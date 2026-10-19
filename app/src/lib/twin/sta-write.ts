@@ -12,14 +12,17 @@
 // limit; lib/data/store verifyIntegrationKey). Readings go through the one
 // ingestion path (lib/twin/stream-ingest.ts): checked, refused with reasons,
 // audited once per request, kept as readings that the stream's daily run turns
-// into observations. Nothing else is created, changed or deleted here: Things,
-// Sensors and Datastreams come from the register; PATCH and DELETE are
-// refused.
+// into observations. DELETE on such an Observation withdraws the reading
+// (staDelete, below); nothing else is created, changed or deleted here:
+// Things, Sensors and Datastreams come from the register, PATCH is refused
+// (corrections are new readings) and Tasks are created by officials
+// (lib/twin/tasking.ts).
 
-import { verifyIntegrationKey } from '@/lib/data/store';
-import { listSources, type TwinSource } from './register';
+import { verifyIntegrationKey, recordAudit } from '@/lib/data/store';
+import { listSources, standingStreamRun, requestRunWithdrawal, type TwinSource } from './register';
 import { STA_WRITE_SCOPE } from './stream';
 import { ingestReadings, type IncomingReading } from './stream-ingest';
+import { getReading, markReadingWithdrawn } from './readings';
 
 export interface StaWriteAnswer { status: number; body: unknown; headers?: Record<string, string> }
 
@@ -122,5 +125,72 @@ export function staCreate(base: string, path: string[], body: unknown, authoriza
     status: 201,
     headers: { Location: self },
     body: { '@iot.id': id, '@iot.selfLink': self, phenomenonTime: r.ts, resultTime: r.receivedAt, result: r.value, parameters: { kind: 'reading', via: 'sta' }, 'Datastream@iot.navigationLink': `${self}/Datastream` },
+  };
+}
+
+// ── Update and delete (review I3) ─────────────────────────────────────────
+// SensorThings 1.1 lists update-entity and delete-entity as separate
+// requirements of the create-update-delete class. This service declares
+// delete-entity for the Observations a stream's integration sent, and not
+// update-entity: a reading is a measurement, so a wrong one is withdrawn and
+// its correction sent as a new reading (both on record), never overwritten.
+
+/** Why PATCH and PUT are refused (405), whatever the entity. */
+export const STA_UPDATE_REFUSAL = 'Entities are never changed here (SensorThings update-entity is not offered). A reading is withdrawn with DELETE on its Observation and the correction sent as a new Observation; the twin\'s own facts change only through a new import or an official withdrawing the one that recorded them';
+
+const keyRefusal = (key: { status: number; error: string; retryAfterSeconds?: number }): StaWriteAnswer => {
+  const h: Record<string, string> = {};
+  if (key.status === 401) h['WWW-Authenticate'] = `Bearer realm="civicos-twin", scope="${STA_WRITE_SCOPE}"`;
+  if (key.retryAfterSeconds) h['Retry-After'] = String(key.retryAfterSeconds);
+  return err(key.status, key.error, h);
+};
+
+/**
+ * Withdraw a reading through SensorThings: DELETE Observations('telemetry:<stream>~<reading id>')
+ * with the key of the integration bound to the stream source (scope sta:write).
+ * The reading is marked withdrawn with who, why and when (never erased),
+ * leaves SensorThings reads and is not counted by the stream's next run; when
+ * a standing run already counted its day, that run's withdrawal is proposed
+ * to the officials (requestRunWithdrawal in lib/twin/register.ts), the twin's
+ * one way of withdrawing facts. `reason` comes from the request (?reason=,
+ * a JSON body { "reason": … } or the X-Reason header); without one, the
+ * record says none was given. Audited.
+ */
+export function staDelete(path: string[], reason: string | undefined, authorization: string | null, now = new Date()): StaWriteAnswer {
+  if (!authorization) return keyRefusal({ status: 401, error: `Send the key of the integration bound to the stream: Authorization: Bearer civ_… (scope ${STA_WRITE_SCOPE})` });
+  const key = verifyIntegrationKey(authorization, STA_WRITE_SCOPE, now.getTime());
+  if (!key.ok) return keyRefusal(key);
+  const by = `Integration ${key.client.name} (${key.client.id})`;
+  const seg = path.length === 1 ? SEG.exec(path[0]!) : null;
+  if (!seg || seg[1] !== 'Observations' || seg[2] === undefined) return err(405, 'Only an Observation that is a reading sent to a stream source is deleted (withdrawn) here: DELETE Observations(\'telemetry:<stream id>~<reading id>\'). Things, Sensors and Datastreams come from the register, and the twin\'s own facts are withdrawn by an official with the import that recorded them');
+  const id = seg[2].replace(/''/g, "'");
+  const m = /^telemetry:(.+)~([0-9a-f-]{36})$/.exec(id);
+  if (!m) return err(405, `${id.slice(0, 80)} is not a reading sent to the platform: the twin's own facts are withdrawn by an official with the import that recorded them, and the substrate's samples are kept by the substrate`);
+  const streamId = m[1]!, readingId = m[2]!;
+  const reading = getReading(streamId, readingId);
+  if (!reading) return err(404, `Nothing at Observations('${id.slice(0, 80)}')`);
+  const source = listSources().find(s => s.id === reading.sourceId);
+  if (!source?.stream?.ingest || source.stream.ingest.integrationId !== key.client.id) return err(403, 'Only the integration bound to the reading\'s stream source may withdraw it');
+  if (reading.withdrawn) return err(409, `Already withdrawn on ${reading.withdrawn.at.slice(0, 10)} by ${reading.withdrawn.by}`);
+  const why = (reason ?? '').trim().slice(0, 500) || 'No reason given (SensorThings DELETE)';
+  const run = standingStreamRun(source.id, reading.ts);
+  const done = markReadingWithdrawn(streamId, readingId, { by, reason: why, ...(run ? { run: run.id } : {}) }, now);
+  if ('error' in done) return err(409, done.error);
+  let runWithdrawal: 'proposed' | 'already proposed' | 'already withdrawn' | undefined;
+  if (run) {
+    const r = requestRunWithdrawal(run.id, by, `A reading it counted (${reading.ts}, ${reading.value}) was withdrawn by its sender: ${why}`, now);
+    runWithdrawal = 'error' in r ? undefined : r.proposed ? 'proposed' : r.run.withdrawn ? 'already withdrawn' : 'already proposed';
+  }
+  recordAudit(by, 'twin.stream.reading.withdraw', `Twin:${source.id}`, 'ok',
+    `Reading ${readingId} of stream ${streamId} (${reading.ts}, ${reading.value}) withdrawn · ${why}${run ? ` · counted by ${run.id}: withdrawal ${runWithdrawal ?? 'not proposed'}` : ' · not yet counted by a run'}`);
+  return {
+    status: 200,
+    body: {
+      '@iot.id': id, withdrawn: done.withdrawn,
+      message: run
+        ? `The reading is withdrawn and no longer served. Its day was already recorded by ${run.id}: withdrawing that import was ${runWithdrawal === 'proposed' ? 'proposed to the officials' : runWithdrawal ?? 'not possible'}; until an official confirms it, the twin's facts for that day stand.`
+        : 'The reading is withdrawn: it is no longer served and the stream\'s next run will not count it. Send a correction as a new Observation.',
+      ...(run ? { run: run.id, runWithdrawal } : {}),
+    },
   };
 }

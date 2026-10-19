@@ -767,6 +767,32 @@ export function cancelWithdrawal(runId: string, by: string, reason: string): { r
   return { run: { ...run } };
 }
 
+/** The standing run of a stream source that counted the day of `ts` (its read window holds it), or undefined. */
+export function standingStreamRun(sourceId: string, ts: string): TwinRun | undefined {
+  const t = Date.parse(ts);
+  return [...db().runs, ...archivedRuns()].find(r => r.sourceId === sourceId && !r.withdrawn && r.status !== 'failed' && r.stream
+    && Date.parse(r.stream.from) <= t && t < Date.parse(r.stream.to));
+}
+
+/**
+ * A sender that is not an official (a sensor gateway withdrawing a reading
+ * its stream's run already counted) asks for that run to be withdrawn: always
+ * a proposal, whatever the four-eyes policy, because only an official
+ * withdraws an import (confirmWithdrawal by any official, or cancelWithdrawal).
+ * Audited; a run already proposed or withdrawn is left as it is.
+ */
+export function requestRunWithdrawal(runId: string, by: string, reason: string, now = new Date()): { run: TwinRun; proposed: boolean } | { error: string } {
+  const run = findRun(runId);
+  if (!run) return { error: 'No such import' };
+  const who = by.trim(), why = reason.trim();
+  if (!who || why.length < 4) return { error: 'Name who asks and why' };
+  if (run.withdrawn || run.withdrawalProposed) return { run: { ...run }, proposed: false };
+  run.withdrawalProposed = { at: now.toISOString(), by: who.slice(0, 160), reason: why.slice(0, 500) };
+  repo().saveRun(run);
+  recordAudit(who, 'twin.run.withdraw.propose', `Twin:${run.sourceId}/${run.id}`, 'ok', `${run.accepted} observations · ${run.withdrawalProposed.reason} · asked by the sender of a withdrawn reading; an official confirms or cancels`);
+  return { run: { ...run }, proposed: true };
+}
+
 // Listeners told when an import adds observations (e.g. scenario calibration,
 // lib/twin/scenarios.ts). Named, so a module loaded twice registers once; a
 // failing listener never fails the import.

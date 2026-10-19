@@ -40457,12 +40457,20 @@
         ],
         "operationId": "get_twin_sta_v1_1_path",
         "summary": "GET /api/twin/sta/v1.1/{path}",
-        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts).",
+        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts). DELETE Observations('telemetry:<stream id>~<reading id>') with the same key withdraws a reading it sent (with ?reason=, a JSON { reason } or X-Reason): kept on record, no longer served or counted; a day already recorded has its run's withdrawal proposed to an official. PATCH and PUT answer 405 (update- entity is not offered: a correction is a new reading). See the service root's serverSettings for the conformance classes and what each covers. Tasking Core: POST Tasks (or TaskingCapabilities('<id>')/Tasks) creates a task for a declared capability, only for a signed-in official allowed to task sensors (canTaskSensor, lib/auth/roles.ts), with { taskingParameters, TaskingCapability: { \"@iot.id\" }, reason }; the executing integration pulls it from /api/twin/tasking/executor (lib/twin/tasking.ts).",
         "parameters": [
           {
             "name": "path",
             "in": "path",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -40511,7 +40519,7 @@
         ],
         "operationId": "post_twin_sta_v1_1_path",
         "summary": "POST /api/twin/sta/v1.1/{path}",
-        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts).",
+        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts). DELETE Observations('telemetry:<stream id>~<reading id>') with the same key withdraws a reading it sent (with ?reason=, a JSON { reason } or X-Reason): kept on record, no longer served or counted; a day already recorded has its run's withdrawal proposed to an official. PATCH and PUT answer 405 (update- entity is not offered: a correction is a new reading). See the service root's serverSettings for the conformance classes and what each covers. Tasking Core: POST Tasks (or TaskingCapabilities('<id>')/Tasks) creates a task for a declared capability, only for a signed-in official allowed to task sensors (canTaskSensor, lib/auth/roles.ts), with { taskingParameters, TaskingCapability: { \"@iot.id\" }, reason }; the executing integration pulls it from /api/twin/tasking/executor (lib/twin/tasking.ts).",
         "parameters": [
           {
             "name": "path",
@@ -40556,10 +40564,70 @@
         },
         "security": [
           {
-            "officialSession": []
+            "integrationKey": []
           },
           {
-            "automation": []
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "bearer",
+        "x-source": "src/app/api/twin/sta/v1.1/[...path]/route.ts"
+      },
+      "put": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "put_twin_sta_v1_1_path",
+        "summary": "PUT /api/twin/sta/v1.1/{path}",
+        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts). DELETE Observations('telemetry:<stream id>~<reading id>') with the same key withdraws a reading it sent (with ?reason=, a JSON { reason } or X-Reason): kept on record, no longer served or counted; a day already recorded has its run's withdrawal proposed to an official. PATCH and PUT answer 405 (update- entity is not offered: a correction is a new reading). See the service root's serverSettings for the conformance classes and what each covers. Tasking Core: POST Tasks (or TaskingCapabilities('<id>')/Tasks) creates a task for a declared capability, only for a signed-in official allowed to task sensors (canTaskSensor, lib/auth/roles.ts), with { taskingParameters, TaskingCapability: { \"@iot.id\" }, reason }; the executing integration pulls it from /api/twin/tasking/executor (lib/twin/tasking.ts).",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          },
+          {
+            "officialSession": []
           }
         ],
         "x-permission-rule": "bearer",
@@ -40571,7 +40639,7 @@
         ],
         "operationId": "patch_twin_sta_v1_1_path",
         "summary": "PATCH /api/twin/sta/v1.1/{path}",
-        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts).",
+        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts). DELETE Observations('telemetry:<stream id>~<reading id>') with the same key withdraws a reading it sent (with ?reason=, a JSON { reason } or X-Reason): kept on record, no longer served or counted; a day already recorded has its run's withdrawal proposed to an official. PATCH and PUT answer 405 (update- entity is not offered: a correction is a new reading). See the service root's serverSettings for the conformance classes and what each covers. Tasking Core: POST Tasks (or TaskingCapabilities('<id>')/Tasks) creates a task for a declared capability, only for a signed-in official allowed to task sensors (canTaskSensor, lib/auth/roles.ts), with { taskingParameters, TaskingCapability: { \"@iot.id\" }, reason }; the executing integration pulls it from /api/twin/tasking/executor (lib/twin/tasking.ts).",
         "parameters": [
           {
             "name": "path",
@@ -40616,10 +40684,10 @@
         },
         "security": [
           {
-            "officialSession": []
+            "integrationKey": []
           },
           {
-            "automation": []
+            "officialSession": []
           }
         ],
         "x-permission-rule": "bearer",
@@ -40631,7 +40699,7 @@
         ],
         "operationId": "delete_twin_sta_v1_1_path",
         "summary": "DELETE /api/twin/sta/v1.1/{path}",
-        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts).",
+        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts). DELETE Observations('telemetry:<stream id>~<reading id>') with the same key withdraws a reading it sent (with ?reason=, a JSON { reason } or X-Reason): kept on record, no longer served or counted; a day already recorded has its run's withdrawal proposed to an official. PATCH and PUT answer 405 (update- entity is not offered: a correction is a new reading). See the service root's serverSettings for the conformance classes and what each covers. Tasking Core: POST Tasks (or TaskingCapabilities('<id>')/Tasks) creates a task for a declared capability, only for a signed-in official allowed to task sensors (canTaskSensor, lib/auth/roles.ts), with { taskingParameters, TaskingCapability: { \"@iot.id\" }, reason }; the executing integration pulls it from /api/twin/tasking/executor (lib/twin/tasking.ts).",
         "parameters": [
           {
             "name": "path",
@@ -40666,10 +40734,10 @@
         },
         "security": [
           {
-            "officialSession": []
+            "integrationKey": []
           },
           {
-            "automation": []
+            "officialSession": []
           }
         ],
         "x-permission-rule": "bearer",
@@ -40701,11 +40769,14 @@
                           "name": {
                             "type": "string",
                             "enum": [
+                              "Actuators",
                               "Datastreams",
                               "Locations",
                               "Observations",
                               "ObservedProperties",
                               "Sensors",
+                              "TaskingCapabilities",
+                              "Tasks",
                               "Things"
                             ]
                           },
@@ -40722,6 +40793,43 @@
                     "serverSettings": {
                       "type": "object",
                       "properties": {
+                        "civicos:conformanceNotes": {
+                          "type": "object",
+                          "properties": {
+                            "create-update-delete": {
+                              "type": "string"
+                            },
+                            "data-array": {
+                              "type": "string"
+                            },
+                            "receive-updates-via-mqtt": {
+                              "type": "string"
+                            },
+                            "tasking-core": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "create-update-delete",
+                            "data-array",
+                            "receive-updates-via-mqtt",
+                            "tasking-core"
+                          ]
+                        },
+                        "http://www.opengis.net/spec/iot_sensing/1.1/req/receive-updates-via-mqtt/receive-updates": {
+                          "type": "object",
+                          "properties": {
+                            "endpoints": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "endpoints"
+                          ]
+                        },
                         "conformance": {
                           "type": "array",
                           "items": {
@@ -40730,6 +40838,7 @@
                         }
                       },
                       "required": [
+                        "civicos:conformanceNotes",
                         "conformance"
                       ]
                     }
@@ -40745,11 +40854,22 @@
                     "value": {
                       "value": [
                         {
-                          "name": "Datastreams",
+                          "name": "Actuators",
                           "url": "https://example.gov/"
                         }
                       ],
                       "serverSettings": {
+                        "civicos:conformanceNotes": {
+                          "create-update-delete": "string",
+                          "data-array": "string",
+                          "receive-updates-via-mqtt": "string",
+                          "tasking-core": "string"
+                        },
+                        "http://www.opengis.net/spec/iot_sensing/1.1/req/receive-updates-via-mqtt/receive-updates": {
+                          "endpoints": [
+                            "string"
+                          ]
+                        },
                         "conformance": [
                           "string"
                         ]
@@ -40997,6 +41117,900 @@
           }
         ],
         "x-source": "src/app/api/twin/state/route.ts"
+      }
+    },
+    "/api/twin/tasking/capabilities/{id}/retire": {
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_tasking_capabilities_id_retire",
+        "summary": "POST /api/twin/tasking/capabilities/{id}/retire",
+        "description": "Retire a tasking capability (lib/twin/tasking.ts retireCapability): POST { reason }. No new tasks for it; those already made run their course; the record stays. Administrators only (ADMIN_ONLY in lib/auth/roles.ts); the signed-in official's verified name is recorded (withOfficial); audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official",
+                    "reason": "Text"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "capability": {
+                      "$ref": "#/components/schemas/TaskingCapability"
+                    }
+                  },
+                  "required": [
+                    "capability"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "capability": {
+                        "id": "ID-0001",
+                        "sourceId": "ID-0001",
+                        "name": "Example",
+                        "description": "Text",
+                        "actuator": {
+                          "name": "Example",
+                          "description": "Text"
+                        },
+                        "integrationId": "ID-0001",
+                        "parameters": [
+                          {
+                            "name": "Example",
+                            "label": "Example",
+                            "kind": "boolean",
+                            "required": true
+                          }
+                        ],
+                        "declaredBy": "A. Official",
+                        "declaredAt": "2026-01-15T09:30:00.000Z",
+                        "retired": {
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": "A. Official",
+                          "reason": "Text"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/twin/tasking/capabilities/[id]/retire/route.ts"
+      }
+    },
+    "/api/twin/tasking/capabilities": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tasking_capabilities",
+        "summary": "GET /api/twin/tasking/capabilities",
+        "description": "Tasking capabilities of the twin's stream sources (SensorThings Tasking Core, lib/twin/tasking.ts): GET lists them (retired ones included, marked); POST declares one: { sourceId, name, description?, actuator?: { name, description }, integrationId, parameters: [{ name, label, kind: number | text | choice | boolean, unit?, min?, max?, choices?, required? }] }. Administrators only (ADMIN_ONLY in lib/auth/roles.ts); a signed-in official's verified name replaces any name in the request (withOfficial); the executing integration must be approved and hold the scope sta:task; audited.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TaskingCapability"
+                      }
+                    },
+                    "scope": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "capabilities",
+                    "scope"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "capabilities": [
+                        {
+                          "id": "ID-0001",
+                          "sourceId": "ID-0001",
+                          "name": "Example",
+                          "description": "Text",
+                          "actuator": {
+                            "name": "Example",
+                            "description": "Text"
+                          },
+                          "integrationId": "ID-0001",
+                          "parameters": [
+                            {}
+                          ],
+                          "declaredBy": "A. Official",
+                          "declaredAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "scope": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/twin/tasking/capabilities/route.ts"
+      },
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_tasking_capabilities",
+        "summary": "POST /api/twin/tasking/capabilities",
+        "description": "Tasking capabilities of the twin's stream sources (SensorThings Tasking Core, lib/twin/tasking.ts): GET lists them (retired ones included, marked); POST declares one: { sourceId, name, description?, actuator?: { name, description }, integrationId, parameters: [{ name, label, kind: number | text | choice | boolean, unit?, min?, max?, choices?, required? }] }. Administrators only (ADMIN_ONLY in lib/auth/roles.ts); a signed-in official's verified name replaces any name in the request (withOfficial); the executing integration must be approved and hold the scope sta:task; audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "capability": {
+                      "$ref": "#/components/schemas/TaskingCapability"
+                    }
+                  },
+                  "required": [
+                    "capability"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "capability": {
+                        "id": "ID-0001",
+                        "sourceId": "ID-0001",
+                        "name": "Example",
+                        "description": "Text",
+                        "actuator": {
+                          "name": "Example",
+                          "description": "Text"
+                        },
+                        "integrationId": "ID-0001",
+                        "parameters": [
+                          {
+                            "name": "Example",
+                            "label": "Example",
+                            "kind": "boolean",
+                            "required": true
+                          }
+                        ],
+                        "declaredBy": "A. Official",
+                        "declaredAt": "2026-01-15T09:30:00.000Z",
+                        "retired": {
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": "A. Official",
+                          "reason": "Text"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/twin/tasking/capabilities/route.ts"
+      }
+    },
+    "/api/twin/tasking/executor/{id}": {
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_tasking_executor_id",
+        "summary": "POST /api/twin/tasking/executor/{id}",
+        "description": "The executing integration reports a task's status (lib/twin/tasking.ts acknowledgeTask): POST { status: accepted | rejected | in-progress | completed | failed, note? } with Authorization: Bearer civ_… (its own key, scope sta:task; BEARER_ROUTES in lib/auth/roles.ts). Only tasks of the capabilities it executes, only forward (delivered → accepted or rejected → in-progress → completed or failed); audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {},
+                  "note": {}
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "status": null,
+                    "note": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "task": {
+                      "$ref": "#/components/schemas/TwinTask"
+                    }
+                  },
+                  "required": [
+                    "task"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "task": {
+                        "id": "ID-0001",
+                        "capabilityId": "ID-0001",
+                        "parameters": {
+                          "key": true
+                        },
+                        "reason": "Text",
+                        "createdBy": "A. Official",
+                        "institution": "string",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "status": "accepted",
+                        "history": [
+                          {
+                            "status": "accepted",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          },
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "bearer",
+        "x-source": "src/app/api/twin/tasking/executor/[id]/route.ts"
+      }
+    },
+    "/api/twin/tasking/executor": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tasking_executor",
+        "summary": "GET /api/twin/tasking/executor",
+        "description": "The executing integration's task queue (SensorThings Tasking Core, lib/twin/tasking.ts pullTasks): GET with Authorization: Bearer civ_… (the integration's own key, approved, scope sta:task, within its rate limit; BEARER_READS in lib/auth/roles.ts) answers the tasks of the capabilities it executes that are not finished, oldest first, each with its capability's parameters. Tasks handed over for the first time become delivered (audited); a task cancelled by an official is listed once more as cancelled. The gateway then reports each task's status at /api/twin/tasking/executor/{id}.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tasks": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "capabilityId": {
+                            "type": "string"
+                          },
+                          "parameters": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "string"
+                                }
+                              ]
+                            }
+                          },
+                          "reason": {
+                            "type": "string"
+                          },
+                          "createdBy": {
+                            "type": "string"
+                          },
+                          "institution": {
+                            "type": "string",
+                            "description": "The official's institution, when they serve one."
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "accepted",
+                              "cancelled",
+                              "completed",
+                              "created",
+                              "delivered",
+                              "failed",
+                              "in-progress",
+                              "rejected"
+                            ]
+                          },
+                          "history": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accepted",
+                                    "cancelled",
+                                    "completed",
+                                    "created",
+                                    "delivered",
+                                    "failed",
+                                    "in-progress",
+                                    "rejected"
+                                  ]
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "by": {
+                                  "type": "string"
+                                },
+                                "note": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "status",
+                                "at",
+                                "by"
+                              ]
+                            }
+                          },
+                          "capability": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "parameters": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/TaskParameter"
+                                }
+                              },
+                              "sourceId": {
+                                "type": "string",
+                                "description": "The stream source whose device it tasks."
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "parameters",
+                              "sourceId"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "capabilityId",
+                          "parameters",
+                          "reason",
+                          "createdBy",
+                          "createdAt",
+                          "status",
+                          "history",
+                          "capability"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "tasks"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "tasks": [
+                        {
+                          "id": "ID-0001",
+                          "capabilityId": "ID-0001",
+                          "parameters": {
+                            "key": true
+                          },
+                          "reason": "Text",
+                          "createdBy": "A. Official",
+                          "createdAt": "2026-01-15T09:30:00.000Z",
+                          "status": "accepted",
+                          "history": [
+                            {}
+                          ],
+                          "capability": {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "parameters": [],
+                            "sourceId": "ID-0001"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          }
+        ],
+        "x-source": "src/app/api/twin/tasking/executor/route.ts"
+      }
+    },
+    "/api/twin/tasking/tasks/{id}/cancel": {
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_tasking_tasks_id_cancel",
+        "summary": "POST /api/twin/tasking/tasks/{id}/cancel",
+        "description": "Cancel a task that is not finished (lib/twin/tasking.ts cancelTask): POST { reason }. A signed-in official whom canTaskSensor (lib/auth/roles.ts) allows; audited. The executing integration sees the task cancelled on its next pull.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {}
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "reason": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "task": {
+                      "$ref": "#/components/schemas/TwinTask"
+                    }
+                  },
+                  "required": [
+                    "task"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "task": {
+                        "id": "ID-0001",
+                        "capabilityId": "ID-0001",
+                        "parameters": {
+                          "key": true
+                        },
+                        "reason": "Text",
+                        "createdBy": "A. Official",
+                        "institution": "string",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "status": "accepted",
+                        "history": [
+                          {
+                            "status": "accepted",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/twin/tasking/tasks/[id]/cancel/route.ts"
+      }
+    },
+    "/api/twin/tasking/tasks": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tasking_tasks",
+        "summary": "GET /api/twin/tasking/tasks",
+        "description": "Tasks for the devices behind the twin's stream sources (SensorThings Tasking Core, lib/twin/tasking.ts): GET lists them, newest first (?capability= narrows to one capability); POST creates one: { capabilityId, parameters: { … }, reason }. Only a signed-in official (a typed-in name is never enough) whom canTaskSensor (lib/auth/roles.ts) allows: administrators and officials who can sign. The parameters are checked against the capability's declaration; audited. The platform never executes a task: the integration named by the capability pulls it from /api/twin/tasking/executor and reports its status.",
+        "parameters": [
+          {
+            "name": "capability",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tasks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TwinTask"
+                      }
+                    }
+                  },
+                  "required": [
+                    "tasks"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "tasks": [
+                        {
+                          "id": "ID-0001",
+                          "capabilityId": "ID-0001",
+                          "parameters": {
+                            "key": true
+                          },
+                          "reason": "Text",
+                          "createdBy": "A. Official",
+                          "createdAt": "2026-01-15T09:30:00.000Z",
+                          "status": "accepted",
+                          "history": [
+                            {}
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/twin/tasking/tasks/route.ts"
+      },
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_tasking_tasks",
+        "summary": "POST /api/twin/tasking/tasks",
+        "description": "Tasks for the devices behind the twin's stream sources (SensorThings Tasking Core, lib/twin/tasking.ts): GET lists them, newest first (?capability= narrows to one capability); POST creates one: { capabilityId, parameters: { … }, reason }. Only a signed-in official (a typed-in name is never enough) whom canTaskSensor (lib/auth/roles.ts) allows: administrators and officials who can sign. The parameters are checked against the capability's declaration; audited. The platform never executes a task: the integration named by the capability pulls it from /api/twin/tasking/executor and reports its status.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "capabilityId": {},
+                  "parameters": {},
+                  "reason": {}
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "capabilityId": null,
+                    "parameters": null,
+                    "reason": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "task": {
+                      "$ref": "#/components/schemas/TwinTask"
+                    }
+                  },
+                  "required": [
+                    "task"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "task": {
+                        "id": "ID-0001",
+                        "capabilityId": "ID-0001",
+                        "parameters": {
+                          "key": true
+                        },
+                        "reason": "Text",
+                        "createdBy": "A. Official",
+                        "institution": "string",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "status": "accepted",
+                        "history": [
+                          {
+                            "status": "accepted",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/twin/tasking/tasks/route.ts"
       }
     },
     "/api/twin/tiles/boundaries/{z}/{x}/{y}": {
@@ -42235,7 +43249,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "civ_<prefix>_<secret>",
-        "description": "An integration key issued in Integrations (/integrations), stored as a SHA-256 hash and checked with its scopes and rate limit. Scope ogc:read opens the twin's OGC API – Features, SensorThings and vector tiles to GIS clients; scope mirror:read opens the mirror feed (/api/platform/mirror) to the civic-api follower."
+        "description": "An integration key issued in Integrations (/integrations), stored as a SHA-256 hash and checked with its scopes and rate limit. Scope ogc:read opens the twin's OGC API – Features, SensorThings and vector tiles to GIS clients (and its SensorThings MQTT broker, as the password); scope sta:write lets the integration bound to a twin stream source create and withdraw its readings (SensorThings POST and DELETE Observations); scope sta:task lets the integration that executes a tasking capability pull its tasks and report their status (/api/twin/tasking/executor); scope mirror:read opens the mirror feed (/api/platform/mirror) to the civic-api follower."
       },
       "integrationClient": {
         "type": "http",
@@ -59311,6 +60325,132 @@
           "savedBytes"
         ]
       },
+      "TaskParameter": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The key in a task's parameters, e.g. \"samplingInterval\"."
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "boolean",
+              "choice",
+              "number",
+              "text"
+            ]
+          },
+          "unit": {
+            "type": "string",
+            "description": "UCUM unit of a number."
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The values a choice takes."
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "kind",
+          "required"
+        ]
+      },
+      "TaskingCapability": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "The stream source whose device it tasks."
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "actuator": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "description"
+            ]
+          },
+          "integrationId": {
+            "type": "string",
+            "description": "The integration that executes it (pulls and acknowledges its tasks)."
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskParameter"
+            }
+          },
+          "declaredBy": {
+            "type": "string"
+          },
+          "declaredAt": {
+            "type": "string"
+          },
+          "retired": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "reason"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sourceId",
+          "name",
+          "description",
+          "actuator",
+          "integrationId",
+          "parameters",
+          "declaredBy",
+          "declaredAt"
+        ]
+      },
       "TenantHealth": {
         "type": "object",
         "properties": {
@@ -59879,6 +61019,104 @@
           "schedule",
           "registeredBy",
           "registeredAt"
+        ]
+      },
+      "TwinTask": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "capabilityId": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "reason": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string",
+            "description": "The official's institution, when they serve one."
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "cancelled",
+              "completed",
+              "created",
+              "delivered",
+              "failed",
+              "in-progress",
+              "rejected"
+            ]
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "accepted",
+                    "cancelled",
+                    "completed",
+                    "created",
+                    "delivered",
+                    "failed",
+                    "in-progress",
+                    "rejected"
+                  ]
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "status",
+                "at",
+                "by"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "capabilityId",
+          "parameters",
+          "reason",
+          "createdBy",
+          "createdAt",
+          "status",
+          "history"
         ]
       },
       "UpdateChamber": {

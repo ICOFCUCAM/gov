@@ -23,7 +23,10 @@
 // their Datastreams `telemetry:<stream id>` and recent readings); without a
 // substrate the twin's own observations and the pushed streams are served.
 // Creating Observations on a stream source's Datastream (POST Observations,
-// CreateObservations) is lib/twin/sta-write.ts; nothing else is created here.
+// CreateObservations) and withdrawing them (DELETE) is lib/twin/sta-write.ts.
+// Tasking Core (Actuators, TaskingCapabilities, Tasks) comes from
+// lib/twin/tasking.ts; Tasks are served only to signed-in officials. The MQTT
+// extension (subscriptions to these resources) is lib/twin/sta-mqtt.ts.
 // Query options: $top (default 100, at most 1000), $skip, $count, $orderby
 // (one property, asc|desc) and $filter (comparisons eq ne gt ge lt le on a
 // property or a path such as properties/kind, joined by and/or). $expand and
@@ -34,6 +37,8 @@ import { getFacility, viewFacility, type Viewer } from '@/lib/data/facilities';
 import { listTelemetryStreamsRows, recentTelemetrySamplesRows } from '@/lib/db/repos/telemetry';
 import type { TelemetrySampleRow, TelemetryStreamRow } from '@/lib/db/types';
 import { pushedStreams, recentPushedReadings } from './readings';
+import { listCapabilities, listTasks, sweParameters } from './tasking';
+import { staMqttHub } from './sta-mqtt-bus';
 
 /** Active substrate streams and the streams that receive pushed readings, each once. */
 async function allStreams(): Promise<TelemetryStreamRow[]> {
@@ -64,10 +69,24 @@ export const STA_CONFORMANCE = [
   'http://www.opengis.net/spec/iot_sensing/1.1/req/request-data/filter',
   // Observations only, on a stream source's Datastream, with its bound integration's key (lib/twin/sta-write.ts).
   'http://www.opengis.net/spec/iot_sensing/1.1/req/create-update-delete/create-entity',
+  // Only an Observation that is a reading the integration sent: withdrawn, never erased (staDelete).
+  'http://www.opengis.net/spec/iot_sensing/1.1/req/create-update-delete/delete-entity',
   'http://www.opengis.net/spec/iot_sensing/1.1/req/data-array/create-observations',
+  // Tasking Core (OGC 17-079r1): Actuators, TaskingCapabilities, Tasks; Tasks created by signed-in officials.
+  'http://www.opengis.net/spec/iot_tasking/1.0/req/tasking-core',
 ];
+/** The MQTT extension's class: declared only while the broker runs (CIVICOS_STA_MQTT=on). */
+export const STA_MQTT_RECEIVE = 'http://www.opengis.net/spec/iot_sensing/1.1/req/receive-updates-via-mqtt/receive-updates';
 
-export const STA_SETS = ['Things', 'Locations', 'Sensors', 'ObservedProperties', 'Datastreams', 'Observations'] as const;
+/** What this service does and does not do of the classes it touches, served in the service root. */
+export const STA_CONFORMANCE_NOTES = {
+  'create-update-delete': 'create-entity: Observations on a stream source\'s Datastream (telemetry:<stream id>) and Tasks; delete-entity: an Observation that is a reading sent by the integration bound to its stream (withdrawn with who, why and when, never erased; a day already recorded by a run has that run\'s withdrawal proposed to an official). update-entity is not offered (405): a reading is a measurement, so a correction is a new reading; Things, Sensors, Datastreams and the twin\'s own Observations come from the register and change only through it.',
+  'data-array': 'CreateObservations with components phenomenonTime, result (resultTime and parameters ignored); dataArray reads are not offered ($resultFormat is refused).',
+  'receive-updates-via-mqtt': 'Subscriptions to v1.1/Observations and v1.1/Datastreams(<id>)/Observations with an integration key or OAuth access token of scope ogc:read as the MQTT password; each reading is published when it is accepted. Publishing from clients (create-observations-via-mqtt) is refused: readings are sent over HTTP. Listed only while the broker runs.',
+  'tasking-core': 'TaskingCapabilities are declared on a stream source by an administrator with the integration that executes them; Tasks are created by a signed-in official allowed to task sensors (POST Tasks with a reason) and delivered to that integration when it pulls them (GET /api/twin/tasking/executor). The platform never executes a task. Tasks are listed to signed-in officials only.',
+};
+
+export const STA_SETS = ['Things', 'Locations', 'Sensors', 'ObservedProperties', 'Datastreams', 'Observations', 'Actuators', 'TaskingCapabilities', 'Tasks'] as const;
 export type StaSet = (typeof STA_SETS)[number];
 export const STA_MAX_TOP = 1000;
 const MEASUREMENT = 'http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement';
@@ -81,6 +100,7 @@ export interface StaDeps {
 type Row = Record<string, unknown> & { '@iot.id': string };
 interface Model {
   Things: Row[]; Locations: Row[]; Sensors: Row[]; ObservedProperties: Row[]; Datastreams: Row[]; Observations: Row[];
+  Actuators: Row[]; TaskingCapabilities: Row[]; Tasks: Row[];
   /** Relations by set and id: which ids of another set belong to it. */
   rel: Map<string, string[]>;
 }
@@ -104,7 +124,7 @@ function history(nowIso: string): Observation[] {
 
 async function build(viewer: Viewer, deps: StaDeps): Promise<Model> {
   const nowIso = (deps.now ?? new Date()).toISOString();
-  const m: Model = { Things: [], Locations: [], Sensors: [], ObservedProperties: [], Datastreams: [], Observations: [], rel: new Map() };
+  const m: Model = { Things: [], Locations: [], Sensors: [], ObservedProperties: [], Datastreams: [], Observations: [], Actuators: [], TaskingCapabilities: [], Tasks: [], rel: new Map() };
   const link = (set: StaSet, id: string, nav: string, other: string) => { const k = rk(set, id, nav); const a = m.rel.get(k) ?? []; if (!a.includes(other)) a.push(other); m.rel.set(k, a); };
 
   // Things and their locations. A facility is shown only while published, at the position the viewer may see.
@@ -186,23 +206,60 @@ async function build(viewer: Viewer, deps: StaDeps): Promise<Model> {
     link('Datastreams', id, 'Sensor', id); link('Sensors', id, 'Datastreams', id);
     link('Datastreams', id, 'ObservedProperty', id); link('ObservedProperties', id, 'Datastreams', id);
     for (const x of samples) {
-      const oid = `${id}~${x.id}`;
-      m.Observations.push({ '@iot.id': oid, phenomenonTime: x.ts, resultTime: x.ts, result: x.value, parameters: { kind: 'observed', ...(x.meta && Object.keys(x.meta).length ? { meta: x.meta } : {}) } });
-      link('Datastreams', id, 'Observations', oid); link('Observations', oid, 'Datastream', id);
+      const row = sampleObservation(s.stream_id, x);
+      m.Observations.push(row);
+      link('Datastreams', id, 'Observations', row['@iot.id']); link('Observations', row['@iot.id'], 'Datastream', id);
+    }
+  }
+
+  // Tasking Core: each capability's actuator, the capability on its stream's Thing, and (for officials) its tasks.
+  for (const c of listCapabilities()) {
+    const src = sources.get(c.sourceId);
+    const streamId = src?.stream?.streamId;
+    const thingId = streamId && m.Things.some(t => t['@iot.id'] === `stream:${streamId}`) ? `stream:${streamId}`
+      : src?.stream?.entity && things.has(src.stream.entity) ? src.stream.entity : undefined;
+    const aid = `actuator:${c.id}`;
+    m.Actuators.push({ '@iot.id': aid, name: c.actuator.name, description: c.actuator.description || `Device of ${src?.name ?? c.sourceId}`, encodingType: 'text/plain', metadata: `Tasks executed by integration ${c.integrationId}`, properties: { source: c.sourceId } });
+    m.TaskingCapabilities.push({ '@iot.id': c.id, name: c.name, description: c.description || c.name, taskingParameters: sweParameters(c), properties: { source: c.sourceId, declaredBy: c.declaredBy, declaredAt: c.declaredAt } });
+    link('TaskingCapabilities', c.id, 'Actuator', aid); link('Actuators', aid, 'TaskingCapabilities', c.id);
+    if (thingId) { link('TaskingCapabilities', c.id, 'Thing', thingId); link('Things', thingId, 'TaskingCapabilities', c.id); }
+    if (!viewer.signedIn) continue;
+    for (const t of listTasks({ capabilityId: c.id }).reverse()) {
+      m.Tasks.push({ '@iot.id': t.id, creationTime: t.createdAt, taskingParameters: t.parameters, properties: { status: t.status, reason: t.reason, createdBy: t.createdBy, history: t.history } });
+      link('TaskingCapabilities', c.id, 'Tasks', t.id); link('Tasks', t.id, 'TaskingCapability', c.id);
     }
   }
   return m;
 }
 
+/** A telemetry sample or pushed reading as an Observation row (HTTP reads and MQTT messages alike). */
+function sampleObservation(streamId: string, x: TelemetrySampleRow): Row {
+  return { '@iot.id': `telemetry:${streamId}~${x.id}`, phenomenonTime: x.ts, resultTime: x.ts, result: x.value, parameters: { kind: 'observed', ...(x.meta && Object.keys(x.meta).length ? { meta: x.meta } : {}) } };
+}
+
+/** An accepted reading as SensorThings serves it over HTTP (with its self and navigation links), for an MQTT message. */
+export function readingAsObservation(base: string, streamId: string, r: { id: string; ts: string; value: number; via: string }) {
+  return present(base, 'Observations', sampleObservation(streamId, { id: r.id, stream_id: streamId, ts: r.ts, value: r.value, facility_id: null, meta: { via: r.via } }));
+}
+
+/** The Datastream ids a viewer may read (the same model as the HTTP reads, so the MQTT topic rules match them). */
+export async function visibleDatastreams(viewer: Viewer, deps: StaDeps = {}): Promise<Set<string>> {
+  const m = await build(viewer, deps);
+  return new Set(m.Datastreams.map(d => d['@iot.id']));
+}
+
 // ── Navigation links ───────────────────────────────────────────────────────
 
 const NAV: Record<StaSet, { nav: string; set: StaSet; many: boolean }[]> = {
-  Things: [{ nav: 'Locations', set: 'Locations', many: true }, { nav: 'Datastreams', set: 'Datastreams', many: true }],
+  Things: [{ nav: 'Locations', set: 'Locations', many: true }, { nav: 'Datastreams', set: 'Datastreams', many: true }, { nav: 'TaskingCapabilities', set: 'TaskingCapabilities', many: true }],
   Locations: [{ nav: 'Things', set: 'Things', many: true }],
   Sensors: [{ nav: 'Datastreams', set: 'Datastreams', many: true }],
   ObservedProperties: [{ nav: 'Datastreams', set: 'Datastreams', many: true }],
   Datastreams: [{ nav: 'Thing', set: 'Things', many: false }, { nav: 'Sensor', set: 'Sensors', many: false }, { nav: 'ObservedProperty', set: 'ObservedProperties', many: false }, { nav: 'Observations', set: 'Observations', many: true }],
   Observations: [{ nav: 'Datastream', set: 'Datastreams', many: false }],
+  Actuators: [{ nav: 'TaskingCapabilities', set: 'TaskingCapabilities', many: true }],
+  TaskingCapabilities: [{ nav: 'Thing', set: 'Things', many: false }, { nav: 'Actuator', set: 'Actuators', many: false }, { nav: 'Tasks', set: 'Tasks', many: true }],
+  Tasks: [{ nav: 'TaskingCapability', set: 'TaskingCapabilities', many: false }],
 };
 
 function present(base: string, set: StaSet, r: Row) {
@@ -270,9 +327,14 @@ function matches(r: Record<string, unknown>, f: Filter): boolean {
 // ── Requests ───────────────────────────────────────────────────────────────
 
 export function serviceRoot(base: string) {
+  const mqtt = staMqttHub();
   return {
     value: STA_SETS.map(name => ({ name, url: `${base}/${name}` })),
-    serverSettings: { conformance: STA_CONFORMANCE },
+    serverSettings: {
+      conformance: mqtt ? [...STA_CONFORMANCE, STA_MQTT_RECEIVE] : STA_CONFORMANCE,
+      ...(mqtt ? { [STA_MQTT_RECEIVE]: { endpoints: mqtt.endpoints } } : {}),
+      'civicos:conformanceNotes': STA_CONFORMANCE_NOTES,
+    },
   };
 }
 

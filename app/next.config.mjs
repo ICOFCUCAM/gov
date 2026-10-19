@@ -11,10 +11,12 @@ const nextConfig = {
   // Read by Node at run time, not bundled: sql.js (GeoPackage boundary
   // files, lib/geo/boundary-files.ts) carries its WebAssembly inline; mqtt (the
   // twin's stream subscribers, lib/twin/mqtt.ts) is a Node client with its own
-  // optional transports.
+  // optional transports; aedes and ws (the SensorThings MQTT broker,
+  // lib/twin/sta-mqtt.ts, started only with CIVICOS_STA_MQTT=on) run as Node
+  // modules beside it.
   // (src/instrumentation.ts, which restores and saves the platform's state, is
   // loaded by Next.js 15 without a flag.)
-  serverExternalPackages: ['sql.js', 'mqtt'],
+  serverExternalPackages: ['sql.js', 'mqtt', 'aedes', 'ws'],
   // Security headers (security-headers.mjs, mirrored in vercel.json). The
   // Content-Security-Policy carries a nonce per request and is set by the
   // middleware (src/middleware.ts).

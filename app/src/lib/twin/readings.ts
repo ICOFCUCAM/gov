@@ -33,6 +33,13 @@ export interface Reading {
   via: ReadingVia;
   /** The stream source it was posted to. */
   sourceId: string;
+  /**
+   * Set when its sender withdrew it (SensorThings DELETE, lib/twin/sta-write.ts):
+   * it stays on record with who and why, but no read serves it and no run
+   * counts it. `run` names the standing run that had already counted its day,
+   * whose withdrawal was then proposed to the officials.
+   */
+  withdrawn?: { at: string; by: string; reason: string; run?: string };
 }
 
 // A type alias (not an interface) so withDefaults() takes it as a plain record.
@@ -97,24 +104,48 @@ function lowerBound(list: Reading[], t: number): number {
   return lo;
 }
 
-/** A stream's pushed readings with from <= ts < to, oldest first, at most `limit`. */
+/** A stream's pushed readings with from <= ts < to, oldest first, at most `limit` (withdrawn readings are never counted). */
 export function pushedReadingsBetween(streamId: string, from: string, to: string, limit: number): TelemetrySampleRow[] {
   const list = store().readings[streamId];
   if (!list?.length) return [];
   const a = lowerBound(list, Date.parse(from)), b = lowerBound(list, Date.parse(to));
-  return list.slice(a, Math.min(b, a + limit)).map(r => asSample(streamId, r));
+  const out: TelemetrySampleRow[] = [];
+  for (let i = a; i < b && out.length < limit; i++) if (!list[i]!.withdrawn) out.push(asSample(streamId, list[i]!));
+  return out;
 }
 
-/** The latest pushed readings of a stream, newest first. */
+/** The latest pushed readings of a stream that stand, newest first. */
 export function recentPushedReadings(streamId: string, limit: number): TelemetrySampleRow[] {
   const list = store().readings[streamId] ?? [];
-  return list.slice(-limit).reverse().map(r => asSample(streamId, r));
+  const out: TelemetrySampleRow[] = [];
+  for (let i = list.length - 1; i >= 0 && out.length < limit; i--) if (!list[i]!.withdrawn) out.push(asSample(streamId, list[i]!));
+  return out;
 }
 
-/** How many readings a stream holds, and the newest. */
-export function readingsStatus(streamId: string): { readings: number; newest?: string } {
+/** How many readings a stream holds that stand, how many were withdrawn, and the newest. */
+export function readingsStatus(streamId: string): { readings: number; withdrawn: number; newest?: string } {
   const list = store().readings[streamId] ?? [];
-  return { readings: list.length, ...(list.length ? { newest: list.at(-1)!.ts } : {}) };
+  const standing = list.filter(r => !r.withdrawn);
+  return { readings: standing.length, withdrawn: list.length - standing.length, ...(standing.length ? { newest: standing.at(-1)!.ts } : {}) };
+}
+
+/** One reading of a stream by its id (withdrawn ones included), or undefined. */
+export function getReading(streamId: string, id: string): Reading | undefined {
+  const r = store().readings[streamId]?.find(x => x.id === id);
+  return r ? { ...r } : undefined;
+}
+
+/**
+ * Mark a reading withdrawn by its sender (never erased): who, why, when, and
+ * the standing run that had already counted its day, if any. Returns the
+ * reading as it now stands, or why it cannot be withdrawn.
+ */
+export function markReadingWithdrawn(streamId: string, id: string, w: { by: string; reason: string; run?: string }, now = new Date()): Reading | { error: string } {
+  const r = store().readings[streamId]?.find(x => x.id === id);
+  if (!r) return { error: 'No such reading' };
+  if (r.withdrawn) return { error: `Already withdrawn on ${r.withdrawn.at.slice(0, 10)} by ${r.withdrawn.by}` };
+  r.withdrawn = { at: now.toISOString(), by: w.by.slice(0, 160), reason: w.reason.slice(0, 500), ...(w.run ? { run: w.run } : {}) };
+  return { ...r };
 }
 
 /**
@@ -135,8 +166,11 @@ export function addReadings(streamId: string, items: { ts: string; value: number
   items.forEach((it, index) => {
     const t = Date.parse(it.ts);
     const at = lowerBound(list, t);
-    if (at < list.length && Date.parse(list[at]!.ts) === t) {
-      refused.push({ index, reason: list[at]!.value === it.value ? `A reading at ${it.ts} is already held (a repeated delivery)` : `A different reading at ${it.ts} is already held (${list[at]!.value}); readings are not overwritten` });
+    // A withdrawn reading at the same instant does not stand in the way of its correction (a new reading).
+    let held: Reading | undefined;
+    for (let i = at; i < list.length && Date.parse(list[i]!.ts) === t; i++) if (!list[i]!.withdrawn) { held = list[i]; break; }
+    if (held) {
+      refused.push({ index, reason: held.value === it.value ? `A reading at ${it.ts} is already held (a repeated delivery)` : `A different reading at ${it.ts} is already held (${held.value}); readings are not overwritten: withdraw it (SensorThings DELETE) and send the correction` });
       return;
     }
     if (list.length >= READINGS_PER_STREAM) { refused.push({ index, reason: `The stream holds ${READINGS_PER_STREAM} readings, the most kept; older days must age out first` }); return; }

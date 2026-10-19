@@ -6,13 +6,16 @@
 // see every refused row with its reason, and look up the state of any metric
 // as of any date, and withdraw an import with a reason. The Metrics tab
 // (?tab=metrics) defines what each metric means, its unit and how regions
-// combine. Every figure here is observed; nothing is generated.
+// combine. Every figure here is observed; nothing is generated. Device tasks
+// (what a readings stream's device can be asked to do, and the tasks asked
+// for) sit under Sources (twin/TwinTasking.tsx).
 
 import * as React from 'react';
 import { TwinTerritory } from '@/components/features/twin/TwinTerritory';
 import { TwinScenarios } from '@/components/features/twin/TwinScenarios';
 import { TwinMetrics } from '@/components/features/twin/TwinMetrics';
 import { TwinEntityCard } from '@/components/features/twin/TwinEntityCard';
+import { TwinTasking } from '@/components/features/twin/TwinTasking';
 
 type Tab = 'facts' | 'metrics';
 const TABS: { id: Tab; label: string }[] = [{ id: 'facts', label: 'Facts and sources' }, { id: 'metrics', label: 'Metrics' }];
@@ -186,6 +189,8 @@ export function TwinWorkspace() {
           </ul>
         ) : <p className="text-ink-soft">No sources yet.</p>}
       </Section>
+
+      <TwinTasking sources={data?.sources ?? []} by={by} />
 
       <Section title="Imports" aside="lineage of every observation">
         <WithdrawalRule policy={data?.policy} by={by} busy={busy} act={act} />

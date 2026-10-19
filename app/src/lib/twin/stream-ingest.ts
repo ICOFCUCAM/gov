@@ -14,6 +14,7 @@ import { recordAudit } from '@/lib/data/store';
 import { streamResumesAt, type TwinSource } from './register';
 import { addReadings, type Reading, type ReadingVia } from './readings';
 import { sameUnit } from './metrics';
+import { publishAcceptedReadings } from './sta-mqtt-bus';
 
 /** A reading as a sender gives it: the SensorThings names (phenomenonTime, result), optionally the unit it is in. */
 export interface IncomingReading {
@@ -92,6 +93,8 @@ export function ingestReadings(source: TwinSource, items: IncomingReading[], ctx
   const hash = createHash('sha256');
   for (const r of kept.kept) hash.update(`${r.id}|${r.ts}|${r.value}\n`);
   const sha256 = hash.digest('hex');
+  // SensorThings MQTT subscribers receive each accepted reading (lib/twin/sta-mqtt.ts, when it runs).
+  publishAcceptedReadings(spec.streamId, kept.kept);
   const first = refused[0];
   if (ctx.audit !== false) recordAudit(ctx.by.slice(0, 120) || VIA[ctx.via], 'twin.stream.readings', `Twin:${source.id}`, kept.kept.length ? 'ok' : 'error',
     `${kept.kept.length} of ${items.length} readings of stream ${spec.streamId} via ${VIA[ctx.via]}${kept.kept.length ? ` · sha256 ${sha256}` : ''}${first ? ` · ${refused.length} refused, first: ${first.reason}` : ''}`);
