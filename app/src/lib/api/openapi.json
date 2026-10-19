@@ -65,6 +65,9 @@
       "name": "map-pack"
     },
     {
+      "name": "messaging"
+    },
+    {
       "name": "metrics"
     },
     {
@@ -3689,6 +3692,170 @@
         ],
         "x-permission-rule": "self-authenticated",
         "x-source": "src/app/api/cron/deliver-events/route.ts"
+      }
+    },
+    "/api/cron/deliver-messages": {
+      "get": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "get_cron_deliver_messages",
+        "summary": "GET /api/cron/deliver-messages",
+        "description": "Sends the platform's email and SMS outbox (lib/messaging/outbox.ts) through the providers the nation connected (lib/messaging/deliver.ts): retries with growing waits, dead letters with their reason, rate limits per provider. Without a provider messages stay queued (counted as waiting). Auth: CIVICOS_CRON_SECRET (Authorization: Bearer). Cadence: every minute.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "attempted": {
+                      "type": "number"
+                    },
+                    "sent": {
+                      "type": "number"
+                    },
+                    "retrying": {
+                      "type": "number"
+                    },
+                    "dead": {
+                      "type": "number"
+                    },
+                    "waiting": {
+                      "type": "object",
+                      "properties": {
+                        "notConnected": {
+                          "type": "number"
+                        },
+                        "noPublicAddress": {
+                          "type": "number"
+                        },
+                        "rateLimited": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "notConnected",
+                        "noPublicAddress",
+                        "rateLimited"
+                      ],
+                      "description": "Messages due but waiting: no provider connected for their channel, or no public address for their links."
+                    },
+                    "expired": {
+                      "type": "number"
+                    },
+                    "cleared": {
+                      "type": "number"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "attempted",
+                    "sent",
+                    "retrying",
+                    "dead",
+                    "waiting",
+                    "expired",
+                    "cleared",
+                    "ok"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "at": "2026-01-15T09:30:00.000Z",
+                      "attempted": 1,
+                      "sent": 1,
+                      "retrying": 1,
+                      "dead": 1,
+                      "waiting": {
+                        "notConnected": 1,
+                        "noPublicAddress": 1,
+                        "rateLimited": 1
+                      },
+                      "expired": 1,
+                      "cleared": 1,
+                      "ok": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "automation": []
+          }
+        ],
+        "x-source": "src/app/api/cron/deliver-messages/route.ts"
+      },
+      "post": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "post_cron_deliver_messages",
+        "summary": "POST /api/cron/deliver-messages",
+        "description": "Sends the platform's email and SMS outbox (lib/messaging/outbox.ts) through the providers the nation connected (lib/messaging/deliver.ts): retries with growing waits, dead letters with their reason, rate limits per provider. Without a provider messages stay queued (counted as waiting). Auth: CIVICOS_CRON_SECRET (Authorization: Bearer). Cadence: every minute.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "automation": []
+          }
+        ],
+        "x-permission-rule": "self-authenticated",
+        "x-source": "src/app/api/cron/deliver-messages/route.ts"
       }
     },
     "/api/cron/expire-consents": {
@@ -11630,6 +11797,332 @@
         ],
         "x-permission-rule": "admin",
         "x-source": "src/app/api/map-pack/route.ts"
+      }
+    },
+    "/api/messaging": {
+      "get": {
+        "tags": [
+          "messaging"
+        ],
+        "operationId": "get_messaging",
+        "summary": "GET /api/messaging",
+        "description": "/api/messaging — the nation's email and SMS delivery (lib/messaging): the providers its administrator connected, the platform's public address for links, and where messages stand (counts and statuses; addresses masked, never message text). Administrators only (ADMIN_ONLY in lib/auth/roles.ts; reads checked here too). The nation is the installed one: callers never name one. POST actions: save-provider, remove-provider, settings, test (send one message now to an address the administrator gives; the address is neither kept nor audited), retry or discard a dead letter. Every change is audited without secrets or addresses.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagingStatus"
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "nationId": "ID-0001",
+                      "channels": {
+                        "email": "connected",
+                        "sms": "connected"
+                      },
+                      "providers": [
+                        {
+                          "priority": 1,
+                          "id": "ID-0001",
+                          "name": "Example",
+                          "createdAt": "2026-01-15T09:30:00.000Z",
+                          "createdBy": "A. Official",
+                          "nationId": "ID-0001",
+                          "kind": "http-email",
+                          "channel": "email",
+                          "enabled": true,
+                          "from": "string",
+                          "perMinute": 1,
+                          "updatedAt": "2026-01-15T09:30:00.000Z",
+                          "updatedBy": "A. Official",
+                          "hasSecret": true
+                        }
+                      ],
+                      "kinds": [
+                        {
+                          "kind": "http-email",
+                          "channel": "email",
+                          "label": "Example"
+                        }
+                      ],
+                      "settings": {
+                        "publicUrl": "https://example.gov/",
+                        "updatedAt": "2026-01-15T09:30:00.000Z",
+                        "updatedBy": "A. Official"
+                      },
+                      "publicBase": "string",
+                      "secretsSealed": true,
+                      "privateNetwork": true,
+                      "counts": {
+                        "byChannel": {
+                          "email": {
+                            "cancelled": 1,
+                            "dead": 1,
+                            "queued": 1,
+                            "retrying": 1,
+                            "sending": 1,
+                            "sent": 1
+                          },
+                          "sms": {
+                            "cancelled": 1,
+                            "dead": 1,
+                            "queued": 1,
+                            "retrying": 1,
+                            "sending": 1,
+                            "sent": 1
+                          }
+                        },
+                        "byStream": {
+                          "alerts": {
+                            "cancelled": 1,
+                            "dead": 1,
+                            "queued": 1,
+                            "retrying": 1,
+                            "sending": 1,
+                            "sent": 1
+                          },
+                          "site-updates": {
+                            "cancelled": 1,
+                            "dead": 1,
+                            "queued": 1,
+                            "retrying": 1,
+                            "sending": 1,
+                            "sent": 1
+                          },
+                          "test": {
+                            "cancelled": 1,
+                            "dead": 1,
+                            "queued": 1,
+                            "retrying": 1,
+                            "sending": 1,
+                            "sent": 1
+                          }
+                        }
+                      },
+                      "recent": [
+                        {
+                          "id": "ID-0001",
+                          "channel": "email",
+                          "stream": "alerts",
+                          "kind": "string",
+                          "to": "string",
+                          "subject": "string",
+                          "status": "cancelled",
+                          "attempts": 1,
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "dead": [
+                        {
+                          "id": "ID-0001",
+                          "channel": "email",
+                          "stream": "alerts",
+                          "kind": "string",
+                          "to": "string",
+                          "subject": "string",
+                          "status": "cancelled",
+                          "attempts": 1,
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/messaging/route.ts"
+      },
+      "post": {
+        "tags": [
+          "messaging"
+        ],
+        "operationId": "post_messaging",
+        "summary": "POST /api/messaging",
+        "description": "/api/messaging — the nation's email and SMS delivery (lib/messaging): the providers its administrator connected, the platform's public address for links, and where messages stand (counts and statuses; addresses masked, never message text). Administrators only (ADMIN_ONLY in lib/auth/roles.ts; reads checked here too). The nation is the installed one: callers never name one. POST actions: save-provider, remove-provider, settings, test (send one message now to an address the administrator gives; the address is neither kept nor audited), retry or discard a dead letter. Every change is audited without secrets or addresses.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "result": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/MessagingSettings"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ProviderView"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ok": {
+                              "type": "boolean",
+                              "const": true
+                            }
+                          },
+                          "required": [
+                            "ok"
+                          ]
+                        }
+                      ]
+                    },
+                    "status": {
+                      "$ref": "#/components/schemas/MessagingStatus"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "result",
+                    "status"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "ok": true,
+                      "result": {
+                        "publicUrl": "https://example.gov/",
+                        "updatedAt": "2026-01-15T09:30:00.000Z",
+                        "updatedBy": "A. Official"
+                      },
+                      "status": {
+                        "nationId": "ID-0001",
+                        "channels": {
+                          "email": "connected",
+                          "sms": "connected"
+                        },
+                        "providers": [
+                          {
+                            "priority": 1,
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "createdAt": "2026-01-15T09:30:00.000Z",
+                            "createdBy": "A. Official",
+                            "nationId": "ID-0001",
+                            "kind": "http-email",
+                            "channel": "email",
+                            "enabled": true,
+                            "from": "string",
+                            "perMinute": 1,
+                            "updatedAt": "2026-01-15T09:30:00.000Z",
+                            "updatedBy": "A. Official",
+                            "hasSecret": true
+                          }
+                        ],
+                        "kinds": [
+                          {
+                            "kind": "http-email",
+                            "channel": "email",
+                            "label": "Example"
+                          }
+                        ],
+                        "settings": {},
+                        "publicBase": "string",
+                        "secretsSealed": true,
+                        "privateNetwork": true,
+                        "counts": {
+                          "byChannel": {
+                            "email": {},
+                            "sms": {}
+                          },
+                          "byStream": {
+                            "alerts": {},
+                            "site-updates": {},
+                            "test": {}
+                          }
+                        },
+                        "recent": [
+                          {
+                            "id": "ID-0001",
+                            "channel": "email",
+                            "stream": "alerts",
+                            "kind": "string",
+                            "to": "string",
+                            "subject": "string",
+                            "status": "cancelled",
+                            "attempts": 1,
+                            "createdAt": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "dead": [
+                          {
+                            "id": "ID-0001",
+                            "channel": "email",
+                            "stream": "alerts",
+                            "kind": "string",
+                            "to": "string",
+                            "subject": "string",
+                            "status": "cancelled",
+                            "attempts": 1,
+                            "createdAt": "2026-01-15T09:30:00.000Z"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/messaging/route.ts"
       }
     },
     "/api/metrics": {
@@ -25533,7 +26026,7 @@
         ],
         "operationId": "post_public_sites_id_subscribe",
         "summary": "POST /api/public-sites/{id}/subscribe",
-        "description": "Ask for email updates from a public site (the newsletter box). Works as a plain form post (answers with a redirect to /subscriptions) or as JSON. Double opt-in: this only queues a confirmation email (lib/data/site-subscriptions.ts).",
+        "description": "Ask for email updates from a public site (the newsletter box). Works as a plain form post (answers with a redirect to /subscriptions) or as JSON. Double opt-in: this only queues a confirmation email (lib/data/site-subscriptions.ts), in the language the visitor chose on the site.",
         "parameters": [
           {
             "name": "id",
@@ -28835,7 +29328,7 @@
         ],
         "operationId": "get_releases_alerts",
         "summary": "GET /api/releases/alerts",
-        "description": "/api/releases/alerts — the officials this nation alerts about updates, their channels and subscriptions (security, releases, incidents, end of life), and the alerts recently queued for them (GET). POST: save or remove an official. Every change is audited.",
+        "description": "/api/releases/alerts — the officials this nation alerts about updates, their channels and subscriptions (security, releases, incidents, end of life), the alerts recently queued for them with where each delivery stands (addresses masked), and whether email and SMS providers are connected (GET). POST: save or remove an official. Every change is audited.",
         "parameters": [
           {
             "name": "link",
@@ -28877,12 +29370,36 @@
                           "security"
                         ]
                       }
+                    },
+                    "delivery": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "enum": [
+                            "connected",
+                            "not connected"
+                          ]
+                        },
+                        "sms": {
+                          "type": "string",
+                          "enum": [
+                            "connected",
+                            "not connected"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "email",
+                        "sms"
+                      ]
                     }
                   },
                   "required": [
                     "officials",
                     "outbox",
-                    "categories"
+                    "categories",
+                    "delivery"
                   ]
                 },
                 "examples": {
@@ -28917,12 +29434,16 @@
                           "officialName": "Example",
                           "channel": "email",
                           "to": "string",
-                          "status": "failed"
+                          "status": "cancelled"
                         }
                       ],
                       "categories": [
                         "eol"
-                      ]
+                      ],
+                      "delivery": {
+                        "email": "connected",
+                        "sms": "connected"
+                      }
                     }
                   }
                 }
@@ -28953,7 +29474,7 @@
         ],
         "operationId": "post_releases_alerts",
         "summary": "POST /api/releases/alerts",
-        "description": "/api/releases/alerts — the officials this nation alerts about updates, their channels and subscriptions (security, releases, incidents, end of life), and the alerts recently queued for them (GET). POST: save or remove an official. Every change is audited.",
+        "description": "/api/releases/alerts — the officials this nation alerts about updates, their channels and subscriptions (security, releases, incidents, end of life), the alerts recently queued for them with where each delivery stands (addresses masked), and whether email and SMS providers are connected (GET). POST: save or remove an official. Every change is audited.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -30580,6 +31101,7 @@
                         ],
                         "failStreak": 1,
                         "degraded": true,
+                        "degradedAlertAt": "2026-01-15T09:30:00.000Z",
                         "concludedAt": "2026-01-15T09:30:00.000Z",
                         "incidentId": "ID-0001"
                       },
@@ -47014,16 +47536,24 @@
             ]
           },
           "to": {
-            "type": "string"
+            "type": "string",
+            "description": "The address or number (masked when the API shows it)."
           },
           "status": {
             "type": "string",
             "enum": [
+              "cancelled",
               "failed",
               "queued",
+              "retrying",
+              "sending",
               "sent"
             ],
-            "description": "No provider is connected: deliveries are queued (placeholder)."
+            "description": "Where the delivery stands in the platform's outbox (lib/messaging): queued until a provider is connected."
+          },
+          "messageId": {
+            "type": "string",
+            "description": "The outbox message that carries it."
           }
         },
         "required": [
@@ -49812,6 +50342,37 @@
           "label",
           "amount",
           "basis"
+        ]
+      },
+      "Counts": {
+        "type": "object",
+        "properties": {
+          "cancelled": {
+            "type": "number"
+          },
+          "dead": {
+            "type": "number"
+          },
+          "queued": {
+            "type": "number"
+          },
+          "retrying": {
+            "type": "number"
+          },
+          "sending": {
+            "type": "number"
+          },
+          "sent": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "cancelled",
+          "dead",
+          "queued",
+          "retrying",
+          "sending",
+          "sent"
         ]
       },
       "Coverage": {
@@ -54134,6 +54695,253 @@
           "chain"
         ]
       },
+      "MessageView": {
+        "description": "A message as screens and the API show it: masked address, no text, no links.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "email",
+              "sms"
+            ]
+          },
+          "stream": {
+            "type": "string",
+            "enum": [
+              "alerts",
+              "site-updates",
+              "test"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "cancelled",
+              "dead",
+              "queued",
+              "retrying",
+              "sending",
+              "sent"
+            ]
+          },
+          "attempts": {
+            "type": "number"
+          },
+          "nextAttemptAt": {
+            "type": "string"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sentAt": {
+            "type": "string"
+          },
+          "finishedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "channel",
+          "stream",
+          "kind",
+          "to",
+          "subject",
+          "status",
+          "attempts",
+          "createdAt"
+        ]
+      },
+      "MessagingSettings": {
+        "type": "object",
+        "properties": {
+          "publicUrl": {
+            "type": "string",
+            "description": "The address people reach the platform at, for links in messages (e.g. https://www.gov.example)."
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          }
+        }
+      },
+      "MessagingStatus": {
+        "type": "object",
+        "properties": {
+          "nationId": {
+            "type": "string"
+          },
+          "channels": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "enum": [
+                  "connected",
+                  "not connected"
+                ]
+              },
+              "sms": {
+                "type": "string",
+                "enum": [
+                  "connected",
+                  "not connected"
+                ]
+              }
+            },
+            "required": [
+              "email",
+              "sms"
+            ]
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderView"
+            }
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "http-email",
+                    "http-sms",
+                    "smtp"
+                  ]
+                },
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "sms"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "channel",
+                "label"
+              ]
+            }
+          },
+          "settings": {
+            "$ref": "#/components/schemas/MessagingSettings"
+          },
+          "publicBase": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "The address links in messages start with (the setting, else CIVICOS_PUBLIC_URL), or null: messages with links wait."
+          },
+          "secretsSealed": {
+            "type": "boolean"
+          },
+          "privateNetwork": {
+            "type": "boolean"
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "byChannel": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "$ref": "#/components/schemas/Counts"
+                  },
+                  "sms": {
+                    "$ref": "#/components/schemas/Counts"
+                  }
+                },
+                "required": [
+                  "email",
+                  "sms"
+                ]
+              },
+              "byStream": {
+                "type": "object",
+                "properties": {
+                  "alerts": {
+                    "$ref": "#/components/schemas/Counts"
+                  },
+                  "site-updates": {
+                    "$ref": "#/components/schemas/Counts"
+                  },
+                  "test": {
+                    "$ref": "#/components/schemas/Counts"
+                  }
+                },
+                "required": [
+                  "alerts",
+                  "site-updates",
+                  "test"
+                ]
+              }
+            },
+            "required": [
+              "byChannel",
+              "byStream"
+            ]
+          },
+          "recent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageView"
+            }
+          },
+          "dead": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageView"
+            }
+          }
+        },
+        "required": [
+          "nationId",
+          "channels",
+          "providers",
+          "kinds",
+          "settings",
+          "publicBase",
+          "secretsSealed",
+          "privateNetwork",
+          "counts",
+          "recent",
+          "dead"
+        ]
+      },
       "MetricDef": {
         "type": "object",
         "properties": {
@@ -57499,6 +58307,10 @@
           "degraded": {
             "type": "boolean"
           },
+          "degradedAlertAt": {
+            "type": "string",
+            "description": "When the nation's officials were first alerted that the release is degraded (once per probation)."
+          },
           "concludedAt": {
             "type": "string"
           },
@@ -57686,6 +58498,153 @@
           "materials",
           "slsaLevel",
           "verify"
+        ]
+      },
+      "ProviderView": {
+        "description": "A provider as the API shows it: never the secret.",
+        "type": "object",
+        "properties": {
+          "priority": {
+            "type": "number",
+            "description": "Lower first; the next enabled provider of the channel is tried when one fails."
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "POST",
+              "PUT"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "nationId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "http-email",
+              "http-sms",
+              "smtp"
+            ]
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "email",
+              "sms"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "from": {
+            "type": "string",
+            "description": "Sender: an email address, or the SMS sender name or number."
+          },
+          "replyTo": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "number"
+          },
+          "security": {
+            "type": "string",
+            "enum": [
+              "starttls",
+              "tls"
+            ],
+            "description": "STARTTLS (587) or implicit TLS (465); a connection without TLS is never made."
+          },
+          "username": {
+            "type": "string"
+          },
+          "caPem": {
+            "type": "string",
+            "description": "An internal certificate authority the relay's certificate is issued by (PEM)."
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "form",
+              "json"
+            ]
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Header templates, e.g. { Authorization: 'Bearer {{secret}}' }."
+          },
+          "bodyTemplate": {
+            "type": "string",
+            "description": "Body template with {{to}}, {{from}}, {{subject}}, {{text}}, {{key}}, {{secret}}, {{username}}, {{basic}}, {{unsubscribe}}."
+          },
+          "perMinute": {
+            "type": "number",
+            "description": "Messages per minute this provider accepts from the platform."
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "lastResult": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "ok": {
+                "type": "boolean"
+              },
+              "detail": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "ok",
+              "detail"
+            ]
+          },
+          "hasSecret": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "priority",
+          "id",
+          "name",
+          "createdAt",
+          "createdBy",
+          "nationId",
+          "kind",
+          "channel",
+          "enabled",
+          "from",
+          "perMinute",
+          "updatedAt",
+          "updatedBy",
+          "hasSecret"
         ]
       },
       "PublicAccount": {

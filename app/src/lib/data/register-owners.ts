@@ -158,6 +158,8 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each case load and connected case system; feed key hashes') },
   { id: 'public-sites', name: 'Public sites: settings, editorial, subscriptions', owner: { where: 'platform', keys: ['__civicosSites', '__civicosEditorial', '__civicosSiteSubs'] }, api: '/api/public-sites, /api/subscriptions', copies: [],
     storage: RECORD_DOCS('each site\'s settings, each editorial version, proposal and translation, each subscription and queued message') },
+  { id: 'messaging', name: 'Email and SMS: the outbox of messages to officials and subscribers, the nation\'s providers (sealed secrets) and delivery settings', owner: { where: 'platform', keys: ['__civicosMessaging'] }, api: '/api/messaging (administrators), /api/cron/deliver-messages (the delivery worker); queued by lib/data/comms.ts alert() and lib/data/site-subscriptions.ts', copies: [],
+    storage: RECORD_DOCS('each queued, sent or dead message (address and text emptied once sent, cancelled or cleared), each provider with its sealed secret, each nation\'s settings') },
   { id: 'update-center', name: 'Update Center', owner: { where: 'platform', keys: ['__civicosUpdates', '__civicosSecurity', '__civicosHosting', '__civicosReadiness', '__civicosChange', '__civicosAdvisories', '__civicosSupport', '__civicosSupply', '__civicosLifecycle', '__civicosMirror', '__civicosComms', '__civicosContracts', '__civicosSovereignty'] }, api: '/api/releases', copies: [],
     storage: RECORD_DOCS('each release, nation, feature request, order, ticket, advisory, deposit, mirror, shipment, alert, contract and change-control record; record numbers from blocks reserved in civicos.record_counter') },
 ];

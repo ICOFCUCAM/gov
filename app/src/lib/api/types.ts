@@ -1041,6 +1041,8 @@ export interface Probation {
   /** Consecutive bad or missing reports. Above zero the release is "degraded — watching". */
   failStreak: number;
   degraded: boolean;
+  /** When the nation's officials were first alerted that the release is degraded (once per probation). */
+  degradedAlertAt?: ISODate;
   concludedAt?: ISODate;
   incidentId?: string;
 }
@@ -1773,9 +1775,12 @@ export interface AlertDelivery {
   officialId: string;
   officialName: string;
   channel: AlertChannel;
+  /** The address or number (masked when the API shows it). */
   to: string;
-  /** No provider is connected: deliveries are queued (placeholder). */
-  status: 'queued' | 'sent' | 'failed';
+  /** Where the delivery stands in the platform's outbox (lib/messaging): queued until a provider is connected. */
+  status: 'queued' | 'sending' | 'retrying' | 'sent' | 'failed' | 'cancelled';
+  /** The outbox message that carries it. */
+  messageId?: string;
 }
 
 // ── Update Center: licence and contract management ────────────────────

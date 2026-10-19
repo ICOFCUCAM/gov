@@ -13,10 +13,11 @@ const nextConfig = {
   // twin's stream subscribers, lib/twin/mqtt.ts) is a Node client with its own
   // optional transports; aedes and ws (the SensorThings MQTT broker,
   // lib/twin/sta-mqtt.ts, started only with CIVICOS_STA_MQTT=on) run as Node
-  // modules beside it.
+  // modules beside it; nodemailer (the nation's mail relay, lib/messaging/adapters/smtp.ts)
+  // is a Node client with optional transports it loads itself.
   // (src/instrumentation.ts, which restores and saves the platform's state, is
   // loaded by Next.js 15 without a flag.)
-  serverExternalPackages: ['sql.js', 'mqtt', 'aedes', 'ws'],
+  serverExternalPackages: ['sql.js', 'mqtt', 'aedes', 'ws', 'nodemailer'],
   // Security headers (security-headers.mjs, mirrored in vercel.json). The
   // Content-Security-Policy carries a nonce per request and is set by the
   // middleware (src/middleware.ts).

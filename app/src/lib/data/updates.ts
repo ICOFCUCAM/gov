@@ -1171,6 +1171,20 @@ function evaluate(p: Probation, report: HealthReport): HealthCheckKey[] {
   return p.failStreak >= p.thresholds.consecutiveFailures ? bad : [];
 }
 
+/**
+ * evaluate(), and the first time a probation turns degraded (and is not
+ * failing yet), alert the nation's officials named for incidents (register 3.10).
+ */
+function evaluateFor(nationId: string, p: Probation, report: HealthReport): HealthCheckKey[] {
+  const failed = evaluate(p, report);
+  if (p.degraded && !failed.length && !p.degradedAlertAt) {
+    p.degradedAlertAt = report.at;
+    const bad = report.source === 'silence' ? 'no report from the deployment agent' : report.checks.filter(c => !c.ok).map(c => label(c.key)).join(', ') || 'thresholds exceeded';
+    alert(nationId, 'incidents', `${p.version} is degraded on probation (${bad}); watching, fallback after ${p.thresholds.consecutiveFailures} bad reports in a row`, `probation:${p.releaseId}`, Date.parse(report.at));
+  }
+  return failed;
+}
+
 function installRecord(n: SubscribedNation, releaseId: string): NationInstall | undefined {
   return udb().installs[n.id]?.[releaseId];
 }
@@ -1232,6 +1246,7 @@ function failProbation(n: SubscribedNation, r: DistributionRelease, inst: Nation
   if (n.settings.fallback === 'automatic' && r.compatibleWithPrevious) {
     const res = restoreLkg(n, r, inst, 'automatic', SYSTEM_ACTOR, at, inc);
     if ('error' in res) { p.state = 'awaiting-decision'; inc.timeline.push({ at, text: `Automatic fallback refused: ${res.error}` }); return; }
+    alert(n.id, 'incidents', `Automatic fallback: software switched back from ${r.version} to ${p.lkgVersion}; data untouched`, inc.id, Date.parse(at));
     const a = recordAudit(SYSTEM_ACTOR, 'update.fallback', `UpdateChamber:${n.id}/${r.version}`, 'ok',
       `automatic · failed=${failed.join(',')} · now=${n.installedVersion} · restore=${p.restorePointId} · incident=${inc.id}`);
     inc.auditSeq = a.seq;
@@ -1316,7 +1331,7 @@ export function superviseProbations(now = Date.now()): WatchdogSummary {
       for (let t = last + 60_000; t <= horizon; t += 60_000) {
         const rep = simulatedReport(p, t);
         pushReport(p, rep, n.id);
-        const failed = evaluate(p, rep);
+        const failed = evaluateFor(n.id, p, rep);
         if (failed.length) { failProbation(n, r, inst, failed, rep.at, 'simulated health'); break; }
       }
       if (p.state !== 'running') { conclude(); continue; }
@@ -1330,7 +1345,7 @@ export function superviseProbations(now = Date.now()): WatchdogSummary {
         const rep: HealthReport = { at, source: 'silence', checks: [{ key: 'liveness', ok: false, detail: `No report from the deployment agent for ${p.thresholds.silenceMinutes} minutes` }], ok: false };
         pushReport(p, rep, n.id);
         out.missingReports++;
-        const failed = evaluate(p, rep);
+        const failed = evaluateFor(n.id, p, rep);
         if (failed.length) failProbation(n, r, inst, failed, at, `no report from the deployment agent for ${p.thresholds.silenceMinutes * p.thresholds.consecutiveFailures} minutes`);
       }
       if (p.state !== 'running') { conclude(); continue; }
@@ -1361,7 +1376,7 @@ export function reportHealth(nationId: string, input: { checks?: unknown; at?: s
   const at = new Date(now).toISOString();
   const rep: HealthReport = { at, source: 'agent', checks, ok: checks.every(c => c.ok) };
   pushReport(p, rep, n.id);
-  const failed = evaluate(p, rep);
+  const failed = evaluateFor(n.id, p, rep);
   if (failed.length) failProbation(n, r, inst, failed, at, checks.filter(c => failed.includes(c.key)).map(c => c.detail).filter(Boolean).join('; '));
   return { probation: p, install: inst };
 }
