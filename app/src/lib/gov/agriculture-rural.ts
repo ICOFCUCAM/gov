@@ -9,6 +9,7 @@
 // subsidy applications, advisories, pest alerts, irrigation
 // requests). Pure & deterministic; SSR-stable per operational epoch.
 
+import { readTwinValue } from '@/lib/twin/read';
 import { seed, wave } from '@/lib/telemetry';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { regionList } from '@/lib/nation/registry';
@@ -214,7 +215,8 @@ export function agricultureRuralBoard(now: number): AgricultureRuralBoard {
   // ── A. Rural Governance ───────────────────────────────────────────
   const zones: RuralZone[] = REGIONS.map(region => {
     const k = `ar:zn:${region}`;
-    const population = Math.round(wave(`${k}:p`, epoch / 8, 280000, 5400000));
+    // Observed from the twin when a statistics source reports the region (lib/twin/read.ts), else the sample.
+    const population = Math.round(readTwinValue('population', Math.round(wave(`${k}:p`, epoch / 8, 280000, 5400000)), { region }));
     const farmingHouseholdsK = Math.round(wave(`${k}:fh`, epoch / 7, 28, 680));
     const cooperativesActive = Math.round(wave(`${k}:co`, epoch / 6, 12, 480));
     const ruralStabilityIdx = Math.round(wave(`${k}:rs`, epoch / 6, 38, 92));

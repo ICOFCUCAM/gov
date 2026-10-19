@@ -1,9 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { parseCsv } from './csv';
-import { entityProfile, resetTwin, syncRegister, registerSource, runSource, stateAsOf, nationalTotal, signalFor, resolveEntity, linkKey, regionEntities, isoDate, dueSources, type TwinSource } from './register';
+import { setTwinLimits, getRun, metricsKnown, withdrawRun, metricDates, entityProfile, resetTwin, syncRegister, registerSource, runSource, stateAsOf, nationalTotal, signalFor, resolveEntity, linkKey, regionEntities, isoDate, dueSources, type TwinSource } from './register';
 import { withTwin } from './national';
+import { registerMetric } from './metrics';
+import { twinDb } from './db';
+import { archiveStatus } from './archive';
 import { applyNation } from '@/lib/nation/registry';
-import { nationalSnapshot } from '@/lib/data/store';
+import { nationalSnapshot, listAudit } from '@/lib/data/store';
 
 const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
 const mapping = { entity: 'region', value: 'value', metric: { fixed: 'population' }, unit: { fixed: 'persons' }, date: { column: 'year' } } as const;
@@ -35,7 +38,7 @@ describe('the national twin core', () => {
     expect(run).toMatchObject({ status: 'partial', rows: 6, accepted: 3 });
     expect(run.rejected.map(r => r.reason)).toEqual([expect.stringMatching(/Atlantis/), expect.stringMatching(/not a number/), expect.stringMatching(/future/)]);
     const total = nationalTotal('population')!;
-    expect(total).toMatchObject({ value: 6_760_980, kind: 'observed', source: 'Census 2019', asOf: '2019-01-01', coverage: { have: 3, of: 3 } });
+    expect(total).toMatchObject({ value: 6_760_980, unit: '{persons}', kind: 'observed', source: 'Census 2019', asOf: '2019-01-01', coverage: { have: 3, of: 3 }, vintage: { oldest: '2019-01-01', newest: '2019-01-01' }, aggregation: 'sum' });
     expect(signalFor('place:KE-28', 'population')?.value).toBe(1208333);
   });
 
@@ -51,7 +54,8 @@ describe('the national twin core', () => {
   it('shows no national figure from a partial set of regions', async () => {
     const s = ok(registerSource({ by: 'D', name: 'Part', publisher: 'KNBS', kind: 'csv-upload', mapping }));
     await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,1208333,2019\n' });
-    expect(nationalTotal('population')).toBeNull();
+    expect(nationalTotal('population')).toMatchObject({ value: null, kind: 'unavailable', coverage: { have: 1, of: 3 }, refused: expect.stringMatching(/Only 1 of 3 regions/) });
+    expect(nationalTotal('nothing_known')).toBeNull();
   });
 
   it('places rows by the publisher\'s own ids once linked', async () => {
@@ -113,5 +117,139 @@ describe('an entity\'s profile', () => {
     expect(linkKey('place:KE-28', 'knbs', '001', 'D')).toEqual({ ok: true });
     expect(entityProfile('place:KE-28')!.keys).toEqual([{ system: 'knbs', key: '001' }]);
     expect(entityProfile('nothing')).toBeUndefined();
+  });
+});
+
+describe('combining regions into a national figure', () => {
+  const at = '2020-01-01T00:00:00.000Z';
+  const put = (metric: string, values: [string, number, string][]) => {
+    for (const [entityId, value, unit] of values) twinDb().observations.push({ entityId, metric, value, unit, validFrom: '2019-01-01', recordedAt: at, sourceId: 'SRC-T', runId: 'RUN-T' });
+  };
+  beforeEach(async () => {
+    resetTwin();
+    applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa', 'Nairobi City', 'Kisumu'] });
+    await syncRegister();
+    put('population', [['place:KE-28', 1_000_000, '{persons}'], ['place:KE-30', 4_000_000, '{persons}'], ['place:KE-17', 1_000_000, '{persons}']]);
+    put('literacy', [['place:KE-28', 80, '%'], ['place:KE-30', 95, '%'], ['place:KE-17', 70, '%']]);
+  });
+
+  it('refuses a metric that is not registered as combinable, with the reason', () => {
+    expect(nationalTotal('literacy')).toMatchObject({ value: null, aggregation: 'none', refused: expect.stringMatching(/not registered as combinable/) });
+  });
+
+  it('takes a mean or a weighted mean when the metric says so', () => {
+    registerMetric({ by: 'A', id: 'literacy', label: 'Literacy', unit: '%', aggregation: 'mean' });
+    expect(nationalTotal('literacy')).toMatchObject({ value: 245 / 3, aggregation: 'mean', unit: '%' });
+    registerMetric({ by: 'A', id: 'literacy', label: 'Literacy', unit: '%', aggregation: 'weighted-mean', weightMetric: 'population' });
+    expect(nationalTotal('literacy')?.value).toBeCloseTo((80 + 380 + 70) / 6, 9);
+  });
+
+  it('refuses a weighted mean when a region has no weight', () => {
+    twinDb().observations = twinDb().observations.filter(o => !(o.metric === 'population' && o.entityId === 'place:KE-17'));
+    registerMetric({ by: 'A', id: 'literacy', label: 'Literacy', unit: '%', aggregation: 'weighted-mean', weightMetric: 'population' });
+    expect(nationalTotal('literacy')).toMatchObject({ value: null, refused: expect.stringMatching(/1 of 3 regions have no population/) });
+  });
+
+  it('refuses to add values in different units', () => {
+    put('maize', [['place:KE-28', 5, 't'], ['place:KE-30', 5000, 'kg'], ['place:KE-17', 3, 't']]);
+    registerMetric({ by: 'A', id: 'maize', label: 'Maize harvest', unit: 't', aggregation: 'sum', period: 'year' });
+    expect(nationalTotal('maize')).toMatchObject({ value: null, refused: expect.stringMatching(/different units \(t, kg\)/) });
+  });
+
+  it('gives the vintage: the oldest and newest dates combined', () => {
+    twinDb().observations.push({ entityId: 'place:KE-30', metric: 'population', value: 4_100_000, unit: '{persons}', validFrom: '2020-06-01', recordedAt: at, sourceId: 'SRC-T', runId: 'RUN-T' });
+    expect(nationalTotal('population', '2021-01-01T00:00:00Z')).toMatchObject({ value: 6_100_000, vintage: { oldest: '2019-01-01', newest: '2020-06-01' }, asOf: '2019-01-01' });
+  });
+});
+
+describe('withdrawing an import', () => {
+  beforeEach(async () => {
+    resetTwin();
+    applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa', 'Nairobi City', 'Kisumu'] });
+    await syncRegister();
+  });
+
+  it('supersedes its observations from then on, never deletes them, and audits who and why', async () => {
+    const s = ok(registerSource({ by: 'D', name: 'Census', publisher: 'KNBS', kind: 'csv-upload', mapping }));
+    await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,1000000,2019\nNairobi City,4000000,2019\nKisumu,1000000,2019\n', deps: { now: new Date('2020-01-01T00:00:00Z') } });
+    const bad = ok(await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,9000000,2020\nNairobi City,4100000,2020\nKisumu,1100000,2020\n', deps: { now: new Date('2021-01-01T00:00:00Z') } }));
+    expect(nationalTotal('population')?.value).toBe(14_200_000);
+    expect(withdrawRun(bad.id, 'D', '')).toEqual({ error: expect.stringMatching(/reason/) });
+    const w = ok(withdrawRun(bad.id, 'Director of Statistics', 'Mombasa figure keyed wrongly', new Date('2021-02-01T00:00:00Z')));
+    expect(w.superseded).toBe(3);
+    expect(w.run.withdrawn).toMatchObject({ by: 'Director of Statistics', reason: 'Mombasa figure keyed wrongly' });
+    expect(nationalTotal('population')?.value).toBe(6_000_000);
+    // What was known in January 2021 still includes the withdrawn import.
+    expect(stateAsOf({ metric: 'population', asOf: '2021-01-15T00:00:00Z' }).find(o => o.entityId === 'place:KE-28')?.value).toBe(9_000_000);
+    expect(metricDates('population')).toEqual(['2019-01-01']);
+    expect(withdrawRun(bad.id, 'D', 'again please')).toEqual({ error: expect.stringMatching(/Already withdrawn/) });
+    expect(withdrawRun('RUN-404', 'D', 'nothing')).toEqual({ error: 'No such import' });
+    expect(listAudit().find(a => a.action === 'twin.run.withdraw')).toMatchObject({ actor: 'Director of Statistics', detail: expect.stringMatching(/3 observations superseded/) });
+  });
+});
+
+describe('interval facts and stated quality', () => {
+  beforeEach(async () => {
+    resetTwin();
+    applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa', 'Nairobi City', 'Kisumu'] });
+    await syncRegister();
+  });
+
+  it('reads optional end dates and quality columns, refusing what it cannot read', async () => {
+    const s = ok(registerSource({ by: 'D', name: 'Survey', publisher: 'KNBS', kind: 'csv-upload', mapping: { ...mapping, validTo: { column: 'until' }, quality: { status: { column: 'status' }, stdErr: { column: 'se' }, ci95Low: { column: 'lo' }, ci95High: { column: 'hi' } } } }));
+    const run = ok(await runSource(s.id, { by: 'D', deps: { now: new Date('2023-01-01T00:00:00Z') }, csv: [
+      'region,value,year,until,status,se,lo,hi',
+      'Mombasa,1000,2019,2020,provisional,12,980,1020',
+      'Nairobi City,2000,2019,,final,,,',
+      'Kisumu,3000,2019,,,,,',
+      'Kisumu,3000,2019,2018,,,,',
+      'Kisumu,3000,2019,,maybe,,,',
+      'Kisumu,3000,2019,,,,10,',
+    ].join('\n') }));
+    expect(run.accepted).toBe(3);
+    expect(run.rejected.map(r => r.reason)).toEqual([expect.stringMatching(/stops being true/), expect.stringMatching(/not a status/), expect.stringMatching(/95% interval/)]);
+    const all = stateAsOf({ metric: 'population', asOf: '2019-06-01T00:00:00Z', knownAt: '2023-01-01T00:00:00Z' });
+    expect(all.find(o => o.entityId === 'place:KE-28')).toMatchObject({ validTo: '2020-01-01', quality: { status: 'provisional', stdErr: 12, ci95: { low: 980, high: 1020 } } });
+    expect(all.find(o => o.entityId === 'place:KE-30')?.quality).toEqual({ status: 'final' });
+    expect(all.find(o => o.entityId === 'place:KE-17')?.quality).toBeUndefined();
+    // After its end date the Mombasa value is no longer true.
+    expect(stateAsOf({ metric: 'population', asOf: '2021-01-01T00:00:00Z', knownAt: '2023-01-01T00:00:00Z' }).map(o => o.entityId).sort()).toEqual(['place:KE-17', 'place:KE-30']);
+  });
+
+  it('reads observations saved before these fields as open-ended with no stated quality', () => {
+    twinDb().observations.push({ entityId: 'place:KE-28', metric: 'population', value: 5, unit: 'persons', validFrom: '2010-01-01', recordedAt: '2011-01-01T00:00:00.000Z', sourceId: 'SRC-0', runId: 'RUN-0' });
+    expect(stateAsOf({ metric: 'population', asOf: '2030-01-01T00:00:00Z', knownAt: '2030-01-01T00:00:00Z' })).toHaveLength(1);
+  });
+});
+
+describe('no silent eviction', () => {
+  let prev: ReturnType<typeof setTwinLimits>;
+  beforeEach(async () => {
+    resetTwin();
+    applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa', 'Nairobi City', 'Kisumu'] });
+    await syncRegister();
+    prev = setTwinLimits({ observations: 4, runs: 2 });
+  });
+  afterEach(() => { setTwinLimits(prev); });
+
+  it('moves the oldest history to the archive, audited, and still answers old as-of queries from it', async () => {
+    const s = ok(registerSource({ by: 'D', name: 'Census', publisher: 'KNBS', kind: 'csv-upload', mapping }));
+    const first = ok(await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,900000,2009\nNairobi City,3100000,2009\nKisumu,960000,2009\n', deps: { now: new Date('2010-01-01T00:00:00Z') } }));
+    await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,1000000,2019\nNairobi City,4000000,2019\nKisumu,1000000,2019\n', deps: { now: new Date('2020-01-01T00:00:00Z') } });
+    await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,1100000,2021\nNairobi City,4100000,2021\nKisumu,1100000,2021\n', deps: { now: new Date('2022-01-01T00:00:00Z') } });
+    expect(twinDb().observations).toHaveLength(4);
+    expect(twinDb().runs).toHaveLength(2);
+    expect(archiveStatus()).toMatchObject({ observations: 5, runs: 1 });
+    // What was known in 2012, and what was true in 2015 as known today, still answer.
+    expect(nationalTotal('population', '2012-01-01T00:00:00Z')?.value).toBe(4_960_000);
+    expect(stateAsOf({ metric: 'population', asOf: '2015-01-01T00:00:00Z', knownAt: new Date().toISOString() })).toHaveLength(3);
+    expect(nationalTotal('population')?.value).toBe(6_300_000);
+    expect(metricDates('population')).toEqual(['2009-01-01', '2019-01-01', '2021-01-01']);
+    expect(metricsKnown()).toEqual(['population']);
+    expect(getRun(first.id)?.accepted).toBe(3);
+    expect(listAudit().filter(a => a.action === 'twin.archive').length).toBeGreaterThan(0);
+    // An archived import can still be withdrawn.
+    expect(ok(withdrawRun(first.id, 'D', 'wrong census base')).superseded).toBe(3);
+    expect(stateAsOf({ metric: 'population', asOf: '2015-01-01T00:00:00Z', knownAt: new Date(Date.now() + 1000).toISOString() })).toHaveLength(0);
   });
 });

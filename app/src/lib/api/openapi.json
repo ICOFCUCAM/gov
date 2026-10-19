@@ -10247,6 +10247,33 @@
         "x-source": "src/app/api/substrate/export/route.ts"
       }
     },
+    "/api/twin/catalog": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_catalog",
+        "summary": "GET /api/twin/catalog",
+        "description": "The national twin's data catalogue as DCAT-AP JSON-LD (lib/twin/catalog.ts): a dcat:Catalog with a dataset for each registered source, each published boundary version and each OGC API – Features collection, with publisher, licence, temporal and spatial coverage and distributions. Read only. Not a public read: it describes the twin's sources, which are behind the platform session like the twin and its OGC endpoints.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/catalog/route.ts"
+      }
+    },
     "/api/twin/entities/{id}": {
       "get": {
         "tags": [
@@ -10254,12 +10281,20 @@
         ],
         "operationId": "get_twin_entities_id",
         "summary": "GET /api/twin/entities/{id}",
-        "description": "One twin entity: its stable id, the ids other systems use for it, its latest observations and the sources behind them.",
+        "description": "One twin entity: its stable id, the ids other systems use for it, its latest observations and the sources behind them. With Accept: application/ld+json the same entity as NGSI-LD (lib/twin/ngsi.ts): places as AdministrativeArea, facilities as PointOfInterest, observations as properties with observedAt; ?options=temporalValues gives every value over time. The JSON answer is unchanged.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "options",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -10354,6 +10389,68 @@
           }
         },
         "x-source": "src/app/api/twin/keys/route.ts"
+      }
+    },
+    "/api/twin/metrics": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_metrics",
+        "summary": "GET /api/twin/metrics",
+        "description": "The twin's metric registry (lib/twin/metrics.ts): each metric's label, UCUM unit, how regional values combine (sum, mean, weighted-mean or none), its period and SDMX concept. GET lists registered, standard and observed-only metrics with the suggested units. POST registers a metric or changes its definition (a named official; audited with what changed). A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/metrics/route.ts"
+      },
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_metrics",
+        "summary": "POST /api/twin/metrics",
+        "description": "The twin's metric registry (lib/twin/metrics.ts): each metric's label, UCUM unit, how regional values combine (sum, mean, weighted-mean or none), its period and SDMX concept. GET lists registered, standard and observed-only metrics with the suggested units. POST registers a metric or changes its definition (a named official; audited with what changed). A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/metrics/route.ts"
       }
     },
     "/api/twin/ogc/collections/{collectionId}/items/{featureId}": {
@@ -10609,6 +10706,88 @@
         "x-source": "src/app/api/twin/ogc/route.ts"
       }
     },
+    "/api/twin/runs/{id}/prov": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_runs_id_prov",
+        "summary": "GET /api/twin/runs/{id}/prov",
+        "description": "Provenance of one twin import as W3C PROV-O JSON-LD (lib/twin/prov.ts): the import as a prov:Activity associated with the official who ran it, the file it used (with its SHA-256) and the observations it generated; a withdrawal as the activity that invalidated them. Read only.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/runs/[id]/prov/route.ts"
+      }
+    },
+    "/api/twin/runs/{id}/withdraw": {
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_runs_id_withdraw",
+        "summary": "POST /api/twin/runs/{id}/withdraw",
+        "description": "Withdraw a twin import (a correction, lib/twin/register.ts withdrawRun): its observations are marked superseded from now, never deleted, so as-of queries for what was known before still see them. A named official with a reason; audited. A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/runs/[id]/withdraw/route.ts"
+      }
+    },
     "/api/twin/scenarios/{id}": {
       "get": {
         "tags": [
@@ -10689,6 +10868,50 @@
         "x-source": "src/app/api/twin/scenarios/[id]/route.ts"
       }
     },
+    "/api/twin/scenarios/{id}/versions/{v}/prov": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_scenarios_id_versions_v_prov",
+        "summary": "GET /api/twin/scenarios/{id}/versions/{v}/prov",
+        "description": "Provenance of one scenario version as W3C PROV-O JSON-LD (lib/twin/prov.ts): the version derived from the observations it started from (each with the import that generated it), the official who made it, the previous version it revises and its evidence hash. Read only.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/scenarios/[id]/versions/[v]/prov/route.ts"
+      }
+    },
     "/api/twin/scenarios": {
       "get": {
         "tags": [
@@ -10696,7 +10919,7 @@
         ],
         "operationId": "get_twin_scenarios",
         "summary": "GET /api/twin/scenarios",
-        "description": "Scenarios on the national twin (lib/twin/scenarios.ts): every version with its evidence hash and whether it still verifies. POST creates one (named official; audited).",
+        "description": "Scenarios on the national twin (lib/twin/scenarios.ts): every version with its evidence hash and whether it still verifies, and the calibration log (projections checked against values observed later). POST creates one (named official; audited).",
         "parameters": [],
         "responses": {
           "200": {
@@ -10721,7 +10944,7 @@
         ],
         "operationId": "post_twin_scenarios",
         "summary": "POST /api/twin/scenarios",
-        "description": "Scenarios on the national twin (lib/twin/scenarios.ts): every version with its evidence hash and whether it still verifies. POST creates one (named official; audited).",
+        "description": "Scenarios on the national twin (lib/twin/scenarios.ts): every version with its evidence hash and whether it still verifies, and the calibration log (projections checked against values observed later). POST creates one (named official; audited).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -10804,7 +11027,7 @@
         ],
         "operationId": "get_twin_sources",
         "summary": "GET /api/twin/sources",
-        "description": "Registered sources of the national twin and their recent imports. POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "description": "Registered sources of the national twin and their recent imports, and the size of the history archive (older observations and runs, still queried). POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial).",
         "parameters": [],
         "responses": {
           "200": {
@@ -10829,7 +11052,7 @@
         ],
         "operationId": "post_twin_sources",
         "summary": "POST /api/twin/sources",
-        "description": "Registered sources of the national twin and their recent imports. POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "description": "Registered sources of the national twin and their recent imports, and the size of the history archive (older observations and runs, still queried). POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial).",
         "parameters": [],
         "requestBody": {
           "required": false,

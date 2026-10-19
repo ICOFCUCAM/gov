@@ -1,9 +1,10 @@
 // Scenarios on the national twin (lib/twin/scenarios.ts): every version with
-// its evidence hash and whether it still verifies. POST creates one (named
+// its evidence hash and whether it still verifies, and the calibration log
+// (projections checked against values observed later). POST creates one (named
 // official; audited).
 
 import { NextRequest, NextResponse } from 'next/server';
-import { listScenarios, createScenario, verifyVersion } from '@/lib/twin/scenarios';
+import { listScenarios, createScenario, verifyVersion, calibrate, calibrationLog } from '@/lib/twin/scenarios';
 import { syncRegister } from '@/lib/twin/register';
 import { withOfficial, currentOfficial } from '@/lib/auth/official';
 
@@ -11,8 +12,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   await syncRegister();
+  calibrate();
   return NextResponse.json({
-    scenarios: listScenarios().map(s => ({ ...s, versions: s.versions.map(v => ({ ...v, evidenceOk: verifyVersion(s.id, v) })) })),
+    scenarios: listScenarios().map(s => ({ ...s, versions: s.versions.map(v => ({ ...v, evidenceOk: verifyVersion(s.id, v) })), calibration: calibrationLog(s.id) })),
   });
 }
 

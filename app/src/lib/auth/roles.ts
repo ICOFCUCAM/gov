@@ -129,7 +129,7 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/signatures$/,
   /^\/api\/public-sites\/[a-z-]+(\/|$)/,       // Site editor: proposed by one official, published by another (lib/data/site-editorial.ts)
   /^\/api\/releases(\/|$)/,                   // the nation's Update Center (four-eyes and named officials in lib/data/*)
-  /^\/api\/twin\/(keys|scenarios|sources)(\/|$)/,
+  /^\/api\/twin\/(keys|metrics|runs|scenarios|sources)(\/|$)/, // registering metrics and withdrawing imports are audited with the official
 ];
 
 export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'ministry' | 'official';

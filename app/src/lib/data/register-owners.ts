@@ -43,7 +43,7 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
   { id: 'identity', name: 'Citizen and officer identity', owner: { where: 'substrate', objects: ['identities', 'officers', 'signing_keys'] }, api: '/sign-in (substrate auth)', copies: [civicApi('identity')] },
   { id: 'officials', name: 'Platform official accounts and sessions', owner: { where: 'platform', keys: ['__civicosOfficials'] }, api: '/api/auth/officials', copies: [] },
   { id: 'telemetry', name: 'Telemetry streams', owner: { where: 'substrate', objects: ['telemetry_streams', 'telemetry_readings'] }, api: 'substrate RPCs', copies: [] },
-  { id: 'twin', name: 'National twin: sources, runs, observations, metrics, scenarios', owner: { where: 'platform', keys: ['__civicosTwin', '__civicosTwinScenarios'] }, api: '/api/twin', copies: [] },
+  { id: 'twin', name: 'National twin: sources, runs, observations, metrics, scenarios', owner: { where: 'platform', keys: ['__civicosTwin', '__civicosTwinScenarios', '__civicosTwinArchive'] }, api: '/api/twin', copies: [] },
   { id: 'facilities', name: 'National facility register', owner: { where: 'platform', keys: ['__civicosFacilities', '__civicosOpenSites', '__civicosSiteFeeds'] }, api: '/api/facilities, /api/org/ministries/{id}/facilities', copies: [] },
   { id: 'boundaries', name: 'Boundary versions and installed districts', owner: { where: 'platform', keys: ['__civicosBoundaries', '__civicosMapPack'] }, api: '/api/boundaries, /api/map-pack', copies: [] },
   { id: 'case-imports', name: 'Case loads and connected case systems', owner: { where: 'platform', keys: ['__civicosCaseImports', '__civicosCaseFeedKeys'] }, api: '/api/org/ministries/{id}/queue', copies: [] },

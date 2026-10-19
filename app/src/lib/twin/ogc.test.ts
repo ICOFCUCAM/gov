@@ -30,7 +30,7 @@ describe('the twin as OGC API – Features', () => {
     expect(all.numberMatched).toBe(47);
     const nairobi = all.features.find(f => f.id === 'KE-30')!;
     expect(nairobi.properties).toMatchObject({ name: 'Nairobi City', twinEntity: 'place:KE-30', operationalRegion: true });
-    expect(nairobi.properties.observations).toMatchObject({ population: { value: 4397073, unit: 'persons', validFrom: '2019-01-01', source: 'Census' } });
+    expect(nairobi.properties.observations).toMatchObject({ population: { value: 4397073, unit: '{persons}', validFrom: '2019-01-01', source: 'Census' } });
     const then = ok(await item(B, 'KE-30', '2015-06-01T00:00:00Z'))!;
     expect((then.properties.observations as Record<string, { value: number }>).population!.value).toBe(3138369);
     expect(all.features.find(f => f.id === 'KE-01')?.properties.observations).toEqual({});

@@ -18,11 +18,16 @@
 // figure through signalFor() and keep their sample when nothing is observed.
 // Kept as a server store (persisted by lib/data/persist.ts).
 
-import { recordAudit, listMinistries } from '@/lib/data/store';
+import { createHash } from 'node:crypto';
+import { recordAudit, listMinistries, getSovereign } from '@/lib/data/store';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { parseCsv } from './csv';
+import { twinDb, resetTwinDb, type TwinDb } from './db';
+import { archive, archivedRuns, archivedMetrics, archivedObservations, forEachArchived, resetTwinArchive } from './archive';
+import { METRIC_ID, getMetric, isKnownMetric, listMetrics, toUcum, sameUnit, type Aggregation } from './metrics';
+import { sdmxRows, SDMX_ROW, type SdmxOptions } from './sdmx';
 import type { Signal } from './signal';
 
 export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
@@ -39,6 +44,8 @@ export interface TwinEntity {
   /** Its position in the nation's list of regions (official order). */
   order?: number;
   location?: { lat: number; lng: number };
+  /** Its persistent identifier: https://<nation domain>/id/<kind>/<code>, resolved by /id/<kind>/<code> (entityUri). */
+  uri?: string;
 }
 
 export interface SourceMapping {
@@ -46,12 +53,21 @@ export interface SourceMapping {
   entity: string;
   /** Column holding the value. */
   value: string;
-  /** Column holding the metric name, or a fixed metric for every row. */
+  /** Column holding the metric name, or a fixed metric for every row: a registered metric (lib/twin/metrics.ts). */
   metric: { column: string } | { fixed: string };
+  /** The unit as the source writes it; for a registered metric it must be that metric's UCUM unit (empty means that unit). */
   unit?: { column: string } | { fixed: string };
   /** Column holding the date or year the value is true for, or one date for the whole file. */
   date?: { column: string } | { fixed: string };
+  /** Optional: the date a value stops being true (interval facts, e.g. a budget year); empty means open-ended. */
+  validTo?: { column: string } | { fixed: string };
+  /** Optional columns for the quality the source states: provisional, final or revised; a standard error; a 95% interval. */
+  quality?: { status?: { column: string } | { fixed: string }; stdErr?: { column: string }; ci95Low?: { column: string }; ci95High?: { column: string } };
 }
+
+export type QualityStatus = 'provisional' | 'final' | 'revised';
+/** The quality a source states for a value. Absent on observations from sources that state none (and on snapshots saved before the field). */
+export interface ObservationQuality { status?: QualityStatus; stdErr?: number; ci95?: { low: number; high: number } }
 
 export interface TwinSource {
   id: string;
@@ -64,6 +80,12 @@ export interface TwinSource {
   system: string;
   mapping: SourceMapping;
   schedule: 'manual' | 'daily' | 'weekly';
+  /** The file's format: plain CSV with the mapping above (default), or SDMX-CSV 1.0/2.0 read by lib/twin/sdmx.ts. */
+  format?: 'csv' | 'sdmx-csv';
+  /** For SDMX-CSV: which dimension names the metric, and explicit code → metric and unit mappings. */
+  sdmx?: SdmxOptions;
+  /** The licence the publisher releases the data under (for the catalogue), when stated. */
+  licence?: string;
   registeredBy: string;
   registeredAt: string;
   lastRun?: string;
@@ -79,6 +101,10 @@ export interface TwinRun {
   accepted: number;
   rejected: { row: number; reason: string }[];
   error?: string;
+  /** Set when an official withdrew the import: its observations are superseded from that moment, never deleted. */
+  withdrawn?: { at: string; by: string; reason: string };
+  /** SHA-256 of the file as read (UTF-8 text), for provenance; absent on runs recorded before it was kept or that failed before reading. */
+  sha256?: string;
 }
 
 export interface Observation {
@@ -88,28 +114,36 @@ export interface Observation {
   unit: string;
   /** When it was true (ISO date). */
   validFrom: string;
+  /** When it stopped being true (ISO date, exclusive), for interval facts; absent = still true until a later value. */
+  validTo?: string;
   /** When the platform recorded it (ISO time). */
   recordedAt: string;
+  /** What the source states about its quality; absent = not stated. */
+  quality?: ObservationQuality;
   sourceId: string;
   runId: string;
+  /** When the platform stopped relying on it (its run was withdrawn); as-of queries known before then still see it. */
+  supersededAt?: string;
 }
 
-interface TwinDb {
-  entities: Record<string, TwinEntity>;
-  keys: { entityId: string; system: string; key: string }[];
-  sources: TwinSource[];
-  runs: TwinRun[];
-  observations: Observation[];
-  seq: number;
-  syncedFor?: string;
+const db = twinDb;
+export type { TwinDb };
+export function resetTwin(): void { resetTwinDb(); resetTwinArchive(); }
+
+/**
+ * Working limits of the live register. Beyond them the oldest observations
+ * and runs move to the history archive (lib/twin/archive.ts), audited; they
+ * are never dropped and every query still reads them.
+ */
+export const LIMITS: { observations: number; runs: number; readonly rejectedShown: number; readonly rows: number } = { observations: 200_000, runs: 500, rejectedShown: 50, rows: 100_000 };
+/** Change the live register's working limits (tests; a small server); returns the previous ones. */
+export function setTwinLimits(l: Partial<Pick<typeof LIMITS, 'observations' | 'runs'>>): Pick<typeof LIMITS, 'observations' | 'runs'> {
+  const prev = { observations: LIMITS.observations, runs: LIMITS.runs };
+  if (l.observations !== undefined) LIMITS.observations = Math.max(1, l.observations);
+  if (l.runs !== undefined) LIMITS.runs = Math.max(1, l.runs);
+  return prev;
 }
-
-const g = globalThis as unknown as { __civicosTwin?: TwinDb };
-const db = (): TwinDb => (g.__civicosTwin ??= { entities: {}, keys: [], sources: [], runs: [], observations: [], seq: 1 });
-export function resetTwin(): void { g.__civicosTwin = undefined; }
-
-export const LIMITS = { observations: 200_000, runs: 500, rejectedShown: 50, rows: 100_000 } as const;
-const METRIC = /^[a-z][a-z0-9_.]{1,63}$/;
+const METRIC = METRIC_ID;
 const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 const slug = (s: string) => fold(s).replace(/ /g, '-').slice(0, 60);
 
@@ -120,13 +154,49 @@ const slug = (s: string) => fold(s).replace(/ /g, '-').slice(0, 60);
  * official subdivisions (ISO 3166-2) and its operational regions, and its
  * institutions. Ids never change once given; entities are added, not removed.
  */
+// ── Persistent identifiers ────────────────────────────────────────────────
+
+/** Used until the nation records its own domain (SovereignProfile.domain) or CIVICOS_PUBLIC_URL is set; .invalid never resolves. */
+export const PLACEHOLDER_URI_BASE = 'https://twin.invalid';
+
+/** The base of the twin's persistent identifiers: the nation's own domain, else CIVICOS_PUBLIC_URL, else a placeholder. */
+export function uriBase(): string {
+  let domain: string | undefined;
+  try { domain = getSovereign().domain?.trim(); } catch { domain = undefined; }
+  if (domain) return `https://${domain.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
+  const env = process.env.CIVICOS_PUBLIC_URL?.trim();
+  return env ? env.replace(/\/+$/, '') : PLACEHOLDER_URI_BASE;
+}
+
+/** An entity's kind and code as they appear in its URI and the resolver: nation:KEN → nation / KEN. */
+export const uriPath = (id: string): string => {
+  const i = id.indexOf(':');
+  return `/id/${id.slice(0, i)}/${encodeURIComponent(id.slice(i + 1))}`;
+};
+
+/** The entity id a resolver path names (/id/place/KE-30 → place:KE-30). */
+export const entityIdFor = (kind: string, code: string): string => `${kind}:${code}`;
+
+/**
+ * Give every entity its URI once, and keep it: a URI minted under the
+ * placeholder is replaced when the nation's own domain becomes known; one
+ * minted under a real domain never changes (entities saved before URIs get
+ * theirs here).
+ */
+function ensureUris(): void {
+  const base = uriBase();
+  for (const e of Object.values(db().entities)) {
+    if (!e.uri || (e.uri.startsWith(PLACEHOLDER_URI_BASE) && base !== PLACEHOLDER_URI_BASE)) e.uri = `${base}${uriPath(e.id)}`;
+  }
+}
+
 export async function syncRegister(): Promise<{ entities: number }> {
   const d = db();
   const iso3 = nationIso3();
   const regions = nationRegions();
   const ministries = listMinistries();
   const stamp = `${iso3 ?? '-'}|${regions.join('|')}|${ministries.map(m => m.id).join('|')}`;
-  if (d.syncedFor === stamp) return { entities: Object.keys(d.entities).length };
+  if (d.syncedFor === stamp) { ensureUris(); return { entities: Object.keys(d.entities).length }; }
   const nationId = iso3 ? `nation:${iso3}` : 'nation:reference';
   d.entities[nationId] ??= { id: nationId, kind: 'nation', name: iso3 ?? 'Nation', ...(iso3 ? { code: iso3 } : {}) };
   const divisions = iso3 ? (await loadDivisions(iso3)).flatMap(l => l.units) : [];
@@ -144,9 +214,11 @@ export async function syncRegister(): Promise<{ entities: number }> {
   }
   for (const m of ministries) {
     const id = `institution:${m.id}`;
-    d.entities[id] = { id, kind: 'institution', name: m.name, parent: nationId };
+    const uri = d.entities[id]?.uri;
+    d.entities[id] = { id, kind: 'institution', name: m.name, parent: nationId, ...(uri ? { uri } : {}) };
   }
   d.syncedFor = stamp;
+  ensureUris();
   return { entities: Object.keys(d.entities).length };
 }
 
@@ -159,13 +231,16 @@ export async function syncRegister(): Promise<{ entities: number }> {
 export function upsertFacilityEntity(f: { id: string; name: string; location: { lat: number; lng: number }; regionCode?: string; ids: Record<string, string> }): void {
   const d = db();
   const id = `facility:${f.id}`;
-  d.entities[id] = { id, kind: 'facility', name: f.name, code: f.id, location: { lat: f.location.lat, lng: f.location.lng }, ...(f.regionCode ? { parent: `place:${f.regionCode}` } : {}) };
+  const uri = d.entities[id]?.uri;
+  d.entities[id] = { id, kind: 'facility', name: f.name, code: f.id, ...(uri ? { uri } : {}), location: { lat: f.location.lat, lng: f.location.lng }, ...(f.regionCode ? { parent: `place:${f.regionCode}` } : {}) };
   for (const [system, key] of Object.entries(f.ids)) {
     if (!d.keys.some(k => k.system === system && k.key === key)) d.keys.push({ entityId: id, system, key });
   }
+  ensureUris();
 }
 
 export function listEntities(kind?: EntityKind): TwinEntity[] {
+  ensureUris();
   return Object.values(db().entities).filter(e => !kind || e.kind === kind);
 }
 
@@ -208,6 +283,39 @@ export function linkKey(entityId: string, system: string, key: string, by: strin
 
 export function listSources(): TwinSource[] { return db().sources.map(s => ({ ...s })); }
 export function listRuns(sourceId?: string): TwinRun[] { return db().runs.filter(r => !sourceId || r.sourceId === sourceId).map(r => ({ ...r })); }
+/** What a source has contributed (current values, withdrawn imports excluded): how many observations, the dates they were true for, the metrics and entities. */
+export function sourceCoverage(sourceId: string): { observations: number; from?: string; to?: string; metrics: string[]; entities: number } {
+  let n = 0, from: string | undefined, to: string | undefined;
+  const metrics = new Set<string>(), entities = new Set<string>();
+  const visit = (o: Observation) => {
+    if (o.sourceId !== sourceId || o.supersededAt) return;
+    n++; metrics.add(o.metric); entities.add(o.entityId);
+    if (!from || o.validFrom < from) from = o.validFrom;
+    const end = o.validTo ?? o.validFrom;
+    if (!to || end > to) to = end;
+  };
+  forEachArchived(undefined, visit);
+  db().observations.forEach(visit);
+  return { observations: n, ...(from ? { from, to } : {}), metrics: [...metrics].sort(), entities: entities.size };
+}
+
+/** A stable id for an observation: its run, entity, metric and the date it was true for. */
+export const observationId = (o: Pick<Observation, 'runId' | 'entityId' | 'metric' | 'validFrom'>): string => `${o.runId}/${o.entityId}/${o.metric}/${o.validFrom}`;
+
+/** The observations an import generated (live register and archive). */
+export function runObservations(runId: string): Observation[] {
+  const out: Observation[] = [];
+  const visit = (o: Observation) => { if (o.runId === runId) out.push({ ...o }); };
+  forEachArchived(undefined, visit);
+  db().observations.forEach(visit);
+  return out;
+}
+
+/** One import, from the live register or the history archive. */
+export function getRun(id: string): TwinRun | undefined {
+  const r = db().runs.find(x => x.id === id) ?? archivedRuns().find(x => x.id === id);
+  return r ? { ...r } : undefined;
+}
 
 export function registerSource(input: Partial<TwinSource> & { by?: string }): TwinSource | { error: string } {
   const by = (input.by ?? '').trim();
@@ -220,13 +328,22 @@ export function registerSource(input: Partial<TwinSource> & { by?: string }): Tw
     try { const u = new URL(String(input.url)); if (u.protocol !== 'https:' && u.protocol !== 'http:') throw 0; url = u.href; }
     catch { return { error: 'Give the address of the CSV (http or https)' }; }
   }
-  const m = input.mapping;
+  const sdmx = input.format === 'sdmx-csv';
+  const m = sdmx ? SDMX_MAPPING : input.mapping;
   if (!m || !m.entity || !m.value || !m.metric) return { error: 'Say which columns hold the entity, the value and the metric' };
   if ('fixed' in m.metric && !METRIC.test(m.metric.fixed)) return { error: 'A metric is lower case letters, digits, dots and underscores, e.g. population or cpi.all_items' };
+  // A source names a registered metric (lib/twin/metrics.ts), so its unit and aggregation are known before any row arrives.
+  if ('fixed' in m.metric && !isKnownMetric(m.metric.fixed)) return { error: `${m.metric.fixed} is not a registered metric: register it first (its unit and how regions combine)` };
+  if ('fixed' in m.metric && m.unit && 'fixed' in m.unit) {
+    const def = getMetric(m.metric.fixed)!;
+    if (def.origin !== 'observed' && m.unit.fixed.trim() && !sameUnit(m.unit.fixed, def.unit)) return { error: `${m.unit.fixed} is not the unit of ${def.id} (${def.unit})` };
+  }
   const d = db();
   const s: TwinSource = {
     id: `SRC-${d.seq++}`, name: name.slice(0, 120), publisher: publisher.slice(0, 120), kind: input.kind, ...(url ? { url } : {}),
     system: (input.system ?? slug(publisher)).slice(0, 60) || 'source', mapping: m,
+    ...(sdmx ? { format: 'sdmx-csv' as const, ...(input.sdmx ? { sdmx: cleanSdmx(input.sdmx) } : {}) } : {}),
+    ...(input.licence?.trim() ? { licence: input.licence.trim().slice(0, 120) } : {}),
     schedule: input.schedule === 'daily' || input.schedule === 'weekly' ? input.schedule : 'manual',
     registeredBy: by, registeredAt: new Date().toISOString(),
   };
@@ -245,6 +362,60 @@ export function isoDate(v: string | undefined): string | undefined {
   if (/^\d{4}-\d{2}(-\d{2})?$/.test(s)) return s.length === 7 ? `${s}-01` : s;
   const t = Date.parse(s);
   return Number.isFinite(t) ? new Date(t).toISOString().slice(0, 10) : undefined;
+}
+
+const STATUS: Record<string, QualityStatus> = { provisional: 'provisional', p: 'provisional', preliminary: 'provisional', final: 'final', f: 'final', revised: 'revised', r: 'revised' };
+const num = (v: string | undefined) => { const t = (v ?? '').replace(/[\s,]/g, ''); return t === '' ? undefined : Number(t); };
+
+/** The quality columns of a row, or the reason they cannot be read. Empty cells state nothing. */
+function readQuality(row: Record<string, string>, spec: SourceMapping['quality']): ObservationQuality | undefined | string {
+  if (!spec) return undefined;
+  const q: ObservationQuality = {};
+  const rawStatus = (col(row, spec.status) ?? '').trim();
+  if (rawStatus) {
+    const st = STATUS[rawStatus.toLowerCase()];
+    if (!st) return `"${rawStatus}" is not a status (provisional, final or revised)`;
+    q.status = st;
+  }
+  const se = num(spec.stdErr && row[spec.stdErr.column]);
+  if (se !== undefined) { if (!Number.isFinite(se) || se < 0) return `"${row[spec.stdErr!.column]}" is not a standard error`; q.stdErr = se; }
+  const lo = num(spec.ci95Low && row[spec.ci95Low.column]), hi = num(spec.ci95High && row[spec.ci95High.column]);
+  if (lo !== undefined || hi !== undefined) {
+    if (lo === undefined || hi === undefined || !Number.isFinite(lo) || !Number.isFinite(hi) || lo > hi) return 'The 95% interval needs a low and a high bound, low first';
+    q.ci95 = { low: lo, high: hi };
+  }
+  return Object.keys(q).length ? q : undefined;
+}
+
+// ── SDMX-CSV ──────────────────────────────────────────────────────────────
+
+const SDMX_MAPPING: SourceMapping = {
+  entity: SDMX_ROW.entity, value: SDMX_ROW.value, metric: { column: SDMX_ROW.metric }, unit: { column: SDMX_ROW.unit },
+  date: { column: SDMX_ROW.date }, quality: { status: { column: SDMX_ROW.status } },
+};
+
+function cleanSdmx(o: SdmxOptions): SdmxOptions {
+  const pairs = (r?: Record<string, string>) => r ? Object.fromEntries(Object.entries(r).slice(0, 200).map(([k, v]) => [String(k).trim().slice(0, 64), String(v).trim().slice(0, 64)])) : undefined;
+  const codes = pairs(o.codes), units = pairs(o.units);
+  return { ...(o.metricDimension?.trim() ? { metricDimension: o.metricDimension.trim().slice(0, 64) } : {}), ...(codes ? { codes } : {}), ...(units ? { units } : {}) };
+}
+
+/** The registered metric an SDMX code stands for: the one with that SDMX concept, or a metric of that name. */
+function sdmxMetric(code: string): string | undefined {
+  const c = code.trim();
+  const byConcept = listMetrics().find(m => m.sdmxConcept && m.sdmxConcept.toUpperCase() === c.toUpperCase());
+  if (byConcept) return byConcept.id;
+  const id = c.toLowerCase();
+  return METRIC.test(id) && isKnownMetric(id) ? id : undefined;
+}
+
+/** SDMX names the nation itself by its ISO 3166-1 alpha-2 code (KE); the register keys it by alpha-3. */
+function nationArea(row: Record<string, string>): Record<string, string> {
+  const area = row[SDMX_ROW.entity];
+  const nation = listEntities('nation')[0];
+  if (!area || !nation?.code || area.includes('-')) return row;
+  const alpha2 = listEntities('place').find(e => e.code?.includes('-'))?.code?.split('-')[0];
+  return area.toUpperCase() === alpha2 ? { ...row, [SDMX_ROW.entity]: nation.code } : row;
 }
 
 export interface RunDeps { fetch?: typeof fetch; resolve?: (host: string) => Promise<string[]>; now?: Date }
@@ -271,40 +442,98 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
       text = (await safeFetchText(s.url, { allow: u => u.host === host, accept: 'text/csv, text/plain;q=0.8, */*;q=0.1', types: /csv|text\/plain|octet-stream|excel/i, fetch: deps.fetch, resolve: deps.resolve })).text;
     }
     if (text.length > 20_000_000) throw new Error('The CSV is larger than 20 MB');
-    const rows = parseCsv(text);
+    const sdmxFile = s.format === 'sdmx-csv';
+    const mapping = sdmxFile ? SDMX_MAPPING : s.mapping;
+    run.sha256 = createHash('sha256').update(text, 'utf8').digest('hex');
+    const rows = sdmxFile ? sdmxRows(text, sdmxMetric, s.sdmx).rows.map(r => nationArea(r)) : parseCsv(text);
     run.rows = rows.length;
     if (rows.length > LIMITS.rows) throw new Error(`More than ${LIMITS.rows} rows`);
     const fresh: Observation[] = [];
     rows.forEach((row, i) => {
       const reject = (reason: string) => { if (run.rejected.length < LIMITS.rejectedShown) run.rejected.push({ row: i + 2, reason }); };
-      const ref = (row[s.mapping.entity] ?? '').trim();
+      if (row[SDMX_ROW.reject]) return reject(row[SDMX_ROW.reject]!);
+      const ref = (row[mapping.entity] ?? '').trim();
       const entity = resolveEntity(ref, s.system);
       if (!entity) return reject(ref ? `"${ref}" is not an entity of the register (link it to one with its id)` : 'No entity');
-      const metric = (col(row, s.mapping.metric) ?? '').trim().toLowerCase();
+      const metric = (col(row, mapping.metric) ?? '').trim().toLowerCase();
       if (!METRIC.test(metric)) return reject(`"${metric}" is not a metric name`);
-      const rawValue = (row[s.mapping.value] ?? '').replace(/[\s,]/g, '');
+      const def = getMetric(metric);
+      if (!def) return reject(`"${metric}" is not a registered metric (register it with its unit first)`);
+      // A registered metric has one UCUM unit: a row in another unit is refused, never converted or guessed.
+      const rawUnit = (col(row, mapping.unit) ?? '').trim();
+      let unit = rawUnit.slice(0, 24);
+      if (def.origin !== 'observed') {
+        if (rawUnit && !toUcum(rawUnit)) return reject(`"${rawUnit}" is not a UCUM unit (${metric} is counted in ${def.unit})`);
+        if (rawUnit && !sameUnit(rawUnit, def.unit)) return reject(`"${rawUnit}" is not the unit of ${metric} (${def.unit})`);
+        unit = def.unit;
+      }
+      const rawValue = (row[mapping.value] ?? '').replace(/[\s,]/g, '');
       const value = Number(rawValue);
-      if (rawValue === '' || !Number.isFinite(value)) return reject(`"${row[s.mapping.value] ?? ''}" is not a number`);
-      const validFrom = s.mapping.date ? isoDate(col(row, s.mapping.date)) : now.toISOString().slice(0, 10);
-      if (!validFrom) return reject(`"${col(row, s.mapping.date)}" is not a date or year`);
+      if (rawValue === '' || !Number.isFinite(value)) return reject(`"${row[mapping.value] ?? ''}" is not a number`);
+      const validFrom = mapping.date ? isoDate(col(row, mapping.date)) : now.toISOString().slice(0, 10);
+      if (!validFrom) return reject(`"${col(row, mapping.date)}" is not a date or year`);
       if (validFrom > now.toISOString().slice(0, 10)) return reject(`${validFrom} is in the future`);
-      fresh.push({ entityId: entity.id, metric, value, unit: (col(row, s.mapping.unit) ?? '').trim().slice(0, 24), validFrom, recordedAt: run.at, sourceId, runId: run.id });
+      const rawTo = (col(row, mapping.validTo) ?? '').trim();
+      const validTo = rawTo ? isoDate(rawTo) : undefined;
+      if (rawTo && !validTo) return reject(`"${rawTo}" is not a date for the end of the value's validity`);
+      if (validTo && validTo <= validFrom) return reject(`It stops being true (${validTo}) before it starts (${validFrom})`);
+      const q = readQuality(row, mapping.quality);
+      if (typeof q === 'string') return reject(q);
+      fresh.push({ entityId: entity.id, metric, value, unit, validFrom, ...(validTo ? { validTo } : {}), recordedAt: run.at, ...(q ? { quality: q } : {}), sourceId, runId: run.id });
     });
     run.accepted = fresh.length;
     const refused = run.rows - run.accepted;
     run.status = run.accepted === 0 ? 'failed' : refused > 0 ? 'partial' : 'ok';
     if (run.accepted === 0 && !run.error) run.error = 'No row could be accepted';
     d.observations.push(...fresh);
-    if (d.observations.length > LIMITS.observations) d.observations.splice(0, d.observations.length - LIMITS.observations);
+    if (fresh.length) notifyObservations(fresh);
   } catch (e) {
     run.status = 'failed';
     run.error = (e as Error).message;
   }
   s.lastRun = run.at;
   d.runs.unshift(run);
-  d.runs.splice(LIMITS.runs);
+  // Over the working limits: the oldest move to the history archive, never dropped (audited).
+  const oldObs = d.observations.length > LIMITS.observations ? d.observations.splice(0, d.observations.length - LIMITS.observations) : [];
+  const oldRuns = d.runs.length > LIMITS.runs ? d.runs.splice(LIMITS.runs).reverse() : [];
+  if (oldObs.length || oldRuns.length) {
+    const move = archive(oldObs, oldRuns, run.at);
+    recordAudit('Twin register', 'twin.archive', `Twin:${s.id}/${run.id}`, 'ok', `${move.observations} observations and ${move.runs} runs moved to the history archive${move.oldestRecordedAt ? ` (recorded ${move.oldestRecordedAt.slice(0, 10)} to ${move.newestRecordedAt!.slice(0, 10)})` : ''}`);
+  }
   recordAudit(run.by, 'twin.source.run', `Twin:${s.id}/${run.id}`, run.status === 'failed' ? 'error' : 'ok', run.error ?? `${run.accepted} of ${run.rows} rows`);
   return run;
+}
+
+/**
+ * Withdraw an import (a correction): its observations are marked superseded
+ * from now, never deleted, so "what was known then" still answers with them
+ * and every later query does not. A named official with a reason; audited.
+ */
+export function withdrawRun(runId: string, by: string, reason: string, now = new Date()): { run: TwinRun; superseded: number } | { error: string } {
+  const d = db();
+  const run = d.runs.find(r => r.id === runId) ?? archivedRuns().find(r => r.id === runId);
+  if (!run) return { error: 'No such import' };
+  const who = by.trim(), why = reason.trim();
+  if (!who) return { error: 'Name the official withdrawing the import' };
+  if (why.length < 4) return { error: 'Give the reason for withdrawing it' };
+  if (run.withdrawn) return { error: `Already withdrawn on ${run.withdrawn.at.slice(0, 10)} by ${run.withdrawn.by}` };
+  const at = now.toISOString();
+  let superseded = 0;
+  const mark = (o: Observation) => { if (o.runId === runId && !o.supersededAt) { o.supersededAt = at; superseded++; } };
+  d.observations.forEach(mark);
+  forEachArchived(undefined, mark);
+  run.withdrawn = { at, by: who, reason: why.slice(0, 500) };
+  recordAudit(who, 'twin.run.withdraw', `Twin:${run.sourceId}/${run.id}`, 'ok', `${superseded} observations superseded · ${run.withdrawn.reason}`);
+  return { run: { ...run }, superseded };
+}
+
+// Listeners told when an import adds observations (e.g. scenario calibration,
+// lib/twin/scenarios.ts). Named, so a module loaded twice registers once; a
+// failing listener never fails the import.
+const listeners = new Map<string, (fresh: Observation[]) => void>();
+export function onObservations(name: string, fn: (fresh: Observation[]) => void): void { listeners.set(name, fn); }
+function notifyObservations(fresh: Observation[]): void {
+  for (const fn of listeners.values()) { try { fn(fresh); } catch { /* the import stands; the listener catches up on its next read */ } }
 }
 
 /** Sources whose schedule says they are due (for /api/cron/twin-ingest). */
@@ -326,14 +555,19 @@ export function stateAsOf({ asOf, knownAt, metric, entityId }: { asOf?: string; 
   const day = t.toISOString().slice(0, 10);
   const at = (knownAt ? new Date(knownAt) : t).toISOString();
   const best = new Map<string, Observation>();
-  for (const o of db().observations) {
-    if (metric && o.metric !== metric) continue;
-    if (entityId && o.entityId !== entityId) continue;
-    if (o.recordedAt > at || o.validFrom > day) continue;
+  const consider = (o: Observation) => {
+    if (metric && o.metric !== metric) return;
+    if (entityId && o.entityId !== entityId) return;
+    if (o.recordedAt > at || o.validFrom > day) return;
+    if (o.supersededAt && o.supersededAt <= at) return;
+    if (o.validTo && o.validTo <= day) return;
     const k = `${o.entityId}|${o.metric}`;
     const cur = best.get(k);
     if (!cur || o.validFrom > cur.validFrom || (o.validFrom === cur.validFrom && o.recordedAt > cur.recordedAt)) best.set(k, o);
-  }
+  };
+  // The history archive first (older), then the live register.
+  forEachArchived(metric, consider);
+  db().observations.forEach(consider);
   return [...best.values()];
 }
 
@@ -345,23 +579,63 @@ export function signalFor(entityId: string, metric: string, asOf?: string): Sign
   return o ? { value: o.value, unit: o.unit, kind: 'observed', source: sourceName(o.sourceId), asOf: o.validFrom } : null;
 }
 
+export interface NationalFigure extends Signal<number> {
+  /** Regions with a value, of the nation's operational regions. */
+  coverage: { have: number; of: number };
+  /** The oldest and newest date the figures combined were true for. */
+  vintage?: { oldest: string; newest: string };
+  /** How the regions were combined (lib/twin/metrics.ts), or "national" for a figure recorded for the nation itself. */
+  aggregation?: Aggregation | 'national';
+  /** Why no national figure is shown although regions report: regions missing, units differ, not additive, weights missing. */
+  refused?: string;
+}
+
 /**
- * A national figure as the sum over the nation's operational regions, only
- * when every region has a value (otherwise a partial sum would be shown as the
- * nation's); a figure for the nation itself wins when one is recorded.
+ * A national figure from the nation's operational regions, combined as the
+ * metric's definition says (sum, mean or weighted mean; lib/twin/metrics.ts),
+ * and only when every region has a value in the same unit. Otherwise the
+ * figure comes back without a value and with the reason (a partial sum, a sum
+ * of rates or of mixed units is never shown as the nation's). A figure
+ * recorded for the nation itself wins. Null when nothing is observed at all.
  */
-export function nationalTotal(metric: string, asOf?: string): (Signal<number> & { coverage: { have: number; of: number } }) | null {
+export function nationalTotal(metric: string, asOf?: string): NationalFigure | null {
   const regions = regionEntities();
   const obs = stateAsOf({ asOf, metric });
+  if (!obs.length) return null;
   const national = obs.find(o => db().entities[o.entityId]?.kind === 'nation');
-  if (national) return { value: national.value, unit: national.unit, kind: 'observed', source: sourceName(national.sourceId), asOf: national.validFrom, coverage: { have: regions.length, of: regions.length } };
+  if (national) {
+    return { value: national.value, unit: national.unit, kind: 'observed', source: sourceName(national.sourceId), asOf: national.validFrom,
+      coverage: { have: regions.length, of: regions.length }, vintage: { oldest: national.validFrom, newest: national.validFrom }, aggregation: 'national' };
+  }
+  const def = getMetric(metric);
   const byRegion = regions.map(r => obs.find(o => o.entityId === r.id)).filter((o): o is Observation => !!o);
-  if (!regions.length || byRegion.length < regions.length) return null;
-  const oldest = byRegion.reduce((a, o) => (o.validFrom < a ? o.validFrom : a), byRegion[0]!.validFrom);
+  const coverage = { have: byRegion.length, of: regions.length };
+  const refuse = (refused: string, unit?: string): NationalFigure => ({ value: null, ...(unit ? { unit } : {}), kind: 'unavailable', source: 'Not combined', coverage, ...(def ? { aggregation: def.aggregation } : {}), refused });
+  if (!regions.length) return refuse('The nation has no operational regions to combine');
+  if (byRegion.length < regions.length) return refuse(`Only ${byRegion.length} of ${regions.length} regions report ${metric}; a national figure needs every region`);
+  const units = [...new Set(byRegion.map(o => toUcum(o.unit) ?? o.unit))];
+  if (units.length > 1) return refuse(`The regions report ${metric} in different units (${units.join(', ')}); they are not combined`);
+  const unit = byRegion[0]!.unit;
+  if (!def || def.aggregation === 'none') return refuse(`${def?.label ?? metric} is not registered as combinable across regions: register it with sum, mean or weighted mean`, unit);
+  let value: number;
+  if (def.aggregation === 'sum') value = byRegion.reduce((s, o) => s + o.value, 0);
+  else if (def.aggregation === 'mean') value = byRegion.reduce((s, o) => s + o.value, 0) / byRegion.length;
+  else {
+    const wm = def.weightMetric ?? '';
+    const weights = stateAsOf({ asOf, metric: wm });
+    const w = byRegion.map(o => weights.find(x => x.entityId === o.entityId));
+    const missing = w.filter(x => !x).length;
+    if (missing) return refuse(`${missing} of ${regions.length} regions have no ${wm} to weight ${metric} by`, unit);
+    if (new Set(w.map(x => toUcum(x!.unit) ?? x!.unit)).size > 1) return refuse(`The weights (${wm}) are in different units`, unit);
+    const total = w.reduce((s, x) => s + x!.value, 0);
+    if (!(total > 0)) return refuse(`The weights (${wm}) add up to zero`, unit);
+    value = byRegion.reduce((s, o, i) => s + o.value * w[i]!.value, 0) / total;
+  }
+  const dates = byRegion.map(o => o.validFrom).sort();
   return {
-    value: byRegion.reduce((s, o) => s + o.value, 0), unit: byRegion[0]!.unit, kind: 'observed',
-    source: [...new Set(byRegion.map(o => sourceName(o.sourceId)))].join(', '), asOf: oldest,
-    coverage: { have: byRegion.length, of: regions.length },
+    value, unit, kind: 'observed',
+    source: [...new Set(byRegion.map(o => sourceName(o.sourceId)))].join(', '), asOf: dates[0],
+    coverage, vintage: { oldest: dates[0]!, newest: dates.at(-1)! }, aggregation: def.aggregation,
   };
 }
 
@@ -373,17 +647,27 @@ export function regionCoverage(metric: string): { have: number; of: number } {
 }
 
 export function metricsKnown(): string[] {
-  return [...new Set(db().observations.map(o => o.metric))].sort();
+  return [...new Set([...db().observations.map(o => o.metric), ...archivedMetrics()])].sort();
 }
 
 /** The dates a metric has observations for (when they were true), oldest first: the steps of the history view. */
 export function metricDates(metric: string): string[] {
-  return [...new Set(db().observations.filter(o => o.metric === metric).map(o => o.validFrom))].sort();
+  return [...new Set([...archivedObservations(metric), ...db().observations].filter(o => o.metric === metric && !o.supersededAt).map(o => o.validFrom))].sort();
+}
+
+/** Every current value recorded for an entity over time (withdrawn imports excluded; live register and archive), oldest first. */
+export function entityHistory(entityId: string): Observation[] {
+  const out: Observation[] = [];
+  const visit = (o: Observation) => { if (o.entityId === entityId && !o.supersededAt) out.push({ ...o }); };
+  forEachArchived(undefined, visit);
+  db().observations.forEach(visit);
+  return out.sort((a, b) => a.validFrom.localeCompare(b.validFrom) || a.recordedAt.localeCompare(b.recordedAt));
 }
 
 /** An entity as the register holds it. */
 export function getEntity(id: string): TwinEntity | undefined {
   const e = db().entities[id];
+  if (e && !e.uri) ensureUris();
   return e ? { ...e } : undefined;
 }
 
