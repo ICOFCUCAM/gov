@@ -8,6 +8,9 @@ const nextConfig = {
     // App Router is stable in 14.x.
     // src/instrumentation.ts restores and saves the platform's state (lib/data/persist.ts).
     instrumentationHook: true,
+    // Read by Node at run time, not bundled: sql.js (GeoPackage boundary
+    // files, lib/geo/boundary-files.ts) carries its WebAssembly inline.
+    serverComponentsExternalPackages: ['sql.js'],
   },
   // Security headers — sensible defaults; tune per sovereign deployment.
   async headers() {

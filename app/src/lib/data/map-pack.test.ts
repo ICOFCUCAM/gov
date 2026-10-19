@@ -183,3 +183,22 @@ describe('district shapes installed at setup', () => {
     expect(listAudit().filter(e => e.action === 'map-pack.remove')[0]?.detail).toMatch(/bundled districts/);
   }, 60_000);
 });
+
+describe('large district files', () => {
+  it('are simplified on shared borders before the districts are placed, every district kept', async () => {
+    const { convertDistricts } = await import('./map-pack');
+    const { countVertices } = await import('@/lib/geo/boundary-simplify');
+    const { applyNation } = await import('@/lib/nation/registry');
+    const { loadAdmin2 } = await import('@/lib/geo/admin2');
+    applyNation({ iso3: 'KEN', regions: [] });
+    const a = await loadAdmin2('KEN', 'full');
+    const feats = a!.units.map(u => ({ type: 'Feature', properties: { shapeName: u.name }, geometry: u.geometry }));
+    const before = countVertices(feats as never);
+    const r = await convertDistricts('KEN', JSON.stringify({ type: 'FeatureCollection', features: feats }), { simplify: { aboveVertices: 1000, targetVertices: Math.round(before / 4) } });
+    if ('error' in r) throw new Error(r.error);
+    expect(r.units.length).toBe(feats.length);
+    expect(r.simplified!.verticesAfter).toBeLessThan(before / 2);
+    expect(r.warnings.join(' ')).toMatch(/Simplified on the server keeping shared borders/);
+    expect(r.parents).toBeGreaterThan(feats.length * 0.95);
+  }, 60_000);
+});

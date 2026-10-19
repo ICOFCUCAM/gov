@@ -766,7 +766,7 @@
         ],
         "operationId": "get_boundaries",
         "summary": "GET /api/boundaries",
-        "description": "The nation's own boundaries (lib/data/boundaries.ts): GET lists every version (without shapes); POST checks a boundary file (?dryRun=1 records nothing) and records it as a proposal for a different official to publish.",
+        "description": "The nation's own boundaries (lib/data/boundaries.ts): GET lists every version (without shapes); POST checks a boundary file (?dryRun=1 records nothing) and records it as a proposal for a different official to publish. The file goes either as JSON (`text` with `format` geojson | topojson, or `base64` for any format) or as multipart/form-data: `file` (GeoJSON, TopoJSON, a zipped Shapefile .zip or a GeoPackage .gpkg) and `body`, a JSON string with the other fields (level, source, validFrom, codeField, nameField, confirmFewer, note). The format is detected from the file (geojson | topojson | shapefile-zip | geopackage) unless `format` names it.",
         "parameters": [
           {
             "name": "dryRun",
@@ -808,12 +808,17 @@
         ],
         "operationId": "post_boundaries",
         "summary": "POST /api/boundaries",
-        "description": "The nation's own boundaries (lib/data/boundaries.ts): GET lists every version (without shapes); POST checks a boundary file (?dryRun=1 records nothing) and records it as a proposal for a different official to publish.",
+        "description": "The nation's own boundaries (lib/data/boundaries.ts): GET lists every version (without shapes); POST checks a boundary file (?dryRun=1 records nothing) and records it as a proposal for a different official to publish. The file goes either as JSON (`text` with `format` geojson | topojson, or `base64` for any format) or as multipart/form-data: `file` (GeoJSON, TopoJSON, a zipped Shapefile .zip or a GeoPackage .gpkg) and `body`, a JSON string with the other fields (level, source, validFrom, codeField, nameField, confirmFewer, note). The format is detected from the file (geojson | topojson | shapefile-zip | geopackage) unless `format` names it.",
         "parameters": [],
         "requestBody": {
           "required": false,
           "content": {
             "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            },
+            "multipart/form-data": {
               "schema": {
                 "type": "object"
               }
@@ -6352,6 +6357,11 @@
               "schema": {
                 "type": "object"
               }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object"
+              }
             }
           }
         },
@@ -9956,6 +9966,11 @@
           "required": false,
           "content": {
             "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            },
+            "multipart/form-data": {
               "schema": {
                 "type": "object"
               }

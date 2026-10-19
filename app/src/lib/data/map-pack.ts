@@ -26,6 +26,7 @@ import { loadCountry, type BoundaryCredit, type Geom } from '@/lib/geo/admin1';
 import { ADMIN2, type Admin2Unit } from '@/lib/geo/admin2';
 import BOUNDARY_INDEX from '@/lib/geo/boundaries/index.json';
 import { activeBoundary } from '@/lib/map/boundary-active';
+import { countVertices, needsSimplifying, simplifyFeatures, type Simplification } from '@/lib/geo/boundary-simplify';
 import { assignUnits, finerThan, labelPoint, levelsBelow, licenceRefusal, parentFinder, rewind, roundGeometry, type GbMeta } from '@/lib/geo/admin2-convert.mjs';
 import type { InstalledDistrictsLike } from '@/lib/map/districts-installed';
 
@@ -123,10 +124,10 @@ function extentOf(feats: Feature[]): number {
   return Math.max(x1 - x0, y1 - y0);
 }
 
-export interface Converted { units: Admin2Unit[]; parents: number; viaVote: number; warnings: string[] }
+export interface Converted { units: Admin2Unit[]; parents: number; viaVote: number; warnings: string[]; simplified?: Simplification }
 
 /** Districts from a geoBoundaries FeatureCollection, placed in the nation's regions (shared rules: admin2-convert.mjs). */
-export async function convertDistricts(iso3: string, text: string): Promise<Converted | { error: string }> {
+export async function convertDistricts(iso3: string, text: string, opts: { simplify?: { aboveVertices?: number; targetVertices?: number } } = {}): Promise<Converted | { error: string }> {
   const feats = readCollection(text);
   if ('error' in feats) return feats;
   if (!feats.length) return { error: 'The file holds no districts' };
@@ -146,13 +147,23 @@ export async function convertDistricts(iso3: string, text: string): Promise<Conv
   }
   if (skipped) warnings.push(`${skipped} feature${skipped === 1 ? ' was' : 's were'} not an area in longitude/latitude and ${skipped === 1 ? 'was' : 'were'} left out`);
   if (!items.length) return { error: 'No district in the file is an area in longitude/latitude' };
+  // Large nations' districts are simplified on shared borders (lib/geo/boundary-simplify.ts), as uploaded boundaries are.
+  const asFeatures = items.map(it => ({ type: 'Feature' as const, properties: {}, geometry: it.geometry }));
+  const vertices = countVertices(asFeatures as never);
+  let simplified: Simplification | undefined;
+  if (needsSimplifying(vertices, text.length, opts.simplify)) {
+    const r = simplifyFeatures(asFeatures as never, opts.simplify?.targetVertices);
+    simplified = r.info;
+    r.features.forEach((f, i) => { const g = (f as { geometry?: Geom }).geometry; if (g && items[i]) { items[i]!.geometry = g; items[i]!.label = labelPoint(g); } });
+    warnings.push(`Simplified on the server keeping shared borders: ${r.info.verticesBefore.toLocaleString('en')} points to ${r.info.verticesAfter.toLocaleString('en')}`);
+  }
   const { units, viaVote, crossing } = assignUnits(items, parentFinder(first.provinces), iso3, digits - 1);
   const parents = units.filter(u => u.parent).length;
   if (!parents) return { error: 'None of the districts lies in the nation’s regions as the map draws them: is the file for this nation?' };
   if (parents < units.length) warnings.push(`${units.length - parents} district${units.length - parents === 1 ? ' lies' : 's lie'} outside every region and cannot be opened from one`);
   if (viaVote) warnings.push(`${viaVote} district${viaVote === 1 ? ' was' : 's were'} placed by where most of ${viaVote === 1 ? 'its' : 'their'} outline lies (label point outside every region)`);
   if (crossing.length) warnings.push(`${crossing.length} district${crossing.length === 1 ? ' lies' : 's lie'} across region borders: ${crossing.slice(0, 6).join('; ')}${crossing.length > 6 ? '…' : ''}`);
-  return { units: units as Admin2Unit[], parents, viaVote, warnings };
+  return { units: units as Admin2Unit[], parents, viaVote, warnings, ...(simplified ? { simplified } : {}) };
 }
 
 function record(iso3: string, c: Converted, meta: { adm: string; credit: BoundaryCredit; boundaryId?: string; method: DistrictPack['method']; url?: string; fileSha256: string }, by: string): DistrictPack {

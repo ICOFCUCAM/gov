@@ -46,7 +46,8 @@ export async function scanRoutes(appDir) {
     });
     const methods = METHODS.filter(m => new RegExp(`export\\s+(async\\s+)?function\\s+${m}\\b|export\\s+const\\s+${m}\\b`).test(src));
     const query = [...new Set([...src.matchAll(/(?:searchParams|\bq|\bparams|\bsp)\.get\(\s*['"]([\w.-]+)['"]\s*\)/g)].map(m => m[1]))].filter(q => !params.includes(q)).sort();
-    routes.push({ path: '/api/' + segs.join('/'), file: path.relative(appDir, f).split(path.sep).join('/'), methods, params, query, description: leadingComment(src) });
+    const multipart = /\.formData\(\)/.test(src);
+    routes.push({ path: '/api/' + segs.join('/'), file: path.relative(appDir, f).split(path.sep).join('/'), methods, params, query, description: leadingComment(src), ...(multipart ? { multipart } : {}) });
   }
   return routes.map(r => ({ ...r, path: r.path.replace(/\/$/, '') }));
 }
@@ -66,7 +67,7 @@ export function toOpenApi(routes, version = '1') {
           ...r.params.map(p => ({ name: p, in: 'path', required: true, schema: { type: 'string' } })),
           ...(m === 'GET' ? r.query.map(q => ({ name: q, in: 'query', required: false, schema: { type: 'string' } })) : []),
         ],
-        ...(m === 'GET' || m === 'DELETE' ? {} : { requestBody: { required: false, content: { 'application/json': { schema: { type: 'object' } } } } }),
+        ...(m === 'GET' || m === 'DELETE' ? {} : { requestBody: { required: false, content: { 'application/json': { schema: { type: 'object' } }, ...(r.multipart ? { 'multipart/form-data': { schema: { type: 'object' } } } : {}) } } }),
         responses: { 200: { description: 'OK', content: { 'application/json': { schema: { type: 'object' } } } }, default: { description: 'Error: `{ "error": string }`' } },
         'x-source': r.file,
       };
