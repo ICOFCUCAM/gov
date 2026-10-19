@@ -5,8 +5,10 @@
 // anyone outside the owning institution and the whole government
 // (lib/data/facilities.ts viewFacility); confidential categories are never in
 // the register. Filters: bbox, category, datetime (sites published by then).
+// Each feature carries the opaque national FacilityID (`nationalId`, a UUID
+// v7 minted at publication); the feature id stays the display id FAC-xxxxx.
 
-import { listFacilities, categoryOf, type Viewer } from '@/lib/data/facilities';
+import { listFacilities, categoryOf, nationalId, type Viewer } from '@/lib/data/facilities';
 import { getMinistry } from '@/lib/data/store';
 import { QUERYABLES_REL, filterQs, matchesFilters, type PropertyFilter } from './ogc-queryables';
 import { DATETIME_AS_OF, MAX_LIMIT, pageLinks, parseBbox, parseDatetime } from './ogc';
@@ -38,6 +40,7 @@ function featureOf(s: ReturnType<typeof listFacilities>[number]) {
     id: s.id,
     geometry: { type: 'Point' as const, coordinates: [s.location.lng, s.location.lat] },
     properties: {
+      ...(nationalId(s) ? { nationalId: nationalId(s) } : {}),
       name: s.name, ...(s.localName ? { localName: s.localName } : {}),
       category: s.category, categoryLabel: categoryOf(s.category)?.label,
       institution: getMinistry(s.ownerId)?.name ?? s.ownerId, status: s.status,
@@ -81,7 +84,8 @@ export function facilityItems(base: string, q: { limit?: string | null; offset?:
 }
 
 export function facilityItem(base: string, id: string, viewer: Viewer) {
-  const s = listFacilities({}, viewer).find(x => x.id === id);
+  // By the display id (FAC-00012) or the opaque national FacilityID.
+  const s = listFacilities({}, viewer).find(x => x.id === id || nationalId(x) === id);
   if (!s) return null;
   return { ...featureOf(s), links: [{ href: `${base}/collections/${FACILITY_COLLECTION}/items/${encodeURIComponent(id)}`, rel: 'self', type: 'application/geo+json' }] };
 }

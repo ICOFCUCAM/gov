@@ -105,8 +105,10 @@ export function SiteDetail({ site, vocab, act, busy, ownerName, onClose }: { sit
         <dt className="text-ink-muted">How captured</dt>
         <dd>{methodLabel(site.location.method)}{site.location.accuracyM ? ` · within ${site.location.accuracyM} m` : ''}{site.location.capturedBy ? ` · by ${site.location.capturedBy}` : ''}{site.location.capturedAt ? ` · ${when(site.location.capturedAt)}` : ''}{site.location.original ? ` · given as “${site.location.original}”` : ''}</dd>
         <dt className="text-ink-muted">Sensitivity</dt><dd>{LEVEL_WORD[site.sensitivity]}</dd>
+        <dt className="text-ink-muted">National facility ID</dt>
+        <dd>{site.ids.national ? <span className="font-mono">{site.ids.national}</span> : <span className="text-ink-muted">Given when the site is published</span>}</dd>
         <dt className="text-ink-muted">Identifiers</dt>
-        <dd>{Object.keys(site.ids).length ? Object.entries(site.ids).map(([k, v]) => <span key={k} className="me-3">{k}: <span className="font-mono">{v}</span></span>) : <span className="text-ink-muted">None recorded{site.generalised ? ' (hidden for restricted sites)' : ''}</span>}</dd>
+        <dd>{Object.keys(site.ids).some(k => k !== 'national') ? Object.entries(site.ids).filter(([k]) => k !== 'national').map(([k, v]) => <span key={k} className="me-3">{k}: <span className="font-mono">{v}</span></span>) : <span className="text-ink-muted">None recorded{site.generalised ? ' (hidden for restricted sites)' : ''}</span>}</dd>
         <dt className="text-ink-muted">Source</dt><dd>{site.source.kind === 'form' ? 'Recorded on the form' : site.source.kind === 'field' ? 'Captured in the field' : site.source.kind === 'import' ? `Loaded from a file${site.source.sha256 ? ` (fingerprint ${site.source.sha256.slice(0, 12)}…)` : ''}` : 'Connected system'}</dd>
         {site.note ? <><dt className="text-ink-muted">Note</dt><dd>{site.note}</dd></> : null}
         <dt className="text-ink-muted">Location certification</dt>

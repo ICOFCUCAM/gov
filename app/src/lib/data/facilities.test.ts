@@ -228,4 +228,38 @@ describe('open-data candidates (4c)', () => {
     expect(r).toEqual(expect.objectContaining({ candidates: 1, shareAlike: false, url: 'https://example.org/airports.csv' }));
     expect(await loadOpenSource({ name: 'X', publisher: 'Y', licence: 'Z', url: 'http://10.0.0.1/x.csv' }, 'A', { fetch: fetchStub, resolve: async () => ['10.0.0.1'] })).toEqual({ error: expect.stringMatching(/could not be fetched/) });
   }, 60_000);
+  it('mints an opaque national FacilityID (UUID v7) at publication, kept for restricted sites and old snapshots', async () => {
+    const { NATIONAL_ID, nationalId, getFacility } = await import('./facilities');
+    const { UUID7, uuid7Time } = await import('./uuid7');
+    const { facilityItem, facilityItems } = await import('@/lib/twin/ogc-facilities');
+    const r = await proposeFacility(interior, { name: 'Central Police Station', category: 'police', ...NAIROBI, ids: { national: 'chosen-by-me', 'National station code': 'NBI-001' } }, 'Officer A');
+    if ('error' in r) throw new Error(r.error);
+    expect(r.facility.ids).toEqual({ 'National station code': 'NBI-001' }); // never given, only minted
+    const pub = await actOnFacility(r.facility.id, { action: 'publish' }, 'Signer B');
+    if ('error' in pub) throw new Error(pub.error);
+    const nid = nationalId(pub)!;
+    expect(nid).toMatch(UUID7);
+    expect(Math.abs(uuid7Time(nid)! - Date.parse(pub.publishedAt!))).toBe(0);
+    expect(pub.id).toMatch(/^FAC-\d{5}$/); // the display id stays
+    // A moved site keeps its national id.
+    await actOnFacility(r.facility.id, { action: 'status', status: 'partial' }, 'Signer B');
+    expect(nationalId(getFacility(r.facility.id)!)).toBe(nid);
+    // The public sees a restricted site generalised, without its sector codes, but with its national id.
+    const seen = listFacilities({}, { signedIn: false }).find(f => f.id === r.facility.id)!;
+    expect(seen.generalised).toBe(true);
+    expect(seen.ids).toEqual({ [NATIONAL_ID]: nid });
+    // OGC: a property, and the feature found by either id.
+    const items = facilityItems('http://x', {}, { signedIn: false });
+    if ('error' in items) throw new Error(items.error);
+    expect(items.features[0]!.properties.nationalId).toBe(nid);
+    expect(facilityItem('http://x', nid, { signedIn: false })?.id).toBe(r.facility.id);
+    // A snapshot saved before national ids gets one for each published site when restored.
+    const g = globalThis as unknown as { __civicosFacilities: { facilities: { ids: Record<string, string> }[] } };
+    const old = structuredClone(g.__civicosFacilities);
+    delete old.facilities[0]!.ids[NATIONAL_ID];
+    g.__civicosFacilities = old;
+    const restored = nationalId(getFacility(r.facility.id)!)!;
+    expect(restored).toMatch(UUID7);
+    expect(nationalId(getFacility(r.facility.id)!)).toBe(restored); // minted once
+  }, 60_000);
 });

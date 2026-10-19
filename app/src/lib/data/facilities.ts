@@ -34,6 +34,7 @@ import { loadDistricts, loadNationGeography } from '@/lib/map/geography';
 import { parseCsv } from '@/lib/twin/csv';
 import { upsertFacilityEntity } from '@/lib/twin/register';
 import { safeFetchText } from '@/lib/net/safe-fetch';
+import { uuid7 } from './uuid7';
 import type { Geom } from '@/lib/geo/admin1';
 
 // ── Vocabulary ────────────────────────────────────────────────────────────
@@ -214,12 +215,26 @@ const DEFAULT_POLICY: FacilityPolicy = {
 };
 
 const g = globalThis as unknown as { __civicosFacilities?: Db };
+const upgraded = new WeakSet<Db>();
 const db = (): Db => {
   const d = (g.__civicosFacilities ??= { facilities: [], policy: { ...DEFAULT_POLICY }, changes: [], imports: [], seq: 1 });
+  if (upgraded.has(d)) return d;
   d.changes ??= []; d.imports ??= []; d.policy ??= { ...DEFAULT_POLICY };
   d.policy.methods ??= DEFAULT_POLICY.methods; d.policy.sensitivity ??= {}; d.policy.generaliseDegrees ??= DEFAULT_POLICY.generaliseDegrees;
+  // Snapshots saved before national FacilityIDs: published sites get theirs, timed at publication.
+  for (const f of d.facilities ?? []) if (f.state !== 'proposed' && f.publishedAt && !f.ids?.[NATIONAL_ID]) f.ids = { ...(f.ids ?? {}), [NATIONAL_ID]: uuid7(Date.parse(f.publishedAt) || Date.now()) };
+  upgraded.add(d);
   return d;
 };
+
+/**
+ * The opaque national FacilityID (data dictionary §1), kept in the site's
+ * identifiers under this key: a UUID v7 minted when the site is first
+ * published, never reused or changed, and safe to show even for restricted
+ * sites. `FAC-00012` stays the display and legacy id.
+ */
+export const NATIONAL_ID = 'national';
+export const nationalId = (f: Pick<Facility, 'ids'>): string | undefined => f.ids?.[NATIONAL_ID];
 export function resetFacilities(): void { g.__civicosFacilities = undefined; gi.__facilityGrid = undefined; }
 
 // ── Spatial index ─────────────────────────────────────────────────────────
@@ -513,7 +528,8 @@ export async function proposeFacility(ministryId: string, input: ProposeInput, b
   if (!isCaptureMethod(method)) return { error: 'Unknown way of capturing the position' };
   if (!db().policy.methods.includes(method)) return { error: `The nation does not accept "${CAPTURE_METHODS.find(m => m.key === method)!.label}" as a way of capturing a position` };
   const lng = Number(input.lng), lat = Number(input.lat);
-  const ids = Object.fromEntries(Object.entries(input.ids ?? {}).map(([k, v]) => [clean(k, 60), clean(v, 80)]).filter(([k, v]) => k && v));
+  // The national FacilityID is minted at publication, never given.
+  const ids = Object.fromEntries(Object.entries(input.ids ?? {}).map(([k, v]) => [clean(k, 60), clean(v, 80)]).filter(([k, v]) => k && v && k !== NATIONAL_ID));
   const check = await checkLocation({ lng, lat, category: cat.key, region: input.region, name, ids, outsideReason: input.outsideReason });
   if (!check.ok) return { error: check.errors[0]!, check };
   if (!check.place.inside && !clean(input.outsideReason)) return { error: 'The position is outside the boundary as drawn: confirm it with a reason', check };
@@ -562,9 +578,10 @@ export async function actOnFacility(id: string, a: FacilityAction, by: string): 
       if (f.state !== 'proposed') return { error: `The site is already ${f.state}` };
       if (who === f.proposedBy) return { error: 'A different official must publish a site they did not propose' };
       f.state = 'published'; f.publishedBy = who; f.publishedAt = now();
+      if (!f.ids[NATIONAL_ID]) { f.ids[NATIONAL_ID] = uuid7(Date.parse(f.publishedAt)); gridUpdate(f); }
       pushVersion(f, who, 'published');
       upsertFacilityEntity({ id: f.id, name: f.name, location: f.location, regionCode: f.place.regionCode, ids: f.ids });
-      recordAudit(who, 'facility.publish', `Facility:${f.id}`, 'ok', f.name);
+      recordAudit(who, 'facility.publish', `Facility:${f.id}`, 'ok', `${f.name} · national id ${f.ids[NATIONAL_ID]}`);
       break;
     }
     case 'certify': {
@@ -644,7 +661,7 @@ export function viewFacility(f: Facility, v: Viewer): Facility & { generalised?:
     const snap = (x: number) => Math.round(x / step) * step + step / 2;
     out.location = { lng: Number(snap(f.location.lng).toFixed(4)), lat: Number(snap(f.location.lat).toFixed(4)), method: f.location.method, accuracyM: Math.round(step * 111_000) };
     out.place = { ...f.place, districtCode: undefined, district: undefined };
-    out.ids = {}; out.versions = []; out.pendingVersion = undefined; out.generalised = true;
+    out.ids = f.ids[NATIONAL_ID] ? { [NATIONAL_ID]: f.ids[NATIONAL_ID] } : {}; out.versions = []; out.pendingVersion = undefined; out.generalised = true;
   }
   if (!v.signedIn) { out.versions = []; out.pendingVersion = undefined; out.proposedBy = ''; out.publishedBy = undefined; }
   return out;
@@ -906,12 +923,12 @@ export async function receiveSiteFeed(feed: SiteFeed, body: unknown, raw: string
 }
 
 /** What officials did with this system's sites since a time: so both sides agree. */
-export function siteFeedChanges(feed: SiteFeed, since: string | null): { sites: { ref: string; id: string; state: Facility['state']; certification: Facility['certification']['state']; moveWaiting: boolean; lastChange: string }[] } | { error: string } {
+export function siteFeedChanges(feed: SiteFeed, since: string | null): { sites: { ref: string; id: string; nationalId?: string; state: Facility['state']; certification: Facility['certification']['state']; moveWaiting: boolean; lastChange: string }[] } | { error: string } {
   const t = since ? Date.parse(since) : 0;
   if (since && Number.isNaN(t)) return { error: 'since must be a date-time' };
   return {
     sites: db().facilities.filter(x => x.source.feedId === feed.id)
-      .map(x => ({ ref: x.source.ref!, id: x.id, state: x.state, certification: x.certification.state, moveWaiting: !!x.pendingVersion, lastChange: x.versions.at(-1)?.at ?? x.proposedAt }))
+      .map(x => ({ ref: x.source.ref!, id: x.id, ...(x.ids[NATIONAL_ID] ? { nationalId: x.ids[NATIONAL_ID] } : {}), state: x.state, certification: x.certification.state, moveWaiting: !!x.pendingVersion, lastChange: x.versions.at(-1)?.at ?? x.proposedAt }))
       .filter(x => Date.parse(x.lastChange) >= t),
   };
 }
@@ -1021,7 +1038,7 @@ export async function decideCandidate(id: string, d: { decision: 'confirm'; mini
     const f = db().facilities.find(x => x.id === d.facilityId);
     if (!f || f.state === 'withdrawn') return { error: 'No such site' };
     if (f.category !== c.category) return { error: 'The candidate is a different kind of site' };
-    if (c.ref) { f.ids[src.name] = c.ref; gridUpdate(f); }
+    if (c.ref && src.name !== NATIONAL_ID) { f.ids[src.name] = c.ref; gridUpdate(f); }
     pushVersion(f, by.trim(), `linked to ${src.name}${c.ref ? ` (${c.ref})` : ''}`);
     Object.assign(c, { state: 'linked', decidedBy: by.trim(), decidedAt: now(), facilityId: f.id });
   } else {
