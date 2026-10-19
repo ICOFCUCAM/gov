@@ -12,6 +12,7 @@
 // by escalation reason — the operator sees one row, not one per cron tick.
 
 import { NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/platform-auth';
 import { serverClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
@@ -24,14 +25,8 @@ interface DivergenceResult {
   alarmed: boolean;
 }
 
-function authorized(req: Request): boolean {
-  const expected = process.env.CIVICOS_CRON_SECRET;
-  if (!expected) return false;
-  const url = new URL(req.url);
-  const token = url.searchParams.get('token')
-    ?? (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  return token.length > 0 && token === expected;
-}
+/** The cron secret, compared in constant time (lib/platform-auth.ts). */
+const authorized = (req: Request): boolean => cronAuthorized(req);
 
 export async function GET(req: Request) {
   if (!authorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });

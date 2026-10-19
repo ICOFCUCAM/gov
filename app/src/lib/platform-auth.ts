@@ -1,8 +1,8 @@
 // Shared request authorisation for privileged API routes.
 //
 // Two accepted credentials, mirroring the rest of the platform tier:
-//   • CIVICOS_CRON_SECRET in ?token= or Authorization: Bearer — for CLI /
-//     automation that has no UI session.
+//   • CIVICOS_CRON_SECRET in Authorization: Bearer (or, discouraged and
+//     logged, ?token=) — for CLI / automation that has no UI session.
 //   • a Supabase access token (JWT) belonging to a platform-tier officer,
 //     verified by asking the substrate (under that user's RLS) who the
 //     current actor is.
@@ -10,20 +10,39 @@
 // These checks are defense-in-depth: the SECURITY DEFINER RPCs enforce the
 // platform-tier gate themselves, so a route is never the sole authority.
 
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { tokenScopedClient } from '@/lib/db/client';
 
 export const PLATFORM_ROLES = new Set([
   'platform-admin', 'noc-officer', 'cabinet-officer', 'auditor',
 ]);
 
-/** Fixed shared-secret path (CLI / automation, no UI session). */
+/**
+ * Fixed shared-secret path (CLI / automation, no UI session): the secret in
+ * `Authorization: Bearer …`, compared in constant time (SHA-256 of both
+ * sides, then timingSafeEqual, so neither length nor content leaks through
+ * timing). `?token=` is still accepted for schedulers that cannot send
+ * headers, but it ends up in access logs and proxies, so every such use is
+ * logged as discouraged (without the token).
+ */
 export function cronAuthorized(req: Request): boolean {
   const expected = process.env.CIVICOS_CRON_SECRET;
   if (!expected) return false;
-  const url = new URL(req.url);
-  const token = url.searchParams.get('token')
-    ?? (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  return token.length > 0 && token === expected;
+  const header = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '').trim();
+  let token = header;
+  if (!token) {
+    const url = new URL(req.url);
+    token = url.searchParams.get('token') ?? '';
+    if (token) console.warn(`[platform-auth] ${url.pathname}: the cron secret came in the query string (?token=), which ends up in logs; send it as Authorization: Bearer instead`);
+  }
+  return token.length > 0 && secretEquals(token, expected);
+}
+
+/** Constant-time comparison of two secrets of any length. */
+export function secretEquals(given: string, expected: string): boolean {
+  const a = createHash('sha256').update(given, 'utf8').digest();
+  const b = createHash('sha256').update(expected, 'utf8').digest();
+  return timingSafeEqual(a, b);
 }
 
 /** Platform-tier officer session path (Supabase JWT). */
