@@ -37,8 +37,8 @@ real weakness that needs a second condition, or that has a limited effect.
 | ID | Area | Severity | Title | Where (file:line) | Fix proposal | Effort |
 |----|------|----------|-------|-------------------|--------------|--------|
 | C-1 | Security | **Critical** | Anyone can create the first administrator account. On substrate-connected nations this stays possible for good. | `app/src/app/api/auth/officials/route.ts:17-25`, `app/src/lib/auth/officials.ts:142-156`, `app/src/middleware.ts:52,244` | Require a one-time bootstrap token (env or printed at start) for the first account. Refuse local account creation while the substrate is the sign-in method. | S |
-| H-1 | Security | **High** | Anyone (`anon`) can overwrite audit-witness attestations and raise "major" tamper escalations | `app/supabase/migrations/20260521210000_civicos_audit_witnesses.sql:63-110,128-151`; `app/src/app/api/cron/witness-divergence/route.ts:52-90` | Revoke `anon`. Make attestations insert-only (no `on conflict do update`). Verify `witness_signature` against `witness_jwk` / a registered witness key. | S |
-| H-2 | Security | **High** | Until `civicos_base_url` is seeded, the pg_cron jobs send the nation's `CIVICOS_CRON_SECRET` to a fixed outside host | `app/supabase/cron/schedule.sql:30,36-56` | Remove the fallback host and do nothing when the URL is not seeded. Rotate the secret wherever the schedule ran unseeded. | S |
+| H-1 | Security | **High** | Anyone (`anon`) can overwrite audit-witness attestations and raise "major" tamper escalations. **Fixed in fd84b03** | `app/supabase/migrations/20260521210000_civicos_audit_witnesses.sql:63-110,128-151`; `app/src/app/api/cron/witness-divergence/route.ts:52-90` | Revoke `anon`. Make attestations insert-only (no `on conflict do update`). Verify `witness_signature` against `witness_jwk` / a registered witness key. | S |
+| H-2 | Security | **High** | Until `civicos_base_url` is seeded, the pg_cron jobs send the nation's `CIVICOS_CRON_SECRET` to a fixed outside host. **Fixed in fd84b03** | `app/supabase/cron/schedule.sql:30,36-56` | Remove the fallback host and do nothing when the URL is not seeded. Rotate the secret wherever the schedule ran unseeded. | S |
 | H-3 | Security | **High** | Officials signed in through the substrate act for the whole government. The second-step policy and deactivation do not apply to them. | `app/src/app/api/auth/official/route.ts:46-56`; `app/src/lib/auth/official.ts:31` | Map `officers.institution_id`/`charter_id` to the ministry id. Re-check `active` in `currentOfficial()`. Apply the two-step policy (or require AAL2 in the Supabase JWT). | M |
 | H-4 | Security | **High** | Every officer of any institution can take installation-level Update Center decisions (data export to the publisher, agent credential, break-glass, data restore, waivers, settings) | `app/src/lib/auth/roles.ts:163`; `app/src/app/api/releases/sovereignty/route.ts:19-25`; `…/settings/agent-credential/route.ts:10-16`; `…/break-glass/route.ts:9-16`; `…/[id]/restore-data/route.ts:11-17` | Classify `/api/releases/*` writes: settings, sovereignty, agent credential, contract and orders go to `ADMIN_ONLY`. Install, decide, break-glass and restore go to signatory+ (`refusal()` in the route). **Fixed in 18eaf66: `/api/releases/*` changes other than feature requests, support tickets and crash reports are rule `installation` (`installationAdmin()`: a government-wide administrator of this nation), checked in the middleware and again in `chamberBody()` / `pathRefusal()`.** | M |
 | H-5 | Security | **High** | Dual control in break-glass and preflight waivers takes the second person as a typed name | `app/src/lib/data/updates.ts:1386-1391`; `app/src/lib/data/readiness.ts:109-112` | Make it two steps by two sessions (propose, then confirm by a different verified official), as in change control. **Fixed in 18eaf66: propose, then confirm by a different signed-in official in their own request (`lib/data/dual-control.ts`, compared by session identity); typed second names refused.** | S |
@@ -46,7 +46,7 @@ real weakness that needs a second condition, or that has a limited effect.
 | M-2 | Security | Medium | Site editor and site settings are not tied to the institution: any officer can propose, publish, or re-point another ministry's website | `app/src/lib/auth/roles.ts:162`; `app/src/app/api/public-sites/[id]/proposals/route.ts:8-13`; `app/src/app/api/public-sites/[id]/route.ts:15-17`; `app/src/lib/data/site-editorial.ts:232-257` | Map site id to ministry id and check `ministryPermission()`. Publishing and settings changes need signatory+ for that ministry. **Fixed in 18eaf66: `siteOwner()` + `canActForSite()` on proposals, publishing, settings and feed sync (owning institution or whole government; publishing still by a different official).** | S |
 | M-3 | Data protection | Medium | Reads are not scoped by institution: every official reads every ministry's cases and every permit's applicant | `app/src/app/api/permits/route.ts:7-9`; `app/src/app/api/org/ministries/[id]/queue/route.ts:11-15`; `app/src/middleware.ts:78-81` | Add a read rule in `roles.ts` (own ministry, whole government, auditors) and apply it to ministry-scoped GETs and personal-data lists. **Fixed in 18eaf66: `canReadInstitution()` / `canReadPermits()` through `readRefusal()` on the queue, its loads and connected systems, permits and `/api/work` (`INSTITUTION_READS`, coverage test).** | M |
 | M-4 | Security | Medium | Feed endpoints log and sign every unauthenticated call with no rate limit. A flood evicts the 20,000-entry exchange evidence log. | `app/src/app/api/org/ministries/[id]/queue/feed/route.ts:41-45`; `…/facilities/feed/route.ts:37-41`; `app/src/lib/exchange/log.ts:24,126-129`; `app/src/middleware.ts:200` | Do not log or sign unknown-key calls (or log them in a separate bounded counter). Rate-limit by address before key lookup. Check Content-Length before `req.text()`. | S |
-| M-5 | Security | Medium | Substrate event webhooks: no URL check, plain `fetch` that follows redirects, a test route that reports status and error. Auditors can register them. | `app/src/app/api/federation/webhooks/test/route.ts:68-90`; `app/src/app/api/cron/deliver-events/route.ts:45`; `app/supabase/migrations/20260521280000_civicos_service_context_helper.sql:72-90`; `…/20260521050000_civicos_rls_scoping.sql:63-74` | Deliver through `safeFetchText` (public addresses, no redirects). Validate the URL in `register_event_webhook`. Exclude `auditor`. Seal the secret. | S |
+| M-5 | Security | Medium | Substrate event webhooks: no URL check, plain `fetch` that follows redirects, a test route that reports status and error. Auditors can register them. **Fixed in fd84b03** | `app/src/app/api/federation/webhooks/test/route.ts:68-90`; `app/src/app/api/cron/deliver-events/route.ts:45`; `app/supabase/migrations/20260521280000_civicos_service_context_helper.sql:72-90`; `…/20260521050000_civicos_rls_scoping.sql:63-74` | Deliver through `safeFetchText` (public addresses, no redirects). Validate the URL in `register_event_webhook`. Exclude `auditor`. Seal the secret. | S |
 | M-6 | Security | Medium | The Helm chart cannot supply the data key or the signing keys from a Secret, so the default deployment signs with development keys and keeps second-step secrets in plaintext | `infra/helm/civicos/templates/app.yaml:59-130`; `infra/helm/civicos/values.yaml:73`; `app/src/lib/crypto/envelope.ts:63-67`; `app/src/lib/crypto/signing-key.ts:50-66` | Add `secretKeyRef` entries (optional) for `CIVICOS_DATA_KEK`, `CIVICOS_AUDIT_KEY`, `CIVICOS_EXCHANGE_KEY`, `CIVICOS_TOKEN_KEY`, `CIVICOS_METRICS_TOKEN`. Make `/api/health?ready` fail under `enforce` while any is missing (or `CIVICOS_KEY_PROVIDER` not ready). | S |
 | M-7 | Security | Medium | One shared cron secret also unlocks the full citizen export, bulk officer creation and the publisher console, and it is accepted in the query string | `app/src/lib/platform-auth.ts:29-40`; `app/src/app/api/substrate/export/route.ts:22-31,38`; `app/src/app/api/admin/officers/bulk/route.ts:30` | Separate credentials: cron-only secret for `/api/cron/*`, distinct export secret (or signed-in administrator), no `?token=`. | M |
 | M-8 | Performance | Medium | Public, unthrottled full audit-chain verification on the event loop (about 2.7 s per million entries), plus an unpaged full-chain `/api/audit` | `app/src/middleware.ts:29`; `app/src/app/api/audit/verify/route.ts:6-8`; `app/src/lib/data/store/audit.ts:69-84`; `app/src/app/api/audit/route.ts:6-8` | Verify incrementally (keep the last verified seq and hash; verify only new entries) and cache the public answer. Rate-limit public GETs. Page `/api/audit`. | M |
@@ -126,6 +126,25 @@ POST /api/auth/official  {email,password}
 
 ### H-1. Anonymous callers can overwrite witness attestations and raise tamper alarms
 
+**Status. Fixed in fd84b03.** Migration
+`20261024100000_civicos_witness_signed_only.sql`: the write RPC is revoked from
+`anon` and `authenticated` (service role only) and refuses a row without a
+128-hex signature or whose key is not a registered, unrevoked key of that label
+(`civicos.audit_witness_keys`, registered by administrators through
+`/api/audit/witnesses/keys`); rows are insert-only (no upsert, a trigger refuses
+UPDATE and DELETE). Witnesses submit through `/api/audit/witnesses`, which
+verifies the ECDSA P-256 / Ed25519 signature over `scope|seq|hash|label` before
+the service role records it. The self-witness sweep signs with the audit
+signing key. The divergence watchdog reads only `civicos_signed_witnesses` and
+re-verifies every signature (and that the key was not revoked when the row was
+recorded) before it trusts a row; older unsigned rows never alarm. Also fixed
+here: `is_service_context()` counted a definer function's owner as the service,
+so every definer RPC gated by it accepted any caller
+(`20261024090000_civicos_service_context_definer_fix.sql`). Tests:
+`supabase/tests/go_live_security_test.sql`, `api/audit/witnesses/*.test.ts`,
+`api/cron/witness-{divergence,sweep}/route.test.ts`. Not done here: a gateway
+rate limit on `/api/audit/witnesses` (abuse lane); register 1.42.
+
 **Evidence.**
 
 ```sql
@@ -167,6 +186,16 @@ constitutional channel (`app/src/app/api/cron/witness-divergence/route.ts:55-90`
 - Rate-limit through the gateway.
 
 ### H-2. The cron schedule sends the nation's secret to a fixed outside host until it is configured
+
+**Status. Fixed in fd84b03.** Every job in `supabase/cron/schedule.sql`
+now calls `civicos.cron_call(job, path)` (migration
+`20261024110000_civicos_cron_dispatch.sql`). It reads both Vault secrets at run
+time and sends nothing unless `civicos_base_url` is a plain http(s) origin and
+the secret is set. Otherwise it raises a NOTICE and records the reason in
+`civicos.cron_skips`. The fallback host is gone, and
+`src/lib/ops/cron-schedule.test.ts` keeps it out. **Nations that applied the
+earlier schedule before setting `civicos_base_url` must rotate
+`CIVICOS_CRON_SECRET`** (register 1.11, `supabase/README.md`).
 
 **Evidence.**
 
@@ -476,6 +505,18 @@ attributed to any ministry.
 - Check `content-length` against `MAX_BYTES` before `req.text()`.
 
 ### M-5. Substrate event webhooks reach internal addresses
+
+**Status. Fixed in fd84b03.** Deliveries and the test ping go through
+`safeFetchText` (`lib/events/substrate-webhook.ts`: public addresses only unless
+`CIVICOS_WEBHOOKS_PRIVATE=1`, no redirects, 5 s, 64 kB). The test route answers
+only delivered / not delivered and logs the reason. Only the cron secret or a
+substrate `platform-admin` session may call it (`platformAdminOrCronAuthorized`).
+Migration `20261024120000_civicos_webhook_admin_only.sql` limits register,
+pause and rotate to `civicos.is_platform_admin()`, and refuses non-http(s),
+credentialed, loopback, link-local and metadata addresses in the RPC and on the
+table (NOT VALID). `20261024090000` closes the definer bypass that had let *any*
+signed-in user register a webhook. Not done here: sealing the webhook secret
+(M-6 / key custody lane).
 
 **Evidence.**
 
@@ -870,7 +911,7 @@ Smaller notes (not findings):
   `JSON.stringify`.
 - All 261 `SECURITY DEFINER` definitions (80 files) set `search_path`. Every
   `public.civicos_*` write RPC is revoked from `anon`, except the witness RPC
-  (H-1). The `civicos` schema has no `USAGE` grant to `anon` or `authenticated`.
+  (H-1, since fixed: service role only). The `civicos` schema has no `USAGE` grant to `anon` or `authenticated`.
 - Logs are redacted by field name (password, token, email, phone, address,
   national id) and long strings are cut. No log call passes names or addresses
   of citizens.

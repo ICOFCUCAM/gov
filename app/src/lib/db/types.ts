@@ -169,6 +169,8 @@ export interface AuditWitnessRow {
   has_signature: boolean;
   at: string;
   recorded_by: string | null;
+  /** Recorded with a registered witness key (20261024100000). */
+  registered_key?: boolean;
 }
 
 export interface DirectiveRow {

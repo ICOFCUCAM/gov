@@ -176,7 +176,7 @@ so nothing else is pulled.
 
 | Job | Schedule | Method |
 |---|---|---|
-| `update-watchdog` | every minute | GET |
+| `update-watchdog`, `deliver-messages` | every minute | GET |
 | `deliver-cloudevents` | every 2 minutes | GET |
 | `deliver-events` | every 5 minutes | GET |
 | `substrate-metrics`, `audit-anchor` | every 10 minutes | GET |
@@ -184,6 +184,7 @@ so nothing else is pulled.
 | `posture-digest`, `site-feeds` | every 30 minutes | GET |
 | `expire-consents`, `audit-self` | hourly | GET |
 | `twin-ingest` | hourly at :07 | GET |
+| `backup` | hourly at :41 (takes a backup when the newest is older than the policy's interval) | GET |
 | `sla`, `telemetry-stale`, `promote-directives` | hourly | POST |
 
 | Value | Default | |

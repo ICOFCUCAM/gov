@@ -329,6 +329,8 @@ cron:
     site-feeds:          { schedule: "*/30 * * * *", method: GET }
     twin-ingest:         { schedule: "7 * * * *",    method: GET }
     deliver-cloudevents: { schedule: "*/2 * * * *",  method: GET }
+    deliver-messages:    { schedule: "* * * * *",    method: GET }
+    backup:              { schedule: "41 * * * *",   method: GET }
     sla:                 { schedule: "0 * * * *",    method: POST, substrate: true }
     telemetry-stale:     { schedule: "0 * * * *",    method: POST, substrate: true }
     promote-directives:  { schedule: "0 * * * *",    method: POST }

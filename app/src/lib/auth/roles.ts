@@ -66,7 +66,8 @@ export const PUBLIC_WRITE: RegExp[] = [/^\/api\/public-sites\/[a-z-]+\/subscribe
  */
 export const SELF_AUTHENTICATED: RegExp[] = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/feed$/,
   /^\/api\/federation\/exchange$/,  // an institution's integration key (verifyIntegrationKey), logged with a signed receipt
-  /^\/api\/oauth\/token$/];         // OAuth2 client credentials: the integration's id and key (lib/auth/client-credentials.ts)
+  /^\/api\/oauth\/token$/,          // OAuth2 client credentials: the integration's id and key (lib/auth/client-credentials.ts)
+  /^\/api\/audit\/witnesses$/];     // a witness attestation: signed by a key an administrator registered (verifyWitnessStatement in the route)
 /**
  * Routes that verify an `Authorization` bearer themselves (the automation
  * secret or a platform-tier substrate session: lib/platform-auth.ts,
@@ -130,6 +131,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/platform(\/|$)/,
   // Connections to other installations and outside systems.
   /^\/api\/federation(\/|$)/,
+  // Which keys count as audit-chain witnesses (registering and revoking them).
+  /^\/api\/audit\/witnesses\/keys$/,
   /^\/api\/integrations(\/|$)/,
   /^\/api\/webhooks(\/|$)/,
   // The nation's email and SMS providers and its message outbox (lib/messaging).
