@@ -11,7 +11,7 @@
 // public addresses only unless the nation allows its own network
 // (CIVICOS_WEBHOOKS_PRIVATE=1), redirects never followed.
 //
-// Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
+// Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only).
 // Delivery is at-least-once per cursor; consumers dedupe on event id.
 // Cadence: recommended every 1–5 minutes.
 

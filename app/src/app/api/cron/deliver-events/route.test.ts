@@ -66,14 +66,14 @@ function client(opts: {
 
 describe('GET /api/cron/deliver-events', () => {
   it('401 without the secret', async () => {
-    const res = await GET(new Request('http://x?token=x'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer x' } }));
     expect(res.status).toBe(401);
   });
 
   it('503 when substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -87,7 +87,7 @@ describe('GET /api/cron/deliver-events', () => {
     }));
     fetchMock.mockImplementation(answer(200));
 
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.total_delivered).toBe(2);
     expect(json.ok).toBe(true);
@@ -125,7 +125,7 @@ describe('GET /api/cron/deliver-events', () => {
       .mockImplementationOnce(answer(200))
       .mockImplementationOnce(answer(500));
 
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.total_delivered).toBe(1);
     expect(json.ok).toBe(false);
@@ -152,7 +152,7 @@ describe('GET /api/cron/deliver-events', () => {
     }));
     fetchMock.mockImplementation(answer(502));
 
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.total_delivered).toBe(0);
     const markCalls = rpc.mock.calls.filter((c: unknown[]) => c[0] === 'civicos_mark_webhook_delivered');
@@ -170,7 +170,7 @@ describe('GET /api/cron/deliver-events', () => {
     }));
     fetchMock.mockRejectedValue(new Error('aborted'));
 
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.ok).toBe(false);
     expect(json.total_delivered).toBe(0);
@@ -179,7 +179,7 @@ describe('GET /api/cron/deliver-events', () => {
   it('reports an empty run when there are no active webhooks', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(client({ webhooks: [], events: {} }));
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.webhooks_processed).toBe(0);
     expect(json.total_delivered).toBe(0);
@@ -198,7 +198,7 @@ describe('GET /api/cron/deliver-events', () => {
       events: { constitutional: [{ id: 'e1', at_ms: 100 }] },
       rpc,
     }));
-    const json = await (await GET(new Request('http://x?token=correct'))).json();
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
     expect(json.total_delivered).toBe(0);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(rpc).toHaveBeenCalledWith('civicos_record_webhook_failure', expect.objectContaining({ p_id: 'w1' }));
@@ -213,7 +213,7 @@ describe('GET /api/cron/deliver-events', () => {
       events: { constitutional: [{ id: 'e1', at_ms: 100 }] },
     }));
     fetchMock.mockImplementation(answer(200));
-    const json = await (await GET(new Request('http://x?token=correct'))).json();
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
     expect(json.total_delivered).toBe(1);
   });
 
@@ -224,7 +224,7 @@ describe('GET /api/cron/deliver-events', () => {
       events: { constitutional: [{ id: 'e1', at_ms: 100 }] },
     }));
     fetchMock.mockImplementation(() => Promise.resolve(new Response(null, { status: 307, headers: { location: 'http://169.254.169.254/' } })));
-    const json = await (await GET(new Request('http://x?token=correct'))).json();
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
     expect(json.total_delivered).toBe(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

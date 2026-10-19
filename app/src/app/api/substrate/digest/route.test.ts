@@ -19,36 +19,36 @@ function viewBuilder(count: number) {
 
 beforeEach(() => {
   serverClientMock.mockReset();
-  delete process.env.CIVICOS_CRON_SECRET;
+  delete process.env.CIVICOS_EXPORT_SECRET;
 });
 
 describe('GET /api/substrate/digest', () => {
-  it('returns 401 when CIVICOS_CRON_SECRET is unset', async () => {
+  it('returns 401 when CIVICOS_EXPORT_SECRET is unset', async () => {
     const res = await GET(new Request('http://x/api/substrate/digest'));
     expect(res.status).toBe(401);
   });
 
   it('returns 401 with the wrong token', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
-    const res = await GET(new Request('http://x/api/substrate/digest?token=wrong'));
+    process.env.CIVICOS_EXPORT_SECRET = 'correct';
+    const res = await GET(new Request('http://x/api/substrate/digest', { headers: { authorization: 'Bearer wrong' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when the substrate is not configured', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_EXPORT_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x/api/substrate/digest?token=correct'));
+    const res = await GET(new Request('http://x/api/substrate/digest', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
   it('emits per-view counts and totals on a happy path (without verify)', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_EXPORT_SECRET = 'correct';
     serverClientMock.mockReturnValue({
       from: () => ({
         select: () => Promise.resolve({ count: 5, error: null }),
       }),
     });
-    const res = await GET(new Request('http://x/api/substrate/digest?token=correct'));
+    const res = await GET(new Request('http://x/api/substrate/digest', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(Object.keys(json.counts).length).toBeGreaterThan(10);
@@ -58,7 +58,7 @@ describe('GET /api/substrate/digest', () => {
   });
 
   it('includes a chain verification block when verify=1', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_EXPORT_SECRET = 'correct';
     serverClientMock.mockReturnValue({
       from: (view: string) => {
         if (view === 'civicos_audit_entries') {
@@ -80,7 +80,7 @@ describe('GET /api/substrate/digest', () => {
         error: null,
       }),
     });
-    const res = await GET(new Request('http://x/api/substrate/digest?token=correct&verify=1'));
+    const res = await GET(new Request('http://x/api/substrate/digest?verify=1', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.chains.scopes_checked).toBe(2);
     expect(json.chains.results).toHaveLength(2);
@@ -88,13 +88,13 @@ describe('GET /api/substrate/digest', () => {
   });
 
   it('marks broken views as -1 in counts', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_EXPORT_SECRET = 'correct';
     serverClientMock.mockReturnValue({
       from: () => ({
         select: () => Promise.resolve({ count: null, error: { message: 'oops' } }),
       }),
     });
-    const res = await GET(new Request('http://x/api/substrate/digest?token=correct'));
+    const res = await GET(new Request('http://x/api/substrate/digest', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     for (const v of Object.values(json.counts)) {
       expect(v).toBe(-1);

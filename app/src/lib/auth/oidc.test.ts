@@ -5,6 +5,9 @@ import { clearJwksCache, decideRequest, finishSignIn, listRequests, logoutUrl, p
 import { listAudit, listMinistries } from '@/lib/data/store';
 // @ts-expect-error a plain .mjs script (no declarations), shared with the end-to-end check
 import { startStubProvider } from '../../../scripts/oidc-stub-provider.mjs';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 process.env.CIVICOS_SCRYPT_N = '16384';
 const PW = 'correct horse battery';
@@ -38,7 +41,7 @@ describe('OpenID Connect sign-in for officials', () => {
     resetOfficials(); resetSignOn(); clearJwksCache();
     for (const k of Object.keys(stub.tweak)) delete stub.tweak[k];
     Object.assign(stub.person, { sub: 'emp-1001', email: 'ada@gov.example', email_verified: true, name: 'Ada Obi', groups: [], amr: ['pwd'], acr: undefined, extra: undefined });
-    adminId = ok(await createAccount({ email: 'admin@gov.example', name: 'Admin', office: 'ICT', password: PW }, null)).id;
+    adminId = ok(await createAccount({ email: 'admin@gov.example', name: 'Admin', office: 'ICT', password: PW, setupToken: SETUP_TOKEN }, null)).id;
     officerId = ok(await createAccount({ email: 'ada@gov.example', name: 'Ada Obi', office: 'Treasury officer', password: PW, role: 'officer', institution: 'fed-treasury' }, 'Admin')).id;
   });
 

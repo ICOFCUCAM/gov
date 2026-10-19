@@ -69,6 +69,8 @@ real weakness that needs a second condition, or that has a limited effect.
 
 ### C-1. Anyone can create the first administrator account
 
+**Fixed in 934941c.** The first account needs a one-time setup code (`app/src/lib/auth/setup-token.ts`): `CIVICOS_SETUP_TOKEN` (24+ characters, optional `CIVICOS_SETUP_TOKEN_EXPIRES`) or, when unset, a 100-bit code the server writes once to its own stdout at start (`CIVICOS SETUP CODE`, never the log ring, valid 24 h, replaced when expired). Compared in constant time, used once (a used `CIVICOS_SETUP_TOKEN` is remembered by its hash), wrong codes audited and limited to 10 per 15 min, checked again after hashing in the same step the account is added. While the substrate is the sign-in method no platform account is created (409; `CIVICOS_LOCAL_ACCOUNTS=allow` for a break-glass fallback). The first-account form on `/sign-in` (where `/setup` sends a first installation under enforcement) has a Setup code field. Tests: `app/src/lib/auth/setup-token.test.ts`. Documented in `infra/README.md`, `app/.env.example`, Integration Register 15.4.
+
 **Evidence.** The accounts route lets an unauthenticated caller create an account
 whenever the store is empty:
 
@@ -232,6 +234,8 @@ It also contradicts the doctrine that operational data leaves only through
 
 ### H-3. Substrate sign-in grants whole-government scope and skips the second-step policy and deactivation
 
+**Fixed in 934941c.** `app/src/lib/auth/substrate-officials.ts`: role and institution come from the platform's records, an administrator's assignment (`/api/auth/officials/substrate`, on the Sign-in accounts page, audited) or else least privilege from the register (Officer of the ministry the register's `charter_id`/`institution_id` names; Auditor when none matches; `platform-admin` stays Administrator so a substrate-only nation has one; signing rights and whole-government scope need an assignment). The second-step policy applies (a substrate session has passed it only with `aal: aal2`). `currentOfficial()` re-reads the register entry on every request (5 s cache) and refuses an inactive, missing or unreadable one. Tests: `app/src/lib/auth/substrate-officials.test.ts`.
+
 **Evidence.**
 
 ```ts
@@ -366,6 +370,8 @@ step runs on confirmation. Never accept a second name from a body.
 ## Medium
 
 ### M-1. Session revocation does not reach reads
+
+**Fixed in 934941c.** `readGate` asks `GET /api/auth/official` as `roleGate` does, cached 5 s per token hash (`READ_CHECK_MS`), and fails closed (503) when it cannot ask. Sign-out keeps the token's SHA-256 until its expiry and `currentOfficial()` refuses it, so a copied cookie stops working. Tests: `app/src/middleware.test.ts` (M-1 cases), `app/src/lib/auth/substrate-officials.test.ts` (sign-out). Reproduced live under `CIVICOS_AUTH=enforce`: after disabling the account and after sign-out, the old cookie gets 401 on `/api/audit` and a redirect to `/sign-in` for `/gov/home`.
 
 **Evidence.**
 
@@ -578,6 +584,8 @@ Deployment spec in plain text.
   accepts it.
 
 ### M-7. One cron secret opens far more than cron
+
+**Fixed in 934941c.** `app/src/lib/platform-auth.ts` separates secrets by purpose: `CIVICOS_CRON_SECRET` (only `/api/cron/*`), `CIVICOS_EXPORT_SECRET` (substrate export and digest), `CIVICOS_PUBLISHER_SECRET` (publisher console automation), `CIVICOS_PROVISIONING_SECRET` (bulk officers, webhook test). Bearer header only (`?token=` refused and logged without the value), constant-time compare. Deprecation path: `CIVICOS_LEGACY_SHARED_SECRET=1` keeps the cron secret for a purpose without its own secret, logged each use. Helm, docker-compose, `infra/README.md`, `app/supabase/README.md` and `app/.env.example` updated. Still open: officer provisioning by a signed-in platform administrator instead of a secret. Tests: `app/src/lib/platform-auth.test.ts`, `app/src/app/api/substrate/export/route.test.ts`.
 
 **Evidence.** `cronAuthorized()` (`lib/platform-auth.ts:29-40`, which also
 accepts `?token=`) authorises the 15 scheduled jobs. It also authorises

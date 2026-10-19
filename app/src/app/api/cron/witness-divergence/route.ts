@@ -6,7 +6,7 @@
 //   2. A `civicos.federation_events` entry on channel 'constitutional',
 //      type 'audit.divergence', so any subscribed watcher sees it.
 //
-// Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
+// Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only).
 // Cadence: every 15 minutes (same as witness-sweep, but staggered).
 // Idempotent: re-recording the same divergence is silently deduplicated
 // by escalation reason — the operator sees one row, not one per cron tick.

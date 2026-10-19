@@ -69,14 +69,14 @@ function clientFor({
 
 describe('GET /api/cron/posture-digest', () => {
   it('returns 401 without the secret', async () => {
-    const res = await GET(new Request('http://x/api/cron/posture-digest?token=x'));
+    const res = await GET(new Request('http://x/api/cron/posture-digest', { headers: { authorization: 'Bearer x' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x/api/cron/posture-digest?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/posture-digest', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -104,7 +104,7 @@ describe('GET /api/cron/posture-digest', () => {
       },
       rpc: rpcMock,
     });
-    const res = await GET(new Request('http://x/api/cron/posture-digest?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/posture-digest', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(res.status).toBe(200);
     const active = findCharters({ activated: true });

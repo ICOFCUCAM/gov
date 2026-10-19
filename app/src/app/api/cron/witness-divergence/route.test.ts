@@ -67,21 +67,21 @@ beforeEach(() => {
 
 describe('GET /api/cron/witness-divergence', () => {
   it('returns 401 without the secret', async () => {
-    const res = await GET(new Request('http://x?token=x'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer x' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when the substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
   it('returns ok:true and no alarms when every signed witness agrees with the live chain', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     const { rpc, views } = substrate([att('truth', 'auditor-1')]);
-    const json = await (await GET(new Request('http://x?token=correct'))).json();
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
     expect(json.ok).toBe(true);
     expect(json.alarmed).toBe(0);
     expect(rpc).not.toHaveBeenCalled();
@@ -92,7 +92,7 @@ describe('GET /api/cron/witness-divergence', () => {
   it('records an escalation + federation event for a divergent attestation whose signature verifies', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     const { rpc } = substrate([att('ROGUE', 'auditor-1')]);
-    const json = await (await GET(new Request('http://x?token=correct'))).json();
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
     expect(json.alarmed).toBe(1);
     expect(json.ok).toBe(false);
     expect(rpc).toHaveBeenCalledWith('civicos_record_escalation', expect.objectContaining({
@@ -113,7 +113,7 @@ describe('GET /api/cron/witness-divergence', () => {
     const noSig = att('ROGUE', 'auditor-2', { witness_signature: null });
     const junk = att('ROGUE', 'auditor-3', { witness_signature: 'ab'.repeat(64) });
     const { rpc } = substrate([forged, noSig, junk]);
-    const json = await (await GET(new Request('http://x?token=correct'))).json();
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
     expect(json.alarmed).toBe(0);
     expect(json.results[0].unverified).toBe(3);
     expect(rpc).not.toHaveBeenCalled();
@@ -122,7 +122,7 @@ describe('GET /api/cron/witness-divergence', () => {
   it('does not trust a row recorded after its key was revoked', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     const { rpc } = substrate([att('ROGUE', 'auditor-1', { key_revoked_at: '2026-09-01T00:00:00Z', at: '2026-10-01T00:00:00Z' })]);
-    const json = await (await GET(new Request('http://x?token=correct'))).json();
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
     expect(json.alarmed).toBe(0);
     expect(rpc).not.toHaveBeenCalled();
   });
@@ -130,7 +130,7 @@ describe('GET /api/cron/witness-divergence', () => {
   it('does not record a second escalation when one is already open for the same reason', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     const { rpc } = substrate([att('ROGUE', 'a')], { openEscalation: true });
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(200);
     expect(rpc).not.toHaveBeenCalled();
   });

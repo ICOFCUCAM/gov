@@ -1,11 +1,23 @@
 // Shared request authorisation for privileged API routes.
 //
-// Two accepted credentials, mirroring the rest of the platform tier:
-//   • CIVICOS_CRON_SECRET in Authorization: Bearer (or, discouraged and
-//     logged, ?token=) — for CLI / automation that has no UI session.
-//   • a Supabase access token (JWT) belonging to a platform-tier officer,
-//     verified by asking the substrate (under that user's RLS) who the
-//     current actor is.
+// Machine credentials are separated by purpose (go-live review M-7), so the
+// secret every scheduled job carries opens nothing but the scheduled jobs:
+//   • cron         CIVICOS_CRON_SECRET          /api/cron/* (pg_cron, Vercel Cron)
+//   • export       CIVICOS_EXPORT_SECRET        /api/substrate/export and /digest
+//   • publisher    CIVICOS_PUBLISHER_SECRET     /api/releases/publisher/* automation (CI)
+//   • provisioning CIVICOS_PROVISIONING_SECRET  bulk officer creation, webhook test pings
+// Each is accepted only as `Authorization: Bearer …` (never from the query
+// string, which ends up in access logs and proxies) and compared in constant
+// time. A route that also accepts a person accepts a platform-tier officer's
+// Supabase access token (JWT), verified by asking the substrate (under that
+// user's RLS) who the current actor is.
+//
+// Deprecation path: an installation that still drives export, publisher or
+// provisioning automation with the cron secret can set
+// CIVICOS_LEGACY_SHARED_SECRET=1. While it is set, and only for a purpose
+// whose own variable is not set, the cron secret is still accepted there, and
+// every such use is logged as `auth.shared_secret_deprecated`. Set the
+// purpose's own secret, move the automation to it, then remove the flag.
 //
 // These checks are defense-in-depth: the SECURITY DEFINER RPCs enforce the
 // platform-tier gate themselves, so a route is never the sole authority.
@@ -18,25 +30,49 @@ export const PLATFORM_ROLES = new Set([
   'platform-admin', 'noc-officer', 'cabinet-officer', 'auditor',
 ]);
 
-/**
- * Fixed shared-secret path (CLI / automation, no UI session): the secret in
- * `Authorization: Bearer …`, compared in constant time (SHA-256 of both
- * sides, then timingSafeEqual, so neither length nor content leaks through
- * timing). `?token=` is still accepted for schedulers that cannot send
- * headers, but it ends up in access logs and proxies, so every such use is
- * logged as discouraged (without the token).
- */
-export function cronAuthorized(req: Request): boolean {
-  const expected = process.env.CIVICOS_CRON_SECRET;
-  if (!expected) return false;
-  const header = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '').trim();
-  let token = header;
+export type SecretPurpose = 'cron' | 'export' | 'publisher' | 'provisioning';
+/** The environment variable that holds each purpose's secret. */
+export const SECRET_ENV: Record<SecretPurpose, string> = {
+  cron: 'CIVICOS_CRON_SECRET',
+  export: 'CIVICOS_EXPORT_SECRET',
+  publisher: 'CIVICOS_PUBLISHER_SECRET',
+  provisioning: 'CIVICOS_PROVISIONING_SECRET',
+};
+
+const pathOf = (req: Request): string => { try { return new URL(req.url).pathname; } catch { return ''; } };
+
+/** The bearer token of a request (header only), or ''. A secret sent as `?token=` is refused and logged (without it), never read. */
+function bearerOf(req: Request, purpose: SecretPurpose): string {
+  const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '').trim();
   if (!token) {
-    const url = new URL(req.url);
-    token = url.searchParams.get('token') ?? '';
-    if (token) logger.warn('auth.cron_secret_in_query', { route: url.pathname, advice: 'send it as Authorization: Bearer; query strings end up in logs' });
+    let inQuery = false;
+    try { inQuery = new URL(req.url).searchParams.has('token'); } catch { /* not a URL */ }
+    if (inQuery) logger.warn('auth.secret_in_query_refused', { route: pathOf(req), purpose, advice: 'send it as Authorization: Bearer; query strings are no longer accepted' });
   }
-  return token.length > 0 && secretEquals(token, expected);
+  return token;
+}
+
+/**
+ * The machine secret for one purpose, from `Authorization: Bearer …` only,
+ * compared in constant time. False when the purpose's secret is not set
+ * (and the deprecated shared-secret fallback does not apply).
+ */
+export function secretAuthorized(req: Request, purpose: SecretPurpose): boolean {
+  const token = bearerOf(req, purpose);
+  if (!token) return false;
+  const own = process.env[SECRET_ENV[purpose]];
+  if (own) return secretEquals(token, own);
+  const shared = process.env.CIVICOS_CRON_SECRET;
+  if (purpose !== 'cron' && process.env.CIVICOS_LEGACY_SHARED_SECRET === '1' && shared && secretEquals(token, shared)) {
+    logger.warn('auth.shared_secret_deprecated', { route: pathOf(req), purpose, advice: `set ${SECRET_ENV[purpose]} and stop using CIVICOS_CRON_SECRET here, then remove CIVICOS_LEGACY_SHARED_SECRET` });
+    return true;
+  }
+  return false;
+}
+
+/** The scheduled jobs' secret (CIVICOS_CRON_SECRET), header only. Opens /api/cron/* and nothing else. */
+export function cronAuthorized(req: Request): boolean {
+  return secretAuthorized(req, 'cron');
 }
 
 /** Constant-time comparison of two secrets of any length. */
@@ -62,12 +98,12 @@ export async function sessionAuthorized(req: Request, roles: ReadonlySet<string>
  *  outside systems (federation webhooks; civicos.is_platform_admin() on the SQL side). */
 export const PLATFORM_ADMIN_ROLES: ReadonlySet<string> = new Set(['platform-admin']);
 
-/** Accept either the cron secret or a platform-tier officer session. */
-export async function platformOrCronAuthorized(req: Request): Promise<boolean> {
-  return cronAuthorized(req) || await sessionAuthorized(req);
+/** Accept the purpose's own secret or a platform-tier officer session. */
+export async function platformOrSecretAuthorized(req: Request, purpose: Exclude<SecretPurpose, 'cron'>): Promise<boolean> {
+  return secretAuthorized(req, purpose) || await sessionAuthorized(req);
 }
 
-/** Accept either the cron secret or a platform administrator's session (not auditors or other platform roles). */
-export async function platformAdminOrCronAuthorized(req: Request): Promise<boolean> {
-  return cronAuthorized(req) || await sessionAuthorized(req, PLATFORM_ADMIN_ROLES);
+/** Accept the purpose's own secret or a platform administrator's session (not auditors or other platform roles). */
+export async function platformAdminOrSecretAuthorized(req: Request, purpose: Exclude<SecretPurpose, 'cron'>): Promise<boolean> {
+  return secretAuthorized(req, purpose) || await sessionAuthorized(req, PLATFORM_ADMIN_ROLES);
 }

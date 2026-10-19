@@ -29,7 +29,7 @@ export function OfficialSignIn() {
   const providerNote = params.get('oidc');
   const providerPending = params.get('pending') === '1';
   const s = useSignIn();
-  const [f, setF] = React.useState({ email: '', password: '', name: '', office: '', code: '' });
+  const [f, setF] = React.useState({ email: '', password: '', name: '', office: '', code: '', setupToken: '' });
   const [askCode, setAskCode] = React.useState(false);
   // The account has a passkey: the server's options for the second step.
   const [passkeyStep, setPasskeyStep] = React.useState<PasskeyStep | null>(null);
@@ -65,7 +65,7 @@ export function OfficialSignIn() {
     e.preventDefault();
     setBusy(true); setError(null);
     try {
-      if (first) await post('/api/auth/officials', { email: f.email, password: f.password, name: f.name, office: f.office });
+      if (first) await post('/api/auth/officials', { email: f.email, password: f.password, name: f.name, office: f.office, setupToken: f.setupToken });
       const d = await post('/api/auth/official', { method: 'local', email: f.email, password: f.password, ...(askCode && f.code ? { code: f.code } : {}) });
       await landed(d);
     } catch (err) { setError((err as Error).message); }
@@ -164,7 +164,7 @@ export function OfficialSignIn() {
       <h2 className="mb-1 font-semibold">{first ? 'Create the first official account' : 'Officials: sign in with your platform account'}</h2>
       <p className="mb-3 text-sm text-ink-muted">
         {first
-          ? 'This installation has no official accounts yet. The first account is made now, at installation; after that, only a signed-in official can create accounts. Every account and sign-in is written to the audit chain.'
+          ? 'This installation has no official accounts yet. The first account is made now, at installation, with the one-time setup code from the operator; after that, only a signed-in official can create accounts. Every account and sign-in is written to the audit chain.'
           : 'Your actions will be recorded under your verified name.'}
       </p>
       <form onSubmit={submit} className="space-y-3">
@@ -172,6 +172,8 @@ export function OfficialSignIn() {
           <>
             <TextField label="Full name" name="name" required value={f.name} onChange={e => setF({ ...f, name: e.currentTarget.value })} />
             <TextField label="Office" name="office" required placeholder="e.g. Permanent Secretary, Cabinet Office" value={f.office} onChange={e => setF({ ...f, office: e.currentTarget.value })} />
+            <TextField label="Setup code" name="setup-code" autoComplete="one-time-code" required spellCheck={false}
+              help="From the operator: CIVICOS_SETUP_TOKEN, or the code the server wrote to its output at start (CIVICOS SETUP CODE). It works once." value={f.setupToken} onChange={e => setF({ ...f, setupToken: e.currentTarget.value })} />
           </>
         ) : null}
         <TextField label="Email" name="official-email" type="email" autoComplete="username" required value={f.email} onChange={e => setF({ ...f, email: e.currentTarget.value })} />

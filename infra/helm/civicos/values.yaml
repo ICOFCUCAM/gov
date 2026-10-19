@@ -56,9 +56,13 @@ app:
   # installation's client certificate for calling partner installations under
   # mutual TLS (lib/exchange/federation-client.ts); "" for none.
   federationClientSecret: ""
-  # Secret holding CIVICOS_SESSION_SECRET and CIVICOS_CRON_SECRET (required)
-  # and NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  # SUPABASE_SERVICE_ROLE_KEY (when the substrate is connected).
+  # Secret holding CIVICOS_SESSION_SECRET and CIVICOS_CRON_SECRET (required),
+  # optionally CIVICOS_EXPORT_SECRET, CIVICOS_PUBLISHER_SECRET,
+  # CIVICOS_PROVISIONING_SECRET (one per purpose; the cron secret opens only
+  # /api/cron/*) and CIVICOS_SETUP_TOKEN (first administrator; else printed
+  # to the log at start), and NEXT_PUBLIC_SUPABASE_URL,
+  # NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SERVICE_ROLE_KEY (when the
+  # substrate is connected).
   existingSecret: civicos-app
   # Optional keys the app also reads from existingSecret when present:
   # CIVICOS_METRICS_TOKEN (/api/metrics), CIVICOS_OTEL_HEADERS (the trace

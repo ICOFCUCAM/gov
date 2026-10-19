@@ -8,6 +8,9 @@ import { signClaims } from '@/lib/auth/session-token';
 import { apiPermission, mutationRule } from '@/lib/auth/roles';
 import { listAudit } from '@/lib/data/store';
 import { resetMessaging, enqueue } from '@/lib/messaging/outbox';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 process.env.CIVICOS_SCRYPT_N = '16384';
 let cookie: string | undefined;
@@ -27,7 +30,7 @@ const relay = { kind: 'smtp', name: 'Main relay', from: 'updates@gov.example', h
 
 beforeEach(async () => {
   resetOfficials(); resetMessaging(); cookie = undefined;
-  await createAccount({ email: 'admin@gov.test', name: 'Admin', office: 'Head of Service', password: PW }, null);
+  await createAccount({ email: 'admin@gov.test', name: 'Admin', office: 'Head of Service', password: PW, setupToken: SETUP_TOKEN }, null);
 });
 afterEach(() => vi.unstubAllEnvs());
 

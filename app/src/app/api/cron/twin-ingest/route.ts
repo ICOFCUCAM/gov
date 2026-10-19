@@ -4,7 +4,7 @@
 // daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never
 // fetched here.
 //
-// Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=),
+// Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only),
 // like every /api/cron/* worker.
 
 import { NextResponse } from 'next/server';

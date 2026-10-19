@@ -39,7 +39,7 @@ beforeEach(() => {
   serverClientMock.mockReset();
   tokenScopedClientMock.mockReset();
   tokenScopedClientMock.mockReturnValue(null);
-  delete process.env.CIVICOS_CRON_SECRET;
+  delete process.env.CIVICOS_PROVISIONING_SECRET;
   delete process.env.CIVICOS_WEBHOOKS_PRIVATE;
   vi.restoreAllMocks();
   netFetch.mockReset();
@@ -60,28 +60,28 @@ describe('POST /api/federation/webhooks/test', () => {
   });
 
   it('returns 503 when the substrate is not configured', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_PROVISIONING_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await POST(new Request('http://x?token=correct', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: 'w1' }),
+    const res = await POST(new Request('http://x', {
+      method: 'POST', headers: { authorization: 'Bearer correct', 'content-type': 'application/json' }, body: JSON.stringify({ id: 'w1' }),
     }));
     expect(res.status).toBe(503);
   });
 
   it('returns 400 when id is missing', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_PROVISIONING_SECRET = 'correct';
     serverClientMock.mockReturnValue(webhookQuery({ data: null, error: null }));
-    const res = await POST(new Request('http://x?token=correct', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wrong: 1 }),
+    const res = await POST(new Request('http://x', {
+      method: 'POST', headers: { authorization: 'Bearer correct', 'content-type': 'application/json' }, body: JSON.stringify({ wrong: 1 }),
     }));
     expect(res.status).toBe(400);
   });
 
   it('returns 404 when the webhook does not exist', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_PROVISIONING_SECRET = 'correct';
     serverClientMock.mockReturnValue(webhookQuery({ data: null, error: null }));
-    const res = await POST(new Request('http://x?token=correct', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: 'missing' }),
+    const res = await POST(new Request('http://x', {
+      method: 'POST', headers: { authorization: 'Bearer correct', 'content-type': 'application/json' }, body: JSON.stringify({ id: 'missing' }),
     }));
     expect(res.status).toBe(404);
   });

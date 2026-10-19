@@ -194,7 +194,7 @@ export function CronStatus() {
 
       <p className="text-[10px] text-ink-muted">
         Cron secret: <span className="font-mono">CIVICOS_CRON_SECRET</span> env
-        var. Recipes for Vercel Cron / Supabase pg_cron in supabase/README.md.
+        var, sent as a Bearer header (it opens the scheduled jobs only). Recipes for Vercel Cron / Supabase pg_cron in supabase/README.md.
       </p>
     </div>
   );

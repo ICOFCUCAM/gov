@@ -4,7 +4,7 @@
 // hash checked, dry-run restore), then applies the retention policy, and
 // reports whether the recovery point objective is met. Never restores.
 //
-// Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=),
+// Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only),
 // like every /api/cron/* worker.
 
 import { NextResponse } from 'next/server';

@@ -81,6 +81,13 @@ services:
       CIVICOS_AUTH: ${CIVICOS_AUTH:-}
       CIVICOS_SESSION_SECRET: ${CIVICOS_SESSION_SECRET:-local-only-session-secret-change-me-0001}
       CIVICOS_CRON_SECRET: ${CIVICOS_CRON_SECRET:-local-only-cron-secret-change-me-0001}
+      # One secret per purpose (the cron secret opens only /api/cron/*); empty = no machine caller for that purpose.
+      CIVICOS_EXPORT_SECRET: ${CIVICOS_EXPORT_SECRET:-}
+      CIVICOS_PUBLISHER_SECRET: ${CIVICOS_PUBLISHER_SECRET:-}
+      CIVICOS_PROVISIONING_SECRET: ${CIVICOS_PROVISIONING_SECRET:-}
+      # First administrator: the one-time setup code. Empty = the app writes one to its log at start
+      # (docker compose logs app | grep -A3 "SETUP CODE").
+      CIVICOS_SETUP_TOKEN: ${CIVICOS_SETUP_TOKEN:-}
       CIVICOS_METRICS_TOKEN: ${CIVICOS_METRICS_TOKEN:-local-only-metrics-token-change-me-0001}
       CIVICOS_INTERNAL_URL: http://localhost:3000
       CIVICOS_LOG_LEVEL: ${CIVICOS_LOG_LEVEL:-info}

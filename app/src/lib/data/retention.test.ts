@@ -7,6 +7,9 @@ import { resetMessaging, messagesWhere } from '@/lib/messaging/outbox';
 import { resetOfficials, createAccount, checkPassword, sweepSignInFailures, failureKeys } from '@/lib/auth/officials';
 import { recordAggregated, flushAggregated, resetAuditAggregate, AGGREGATE_WINDOW_MS, WRITTEN_PER_WINDOW, MAX_WINDOWS, openAggregates } from '@/lib/audit/aggregate';
 import { proposeRetention, decideRetention, retentionRules, runRetention, resetRetention } from './retention';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 process.env.CIVICOS_SCRYPT_N = '16384';
 const DAY = 86_400_000;
@@ -28,7 +31,7 @@ describe('refusals from people not signed in are written in a bounded way', () =
   });
 
   it('keeps failed sign-ins bounded: hashed keys, expiring, few audit entries', async () => {
-    ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: 'correct horse battery' }, null));
+    ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: 'correct horse battery', setupToken: SETUP_TOKEN }, null));
     const before = listAudit().length;
     const now = Date.now();
     // Unknown addresses are compared against a full-cost dummy hash, so a dozen is enough here.

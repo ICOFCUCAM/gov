@@ -5,7 +5,7 @@
 // a blind spot becomes a visible escalation. Designed for a scheduler
 // (Vercel Cron, Supabase scheduled function, etc.).
 //
-// Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization:
+// Protection: shared CIVICOS_CRON_SECRET as Authorization:
 // Bearer. The secret never reaches the client bundle (server-only route).
 
 import { NextResponse } from 'next/server';

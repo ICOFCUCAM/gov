@@ -317,16 +317,20 @@ API: `/api/health`, `/api/cron/sla`, `/api/cron/substrate-metrics`,
 
 ## API endpoints
 
-All shared-secret-gated (`CIVICOS_CRON_SECRET` env var, presented as
-`?token=…` or `Authorization: Bearer …`). They use the service-role
-client server-side; the secret never reaches the browser bundle.
+Shared-secret-gated, one secret per purpose, presented only as
+`Authorization: Bearer …` (a `?token=` query parameter is refused): the
+scheduled jobs `/api/cron/*` take `CIVICOS_CRON_SECRET`, the substrate
+digest and export take `CIVICOS_EXPORT_SECRET` (go-live review M-7; see
+`infra/README.md` for the deprecation path of the shared secret). They use
+the service-role client server-side; the secret never reaches the browser
+bundle.
 
-### `GET|POST /api/cron/sla?token=…[&hours=NN]`
+### `GET|POST /api/cron/sla[?hours=NN]`
 Calls `civicos_escalate_stale_service_requests(hours)`. Default
 threshold 48h. Records a `minor` escalation per stale request,
 idempotent per request within 24h. Returns `{ ok, escalated, threshold_hours, at }`.
 
-### `GET|POST /api/cron/substrate-metrics?token=…`
+### `GET|POST /api/cron/substrate-metrics`
 Defines (idempotent) six substrate-level telemetry streams and appends
 a sample to each:
 - `substrate.work_items.open` (warn 100, alert 250)
@@ -339,12 +343,12 @@ a sample to each:
 Samples flow through `/gov/telemetry`; threshold breaches auto-escalate
 via the existing telemetry trigger.
 
-### `GET|POST /api/substrate/digest?token=…[&verify=1]`
+### `GET|POST /api/substrate/digest[?verify=1]` (CIVICOS_EXPORT_SECRET)
 Programmatic equivalent of the /gov/substrate download digest. Returns
 per-view row counts (RLS-unfiltered via service-role) and optionally
 the chain integrity sweep across recent scopes. Suitable for archival.
 
-### `GET|POST /api/cron/posture-digest?token=…`
+### `GET|POST /api/cron/posture-digest`
 Per-charter posture aggregator. For every activated institution,
 computes open / urgent / open-escalations counts and runs a simple
 heuristic to produce a `steady` / `elevated` / `crisis` posture +
@@ -352,7 +356,7 @@ readiness/stress score, then appends a `posture_history` snapshot.
 Produces a continuous timeline on /gov/posture without needing any
 operator to manually snapshot. Recommended cadence: 30 min.
 
-### `GET|POST /api/cron/audit-self?token=…`
+### `GET|POST /api/cron/audit-self`
 Heartbeat append to the `substrate:self` audit scope on each run.
 Detail carries open work-item count + total audit entries. Gives
 the chain coverage sweep a guaranteed sample on every recent run
@@ -366,18 +370,20 @@ Safe for unauthenticated monitoring systems.
 
 ## Cron recipes
 
-Vercel Cron (`vercel.json`):
+Vercel Cron (`vercel.json`). Vercel sends `Authorization: Bearer $CRON_SECRET`
+itself: set the project's `CRON_SECRET` to the same value as
+`CIVICOS_CRON_SECRET`. Never put the secret in the path.
 ```json
 { "crons": [
-    { "path": "/api/cron/sla?token=$CIVICOS_CRON_SECRET&hours=48",     "schedule": "0 * * * *" },
-    { "path": "/api/cron/substrate-metrics?token=$CIVICOS_CRON_SECRET", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/posture-digest?token=$CIVICOS_CRON_SECRET",    "schedule": "*/30 * * * *" },
-    { "path": "/api/cron/audit-self?token=$CIVICOS_CRON_SECRET",        "schedule": "0 * * * *" },
-    { "path": "/api/cron/witness-sweep?token=$CIVICOS_CRON_SECRET",     "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/witness-divergence?token=$CIVICOS_CRON_SECRET","schedule": "5,20,35,50 * * * *" },
-    { "path": "/api/cron/audit-anchor?token=$CIVICOS_CRON_SECRET",      "schedule": "*/10 * * * *" },
-    { "path": "/api/cron/expire-consents?token=$CIVICOS_CRON_SECRET",   "schedule": "30 * * * *" },
-    { "path": "/api/cron/deliver-events?token=$CIVICOS_CRON_SECRET",    "schedule": "*/2 * * * *" }
+    { "path": "/api/cron/sla?hours=48",     "schedule": "0 * * * *" },
+    { "path": "/api/cron/substrate-metrics", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/posture-digest",    "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/audit-self",        "schedule": "0 * * * *" },
+    { "path": "/api/cron/witness-sweep",     "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/witness-divergence","schedule": "5,20,35,50 * * * *" },
+    { "path": "/api/cron/audit-anchor",      "schedule": "*/10 * * * *" },
+    { "path": "/api/cron/expire-consents",   "schedule": "30 * * * *" },
+    { "path": "/api/cron/deliver-events",    "schedule": "*/2 * * * *" }
 ] }
 ```
 
@@ -385,8 +391,9 @@ Supabase scheduled function (pg_cron):
 ```sql
 select cron.schedule('civicos-sla', '0 * * * *',
   $$ select net.http_post(
-       'https://<host>/api/cron/sla?token=<secret>&hours=48',
-       '{}'::jsonb, '{"content-type":"application/json"}'::jsonb) $$);
+       url := 'https://<host>/api/cron/sla?hours=48',
+       headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret'), 'Content-Type', 'application/json'),
+       body := '{}'::jsonb) $$);
 ```
 
 ## Testing

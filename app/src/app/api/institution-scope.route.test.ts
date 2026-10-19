@@ -13,6 +13,9 @@ import { signClaims } from '@/lib/auth/session-token';
 import { resetSiteSettings, siteOwner, getSiteSettings } from '@/lib/data/site-settings';
 import { resetSiteEditorial } from '@/lib/data/site-editorial';
 import { permitHolders } from '@/lib/data/store';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 process.env.CIVICOS_SCRYPT_N = '16384';
 let cookie: string | undefined;
@@ -32,7 +35,7 @@ const work = await import('./work/route');
 const PW = 'correct horse battery';
 const sessions: Record<string, string> = {};
 async function account(key: string, name: string, role?: string, institution?: string) {
-  const a = await createAccount({ email: `${key}@gov.test`, name, office: 'Office', password: PW, role, institution }, role ? 'Admin' : null);
+  const a = await createAccount({ email: `${key}@gov.test`, name, office: 'Office', password: PW, role, institution, setupToken: SETUP_TOKEN }, role ? 'Admin' : null);
   if ('error' in a) throw new Error(a.error);
   const now = Math.floor(Date.now() / 1000);
   sessions[key] = await signClaims({ sub: `local:${a.id}`, name: 'typed', method: 'local', iat: now, exp: now + 600 }, sessionSecret());

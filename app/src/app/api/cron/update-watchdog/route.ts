@@ -11,7 +11,7 @@
 // the chamber, a release, the publisher console or the health endpoint is
 // read, as a fallback if the schedule stops.
 //
-// Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=),
+// Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only),
 // like every /api/cron/* worker.
 
 import { NextResponse } from 'next/server';

@@ -13,14 +13,14 @@
 // cannot be used to probe addresses. The reason is logged for operators.
 //
 // Auth: a platform administrator's substrate session (platform-admin) OR
-// CIVICOS_CRON_SECRET; officials through the API are administrators only
+// CIVICOS_PROVISIONING_SECRET as a bearer (go-live review M-7); officials through the API are administrators only
 // (lib/auth/roles.ts ADMIN_ONLY /api/federation). The secret lives only in
 // the service-role-readable table, so the signing happens server-side here —
 // the browser never sees it.
 
 import { NextResponse } from 'next/server';
 import { serverClient } from '@/lib/db/client';
-import { platformAdminOrCronAuthorized } from '@/lib/platform-auth';
+import { platformAdminOrSecretAuthorized } from '@/lib/platform-auth';
 import { postSubstrateWebhook } from '@/lib/events/substrate-webhook';
 import { logger } from '@/lib/ops/log';
 
@@ -29,7 +29,7 @@ export const dynamic = 'force-dynamic';
 interface WebhookRow { id: string; channel: string; url: string; secret: string; active: boolean; }
 
 export async function POST(req: Request) {
-  if (!await platformAdminOrCronAuthorized(req)) {
+  if (!await platformAdminOrSecretAuthorized(req, 'provisioning')) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const sb = serverClient();

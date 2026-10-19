@@ -9,15 +9,29 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, verifyToken, type OfficialClaims } from './session-token';
-import { sessionSecret, sessionSecretProblem, accountById } from './officials';
+import { createHash } from 'node:crypto';
+import { sessionSecret, sessionSecretProblem, accountById, sessionRevoked } from './officials';
 import { apiPermission, secondStepMissing, type Scope } from './roles';
+import { officerNow, substrateScope } from './substrate-officials';
 import { logger } from '@/lib/ops/log';
 import { providerMfaAccepted } from './sign-on-store';
 
+/** The key an ended session is kept under (lib/auth/officials.ts revokeSession): the token's SHA-256. */
+export const sessionKey = (token: string) => createHash('sha256').update(token, 'utf8').digest('hex');
+
+/** The session token the request carries, if any. */
+export async function sessionToken(): Promise<string | undefined> {
+  try { return (await cookies()).get(OFFICIAL_COOKIE)?.value; } catch { return undefined; }
+}
+
 /**
- * The signed-in official, as their account stands now: a platform account
- * that has since been disabled signs nobody in, and a changed role or
- * institution applies at once (the session carries what it was at sign-in).
+ * The signed-in official, as their account stands now: a session that was
+ * signed out is refused (review M-1); a platform account that has since been
+ * disabled signs nobody in, and a changed role or institution applies at
+ * once (the session carries what it was at sign-in); a substrate officer
+ * whose register entry is gone or inactive signs nobody in, and their role
+ * and institution come from the platform's records (review H-3,
+ * lib/auth/substrate-officials.ts).
  */
 export async function currentOfficial(): Promise<OfficialClaims | null> {
   let token: string | undefined;
@@ -29,7 +43,16 @@ export async function currentOfficial(): Promise<OfficialClaims | null> {
     return null;
   }
   const c = await verifyToken(token, sessionSecret());
-  if (!c || c.method !== 'local') return c;
+  if (!c || sessionRevoked(sessionKey(token!))) return null;
+  if (c.method === 'substrate') {
+    const row = await officerNow(c.sub.slice('officer:'.length));
+    // Gone, inactive, or the register cannot be read just now: the session does not count.
+    if (!row || !row.active) return null;
+    const s = substrateScope(row);
+    return { ...c, name: row.name, office: row.title ?? row.role, role: s.role, institution: s.institution,
+      twoStep: !!c.twoStep, twoStepRequired: s.twoStepRequired };
+  }
+  if (c.method !== 'local') return c;
   const a = accountById(c.sub.slice('local:'.length));
   if (!a || a.disabled) return null;
   // A session issued before the password last changed no longer counts.

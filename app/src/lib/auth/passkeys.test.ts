@@ -4,6 +4,9 @@ import { relyingParty, type RelyingParty } from './passkeys';
 import { resetSignOn } from './sign-on-store';
 import { SoftAuthenticator } from './soft-authenticator';
 import { listAudit } from '@/lib/data/store';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 process.env.CIVICOS_SCRYPT_N = '16384';
 const PW = 'correct horse battery';
@@ -21,7 +24,7 @@ describe('passkeys for platform accounts', () => {
   let id = '', other = '';
   beforeEach(async () => {
     resetOfficials(); resetSignOn();
-    id = ok(await createAccount({ email: 'ada@gov.example', name: 'Ada Obi', office: 'Officer', password: PW }, null)).id;
+    id = ok(await createAccount({ email: 'ada@gov.example', name: 'Ada Obi', office: 'Officer', password: PW, setupToken: SETUP_TOKEN }, null)).id;
     other = ok(await createAccount({ email: 'ben@gov.example', name: 'Ben', office: 'Officer', password: PW }, 'Ada')).id;
   });
 
