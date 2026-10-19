@@ -6,6 +6,7 @@
 
 import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type { FederationEventRow } from '@/lib/db/types';
+import { logger } from '@/lib/ops/log';
 
 export interface PersistedEvent {
   id: string;
@@ -41,7 +42,7 @@ export async function publishEventRow(
   });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error('[civicos] publish_event RPC failed:', error.message, error.code);
+    logger.error('substrate.rpc_failed', { rpc: 'publish_event', message: error.message, code: error.code });
     return null;
   }
   if (!data) return null;

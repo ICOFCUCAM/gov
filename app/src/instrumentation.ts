@@ -8,7 +8,8 @@ export async function register() {
     const { startFromEnv } = await import('./lib/data/persist');
     const status = await startFromEnv();
     if (status.adapter !== 'memory' || status.error) {
-      console.log(`[civicos] state: ${status.adapter}, restored ${status.restored.length} stores${status.error ? ` — ${status.error}` : ''}`);
+      const { log } = await import('./lib/ops/log');
+      log(status.error ? 'error' : 'info', 'state.restore', { adapter: status.adapter, restored: status.restored.length, ...(status.error ? { message: status.error } : {}) });
     }
   }
 }

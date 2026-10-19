@@ -60,6 +60,13 @@ describe('architecture', () => {
     expect(bad).toEqual([]);
   });
 
+  it('server code logs through lib/ops/log (structured, redacted), not the console', () => {
+    const bad = all.filter(p => /[\\/](lib|app[\\/]api)[\\/]/.test(p) && !/[\\/]lib[\\/]ops[\\/]log\.ts$/.test(p))
+      .filter(p => { const t = readFileSync(p, 'utf8'); return !/^\s*['"]use client['"]/.test(t) && /\bconsole\.(log|info|warn|error)\(/.test(t.replace(/\/\/.*$/gm, '')); })
+      .map(rel);
+    expect(bad, 'use logger from @/lib/ops/log').toEqual([]);
+  });
+
   it('API routes record who acted through the verified official, never a bare body field', () => {
     const bad: string[] = [];
     for (const f of all.filter(p => /[\\/]app[\\/]api[\\/].*route\.ts$/.test(p))) {

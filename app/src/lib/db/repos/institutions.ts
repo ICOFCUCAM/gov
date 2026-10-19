@@ -7,6 +7,7 @@
 
 import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type { InstitutionRow, InstitutionKind } from '@/lib/db/types';
+import { logger } from '@/lib/ops/log';
 
 export interface InstitutionUpsert {
   charterId: string;
@@ -40,7 +41,7 @@ export async function registerInstitutionRow(
   });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error('[civicos] register_institution RPC failed:', error.message, error.code);
+    logger.error('substrate.rpc_failed', { rpc: 'register_institution', message: error.message, code: error.code });
     return null;
   }
   return (data as InstitutionRow) ?? null;
@@ -54,7 +55,7 @@ export async function activateInstitutionRow(charterId: string): Promise<Institu
   });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error('[civicos] activate_institution RPC failed:', error.message, error.code);
+    logger.error('substrate.rpc_failed', { rpc: 'activate_institution', message: error.message, code: error.code });
     return null;
   }
   return (data as InstitutionRow) ?? null;

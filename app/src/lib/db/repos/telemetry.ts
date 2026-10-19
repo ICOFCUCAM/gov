@@ -5,6 +5,7 @@
 
 import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
+import { logger } from '@/lib/ops/log';
 
 export interface TelemetryStreamInput {
   streamId: string;
@@ -30,7 +31,7 @@ export async function defineTelemetryStreamRow(s: TelemetryStreamInput): Promise
     p_alert_threshold: s.alertThreshold ?? null,
     p_facility_id: s.facilityId ?? null,
   });
-  if (error) { console.error('[civicos] define_telemetry_stream failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'define_telemetry_stream', message: error.message }); return null; }
   return (data as TelemetryStreamRow) ?? null;
 }
 
@@ -50,7 +51,7 @@ export async function recordTelemetrySampleRow(s: TelemetrySampleInput): Promise
     p_ts: s.ts ?? null, p_facility_id: s.facilityId ?? null,
     p_meta: s.meta ?? {},
   });
-  if (error) { console.error('[civicos] record_telemetry_sample failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'record_telemetry_sample', message: error.message }); return null; }
   return (data as TelemetrySampleRow) ?? null;
 }
 

@@ -8,6 +8,7 @@ import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type {
   DirectiveRow, DispatchRow, EscalationRow, PostureHistoryRow, Posture, Priority, Severity,
 } from '@/lib/db/types';
+import { logger } from '@/lib/ops/log';
 
 // ── Directives ────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ async function platformDirectives<T>(path: string, init?: { method: string; body
   const r = await fetch(`/api/directives${path}`, init
     ? { method: init.method, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ by: declaredOfficial() || undefined, ...(init.body as object) }) }
     : { cache: 'no-store' }).catch(() => null);
-  if (!r || !r.ok) { if (r) console.error('[civicos] directive request failed:', (await r.json().catch(() => ({}))).error); return null; }
+  if (!r || !r.ok) { if (r) logger.error('directives.request_failed', { status: r.status, message: (await r.json().catch(() => ({}))).error }); return null; }
   return r.json() as Promise<T>;
 }
 
@@ -46,7 +47,7 @@ export async function recordDirectiveRow(d: DirectiveInput): Promise<DirectiveRo
     p_issued_by_name: d.issuedByName ?? null,
     p_status: d.status ?? 'drafting',
   });
-  if (error) { console.error('[civicos] record_directive failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'record_directive', message: error.message }); return null; }
   return (data as DirectiveRow) ?? null;
 }
 
@@ -57,7 +58,7 @@ export async function signDirectiveRow(ref: string, signedByOfficerId?: string |
     p_ref: ref, p_signed_by_officer_id: signedByOfficerId ?? null,
     p_effective_at: effectiveAt ?? null,
   });
-  if (error) { console.error('[civicos] sign_directive failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'sign_directive', message: error.message }); return null; }
   return (data as DirectiveRow) ?? null;
 }
 
@@ -65,7 +66,7 @@ export async function rescindDirectiveRow(ref: string): Promise<DirectiveRow | n
   const sb = publicClient();
   if (!sb) return (await platformDirectives<{ directive: DirectiveRow }>(`/${encodeURIComponent(ref)}`, { method: 'POST', body: { action: 'rescind' } }))?.directive ?? null;
   const { data, error } = await sb.rpc('civicos_rescind_directive', { p_ref: ref });
-  if (error) { console.error('[civicos] rescind_directive failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'rescind_directive', message: error.message }); return null; }
   return (data as DirectiveRow) ?? null;
 }
 
@@ -135,7 +136,7 @@ export async function recordDispatchRow(d: DispatchInput): Promise<DispatchRow |
     p_target_charter_id: d.targetCharterId ?? null,
     p_issued_by_officer_id: d.issuedByOfficerId ?? null,
   });
-  if (error) { console.error('[civicos] record_dispatch failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'record_dispatch', message: error.message }); return null; }
   return (data as DispatchRow) ?? null;
 }
 
@@ -143,7 +144,7 @@ export async function acknowledgeDispatchRow(ref: string): Promise<DispatchRow |
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_acknowledge_dispatch', { p_ref: ref });
-  if (error) { console.error('[civicos] acknowledge_dispatch failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'acknowledge_dispatch', message: error.message }); return null; }
   return (data as DispatchRow) ?? null;
 }
 
@@ -153,7 +154,7 @@ export async function markDispatchOnSceneRow(ref: string): Promise<DispatchRow |
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_mark_dispatch_on_scene', { p_ref: ref });
-  if (error || !data) { if (error) console.error('[civicos] mark_dispatch_on_scene failed:', error.message); return null; }
+  if (error || !data) { if (error) logger.error('substrate.rpc_failed', { rpc: 'mark_dispatch_on_scene', message: error.message }); return null; }
   return (Array.isArray(data) ? data[0] : data) as DispatchRow;
 }
 
@@ -161,7 +162,7 @@ export async function closeDispatchRow(ref: string): Promise<DispatchRow | null>
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_close_dispatch', { p_ref: ref });
-  if (error) { console.error('[civicos] close_dispatch failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'close_dispatch', message: error.message }); return null; }
   return (data as DispatchRow) ?? null;
 }
 
@@ -275,7 +276,7 @@ export async function recordEscalationRow(e: EscalationInput): Promise<Escalatio
     p_triggered_by_actor: e.triggeredByActor ?? null,
     p_payload: e.payload ?? {},
   });
-  if (error) { console.error('[civicos] record_escalation failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'record_escalation', message: error.message }); return null; }
   return (data as EscalationRow) ?? null;
 }
 
@@ -285,7 +286,7 @@ export async function acknowledgeEscalationRow(id: string, acknowledgedBy?: stri
   const { data, error } = await sb.rpc('civicos_acknowledge_escalation', {
     p_id: id, p_acknowledged_by: acknowledgedBy ?? null,
   });
-  if (error) { console.error('[civicos] acknowledge_escalation failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'acknowledge_escalation', message: error.message }); return null; }
   return (data as EscalationRow) ?? null;
 }
 
@@ -308,7 +309,7 @@ export async function resolveEscalationRow(id: string): Promise<EscalationRow | 
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_resolve_escalation', { p_id: id });
-  if (error) { console.error('[civicos] resolve_escalation failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'resolve_escalation', message: error.message }); return null; }
   return (data as EscalationRow) ?? null;
 }
 
@@ -440,7 +441,7 @@ export async function recordPostureRow(p: PostureInput): Promise<PostureHistoryR
     p_stress: p.stress ?? null,
     p_detail: p.detail ?? {},
   });
-  if (error) { console.error('[civicos] record_posture failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'record_posture', message: error.message }); return null; }
   return (data as PostureHistoryRow) ?? null;
 }
 
