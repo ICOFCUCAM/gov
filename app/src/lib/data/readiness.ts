@@ -7,7 +7,8 @@
 // nation — its integration clients, signed configuration bundles and
 // institutions chartered beyond the canonical set. Each finding is
 // compatible / needs change / blocking, with the reason. Blocking findings
-// stop approval until resolved or waived by two named officials.
+// stop approval until resolved or waived by two officials (one proposes, a
+// different signed-in official confirms).
 //
 // Staging: each nation has a staging environment (hosted nations get one
 // provisioned). A production install needs the same release to have passed
@@ -19,15 +20,21 @@ import { recordAudit, listIntegrations, listConfigs, listMinistries } from './st
 import { listSoftware } from './security-store';
 import { federationSeed } from '@/lib/institution/federation';
 import { touch } from '@/lib/data/repo/track';
+import { dualControlRefusal, proposalLapsed } from './dual-control';
 
+/** A waiver proposed by one official, awaiting a different one (dual control); `byId` is the proposer's verified identity. */
+export interface WaiverProposal { by: string; byId?: string; reason: string; at: string }
 interface ReadinessDb {
   reports: Record<string, PreflightReport>;
   waivers: Record<string, NonNullable<PreflightFinding['waiver']>>;
+  /** Proposed waivers awaiting a second official (absent in snapshots saved before dual control by two sign-ins). */
+  proposals?: Record<string, WaiverProposal>;
   staging: Record<string, StagingEnvironment>;
 }
 const g = globalThis as unknown as { __civicosReadiness?: ReadinessDb };
-function rdb(): ReadinessDb { return touch('__civicosReadiness', g.__civicosReadiness ??= { reports: {}, waivers: {}, staging: {} }); }
-export function resetReadiness(): void { g.__civicosReadiness = { reports: {}, waivers: {}, staging: {} }; }
+function rdb(): ReadinessDb { return touch('__civicosReadiness', g.__civicosReadiness ??= { reports: {}, waivers: {}, proposals: {}, staging: {} }); }
+const proposals = (): Record<string, WaiverProposal> => (rdb().proposals ??= {});
+export function resetReadiness(): void { g.__civicosReadiness = { reports: {}, waivers: {}, proposals: {}, staging: {} }; }
 
 const key = (nationId: string, releaseId: string) => `${nationId}:${releaseId}`;
 let canonical: Set<string> | undefined;
@@ -72,8 +79,11 @@ export function scan(n: SubscribedNation, r: DistributionRelease): PreflightFind
     }
   }
   return out.map(f => {
-    const w = rdb().waivers[`${key(n.id, r.id)}:${f.key}`];
-    return w && f.status === 'blocking' ? { ...f, waiver: w } : f;
+    const k = `${key(n.id, r.id)}:${f.key}`;
+    const w = rdb().waivers[k];
+    if (w && f.status === 'blocking') return { ...f, waiver: w };
+    const p = proposals()[k];
+    return p && f.status === 'blocking' && !proposalLapsed(p.at) ? { ...f, waiverProposal: { by: p.by, reason: p.reason, at: p.at } } : f;
   });
 }
 
@@ -105,20 +115,61 @@ export function latestPreflight(nationId: string, releaseId: string): PreflightR
   return rdb().reports[key(nationId, releaseId)];
 }
 
-/** Two named officials waive one blocking finding, with a reason. */
-export function waiveFinding(n: SubscribedNation, r: DistributionRelease, findingKey: string, input: { by?: string; secondBy?: string; reason?: string }): PreflightReport | { error: string; status: number } {
-  const by = (input.by ?? '').trim(), second = (input.secondBy ?? '').trim(), reason = (input.reason ?? '').trim();
-  if (!by || !second) return { error: 'A waiver needs two named officials', status: 422 };
-  if (by.toLowerCase() === second.toLowerCase()) return { error: 'The second official must be a different person', status: 422 };
-  if (reason.length < 15) return { error: 'Give the reason for the waiver (at least 15 characters)', status: 422 };
+export type WaiveInput = {
+  /** The official taking this step (the verified official's name when signed in). */
+  by?: string;
+  /** The verified official's session subject, set by the route from the session, never from the body. */
+  byId?: string;
+  reason?: string;
+  /** cancel: withdraw the pending proposal. */
+  cancel?: boolean;
+  /** No longer accepted: the second official confirms in their own request. */
+  secondBy?: string;
+};
+
+/**
+ * Waive one blocking finding by dual control with two sign-ins (review H-5),
+ * as the four-eyes decisions: the first official proposes with a reason, a
+ * different official confirms in their own request, and only then is the
+ * finding waived. A typed second name is refused. Proposal, cancellation and
+ * waiver are audited; the waiver with both names. Returns the rescanned report
+ * (`pending` while it awaits confirmation).
+ */
+export function waiveFinding(n: SubscribedNation, r: DistributionRelease, findingKey: string, input: WaiveInput): (PreflightReport & { pending?: boolean }) | { error: string; status: number } {
+  if (typeof input.secondBy === 'string' && input.secondBy.trim()) {
+    return { error: 'A second name is not accepted: the second official confirms the waiver by signing in and confirming it themselves', status: 422 };
+  }
+  const by = (input.by ?? '').trim();
+  if (!by) return { error: 'Name the official taking this step', status: 422 };
   const f = scan(n, r).find(x => x.key === findingKey);
   if (!f) return { error: 'Finding not found', status: 404 };
   if (f.status !== 'blocking') return { error: 'Only blocking findings can be waived', status: 409 };
   if (f.waiver) return { error: 'Already waived', status: 409 };
+  const k = `${key(n.id, r.id)}:${findingKey}`;
+  const target = `UpdateChamber:${n.id}/${r.version}`;
+  let p = proposals()[k];
+  if (p && proposalLapsed(p.at)) { delete proposals()[k]; p = undefined; }
+  if (input.cancel) {
+    if (!p) return { error: 'There is no waiver proposal to cancel', status: 409 };
+    delete proposals()[k];
+    recordAudit(by, 'update.preflight.waive.cancel', target, 'ok', `${f.subject}: cancelled ${p.by}’s proposal`);
+    return runPreflight(n, r, by);
+  }
+  if (!p) {
+    const reason = (input.reason ?? '').trim();
+    if (reason.length < 15) return { error: 'Give the reason for the waiver (at least 15 characters)', status: 422 };
+    if (reason.length > 1000) return { error: 'The reason is too long (1000 characters at most)', status: 422 };
+    proposals()[k] = { by, ...(input.byId ? { byId: input.byId } : {}), reason, at: new Date().toISOString() };
+    recordAudit(by, 'update.preflight.waive.propose', target, 'ok', `${f.subject}: awaiting a second official · ${reason}`);
+    return { ...runPreflight(n, r, by), pending: true };
+  }
+  const refused = dualControlRefusal(p, { by, byId: input.byId });
+  if (refused) return { error: refused, status: 409 };
+  delete proposals()[k];
   const at = new Date().toISOString();
-  rdb().waivers[`${key(n.id, r.id)}:${findingKey}`] = { by, secondBy: second, reason, at };
-  recordAudit(`${by} + ${second}`, 'update.preflight.waive', `UpdateChamber:${n.id}/${r.version}`, 'ok', `${f.subject}: ${reason}`);
-  return runPreflight(n, r, `${by} + ${second}`);
+  rdb().waivers[k] = { by: p.by, secondBy: by, reason: p.reason, at };
+  recordAudit(`${p.by} + ${by}`, 'update.preflight.waive', target, 'ok', `${f.subject}: ${p.reason}`);
+  return runPreflight(n, r, `${p.by} + ${by}`);
 }
 
 /** Approval gate: a recorded preflight with no unwaived blocking finding. Runs the scan if none exists. */

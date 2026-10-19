@@ -1,0 +1,94 @@
+{{- /*
+The app's scheduled jobs (app/src/app/api/cron/*) as Kubernetes CronJobs
+(values cron). Off by default: with the Supabase substrate pg_cron calls the
+same routes (app/supabase/cron/schedule.sql); run one scheduler, not both.
+Each run calls the app's Service once with CIVICOS_CRON_SECRET (from
+app.existingSecret) as `Authorization: Bearer …` and fails on any answer
+other than 2xx, so a failed run shows in the Job history. Runs never overlap
+(concurrencyPolicy Forbid) and are not retried: the next run picks the work up.
+*/ -}}
+{{- if .Values.cron.enabled }}
+{{- $c := .Values.cron }}
+{{- $repo := $c.image | default .Values.app.image }}
+{{- $tag := $c.tag | default .Values.app.tag }}
+{{- $image := include "civicos.image" (dict "registry" .Values.global.imageRegistry "repo" $repo "tag" $tag) }}
+{{- range $name, $job := $c.jobs }}
+{{- if and (ne (toString $job.enabled) "false") (not (and $c.withoutSubstrate $job.substrate)) }}
+{{- $method := upper ($job.method | default "GET") }}
+{{- if not (has $method (list "GET" "POST")) }}
+{{- fail (printf "cron.jobs.%s.method must be GET or POST" $name) }}
+{{- end }}
+{{- if not (regexMatch "^[a-z0-9-]+$" $name) }}
+{{- fail (printf "cron.jobs.%s: a job is named after its route under /api/cron (lowercase letters, digits, hyphens)" $name) }}
+{{- end }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: civicos-cron-{{ $name }}
+  labels:
+    app.kubernetes.io/name: civic-cron
+    app.kubernetes.io/component: {{ $name }}
+    {{- include "civicos.labels" $ | nindent 4 }}
+spec:
+  schedule: {{ $job.schedule | quote }}
+  {{- with $c.timeZone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: {{ $c.startingDeadlineSeconds | default 120 }}
+  successfulJobsHistoryLimit: {{ $c.successfulJobsHistoryLimit | default 1 }}
+  failedJobsHistoryLimit: {{ $c.failedJobsHistoryLimit | default 3 }}
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: {{ add ($c.timeoutSeconds | default 300) 30 }}
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: civic-cron
+            app.kubernetes.io/component: {{ $name }}
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          {{- with (include "civicos.imagePullSecrets" $) }}{{ . | nindent 10 }}{{- end }}
+          securityContext:
+            {{- toYaml $.Values.security.podSecurityContext | nindent 12 }}
+          containers:
+            - name: call
+              image: {{ $image }}
+              imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+              command:
+                - node
+                - -e
+                - |
+                  const { CRON_URL: url, CRON_METHOD: method, CRON_TIMEOUT_MS: ms, CIVICOS_CRON_SECRET: secret } = process.env;
+                  if (!secret) { console.error('CIVICOS_CRON_SECRET is not set'); process.exit(1); }
+                  fetch(url, {
+                    method,
+                    headers: { authorization: 'Bearer ' + secret, 'content-type': 'application/json' },
+                    body: method === 'POST' ? '{}' : undefined,
+                    signal: AbortSignal.timeout(Number(ms)),
+                  }).then(async (r) => {
+                    console.log(method, url, r.status, (await r.text()).slice(0, 2000));
+                    process.exit(r.ok ? 0 : 1);
+                  }).catch((e) => { console.error(method, url, String(e)); process.exit(1); });
+              env:
+                - name: CRON_URL
+                  value: http://civicos-app:3000/api/cron/{{ $name }}
+                - name: CRON_METHOD
+                  value: {{ $method | quote }}
+                - name: CRON_TIMEOUT_MS
+                  value: {{ mul ($c.timeoutSeconds | default 300) 1000 | quote }}
+                - name: CIVICOS_CRON_SECRET
+                  valueFrom:
+                    secretKeyRef: { name: {{ $.Values.app.existingSecret }}, key: CIVICOS_CRON_SECRET }
+              resources:
+                {{- toYaml $c.resources | nindent 16 }}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: { drop: ["ALL"] }
+{{- end }}
+{{- end }}
+{{- end }}

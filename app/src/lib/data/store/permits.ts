@@ -15,6 +15,7 @@ import type {
 import { db } from './state';
 import { uid, hash, citizen } from './shared';
 import { recordAudit } from './audit';
+import { institutionsKeeping } from './ministries';
 
 // ── Session ───────────────────────────────────────────────────────────
 export function getSession(): Session {
@@ -22,6 +23,9 @@ export function getSession(): Session {
 }
 
 // ── Permits ───────────────────────────────────────────────────────────
+/** The institutions that issue permits and may read their applicants (review M-3): those whose kind keeps the permit register. */
+export const permitHolders = (): string[] => institutionsKeeping('Permit');
+
 export function listPermits(): Permit[] {
   return db.permits;
 }

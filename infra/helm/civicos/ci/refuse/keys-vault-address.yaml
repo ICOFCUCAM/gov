@@ -1,0 +1,6 @@
+# Vault named as the key provider without its address: refused.
+app:
+  keys:
+    provider: vault
+    vault:
+      existingSecret: civicos-vault

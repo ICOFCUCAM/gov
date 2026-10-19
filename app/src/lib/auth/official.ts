@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server';
 import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, verifyToken, type OfficialClaims } from './session-token';
 import { createHash } from 'node:crypto';
 import { sessionSecret, sessionSecretProblem, accountById, sessionRevoked } from './officials';
-import { secondStepMissing, type Scope } from './roles';
+import { apiPermission, secondStepMissing, type Scope } from './roles';
 import { officerNow, substrateScope } from './substrate-officials';
 import { logger } from '@/lib/ops/log';
 import { providerMfaAccepted } from './sign-on-store';
@@ -89,6 +89,40 @@ export async function refusal(rule: (s: Scope) => string | null): Promise<NextRe
   const o = await currentOfficial();
   const why = o ? secondStepMissing(o) ?? rule(o) : null;
   return why ? NextResponse.json({ error: why }, { status: 403 }) : null;
+}
+
+/**
+ * The path rule of lib/auth/roles.ts (apiPermission()) for this change,
+ * checked again in the route against the account as it stands now: the
+ * middleware applies it only when it can verify the session itself, so the
+ * Update Center's installation-level routes check here too.
+ */
+export function pathRefusal(req: Request): Promise<NextResponse | null> {
+  const { pathname } = new URL(req.url);
+  return refusal(s => apiPermission(s, req.method, pathname));
+}
+
+/**
+ * Check a read rule from lib/auth/roles.ts (canReadInstitution(),
+ * canReadPermits()) against the signed-in official: a 403 with the reason, or
+ * null to go ahead. Reads do not need the second sign-in step. Without a
+ * signed-in official there is nothing to check (CIVICOS_AUTH=enforce refuses
+ * reads without one in the middleware).
+ */
+export async function readRefusal(rule: (s: Scope) => string | null): Promise<NextResponse | null> {
+  const o = await currentOfficial();
+  const why = o ? rule(o) : null;
+  return why ? NextResponse.json({ error: why }, { status: 403 }) : null;
+}
+
+/**
+ * The verified identity of the signed-in official (their session subject),
+ * for dual control: a step proposed by one official is confirmed only by a
+ * different one, compared by this rather than by a name. Undefined when no
+ * one is signed in.
+ */
+export async function officialId(): Promise<string | undefined> {
+  return (await currentOfficial())?.sub;
 }
 
 /** Set the signed session cookie (and the console's page cookie) on a response. */

@@ -23,6 +23,7 @@ import type {
 } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
 import { isShared, transmit } from './sovereignty';
+import { alertNations } from './comms';
 import { touch } from '@/lib/data/repo/track';
 
 export const PRIORITIES: TicketPriority[] = ['P1', 'P2', 'P3', 'P4'];
@@ -346,6 +347,8 @@ export function declareServiceIncident(input: { title?: string; impact?: string;
   };
   db.service.push(inc);
   recordAudit(by, 'support.service.declare', `ServiceIncident:${inc.id}`, 'ok', `${inc.impact} · ${components.join(',')} · ${nations === 'all' ? 'all nations' : nations.join(',')}`);
+  // The officials named for incident alerts in each affected nation hear of it (lib/messaging outbox).
+  alertNations(nations, 'incidents', scheduled ? `Planned maintenance ${scheduled.start.slice(0, 16).replace('T', ' ')} UTC: ${title}` : `Service incident (${inc.impact}): ${title}`, inc.id, now);
   return inc;
 }
 
@@ -360,5 +363,6 @@ export function updateServiceIncident(id: string, input: { state?: string; text?
   inc.updates.push({ at: iso(now), state: input.state as ServiceIncident['updates'][number]['state'], text, by });
   if (input.state === 'resolved' || input.state === 'completed') inc.resolvedAt = iso(now);
   recordAudit(by, 'support.service.update', `ServiceIncident:${inc.id}`, 'ok', String(input.state));
+  if (inc.resolvedAt) alertNations(inc.nations, 'incidents', `${inc.scheduled ? 'Maintenance completed' : 'Service incident resolved'}: ${inc.title}`, inc.id, now);
   return inc;
 }

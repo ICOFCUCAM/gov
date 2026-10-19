@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPermit, listPermits } from '@/lib/data/store';
+import { createPermit, listPermits, permitHolders } from '@/lib/data/store';
+import { readRefusal } from '@/lib/auth/official';
+import { canReadPermits } from '@/lib/auth/roles';
 import type { CreatePermitInput } from '@/lib/api/types';
 
 export const dynamic = 'force-dynamic';
 
-export function GET() {
+/** Permits and their applicants: the issuing institution, the whole government and auditors (review M-3). */
+export async function GET() {
+  const refused = await readRefusal(s => canReadPermits(s, permitHolders()));
+  if (refused) return refused;
   return NextResponse.json({ permits: listPermits() });
 }
 

@@ -83,7 +83,7 @@ export function secretEquals(given: string, expected: string): boolean {
 }
 
 /** Platform-tier officer session path (Supabase JWT). */
-export async function sessionAuthorized(req: Request): Promise<boolean> {
+export async function sessionAuthorized(req: Request, roles: ReadonlySet<string> = PLATFORM_ROLES): Promise<boolean> {
   const bearer = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!bearer || bearer.split('.').length !== 3) return false; // not a JWT
   const scoped = tokenScopedClient(bearer);
@@ -91,10 +91,19 @@ export async function sessionAuthorized(req: Request): Promise<boolean> {
   const { data, error } = await scoped.rpc('civicos_current_actor');
   if (error || !data) return false;
   const actor = (Array.isArray(data) ? data[0] : data) as { kind?: string; role?: string } | null;
-  return !!actor && actor.kind === 'officer' && PLATFORM_ROLES.has(actor.role ?? '');
+  return !!actor && actor.kind === 'officer' && roles.has(actor.role ?? '');
 }
+
+/** The substrate's administrator role: the only one that changes connections to
+ *  outside systems (federation webhooks; civicos.is_platform_admin() on the SQL side). */
+export const PLATFORM_ADMIN_ROLES: ReadonlySet<string> = new Set(['platform-admin']);
 
 /** Accept the purpose's own secret or a platform-tier officer session. */
 export async function platformOrSecretAuthorized(req: Request, purpose: Exclude<SecretPurpose, 'cron'>): Promise<boolean> {
   return secretAuthorized(req, purpose) || await sessionAuthorized(req);
+}
+
+/** Accept the purpose's own secret or a platform administrator's session (not auditors or other platform roles). */
+export async function platformAdminOrSecretAuthorized(req: Request, purpose: Exclude<SecretPurpose, 'cron'>): Promise<boolean> {
+  return secretAuthorized(req, purpose) || await sessionAuthorized(req, PLATFORM_ADMIN_ROLES);
 }

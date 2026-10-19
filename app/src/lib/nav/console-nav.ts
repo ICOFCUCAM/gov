@@ -76,7 +76,7 @@ export const CONSOLE_NAV: NavSection[] = [
     { key: 'intg', icon: '⇄', label: 'Connected systems', href: '/integrations',
       purpose: 'Which outside systems may exchange data with the platform, and on what terms.',
       tabs: [tab('Connected systems', '/integrations', 'Interoperability'), tab('Links between institutions', '/gov/fabric', 'Interoperability Fabric'),
-        tab('Automatic notifications', '/gov/webhooks', 'Federation Webhooks')] },
+        tab('Automatic notifications', '/gov/webhooks', 'Federation Webhooks'), tab('Email and text messages', '/admin/messaging')] },
   ]},
   { label: 'Records & audit', items: [
     { key: 'aud', icon: '⛓', label: 'Audit record', href: '/audit',

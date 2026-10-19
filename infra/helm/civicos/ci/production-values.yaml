@@ -1,0 +1,61 @@
+# Production-like: the nation's Postgres holds every record (several app
+# replicas, scaled), the chart runs the scheduled jobs, traces go to the
+# chart's collector, partner exchanges under mutual TLS, egress narrowed to
+# the nation's own addresses. Rendered and validated by infra/helm/check.sh.
+global:
+  imageRegistry: registry.gov.example
+  imagePullSecrets: [civicos-registry]
+api:
+  tag: "1.4.2"
+  mirrorSecret: civicos-api-mirror
+app:
+  tag: "1.4.2"
+  replicas: 2
+  state:
+    mode: postgres
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+  federationClientSecret: civicos-federation-client
+  # Keys in the nation's Vault (Transit), AppRole sign-in, the nation's CA;
+  # civicos-app-keys still holds the KEK values were sealed under before.
+  keys:
+    provider: vault
+    vault:
+      addr: https://vault.gov.example:8200
+      namespace: civicos
+      auth: approle
+      existingSecret: civicos-vault-approle
+      caSecret: civicos-vault-ca
+      keyNames: { audit: civicos-audit-2026 }
+  env:
+    CIVICOS_EGRESS_PROXY: http://egress-proxy.gov.example:3128
+    CIVICOS_WEBHOOKS_PRIVATE: "1"
+otel:
+  enabled: true
+  collector:
+    enabled: true
+ingress:
+  host: civicos.gov.example
+  federation:
+    enabled: true
+    host: federation.civicos.gov.example
+security:
+  ingressFrom:
+    - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: ingress-nginx } }
+  egress:
+    postgres:
+      - ipBlock: { cidr: 10.20.0.0/24 }
+    nats:
+      - ipBlock: { cidr: 10.20.1.0/24 }
+    https:
+      - ipBlock: { cidr: 10.30.0.8/32 }
+    httpsPorts: [3128]
+    extra:
+      # Vault on its own port.
+      - to: [{ ipBlock: { cidr: 10.40.0.5/32 } }]
+        ports: [{ port: 8200 }]
+cron:
+  enabled: true
+  timeZone: Africa/Nairobi

@@ -5,12 +5,22 @@
 // live hash is a tamper indicator.
 //
 // Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only).
-// Cadence: recommended every 15 minutes. Idempotent per (scope, seq) —
-// the substrate's unique constraint deduplicates by witness_label.
+// Cadence: recommended every 15 minutes. Idempotent per (scope, seq):
+// attestations are insert-only, so a point already attested is reported as
+// such and never replaced.
+//
+// Signed (go-live review H-1): the platform signs `scope|seq|hash|label` with
+// its audit signing key (Ed25519, lib/keys/custody.ts) and registers that
+// public key for the self-witness label before its first attestation of the
+// run (idempotent), so the divergence watchdog can verify these rows like
+// any other witness's.
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
 import { serverClient } from '@/lib/db/client';
+import { signer } from '@/lib/keys/custody';
+import { canonicalWitnessMaterial } from '@/lib/db/signatures';
+import { base64ToHex, jwkFromPublicPem } from '@/lib/audit/witness-signature';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +42,9 @@ export async function GET(req: Request) {
     .order('at', { ascending: false }).limit(500);
   const scopes = Array.from(new Set(((scopeRows ?? []) as { scope: string }[]).map(r => r.scope))).slice(0, scopeLimit);
 
-  const results: { scope: string; latestSeq: number | null; attested: boolean }[] = [];
+  const results: { scope: string; latestSeq: number | null; attested: boolean; already?: boolean }[] = [];
+  const audit = signer('audit');
+  let jwk: ReturnType<typeof jwkFromPublicPem> | null = null;
   for (const scope of scopes) {
     const { data: latest } = await sb.from('civicos_audit_entries')
       .select('seq,hash')
@@ -44,15 +56,26 @@ export async function GET(req: Request) {
       results.push({ scope, latestSeq: null, attested: false });
       continue;
     }
+    if (!jwk) {
+      // Register this platform's current public key for the self-witness (idempotent).
+      const half = await audit.load();
+      jwk = jwkFromPublicPem(half.publicKeyPem);
+      const { error: kErr } = await sb.rpc('civicos_register_witness_key', {
+        p_witness_label: WITNESS_LABEL, p_public_jwk: jwk as never, p_registered_by: 'witness-sweep (platform)',
+      });
+      if (kErr) return NextResponse.json({ error: 'could not register the self-witness key' }, { status: 502 });
+    }
+    const sig = await audit.sign(canonicalWitnessMaterial(scope, row.seq, row.hash, WITNESS_LABEL));
     const { error } = await sb.rpc('civicos_record_witness_attestation', {
       p_scope: scope,
       p_observed_seq: row.seq,
       p_observed_hash: row.hash,
       p_witness_label: WITNESS_LABEL,
-      p_witness_jwk: null,
-      p_witness_signature: null,
+      p_witness_jwk: jwk as never,
+      p_witness_signature: base64ToHex(sig.signature),
     });
-    results.push({ scope, latestSeq: row.seq, attested: !error });
+    const already = (error as { code?: string } | null)?.code === '23505';
+    results.push({ scope, latestSeq: row.seq, attested: !error || already, ...(already ? { already: true } : {}) });
   }
 
   return NextResponse.json({

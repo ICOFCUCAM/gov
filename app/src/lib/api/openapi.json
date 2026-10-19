@@ -3,7 +3,7 @@
   "info": {
     "title": "CivicOS platform API",
     "version": "1",
-    "description": "Every HTTP endpoint of this installation, generated from its route files (scripts/build-openapi.mjs). Request and response bodies are JSON, typed from the TypeScript types the routes use where they declare them; errors are `{ \"error\": string }`. Sign-in rules follow the platform middleware and lib/auth/roles.ts: public sites and public reads are open, everything else needs an official's session or the machine credential named in each operation's security. `x-permission-rule` names the rule a change falls under (administrator, ministry, official, bearer, self-authenticated, public-write)."
+    "description": "Every HTTP endpoint of this installation, generated from its route files (scripts/build-openapi.mjs). Request and response bodies are JSON, typed from the TypeScript types the routes use where they declare them; errors are `{ \"error\": string }`. Sign-in rules follow the platform middleware and lib/auth/roles.ts: public sites and public reads are open, everything else needs an official's session or the machine credential named in each operation's security. `x-permission-rule` names the rule a change falls under (administrator, installation: a government-wide administrator of this nation, ministry, official, bearer, self-authenticated, public-write)."
   },
   "servers": [
     {
@@ -63,6 +63,9 @@
     },
     {
       "name": "map-pack"
+    },
+    {
+      "name": "messaging"
     },
     {
       "name": "metrics"
@@ -777,6 +780,368 @@
         },
         "security": [],
         "x-source": "src/app/api/audit/verify/route.ts"
+      }
+    },
+    "/api/audit/witnesses/keys": {
+      "get": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "get_audit_witnesses_keys",
+        "summary": "GET /api/audit/witnesses/keys",
+        "description": "/api/audit/witnesses/keys — the public keys whose signed attestations of the audit chain the platform records (go-live review H-1). GET every registered key (public keys are public) POST { label, jwk, by } register a witness's public key (administrators: lib/auth/roles.ts ADMIN_ONLY) DELETE ?id=…&by=… revoke it; its earlier attestations stay, it attests no more The name recorded is the signed-in official's (withOfficial), never a typed one when someone is signed in. Each change is written to the substrate's audit chain (scope substrate:witnesses).",
+        "parameters": [
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {},
+                          "public_jwk": {},
+                          "registered_at": {},
+                          "registered_by": {},
+                          "revoked_at": {},
+                          "revoked_by": {},
+                          "witness_label": {}
+                        },
+                        "required": [
+                          "id",
+                          "public_jwk",
+                          "registered_at",
+                          "registered_by",
+                          "revoked_at",
+                          "revoked_by",
+                          "witness_label"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "keys"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "keys": [
+                        {
+                          "id": null,
+                          "public_jwk": null,
+                          "registered_at": null,
+                          "registered_by": null,
+                          "revoked_at": null,
+                          "revoked_by": null,
+                          "witness_label": null
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/audit/witnesses/keys/route.ts"
+      },
+      "post": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "post_audit_witnesses_keys",
+        "summary": "POST /api/audit/witnesses/keys",
+        "description": "/api/audit/witnesses/keys — the public keys whose signed attestations of the audit chain the platform records (go-live review H-1). GET every registered key (public keys are public) POST { label, jwk, by } register a witness's public key (administrators: lib/auth/roles.ts ADMIN_ONLY) DELETE ?id=…&by=… revoke it; its earlier attestations stay, it attests no more The name recorded is the signed-in official's (withOfficial), never a typed one when someone is signed in. Each change is written to the substrate's audit chain (scope substrate:witnesses).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "label": {},
+                  "jwk": {},
+                  "by": {}
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "label": null,
+                    "jwk": null,
+                    "by": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "key": {}
+                  },
+                  "required": [
+                    "key"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "key": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/audit/witnesses/keys/route.ts"
+      },
+      "delete": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "delete_audit_witnesses_keys",
+        "summary": "DELETE /api/audit/witnesses/keys",
+        "description": "/api/audit/witnesses/keys — the public keys whose signed attestations of the audit chain the platform records (go-live review H-1). GET every registered key (public keys are public) POST { label, jwk, by } register a witness's public key (administrators: lib/auth/roles.ts ADMIN_ONLY) DELETE ?id=…&by=… revoke it; its earlier attestations stay, it attests no more The name recorded is the signed-in official's (withOfficial), never a typed one when someone is signed in. Each change is written to the substrate's audit chain (scope substrate:witnesses).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revoked": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "revoked"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "revoked": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/audit/witnesses/keys/route.ts"
+      }
+    },
+    "/api/audit/witnesses": {
+      "post": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "post_audit_witnesses",
+        "summary": "POST /api/audit/witnesses",
+        "description": "/api/audit/witnesses — record a witness attestation of the audit chain (go-live review H-1). A witness (an auditor, civil society, a peer institution) states \"I saw scope S at seq N with hash H\" and signs `S|N|H|label` with its own key. The credential is that signature: the key must be registered for the label by an administrator (/api/audit/witnesses/keys) and unrevoked, and the signature must verify, before the platform records the statement through the service role. Nobody else can write attestations (the substrate RPC is service-role only), and a statement is never replaced. POST { scope, observedSeq, observedHash, label, jwk, signature } 201 { witness } recorded 400 malformed 403 no registered key for the label matches, or the signature does not verify 409 this witness already attested that point 503 substrate not configured",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "witness": {
+                      "type": "object",
+                      "properties": {
+                        "id": {},
+                        "scope": {},
+                        "observedSeq": {},
+                        "observedHash": {},
+                        "label": {},
+                        "hasJwk": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "hasSignature": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "registeredKey": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "at": {
+                          "type": "number"
+                        },
+                        "recordedBy": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "scope",
+                        "observedSeq",
+                        "observedHash",
+                        "label",
+                        "hasJwk",
+                        "hasSignature",
+                        "registeredKey",
+                        "at",
+                        "recordedBy"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "witness"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "witness": {
+                        "id": null,
+                        "scope": null,
+                        "observedSeq": null,
+                        "observedHash": null,
+                        "label": null,
+                        "hasJwk": true,
+                        "hasSignature": true,
+                        "registeredKey": true,
+                        "at": 1,
+                        "recordedBy": {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          }
+        ],
+        "x-permission-rule": "self-authenticated",
+        "x-source": "src/app/api/audit/witnesses/route.ts"
       }
     },
     "/api/auth/activity": {
@@ -1860,8 +2225,8 @@
                       "accounts": [
                         {
                           "id": "ID-0001",
-                          "email": "official@example.gov",
                           "name": "Example",
+                          "email": "official@example.gov",
                           "office": "string",
                           "createdAt": "2026-01-15T09:30:00.000Z",
                           "createdBy": "A. Official",
@@ -1972,10 +2337,10 @@
                     "summary": "Generated from the schema",
                     "value": {
                       "account": {
-                        "institution": "string",
                         "id": "ID-0001",
-                        "email": "official@example.gov",
                         "name": "Example",
+                        "institution": "string",
+                        "email": "official@example.gov",
                         "office": "string",
                         "createdAt": "2026-01-15T09:30:00.000Z",
                         "createdBy": "A. Official",
@@ -4800,6 +5165,155 @@
         "x-source": "src/app/api/cron/audit-self/route.ts"
       }
     },
+    "/api/cron/backup": {
+      "get": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "get_cron_backup",
+        "summary": "GET /api/cron/backup",
+        "description": "Backup schedule cron — hourly (supabase/cron/schedule.sql, or the nation's own scheduler). Takes a backup when the newest is older than the policy's interval (default daily), verifies it (read back, decrypted, every part's hash checked, dry-run restore), then applies the retention policy, and reports whether the recovery point objective is met. Never restores. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "took": {
+                          "type": "string"
+                        },
+                        "verified": {
+                          "type": "boolean"
+                        },
+                        "skipped": {
+                          "type": "string"
+                        },
+                        "pruned": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "rpo": {
+                          "$ref": "#/components/schemas/RpoStatus"
+                        },
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "pruned",
+                        "rpo"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "summary"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "ok": true,
+                      "summary": {
+                        "took": "string",
+                        "verified": true,
+                        "skipped": "string",
+                        "pruned": [
+                          "string"
+                        ],
+                        "rpo": {
+                          "targetMinutes": 1,
+                          "newestVerifiedAt": "2026-01-15T09:30:00.000Z",
+                          "ageMinutes": 1,
+                          "met": true
+                        },
+                        "error": "Text"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "automation": []
+          }
+        ],
+        "x-source": "src/app/api/cron/backup/route.ts"
+      },
+      "post": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "post_cron_backup",
+        "summary": "POST /api/cron/backup",
+        "description": "Backup schedule cron — hourly (supabase/cron/schedule.sql, or the nation's own scheduler). Takes a backup when the newest is older than the policy's interval (default daily), verifies it (read back, decrypted, every part's hash checked, dry-run restore), then applies the retention policy, and reports whether the recovery point objective is met. Never restores. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "automation": []
+          }
+        ],
+        "x-permission-rule": "self-authenticated",
+        "x-source": "src/app/api/cron/backup/route.ts"
+      }
+    },
     "/api/cron/deliver-cloudevents": {
       "get": {
         "tags": [
@@ -4941,7 +5455,7 @@
         ],
         "operationId": "get_cron_deliver_events",
         "summary": "GET /api/cron/deliver-events",
-        "description": "Outbound federation webhook delivery worker. For each active civicos.event_webhooks row, finds federation events on its channel newer than its cursor and POSTs each to the registered URL with an HMAC-SHA256 signature header. On an all-2xx run the cursor advances to the last delivered event's at_ms; on the first failure the cursor holds (so the next run retries from the same point) and the failure is recorded. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Delivery is at-least-once per cursor; consumers dedupe on event id. Cadence: recommended every 1–5 minutes.",
+        "description": "Outbound federation webhook delivery worker. For each active civicos.event_webhooks row, finds federation events on its channel newer than its cursor and POSTs each to the registered URL with an HMAC-SHA256 signature header. On an all-2xx run the cursor advances to the last delivered event's at_ms; on the first failure the cursor holds (so the next run retries from the same point) and the failure is recorded. Every POST goes through the platform's safe fetch (go-live review M-5): public addresses only unless the nation allows its own network (CIVICOS_WEBHOOKS_PRIVATE=1), redirects never followed. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Delivery is at-least-once per cursor; consumers dedupe on event id. Cadence: recommended every 1–5 minutes.",
         "parameters": [],
         "responses": {
           "200": {
@@ -5056,7 +5570,7 @@
         ],
         "operationId": "post_cron_deliver_events",
         "summary": "POST /api/cron/deliver-events",
-        "description": "Outbound federation webhook delivery worker. For each active civicos.event_webhooks row, finds federation events on its channel newer than its cursor and POSTs each to the registered URL with an HMAC-SHA256 signature header. On an all-2xx run the cursor advances to the last delivered event's at_ms; on the first failure the cursor holds (so the next run retries from the same point) and the failure is recorded. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Delivery is at-least-once per cursor; consumers dedupe on event id. Cadence: recommended every 1–5 minutes.",
+        "description": "Outbound federation webhook delivery worker. For each active civicos.event_webhooks row, finds federation events on its channel newer than its cursor and POSTs each to the registered URL with an HMAC-SHA256 signature header. On an all-2xx run the cursor advances to the last delivered event's at_ms; on the first failure the cursor holds (so the next run retries from the same point) and the failure is recorded. Every POST goes through the platform's safe fetch (go-live review M-5): public addresses only unless the nation allows its own network (CIVICOS_WEBHOOKS_PRIVATE=1), redirects never followed. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Delivery is at-least-once per cursor; consumers dedupe on event id. Cadence: recommended every 1–5 minutes.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -5097,6 +5611,170 @@
         ],
         "x-permission-rule": "self-authenticated",
         "x-source": "src/app/api/cron/deliver-events/route.ts"
+      }
+    },
+    "/api/cron/deliver-messages": {
+      "get": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "get_cron_deliver_messages",
+        "summary": "GET /api/cron/deliver-messages",
+        "description": "Sends the platform's email and SMS outbox (lib/messaging/outbox.ts) through the providers the nation connected (lib/messaging/deliver.ts): retries with growing waits, dead letters with their reason, rate limits per provider. Without a provider messages stay queued (counted as waiting). Auth: CIVICOS_CRON_SECRET (Authorization: Bearer). Cadence: every minute.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "attempted": {
+                      "type": "number"
+                    },
+                    "sent": {
+                      "type": "number"
+                    },
+                    "retrying": {
+                      "type": "number"
+                    },
+                    "dead": {
+                      "type": "number"
+                    },
+                    "waiting": {
+                      "type": "object",
+                      "properties": {
+                        "notConnected": {
+                          "type": "number"
+                        },
+                        "noPublicAddress": {
+                          "type": "number"
+                        },
+                        "rateLimited": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "notConnected",
+                        "noPublicAddress",
+                        "rateLimited"
+                      ],
+                      "description": "Messages due but waiting: no provider connected for their channel, or no public address for their links."
+                    },
+                    "expired": {
+                      "type": "number"
+                    },
+                    "cleared": {
+                      "type": "number"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "attempted",
+                    "sent",
+                    "retrying",
+                    "dead",
+                    "waiting",
+                    "expired",
+                    "cleared",
+                    "ok"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "at": "2026-01-15T09:30:00.000Z",
+                      "attempted": 1,
+                      "sent": 1,
+                      "retrying": 1,
+                      "dead": 1,
+                      "waiting": {
+                        "notConnected": 1,
+                        "noPublicAddress": 1,
+                        "rateLimited": 1
+                      },
+                      "expired": 1,
+                      "cleared": 1,
+                      "ok": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "automation": []
+          }
+        ],
+        "x-source": "src/app/api/cron/deliver-messages/route.ts"
+      },
+      "post": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "post_cron_deliver_messages",
+        "summary": "POST /api/cron/deliver-messages",
+        "description": "Sends the platform's email and SMS outbox (lib/messaging/outbox.ts) through the providers the nation connected (lib/messaging/deliver.ts): retries with growing waits, dead letters with their reason, rate limits per provider. Without a provider messages stay queued (counted as waiting). Auth: CIVICOS_CRON_SECRET (Authorization: Bearer). Cadence: every minute.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "automation": []
+          }
+        ],
+        "x-permission-rule": "self-authenticated",
+        "x-source": "src/app/api/cron/deliver-messages/route.ts"
       }
     },
     "/api/cron/expire-consents": {
@@ -6507,7 +7185,7 @@
         ],
         "operationId": "get_cron_witness_divergence",
         "summary": "GET /api/cron/witness-divergence",
-        "description": "Tamper-detection watchdog. Runs after witness-sweep on the same cadence (or slower) and looks for any audit scope where a recorded attestation disagrees with the live chain. Each divergence becomes: 1. A `civicos.escalations` row at severity 'major', source 'substrate', reason 'witness-divergence:<scope>'. 2. A `civicos.federation_events` entry on channel 'constitutional', type 'audit.divergence', so any subscribed watcher sees it. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: every 15 minutes (same as witness-sweep, but staggered). Idempotent: re-recording the same divergence is silently deduplicated by escalation reason — the operator sees one row, not one per cron tick.",
+        "description": "Tamper-detection watchdog. Runs after witness-sweep on the same cadence (or slower) and looks for any audit scope where a recorded attestation disagrees with the live chain. Each divergence becomes: 1. A `civicos.escalations` row at severity 'major', source 'substrate', reason 'witness-divergence:<scope>'. 2. A `civicos.federation_events` entry on channel 'constitutional', type 'audit.divergence', so any subscribed watcher sees it. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: every 15 minutes (same as witness-sweep, but staggered). Idempotent: re-recording the same divergence is silently deduplicated by escalation reason — the operator sees one row, not one per cron tick. Only signed rows count (go-live review H-1): attestations recorded with a registered witness key (public.civicos_signed_witnesses), whose signature over `scope|seq|hash|label` verifies here against that key, and whose key had not been revoked when the row was recorded. Anything else (older unsigned rows, a row whose signature does not verify) never raises an alarm; rows that fail verification are counted as `unverified`.",
         "parameters": [],
         "responses": {
           "200": {
@@ -6558,6 +7236,7 @@
                           "latestLiveSeq": 1,
                           "latestLiveHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                           "conflictingAttestations": 1,
+                          "unverified": 1,
                           "alarmed": true
                         }
                       ]
@@ -6591,7 +7270,7 @@
         ],
         "operationId": "post_cron_witness_divergence",
         "summary": "POST /api/cron/witness-divergence",
-        "description": "Tamper-detection watchdog. Runs after witness-sweep on the same cadence (or slower) and looks for any audit scope where a recorded attestation disagrees with the live chain. Each divergence becomes: 1. A `civicos.escalations` row at severity 'major', source 'substrate', reason 'witness-divergence:<scope>'. 2. A `civicos.federation_events` entry on channel 'constitutional', type 'audit.divergence', so any subscribed watcher sees it. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: every 15 minutes (same as witness-sweep, but staggered). Idempotent: re-recording the same divergence is silently deduplicated by escalation reason — the operator sees one row, not one per cron tick.",
+        "description": "Tamper-detection watchdog. Runs after witness-sweep on the same cadence (or slower) and looks for any audit scope where a recorded attestation disagrees with the live chain. Each divergence becomes: 1. A `civicos.escalations` row at severity 'major', source 'substrate', reason 'witness-divergence:<scope>'. 2. A `civicos.federation_events` entry on channel 'constitutional', type 'audit.divergence', so any subscribed watcher sees it. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: every 15 minutes (same as witness-sweep, but staggered). Idempotent: re-recording the same divergence is silently deduplicated by escalation reason — the operator sees one row, not one per cron tick. Only signed rows count (go-live review H-1): attestations recorded with a registered witness key (public.civicos_signed_witnesses), whose signature over `scope|seq|hash|label` verifies here against that key, and whose key had not been revoked when the row was recorded. Anything else (older unsigned rows, a row whose signature does not verify) never raises an alarm; rows that fail verification are counted as `unverified`.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -6641,7 +7320,7 @@
         ],
         "operationId": "get_cron_witness_sweep",
         "summary": "GET /api/cron/witness-sweep",
-        "description": "Witness-sweep cron — emits a substrate-self attestation per visible scope. The substrate becomes its own first witness, so even before any external auditor signs the chain there's a continuous attestation timeline. Any divergence between the cron's recorded hash and the live hash is a tamper indicator. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: recommended every 15 minutes. Idempotent per (scope, seq) — the substrate's unique constraint deduplicates by witness_label.",
+        "description": "Witness-sweep cron — emits a substrate-self attestation per visible scope. The substrate becomes its own first witness, so even before any external auditor signs the chain there's a continuous attestation timeline. Any divergence between the cron's recorded hash and the live hash is a tamper indicator. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: recommended every 15 minutes. Idempotent per (scope, seq): attestations are insert-only, so a point already attested is reported as such and never replaced. Signed (go-live review H-1): the platform signs `scope|seq|hash|label` with its audit signing key (Ed25519, lib/keys/custody.ts) and registers that public key for the self-witness label before its first attestation of the run (idempotent), so the divergence watchdog can verify these rows like any other witness's.",
         "parameters": [
           {
             "name": "scopes",
@@ -6695,6 +7374,9 @@
                             ]
                           },
                           "attested": {
+                            "type": "boolean"
+                          },
+                          "already": {
                             "type": "boolean"
                           }
                         },
@@ -6761,7 +7443,7 @@
         ],
         "operationId": "post_cron_witness_sweep",
         "summary": "POST /api/cron/witness-sweep",
-        "description": "Witness-sweep cron — emits a substrate-self attestation per visible scope. The substrate becomes its own first witness, so even before any external auditor signs the chain there's a continuous attestation timeline. Any divergence between the cron's recorded hash and the live hash is a tamper indicator. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: recommended every 15 minutes. Idempotent per (scope, seq) — the substrate's unique constraint deduplicates by witness_label.",
+        "description": "Witness-sweep cron — emits a substrate-self attestation per visible scope. The substrate becomes its own first witness, so even before any external auditor signs the chain there's a continuous attestation timeline. Any divergence between the cron's recorded hash and the live hash is a tamper indicator. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: recommended every 15 minutes. Idempotent per (scope, seq): attestations are insert-only, so a point already attested is reported as such and never replaced. Signed (go-live review H-1): the platform signs `scope|seq|hash|label` with its audit signing key (Ed25519, lib/keys/custody.ts) and registers that public key for the self-witness label before its first attestation of the run (idempotent), so the divergence watchdog can verify these rows like any other witness's.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -11161,7 +11843,7 @@
         ],
         "operationId": "post_federation_webhooks_test",
         "summary": "POST /api/federation/webhooks/test",
-        "description": "/api/federation/webhooks/test — send a synthetic signed ping to one registered federation webhook, so an operator can confirm an endpoint is reachable and validates the HMAC signature BEFORE relying on it for real events. The ping is out-of-band: it does NOT advance the delivery cursor and a failure does NOT count toward the circuit breaker. It simply reports the HTTP result back to the caller. Auth: platform-tier officer session OR CIVICOS_PROVISIONING_SECRET (bearer). The webhook secret lives only in the service-role-readable table, so the signing happens server-side here — the browser never sees it.",
+        "description": "/api/federation/webhooks/test — send a synthetic signed ping to one registered federation webhook, so an operator can confirm an endpoint is reachable and validates the HMAC signature BEFORE relying on it for real events. The ping is out-of-band: it does NOT advance the delivery cursor and a failure does NOT count toward the circuit breaker. Go-live review M-5: the ping goes through the platform's safe fetch (lib/events/substrate-webhook.ts: public addresses only unless CIVICOS_WEBHOOKS_PRIVATE=1, no redirects), and the answer is coarse — delivered or not, never the remote status or error text, so the route cannot be used to probe addresses. The reason is logged for operators. Auth: a platform administrator's substrate session (platform-admin) OR CIVICOS_PROVISIONING_SECRET as a bearer (go-live review M-7); officials through the API are administrators only (lib/auth/roles.ts ADMIN_ONLY /api/federation). The secret lives only in the service-role-readable table, so the signing happens server-side here — the browser never sees it.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -11192,54 +11874,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "ok": {
-                          "type": "boolean"
-                        },
-                        "status": {
-                          "type": "number"
-                        },
-                        "detail": {
-                          "type": "string"
-                        },
-                        "at": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "ok",
-                        "status",
-                        "detail",
-                        "at"
-                      ]
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
                     },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "ok": {
-                          "type": "boolean",
-                          "const": false
-                        },
-                        "status": {
-                          "type": "number"
-                        },
-                        "detail": {
-                          "type": "string"
-                        },
-                        "at": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "ok",
-                        "status",
-                        "detail",
-                        "at"
-                      ]
+                    "detail": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
                     }
+                  },
+                  "required": [
+                    "ok",
+                    "detail",
+                    "at"
                   ]
                 },
                 "examples": {
@@ -11247,7 +11897,6 @@
                     "summary": "Generated from the schema",
                     "value": {
                       "ok": true,
-                      "status": 1,
                       "detail": "string",
                       "at": "2026-01-15T09:30:00.000Z"
                     }
@@ -13038,6 +13687,332 @@
         ],
         "x-permission-rule": "admin",
         "x-source": "src/app/api/map-pack/route.ts"
+      }
+    },
+    "/api/messaging": {
+      "get": {
+        "tags": [
+          "messaging"
+        ],
+        "operationId": "get_messaging",
+        "summary": "GET /api/messaging",
+        "description": "/api/messaging — the nation's email and SMS delivery (lib/messaging): the providers its administrator connected, the platform's public address for links, and where messages stand (counts and statuses; addresses masked, never message text). Administrators only (ADMIN_ONLY in lib/auth/roles.ts; reads checked here too). The nation is the installed one: callers never name one. POST actions: save-provider, remove-provider, settings, test (send one message now to an address the administrator gives; the address is neither kept nor audited), retry or discard a dead letter. Every change is audited without secrets or addresses.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagingStatus"
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "nationId": "ID-0001",
+                      "channels": {
+                        "email": "connected",
+                        "sms": "connected"
+                      },
+                      "providers": [
+                        {
+                          "priority": 1,
+                          "id": "ID-0001",
+                          "name": "Example",
+                          "createdAt": "2026-01-15T09:30:00.000Z",
+                          "createdBy": "A. Official",
+                          "enabled": true,
+                          "updatedAt": "2026-01-15T09:30:00.000Z",
+                          "updatedBy": "A. Official",
+                          "nationId": "ID-0001",
+                          "kind": "http-email",
+                          "channel": "email",
+                          "from": "string",
+                          "perMinute": 1,
+                          "hasSecret": true
+                        }
+                      ],
+                      "kinds": [
+                        {
+                          "kind": "http-email",
+                          "channel": "email",
+                          "label": "Example"
+                        }
+                      ],
+                      "settings": {
+                        "publicUrl": "https://example.gov/",
+                        "updatedAt": "2026-01-15T09:30:00.000Z",
+                        "updatedBy": "A. Official"
+                      },
+                      "publicBase": "string",
+                      "secretsSealed": true,
+                      "privateNetwork": true,
+                      "counts": {
+                        "byChannel": {
+                          "email": {
+                            "cancelled": 1,
+                            "dead": 1,
+                            "queued": 1,
+                            "retrying": 1,
+                            "sending": 1,
+                            "sent": 1
+                          },
+                          "sms": {
+                            "cancelled": 1,
+                            "dead": 1,
+                            "queued": 1,
+                            "retrying": 1,
+                            "sending": 1,
+                            "sent": 1
+                          }
+                        },
+                        "byStream": {
+                          "alerts": {
+                            "cancelled": 1,
+                            "dead": 1,
+                            "queued": 1,
+                            "retrying": 1,
+                            "sending": 1,
+                            "sent": 1
+                          },
+                          "site-updates": {
+                            "cancelled": 1,
+                            "dead": 1,
+                            "queued": 1,
+                            "retrying": 1,
+                            "sending": 1,
+                            "sent": 1
+                          },
+                          "test": {
+                            "cancelled": 1,
+                            "dead": 1,
+                            "queued": 1,
+                            "retrying": 1,
+                            "sending": 1,
+                            "sent": 1
+                          }
+                        }
+                      },
+                      "recent": [
+                        {
+                          "id": "ID-0001",
+                          "channel": "email",
+                          "stream": "alerts",
+                          "kind": "string",
+                          "to": "string",
+                          "subject": "string",
+                          "status": "cancelled",
+                          "attempts": 1,
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "dead": [
+                        {
+                          "id": "ID-0001",
+                          "channel": "email",
+                          "stream": "alerts",
+                          "kind": "string",
+                          "to": "string",
+                          "subject": "string",
+                          "status": "cancelled",
+                          "attempts": 1,
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/messaging/route.ts"
+      },
+      "post": {
+        "tags": [
+          "messaging"
+        ],
+        "operationId": "post_messaging",
+        "summary": "POST /api/messaging",
+        "description": "/api/messaging — the nation's email and SMS delivery (lib/messaging): the providers its administrator connected, the platform's public address for links, and where messages stand (counts and statuses; addresses masked, never message text). Administrators only (ADMIN_ONLY in lib/auth/roles.ts; reads checked here too). The nation is the installed one: callers never name one. POST actions: save-provider, remove-provider, settings, test (send one message now to an address the administrator gives; the address is neither kept nor audited), retry or discard a dead letter. Every change is audited without secrets or addresses.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "result": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/MessagingSettings"
+                        },
+                        {
+                          "$ref": "#/components/schemas/ProviderView_messaging_types"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ok": {
+                              "type": "boolean",
+                              "const": true
+                            }
+                          },
+                          "required": [
+                            "ok"
+                          ]
+                        }
+                      ]
+                    },
+                    "status": {
+                      "$ref": "#/components/schemas/MessagingStatus"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "result",
+                    "status"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "ok": true,
+                      "result": {
+                        "publicUrl": "https://example.gov/",
+                        "updatedAt": "2026-01-15T09:30:00.000Z",
+                        "updatedBy": "A. Official"
+                      },
+                      "status": {
+                        "nationId": "ID-0001",
+                        "channels": {
+                          "email": "connected",
+                          "sms": "connected"
+                        },
+                        "providers": [
+                          {
+                            "priority": 1,
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "createdAt": "2026-01-15T09:30:00.000Z",
+                            "createdBy": "A. Official",
+                            "enabled": true,
+                            "updatedAt": "2026-01-15T09:30:00.000Z",
+                            "updatedBy": "A. Official",
+                            "nationId": "ID-0001",
+                            "kind": "http-email",
+                            "channel": "email",
+                            "from": "string",
+                            "perMinute": 1,
+                            "hasSecret": true
+                          }
+                        ],
+                        "kinds": [
+                          {
+                            "kind": "http-email",
+                            "channel": "email",
+                            "label": "Example"
+                          }
+                        ],
+                        "settings": {},
+                        "publicBase": "string",
+                        "secretsSealed": true,
+                        "privateNetwork": true,
+                        "counts": {
+                          "byChannel": {
+                            "email": {},
+                            "sms": {}
+                          },
+                          "byStream": {
+                            "alerts": {},
+                            "site-updates": {},
+                            "test": {}
+                          }
+                        },
+                        "recent": [
+                          {
+                            "id": "ID-0001",
+                            "channel": "email",
+                            "stream": "alerts",
+                            "kind": "string",
+                            "to": "string",
+                            "subject": "string",
+                            "status": "cancelled",
+                            "attempts": 1,
+                            "createdAt": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "dead": [
+                          {
+                            "id": "ID-0001",
+                            "channel": "email",
+                            "stream": "alerts",
+                            "kind": "string",
+                            "to": "string",
+                            "subject": "string",
+                            "status": "cancelled",
+                            "attempts": 1,
+                            "createdAt": "2026-01-15T09:30:00.000Z"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/messaging/route.ts"
       }
     },
     "/api/metrics": {
@@ -23980,6 +24955,7 @@
         ],
         "operationId": "post_platform_backups_id_restore",
         "summary": "POST /api/platform/backups/{id}/restore",
+        "description": "/api/platform/backups/[id]/restore — restore the platform's data from a backup. Never automatic, four-eyes (lib/data/backups.ts requestRestore): 1. an administrator proposes it, acknowledging the loss warning (what was recorded after the backup is lost) → 202 with the proposal 2. a second, different official confirms it within 30 minutes, acknowledging the loss → the current state is backed up, the backup is restored, and one audit entry names both officials, the backup and the hash of the state it replaced DELETE cancels a proposal. Administrators only (lib/auth/roles.ts ADMIN_ONLY).",
         "parameters": [
           {
             "name": "id",
@@ -23995,7 +24971,28 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  },
+                  "acknowledgeLoss": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official",
+                    "acknowledgeLoss": true,
+                    "reason": "Text"
+                  }
+                }
               }
             }
           }
@@ -24006,28 +25003,227 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "backup": {
-                      "$ref": "#/components/schemas/BackupRecord"
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "boolean",
+                          "const": false
+                        },
+                        "restore": {
+                          "$ref": "#/components/schemas/RestoreRecord"
+                        }
+                      },
+                      "required": [
+                        "pending",
+                        "restore"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "proposal": {
+                          "$ref": "#/components/schemas/RestoreProposal"
+                        }
+                      },
+                      "required": [
+                        "pending",
+                        "proposal"
+                      ]
                     }
-                  },
-                  "required": [
-                    "backup"
                   ]
                 },
                 "examples": {
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
-                      "backup": {
+                      "pending": false,
+                      "restore": {
                         "id": "ID-0001",
-                        "kind": "full",
-                        "state": "completed",
-                        "location": "string",
-                        "encrypted": true,
-                        "sizeBytes": 1,
-                        "createdAt": "2026-01-15T09:30:00.000Z"
+                        "backupId": "ID-0001",
+                        "backupAt": "2026-01-15T09:30:00.000Z",
+                        "proposedBy": "A. Official",
+                        "confirmedBy": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "safetyBackupId": "ID-0001",
+                        "replacedDigest": "string",
+                        "auditSeq": 1,
+                        "check": {
+                          "compared": 1,
+                          "differing": [
+                            "string"
+                          ]
+                        },
+                        "removed": [
+                          "string"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "boolean",
+                          "const": false
+                        },
+                        "restore": {
+                          "$ref": "#/components/schemas/RestoreRecord"
+                        }
+                      },
+                      "required": [
+                        "pending",
+                        "restore"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "proposal": {
+                          "$ref": "#/components/schemas/RestoreProposal"
+                        }
+                      },
+                      "required": [
+                        "pending",
+                        "proposal"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "pending": false,
+                      "restore": {
+                        "id": "ID-0001",
+                        "backupId": "ID-0001",
+                        "backupAt": "2026-01-15T09:30:00.000Z",
+                        "proposedBy": "A. Official",
+                        "confirmedBy": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "safetyBackupId": "ID-0001",
+                        "replacedDigest": "string",
+                        "auditSeq": 1,
+                        "check": {
+                          "compared": 1,
+                          "differing": [
+                            "string"
+                          ]
+                        },
+                        "removed": [
+                          "string"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/platform/backups/[id]/restore/route.ts"
+      },
+      "delete": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "delete_platform_backups_id_restore",
+        "summary": "DELETE /api/platform/backups/{id}/restore",
+        "description": "/api/platform/backups/[id]/restore — restore the platform's data from a backup. Never automatic, four-eyes (lib/data/backups.ts requestRestore): 1. an administrator proposes it, acknowledging the loss warning (what was recorded after the backup is lost) → 202 with the proposal 2. a second, different official confirms it within 30 minutes, acknowledging the loss → the current state is backed up, the backup is restored, and one audit entry names both officials, the backup and the hash of the state it replaced DELETE cancels a proposal. Administrators only (lib/auth/roles.ts ADMIN_ONLY).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cancelled": {
+                      "$ref": "#/components/schemas/RestoreProposal"
+                    }
+                  },
+                  "required": [
+                    "cancelled"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "cancelled": {
+                        "id": "ID-0001",
+                        "backupId": "ID-0001",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "expiresAt": "2026-01-15T09:30:00.000Z",
+                        "reason": "Text",
+                        "warning": {
+                          "backupId": "ID-0001",
+                          "backupAt": "2026-01-15T09:30:00.000Z",
+                          "auditEntriesLost": 1,
+                          "divergent": true,
+                          "changed": [
+                            "string"
+                          ],
+                          "added": [
+                            "string"
+                          ],
+                          "kept": [
+                            "string"
+                          ],
+                          "text": "string"
+                        },
+                        "origin": {
+                          "kind": "update-center",
+                          "nationId": "ID-0001",
+                          "releaseId": "ID-0001"
+                        }
                       }
                     }
                   }
@@ -24055,13 +25251,310 @@
         "x-source": "src/app/api/platform/backups/[id]/restore/route.ts"
       }
     },
-    "/api/platform/backups": {
+    "/api/platform/backups/{id}": {
       "get": {
         "tags": [
           "platform"
         ],
-        "operationId": "get_platform_backups",
-        "summary": "GET /api/platform/backups",
+        "operationId": "get_platform_backups_id",
+        "summary": "GET /api/platform/backups/{id}",
+        "description": "/api/platform/backups/[id] — one backup as the target describes it; with ?preview=1 also what restoring it would lose (the backup is read back and opened; nothing changes).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "proposal": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/components/schemas/RestoreProposal"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "backup": {
+                          "$ref": "#/components/schemas/BackupEntry"
+                        },
+                        "warning": {
+                          "$ref": "#/components/schemas/LossWarning"
+                        }
+                      },
+                      "required": [
+                        "proposal",
+                        "backup",
+                        "warning"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "backup": {
+                          "$ref": "#/components/schemas/BackupEntry"
+                        },
+                        "proposal": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/components/schemas/RestoreProposal"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "backup",
+                        "proposal"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "proposal": {
+                        "id": "ID-0001",
+                        "backupId": "ID-0001",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "expiresAt": "2026-01-15T09:30:00.000Z",
+                        "reason": "Text",
+                        "warning": {
+                          "backupId": "ID-0001",
+                          "backupAt": "2026-01-15T09:30:00.000Z",
+                          "auditEntriesLost": 1,
+                          "divergent": true,
+                          "changed": [
+                            "string"
+                          ],
+                          "added": [
+                            "string"
+                          ],
+                          "kept": [
+                            "string"
+                          ],
+                          "text": "string"
+                        },
+                        "origin": {
+                          "kind": "update-center",
+                          "nationId": "ID-0001",
+                          "releaseId": "ID-0001"
+                        }
+                      },
+                      "backup": {
+                        "id": "ID-0001",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "createdBy": "A. Official",
+                        "reason": "drill",
+                        "mode": "postgres",
+                        "adapter": "string",
+                        "archive": "string",
+                        "sizeBytes": 1,
+                        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "keyProvider": "string",
+                        "audit": {
+                          "seq": 1,
+                          "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "entries": 1
+                        },
+                        "release": "string",
+                        "parts": 1,
+                        "stateDigest": "string",
+                        "verification": {
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": "A. Official",
+                          "ok": true,
+                          "scratch": "parsed",
+                          "checks": [
+                            "string"
+                          ]
+                        }
+                      },
+                      "warning": {
+                        "backupId": "ID-0001",
+                        "backupAt": "2026-01-15T09:30:00.000Z",
+                        "auditEntriesLost": 1,
+                        "auditFrom": 1,
+                        "auditTo": 1,
+                        "divergent": true,
+                        "changed": [
+                          "string"
+                        ],
+                        "added": [
+                          "string"
+                        ],
+                        "kept": [
+                          "string"
+                        ],
+                        "text": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/platform/backups/[id]/route.ts"
+      }
+    },
+    "/api/platform/backups/{id}/verify": {
+      "post": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "post_platform_backups_id_verify",
+        "summary": "POST /api/platform/backups/{id}/verify",
+        "description": "/api/platform/backups/[id]/verify — read the backup back from the target, decrypt it, check every part's SHA-256 against the manifest and dry-run the restore into a scratch store (postgres: a scratch schema, rolled back). The result is kept with the backup and audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "backup": {
+                      "$ref": "#/components/schemas/BackupEntry"
+                    }
+                  },
+                  "required": [
+                    "backup"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "backup": {
+                        "id": "ID-0001",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "createdBy": "A. Official",
+                        "reason": "drill",
+                        "mode": "postgres",
+                        "adapter": "string",
+                        "archive": "string",
+                        "sizeBytes": 1,
+                        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "keyProvider": "string",
+                        "audit": {
+                          "seq": 1,
+                          "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "entries": 1
+                        },
+                        "release": "string",
+                        "parts": 1,
+                        "stateDigest": "string",
+                        "verification": {
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": "A. Official",
+                          "ok": true,
+                          "scratch": "parsed",
+                          "checks": [
+                            "string"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/platform/backups/[id]/verify/route.ts"
+      }
+    },
+    "/api/platform/backups/policy": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "get_platform_backups_policy",
+        "summary": "GET /api/platform/backups/policy",
+        "description": "/api/platform/backups/policy — the backup schedule, retention (newest of the last N days, weeks and months; pre-restore copies for N days) and the RPO and RTO targets (docs/DISASTER_RECOVERY.md). PUT by an administrator, audited.",
         "parameters": [],
         "responses": {
           "200": {
@@ -24071,31 +25564,319 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "backups": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/BackupRecord"
-                      }
+                    "policy": {
+                      "$ref": "#/components/schemas/BackupPolicy"
                     }
                   },
                   "required": [
-                    "backups"
+                    "policy"
                   ]
                 },
                 "examples": {
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
-                      "backups": [
-                        {
-                          "id": "ID-0001",
-                          "kind": "full",
-                          "state": "completed",
-                          "location": "string",
-                          "encrypted": true,
-                          "createdAt": "2026-01-15T09:30:00.000Z"
-                        }
+                      "policy": {
+                        "daily": 1,
+                        "weekly": 1,
+                        "monthly": 1,
+                        "preRestoreDays": 1,
+                        "intervalMinutes": 1,
+                        "rpoMinutes": 1,
+                        "rtoMinutes": 1,
+                        "updatedBy": "A. Official",
+                        "updatedAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/platform/backups/policy/route.ts"
+      },
+      "put": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "put_platform_backups_policy",
+        "summary": "PUT /api/platform/backups/policy",
+        "description": "/api/platform/backups/policy — the backup schedule, retention (newest of the last N days, weeks and months; pre-restore copies for N days) and the RPO and RTO targets (docs/DISASTER_RECOVERY.md). PUT by an administrator, audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "policy": {
+                      "$ref": "#/components/schemas/BackupPolicy"
+                    }
+                  },
+                  "required": [
+                    "policy"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "policy": {
+                        "daily": 1,
+                        "weekly": 1,
+                        "monthly": 1,
+                        "preRestoreDays": 1,
+                        "intervalMinutes": 1,
+                        "rpoMinutes": 1,
+                        "rtoMinutes": 1,
+                        "updatedBy": "A. Official",
+                        "updatedAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/platform/backups/policy/route.ts"
+      }
+    },
+    "/api/platform/backups/retention": {
+      "post": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "post_platform_backups_retention",
+        "summary": "POST /api/platform/backups/retention",
+        "description": "/api/platform/backups/retention — apply the retention policy now: remove the backups it no longer keeps (never one an installed release's restore point names, never the newest verified one). Audited with the ids removed.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kept": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "pruned": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "kept",
+                    "pruned"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "kept": [
+                        "string"
+                      ],
+                      "pruned": [
+                        "string"
                       ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/platform/backups/retention/route.ts"
+      }
+    },
+    "/api/platform/backups": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "get_platform_backups",
+        "summary": "GET /api/platform/backups",
+        "description": "/api/platform/backups — the installation's backups (register 3.7, 9.1; lib/data/backups.ts; review M-14: no simulated backups). GET: the catalogue at the backup target (newest first; each with the earlier fields kind, state, location, encrypted, sizeBytes, createdAt, and the backup's own description), and the status (target, key, policy, RPO, restore proposals and restores). POST: an administrator takes a backup now (encrypted, with its manifest and the audit chain head) and it is verified at once (administrators only, lib/auth/roles.ts ADMIN_ONLY). `kind` is accepted as before; every backup is a full, consistent copy.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "backups": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "status": {
+                      "$ref": "#/components/schemas/BackupStatus"
+                    }
+                  },
+                  "required": [
+                    "backups",
+                    "status"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "error": "Text",
+                      "backups": [],
+                      "status": {
+                        "target": {
+                          "error": "Text"
+                        },
+                        "key": {
+                          "provider": "string",
+                          "ready": true
+                        },
+                        "mode": "postgres",
+                        "policy": {
+                          "daily": 1,
+                          "weekly": 1,
+                          "monthly": 1,
+                          "preRestoreDays": 1,
+                          "intervalMinutes": 1,
+                          "rpoMinutes": 1,
+                          "rtoMinutes": 1
+                        },
+                        "rpo": {
+                          "targetMinutes": 1,
+                          "newestVerifiedAt": "2026-01-15T09:30:00.000Z",
+                          "ageMinutes": 1,
+                          "met": true
+                        },
+                        "rtoMinutes": 1,
+                        "proposals": [
+                          {
+                            "id": "ID-0001",
+                            "backupId": "ID-0001",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "expiresAt": "2026-01-15T09:30:00.000Z",
+                            "warning": {}
+                          }
+                        ],
+                        "restores": [
+                          {
+                            "id": "ID-0001",
+                            "backupId": "ID-0001",
+                            "backupAt": "2026-01-15T09:30:00.000Z",
+                            "proposedBy": "A. Official",
+                            "confirmedBy": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "safetyBackupId": "ID-0001",
+                            "replacedDigest": "string",
+                            "auditSeq": 1,
+                            "check": {},
+                            "removed": []
+                          }
+                        ],
+                        "runs": [
+                          {
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "kind": "retention",
+                            "ok": true
+                          }
+                        ]
+                      }
                     }
                   }
                 }
@@ -24126,6 +25907,7 @@
         ],
         "operationId": "post_platform_backups",
         "summary": "POST /api/platform/backups",
+        "description": "/api/platform/backups — the installation's backups (register 3.7, 9.1; lib/data/backups.ts; review M-14: no simulated backups). GET: the catalogue at the backup target (newest first; each with the earlier fields kind, state, location, encrypted, sizeBytes, createdAt, and the backup's own description), and the status (target, key, policy, RPO, restore proposals and restores). POST: an administrator takes a backup now (encrypted, with its manifest and the audit chain head) and it is verified at once (administrators only, lib/auth/roles.ts ADMIN_ONLY). `kind` is accepted as before; every backup is a full, consistent copy.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -24134,6 +25916,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "by": {
+                    "type": "string"
+                  },
                   "kind": {
                     "type": "string"
                   }
@@ -24143,6 +25928,7 @@
                 "schema": {
                   "summary": "Generated from the schema",
                   "value": {
+                    "by": "A. Official",
                     "kind": "string"
                   }
                 }
@@ -24158,8 +25944,143 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "note": {
+                      "type": "string"
+                    },
                     "backup": {
-                      "$ref": "#/components/schemas/BackupRecord"
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "full",
+                            "incremental"
+                          ]
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "completed",
+                            "failed",
+                            "pending",
+                            "restoring"
+                          ],
+                          "description": "completed: verified (read back, decrypted, every part checked, dry-run restored); pending: not verified yet; failed: verification failed."
+                        },
+                        "location": {
+                          "type": "string",
+                          "description": "Where the archive is: `dir://<file>` or `s3://<bucket>/<prefix><file>`."
+                        },
+                        "encrypted": {
+                          "type": "boolean"
+                        },
+                        "sizeBytes": {
+                          "type": "number"
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "sha256": {
+                          "type": "string",
+                          "description": "Real backups (lib/data/backups.ts): the archive's SHA-256, who took it and why, and the audit chain head it holds."
+                        },
+                        "createdBy": {
+                          "type": "string"
+                        },
+                        "reason": {
+                          "type": "string"
+                        },
+                        "auditSeq": {
+                          "type": "number"
+                        },
+                        "verifiedAt": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "postgres",
+                            "snapshot"
+                          ]
+                        },
+                        "adapter": {
+                          "type": "string"
+                        },
+                        "archive": {
+                          "type": "string"
+                        },
+                        "keyProvider": {
+                          "type": "string"
+                        },
+                        "audit": {
+                          "type": "object",
+                          "properties": {
+                            "seq": {
+                              "type": "number"
+                            },
+                            "hash": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string"
+                                }
+                              ]
+                            },
+                            "entries": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "seq",
+                            "hash",
+                            "entries"
+                          ]
+                        },
+                        "release": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "parts": {
+                          "type": "number"
+                        },
+                        "stateDigest": {
+                          "type": "string"
+                        },
+                        "verification": {
+                          "$ref": "#/components/schemas/Verification"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind",
+                        "state",
+                        "location",
+                        "encrypted",
+                        "sizeBytes",
+                        "createdAt",
+                        "sha256",
+                        "createdBy",
+                        "reason",
+                        "mode",
+                        "adapter",
+                        "archive",
+                        "keyProvider",
+                        "audit",
+                        "release",
+                        "parts",
+                        "stateDigest"
+                      ]
                     }
                   },
                   "required": [
@@ -24170,6 +26091,7 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "note": "Text",
                       "backup": {
                         "id": "ID-0001",
                         "kind": "full",
@@ -24177,7 +26099,33 @@
                         "location": "string",
                         "encrypted": true,
                         "sizeBytes": 1,
-                        "createdAt": "2026-01-15T09:30:00.000Z"
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "createdBy": "A. Official",
+                        "reason": "Text",
+                        "auditSeq": 1,
+                        "verifiedAt": "2026-01-15T09:30:00.000Z",
+                        "mode": "postgres",
+                        "adapter": "string",
+                        "archive": "string",
+                        "keyProvider": "string",
+                        "audit": {
+                          "seq": 1,
+                          "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "entries": 1
+                        },
+                        "release": "string",
+                        "parts": 1,
+                        "stateDigest": "string",
+                        "verification": {
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": "A. Official",
+                          "ok": true,
+                          "scratch": "parsed",
+                          "checks": [
+                            "string"
+                          ]
+                        }
                       }
                     }
                   }
@@ -24203,6 +26151,151 @@
         ],
         "x-permission-rule": "admin",
         "x-source": "src/app/api/platform/backups/route.ts"
+      }
+    },
+    "/api/platform/backups/state": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "get_platform_backups_state",
+        "summary": "GET /api/platform/backups/state",
+        "description": "/api/platform/backups/state — a fingerprint of this server's state: the SHA-256 of each store (or table) as a backup would hold it, the state digest and the audit chain head, with the chain verified. Hashes only, nothing of the state itself. The disaster recovery drill (scripts/dr-drill.mjs) compares a restored instance with the backup.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "chain": {
+                      "type": "object",
+                      "properties": {
+                        "brokenAtSeq": {
+                          "type": "number"
+                        },
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "checked": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "checked"
+                      ]
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "postgres",
+                        "snapshot"
+                      ]
+                    },
+                    "stateDigest": {
+                      "type": "string"
+                    },
+                    "parts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "sha256": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "sha256"
+                        ]
+                      }
+                    },
+                    "audit": {
+                      "type": "object",
+                      "properties": {
+                        "seq": {
+                          "type": "number"
+                        },
+                        "hash": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "entries": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "seq",
+                        "hash",
+                        "entries"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "chain",
+                    "mode",
+                    "stateDigest",
+                    "parts",
+                    "audit"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "chain": {
+                        "brokenAtSeq": 1,
+                        "ok": true,
+                        "checked": 1
+                      },
+                      "mode": "postgres",
+                      "stateDigest": "string",
+                      "parts": [
+                        {
+                          "name": "Example",
+                          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                        }
+                      ],
+                      "audit": {
+                        "seq": 1,
+                        "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "entries": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/platform/backups/state/route.ts"
       }
     },
     "/api/platform/config/{id}/apply": {
@@ -25673,6 +27766,14 @@
                         },
                         "records": {
                           "$ref": "#/components/schemas/RecordsStatus"
+                        },
+                        "restoring": {
+                          "type": "boolean",
+                          "description": "A data restore is being applied here (lib/data/backups.ts): changes are refused until it ends."
+                        },
+                        "restartRequired": {
+                          "type": "string",
+                          "description": "Another instance restored the state from a backup: this server must restart before it takes changes."
                         }
                       },
                       "required": [
@@ -25721,7 +27822,9 @@
                           "followed": 1,
                           "outboxSeen": 1,
                           "lagMs": 1
-                        }
+                        },
+                        "restoring": true,
+                        "restartRequired": "string"
                       }
                     }
                   }
@@ -26941,7 +29044,7 @@
         ],
         "operationId": "post_public_sites_id_subscribe",
         "summary": "POST /api/public-sites/{id}/subscribe",
-        "description": "Ask for email updates from a public site (the newsletter box). Works as a plain form post (answers with a redirect to /subscriptions) or as JSON. Double opt-in: this only queues a confirmation email (lib/data/site-subscriptions.ts).",
+        "description": "Ask for email updates from a public site (the newsletter box). Works as a plain form post (answers with a redirect to /subscriptions) or as JSON. Double opt-in: this only queues a confirmation email (lib/data/site-subscriptions.ts), in the language the visitor chose on the site.",
         "parameters": [
           {
             "name": "id",
@@ -28598,7 +30701,7 @@
         ],
         "operationId": "post_releases_id_decision",
         "summary": "POST /api/releases/{id}/decision",
-        "description": "/api/releases/[id]/decision — a nation's explicit decision on a release: approve, schedule, unschedule, install, skip, reconsider or rollback. Nothing is ever applied without one; each is written to the audit chain.",
+        "description": "/api/releases/[id]/decision — a nation's explicit decision on a release: approve, schedule, unschedule, install, skip, reconsider or rollback. Nothing is ever applied without one; each is written to the audit chain. prepare (take a restore point) for the installed nation backs the platform up and verifies the backup first (lib/data/backups.ts takeRestorePoint); the restore point records the backup, and only a verified one lets the install proceed.",
         "parameters": [
           {
             "name": "id",
@@ -28709,6 +30812,12 @@
                           "action": "approve",
                           "by": "A. Official",
                           "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "breakGlass": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text",
+                          "version": "string"
                         }
                       },
                       "chamber": {
@@ -28886,7 +30995,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/[id]/decision/route.ts"
       }
     },
@@ -29099,7 +31208,7 @@
         ],
         "operationId": "get_releases_id_readiness",
         "summary": "GET /api/releases/{id}/readiness",
-        "description": "/api/releases/[id]/readiness — preflight compatibility and staging for one release, as this nation sees it. GET the latest preflight report, the staging environment and run. POST { action: 'preflight' | 'waive' | 'stage' | 'stage-fail' | 'uat', … }",
+        "description": "/api/releases/[id]/readiness — preflight compatibility and staging for one release, as this nation sees it. GET the latest preflight report, the staging environment and run. POST { action: 'preflight' | 'waive' | 'cancel-waiver' | 'stage' | 'stage-fail' | 'uat', … } Installation-level: this nation's government-wide administrators only (lib/auth/roles.ts, checked in chamberBody()). A waiver is dual control by two sign-ins: the first official proposes { findingKey, reason }, a different signed-in official confirms with { findingKey } in their own request.",
         "parameters": [
           {
             "name": "id",
@@ -29251,7 +31360,7 @@
         ],
         "operationId": "post_releases_id_readiness",
         "summary": "POST /api/releases/{id}/readiness",
-        "description": "/api/releases/[id]/readiness — preflight compatibility and staging for one release, as this nation sees it. GET the latest preflight report, the staging environment and run. POST { action: 'preflight' | 'waive' | 'stage' | 'stage-fail' | 'uat', … }",
+        "description": "/api/releases/[id]/readiness — preflight compatibility and staging for one release, as this nation sees it. GET the latest preflight report, the staging environment and run. POST { action: 'preflight' | 'waive' | 'cancel-waiver' | 'stage' | 'stage-fail' | 'uat', … } Installation-level: this nation's government-wide administrators only (lib/auth/roles.ts, checked in chamberBody()). A waiver is dual control by two sign-ins: the first official proposes { findingKey, reason }, a different signed-in official confirms with { findingKey } in their own request.",
         "parameters": [
           {
             "name": "id",
@@ -29334,6 +31443,81 @@
                     {
                       "type": "object",
                       "properties": {
+                        "pending": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "preflight": {
+                          "type": "object",
+                          "properties": {
+                            "nationId": {
+                              "type": "string"
+                            },
+                            "releaseId": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string"
+                            },
+                            "runAt": {
+                              "type": "string"
+                            },
+                            "runBy": {
+                              "type": "string"
+                            },
+                            "findings": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/PreflightFinding"
+                              }
+                            },
+                            "summary": {
+                              "type": "object",
+                              "properties": {
+                                "compatible": {
+                                  "type": "number"
+                                },
+                                "needsChange": {
+                                  "type": "number"
+                                },
+                                "blocking": {
+                                  "type": "number"
+                                },
+                                "waived": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "compatible",
+                                "needsChange",
+                                "blocking",
+                                "waived"
+                              ]
+                            },
+                            "approvable": {
+                              "type": "boolean",
+                              "description": "No blocking finding is left unwaived."
+                            }
+                          },
+                          "required": [
+                            "nationId",
+                            "releaseId",
+                            "version",
+                            "runAt",
+                            "runBy",
+                            "findings",
+                            "summary",
+                            "approvable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "preflight"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
                         "run": {
                           "$ref": "#/components/schemas/StagingRun"
                         }
@@ -29393,7 +31577,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/[id]/readiness/route.ts"
       }
     },
@@ -29404,7 +31588,7 @@
         ],
         "operationId": "post_releases_id_restore_data",
         "summary": "POST /api/releases/{id}/restore-data",
-        "description": "/api/releases/[id]/restore-data — restore the data snapshot taken before this release was installed. The last resort, never automatic: a named person, the software already back on the snapshot's version, and an explicit acknowledgement that everything written since is lost.",
+        "description": "/api/releases/[id]/restore-data — restore the data snapshot taken before this release was installed. The last resort, never automatic: a named person, the software already back on the snapshot's version, and an explicit acknowledgement that everything written since is lost. A restore point that is a real backup (lib/data/backups.ts) is restored four-eyes: an administrator proposes it (202, with the loss warning), a second, different official confirms it; the current state is backed up first and the restore is recorded in the audit chain and the chamber.",
         "parameters": [
           {
             "name": "id",
@@ -29448,24 +31632,67 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "restorePoint": {
-                      "$ref": "#/components/schemas/RestorePoint"
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "restore": {
+                          "$ref": "#/components/schemas/RestoreRecord"
+                        },
+                        "restorePoint": {
+                          "$ref": "#/components/schemas/RestorePoint"
+                        },
+                        "chamber": {
+                          "$ref": "#/components/schemas/UpdateChamber"
+                        }
+                      },
+                      "required": [
+                        "restore",
+                        "restorePoint",
+                        "chamber"
+                      ]
                     },
-                    "chamber": {
-                      "$ref": "#/components/schemas/UpdateChamber"
+                    {
+                      "type": "object",
+                      "properties": {
+                        "restorePoint": {
+                          "$ref": "#/components/schemas/RestorePoint"
+                        },
+                        "chamber": {
+                          "$ref": "#/components/schemas/UpdateChamber"
+                        }
+                      },
+                      "required": [
+                        "restorePoint",
+                        "chamber"
+                      ]
                     }
-                  },
-                  "required": [
-                    "restorePoint",
-                    "chamber"
                   ]
                 },
                 "examples": {
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "restore": {
+                        "id": "ID-0001",
+                        "backupId": "ID-0001",
+                        "backupAt": "2026-01-15T09:30:00.000Z",
+                        "proposedBy": "A. Official",
+                        "confirmedBy": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "safetyBackupId": "ID-0001",
+                        "replacedDigest": "string",
+                        "auditSeq": 1,
+                        "check": {
+                          "compared": 1,
+                          "differing": [
+                            "string"
+                          ]
+                        },
+                        "removed": [
+                          "string"
+                        ]
+                      },
                       "restorePoint": {
                         "id": "ID-0001",
                         "version": "string",
@@ -29480,7 +31707,12 @@
                         "restoreNotes": [
                           "Text"
                         ],
-                        "restoredAt": "2026-01-15T09:30:00.000Z"
+                        "restoredAt": "2026-01-15T09:30:00.000Z",
+                        "backupId": "ID-0001",
+                        "checks": [
+                          "string"
+                        ],
+                        "simulated": true
                       },
                       "chamber": {
                         "nation": {
@@ -29640,6 +31872,66 @@
               }
             }
           },
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pending": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "proposal": {
+                      "$ref": "#/components/schemas/RestoreProposal"
+                    }
+                  },
+                  "required": [
+                    "pending",
+                    "proposal"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "pending": true,
+                      "proposal": {
+                        "id": "ID-0001",
+                        "backupId": "ID-0001",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "expiresAt": "2026-01-15T09:30:00.000Z",
+                        "reason": "Text",
+                        "warning": {
+                          "backupId": "ID-0001",
+                          "backupAt": "2026-01-15T09:30:00.000Z",
+                          "auditEntriesLost": 1,
+                          "divergent": true,
+                          "changed": [
+                            "string"
+                          ],
+                          "added": [
+                            "string"
+                          ],
+                          "kept": [
+                            "string"
+                          ],
+                          "text": "string"
+                        },
+                        "origin": {
+                          "kind": "update-center",
+                          "nationId": "ID-0001",
+                          "releaseId": "ID-0001"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "default": {
             "description": "Error: `{ \"error\": string }`",
             "content": {
@@ -29656,7 +31948,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/[id]/restore-data/route.ts"
       }
     },
@@ -30243,7 +32535,7 @@
         ],
         "operationId": "get_releases_alerts",
         "summary": "GET /api/releases/alerts",
-        "description": "/api/releases/alerts — the officials this nation alerts about updates, their channels and subscriptions (security, releases, incidents, end of life), and the alerts recently queued for them (GET). POST: save or remove an official. Every change is audited.",
+        "description": "/api/releases/alerts — the officials this nation alerts about updates, their channels and subscriptions (security, releases, incidents, end of life), the alerts recently queued for them with where each delivery stands (addresses masked), and whether email and SMS providers are connected (GET). POST: save or remove an official. Every change is audited.",
         "parameters": [
           {
             "name": "link",
@@ -30285,12 +32577,36 @@
                           "security"
                         ]
                       }
+                    },
+                    "delivery": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "enum": [
+                            "connected",
+                            "not connected"
+                          ]
+                        },
+                        "sms": {
+                          "type": "string",
+                          "enum": [
+                            "connected",
+                            "not connected"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "email",
+                        "sms"
+                      ]
                     }
                   },
                   "required": [
                     "officials",
                     "outbox",
-                    "categories"
+                    "categories",
+                    "delivery"
                   ]
                 },
                 "examples": {
@@ -30325,12 +32641,16 @@
                           "officialName": "Example",
                           "channel": "email",
                           "to": "string",
-                          "status": "failed"
+                          "status": "cancelled"
                         }
                       ],
                       "categories": [
                         "eol"
-                      ]
+                      ],
+                      "delivery": {
+                        "email": "connected",
+                        "sms": "connected"
+                      }
                     }
                   }
                 }
@@ -30361,7 +32681,7 @@
         ],
         "operationId": "post_releases_alerts",
         "summary": "POST /api/releases/alerts",
-        "description": "/api/releases/alerts — the officials this nation alerts about updates, their channels and subscriptions (security, releases, incidents, end of life), and the alerts recently queued for them (GET). POST: save or remove an official. Every change is audited.",
+        "description": "/api/releases/alerts — the officials this nation alerts about updates, their channels and subscriptions (security, releases, incidents, end of life), the alerts recently queued for them with where each delivery stands (addresses masked), and whether email and SMS providers are connected (GET). POST: save or remove an official. Every change is audited.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -30537,7 +32857,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/alerts/route.ts"
       }
     },
@@ -30548,7 +32868,7 @@
         ],
         "operationId": "post_releases_break_glass",
         "summary": "POST /api/releases/break-glass",
-        "description": "/api/releases/break-glass — the worst case: two named people restore the restore point taken before the running release was installed.",
+        "description": "/api/releases/break-glass — the worst case: switch the software back to the restore point taken before the running release was installed. Dual control by two sign-ins (review H-5): the first official proposes { reason }, a different signed-in official confirms in their own request, and only then does it run. { action: 'cancel' } withdraws a proposal. Installation-level: this nation's government-wide administrators only (lib/auth/roles.ts, checked in chamberBody()). Names and identities come from the verified session, never from the body; a typed second name is refused.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -30565,6 +32885,9 @@
                   },
                   "reason": {
                     "type": "string"
+                  },
+                  "action": {
+                    "type": "string"
                   }
                 }
               },
@@ -30574,7 +32897,8 @@
                   "value": {
                     "by": "A. Official",
                     "secondBy": "A. Official",
-                    "reason": "Text"
+                    "reason": "Text",
+                    "action": "string"
                   }
                 }
               }
@@ -30587,52 +32911,88 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "incident": {
-                      "$ref": "#/components/schemas/FallbackIncident"
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "cancelled": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "chamber": {
+                          "$ref": "#/components/schemas/UpdateChamber"
+                        }
+                      },
+                      "required": [
+                        "cancelled",
+                        "chamber"
+                      ]
                     },
-                    "chamber": {
-                      "$ref": "#/components/schemas/UpdateChamber"
+                    {
+                      "type": "object",
+                      "properties": {
+                        "incident": {
+                          "$ref": "#/components/schemas/FallbackIncident"
+                        },
+                        "chamber": {
+                          "$ref": "#/components/schemas/UpdateChamber"
+                        }
+                      },
+                      "required": [
+                        "incident",
+                        "chamber"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "proposal": {
+                          "type": "object",
+                          "properties": {
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "reason": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "by",
+                            "at",
+                            "reason",
+                            "version"
+                          ]
+                        },
+                        "chamber": {
+                          "$ref": "#/components/schemas/UpdateChamber"
+                        }
+                      },
+                      "required": [
+                        "pending",
+                        "proposal",
+                        "chamber"
+                      ]
                     }
-                  },
-                  "required": [
-                    "incident",
-                    "chamber"
                   ]
                 },
                 "examples": {
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
-                      "incident": {
-                        "id": "ID-0001",
-                        "nationId": "ID-0001",
-                        "releaseId": "ID-0001",
-                        "fromVersion": "string",
-                        "toVersion": "string",
-                        "restorePointId": "ID-0001",
-                        "trigger": "approved",
-                        "state": "awaiting-decision",
-                        "dataRestored": {
-                          "at": "2026-01-15T09:30:00.000Z",
-                          "by": "A. Official",
-                          "snapshotAt": "2026-01-15T09:30:00.000Z"
-                        },
-                        "failedChecks": [
-                          "audit-chain"
-                        ],
-                        "timeline": [
-                          {
-                            "at": "2026-01-15T09:30:00.000Z",
-                            "text": "string"
-                          }
-                        ],
-                        "openedAt": "2026-01-15T09:30:00.000Z",
-                        "acknowledgedAt": "2026-01-15T09:30:00.000Z",
-                        "acknowledgedBy": "A. Official",
-                        "auditSeq": 1
-                      },
+                      "cancelled": true,
                       "chamber": {
                         "nation": {
                           "id": "ID-0001",
@@ -30807,7 +33167,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/break-glass/route.ts"
       }
     },
@@ -31043,7 +33403,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/change-control/route.ts"
       }
     },
@@ -31335,7 +33695,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/contract/route.ts"
       }
     },
@@ -31810,7 +34170,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/escrow/route.ts"
       }
     },
@@ -31988,6 +34348,7 @@
                         ],
                         "failStreak": 1,
                         "degraded": true,
+                        "degradedAlertAt": "2026-01-15T09:30:00.000Z",
                         "concludedAt": "2026-01-15T09:30:00.000Z",
                         "incidentId": "ID-0001"
                       },
@@ -32054,6 +34415,12 @@
                           "action": "approve",
                           "by": "A. Official",
                           "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "breakGlass": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text",
+                          "version": "string"
                         }
                       }
                     }
@@ -32250,7 +34617,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/hosting/[id]/route.ts"
       }
     },
@@ -32746,7 +35113,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/hosting/route.ts"
       }
     },
@@ -32861,7 +35228,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/incidents/[id]/route.ts"
       }
     },
@@ -33290,7 +35657,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/mirror/route.ts"
       }
     },
@@ -36997,7 +39364,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/security/byo/route.ts"
       }
     },
@@ -37083,7 +39450,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/security/definitions/route.ts"
       }
     },
@@ -37282,7 +39649,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/security/orders/[id]/route.ts"
       }
     },
@@ -37420,7 +39787,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/security/orders/route.ts"
       }
     },
@@ -37722,7 +40089,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/security/software/route.ts"
       }
     },
@@ -37816,7 +40183,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/settings/agent-credential/route.ts"
       }
     },
@@ -37994,7 +40361,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/settings/route.ts"
       }
     },
@@ -38386,7 +40753,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/sovereignty/route.ts"
       }
     },
@@ -38567,7 +40934,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/staging/route.ts"
       }
     },
@@ -47983,7 +50350,7 @@
         ],
         "operationId": "get_work",
         "summary": "GET /api/work",
-        "description": "What is waiting on officials across the government, from the records that hold it: every institution's queue (open or escalated items), its active incidents, permits awaiting a decision and open operational incidents. Read-only; the actions stay on their own endpoints (queue act, incident escalate/resolve, permit decide, ops incident ack/resolve), each audited.",
+        "description": "What is waiting on officials across the government, from the records that hold it: every institution's queue (open or escalated items), its active incidents, permits awaiting a decision and open operational incidents. Read-only; the actions stay on their own endpoints (queue act, incident escalate/resolve, permit decide, ops incident ack/resolve), each audited. Cases and permits carry personal data: a signed-in official sees only those they may read (lib/auth/roles.ts canReadInstitution(), canReadPermits(); review M-3); the whole government and auditors see all of them.",
         "parameters": [],
         "responses": {
           "200": {
@@ -48422,16 +50789,24 @@
             ]
           },
           "to": {
-            "type": "string"
+            "type": "string",
+            "description": "The address or number (masked when the API shows it)."
           },
           "status": {
             "type": "string",
             "enum": [
+              "cancelled",
               "failed",
               "queued",
+              "retrying",
+              "sending",
               "sent"
             ],
-            "description": "No provider is connected: deliveries are queued (placeholder)."
+            "description": "Where the delivery stands in the platform's outbox (lib/messaging): queued until a provider is connected."
+          },
+          "messageId": {
+            "type": "string",
+            "description": "The outbox message that carries it."
           }
         },
         "required": [
@@ -49105,6 +51480,159 @@
         "minItems": 4,
         "maxItems": 4
       },
+      "BackupEntry": {
+        "description": "One backup, as the target's catalogue describes it (no state in it).",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "drill",
+              "manual",
+              "pre-restore",
+              "restore-point",
+              "scheduled"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "postgres",
+              "snapshot"
+            ]
+          },
+          "adapter": {
+            "type": "string"
+          },
+          "archive": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "keyProvider": {
+            "type": "string"
+          },
+          "audit": {
+            "type": "object",
+            "properties": {
+              "seq": {
+                "type": "number"
+              },
+              "hash": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "entries": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "seq",
+              "hash",
+              "entries"
+            ]
+          },
+          "release": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "parts": {
+            "type": "number"
+          },
+          "stateDigest": {
+            "type": "string"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/Verification"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "createdBy",
+          "reason",
+          "mode",
+          "adapter",
+          "archive",
+          "sizeBytes",
+          "sha256",
+          "keyProvider",
+          "audit",
+          "release",
+          "parts",
+          "stateDigest"
+        ]
+      },
+      "BackupPolicy": {
+        "type": "object",
+        "properties": {
+          "daily": {
+            "type": "number",
+            "description": "Newest backup of each of the last N days / ISO weeks / months is kept."
+          },
+          "weekly": {
+            "type": "number"
+          },
+          "monthly": {
+            "type": "number"
+          },
+          "preRestoreDays": {
+            "type": "number",
+            "description": "Pre-restore copies are kept this many days."
+          },
+          "intervalMinutes": {
+            "type": "number",
+            "description": "The schedule takes a backup when the newest is older than this."
+          },
+          "rpoMinutes": {
+            "type": "number",
+            "description": "Targets (docs/DISASTER_RECOVERY.md): at most this much data may be lost, and service is back within this."
+          },
+          "rtoMinutes": {
+            "type": "number"
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "daily",
+          "weekly",
+          "monthly",
+          "preRestoreDays",
+          "intervalMinutes",
+          "rpoMinutes",
+          "rtoMinutes"
+        ]
+      },
       "BackupRecord": {
         "type": "object",
         "properties": {
@@ -49125,10 +51653,12 @@
               "failed",
               "pending",
               "restoring"
-            ]
+            ],
+            "description": "completed: verified (read back, decrypted, every part checked, dry-run restored); pending: not verified yet; failed: verification failed."
           },
           "location": {
-            "type": "string"
+            "type": "string",
+            "description": "Where the archive is: `dir://<file>` or `s3://<bucket>/<prefix><file>`."
           },
           "encrypted": {
             "type": "boolean"
@@ -49137,6 +51667,480 @@
             "type": "number"
           },
           "createdAt": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "Real backups (lib/data/backups.ts): the archive's SHA-256, who took it and why, and the audit chain head it holds."
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "auditSeq": {
+            "type": "number"
+          },
+          "verifiedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "state",
+          "location",
+          "encrypted",
+          "createdAt"
+        ]
+      },
+      "BackupStatus": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "error"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string"
+                  },
+                  "where": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "where"
+                ]
+              }
+            ]
+          },
+          "key": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string"
+              },
+              "ready": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "provider",
+              "ready"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "postgres",
+              "snapshot"
+            ]
+          },
+          "policy": {
+            "$ref": "#/components/schemas/BackupPolicy"
+          },
+          "rpo": {
+            "$ref": "#/components/schemas/RpoStatus"
+          },
+          "rtoMinutes": {
+            "type": "number"
+          },
+          "proposals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestoreProposal"
+            }
+          },
+          "restores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestoreRecord"
+            }
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Run"
+            }
+          }
+        },
+        "required": [
+          "target",
+          "key",
+          "mode",
+          "policy",
+          "rpo",
+          "rtoMinutes",
+          "proposals",
+          "restores",
+          "runs"
+        ]
+      },
+      "BackupStatusView": {
+        "description": "The backup service's status (lib/data/backups.ts backupStatus).",
+        "type": "object",
+        "properties": {
+          "target": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "error"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string"
+                  },
+                  "where": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "where"
+                ]
+              }
+            ]
+          },
+          "key": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string"
+              },
+              "ready": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "provider",
+              "ready"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "postgres",
+              "snapshot"
+            ]
+          },
+          "policy": {
+            "type": "object",
+            "properties": {
+              "daily": {
+                "type": "number"
+              },
+              "weekly": {
+                "type": "number"
+              },
+              "monthly": {
+                "type": "number"
+              },
+              "preRestoreDays": {
+                "type": "number"
+              },
+              "intervalMinutes": {
+                "type": "number"
+              },
+              "rpoMinutes": {
+                "type": "number"
+              },
+              "rtoMinutes": {
+                "type": "number"
+              },
+              "updatedBy": {
+                "type": "string"
+              },
+              "updatedAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "daily",
+              "weekly",
+              "monthly",
+              "preRestoreDays",
+              "intervalMinutes",
+              "rpoMinutes",
+              "rtoMinutes"
+            ]
+          },
+          "rpo": {
+            "type": "object",
+            "properties": {
+              "targetMinutes": {
+                "type": "number"
+              },
+              "newestVerifiedAt": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "ageMinutes": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "met": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "targetMinutes",
+              "newestVerifiedAt",
+              "ageMinutes",
+              "met"
+            ]
+          },
+          "rtoMinutes": {
+            "type": "number"
+          },
+          "proposals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "backupId": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "expiresAt": {
+                  "type": "string"
+                },
+                "warning": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "backupId",
+                "by",
+                "at",
+                "expiresAt",
+                "warning"
+              ]
+            }
+          },
+          "restores": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "backupId": {
+                  "type": "string"
+                },
+                "proposedBy": {
+                  "type": "string"
+                },
+                "confirmedBy": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "safetyBackupId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "backupId",
+                "proposedBy",
+                "confirmedBy",
+                "at",
+                "safetyBackupId"
+              ]
+            }
+          }
+        },
+        "required": [
+          "target",
+          "key",
+          "mode",
+          "policy",
+          "rpo",
+          "rtoMinutes",
+          "proposals",
+          "restores"
+        ]
+      },
+      "BackupView": {
+        "description": "A backup as the platform console shows it: the earlier record and the backup's own description.",
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "postgres",
+              "snapshot"
+            ]
+          },
+          "keyProvider": {
+            "type": "string"
+          },
+          "audit": {
+            "type": "object",
+            "properties": {
+              "seq": {
+                "type": "number"
+              },
+              "hash": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "entries": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "seq",
+              "hash",
+              "entries"
+            ]
+          },
+          "release": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "verification": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "ok": {
+                "type": "boolean"
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "problem": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "ok",
+              "checks"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "full",
+              "incremental"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed",
+              "pending",
+              "restoring"
+            ],
+            "description": "completed: verified (read back, decrypted, every part checked, dry-run restored); pending: not verified yet; failed: verification failed."
+          },
+          "location": {
+            "type": "string",
+            "description": "Where the archive is: `dir://<file>` or `s3://<bucket>/<prefix><file>`."
+          },
+          "encrypted": {
+            "type": "boolean"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "Real backups (lib/data/backups.ts): the archive's SHA-256, who took it and why, and the audit chain head it holds."
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "auditSeq": {
+            "type": "number"
+          },
+          "verifiedAt": {
             "type": "string"
           }
         },
@@ -51269,6 +54273,37 @@
           "basis"
         ]
       },
+      "Counts": {
+        "type": "object",
+        "properties": {
+          "cancelled": {
+            "type": "number"
+          },
+          "dead": {
+            "type": "number"
+          },
+          "queued": {
+            "type": "number"
+          },
+          "retrying": {
+            "type": "number"
+          },
+          "sending": {
+            "type": "number"
+          },
+          "sent": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "cancelled",
+          "dead",
+          "queued",
+          "retrying",
+          "sending",
+          "sent"
+        ]
+      },
       "Coverage": {
         "type": "object",
         "properties": {
@@ -52469,6 +55504,10 @@
           "conflictingAttestations": {
             "type": "number"
           },
+          "unverified": {
+            "type": "number",
+            "description": "Signed rows at the live seq whose signature did not verify (ignored)."
+          },
           "alarmed": {
             "type": "boolean"
           }
@@ -52478,6 +55517,7 @@
           "latestLiveSeq",
           "latestLiveHash",
           "conflictingAttestations",
+          "unverified",
           "alarmed"
         ]
       },
@@ -55544,6 +58584,63 @@
           "duplicates"
         ]
       },
+      "LossWarning": {
+        "type": "object",
+        "properties": {
+          "backupId": {
+            "type": "string"
+          },
+          "backupAt": {
+            "type": "string"
+          },
+          "auditEntriesLost": {
+            "type": "number",
+            "description": "Audit entries recorded after the backup (they are kept in the pre-restore copy, not in the restored chain)."
+          },
+          "auditFrom": {
+            "type": "number"
+          },
+          "auditTo": {
+            "type": "number"
+          },
+          "divergent": {
+            "type": "boolean",
+            "description": "The live chain does not contain the backup's head (another history)."
+          },
+          "changed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Stores or tables whose content differs from the backup."
+          },
+          "added": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kept": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "backupId",
+          "backupAt",
+          "auditEntriesLost",
+          "divergent",
+          "changed",
+          "added",
+          "kept",
+          "text"
+        ]
+      },
       "MaintenanceSlot": {
         "description": "A preferred weekly maintenance window, in the nation's local time.",
         "type": "object",
@@ -55682,6 +58779,253 @@
           "sealId",
           "state",
           "chain"
+        ]
+      },
+      "MessageView": {
+        "description": "A message as screens and the API show it: masked address, no text, no links.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "email",
+              "sms"
+            ]
+          },
+          "stream": {
+            "type": "string",
+            "enum": [
+              "alerts",
+              "site-updates",
+              "test"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "cancelled",
+              "dead",
+              "queued",
+              "retrying",
+              "sending",
+              "sent"
+            ]
+          },
+          "attempts": {
+            "type": "number"
+          },
+          "nextAttemptAt": {
+            "type": "string"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sentAt": {
+            "type": "string"
+          },
+          "finishedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "channel",
+          "stream",
+          "kind",
+          "to",
+          "subject",
+          "status",
+          "attempts",
+          "createdAt"
+        ]
+      },
+      "MessagingSettings": {
+        "type": "object",
+        "properties": {
+          "publicUrl": {
+            "type": "string",
+            "description": "The address people reach the platform at, for links in messages (e.g. https://www.gov.example)."
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          }
+        }
+      },
+      "MessagingStatus": {
+        "type": "object",
+        "properties": {
+          "nationId": {
+            "type": "string"
+          },
+          "channels": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "enum": [
+                  "connected",
+                  "not connected"
+                ]
+              },
+              "sms": {
+                "type": "string",
+                "enum": [
+                  "connected",
+                  "not connected"
+                ]
+              }
+            },
+            "required": [
+              "email",
+              "sms"
+            ]
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderView_messaging_types"
+            }
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "http-email",
+                    "http-sms",
+                    "smtp"
+                  ]
+                },
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "sms"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "channel",
+                "label"
+              ]
+            }
+          },
+          "settings": {
+            "$ref": "#/components/schemas/MessagingSettings"
+          },
+          "publicBase": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "The address links in messages start with (the setting, else CIVICOS_PUBLIC_URL), or null: messages with links wait."
+          },
+          "secretsSealed": {
+            "type": "boolean"
+          },
+          "privateNetwork": {
+            "type": "boolean"
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "byChannel": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "$ref": "#/components/schemas/Counts"
+                  },
+                  "sms": {
+                    "$ref": "#/components/schemas/Counts"
+                  }
+                },
+                "required": [
+                  "email",
+                  "sms"
+                ]
+              },
+              "byStream": {
+                "type": "object",
+                "properties": {
+                  "alerts": {
+                    "$ref": "#/components/schemas/Counts"
+                  },
+                  "site-updates": {
+                    "$ref": "#/components/schemas/Counts"
+                  },
+                  "test": {
+                    "$ref": "#/components/schemas/Counts"
+                  }
+                },
+                "required": [
+                  "alerts",
+                  "site-updates",
+                  "test"
+                ]
+              }
+            },
+            "required": [
+              "byChannel",
+              "byStream"
+            ]
+          },
+          "recent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageView"
+            }
+          },
+          "dead": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageView"
+            }
+          }
+        },
+        "required": [
+          "nationId",
+          "channels",
+          "providers",
+          "kinds",
+          "settings",
+          "publicBase",
+          "secretsSealed",
+          "privateNetwork",
+          "counts",
+          "recent",
+          "dead"
         ]
       },
       "MetricDef": {
@@ -56683,6 +60027,33 @@
               "at"
             ],
             "description": "Four-eyes: a production approve or install proposed by one official, awaiting a second."
+          },
+          "breakGlass": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason",
+              "version"
+            ],
+            "description": "Dual control: break-glass proposed by one official for the running release, awaiting a different signed-in official's confirmation (lapses after DUAL_CONTROL_HOURS). `byId` is the proposer's verified identity."
           }
         },
         "required": [
@@ -58907,7 +62278,27 @@
               "reason",
               "at"
             ],
-            "description": "A blocking finding waived by two named officials."
+            "description": "A blocking finding waived by two officials: `by` proposed it, `secondBy` (a different signed-in official) confirmed it."
+          },
+          "waiverProposal": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "reason",
+              "at"
+            ],
+            "description": "A waiver proposed by one official, awaiting a different official's confirmation (dual control)."
           }
         },
         "required": [
@@ -59088,6 +62479,10 @@
           },
           "degraded": {
             "type": "boolean"
+          },
+          "degradedAlertAt": {
+            "type": "string",
+            "description": "When the nation's officials were first alerted that the release is degraded (once per probation)."
           },
           "concludedAt": {
             "type": "string"
@@ -59435,21 +62830,168 @@
           "hasSecret"
         ]
       },
-      "PublicAccount": {
-        "description": "What screens see of an account: never the password hash or the second-step secret.",
+      "ProviderView_messaging_types": {
+        "description": "A provider as the API shows it: never the secret.",
         "type": "object",
         "properties": {
-          "institution": {
-            "type": "string",
-            "description": "Ministry id; absent for officials serving the whole government."
+          "priority": {
+            "type": "number",
+            "description": "Lower first; the next enabled provider of the channel is tried when one fails."
           },
           "id": {
             "type": "string"
           },
-          "email": {
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "POST",
+              "PUT"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "nationId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "http-email",
+              "http-sms",
+              "smtp"
+            ]
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "email",
+              "sms"
+            ]
+          },
+          "from": {
+            "type": "string",
+            "description": "Sender: an email address, or the SMS sender name or number."
+          },
+          "replyTo": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "number"
+          },
+          "security": {
+            "type": "string",
+            "enum": [
+              "starttls",
+              "tls"
+            ],
+            "description": "STARTTLS (587) or implicit TLS (465); a connection without TLS is never made."
+          },
+          "username": {
+            "type": "string"
+          },
+          "caPem": {
+            "type": "string",
+            "description": "An internal certificate authority the relay's certificate is issued by (PEM)."
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "form",
+              "json"
+            ]
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Header templates, e.g. { Authorization: 'Bearer {{secret}}' }."
+          },
+          "bodyTemplate": {
+            "type": "string",
+            "description": "Body template with {{to}}, {{from}}, {{subject}}, {{text}}, {{key}}, {{secret}}, {{username}}, {{basic}}, {{unsubscribe}}."
+          },
+          "perMinute": {
+            "type": "number",
+            "description": "Messages per minute this provider accepts from the platform."
+          },
+          "lastResult": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "ok": {
+                "type": "boolean"
+              },
+              "detail": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "ok",
+              "detail"
+            ]
+          },
+          "hasSecret": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "priority",
+          "id",
+          "name",
+          "createdAt",
+          "createdBy",
+          "enabled",
+          "updatedAt",
+          "updatedBy",
+          "nationId",
+          "kind",
+          "channel",
+          "from",
+          "perMinute",
+          "hasSecret"
+        ]
+      },
+      "PublicAccount": {
+        "description": "What screens see of an account: never the password hash or the second-step secret.",
+        "type": "object",
+        "properties": {
+          "id": {
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string",
+            "description": "Ministry id; absent for officials serving the whole government."
+          },
+          "email": {
             "type": "string"
           },
           "office": {
@@ -59534,8 +63076,8 @@
         },
         "required": [
           "id",
-          "email",
           "name",
+          "email",
           "office",
           "createdAt",
           "createdBy",
@@ -60905,6 +64447,21 @@
           },
           "restoredAt": {
             "type": "string"
+          },
+          "backupId": {
+            "type": "string",
+            "description": "The real backup behind it (lib/data/backups.ts): read back, decrypted, every part checked and dry-run restored."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What the verification checked (the backup's dry run)."
+          },
+          "simulated": {
+            "type": "boolean",
+            "description": "Not a real backup: a demonstration nation of the publisher, or CIVICOS_RESTORE_POINTS=simulated."
           }
         },
         "required": [
@@ -60918,11 +64475,209 @@
           "restoreNotes"
         ]
       },
+      "RestoreProposal": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "backupId": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "warning": {
+            "$ref": "#/components/schemas/LossWarning"
+          },
+          "origin": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "update-center"
+              },
+              "nationId": {
+                "type": "string"
+              },
+              "releaseId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "nationId",
+              "releaseId"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "backupId",
+          "by",
+          "at",
+          "expiresAt",
+          "warning"
+        ]
+      },
+      "RestoreRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "backupId": {
+            "type": "string"
+          },
+          "backupAt": {
+            "type": "string"
+          },
+          "proposedBy": {
+            "type": "string"
+          },
+          "confirmedBy": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "safetyBackupId": {
+            "type": "string"
+          },
+          "replacedDigest": {
+            "type": "string"
+          },
+          "auditSeq": {
+            "type": "number"
+          },
+          "check": {
+            "type": "object",
+            "properties": {
+              "compared": {
+                "type": "number"
+              },
+              "differing": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "compared",
+              "differing"
+            ]
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "backupId",
+          "backupAt",
+          "proposedBy",
+          "confirmedBy",
+          "at",
+          "safetyBackupId",
+          "replacedDigest",
+          "auditSeq",
+          "check",
+          "removed"
+        ]
+      },
       "Ring": {
         "type": "array",
         "items": {
           "$ref": "#/components/schemas/Position"
         }
+      },
+      "RpoStatus": {
+        "type": "object",
+        "properties": {
+          "targetMinutes": {
+            "type": "number"
+          },
+          "newestVerifiedAt": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "ageMinutes": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "met": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "targetMinutes",
+          "newestVerifiedAt",
+          "ageMinutes",
+          "met"
+        ]
+      },
+      "Run": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "retention",
+              "scheduled"
+            ]
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "backupId": {
+            "type": "string"
+          },
+          "pruned": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skipped": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "kind",
+          "ok"
+        ]
       },
       "Scenario": {
         "type": "object",
@@ -67523,6 +71278,44 @@
           "purposes",
           "retentionDays",
           "onwardSharing"
+        ]
+      },
+      "Verification": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "scratch": {
+            "type": "string",
+            "enum": [
+              "parsed",
+              "schema",
+              "store"
+            ]
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "problem": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "by",
+          "ok",
+          "scratch",
+          "checks"
         ]
       },
       "VerifyResult": {

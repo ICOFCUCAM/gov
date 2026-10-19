@@ -257,7 +257,7 @@ export function toOpenApi(routes, version = '1', types = { schemas: {}, ops: {} 
     info: {
       title: 'CivicOS platform API',
       version,
-      description: 'Every HTTP endpoint of this installation, generated from its route files (scripts/build-openapi.mjs). Request and response bodies are JSON, typed from the TypeScript types the routes use where they declare them; errors are `{ "error": string }`. Sign-in rules follow the platform middleware and lib/auth/roles.ts: public sites and public reads are open, everything else needs an official\'s session or the machine credential named in each operation\'s security. `x-permission-rule` names the rule a change falls under (administrator, ministry, official, bearer, self-authenticated, public-write).',
+      description: 'Every HTTP endpoint of this installation, generated from its route files (scripts/build-openapi.mjs). Request and response bodies are JSON, typed from the TypeScript types the routes use where they declare them; errors are `{ "error": string }`. Sign-in rules follow the platform middleware and lib/auth/roles.ts: public sites and public reads are open, everything else needs an official\'s session or the machine credential named in each operation\'s security. `x-permission-rule` names the rule a change falls under (administrator, installation: a government-wide administrator of this nation, ministry, official, bearer, self-authenticated, public-write).',
     },
     servers: [{ url: '/' }],
     security: [{ officialSession: [] }],

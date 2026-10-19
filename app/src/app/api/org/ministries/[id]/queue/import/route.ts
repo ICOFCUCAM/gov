@@ -7,12 +7,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CASE_COLUMNS, MAX_ROWS, importCases, listImports, sampleCount } from '@/lib/data/case-import';
 import { getMinistry } from '@/lib/data/store';
-import { withOfficial, refusal } from '@/lib/auth/official';
-import { ministryPermission } from '@/lib/auth/roles';
+import { withOfficial, refusal, readRefusal } from '@/lib/auth/official';
+import { canReadInstitution, ministryPermission } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
 export async function GET(_r: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  const refused = await readRefusal(s => canReadInstitution(s, params.id));
+  if (refused) return refused;
   if (!getMinistry(params.id)) return NextResponse.json({ error: 'Ministry not found' }, { status: 404 });
   return NextResponse.json({ columns: CASE_COLUMNS, maxRows: MAX_ROWS, samples: sampleCount(params.id), imports: listImports(params.id) });
 }

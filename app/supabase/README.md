@@ -20,7 +20,7 @@ Project: **civicos** (eu-central-1, `gtgpbokcbngchvoijish`).
 
 ## Scheduling
 
-The 12 `/api/cron/*` worker endpoints are driven in-database by **pg_cron +
+The 15 `/api/cron/*` worker jobs are driven in-database by **pg_cron +
 pg_net** (the free path — no Vercel Pro needed). Postgres calls the deployed
 Next.js routes on a timer, authenticating with a Bearer token read at run time
 from Supabase Vault (`civicos_cron_secret`, seeded once by an operator to match
@@ -28,6 +28,17 @@ the app's `CIVICOS_CRON_SECRET`). The full re-runnable schedule lives in
 [`cron/schedule.sql`](cron/schedule.sql); cadences range from every minute
 (`update-watchdog`, which concludes Update Center probations) and every 5 min
 (`deliver-events`) to hourly (SLA, consent expiry, directive promotion, etc.).
+
+Every job calls `civicos.cron_call(job, path)` (migration
+`20261024110000_civicos_cron_dispatch.sql`), which reads `civicos_base_url`
+and `civicos_cron_secret` from Vault when it runs. **There is no fallback
+host**: until both are seeded (the base URL as a plain `https://host` origin)
+a job sends nothing and records why in `civicos.cron_skips`
+(`select * from civicos.cron_skips;`). Earlier versions of `schedule.sql`
+fell back to an outside reference deployment and sent the cron secret there;
+if your deployment ran the schedule before `civicos_base_url` was set,
+**rotate the cron secret** (the app's `CIVICOS_CRON_SECRET` and Vault's
+`civicos_cron_secret`, same value) and re-apply `schedule.sql`.
 
 ## Migrations
 

@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { generateKeyPairSync, sign } from 'node:crypto';
+import { canonicalWitnessMaterial } from '@/lib/db/signatures';
 
 const serverClientMock = vi.fn();
 vi.mock('@/lib/db/client', () => ({
@@ -14,6 +16,48 @@ function chainable(result: { data: unknown; error: unknown }): Record<string, un
   }
   self.then = (resolve: (r: typeof result) => void) => { resolve(result); return self; };
   return self;
+}
+
+// A witness's ECDSA P-256 device key, as the browser makes it (raw r||s signatures).
+const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+const JWK = publicKey.export({ format: 'jwk' });
+const signed = (scope: string, seq: number, hash: string, label: string): string =>
+  sign('sha256', Buffer.from(canonicalWitnessMaterial(scope, seq, hash, label)), { key: privateKey, dsaEncoding: 'ieee-p1363' }).toString('hex');
+
+interface Att { observed_hash: string; witness_label: string; witness_signature: string | null; public_jwk: unknown; key_revoked_at: string | null; at: string }
+const att = (hash: string, label: string, over: Partial<Att> = {}): Att => ({
+  observed_hash: hash, witness_label: label, witness_signature: signed('X', 7, hash, label),
+  public_jwk: JWK, key_revoked_at: null, at: '2026-10-01T00:00:00Z', ...over,
+});
+
+/** A substrate whose live chain for scope X is at seq 7 with `liveHash`, with these signed attestations. */
+function substrate(atts: Att[], opts: { liveHash?: string; openEscalation?: boolean } = {}) {
+  const rpc = vi.fn(async () => ({ data: null, error: null }));
+  const views: string[] = [];
+  serverClientMock.mockReturnValue({
+    from: (view: string) => {
+      views.push(view);
+      if (view === 'civicos_signed_witnesses') {
+        let phase: 'scopes' | 'attestations' = 'scopes';
+        const self: Record<string, unknown> = {
+          select: () => self,
+          limit: () => Promise.resolve({ data: [{ scope: 'X' }], error: null }),
+          eq: (col: string) => { if (col === 'observed_seq') phase = 'attestations'; return self; },
+          order: () => self,
+          then: (resolve: (r: { data: unknown; error: unknown }) => void) => {
+            resolve({ data: phase === 'scopes' ? [{ scope: 'X' }] : atts, error: null });
+            return self;
+          },
+        };
+        return self;
+      }
+      if (view === 'civicos_audit_entries') return chainable({ data: [{ seq: 7, hash: opts.liveHash ?? 'truth' }], error: null });
+      if (view === 'civicos_escalations') return chainable({ data: opts.openEscalation ? [{ id: 'e-existing' }] : [], error: null });
+      return chainable({ data: [], error: null });
+    },
+    rpc,
+  });
+  return { rpc, views };
 }
 
 beforeEach(() => {
@@ -34,79 +78,21 @@ describe('GET /api/cron/witness-divergence', () => {
     expect(res.status).toBe(503);
   });
 
-  it('returns ok:true and no alarms when every witness agrees with live chain', async () => {
+  it('returns ok:true and no alarms when every signed witness agrees with the live chain', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
-    const rpc = vi.fn(async () => ({ data: null, error: null }));
-    serverClientMock.mockReturnValue({
-      from: (view: string) => {
-        if (view === 'civicos_audit_witnesses') {
-          // First call: scope list. Second call: attestations for the seq.
-          // Distinguish by whether .eq was called.
-          let usedEq = false;
-          const self: Record<string, unknown> = {
-            select: () => self,
-            limit: () => Promise.resolve({ data: [{ scope: 'X' }], error: null }),
-            eq: () => { usedEq = true; return self; },
-            order: () => self,
-            then: (resolve: (r: { data: unknown; error: unknown }) => void) => {
-              resolve({ data: usedEq ? [{ observed_hash: 'h', witness_label: 'l' }] : [{ scope: 'X' }], error: null });
-              return self;
-            },
-          };
-          return self;
-        }
-        if (view === 'civicos_audit_entries') {
-          return chainable({ data: [{ seq: 5, hash: 'h' }], error: null });
-        }
-        return chainable({ data: [], error: null });
-      },
-      rpc,
-    });
-    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
-    const json = await res.json();
-    expect(res.status).toBe(200);
+    const { rpc, views } = substrate([att('truth', 'auditor-1')]);
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
     expect(json.ok).toBe(true);
     expect(json.alarmed).toBe(0);
     expect(rpc).not.toHaveBeenCalled();
+    // only signed rows are read, never the unsigned public view
+    expect(views).not.toContain('civicos_audit_witnesses');
   });
 
-  it('records an escalation + federation event when a divergent attestation exists', async () => {
+  it('records an escalation + federation event for a divergent attestation whose signature verifies', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
-    const rpc = vi.fn(async () => ({ data: null, error: null }));
-    serverClientMock.mockReturnValue({
-      from: (view: string) => {
-        if (view === 'civicos_audit_witnesses') {
-          let phase: 'scopes' | 'attestations' = 'scopes';
-          const self: Record<string, unknown> = {
-            select: () => self,
-            limit: () => Promise.resolve({ data: phase === 'scopes' ? [{ scope: 'X' }] : [], error: null }),
-            eq: (col: string) => {
-              if (col === 'observed_seq') phase = 'attestations';
-              return self;
-            },
-            order: () => self,
-            then: (resolve: (r: { data: unknown; error: unknown }) => void) => {
-              const data = phase === 'scopes'
-                ? [{ scope: 'X' }]
-                : [{ observed_hash: 'ROGUE', witness_label: 'auditor-1' }];
-              resolve({ data, error: null });
-              return self;
-            },
-          };
-          return self;
-        }
-        if (view === 'civicos_audit_entries') {
-          return chainable({ data: [{ seq: 7, hash: 'truth' }], error: null });
-        }
-        if (view === 'civicos_escalations') {
-          return chainable({ data: [], error: null }); // no existing escalation
-        }
-        return chainable({ data: [], error: null });
-      },
-      rpc,
-    });
-    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
-    const json = await res.json();
+    const { rpc } = substrate([att('ROGUE', 'auditor-1')]);
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
     expect(json.alarmed).toBe(1);
     expect(json.ok).toBe(false);
     expect(rpc).toHaveBeenCalledWith('civicos_record_escalation', expect.objectContaining({
@@ -120,44 +106,32 @@ describe('GET /api/cron/witness-divergence', () => {
     }));
   });
 
+  it('raises no alarm for a divergent row whose signature does not verify (forged), and counts it', async () => {
+    process.env.CIVICOS_CRON_SECRET = 'correct';
+    // signed over the true hash, then the hash swapped: the signature no longer matches
+    const forged = att('ROGUE', 'auditor-1', { witness_signature: signed('X', 7, 'truth', 'auditor-1') });
+    const noSig = att('ROGUE', 'auditor-2', { witness_signature: null });
+    const junk = att('ROGUE', 'auditor-3', { witness_signature: 'ab'.repeat(64) });
+    const { rpc } = substrate([forged, noSig, junk]);
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
+    expect(json.alarmed).toBe(0);
+    expect(json.results[0].unverified).toBe(3);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('does not trust a row recorded after its key was revoked', async () => {
+    process.env.CIVICOS_CRON_SECRET = 'correct';
+    const { rpc } = substrate([att('ROGUE', 'auditor-1', { key_revoked_at: '2026-09-01T00:00:00Z', at: '2026-10-01T00:00:00Z' })]);
+    const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
+    expect(json.alarmed).toBe(0);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it('does not record a second escalation when one is already open for the same reason', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
-    const rpc = vi.fn(async () => ({ data: null, error: null }));
-    serverClientMock.mockReturnValue({
-      from: (view: string) => {
-        if (view === 'civicos_audit_witnesses') {
-          let phase: 'scopes' | 'attestations' = 'scopes';
-          const self: Record<string, unknown> = {
-            select: () => self,
-            limit: () => Promise.resolve({ data: phase === 'scopes' ? [{ scope: 'X' }] : [], error: null }),
-            eq: (col: string) => {
-              if (col === 'observed_seq') phase = 'attestations';
-              return self;
-            },
-            order: () => self,
-            then: (resolve: (r: { data: unknown; error: unknown }) => void) => {
-              const data = phase === 'scopes'
-                ? [{ scope: 'X' }]
-                : [{ observed_hash: 'ROGUE', witness_label: 'a' }];
-              resolve({ data, error: null });
-              return self;
-            },
-          };
-          return self;
-        }
-        if (view === 'civicos_audit_entries') {
-          return chainable({ data: [{ seq: 7, hash: 'truth' }], error: null });
-        }
-        if (view === 'civicos_escalations') {
-          return chainable({ data: [{ id: 'e-existing' }], error: null });
-        }
-        return chainable({ data: [], error: null });
-      },
-      rpc,
-    });
+    const { rpc } = substrate([att('ROGUE', 'a')], { openEscalation: true });
     const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(200);
-    // No RPC fired because the escalation already exists.
     expect(rpc).not.toHaveBeenCalled();
   });
 });

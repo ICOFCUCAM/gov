@@ -35,6 +35,8 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
     environment: 'node',
-    env: { ...localEnv },
+    // Update Center tests decide in-process; their restore points are simulated (lib/data/updates.ts
+    // simulatedRestorePoints). The backup tests (lib/data/backups*.test.ts) take real ones.
+    env: { CIVICOS_RESTORE_POINTS: 'simulated', ...localEnv },
   },
 });

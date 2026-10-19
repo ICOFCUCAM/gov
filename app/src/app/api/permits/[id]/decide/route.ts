@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { decidePermit } from '@/lib/data/store';
+import { decidePermit, permitHolders } from '@/lib/data/store';
 import type { DecidePermitInput } from '@/lib/api/types';
-import { withOfficial } from '@/lib/auth/official';
+import { refusal, withOfficial } from '@/lib/auth/official';
+import { canDecidePermit } from '@/lib/auth/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,9 @@ const VALID = ['approve', 'decline', 'request-info', 'escalate'];
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  // Only the issuing institution (or the whole government) decides a permit it may read (review M-3).
+  const refused = await refusal(s => canDecidePermit(s, permitHolders()));
+  if (refused) return refused;
   let body: Partial<DecidePermitInput>;
   try {
     body = (await withOfficial(await req.json())) as Partial<DecidePermitInput>;

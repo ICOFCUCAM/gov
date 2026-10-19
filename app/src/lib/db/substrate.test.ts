@@ -408,68 +408,34 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
 
   /* ── Witness attestations ─────────────────────────────────────── */
 
-  it('WITNESS — recording an attestation appears in the public view', async () => {
-    const { recordWitnessAttestationRow, recentWitnessRows } = await import('./repos/audit');
+  // Go-live review H-1: attestations are written only by the platform after it
+  // has verified a registered witness key's signature (/api/audit/witnesses);
+  // the public key cannot write them, and they are never replaced.
+  it('WITNESS — the public key cannot record (or overwrite) an attestation', async () => {
+    const sb = publicClient()!;
     const stamp = Date.now();
     const myScope = `${scope}:witness:${stamp}`;
-    // Seed an audit entry under this scope so we have a real (seq, hash).
     await appendAuditRow(myScope, 'witness-test', 'seed', 's', 'd');
-    const trail = await auditTrailRows(myScope, 5);
-    expect(trail.length).toBeGreaterThan(0);
-    const head = trail[0]!;
-
-    const w = await recordWitnessAttestationRow({
-      scope: myScope, observedSeq: head.seq, observedHash: head.hash,
-      label: `integration-${stamp}`,
-    });
-    expect(w).not.toBeNull();
-    expect(w!.observedSeq).toBe(head.seq);
-    expect(w!.observedHash).toBe(head.hash);
-
-    const list = await recentWitnessRows({ scope: myScope, limit: 10 });
-    expect(list.some(x => x.label === `integration-${stamp}`)).toBe(true);
+    const head = (await auditTrailRows(myScope, 5))[0]!;
+    const { error } = await sb.rpc('civicos_record_witness_attestation', {
+      p_scope: myScope, p_observed_seq: head.seq, p_observed_hash: 'FORGED',
+      p_witness_label: `integration-${stamp}`,
+    } as never);
+    expect(error).not.toBeNull();
   });
 
-  it('WITNESS — second attestation by same label upserts in place', async () => {
-    const { recordWitnessAttestationRow, recentWitnessRows } = await import('./repos/audit');
-    const stamp = Date.now() + 1;
-    const myScope = `${scope}:witness-upsert:${stamp}`;
-    await appendAuditRow(myScope, 't', 's', 'x', 'y');
-    const trail = await auditTrailRows(myScope, 5);
-    const head = trail[0]!;
-
-    const label = `upsert-${stamp}`;
-    const a = await recordWitnessAttestationRow({
-      scope: myScope, observedSeq: head.seq, observedHash: head.hash, label,
-    });
-    const b = await recordWitnessAttestationRow({
-      scope: myScope, observedSeq: head.seq, observedHash: head.hash, label,
-    });
-    expect(a).not.toBeNull();
-    expect(b).not.toBeNull();
-    expect(a!.id).toBe(b!.id); // same row updated, not duplicated
-
-    const list = await recentWitnessRows({ scope: myScope, limit: 10 });
-    const mine = list.filter(x => x.label === label);
-    expect(mine).toHaveLength(1);
+  it('WITNESS — an unsigned statement is refused before it reaches the substrate', async () => {
+    const { recordWitnessAttestationRow } = await import('./repos/audit');
+    const out = await recordWitnessAttestationRow({ scope: `${scope}:witness`, observedSeq: 1, observedHash: 'h', label: 'unsigned' });
+    expect(out).toHaveProperty('error');
   });
 
-  it('WITNESS — agreement check reports consistent for a freshly attested chain', async () => {
-    const { recordWitnessAttestationRow, witnessAgreementRow } = await import('./repos/audit');
-    const stamp = Date.now() + 2;
-    const myScope = `${scope}:witness-agree:${stamp}`;
+  it('WITNESS — agreement check reports consistent when no registered witness disagrees', async () => {
+    const { witnessAgreementRow } = await import('./repos/audit');
+    const myScope = `${scope}:witness-agree:${Date.now() + 2}`;
     await appendAuditRow(myScope, 't', 's', 'x', 'y');
-    const trail = await auditTrailRows(myScope, 5);
-    const head = trail[0]!;
-
-    await recordWitnessAttestationRow({
-      scope: myScope, observedSeq: head.seq, observedHash: head.hash,
-      label: `agree-${stamp}`,
-    });
     const agreement = await witnessAgreementRow(myScope);
     expect(agreement).not.toBeNull();
     expect(agreement!.consistent).toBe(true);
-    expect(agreement!.attestations).toBeGreaterThan(0);
-    expect(agreement!.latestSeq).toBe(head.seq);
   });
 });

@@ -98,9 +98,13 @@ describe('health, probation and fallback over HTTP', () => {
     expect((await r.json()).nation.settings).toMatchObject({ probationMinutes: 60, fallback: 'ask' });
   });
 
-  it('break-glass needs two people', async () => {
-    expect((await breakGlassPOST(post({ by: 'CIO', reason: 'Total outage after the upgrade' }))).status).toBe(422);
-    const r = await breakGlassPOST(post({ by: 'CIO', secondBy: 'CISO', reason: 'Total outage after the upgrade' }));
+  it('break-glass needs two people, each in their own request', async () => {
+    expect((await breakGlassPOST(post({ by: 'CIO', secondBy: 'CISO', reason: 'Total outage after the upgrade' }))).status).toBe(422);
+    const p = await breakGlassPOST(post({ by: 'CIO', reason: 'Total outage after the upgrade' }));
+    expect(p.status).toBe(200);
+    expect(await p.json()).toMatchObject({ pending: true, proposal: { by: 'CIO' } });
+    expect((await breakGlassPOST(post({ by: 'CIO' }))).status).toBe(409);
+    const r = await breakGlassPOST(post({ by: 'CISO', action: 'confirm' }));
     expect(r.status).toBe(200);
     expect((await r.json()).incident.trigger).toBe('break-glass');
   });

@@ -89,6 +89,8 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const [regions, setRegions] = React.useState<RegionStat[]>([]);
   const [series, setSeries] = React.useState<AnalyticSeries[]>([]);
   const [queue, setQueue] = React.useState<MinistryQueue | null>(null);
+  // Cases carry personal data: officials of other institutions are refused the queue (review M-3); the rest of the workspace still loads.
+  const [queueRefused, setQueueRefused] = React.useState<string | null>(null);
   const [incidents, setIncidents] = React.useState<MinistryIncident[]>([]);
   const [escChain, setEscChain] = React.useState<string[]>([]);
   const [field, setField] = React.useState<FieldUnitStatus[]>([]);
@@ -111,7 +113,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
       const [r, s, q, inc, f, mins] = await Promise.all([
         api.org.regions(id),
         api.org.series(id),
-        api.org.queue(id),
+        api.org.queue(id).then(x => { setQueueRefused(null); return x; }).catch(e => { setQueueRefused(e instanceof Error ? e.message : 'The queue could not be read'); return null; }),
         api.org.incidents(id),
         api.org.field(id),
         api.org.ministries().then(x => x.ministries).catch(() => [] as Ministry[]),
@@ -901,7 +903,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
             columns={queueCols}
             rows={queue?.items ?? []}
             rowKey={i => i.id}
-            empty="Queue clear."
+            empty={queueRefused ?? 'Queue clear.'}
             search
             searchPlaceholder="Filter by ref, subject, region…"
             initialSort={{ key: 'age', dir: 'desc' }}

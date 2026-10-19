@@ -1,11 +1,17 @@
 {{- if .Values.security.networkPolicy }}
+{{- $eg := .Values.security.egress }}
+{{- $mode := (.Values.app.state | default dict).mode | default "supabase" }}
 # Zero-trust default-deny + explicit allows. The API may talk to Postgres,
 # NATS and the app (it forwards writes to the platform and reads its mirror
-# feed), and receive from the app (event deliveries) and the ingress.
+# feed), and receive from the app (event deliveries) and the ingress. Every
+# destination is a value (security.egress) so a nation can narrow it to its
+# own addresses; DNS goes only to the cluster DNS.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: civicos-default-deny
+  labels:
+    {{- include "civicos.labels" . | nindent 4 }}
 spec:
   podSelector: {}
   policyTypes: [Ingress, Egress]
@@ -14,6 +20,8 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: civicos-api-allow
+  labels:
+    {{- include "civicos.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels: { app.kubernetes.io/name: civic-api }
@@ -21,45 +29,80 @@ spec:
   ingress:
     - from:
         - podSelector: { matchLabels: { app.kubernetes.io/name: civic-app } }
-        - namespaceSelector: { matchLabels: { role: ingress } }
+        {{- with .Values.security.ingressFrom }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       ports: [{ port: 4000 }]
   egress:
-    - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: postgres } } }]
-      ports: [{ port: 5432 }]
-    - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: nats } } }]
-      ports: [{ port: 4222 }]
+    {{- include "civicos.egressRule" (dict "peers" $eg.postgres "ports" (list (dict "port" (int $eg.postgresPort)))) | nindent 4 }}
+    {{- include "civicos.egressRule" (dict "peers" $eg.nats "ports" (list (dict "port" 4222))) | nindent 4 }}
     - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: civic-app } } }]
       ports: [{ port: 3000 }]
-    - to: [] # DNS
-      ports: [{ port: 53, protocol: UDP }]
+    {{- include "civicos.dnsEgress" . | nindent 4 }}
 ---
-# The Next.js app: reached from the ingress; it reaches the nation's substrate
-# (Supabase over HTTPS), the civic-api, and DNS. Without this policy the
-# default deny above would cut the app off entirely.
+# The Next.js app: reached from the ingress, the civic-api (forwarded writes,
+# its mirror feed) and the chart's scheduled jobs; it reaches the civic-api,
+# the nation's substrate and other registered HTTPS hosts (security.egress.https),
+# Postgres in state.mode postgres, the trace collector when the chart runs one,
+# and the cluster DNS. Without this policy the default deny above would cut
+# the app off entirely.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: civicos-app-allow
+  labels:
+    {{- include "civicos.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels: { app.kubernetes.io/name: civic-app }
   policyTypes: [Ingress, Egress]
   ingress:
     - from:
-        - namespaceSelector: { matchLabels: { role: ingress } }
         - podSelector: { matchLabels: { app.kubernetes.io/name: civic-api } } # the civic-api mirror (forwarded writes, its feed)
+        {{- if .Values.cron.enabled }}
+        - podSelector: { matchLabels: { app.kubernetes.io/name: civic-cron } } # the scheduled jobs (values cron)
+        {{- end }}
+        {{- with .Values.security.ingressFrom }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       ports: [{ port: 3000 }]
   egress:
     - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: civic-api } } }]
       ports: [{ port: 4000 }]
+    {{- if eq $mode "postgres" }}
+    {{- include "civicos.egressRule" (dict "peers" $eg.postgres "ports" (list (dict "port" (int $eg.postgresPort)))) | nindent 4 }}
+    {{- end }}
     {{- if and .Values.otel.enabled .Values.otel.collector.enabled }}
     - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: otel-collector } } }]
       ports: [{ port: 4318 }]
     {{- end }}
-    - to: [] # the substrate and other registered HTTPS hosts (narrow with an egress gateway per nation)
-      ports: [{ port: 443 }]
-    - to: [] # DNS
-      ports: [{ port: 53, protocol: UDP }]
+    {{- $https := list }}
+    {{- range $eg.httpsPorts }}{{ $https = append $https (dict "port" (int .)) }}{{ end }}
+    # The substrate and other registered HTTPS hosts (security.egress.https; empty: any address).
+    {{- include "civicos.egressRule" (dict "peers" $eg.https "ports" $https) | nindent 4 }}
+    {{- include "civicos.dnsEgress" . | nindent 4 }}
+    {{- with $eg.extra }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- if .Values.cron.enabled }}
+---
+# The scheduled jobs: they only call the app's Service.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: civicos-cron-allow
+  labels:
+    {{- include "civicos.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: { app.kubernetes.io/name: civic-cron }
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: civic-app } } }]
+      ports: [{ port: 3000 }]
+    {{- include "civicos.dnsEgress" . | nindent 4 }}
+{{- end }}
 {{- if and .Values.otel.enabled .Values.otel.collector.enabled }}
 ---
 # The trace collector: reached by the app only; it sends to the nation's own
@@ -68,6 +111,8 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: civicos-otel-collector-allow
+  labels:
+    {{- include "civicos.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels: { app.kubernetes.io/name: otel-collector }
@@ -78,7 +123,6 @@ spec:
   egress:
     - to: [] # the nation's trace backends
       ports: [{ port: 443 }, { port: 4317 }, { port: 4318 }]
-    - to: [] # DNS
-      ports: [{ port: 53, protocol: UDP }]
+    {{- include "civicos.dnsEgress" . | nindent 4 }}
 {{- end }}
 {{- end }}
