@@ -54,14 +54,15 @@ import type { TwinDb } from '@/lib/twin/db';
 import type { Observation, TwinEntity, TwinRun, TwinSource } from '@/lib/twin/register';
 import type { Facility } from '@/lib/data/facilities';
 import type { BoundaryVersion } from '@/lib/data/boundaries';
+import type { Parcel } from '@/lib/data/parcels';
 import { auditHashV2 } from '@/lib/data/store/audit';
 import { auditCommitted } from '@/lib/data/store/audit-committed';
 import { log } from '@/lib/ops/log';
-import { memoryAudit, memoryBoundaries, memoryFacilities, memoryTwin } from './memory';
-import { RECORDS_SCHEMA, DOCS_SCHEMA } from './postgres-schema';
+import { memoryAudit, memoryBoundaries, memoryFacilities, memoryParcels, memoryTwin } from './memory';
+import { RECORDS_SCHEMA, DOCS_SCHEMA, PARCELS_SCHEMA } from './postgres-schema';
 import { applyRow, build, counterFields, decompose, diff, isCounterPath, mergeAt, normalise, removeAt, replaceInPlace, rowAt, segsOf, type Change, type DocRow, type Kind, type Known } from './documents';
 import { followed, listenForUse } from './track';
-import type { Backend, BoundaryStore, FacilityStore } from './types';
+import type { Backend, BoundaryStore, FacilityStore, ParcelStore } from './types';
 import type { Lease, StateAdapter } from '@/lib/data/persist';
 
 // The driver's query function, as far as this module uses it.
@@ -87,14 +88,14 @@ const iso = (col: string) => `to_char(${col} at time zone 'UTC', ${ISO})`;
 /** Apply the records schema (idempotent; one instance at a time). Returns whether PostGIS is in use. */
 export async function ensureSchema(sql: Sql): Promise<{ postgis: boolean }> {
   // Applied once per version of the schema: re-running its DDL while other instances write would take their tables' locks.
-  const version = createHash('sha256').update(RECORDS_SCHEMA).update(DOCS_SCHEMA).digest('hex');
+  const version = createHash('sha256').update(RECORDS_SCHEMA).update(DOCS_SCHEMA).update(PARCELS_SCHEMA).digest('hex');
   const applied = async (s: Sql) => (await q(s, `select to_regclass('civicos.records_schema') is not null as t`))[0]!.t
     && (await q(s, `select 1 from civicos.records_schema where version = $1`, [version])).length > 0;
   if (!(await applied(sql))) {
     await sql.begin(async tx => {
       await q(tx, `select pg_advisory_xact_lock(hashtext('civicos.records.schema'))`);
       if (await applied(tx)) return;
-      for (const schema of [RECORDS_SCHEMA, DOCS_SCHEMA]) {
+      for (const schema of [RECORDS_SCHEMA, DOCS_SCHEMA, PARCELS_SCHEMA]) {
         const all = tx.unsafe(schema);
         await (all.simple ? all.simple() : all);
       }
@@ -132,6 +133,11 @@ const boundariesOf = (r: Root): BoundaryStore => {
   d.versions ??= []; d.seq ??= 1;
   return d;
 };
+const parcelsOf = (r: Root): ParcelStore => {
+  const d = (r.__civicosParcels ??= { parcels: [], changes: [], imports: [], seq: 1 }) as ParcelStore;
+  d.parcels ??= []; d.seq ??= 1;
+  return d;
+};
 
 /** The fields of each store kept in tables, not in the JSON snapshot (lib/data/persist.ts leaves them out of saves). */
 export const RECORD_FIELDS: Record<string, string[]> = {
@@ -140,6 +146,7 @@ export const RECORD_FIELDS: Record<string, string[]> = {
   __civicosTwinArchive: ['observations', 'runs'],
   __civicosFacilities: ['facilities'],
   __civicosBoundaries: ['versions'],
+  __civicosParcels: ['parcels'],
 };
 
 // ── Ops ───────────────────────────────────────────────────────────────────
@@ -152,7 +159,8 @@ type Op =
   | { topic: 'twin.observations'; data: { runId: string; from: number; list: Observation[] } }
   | { topic: 'twin.supersede'; data: { runId: string; at: string } }
   | { topic: 'facility'; data: Facility }
-  | { topic: 'boundary.version'; data: BoundaryVersion };
+  | { topic: 'boundary.version'; data: BoundaryVersion }
+  | { topic: 'parcel'; data: Parcel };
 
 const recordId = (op: Op): string => {
   switch (op.topic) {
@@ -167,6 +175,8 @@ const payloadOf = (op: Op): unknown => {
   switch (op.topic) {
     case 'twin.observations': return { runId: op.data.runId, from: op.data.from, count: op.data.list.length };
     case 'boundary.version': return { id: op.data.id, state: op.data.state };
+    // A parcel's rights are personal data: the outbox says which parcel changed, the others read it from civicos.parcel.
+    case 'parcel': return { id: op.data.id, state: op.data.state };
     default: return op.data;
   }
 };
@@ -237,6 +247,16 @@ async function writeOp(tx: Sql, op: Op, instance: string): Promise<void> {
                    on conflict (id) do update set national_id = excluded.national_id, owner_id = excluded.owner_id, category = excluded.category, state = excluded.state,
                      lng = excluded.lng, lat = excluded.lat, doc = excluded.doc, updated_at = now()`,
         [f.id, f.ids?.national ?? null, f.ownerId, f.category, f.state, f.location.lng, f.location.lat, JSON.stringify(f)]);
+      return;
+    }
+    case 'parcel': {
+      const p = op.data;
+      await q(tx, `insert into civicos.parcel (id, parcel_id, state, land_use, region_code, district_code, area_m2, min_lng, min_lat, max_lng, max_lat, geometry, doc)
+                   values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::text::jsonb, $13::text::jsonb)
+                   on conflict (id) do update set parcel_id = excluded.parcel_id, state = excluded.state, land_use = excluded.land_use, region_code = excluded.region_code,
+                     district_code = excluded.district_code, area_m2 = excluded.area_m2, min_lng = excluded.min_lng, min_lat = excluded.min_lat, max_lng = excluded.max_lng,
+                     max_lat = excluded.max_lat, geometry = excluded.geometry, doc = excluded.doc, updated_at = now()`,
+        [p.id, p.parcelId, p.state, p.landUse, p.place.regionCode ?? null, p.place.districtCode ?? null, p.areaM2, p.bbox[0], p.bbox[1], p.bbox[2], p.bbox[3], JSON.stringify(p.geometry), JSON.stringify(p)]);
       return;
     }
     case 'boundary.version': {
@@ -509,7 +529,7 @@ export interface RecordsOptions {
   journalDir?: string | null;
   pollMs?: number;
   /** Record numbers reserved per block (`counter`: each store's own counters, `seq` and `…Seq`). */
-  blockSize?: { twin?: number; facility?: number; boundary?: number; counter?: number };
+  blockSize?: { twin?: number; facility?: number; boundary?: number; parcel?: number; counter?: number };
   /** Keep every other store as per-record documents (default true; false keeps them in snapshots, as before). */
   documents?: boolean;
   /** How often stores used since the last write are compared when nothing was audited (ms, default 1000). */
@@ -526,7 +546,7 @@ interface DocBatch { store: string; changes: Change[] }
 interface DocResult { version: number; merged?: DocRow }
 const docKey = (store: string, path: string) => `${store}\u0000${path}`;
 
-const UPSERTS = new Set(['twin.entity', 'twin.source', 'twin.run', 'facility', 'boundary.version']);
+const UPSERTS = new Set(['twin.entity', 'twin.source', 'twin.run', 'facility', 'boundary.version', 'parcel']);
 const isChainConflict = (e: unknown): boolean => {
   const err = e as { code?: string; constraint_name?: string; message?: string };
   return (err.code === '23505' && /audit_entry_pkey|audit_entry_hash_key/.test(`${err.constraint_name ?? ''} ${err.message ?? ''}`))
@@ -758,7 +778,7 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
   };
 
   // ── Record numbers ─────────────────────────────────────────────────────
-  const sizes = { twin: opts.blockSize?.twin ?? 200, facility: opts.blockSize?.facility ?? 2000, boundary: opts.blockSize?.boundary ?? 20 };
+  const sizes = { twin: opts.blockSize?.twin ?? 200, facility: opts.blockSize?.facility ?? 2000, boundary: opts.blockSize?.boundary ?? 20, parcel: opts.blockSize?.parcel ?? 2000 };
   type Block = { next: number; end: number; refilling?: Promise<void>; spare?: { next: number; end: number } };
   const blocks = new Map<string, Block>();
   const reserve = async (name: string, floor: number, size: number = sizes[name as keyof typeof sizes]): Promise<{ next: number; end: number }> => {
@@ -893,6 +913,10 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
       const m = memoryBoundaries(store);
       return { ...m, nextSeq: nextOf('boundary'), add(v) { m.add(v); enqueue({ topic: 'boundary.version', data: v }); }, save(v) { enqueue({ topic: 'boundary.version', data: v }); } };
     },
+    parcels(store) {
+      const m = memoryParcels(store);
+      return { ...m, nextSeq: nextOf('parcel'), add(p) { m.add(p); enqueue({ topic: 'parcel', data: p }); }, save(p) { enqueue({ topic: 'parcel', data: p }); } };
+    },
   };
 
   // ── Start: replay, import, load ────────────────────────────────────────
@@ -934,7 +958,8 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
 
   // 2. Records still only in a restored snapshot (an installation moving from file or supabase state) are imported once.
   const counts = (await q(sql, `select (select count(*) from civicos.audit_entry)::int as audit, (select count(*) from civicos.twin_entity)::int as entities,
-      (select count(*) from civicos.twin_run)::int as runs, (select count(*) from civicos.facility)::int as facilities, (select count(*) from civicos.boundary_version)::int as versions`))[0]!;
+      (select count(*) from civicos.twin_run)::int as runs, (select count(*) from civicos.facility)::int as facilities, (select count(*) from civicos.boundary_version)::int as versions,
+      (select count(*) from civicos.parcel)::int as parcels`))[0]!;
   const imports: Op[] = [];
   const snapChain = chainOf(root);
   if (Number(counts.audit) === 0 && snapChain.length) imports.push(...snapChain.map(e => ({ topic: 'audit' as const, data: e })));
@@ -953,6 +978,7 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
   }
   if (Number(counts.facilities) === 0) imports.push(...facilitiesOf(root).facilities.map(f => ({ topic: 'facility' as const, data: f })));
   if (Number(counts.versions) === 0) imports.push(...boundariesOf(root).versions.map(v => ({ topic: 'boundary.version' as const, data: v })));
+  if (Number(counts.parcels) === 0) imports.push(...parcelsOf(root).parcels.map(p => ({ topic: 'parcel' as const, data: p })));
   // Every other store live here (restored from a snapshot, or seeded) and not yet in civicos.record_doc.
   const docImports: DocBatch[] = [];
   if (DOCS) {
@@ -989,6 +1015,8 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
     fs.facilities = (await q(tx, `select doc from civicos.facility order by pos`)).map(r => doc<Facility>(r));
     const bs = boundariesOf(root);
     bs.versions = await loadVersions(tx);
+    const ps = parcelsOf(root);
+    ps.parcels = (await q(tx, `select doc from civicos.parcel order by pos`)).map(r => doc<Parcel>(r));
     // Every other store from its records, put into the store objects modules already hold (in place).
     if (DOCS) {
       const byStore = new Map<string, Row[]>();
@@ -1015,15 +1043,17 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
     for (let id = Math.max(1, outboxSeen - 999); id <= outboxSeen; id++) if (!near.has(id)) gaps.set(id, Date.now());
   }
   delete (root as { __facilityGrid?: unknown }).__facilityGrid;
+  delete (root as { __parcelIndex?: unknown }).__parcelIndex;
 
   // 4. Record numbers: blocks above every number already given (also those in a restored snapshot).
-  const tw = twinOf(root), fs = facilitiesOf(root), bs = boundariesOf(root);
+  const tw = twinOf(root), fs = facilitiesOf(root), bs = boundariesOf(root), ps = parcelsOf(root);
   const twinFloor = Math.max(tw.seq, maxNum([...tw.runs.map(r => r.id), ...tw.sources.map(s => s.id)], /^(?:RUN|SRC)-(\d+)$/) + 1);
   const facFloor = Math.max(fs.seq, maxNum(fs.facilities.map(f => f.id), /^FAC-(\d+)$/) + 1);
   const bndFloor = Math.max(bs.seq, maxNum(bs.versions.map(v => v.id), /^bnd-(\d+)$/) + 1);
   blocks.set('twin', await reserve('twin', twinFloor));
   blocks.set('facility', await reserve('facility', facFloor));
   blocks.set('boundary', await reserve('boundary', bndFloor));
+  blocks.set('parcel', await reserve('parcel', Math.max(ps.seq, maxNum(ps.parcels.map(p => p.id), /^PCL-(\d+)$/) + 1)));
   // Every store's own counters, and from now on every store used is noted (track.ts).
   if (DOCS) {
     await Promise.all(liveStores().map(s => { const o = root[s]; if (o && typeof o === 'object') checkedStores.add(o); return ensureCounters(s, o); }));
@@ -1108,6 +1138,15 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
         const i = list.findIndex(x => x.id === f.id);
         if (i < 0) list.push(f); else list[i] = f;
         delete (root as { __facilityGrid?: unknown }).__facilityGrid;
+        return;
+      }
+      case 'parcel': {
+        const row = (await q(sql, `select doc from civicos.parcel where id = $1`, [p.id]))[0];
+        if (!row) return;
+        const rec = doc<Parcel>(row), list = parcelsOf(root).parcels;
+        const i = list.findIndex(x => x.id === rec.id);
+        if (i < 0) list.push(rec); else list[i] = rec;
+        delete (root as { __parcelIndex?: unknown }).__parcelIndex;
         return;
       }
       case 'boundary.version': {

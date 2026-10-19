@@ -5,8 +5,9 @@
 // only as its SHA-256 hash (lib/data/store.ts verifyIntegrationKey). With
 // `Authorization: Bearer civ_…` the twin's read services open to it:
 // OGC API – Features (/api/twin/ogc/*), SensorThings (/api/twin/sta/*) and
-// the vector tiles of the facility register and of the nation's boundaries
-// (/api/twin/tiles/facilities/*, /api/twin/tiles/boundaries/*). These paths are in BEARER_READS
+// the vector tiles of the facility register, of the nation's boundaries and of
+// the land parcel register (/api/twin/tiles/facilities/*, /api/twin/tiles/boundaries/*,
+// /api/twin/tiles/parcels/*: public fields only). These paths are in BEARER_READS
 // (lib/auth/roles.ts), so the middleware lets a request with the header
 // through to the route, and the route checks the key here: a missing,
 // unknown, unapproved or out-of-scope key is refused (401/403), and the

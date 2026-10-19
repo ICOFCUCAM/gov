@@ -1,11 +1,13 @@
 // One subdivision as a GeoJSON feature with its observed values (?datetime),
 // or one published site of the national facility register, or one unit of
-// the published boundaries in force. ?crs=<URI> serves it in another of the
+// the published boundaries in force, or one published land parcel (public
+// fields only). ?crs=<URI> serves it in another of the
 // collection's coordinate systems (Part 2); Content-Crs names the one used.
 import { NextRequest, NextResponse } from 'next/server';
 import { item, COLLECTION } from '@/lib/twin/ogc';
 import { facilityItem, FACILITY_COLLECTION } from '@/lib/twin/ogc-facilities';
 import { boundaryItem, BOUNDARY_COLLECTION } from '@/lib/twin/ogc-boundaries';
+import { parcelItem, PARCEL_COLLECTION } from '@/lib/twin/ogc-parcels';
 import { syncRegister } from '@/lib/twin/register';
 import { currentOfficial } from '@/lib/auth/official';
 import { machineReadRefusal } from '@/lib/twin/machine-read';
@@ -34,6 +36,11 @@ export async function GET(
   }
   if (params.collectionId === BOUNDARY_COLLECTION) {
     const r = boundaryItem(base, params.featureId);
+    if (!r) return NextResponse.json({ error: 'No such feature' }, { status: 404 });
+    return NextResponse.json(answerInCrs(r, crs, crsQ), { headers });
+  }
+  if (params.collectionId === PARCEL_COLLECTION) {
+    const r = parcelItem(base, params.featureId);
     if (!r) return NextResponse.json({ error: 'No such feature' }, { status: 404 });
     return NextResponse.json(answerInCrs(r, crs, crsQ), { headers });
   }

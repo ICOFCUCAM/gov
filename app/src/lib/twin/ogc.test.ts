@@ -22,7 +22,7 @@ describe('the twin as OGC API – Features', () => {
   });
 
   it('describes itself: landing links, conformance and a collection with an extent', async () => {
-    expect(landing(B).links.map(l => l.rel)).toEqual(['self', 'service-desc', 'conformance', 'data', 'related', 'related']);
+    expect(landing(B).links.map(l => l.rel)).toEqual(['self', 'service-desc', 'conformance', 'data', 'related', 'related', 'related']);
     expect(CONFORMANCE).toContain('http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson');
     const c = await collectionInfo(B);
     expect(c.extent?.spatial.bbox[0]![0]).toBeGreaterThan(33);

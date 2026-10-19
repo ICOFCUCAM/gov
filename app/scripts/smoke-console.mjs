@@ -26,6 +26,7 @@ const PAGES = [
   { path: '/gov/twin', map: false, text: /national data|twin/i },
   { path: '/gov/sites', map: true, text: /sites/i },
   { path: '/gov/sites/boundaries', map: false, text: /boundaries/i },
+  { path: '/gov/sites/parcels', map: false, text: /land parcels/i },
   { path: '/gov/situation-room', map: true, text: /situation/i },
   { path: '/gov/regional', map: true, text: /region/i },
   { path: '/gov/geopolitical', map: false, text: /world|foreign/i },

@@ -6,7 +6,7 @@ import type { AuditEntry } from '@/lib/api/types';
 import type { TwinDb } from '@/lib/twin/db';
 import { forEachArchived } from '@/lib/twin/archive';
 import type { Observation } from '@/lib/twin/register';
-import type { AuditRepo, Backend, BoundaryRepo, BoundaryStore, FacilityRepo, FacilityStore, TwinRepo } from './types';
+import type { AuditRepo, Backend, BoundaryRepo, BoundaryStore, FacilityRepo, FacilityStore, ParcelRepo, ParcelStore, TwinRepo } from './types';
 
 export function memoryAudit(chain: () => AuditEntry[]): AuditRepo {
   return {
@@ -59,10 +59,20 @@ export function memoryBoundaries(store: () => BoundaryStore): BoundaryRepo {
   };
 }
 
+export function memoryParcels(store: () => ParcelStore): ParcelRepo {
+  return {
+    list: () => store().parcels,
+    nextSeq: () => store().seq++,
+    add(p) { store().parcels.push(p); },
+    save() { /* the read model holds the record itself */ },
+  };
+}
+
 export const memoryBackend: Backend = {
   name: 'memory',
   audit: memoryAudit,
   twin: memoryTwin,
   facilities: memoryFacilities,
   boundaries: memoryBoundaries,
+  parcels: memoryParcels,
 };

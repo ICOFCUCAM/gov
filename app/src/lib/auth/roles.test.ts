@@ -1,5 +1,29 @@
 import { describe, it, expect } from 'vitest';
-import { apiPermission, canSignDirective, canSeeDraft, directiveIssuer, ministryPermission, roleFromSubstrate, roleOf, ROLES } from './roles';
+import { apiPermission, canCertifyParcel, canRecordParcel, canSeeParcelRights, canSignDirective, canSeeDraft, directiveIssuer, ministryPermission, roleFromSubstrate, roleOf, ROLES } from './roles';
+
+describe('the land parcel register', () => {
+  it('lets the cadastre authority record, its signatories publish, and keeps holders to those with need', () => {
+    const lands = 'min-lands';
+    expect(canRecordParcel({ role: 'officer', institution: lands }, lands)).toBeNull();
+    expect(canRecordParcel({ role: 'auditor', institution: lands }, lands)).toMatch(/Auditors/);
+    expect(canRecordParcel({ role: 'signatory', institution: 'min-health' }, lands)).toMatch(/cadastre authority/);
+    expect(canRecordParcel({ role: 'administrator' }, lands)).toBeNull();
+    expect(canRecordParcel({ role: 'officer' }, lands)).toMatch(/cadastre authority/);
+    expect(canCertifyParcel({ role: 'officer', institution: lands }, lands)).toMatch(/can sign/);
+    expect(canCertifyParcel({ role: 'signatory', institution: lands }, lands)).toBeNull();
+    expect(canCertifyParcel({ role: 'administrator' }, undefined)).toBeNull();
+    expect(canCertifyParcel({ role: 'signatory' }, lands)).toMatch(/can sign/);
+    expect(canSeeParcelRights({ role: 'auditor', institution: lands }, lands)).toBeNull();
+    expect(canSeeParcelRights({ role: 'auditor' }, lands)).toBeNull();
+    expect(canSeeParcelRights({ role: 'administrator' }, lands)).toBeNull();
+    expect(canSeeParcelRights({ role: 'officer' }, lands)).toMatch(/need/);
+    expect(canSeeParcelRights({ role: 'administrator', institution: 'min-health' }, lands)).toMatch(/need/);
+    // The policy is for administrators; the register's own routes check the authority themselves.
+    expect(apiPermission({ role: 'signatory' }, 'POST', '/api/parcels/policy')).toMatch(/administrator/);
+    expect(apiPermission({ role: 'officer' }, 'POST', '/api/parcels')).toBeNull();
+    expect(apiPermission({ role: 'auditor' }, 'POST', '/api/parcels/PCL-000001')).toMatch(/Auditors/);
+  });
+});
 
 describe('what an official may do', () => {
   it('keeps accounts and sessions from before roles able to do everything', () => {
