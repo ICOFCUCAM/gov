@@ -17,7 +17,7 @@
 
 import { listGrants, listIntegrations, listMinistries } from '@/lib/data/store';
 import { listFeeds } from '@/lib/data/case-import';
-import { listFacilities, listSiteFeeds, type Facility } from '@/lib/data/facilities';
+import { listFacilities, listSiteFeeds, type Facility, type Viewer } from '@/lib/data/facilities';
 import { stateAsOf } from '@/lib/twin/register';
 import { nationCapital } from '@/lib/nation/registry';
 
@@ -47,9 +47,10 @@ function seatOf(sites: Facility[], ministryId: string): InteropNode['seat'] {
 const callHealth = (last: string | undefined, refused: boolean, now: number): LinkHealth =>
   !last ? 'quiet' : refused ? 'failing' : now - Date.parse(last) <= 2 * DAY ? 'healthy' : now - Date.parse(last) <= 14 * DAY ? 'quiet' : 'failing';
 
-export function interoperability(now = Date.now()): { nodes: InteropNode[]; links: InteropLink[]; regions: RegionReporting[]; unplaced: string[] } {
+/** The viewer decides which seats are placed exactly: a restricted seat is never placed for a viewer without need. */
+export function interoperability(viewer: Viewer, now = Date.now()): { nodes: InteropNode[]; links: InteropLink[]; regions: RegionReporting[]; unplaced: string[] } {
   const ministries = listMinistries().filter(m => m.status !== 'merged');
-  const sites = listFacilities({}, { signedIn: true });
+  const sites = listFacilities({}, viewer);
   const cap = nationCapital();
   const nodes: InteropNode[] = [
     { id: CENTRAL, name: 'Central government', ...(cap ? { seat: { lng: cap.lng, lat: cap.lat, certified: cap.chosen, capital: true } } : {}) },

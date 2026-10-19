@@ -667,7 +667,13 @@ export function viewFacility(f: Facility, v: Viewer): Facility & { generalised?:
   return out;
 }
 
-export function listFacilities(filter: { ministryId?: string; category?: string; state?: Facility['state'] | 'all'; region?: string; bbox?: [number, number, number, number] } = {}, viewer: Viewer = { signedIn: true }): (Facility & { generalised?: boolean })[] {
+/**
+ * Sites as a viewer may see them. The viewer is required: there is no default,
+ * so a caller that forgot who is looking cannot receive restricted positions
+ * (pass `{ signedIn: true }` only for the whole government, server-side).
+ */
+export function listFacilities(filter: { ministryId?: string; category?: string; state?: Facility['state'] | 'all'; region?: string; bbox?: [number, number, number, number] }, viewer: Viewer): (Facility & { generalised?: boolean })[] {
+  if (!viewer || typeof viewer.signedIn !== 'boolean') throw new Error('listFacilities needs the viewer');
   const b = filter.bbox;
   // A bbox reads the grid around the box, widened by the generalisation step so
   // a restricted site is matched where the viewer sees it, never where it is.

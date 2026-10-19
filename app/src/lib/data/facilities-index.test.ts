@@ -47,7 +47,7 @@ let sites: Facility[];
 beforeEach(() => {
   resetFacilities();
   applyNation({ iso3: 'KEN', regions: [] });
-  listFacilities(); // create the store
+  listFacilities({}, { signedIn: true }); // create the store
   sites = seedSites();
   g.__civicosFacilities!.facilities = sites;
 });

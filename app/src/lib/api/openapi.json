@@ -2328,7 +2328,7 @@
         ],
         "operationId": "get_facilities_connections",
         "summary": "GET /api/facilities/connections",
-        "description": "Digital interoperability on the map (lib/data/interop-map.ts): institutions at their registered seats, agreed exchanges (approved grants and integrations), live exchanges (institutions' systems calling the platform, with health) and, by region, the share of published sites that reported in the last 31 days. Only records the platform holds; nothing generated.",
+        "description": "Digital interoperability on the map (lib/data/interop-map.ts): institutions at their registered seats, agreed exchanges (approved grants and integrations), live exchanges (institutions' systems calling the platform, with health) and, by region, the share of published sites that reported in the last 31 days. Only records the platform holds; nothing generated. Seats are placed as the viewer may see them (restricted seats not placed for viewers without need).",
         "parameters": [],
         "responses": {
           "200": {

@@ -7,6 +7,7 @@ import { listMinistries } from './store';
 import { applyNation } from '@/lib/nation/registry';
 
 const NAIROBI = { lng: 36.81724, lat: -1.28638 };
+const GOV = { signedIn: true } as const;
 let health: string, interior: string, survey: string;
 
 beforeEach(() => {
@@ -125,11 +126,11 @@ describe('national facility register', () => {
     if ('error' in dry) throw new Error(dry.error);
     expect(dry).toEqual(expect.objectContaining({ dryRun: true, rows: 4, accepted: 1 }));
     expect(dry.refused.map(r => r.row)).toEqual([3, 4, 5]);
-    expect(listFacilities({ state: 'all' })).toHaveLength(0);
+    expect(listFacilities({ state: 'all' }, GOV)).toHaveLength(0);
     const real = await importSites(health, csv, 'csv', 'Officer A');
     if ('error' in real) throw new Error(real.error);
     expect(real.accepted).toBe(1);
-    const f = listFacilities({ state: 'all' })[0]!;
+    const f = listFacilities({ state: 'all' }, GOV)[0]!;
     expect(f).toEqual(expect.objectContaining({ name: 'KNH', state: 'proposed', source: expect.objectContaining({ kind: 'import', sha256: real.sha256 }) }));
     expect(f.ids['Master Facility List code']).toBe('13023');
 
@@ -171,7 +172,7 @@ describe('connected ministry systems (4b)', () => {
     ] };
     const first = await receiveSiteFeed(r.feed, body, JSON.stringify(body));
     expect(first).toEqual(expect.objectContaining({ added: 1, refused: [expect.objectContaining({ index: 1, reason: 'The position is outside the nation' }), expect.objectContaining({ index: 2 })] }));
-    const site = listFacilities({ state: 'all' }).find(f => f.source.ref === 'MFL-13023')!;
+    const site = listFacilities({ state: 'all' }, GOV).find(f => f.source.ref === 'MFL-13023')!;
     expect(site).toEqual(expect.objectContaining({ state: 'proposed', source: expect.objectContaining({ kind: 'feed', feedId: r.feed.id }) }));
     expect(site.location.method).toBe('system-feed');
     expect(site.ids['Master Facility List code']).toBe('13023');
@@ -179,7 +180,7 @@ describe('connected ministry systems (4b)', () => {
     await actOnFacility(site.id, { action: 'publish' }, 'Signer B');
     const upd = { sites: [{ ref: 'MFL-13023', name: 'Kenyatta National Hospital (KNH)', category: 'health', lat: -1.3012, lng: 36.8068, status: 'partial' }] };
     expect(await receiveSiteFeed(r.feed, upd, JSON.stringify(upd))).toEqual(expect.objectContaining({ updated: 1, movesWaiting: 1 }));
-    const after = listFacilities({ state: 'all' }).find(f => f.id === site.id)!;
+    const after = listFacilities({ state: 'all' }, GOV).find(f => f.id === site.id)!;
     expect(after).toEqual(expect.objectContaining({ name: 'Kenyatta National Hospital (KNH)', status: 'partial' }));
     expect(after.location.lat).toBe(-1.30096); // the move waits for an official
     expect(after.pendingVersion?.location.lat).toBe(-1.3012);
@@ -207,14 +208,14 @@ describe('open-data candidates (4c)', () => {
     const src = await loadOpenSource({ name: 'OSM health', publisher: 'OpenStreetMap contributors', licence: 'ODbL 1.0', text: geojson, category: 'health' }, 'Officer A');
     if ('error' in src) throw new Error(src.error);
     expect(src).toEqual(expect.objectContaining({ shareAlike: true, rows: 3, candidates: 2, refused: [expect.objectContaining({ row: 3 })] }));
-    expect(listFacilities({ state: 'all' })).toHaveLength(1); // nothing became a site
+    expect(listFacilities({ state: 'all' }, GOV)).toHaveLength(1); // nothing became a site
     const [knh, clinic] = listCandidates();
     expect(knh!.match?.id).toBe(recorded.facility.id);
     expect(await decideCandidate(knh!.id, { decision: 'link', facilityId: recorded.facility.id }, 'Officer A')).toEqual(expect.objectContaining({ state: 'linked' }));
-    expect(listFacilities({ state: 'all' }).find(f => f.id === recorded.facility.id)!.ids['OSM health']).toBe('node/1');
+    expect(listFacilities({ state: 'all' }, GOV).find(f => f.id === recorded.facility.id)!.ids['OSM health']).toBe('node/1');
     const confirmed = await decideCandidate(clinic!.id, { decision: 'confirm', ministryId: health }, 'Officer A');
     expect(confirmed).toEqual(expect.objectContaining({ state: 'confirmed', facilityId: expect.any(String) }));
-    const site = listFacilities({ state: 'all' }).find(f => f.name === 'Clinic X')!;
+    const site = listFacilities({ state: 'all' }, GOV).find(f => f.name === 'Clinic X')!;
     expect(site).toEqual(expect.objectContaining({ state: 'proposed', location: expect.objectContaining({ method: 'open-data' }), source: expect.objectContaining({ kind: 'candidate' }) }));
     expect(await decideCandidate(clinic!.id, { decision: 'reject', reason: 'x' }, 'B')).toEqual({ error: expect.stringMatching(/already confirmed/) });
   }, 60_000);
@@ -262,4 +263,8 @@ describe('open-data candidates (4c)', () => {
     expect(restored).toMatch(UUID7);
     expect(nationalId(getFacility(r.facility.id)!)).toBe(restored); // minted once
   }, 60_000);
+
+  it('refuses to list sites without being told who is looking', () => {
+    expect(() => (listFacilities as unknown as (f: object) => unknown)({})).toThrow(/viewer/);
+  });
 });
