@@ -10153,6 +10153,33 @@
         "x-source": "src/app/api/substrate/export/route.ts"
       }
     },
+    "/api/twin/catalog": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_catalog",
+        "summary": "GET /api/twin/catalog",
+        "description": "The national twin's data catalogue as DCAT-AP JSON-LD (lib/twin/catalog.ts): a dcat:Catalog with a dataset for each registered source, each published boundary version and each OGC API – Features collection, with publisher, licence, temporal and spatial coverage and distributions. Read only. Not a public read: it describes the twin's sources, which are behind the platform session like the twin and its OGC endpoints.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/catalog/route.ts"
+      }
+    },
     "/api/twin/entities/{id}": {
       "get": {
         "tags": [

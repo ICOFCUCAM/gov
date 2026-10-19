@@ -237,6 +237,22 @@ export function linkKey(entityId: string, system: string, key: string, by: strin
 
 export function listSources(): TwinSource[] { return db().sources.map(s => ({ ...s })); }
 export function listRuns(sourceId?: string): TwinRun[] { return db().runs.filter(r => !sourceId || r.sourceId === sourceId).map(r => ({ ...r })); }
+/** What a source has contributed (current values, withdrawn imports excluded): how many observations, the dates they were true for, the metrics and entities. */
+export function sourceCoverage(sourceId: string): { observations: number; from?: string; to?: string; metrics: string[]; entities: number } {
+  let n = 0, from: string | undefined, to: string | undefined;
+  const metrics = new Set<string>(), entities = new Set<string>();
+  const visit = (o: Observation) => {
+    if (o.sourceId !== sourceId || o.supersededAt) return;
+    n++; metrics.add(o.metric); entities.add(o.entityId);
+    if (!from || o.validFrom < from) from = o.validFrom;
+    const end = o.validTo ?? o.validFrom;
+    if (!to || end > to) to = end;
+  };
+  forEachArchived(undefined, visit);
+  db().observations.forEach(visit);
+  return { observations: n, ...(from ? { from, to } : {}), metrics: [...metrics].sort(), entities: entities.size };
+}
+
 /** One import, from the live register or the history archive. */
 export function getRun(id: string): TwinRun | undefined {
   const r = db().runs.find(x => x.id === id) ?? archivedRuns().find(x => x.id === id);
