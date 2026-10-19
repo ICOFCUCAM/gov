@@ -315,6 +315,7 @@ export function SiteForm({ ministryId, ministryName, vocab, onRecorded, tiles }:
           maxHeight={420}
           points={tiles ? undefined : sitePoints(vocab.sites, vocab.categories)}
           pointTiles={tiles}
+          cluster
           pointsLabel="Sites already in the register"
           onPick={method === 'map-pin' ? ({ lng, lat }) => { setPos({ lat: Math.round(lat * 1e5) / 1e5, lng: Math.round(lng * 1e5) / 1e5 }); setPosNote(`Pin at ${Math.round(lat * 1e5) / 1e5}, ${Math.round(lng * 1e5) / 1e5}: about 100 m accuracy.`); } : undefined}
           pin={pos ? { lng: pos.lng, lat: pos.lat, label: f.name || 'New site' } : null}

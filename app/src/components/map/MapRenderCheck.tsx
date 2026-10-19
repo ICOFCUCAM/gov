@@ -18,7 +18,8 @@ const rand = (seed: number) => { let s = seed >>> 0; return () => ((s = (s * 166
 const TONES = ['ok', 'ok', 'ok', 'warn', 'warn', 'alert', 'neutral'] as const;
 const GLYPHS = ['✚', '✎', '⛨', '⚖', '⌂', '⚡', '✈', '⚓'];
 
-export function MapRenderCheck({ n, areas: areaCount, style, webglAbove, cluster = false }: { n: number; areas: number; style: 'dot' | 'tile'; webglAbove?: number; cluster?: boolean }) {
+export function MapRenderCheck({ n, areas: areaCount, style, webglAbove, cluster = false, pick = false, boundaryTiles = false }: { n: number; areas: number; style: 'dot' | 'tile'; webglAbove?: number; cluster?: boolean; pick?: boolean; boundaryTiles?: boolean }) {
+  const [pin, setPin] = React.useState<{ lng: number; lat: number } | null>(null);
   const [box, setBox] = React.useState<[[number, number], [number, number]] | null>(null);
   const iso3 = nationIso3();
   React.useEffect(() => {
@@ -64,10 +65,12 @@ export function MapRenderCheck({ n, areas: areaCount, style, webglAbove, cluster
       <p className="text-[13px] text-ink-soft">
         {points.length.toLocaleString('en')} synthetic points and {areas.length.toLocaleString('en')} synthetic outlines (samples, generated in the browser) on the installed nation&rsquo;s map.
         {' '}Last picked: <span data-testid="map-check-hash">{hash || 'none'}</span>
+        {pick ? <>{' '}Pin: <span data-testid="map-check-pin">{pin ? `${pin.lat},${pin.lng}` : 'none'}</span></> : null}
       </p>
       {points.length ? (
         <NationMap title="Synthetic points" kind="sample" source="Generated for the renderer check" points={points} pointsLabel="Synthetic points" areas={areas}
-          maxHeight={640} pointStyle={style} webglAbove={webglAbove} cluster={cluster} selectedPoint={hash.startsWith('#pt-') ? hash.slice(1) : undefined} />
+          maxHeight={640} pointStyle={style} webglAbove={webglAbove} cluster={cluster} selectedPoint={hash.startsWith('#pt-') ? hash.slice(1) : undefined}
+          onPick={pick ? setPin : undefined} pin={pick && pin ? { ...pin, label: 'Pin (sample)' } : null} boundaryTilesAbove={boundaryTiles ? 0 : undefined} />
       ) : <p className="text-[13px] text-ink-muted">Preparing the synthetic points…</p>}
     </main>
   );

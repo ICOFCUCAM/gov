@@ -15,6 +15,8 @@
 // district only where the viewer sees the site exactly) and ?waiting=1 (what
 // waits on an official). Without ?limit the answer is the whole list, as
 // before. Each page is viewed through viewFacility() like the full list.
+// With ?ministry= the answer also carries `ministryCounts`, that institution's
+// own counts (an institution's Sites tab pages its own sites this way).
 import { NextRequest, NextResponse } from 'next/server';
 import {
   CAPTURE_METHODS, FACILITY_CATEGORIES, SENSITIVITY_AUTHORITIES, STATUSES, facilityCounts, facilityPolicy, facilityRegions, listFacilities, mappingAgency,
@@ -50,7 +52,7 @@ export async function GET(req: NextRequest) {
     sites = listFacilities({ ...filter, state: state === 'proposed' || state === 'published' || state === 'all' ? state : 'published' }, viewer);
   }
   return NextResponse.json({
-    sites, ...(page ? { page } : {}), counts: facilityCounts(), regions: facilityRegions(), policy: facilityPolicy(), mappingAgency: mappingAgency(),
+    sites, ...(page ? { page } : {}), counts: facilityCounts(), ...(filter.ministryId ? { ministryCounts: facilityCounts(filter.ministryId) } : {}), regions: facilityRegions(), policy: facilityPolicy(), mappingAgency: mappingAgency(),
     categories: FACILITY_CATEGORIES.map(c => ({ ...c, rule: sensitivityRule(c.key), standards: standardsOf(c.key) })), methods: CAPTURE_METHODS, authorities: SENSITIVITY_AUTHORITIES, statuses: STATUSES,
   });
 }

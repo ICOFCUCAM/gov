@@ -21,6 +21,14 @@
 // either way. With `cluster`, points drawn on the canvas or with WebGL merge
 // into numbered cluster marks at low zoom (lib/map/cluster.ts); activating one
 // (click, Enter or Space) zooms the map to it, and "Whole map" zooms back.
+// Only the marks take the pointer, so a map that places a pin (`onPick`) still
+// places it everywhere else; in the theatre the marks are stacked glyph tiles
+// drawn under the page's own layers (incidents, institutions stay on top).
+// With many units (`boundaryTilesAbove`, e.g. an opened region with hundreds
+// of districts) the units' shapes are drawn from the boundary vector tiles
+// for the visible extent, simplified for the zoom (lib/map/boundary-tiles.ts),
+// instead of the full shapes; units, names, drill-down, figures and disputed
+// territory stay exactly as they are.
 
 import * as React from 'react';
 import { nationCapital, nationIso3, nationProjection, nationRegions, nationWorldview } from '@/lib/nation/registry';
@@ -44,6 +52,8 @@ import { WebGLPoints, type WebGLPointsHandle } from './WebGLPoints';
 import { useTileFeatures } from './useTileFeatures';
 import { CLUSTER_MAX_ZOOM, clusterCount, clusterLabel, clusterPoints, clusterRadius, zoomToCluster, type ClusterOptions, type PointCluster } from '@/lib/map/cluster';
 import type { PointTileSource } from '@/lib/map/tile-loader';
+import { BOUNDARY_TILE_UNITS, tilePath } from '@/lib/map/boundary-tiles';
+import { useBoundaryTiles } from './useBoundaryTiles';
 
 export type { MapPoint, MapValue, MapTone };
 
@@ -89,7 +99,7 @@ export interface OverlayContext {
 export function NationMap({
   title, values = NO_VALUES, kind, source, valueLabel = 'Value', unit = '', points, pointsLabel = 'Located items',
   asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap, onPick, pin, zoom, header = 'auto', below, notes = 'normal',
-  webglAbove, selectedPoint, areas, pointStyle, pointTiles, pointLabels, cluster, onZoom,
+  webglAbove, selectedPoint, areas, pointStyle, pointTiles, pointLabels, cluster, onZoom, boundaryTilesAbove = BOUNDARY_TILE_UNITS,
 }: {
   /** What the map shows, e.g. "Open incidents by county"; used for the accessible name and the table caption. */
   title: string;
@@ -172,7 +182,9 @@ export function NationMap({
   /**
    * Merge nearby points into numbered cluster marks at low zoom (canvas and
    * WebGL layers, page or tile points; never the SVG points of a small map,
-   * which stay focusable links). Activating a cluster zooms to it.
+   * which stay focusable links). Activating a cluster zooms to it; clicks
+   * elsewhere reach the map as before (`onPick` places its pin). In the
+   * theatre (glyph tiles) the marks are stacked tiles under the page's layers.
    */
   cluster?: boolean | ClusterOptions;
   /**
@@ -181,6 +193,13 @@ export function NationMap({
    * "Whole map" to zoom back.
    */
   onZoom?: (zoom: { z: number; tx: number; ty: number }) => void;
+  /**
+   * Draw the units from the boundary vector tiles for the visible extent
+   * (simplified for the zoom) when the map has more units than this (default
+   * 300; lib/map/boundary-tiles.ts). Fewer units are drawn from their shapes
+   * as SVG, as before. Maps with inset frames always draw the shapes.
+   */
+  boundaryTilesAbove?: number;
 }) {
   const iso3 = isoOverride ?? nationIso3();
   const regionsKey = (regionsOverride ?? nationRegions()).join('|');
@@ -288,6 +307,21 @@ export function NationMap({
   // WebGL threshold, on the GPU (found by picking); below both the SVG draws them one by one.
   // A tile-backed layer replaces the page's points with the tiles' features for the visible extent.
   const tiles = useTileFeatures(geo?.parent ? undefined : pointTiles, model, z);
+  // Many units: their shapes from the boundary tiles for the visible extent, simplified for the zoom
+  // (matched by code; a unit the tiles do not carry, and every unit until the tiles arrive, keeps its own shape).
+  const unitTilesOn = !!model && !!geo && model.frames.length === 0 && geo.units.length > boundaryTilesAbove;
+  const bTiles = useBoundaryTiles(unitTilesOn, model, z, { districts: !!geo?.parent });
+  const unitTilePaths = React.useMemo(() => {
+    if (!unitTilesOn || !model || !bTiles.units) return null;
+    const m = new Map<number, { fill: string; edge: string }>();
+    model.units.forEach((u, i) => {
+      const t = u.code ? bTiles.units!.get(u.code) : undefined;
+      if (!t) return;
+      const fill = tilePath(t.rings, model.projectRaw, true);
+      if (fill) m.set(i, { fill, edge: tilePath(t.edges, model.projectRaw, false) });
+    });
+    return m;
+  }, [unitTilesOn, model, bTiles.units]);
   const toPoint = pointTiles?.toPoint;
   const exactPoints = React.useMemo<LocatedPoint[]>(() => {
     if (!model) return [];
@@ -374,6 +408,8 @@ export function NationMap({
   /** What the points are, without the legend in brackets ("published sites"), for cluster names. */
   const clusterNoun = locatedLabel.replace(/\s*\(.*\)\s*$/, '').toLowerCase() || 'items';
   const glStyle: PointStyle = pointStyle ?? (theatre ? 'tile' : 'dot');
+  /** Cluster marks follow the points' style: the theatre's glyph tiles cluster into stacked tiles, dots into rings. */
+  const clusterTile = glStyle === 'tile';
   // Names where they do not run into each other (the 'ok' tone, e.g. certified sites, first), as the SVG theatre names its sites.
   const labels = React.useMemo(() => {
     if (!pointLabels || renderer === 'svg') return [];
@@ -493,7 +529,7 @@ export function NationMap({
         {geo === undefined ? <p className="p-3 text-[13px] text-ink-soft" style={{ minHeight }}>Loading the nation&rsquo;s boundaries…</p>
           : geo === null || !model ? <p className="p-3 text-[13px] text-ink-soft">No boundaries are available for this country yet.</p> : (
           <svg ref={svgRef} width={model.width} height={model.height} viewBox={`0 0 ${model.width} ${model.height}`} className="block max-w-full"
-            role="group" aria-roledescription="map" aria-label={summary} onKeyDown={onKey}
+            role="group" aria-roledescription="map" aria-label={summary} onKeyDown={onKey} data-boundary-tiles={unitTilePaths ? unitTilePaths.size : undefined}
             onMouseMove={theatre ? e => { const r = e.currentTarget.getBoundingClientRect(); setCursor(model.invert(unzoom(((e.clientX - r.left) / r.width) * model.width, 'x'), unzoom(((e.clientY - r.top) / r.height) * model.height, 'y'))); } : undefined}
             onMouseLeave={theatre ? () => setCursor(null) : undefined}
             onClick={onPick ? e => { const r = e.currentTarget.getBoundingClientRect(); const q = model.invert(unzoom(((e.clientX - r.left) / r.width) * model.width, 'x'), unzoom(((e.clientY - r.top) / r.height) * model.height, 'y')); if (q) onPick({ lng: Number(q[0].toFixed(6)), lat: Number(q[1].toFixed(6)) }); } : undefined}
@@ -516,18 +552,23 @@ export function NationMap({
               const fillOpacity = theatre ? (u.value ? (heat ? 0.7 : 0.34) : 0.3) : u.value ? 0.9 : 0.55;
               const on = active === i || selected === u.name || selected === u.code;
               const label = `${u.name}${u.value ? `: ${fmt(u.value.value)}${u.value.unit ?? unit ? ` ${u.value.unit ?? unit}` : ''}${marked ? ` (${SIGNAL_LABEL[kind].toLowerCase()})` : ''}` : ': no figure'}`;
+              // From the boundary tiles: the fill from the unit's pieces, the outline drawn apart (no seams where tiles meet).
+              const tp = unitTilePaths?.get(i);
+              const stroke = { stroke: on ? 'rgb(var(--c-ink))' : theatre ? fill : u.value ? 'rgb(var(--c-bg))' : 'rgb(var(--c-ink-muted))', strokeWidth: on ? 2 : theatre ? 1 : 0.7, strokeOpacity: theatre && !on ? 0.85 : 1 };
+              const d = tp ? tp.fill : u.d;
               return (
-                <g key={`${u.code ?? u.name}-${i}`}>
-                  <path ref={el => { pathRefs.current[i] = el; }} d={u.d} fill={fill} fillOpacity={fillOpacity}
-                    stroke={on ? 'rgb(var(--c-ink))' : theatre ? fill : u.value ? 'rgb(var(--c-bg))' : 'rgb(var(--c-ink-muted))'} strokeWidth={on ? 2 : theatre ? 1 : 0.7} strokeOpacity={theatre && !on ? 0.85 : 1}
+                <g key={`${u.code ?? u.name}-${i}`} data-tile-unit={tp ? '' : undefined}>
+                  <path ref={el => { pathRefs.current[i] = el; }} d={d} fill={fill} fillOpacity={fillOpacity} fillRule={tp ? 'evenodd' : undefined}
+                    {...(tp ? { stroke: 'none' } : stroke)}
                     tabIndex={k === focus ? 0 : -1} role="button" aria-label={label} aria-pressed={onSelect ? on : undefined}
-                    className="cursor-pointer outline-none focus-visible:[stroke:rgb(var(--c-ink))] focus-visible:[stroke-width:2.5]"
+                    className={tp ? 'cursor-pointer outline-none' : 'cursor-pointer outline-none focus-visible:[stroke:rgb(var(--c-ink))] focus-visible:[stroke-width:2.5]'}
                     onFocus={() => { setFocus(k); setActive(i); }} onBlur={() => setActive(a => (a === i ? null : a))}
                     onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(a => (a === i ? null : a))}
                     onClick={() => onSelect?.({ name: u.name, code: u.code })}
                     onDoubleClick={() => { const n = nationGeo?.units.find(x => x.code === u.code && x.drill); if (!opened && n) open({ name: n.name, code: n.code }); }}
                     onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && onSelect) { e.preventDefault(); onSelect({ name: u.name, code: u.code }); } }} />
-                  {u.value && marked ? <path d={u.d} fill={`url(#${hatch})`} opacity={theatre ? 0.22 : 1} pointerEvents="none" aria-hidden /> : null}
+                  {u.value && marked ? <path d={d} fill={`url(#${hatch})`} fillRule={tp ? 'evenodd' : undefined} opacity={theatre ? 0.22 : 1} pointerEvents="none" aria-hidden /> : null}
+                  {tp ? <path d={tp.edge} fill="none" {...stroke} strokeLinejoin="round" pointerEvents="none" aria-hidden /> : null}
                 </g>
               );
             })}
@@ -600,22 +641,21 @@ export function NationMap({
         {onCanvas && model ? (
           <CanvasPoints points={layerPoints} width={model.width} height={model.height} zoom={z} highlight={layerOf(hoverPoint) ?? layerOf(selectedIndex)} />
         ) : null}
-        {overTop && model && overlayContent ? (
-          <svg className="absolute start-0 top-0" width={model.width} height={model.height} style={{ pointerEvents: 'none' }} aria-hidden={overlay ? undefined : true}>
-            <g transform={z ? `translate(${z.tx} ${z.ty}) scale(${z.z})` : undefined} style={{ transition: 'transform 260ms ease', pointerEvents: 'auto' }}>{overlayContent}</g>
-          </svg>
-        ) : null}
-        {/* Clusters over the canvas or WebGL layer: one mark with the count, activated to zoom in (keyboard: Tab to the first, arrows between them). */}
+        {/* Clusters over the canvas or WebGL layer: one mark with the count, activated to zoom in (keyboard: Tab to the first, arrows between them).
+            Only the marks take the pointer: a click anywhere else still reaches the map (placing a pin with `onPick`, picking a point).
+            Drawn under the page's own layers, so the theatre's incidents and institutions stay on top of the sites' clusters. */}
         {clusterOn && model ? (
           <svg className="absolute start-0 top-0" width={model.width} height={model.height} style={{ pointerEvents: 'none' }}
             role="group" aria-label={`${clusters.length.toLocaleString('en')} clusters of ${clusterNoun} in view`}
-            data-testid="map-clusters" data-clusters={allClusters.length} data-shown={clusters.length} data-clustered={clusteredCount} data-singles={layerPoints.length} data-zoom={(z?.z ?? 1).toFixed(3)}>
+            data-testid="map-clusters" data-style={clusterTile ? 'tile' : 'dot'} data-clusters={allClusters.length} data-shown={clusters.length} data-clustered={clusteredCount} data-singles={layerPoints.length} data-zoom={(z?.z ?? 1).toFixed(3)}>
             <g transform={z ? `translate(${z.tx} ${z.ty}) scale(${z.z})` : undefined} style={{ transition: 'transform 260ms ease' }} className="motion-reduce:transition-none">
               {clusters.map((c, k) => {
                 const zz = z?.z ?? 1, r = clusterRadius(c.count) / zz, on = hoverCluster === k || selectedCluster === k;
                 const label = clusterLabel(c, clusterNoun);
+                // The theatre's clusters are stacked glyph tiles (its sites are glyph tiles), ringed in the gravest member's status.
+                const s = r * 0.92, rx = 4 / zz, lift = 3 / zz;
                 return (
-                  <g key={c.id} ref={el => { clusterRefs.current[k] = el; }} data-cluster="" data-testid="map-cluster" data-count={c.count}
+                  <g key={c.id} ref={el => { clusterRefs.current[k] = el; }} data-cluster="" data-testid="map-cluster" data-count={c.count} data-tone={c.tone}
                     role="button" tabIndex={k === clusterFocus ? 0 : -1} aria-label={label}
                     className="cursor-pointer outline-none" style={{ pointerEvents: 'auto' }}
                     onClick={e => { e.stopPropagation(); openCluster(c); }}
@@ -626,13 +666,29 @@ export function NationMap({
                     }}
                     onFocus={() => { setClusterFocus(k); setHoverCluster(k); }} onBlur={() => setHoverCluster(h => (h === k ? null : h))}
                     onMouseEnter={() => setHoverCluster(k)} onMouseLeave={() => setHoverCluster(h => (h === k ? null : h))}>
-                    <circle cx={c.x} cy={c.y} r={r} fill="rgb(var(--c-surface))" fillOpacity={0.92} stroke={on ? 'rgb(var(--c-ink))' : STATUS[c.tone]} strokeWidth={(on ? 3 : 2.5) / zz} />
-                    {selectedCluster === k ? <circle cx={c.x} cy={c.y} r={r + 4 / zz} fill="none" stroke="rgb(var(--c-ink))" strokeWidth={1.6 / zz} aria-hidden /> : null}
-                    <text x={c.x} y={c.y + 3.6 / zz} textAnchor="middle" fontSize={10.5 / zz} fontWeight="700" fill="rgb(var(--c-ink))" aria-hidden>{clusterCount(c.count)}</text>
+                    {clusterTile ? (
+                      <>
+                        <rect x={c.x - s + lift} y={c.y - s - lift} width={2 * s} height={2 * s} rx={rx} fill="rgb(var(--c-surface-2))" fillOpacity={0.9} stroke={STATUS[c.tone]} strokeOpacity={0.6} strokeWidth={1.2 / zz} aria-hidden />
+                        <rect x={c.x - s} y={c.y - s} width={2 * s} height={2 * s} rx={rx} fill="rgb(var(--c-surface-2))" fillOpacity={0.96} stroke={on ? 'rgb(var(--c-ink))' : STATUS[c.tone]} strokeWidth={(on ? 2.4 : 1.8) / zz} />
+                        {selectedCluster === k ? <rect x={c.x - s - 4 / zz} y={c.y - s - 4 / zz} width={2 * s + 8 / zz} height={2 * s + 8 / zz} rx={rx + 2 / zz} fill="none" stroke="rgb(var(--c-ink))" strokeWidth={1.6 / zz} aria-hidden /> : null}
+                        <text x={c.x} y={c.y + 3.6 / zz} textAnchor="middle" fontSize={10.5 / zz} fontWeight="700" fill={STATUS[c.tone]} aria-hidden>{clusterCount(c.count)}</text>
+                      </>
+                    ) : (
+                      <>
+                        <circle cx={c.x} cy={c.y} r={r} fill="rgb(var(--c-surface))" fillOpacity={0.92} stroke={on ? 'rgb(var(--c-ink))' : STATUS[c.tone]} strokeWidth={(on ? 3 : 2.5) / zz} />
+                        {selectedCluster === k ? <circle cx={c.x} cy={c.y} r={r + 4 / zz} fill="none" stroke="rgb(var(--c-ink))" strokeWidth={1.6 / zz} aria-hidden /> : null}
+                        <text x={c.x} y={c.y + 3.6 / zz} textAnchor="middle" fontSize={10.5 / zz} fontWeight="700" fill="rgb(var(--c-ink))" aria-hidden>{clusterCount(c.count)}</text>
+                      </>
+                    )}
                   </g>
                 );
               })}
             </g>
+          </svg>
+        ) : null}
+        {overTop && model && overlayContent ? (
+          <svg className="absolute start-0 top-0" width={model.width} height={model.height} style={{ pointerEvents: 'none' }} aria-hidden={overlay ? undefined : true}>
+            <g transform={z ? `translate(${z.tx} ${z.ty}) scale(${z.z})` : undefined} style={{ transition: 'transform 260ms ease', pointerEvents: 'auto' }}>{overlayContent}</g>
           </svg>
         ) : null}
         {/* Over the WebGL layer: the hovered point's ring and the names (SVG, so hovering never redraws the layer). */}
@@ -760,6 +816,12 @@ export function NationMap({
               {tiles.error ? <span className="text-warn">Some map tiles could not be read ({tiles.error}); </span> : null}
               {tiles.loading && !tiles.features.length ? `Loading ${locatedLabel.toLowerCase()}…` : `${exactPoints.length.toLocaleString('en')} ${locatedLabel.toLowerCase()} drawn from ${tiles.tiles.toLocaleString('en')} vector tile${tiles.tiles === 1 ? '' : 's'}${tiles.z != null ? ` (zoom ${tiles.z})` : ''}`}
               {tiles.truncated ? ' · some tiles hold more than their limit; zoom in for every point' : ''}
+            </div>
+          ) : null}
+          {unitTilesOn ? (
+            <div className={`${notes === 'small' ? 'text-[9px]' : 'text-[10px]'} text-ink-muted`} role="status" data-testid="map-boundary-tile-status">
+              {bTiles.error ? <span className="text-warn">Some boundary tiles could not be read ({bTiles.error}); those {plural(2)} are drawn from their full shapes. </span> : null}
+              {unitTilePaths ? `${unitTilePaths.size.toLocaleString('en')} of ${model.units.length.toLocaleString('en')} ${plural(2)} drawn from ${bTiles.tiles.toLocaleString('en')} boundary tile${bTiles.tiles === 1 ? '' : 's'}${bTiles.z != null ? ` (zoom ${bTiles.z}), simplified for this view` : ''}` : bTiles.loading ? 'Reading the boundary tiles for this view…' : ''}
             </div>
           ) : null}
           <div className={`${notes === 'small' ? 'text-[9px]' : 'text-[10px]'} text-ink-muted`}>

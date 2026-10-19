@@ -25,6 +25,8 @@ export interface Vocabulary {
   /** The regions sites are recorded in (not withdrawn). */
   regions?: string[];
   counts:{ total: number; published: number; certified: number; awaiting: number; byCategory: Record<string, number> };
+  /** With ?ministry=: that institution's own counts. */
+  ministryCounts?: { total: number; published: number; certified: number; awaiting: number; byCategory: Record<string, number> };
   policy: FacilityPolicy;
   mappingAgency: { id: string; name: string } | null;
   categories: Category[];

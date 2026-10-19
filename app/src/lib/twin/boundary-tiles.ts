@@ -22,13 +22,25 @@
 // reached), a withdrawn one, new districts or a changed worldview drop the
 // cache and change every tile's ETag at once.
 //
+// Simplified per zoom (lib/geo/tile-topology.ts): the three layers are made
+// into one topology once per boundary version, so a border two units share is
+// one arc, simplified once per tile zoom to the tile's resolution and drawn
+// the same for both neighbours (no gaps, no overlaps); arc ends are kept and
+// no ring falls below three points, so no unit or island disappears. A
+// low-zoom tile of a full-detail district file holds only what that zoom can
+// show.
+//
 // Same reading rules as the facility tiles: behind the official's session,
 // or a GIS client's integration key / access token of scope ogc:read
 // (machineReadRefusal(), BEARER_READS in lib/auth/roles.ts).
 
 import { createHash } from 'node:crypto';
 import type { Geom } from '@/lib/geo/admin1';
-import { EXTENT, encodeTile, tileBounds, validTile, type TileShape } from '@/lib/geo/mvt';
+import { EXTENT, clipRing, encodeTile, ringArea2, tileBounds, validTile, type TileShape } from '@/lib/geo/mvt';
+
+// Clipping and ring area live with the tile format (the console maps clip decoded tiles too).
+export { clipRing, ringArea2 };
+import { buildTileTopology, SIMPLIFY_TILE_UNITS, type TileTopology } from '@/lib/geo/tile-topology';
 import { loadDistricts, loadNationGeography } from '@/lib/map/geography';
 import { activeBoundary } from '@/lib/map/boundary-active';
 import { installedDistrictsSummary } from '@/lib/map/districts-installed';
@@ -54,8 +66,9 @@ export const BOUNDARY_FIELDS = {
 } as const;
 
 type BBox = [number, number, number, number];
-interface Shape { id: number; bbox: BBox; polygons: number[][][][]; properties: TileShape['properties'] }
-interface Prepared { key: string; iso3: string | null; worldview: string; credit: string; regions: Shape[]; districts: Shape[]; disputed: Shape[]; bounds: BBox | null; version: { regions?: string; districts?: string } }
+type LayerName = keyof typeof BOUNDARY_LAYERS;
+interface Shape { id: number; layer: LayerName; index: number; bbox: BBox; polygons: number[][][][]; properties: TileShape['properties'] }
+interface Prepared { key: string; iso3: string | null; worldview: string; credit: string; regions: Shape[]; districts: Shape[]; disputed: Shape[]; bounds: BBox | null; version: { regions?: string; districts?: string }; topo: TileTopology | null }
 interface Cache { key: string; prepared: Promise<Prepared>; tiles: Map<string, { bytes: Uint8Array; features: number }> }
 
 // Derived from the stores, never persisted: not a __civicos key.
@@ -81,16 +94,16 @@ export async function boundaryVersionKey(): Promise<string> {
 
 async function prepare(key: string): Promise<Prepared> {
   const iso3 = nationIso3() ?? null, worldview = nationWorldview();
-  if (!iso3) return { key, iso3, worldview, credit: 'No nation installed', regions: [], districts: [], disputed: [], bounds: null, version: {} };
+  if (!iso3) return { key, iso3, worldview, credit: 'No nation installed', regions: [], districts: [], disputed: [], bounds: null, version: {}, topo: null };
   const [geo, dist, one, two] = await Promise.all([loadNationGeography(iso3, [], 'full'), loadDistricts(iso3, undefined, 'full'), activeBoundary(iso3, 1), activeBoundary(iso3, 2)]);
   let n = 0;
-  const regions: Shape[] = (geo?.units ?? []).filter(u => u.geometry).map(u => {
+  const regions: Shape[] = (geo?.units ?? []).filter(u => u.geometry).map((u, index) => {
     const polygons = polygonsOf(u.geometry);
-    return { id: ++n, bbox: bboxOfPolygons(polygons), polygons, properties: { code: u.code, name: u.name, level: 1 } };
+    return { id: ++n, layer: 'regions', index, bbox: bboxOfPolygons(polygons), polygons, properties: { code: u.code, name: u.name, level: 1 } };
   });
-  const districts: Shape[] = (dist?.units ?? []).filter(u => u.geometry).map(u => {
+  const districts: Shape[] = (dist?.units ?? []).filter(u => u.geometry).map((u, index) => {
     const polygons = polygonsOf(u.geometry);
-    return { id: ++n, bbox: bboxOfPolygons(polygons), polygons, properties: { code: u.code, name: u.name, parent: u.parent, level: 2 } };
+    return { id: ++n, layer: 'districts', index, bbox: bboxOfPolygons(polygons), polygons, properties: { code: u.code, name: u.name, parent: u.parent, level: 2 } };
   });
   const all = [...regions, ...districts].map(s => s.bbox);
   const bounds: BBox | null = all.length ? [Math.min(...all.map(b => b[0])), Math.min(...all.map(b => b[1])), Math.max(...all.map(b => b[2])), Math.max(...all.map(b => b[3]))] : null;
@@ -99,13 +112,16 @@ async function prepare(key: string): Promise<Prepared> {
   const disputed: Shape[] = near ? disputedAreas(worldview).flatMap(a => {
     const polygons = polygonsOf(a.geometry), bbox = bboxOfPolygons(polygons);
     if (!meets(bbox, near)) return [];
-    return [{ id: ++n, bbox, polygons, properties: {
+    return [{ id: ++n, layer: 'disputed' as const, index: 0, bbox, polygons, properties: {
       id: a.id, name: a.name, note: a.note ?? undefined, disputed: a.shownAs === 'disputed', shownAs: a.shownAs, parties: a.parties.join(','), text: disputeText(a, worldview),
     } }];
   }) : [];
+  disputed.forEach((d, i) => { d.index = i; });
+  // One topology over the three layers: shared borders become shared arcs, simplified once per zoom.
+  const topo = buildTileTopology({ regions: regions.map(r => r.polygons), districts: districts.map(d => d.polygons), disputed: disputed.map(d => d.polygons) });
   const dCredit = dist ? dist.own ?? `${dist.credit.source}${dist.credit.licence ? ` (${dist.credit.licence})` : ''}` : null;
   return {
-    key, iso3, worldview, regions, districts, disputed, bounds,
+    key, iso3, worldview, regions, districts, disputed, bounds, topo,
     credit: [geo?.credit, dCredit, disputed.length ? 'Disputed areas: Natural Earth (public domain)' : null].filter(Boolean).join('; '),
     version: { ...(one ? { regions: `version ${one.n} in force from ${one.validFrom}` } : {}), ...(two ? { districts: `version ${two.n} in force from ${two.validFrom}` } : {}) },
   };
@@ -133,45 +149,20 @@ function project(lng: number, lat: number, z: number, x: number, y: number): [nu
   return [(((lng + 180) / 360) * n - x) * EXTENT, (((1 - Math.log(Math.tan(phi) + 1 / Math.cos(phi)) / Math.PI) / 2) * n - y) * EXTENT];
 }
 
-/** Sutherland–Hodgman: a closed ring clipped to the box lo…hi on both axes. */
-export function clipRing(ring: [number, number][], lo: number, hi: number): [number, number][] {
-  let out = ring;
-  const edges: [(p: [number, number]) => boolean, (a: [number, number], b: [number, number]) => [number, number]][] = [
-    [p => p[0] >= lo, (a, b) => [lo, a[1] + ((b[1] - a[1]) * (lo - a[0])) / (b[0] - a[0])]],
-    [p => p[0] <= hi, (a, b) => [hi, a[1] + ((b[1] - a[1]) * (hi - a[0])) / (b[0] - a[0])]],
-    [p => p[1] >= lo, (a, b) => [a[0] + ((b[0] - a[0]) * (lo - a[1])) / (b[1] - a[1]), lo]],
-    [p => p[1] <= hi, (a, b) => [a[0] + ((b[0] - a[0]) * (hi - a[1])) / (b[1] - a[1]), hi]],
-  ];
-  for (const [inside, cross] of edges) {
-    if (!out.length) break;
-    const next: [number, number][] = [];
-    for (let i = 0; i < out.length; i++) {
-      const cur = out[i]!, prev = out[(i + out.length - 1) % out.length]!;
-      const ci = inside(cur), pi = inside(prev);
-      if (ci) { if (!pi) next.push(cross(prev, cur)); next.push(cur); }
-      else if (pi) next.push(cross(prev, cur));
-    }
-    out = next;
-  }
-  return out;
-}
-
-/** Twice the signed area by the surveyor's formula (tile coordinates, y down). */
-export const ringArea2 = (r: readonly [number, number][]) => {
-  let a = 0;
-  for (let i = 0; i < r.length; i++) { const p = r[i]!, q = r[(i + 1) % r.length]!; a += p[0] * q[1] - q[0] * p[1]; }
-  return a;
-};
-
-/** One shape's rings in a tile: projected, clipped to the tile and its buffer, rounded, oriented (exteriors positive, holes negative). */
-function cut(polygons: number[][][][], z: number, x: number, y: number): [number, number][][] {
+/**
+ * One shape's rings in a tile: projected (from longitude/latitude, or from
+ * world units with `world`), clipped to the tile and its buffer, rounded,
+ * oriented (exteriors positive, holes negative).
+ */
+export function cut(polygons: number[][][][], z: number, x: number, y: number, world = false): [number, number][][] {
   const lo = -BOUNDARY_BUFFER, hi = EXTENT + BOUNDARY_BUFFER, rings: [number, number][][] = [];
+  const n = 2 ** z;
   for (const poly of polygons) {
     let outerKept = false;
     poly.forEach((ring, k) => {
       if (k > 0 && !outerKept) return;
       const pts: [number, number][] = [];
-      for (const c of ring) pts.push(project(c[0]!, c[1]!, z, x, y));
+      for (const c of ring) pts.push(world ? [(c[0]! * n - x) * EXTENT, (c[1]! * n - y) * EXTENT] : project(c[0]!, c[1]!, z, x, y));
       if (pts.length > 1 && pts[0]![0] === pts[pts.length - 1]![0] && pts[0]![1] === pts[pts.length - 1]![1]) pts.pop();
       const clipped = clipRing(pts, lo, hi);
       const r: [number, number][] = [];
@@ -191,11 +182,11 @@ function cut(polygons: number[][][][], z: number, x: number, y: number): [number
   return rings;
 }
 
-function layerShapes(shapes: readonly Shape[], z: number, x: number, y: number, box: BBox): TileShape[] {
+function layerShapes(p: Prepared, shapes: readonly Shape[], z: number, x: number, y: number, box: BBox, simplify: boolean): TileShape[] {
   const out: TileShape[] = [];
   for (const s of shapes) {
     if (!meets(s.bbox, box)) continue;
-    const rings = cut(s.polygons, z, x, y);
+    const rings = simplify && p.topo ? cut(p.topo.polygons(s.layer, s.index, z), z, x, y, true) : cut(s.polygons, z, x, y);
     if (rings.length) out.push({ id: s.id, type: 'polygon', rings, properties: s.properties });
   }
   return out;
@@ -209,23 +200,30 @@ export function parseBoundaryTile(z: string, x: string, y: string): { z: number;
   return validTile(t.z, t.x, t.y, BOUNDARY_MAX_ZOOM) ? t : null;
 }
 
-/** One boundary tile: its bytes, the version key and an ETag that changes with the boundaries in force. */
-export async function boundaryTile(z: number, x: number, y: number): Promise<{ bytes: Uint8Array; etag: string; version: string; features: number }> {
+/**
+ * One boundary tile: its bytes, the version key and an ETag that changes with
+ * the boundaries in force. Simplified for its zoom (`simplify: false`, for
+ * checks, cuts the full shapes and is not cached).
+ */
+export async function boundaryTile(z: number, x: number, y: number, o: { simplify?: boolean } = {}): Promise<{ bytes: Uint8Array; etag: string; version: string; features: number }> {
   const c = await current();
   const p = await c.prepared;
+  const simplify = o.simplify !== false;
   const k = `${z}/${x}/${y}`;
-  const etag = `"${createHash('sha256').update(`${c.key}|${k}`).digest('hex').slice(0, 32)}"`;
-  let t = c.tiles.get(k);
+  const etag = `"${createHash('sha256').update(`${c.key}|${k}${simplify ? '' : '|full'}`).digest('hex').slice(0, 32)}"`;
+  let t = simplify ? c.tiles.get(k) : undefined;
   if (!t) {
     const box = tileBounds(z, x, y, BOUNDARY_BUFFER);
     const layers = [
-      { name: BOUNDARY_LAYERS.regions, points: [], shapes: layerShapes(p.regions, z, x, y, box) },
-      { name: BOUNDARY_LAYERS.districts, points: [], shapes: z >= DISTRICT_MIN_ZOOM ? layerShapes(p.districts, z, x, y, box) : [] },
-      { name: BOUNDARY_LAYERS.disputed, points: [], shapes: layerShapes(p.disputed, z, x, y, box) },
+      { name: BOUNDARY_LAYERS.regions, points: [], shapes: layerShapes(p, p.regions, z, x, y, box, simplify) },
+      { name: BOUNDARY_LAYERS.districts, points: [], shapes: z >= DISTRICT_MIN_ZOOM ? layerShapes(p, p.districts, z, x, y, box, simplify) : [] },
+      { name: BOUNDARY_LAYERS.disputed, points: [], shapes: layerShapes(p, p.disputed, z, x, y, box, simplify) },
     ];
     t = { bytes: encodeTile(layers), features: layers.reduce((n, l) => n + l.shapes.length, 0) };
-    if (c.tiles.size >= CACHE_TILES) c.tiles.delete(c.tiles.keys().next().value!);
-    c.tiles.set(k, t);
+    if (simplify) {
+      if (c.tiles.size >= CACHE_TILES) c.tiles.delete(c.tiles.keys().next().value!);
+      c.tiles.set(k, t);
+    }
   } else { c.tiles.delete(k); c.tiles.set(k, t); } // most recently used last
   return { ...t, etag, version: c.key };
 }
@@ -248,6 +246,7 @@ export async function boundaryTileJson(origin: string) {
     center: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2, 5],
     attribution: p.credit,
     boundaryVersion: { key: c.key, ...p.version },
+    simplification: p.topo ? { method: 'Visvalingam per zoom on one topology of all layers (shared borders simplified once: no gaps or overlaps)', toleranceTileUnits: SIMPLIFY_TILE_UNITS, vertices: p.topo.vertices.input, sharedVertices: p.topo.vertices.arcs } : undefined,
     worldview: p.worldview,
     vector_layers: [
       { id: BOUNDARY_LAYERS.regions, description: `Official subdivisions (${p.regions.length})`, minzoom: BOUNDARY_MIN_ZOOM, maxzoom: BOUNDARY_MAX_ZOOM, fields: BOUNDARY_FIELDS.regions },

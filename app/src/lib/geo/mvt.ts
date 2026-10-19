@@ -239,3 +239,35 @@ export function fromTile(px: number, py: number, z: number, x: number, y: number
 
 export const validTile = (z: number, x: number, y: number, maxZoom = 22) =>
   Number.isInteger(z) && Number.isInteger(x) && Number.isInteger(y) && z >= 0 && z <= maxZoom && x >= 0 && y >= 0 && x < 2 ** z && y < 2 ** z;
+
+// ── Polygon clipping (cutting shapes to a tile, and decoded tiles back to their own box) ──
+
+/** Sutherland–Hodgman: a closed ring clipped to the box lo…hi on both axes. */
+export function clipRing(ring: [number, number][], lo: number, hi: number): [number, number][] {
+  let out = ring;
+  const edges: [(p: [number, number]) => boolean, (a: [number, number], b: [number, number]) => [number, number]][] = [
+    [p => p[0] >= lo, (a, b) => [lo, a[1] + ((b[1] - a[1]) * (lo - a[0])) / (b[0] - a[0])]],
+    [p => p[0] <= hi, (a, b) => [hi, a[1] + ((b[1] - a[1]) * (hi - a[0])) / (b[0] - a[0])]],
+    [p => p[1] >= lo, (a, b) => [a[0] + ((b[0] - a[0]) * (lo - a[1])) / (b[1] - a[1]), lo]],
+    [p => p[1] <= hi, (a, b) => [a[0] + ((b[0] - a[0]) * (hi - a[1])) / (b[1] - a[1]), hi]],
+  ];
+  for (const [inside, cross] of edges) {
+    if (!out.length) break;
+    const next: [number, number][] = [];
+    for (let i = 0; i < out.length; i++) {
+      const cur = out[i]!, prev = out[(i + out.length - 1) % out.length]!;
+      const ci = inside(cur), pi = inside(prev);
+      if (ci) { if (!pi) next.push(cross(prev, cur)); next.push(cur); }
+      else if (pi) next.push(cross(prev, cur));
+    }
+    out = next;
+  }
+  return out;
+}
+
+/** Twice the signed area by the surveyor's formula (tile coordinates, y down). */
+export const ringArea2 = (r: readonly [number, number][]) => {
+  let a = 0;
+  for (let i = 0; i < r.length; i++) { const p = r[i]!, q = r[(i + 1) % r.length]!; a += p[0] * q[1] - q[0] * p[1]; }
+  return a;
+};

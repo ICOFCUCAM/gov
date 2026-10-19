@@ -98,6 +98,34 @@ describe('boundary vector tiles', () => {
     expect((await tileGET(new NextRequest('http://localhost/x', { headers: { authorization: 'Bearer civ_nope' } }), ctx)).status).toBe(401);
   });
 
+  it('simplifies per zoom without gaps or overlaps between neighbours, and keeps low-zoom tiles small', async () => {
+    // A tile wholly inside Kenya: its regions (and its districts) together cover it exactly, as without simplification.
+    const z = 8, t = tileOf(37.0, -0.9, z);
+    const square = 2 * (4096 + 128) ** 2;
+    const cover = (b: Uint8Array, layer: string) => layers(b)[layer]!.features.reduce((s, f) => s + f.rings!.reduce((a, r) => a + ringArea2(r), 0), 0);
+    const simple = await boundaryTile(z, t.x, t.y), full = await boundaryTile(z, t.x, t.y, { simplify: false });
+    for (const layer of ['regions', 'districts']) {
+      expect(Math.abs(cover(full.bytes, layer) - square) / square).toBeLessThan(0.002);
+      expect(Math.abs(cover(simple.bytes, layer) - square) / square).toBeLessThan(0.002);
+    }
+    // Every unit of the full tile is still there.
+    for (const layer of ['regions', 'districts']) {
+      const codes = (b: Uint8Array) => new Set(layers(b)[layer]!.features.map(f => f.properties.code));
+      expect(codes(simple.bytes)).toEqual(codes(full.bytes));
+    }
+    // A whole-nation tile carries far fewer points than the full shapes cut to it.
+    let small = 0, big = 0;
+    for (const zz of [3, 5]) {
+      const tt = tileOf(37.9, 0.2, zz);
+      small += (await boundaryTile(zz, tt.x, tt.y)).bytes.length;
+      big += (await boundaryTile(zz, tt.x, tt.y, { simplify: false })).bytes.length;
+    }
+    expect(small).toBeLessThan(big * 0.5);
+    const tj = await boundaryTileJson('https://x');
+    expect(tj.simplification).toMatchObject({ toleranceTileUnits: expect.any(Number) });
+    expect(tj.simplification!.sharedVertices).toBeLessThan(tj.simplification!.vertices);
+  }, 120_000);
+
   it('clips rings to the tile and encodes polygons and lines', () => {
     const sq: [number, number][] = [[-100, -100], [5000, -100], [5000, 5000], [-100, 5000]];
     const c = clipRing(sq, -64, 4160);
