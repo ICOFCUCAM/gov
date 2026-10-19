@@ -124,8 +124,10 @@ async function main() {
   check('the standby\'s audit chain verifies', after.chain.ok === true, `${after.chain.checked} entries`);
   check('the standby\'s chain is the backup\'s chain plus the restore record', after.audit.seq >= backup.audit.seq + 1, `standby head ${after.audit.seq}, backup head ${backup.audit.seq}`);
   const was = new Map(before.parts.map(p => [p.name, p.sha256]));
-  // Expected to differ: the audit chain (the restore record), the record counters, the stores a restore keeps (the backup records, the Update Center's install records).
-  const EXPECTED = new Set(['store/__civicos', 'table/audit_entry', 'table/record_doc', 'table/record_counter', 'store/__civicosUpdates', 'store/__civicosBackups']);
+  // Expected to differ: the audit chain and what follows each audit entry (the restore record, its CloudEvent in
+  // the event outbox, a signed head), the record counters, and the stores a restore keeps (the backup records, the
+  // Update Center's install records). The restore's own check above compared every part before that entry.
+  const EXPECTED = new Set(['store/__civicos', 'store/__civicosEventOutbox', 'store/__civicosAuditHeads', 'table/audit_entry', 'table/record_doc', 'table/record_counter', 'store/__civicosUpdates', 'store/__civicosBackups']);
   const differ = after.parts.filter(p => was.has(p.name) && was.get(p.name) !== p.sha256).map(p => p.name);
   const missing = before.parts.filter(p => !after.parts.some(q => q.name === p.name)).map(p => p.name);
   const unexpected = differ.filter(n => !EXPECTED.has(n));

@@ -194,8 +194,9 @@ standby sees the backup at the shared target and can verify it, restores it
 four-eyes (and checks the same official cannot confirm), then compares:
 every restored part against the backup, the audit chain (verified; the
 backup's head plus the restore entry), every store's hash against the source
-at backup time (only the audit store, the record counters and the stores a
-restore keeps may differ), and a sample read through the API (nation profile,
+at backup time (only the audit store and what follows an audit entry — the
+event outbox, signed heads — the record counters and the stores a restore
+keeps may differ), and a sample read through the API (nation profile,
 institutions, releases, facilities). It reports the measured recovery time
 against the RTO target and exits non-zero on any failed check. Under
 `CIVICOS_AUTH=enforce` pass an administrator's session with `--cookie` and a
