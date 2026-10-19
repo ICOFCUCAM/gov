@@ -75,6 +75,7 @@ import { issueDueNotices, lifecycleWarning, lineOf, onEolNotice } from './lifecy
 import { alert } from './comms';
 import { transmit } from './sovereignty';
 import { touch } from '@/lib/data/repo/track';
+import type { RestorePointBackup } from './backups';
 
 /** Backward compatible with the previous release: every migration reversible and expand/contract, never in place. */
 export function isBackwardCompatible(migrations: ReleaseMigration[]): boolean {
@@ -604,6 +605,8 @@ export interface DecisionInput {
   verified?: boolean;
   /** Rollback over an irreversible migration: the team acknowledges what stays. */
   acknowledge?: boolean;
+  /** prepare: the verified backup taken for the restore point (lib/data/backups.ts takeRestorePoint, by the route). */
+  backup?: RestorePointBackup;
 }
 
 export type DecisionResult = { install: NationInstall; chamber: UpdateChamber; pending?: boolean } | { error: string; status: number };
@@ -683,9 +686,12 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
       next.window = undefined;
       break;
     case 'prepare': {
-      const rp = takeRestorePoint(n, r, by, event.at);
+      if (input.backup && !input.backup.verified) {
+        return { error: `The backup ${input.backup.backupId} did not pass verification${input.backup.problem ? `: ${input.backup.problem}` : ''}. No restore point was recorded`, status: 409 };
+      }
+      const rp = takeRestorePoint(n, r, by, event.at, input.backup);
       next.restorePoint = rp;
-      event.note = [`Restore point ${rp.id} of ${rp.version} verified`, note].filter(Boolean).join(' · ');
+      event.note = [`Restore point ${rp.id} of ${rp.version} verified${rp.backupId ? ` (backup ${rp.backupId})` : rp.simulated ? ' (simulated)' : ''}`, note].filter(Boolean).join(' · ');
       break;
     }
     case 'install': {
@@ -708,6 +714,9 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
       const rp = cur.restorePoint;
       if (!rp || !rp.verified || rp.version !== n.installedVersion) {
         return { error: `Take a verified restore point of ${n.installedVersion} before installing (it protects the version you fall back to)`, status: 409 };
+      }
+      if (rp.simulated && !simulatedRestorePoints(n)) {
+        return { error: `Restore point ${rp.id} is simulated, not a backup. Take a restore point again: it backs up the platform and verifies the backup before the install may proceed`, status: 409 };
       }
       if (!proposal) return propose({ mode, verified });
       next.pending = undefined;
@@ -1111,7 +1120,24 @@ function runningProbation(n: SubscribedNation): Probation | undefined {
   return i?.state === 'probation' && i.probation && (i.probation.state === 'running' || i.probation.state === 'awaiting-decision') ? i.probation : undefined;
 }
 
-function takeRestorePoint(n: SubscribedNation, target: DistributionRelease, by: string, at: string): RestorePoint {
+/**
+ * Whether a restore point may be simulated: for the publisher's demonstration
+ * nations (their backups live on their own servers), or where the
+ * installation says so (CIVICOS_RESTORE_POINTS=simulated: development and
+ * tests). The installed nation's restore points are real backups otherwise.
+ */
+export function simulatedRestorePoints(n: { id: string }, env: NodeJS.ProcessEnv = process.env): boolean {
+  return n.id !== HOME_NATION || (env.CIVICOS_RESTORE_POINTS ?? '').trim().toLowerCase() === 'simulated';
+}
+
+/** The backups the installed nation's restore points name (retention never removes them). */
+export function restorePointBackups(): string[] {
+  const out: string[] = [];
+  for (const i of Object.values(udb().installs[HOME_NATION] ?? {})) if (i.restorePoint?.backupId) out.push(i.restorePoint.backupId);
+  return out;
+}
+
+function takeRestorePoint(n: SubscribedNation, target: DistributionRelease, by: string, at: string, backup?: RestorePointBackup): RestorePoint {
   const irreversible = target.migrations.filter(m => !m.reversible || m.pattern === 'in-place');
   const notes = [
     `Data restore replaces the whole database with this snapshot (${at}): everything written after it — payments, applications, registrations — is lost.`,
@@ -1119,6 +1145,16 @@ function takeRestorePoint(n: SubscribedNation, target: DistributionRelease, by: 
       ? irreversible.map(m => `“${m.description}” is not backward compatible: if ${target.version} fails, you decide whether to switch back; it is never automatic.`)
       : [`${target.version} is backward compatible (expand/contract): if it fails, the software switches back to ${n.installedVersion} automatically and data is untouched.`]),
   ];
+  if (backup) {
+    // A real backup (lib/data/backups.ts): read back, decrypted, every part checked, dry-run restored.
+    return {
+      id: `RP-${digest(`${n.id}:${target.id}:${at}`, 6).toUpperCase()}`,
+      version: n.installedVersion, releaseId: n.installedReleaseId, createdAt: backup.createdAt, createdBy: by,
+      sizeBytes: backup.sizeBytes, verified: backup.verified, backupId: backup.backupId, checks: backup.checks,
+      contents: backup.contents,
+      restoreNotes: [...notes, 'Restoring needs an administrator and a second official; the current state is backed up first.'],
+    };
+  }
   return {
     id: `RP-${digest(`${n.id}:${target.id}:${at}`, 6).toUpperCase()}`,
     version: n.installedVersion,
@@ -1126,9 +1162,10 @@ function takeRestorePoint(n: SubscribedNation, target: DistributionRelease, by: 
     createdAt: at,
     createdBy: by,
     sizeBytes: sizeFor(`${n.id}:${at}`, 4e9, 24e9),
-    // Simulated: the snapshot is re-read and its checksum compared before it counts.
+    // Simulated (a demonstration nation, or CIVICOS_RESTORE_POINTS=simulated): nothing is copied.
     verified: true,
-    contents: ['Database snapshot (point-in-time, encrypted)', 'Configuration bundle and secret references', `Release artifacts of ${n.installedVersion}`],
+    simulated: true,
+    contents: ['Simulated restore point: nothing was copied', 'Database snapshot (point-in-time, encrypted)', 'Configuration bundle and secret references', `Release artifacts of ${n.installedVersion}`],
     restoreNotes: notes,
   };
 }
@@ -1518,12 +1555,13 @@ export function releaseStats(releaseId: string): ReleaseHealthStats {
 }
 
 /**
- * Restore the data snapshot — the last resort, never automatic. Needs a
+ * Whether the data snapshot of a release's restore point may be restored now
+ * (no change). Restoring is the last resort, never automatic: it needs a
  * named person, the software already back on the snapshot's version, and
  * explicit acknowledgement that everything written since the snapshot is
  * lost.
  */
-export function restoreData(nationId: string, releaseId: string, input: { by?: string; acknowledgeLoss?: boolean }): { restorePoint: RestorePoint; chamber: UpdateChamber } | { error: string; status: number } {
+export function restoreDataCheck(nationId: string, releaseId: string, input: { by?: string; acknowledgeLoss?: boolean }): { restorePoint: RestorePoint } | { error: string; status: number } {
   const n = nationById(nationId);
   if (!n) return { error: 'Nation not found', status: 404 };
   const r = udb().releases.find(x => x.id === releaseId);
@@ -1541,9 +1579,28 @@ export function restoreData(nationId: string, releaseId: string, input: { by?: s
   if (input.acknowledgeLoss !== true) {
     return { error: `Restoring discards everything written since ${rp.createdAt}. Acknowledge the loss to continue`, status: 422 };
   }
+  return { restorePoint: rp };
+}
+
+/**
+ * Record the data restore in the chamber. A simulated restore point records
+ * the decision only; a real backup is restored through lib/data/backups.ts
+ * (an administrator and a second official) and recorded here afterwards.
+ */
+export function restoreData(nationId: string, releaseId: string, input: { by?: string; acknowledgeLoss?: boolean; restoredFrom?: { backupId: string; proposedBy: string; auditSeq: number } }): { restorePoint: RestorePoint; chamber: UpdateChamber } | { error: string; status: number } {
+  const ok = restoreDataCheck(nationId, releaseId, input);
+  if ('error' in ok) return ok;
+  const n = nationById(nationId)!;
+  const inst = installRecord(n, releaseId)!;
+  const rp = ok.restorePoint;
+  const by = (input.by ?? '').trim();
+  if (rp.backupId && !input.restoredFrom) return { error: `Restore point ${rp.id} is backup ${rp.backupId}: it is restored by an administrator with a second official confirming`, status: 409 };
   const at = new Date().toISOString();
   rp.restoredAt = at;
-  const a = recordAudit(by, 'update.restore-data', `UpdateChamber:${nationId}/${rp.id}`, 'ok', `database restored to snapshot of ${rp.createdAt} (${rp.version}); data written after it discarded`);
+  const how = input.restoredFrom
+    ? `backup ${input.restoredFrom.backupId} restored (proposed by ${input.restoredFrom.proposedBy}, confirmed by ${by}; audit entry ${input.restoredFrom.auditSeq})`
+    : `database restored to snapshot of ${rp.createdAt} (${rp.version})${rp.simulated ? ' (simulated: nothing was copied)' : ''}`;
+  const a = recordAudit(by, 'update.restore-data', `UpdateChamber:${nationId}/${rp.id}`, 'ok', `${how}; data written after it discarded`);
   inst.events.push({ at, by, action: 'rollback', from: inst.state, to: inst.state, note: `Data restored from ${rp.id} (snapshot ${rp.createdAt}); later data discarded`, auditSeq: a.seq });
   const inc = [...udb().incidents].reverse().find(i => i.nationId === nationId && i.releaseId === releaseId);
   if (inc) {

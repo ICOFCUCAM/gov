@@ -62,6 +62,28 @@ export function recordAudit(
 }
 
 // ── Audit ─────────────────────────────────────────────────────────────
+/**
+ * Whether a list of entries chains, each by the rule it was written with
+ * (no signed heads). Used for the live chain and for a chain read back from
+ * a backup (lib/backup/state.ts) before it may count as restorable.
+ */
+export function verifyChainEntries(entries: readonly AuditEntry[]): { ok: boolean; checked: number; brokenAtSeq?: number } {
+  let prevHash: string | null = null;
+  let upgraded = false;
+  for (const e of entries) {
+    // Each entry by the rule it was written with; once the chain is on v2, no entry may fall back.
+    const v2 = e.alg === 'sha256-v2';
+    if (upgraded && !v2) return { ok: false, checked: entries.length, brokenAtSeq: e.seq };
+    upgraded ||= v2;
+    const expected: string = v2 ? auditHashV2(e) : hash(`${prevHash ?? 'GENESIS'}|${e.action}|${e.resource}|${e.outcome}|${e.seq}`);
+    if (expected !== e.hash || (e.prevHash ?? null) !== (prevHash ?? null)) {
+      return { ok: false, checked: entries.length, brokenAtSeq: e.seq };
+    }
+    prevHash = e.hash;
+  }
+  return { ok: true, checked: entries.length };
+}
+
 export function listAudit(): AuditEntry[] {
   return [...chain()].reverse();
 }
@@ -73,19 +95,8 @@ export function verifyAuditChain(): {
   /** The signed heads (lib/audit/sign.ts): the last one, and whether every one still matches the chain. */
   signed?: SignedHeadCheck;
 } {
-  let prevHash: string | null = null;
-  let upgraded = false;
-  for (const e of chain()) {
-    // Each entry by the rule it was written with; once the chain is on v2, no entry may fall back.
-    const v2 = e.alg === 'sha256-v2';
-    if (upgraded && !v2) return { ok: false, checked: chain().length, brokenAtSeq: e.seq };
-    upgraded ||= v2;
-    const expected: string = v2 ? auditHashV2(e) : hash(`${prevHash ?? 'GENESIS'}|${e.action}|${e.resource}|${e.outcome}|${e.seq}`);
-    if (expected !== e.hash || (e.prevHash ?? null) !== (prevHash ?? null)) {
-      return { ok: false, checked: chain().length, brokenAtSeq: e.seq };
-    }
-    prevHash = e.hash;
-  }
+  const links = verifyChainEntries(chain());
+  if (!links.ok) return links;
   const bySeq = new Map(chain().map(e => [e.seq, e]));
   const signed = verifySignedHeads(seq => bySeq.get(seq));
   return signed.ok ? { ok: true, checked: chain().length, signed } : { ok: false, checked: chain().length, signed };

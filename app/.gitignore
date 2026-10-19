@@ -14,5 +14,6 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 public-sites-audit.json
 .civicos-state/
+.civicos-backups/
 dependency-audit.json
 /map-check/
