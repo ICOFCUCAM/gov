@@ -17,31 +17,14 @@ import { presidencyNav } from '@/apps/presidency/core/domains';
 import { portalNav } from '@/apps/citizen-wallet/core/domains';
 import { nocNav } from '@/apps/noc/core/domains';
 import type { AppManifest } from '@/services/orchestration-engine';
-
-const ARCHETYPE_APP: Partial<Record<ArchetypeKey, { id: string; label: string; domain: string }>> = {
-  HEALTH: { id: 'ministry-health', label: 'Ministry of Health', domain: 'health' },
-  EDUCATION: { id: 'ministry-education', label: 'Ministry of Education', domain: 'education' },
-  TRANSPORT: { id: 'ministry-transport', label: 'Ministry of Transport', domain: 'transport' },
-  ENERGY: { id: 'ministry-energy', label: 'Ministry of Energy', domain: 'energy' },
-  FINANCE: { id: 'ministry-finance', label: 'Treasury & Finance', domain: 'treasury' },
-  AGRICULTURE: { id: 'ministry-agriculture', label: 'Ministry of Agriculture', domain: 'agriculture' },
-  JUSTICE: { id: 'ministry-justice', label: 'Ministry of Justice', domain: 'justice' },
-  ENVIRONMENT: { id: 'ministry-environment', label: 'Ministry of Environment', domain: 'environment' },
-  INTERIOR: { id: 'ministry-interior', label: 'Ministry of Interior', domain: 'interior' },
-  LABOR: { id: 'ministry-labor', label: 'Ministry of Labour', domain: 'labour' },
-  TRADE: { id: 'ministry-trade', label: 'Ministry of Trade & Industry', domain: 'trade' },
-  GENERIC: { id: 'ministry-generic', label: 'Institution', domain: 'institution' },
-};
+// Charter identities (id, label, domain, kind, archetype) live in one place,
+// shared with the server that mirrors the registry to the substrate.
+import { ministryCharter, standingCharter } from '@/lib/institution/charters';
 
 /** Build the federated app manifest for a provisioned ministry instance. */
 export function ministryAppManifest(m: { id: string; name: string; archetype: ArchetypeKey }): AppManifest {
-  const meta = ARCHETYPE_APP[m.archetype] ?? ARCHETYPE_APP.GENERIC!;
   return {
-    id: meta.id,
-    label: m.name,
-    domain: meta.domain,
-    kind: 'ministry',
-    archetypeOrBranch: m.archetype,
+    ...ministryCharter(m),
     instanceId: m.id,
     // Interior is a Tier-1 sovereign shell with its own normalized domain
     // navigation framework; other ministries derive nav from the blueprint.
@@ -53,28 +36,24 @@ export function ministryAppManifest(m: { id: string; name: string; archetype: Ar
 
 // Constitutional branches as sovereign reference-tier operational apps.
 export const BRANCH_APPS: AppManifest[] = [
-  {
-    id: 'presidency', label: 'Presidency · Cabinet Office', domain: 'presidency', kind: 'branch', archetypeOrBranch: 'GENERIC',
+  { ...standingCharter('presidency'),
     nav: presidencyNav(),
   },
-  {
-    id: 'judiciary', label: 'Judicial Branch', domain: 'judiciary', kind: 'branch', archetypeOrBranch: 'judiciary',
+  { ...standingCharter('judiciary'),
     nav: judicialNav(),
   },
-  {
-    id: 'senate', label: 'Senate', domain: 'senate', kind: 'branch', archetypeOrBranch: 'legislature',
+  { ...standingCharter('senate'),
     nav: senateNav(),
   },
-  {
-    id: 'assembly', label: 'National Assembly', domain: 'assembly', kind: 'branch', archetypeOrBranch: 'legislature',
+  { ...standingCharter('assembly'),
     nav: assemblyNav(),
   },
 ];
 
 export const AGENCY_APPS: AppManifest[] = [
-  { id: 'police-command', label: 'Police Command', domain: 'police', kind: 'agency', archetypeOrBranch: 'INTERIOR',
+  { ...standingCharter('police-command'),
     nav: policeNav() },
-  { id: 'emergency-response', label: 'Emergency Response', domain: 'emergency', kind: 'agency', archetypeOrBranch: 'INTERIOR',
+  { ...standingCharter('emergency-response'),
     nav: [
       { key: 'command', label: 'Crisis command' },
       { key: 'dispatch', label: 'Dispatch' },
@@ -85,20 +64,18 @@ export const AGENCY_APPS: AppManifest[] = [
       { key: 'alert-network', label: 'Crisis Communications' },
       { key: 'resilience-foresight', label: 'Resilience & Foresight' },
     ] },
-  { id: 'immigration', label: 'Immigration', domain: 'immigration', kind: 'agency', archetypeOrBranch: 'INTERIOR',
+  { ...standingCharter('immigration'),
     nav: [{ key: 'border', label: 'Border control' }, { key: 'permits', label: 'Visas & permits' }, { key: 'registry', label: 'Resident registry' }, { key: 'enforcement', label: 'Enforcement' }] },
-  { id: 'customs', label: 'Customs', domain: 'customs', kind: 'agency', archetypeOrBranch: 'TRADE',
+  { ...standingCharter('customs'),
     nav: [{ key: 'clearance', label: 'Clearance' }, { key: 'tariffs', label: 'Tariffs & duties' }, { key: 'inspection', label: 'Inspection' }, { key: 'revenue', label: 'Revenue' }] },
-  { id: 'communications', label: 'Communications & Digital Infrastructure', domain: 'communications', kind: 'agency',
-    archetypeOrBranch: 'GENERIC',
+  { ...standingCharter('communications'),
     nav: [
       { key: 'connectivity-command', label: 'National Connectivity Command' },
       { key: 'cyber-resilience', label: 'Cybersecurity & Resilience' },
       { key: 'identity-spectrum', label: 'Digital Identity & Spectrum' },
       { key: 'foresight-portal', label: 'Forecast & Public Portal' },
     ] },
-  { id: 'foreign-affairs', label: 'Foreign Affairs & Geopolitical Relations', domain: 'foreign', kind: 'agency',
-    archetypeOrBranch: 'GENERIC',
+  { ...standingCharter('foreign-affairs'),
     nav: [
       { key: 'geopolitical-command', label: 'Geopolitical Command' },
       { key: 'diplomatic-missions', label: 'Diplomatic Missions' },
@@ -108,12 +85,9 @@ export const AGENCY_APPS: AppManifest[] = [
       { key: 'law-sovereignty', label: 'International Law & Sovereignty' },
       { key: 'citizen-portal', label: 'Citizen Foreign Services' },
     ] },
-  { id: 'citizen-wallet', label: 'Citizen Super-Portal', domain: 'citizen', kind: 'citizen',
-    archetypeOrBranch: 'GENERIC', nav: portalNav() },
-  { id: 'noc', label: 'National Operations Centre', domain: 'noc', kind: 'agency',
-    archetypeOrBranch: 'GENERIC', nav: nocNav() },
-  { id: 'officer-console', label: 'Officer Console', domain: 'officer', kind: 'officer',
-    archetypeOrBranch: 'GENERIC', nav: [{ key: 'queue', label: 'Work queue' }, { key: 'decisions', label: 'Decisions' }, { key: 'review', label: 'Review' }] },
+  { ...standingCharter('citizen-wallet'), nav: portalNav() },
+  { ...standingCharter('noc'), nav: nocNav() },
+  { ...standingCharter('officer-console'), nav: [{ key: 'queue', label: 'Work queue' }, { key: 'decisions', label: 'Decisions' }, { key: 'review', label: 'Review' }] },
 ];
 
 export const STANDING_APPS: AppManifest[] = [...BRANCH_APPS, ...AGENCY_APPS];

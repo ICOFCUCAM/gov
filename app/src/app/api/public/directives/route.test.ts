@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const listDirectivesRows = vi.fn();
-vi.mock('@/lib/db/repos/memory', () => ({
-  listDirectivesRows: (o: unknown) => listDirectivesRows(o),
+// The platform owns the register (lib/data/directives.ts); the feed reads it there.
+vi.mock('@/lib/data/directives', () => ({
+  listDirectives: (o: unknown) => listDirectivesRows(o),
+  settleDirectives: () => [],
 }));
 
 import { GET } from './route';
 
 beforeEach(() => {
-  listDirectivesRows.mockReset().mockResolvedValue([
+  listDirectivesRows.mockReset().mockReturnValue([
     { ref: 'DIR-1', kind: 'policy', title: 'A', issued_by_charter_id: 'MIN-X', status: 'effective', citation: null, targets: [], signed_at: '2026-05-01T00:00:00Z', effective_at: '2026-05-02T00:00:00Z', rescinded_at: null },
     { ref: 'DIR-2', kind: 'policy', title: 'draft', issued_by_charter_id: 'MIN-X', status: 'drafting', citation: null, targets: [], signed_at: null, effective_at: null, rescinded_at: null },
   ]);

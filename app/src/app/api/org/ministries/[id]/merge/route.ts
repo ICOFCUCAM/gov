@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { mergeMinistry } from '@/lib/data/store';
 import { refusal } from '@/lib/auth/official';
 import { adminOnly } from '@/lib/auth/roles';
+import { queueMirror } from '@/lib/db/mirror';
 export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -11,5 +12,6 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   if (!b.targetId) return NextResponse.json({ error: 'targetId required' }, { status: 422 });
   const r = mergeMinistry(params.id, b.targetId);
   if ('error' in r) return NextResponse.json(r, { status: 409 });
+  queueMirror('institutions'); // the substrate's charter rows mirror the registry (lib/db/mirror.ts)
   return NextResponse.json({ ministry: r });
 }

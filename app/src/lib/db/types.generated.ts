@@ -1749,6 +1749,8 @@ export type Database = {
       log_my_data_export: { Args: Record<PropertyKey, never>; Returns: string };
       mark_dispatch_on_scene: { Args: { p_ref: string }; Returns: Database["civicos"]["Tables"]["dispatches"]["Row"] };
       mark_webhook_delivered: { Args: { p_id: string; p_last_event_id: string; p_cursor_at_ms: number; p_delivered: number }; Returns: undefined };
+      mirror_directive: { Args: { p_row: Json }; Returns: Database["civicos"]["Tables"]["directives"]["Row"] };
+      mirror_institution: { Args: { p_charter_id: string; p_label: string; p_kind: string; p_domain: string; p_archetype_or_branch: string; p_activated: boolean; p_meta?: Json }; Returns: Database["civicos"]["Tables"]["institutions"]["Row"] };
       my_audit_trail: { Args: { p_limit?: number }; Returns: {
           action: string
           actor: string
@@ -2538,6 +2540,8 @@ export type Database = {
       civicos_log_my_data_export: { Args: Record<PropertyKey, never>; Returns: string };
       civicos_mark_dispatch_on_scene: { Args: { p_ref: string }; Returns: Database["civicos"]["Tables"]["dispatches"]["Row"] };
       civicos_mark_webhook_delivered: { Args: { p_id: string; p_last_event_id: string; p_cursor_at_ms: number; p_delivered: number }; Returns: undefined };
+      civicos_mirror_directive: { Args: { p_row: Json }; Returns: Database["civicos"]["Tables"]["directives"]["Row"] };
+      civicos_mirror_institution: { Args: { p_charter_id: string; p_label: string; p_kind: string; p_domain: string; p_archetype_or_branch: string; p_activated: boolean; p_meta?: Json }; Returns: Database["civicos"]["Tables"]["institutions"]["Row"] };
       civicos_my_audit_trail: { Args: { p_limit?: number }; Returns: {
           action: string
           actor: string
