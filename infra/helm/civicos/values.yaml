@@ -46,7 +46,9 @@ app:
     mode: supabase
     size: 5Gi
     storageClassName: ""
-  # Extra plain environment variables (e.g. CIVICOS_STATE_LEASE_TTL_MS).
+  # Extra plain environment variables (e.g. CIVICOS_STATE_LEASE_TTL_MS, or
+  # CIVICOS_EGRESS_PROXY / CIVICOS_EGRESS_NO_PROXY where outbound traffic must
+  # go through the nation's proxy: a CONNECT tunnel to the vetted address).
   env: {}
   # The whole state is held in memory and re-encoded on save (review O3):
   # at least 1 Gi until the persistence move.
