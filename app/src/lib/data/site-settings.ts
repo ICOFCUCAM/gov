@@ -22,6 +22,22 @@ import { checkPublicUrl, onSite } from '@/lib/public-sites/url-safety';
 import { fetchFeed, type FeedItem, type FeedDeps } from '@/lib/public-sites/feed';
 import { presetsFor } from '@/apps/_shared/public/design/presets';
 import { tracked } from '@/lib/data/repo/track';
+import { listMinistries } from '@/lib/data/store/ministries';
+import { STANDING_CHARTERS } from '@/lib/institution/charters';
+
+/**
+ * The institution that owns a public site (review M-2): the registered
+ * ministry whose slug is the site's id (a merged one's successor), else the
+ * standing charter (branch or agency) the site belongs to. Undefined for a
+ * site no institution owns (it is changed by the whole government only).
+ * Read at use, so a ministry created, renamed or merged in the registry
+ * applies at once. lib/auth/roles.ts canActForSite() decides with it.
+ */
+export function siteOwner(siteId: string): string | undefined {
+  const m = listMinistries().find(x => x.slug === siteId);
+  if (m) return m.status === 'merged' && m.mergedIntoId ? m.mergedIntoId : m.id;
+  return STANDING_CHARTERS.find(c => c.id === siteId || c.domain === siteId)?.id;
+}
 
 export type SiteMode = 'link' | 'embed' | 'migrate' | 'host';
 export const SITE_MODES: SiteMode[] = ['link', 'embed', 'migrate', 'host'];

@@ -1,10 +1,15 @@
 // /api/releases/[id]/readiness — preflight compatibility and staging for
 // one release, as this nation sees it.
 //   GET  the latest preflight report, the staging environment and run.
-//   POST { action: 'preflight' | 'waive' | 'stage' | 'stage-fail' | 'uat', … }
+//   POST { action: 'preflight' | 'waive' | 'cancel-waiver' | 'stage' | 'stage-fail' | 'uat', … }
+// Installation-level: this nation's government-wide administrators only
+// (lib/auth/roles.ts, checked in chamberBody()). A waiver is dual control by
+// two sign-ins: the first official proposes { findingKey, reason }, a different
+// signed-in official confirms with { findingKey } in their own request.
 import { NextRequest, NextResponse } from 'next/server';
 import { nationFor, chamberBody } from '@/lib/updates/access';
 import { releaseFor, superviseProbations } from '@/lib/data/updates';
+import { officialId } from '@/lib/auth/official';
 import { latestPreflight, runPreflight, waiveFinding, stagingEnvironment, stagingRun, stagingInstall, stagingFail, signUat } from '@/lib/data/readiness';
 
 export const dynamic = 'force-dynamic';
@@ -31,9 +36,12 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     case 'preflight':
       if (!by) return NextResponse.json({ error: 'Name the person running the preflight' }, { status: 422 });
       return NextResponse.json({ preflight: runPreflight(n, r, by) });
-    case 'waive': {
-      const out = waiveFinding(n, r, String(b.findingKey ?? ''), { by, secondBy: b.secondBy, reason: b.reason });
-      return 'error' in out ? NextResponse.json({ error: out.error }, { status: out.status }) : NextResponse.json({ preflight: out });
+    case 'waive':
+    case 'cancel-waiver': {
+      const out = waiveFinding(n, r, String(b.findingKey ?? ''), { by, byId: await officialId(), secondBy: b.secondBy, reason: b.reason, cancel: b.action === 'cancel-waiver' });
+      if ('error' in out) return NextResponse.json({ error: out.error }, { status: out.status });
+      const { pending, ...preflight } = out;
+      return NextResponse.json({ preflight, ...(pending ? { pending: true } : {}) });
     }
     case 'stage': {
       const out = stagingInstall(n, r, by);
@@ -48,6 +56,6 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       return 'error' in out ? NextResponse.json({ error: out.error }, { status: out.status }) : NextResponse.json({ run: out });
     }
     default:
-      return NextResponse.json({ error: 'action must be preflight, waive, stage, stage-fail or uat' }, { status: 422 });
+      return NextResponse.json({ error: 'action must be preflight, waive, cancel-waiver, stage, stage-fail or uat' }, { status: 422 });
   }
 }

@@ -78,7 +78,8 @@ describe('alerts to named officials', () => {
     cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' });
     decide(HOME_NATION, 'DR-141', { action: 'prepare', by: 'Ops' });
     cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
-    ok(breakGlass(HOME_NATION, { by: 'CIO', secondBy: 'CISO', reason: 'Citizens cannot pay at the counters' }));
+    ok(breakGlass(HOME_NATION, { by: 'CIO', reason: 'Citizens cannot pay at the counters' }));
+    ok(breakGlass(HOME_NATION, { by: 'CISO' }));
     expect(outbox(HOME_NATION).some(a => a.category === 'incidents' && /Break-glass/.test(a.subject))).toBe(true);
     superviseProbations();
     expect(outbox(HOME_NATION).some(a => a.category === 'eol')).toBe(true);

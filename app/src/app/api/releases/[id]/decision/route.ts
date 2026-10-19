@@ -5,12 +5,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { decide, INSTALL_ACTIONS, type DecisionInput } from '@/lib/data/updates';
 import { nationFor } from '@/lib/updates/access';
 import type { InstallAction } from '@/lib/api/types';
-import { withOfficial } from '@/lib/auth/official';
+import { pathRefusal, withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  const refused = await pathRefusal(req);
+  if (refused) return refused;
   let b: Partial<DecisionInput> & { link?: string };
   try { b = await withOfficial(await req.json()); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
   if (!b || typeof b !== 'object') return NextResponse.json({ error: 'Invalid body' }, { status: 400 });

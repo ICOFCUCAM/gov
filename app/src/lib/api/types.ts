@@ -984,6 +984,12 @@ export interface NationInstall {
   probation?: Probation;
   /** Four-eyes: a production approve or install proposed by one official, awaiting a second. */
   pending?: { action: 'approve' | 'install'; by: string; at: ISODate; mode?: DeliveryMode; verified?: boolean; note?: string };
+  /**
+   * Dual control: break-glass proposed by one official for the running
+   * release, awaiting a different signed-in official's confirmation (lapses
+   * after DUAL_CONTROL_HOURS). `byId` is the proposer's verified identity.
+   */
+  breakGlass?: { by: string; byId?: string; at: ISODate; reason: string; version: string };
 }
 
 // ── Resilience: restore points, probation and fallback ───────────────
@@ -1407,8 +1413,10 @@ export interface PreflightFinding {
   kind: 'module' | 'integration' | 'build' | 'configuration' | 'institution';
   status: PreflightStatus;
   reason: string;
-  /** A blocking finding waived by two named officials. */
+  /** A blocking finding waived by two officials: `by` proposed it, `secondBy` (a different signed-in official) confirmed it. */
   waiver?: { by: string; secondBy: string; reason: string; at: ISODate };
+  /** A waiver proposed by one official, awaiting a different official's confirmation (dual control). */
+  waiverProposal?: { by: string; reason: string; at: ISODate };
 }
 export interface PreflightReport {
   nationId: string;

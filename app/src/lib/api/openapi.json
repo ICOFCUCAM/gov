@@ -3,7 +3,7 @@
   "info": {
     "title": "CivicOS platform API",
     "version": "1",
-    "description": "Every HTTP endpoint of this installation, generated from its route files (scripts/build-openapi.mjs). Request and response bodies are JSON, typed from the TypeScript types the routes use where they declare them; errors are `{ \"error\": string }`. Sign-in rules follow the platform middleware and lib/auth/roles.ts: public sites and public reads are open, everything else needs an official's session or the machine credential named in each operation's security. `x-permission-rule` names the rule a change falls under (administrator, ministry, official, bearer, self-authenticated, public-write)."
+    "description": "Every HTTP endpoint of this installation, generated from its route files (scripts/build-openapi.mjs). Request and response bodies are JSON, typed from the TypeScript types the routes use where they declare them; errors are `{ \"error\": string }`. Sign-in rules follow the platform middleware and lib/auth/roles.ts: public sites and public reads are open, everything else needs an official's session or the machine credential named in each operation's security. `x-permission-rule` names the rule a change falls under (administrator, installation: a government-wide administrator of this nation, ministry, official, bearer, self-authenticated, public-write)."
   },
   "servers": [
     {
@@ -27301,6 +27301,12 @@
                           "action": "approve",
                           "by": "A. Official",
                           "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "breakGlass": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text",
+                          "version": "string"
                         }
                       },
                       "chamber": {
@@ -27478,7 +27484,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/[id]/decision/route.ts"
       }
     },
@@ -27691,7 +27697,7 @@
         ],
         "operationId": "get_releases_id_readiness",
         "summary": "GET /api/releases/{id}/readiness",
-        "description": "/api/releases/[id]/readiness — preflight compatibility and staging for one release, as this nation sees it. GET the latest preflight report, the staging environment and run. POST { action: 'preflight' | 'waive' | 'stage' | 'stage-fail' | 'uat', … }",
+        "description": "/api/releases/[id]/readiness — preflight compatibility and staging for one release, as this nation sees it. GET the latest preflight report, the staging environment and run. POST { action: 'preflight' | 'waive' | 'cancel-waiver' | 'stage' | 'stage-fail' | 'uat', … } Installation-level: this nation's government-wide administrators only (lib/auth/roles.ts, checked in chamberBody()). A waiver is dual control by two sign-ins: the first official proposes { findingKey, reason }, a different signed-in official confirms with { findingKey } in their own request.",
         "parameters": [
           {
             "name": "id",
@@ -27843,7 +27849,7 @@
         ],
         "operationId": "post_releases_id_readiness",
         "summary": "POST /api/releases/{id}/readiness",
-        "description": "/api/releases/[id]/readiness — preflight compatibility and staging for one release, as this nation sees it. GET the latest preflight report, the staging environment and run. POST { action: 'preflight' | 'waive' | 'stage' | 'stage-fail' | 'uat', … }",
+        "description": "/api/releases/[id]/readiness — preflight compatibility and staging for one release, as this nation sees it. GET the latest preflight report, the staging environment and run. POST { action: 'preflight' | 'waive' | 'cancel-waiver' | 'stage' | 'stage-fail' | 'uat', … } Installation-level: this nation's government-wide administrators only (lib/auth/roles.ts, checked in chamberBody()). A waiver is dual control by two sign-ins: the first official proposes { findingKey, reason }, a different signed-in official confirms with { findingKey } in their own request.",
         "parameters": [
           {
             "name": "id",
@@ -27926,6 +27932,81 @@
                     {
                       "type": "object",
                       "properties": {
+                        "pending": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "preflight": {
+                          "type": "object",
+                          "properties": {
+                            "nationId": {
+                              "type": "string"
+                            },
+                            "releaseId": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string"
+                            },
+                            "runAt": {
+                              "type": "string"
+                            },
+                            "runBy": {
+                              "type": "string"
+                            },
+                            "findings": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/PreflightFinding"
+                              }
+                            },
+                            "summary": {
+                              "type": "object",
+                              "properties": {
+                                "compatible": {
+                                  "type": "number"
+                                },
+                                "needsChange": {
+                                  "type": "number"
+                                },
+                                "blocking": {
+                                  "type": "number"
+                                },
+                                "waived": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "compatible",
+                                "needsChange",
+                                "blocking",
+                                "waived"
+                              ]
+                            },
+                            "approvable": {
+                              "type": "boolean",
+                              "description": "No blocking finding is left unwaived."
+                            }
+                          },
+                          "required": [
+                            "nationId",
+                            "releaseId",
+                            "version",
+                            "runAt",
+                            "runBy",
+                            "findings",
+                            "summary",
+                            "approvable"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "preflight"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
                         "run": {
                           "$ref": "#/components/schemas/StagingRun"
                         }
@@ -27985,7 +28066,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/[id]/readiness/route.ts"
       }
     },
@@ -28248,7 +28329,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/[id]/restore-data/route.ts"
       }
     },
@@ -29129,7 +29210,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/alerts/route.ts"
       }
     },
@@ -29140,7 +29221,7 @@
         ],
         "operationId": "post_releases_break_glass",
         "summary": "POST /api/releases/break-glass",
-        "description": "/api/releases/break-glass — the worst case: two named people restore the restore point taken before the running release was installed.",
+        "description": "/api/releases/break-glass — the worst case: switch the software back to the restore point taken before the running release was installed. Dual control by two sign-ins (review H-5): the first official proposes { reason }, a different signed-in official confirms in their own request, and only then does it run. { action: 'cancel' } withdraws a proposal. Installation-level: this nation's government-wide administrators only (lib/auth/roles.ts, checked in chamberBody()). Names and identities come from the verified session, never from the body; a typed second name is refused.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -29157,6 +29238,9 @@
                   },
                   "reason": {
                     "type": "string"
+                  },
+                  "action": {
+                    "type": "string"
                   }
                 }
               },
@@ -29166,7 +29250,8 @@
                   "value": {
                     "by": "A. Official",
                     "secondBy": "A. Official",
-                    "reason": "Text"
+                    "reason": "Text",
+                    "action": "string"
                   }
                 }
               }
@@ -29179,52 +29264,88 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "incident": {
-                      "$ref": "#/components/schemas/FallbackIncident"
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "cancelled": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "chamber": {
+                          "$ref": "#/components/schemas/UpdateChamber"
+                        }
+                      },
+                      "required": [
+                        "cancelled",
+                        "chamber"
+                      ]
                     },
-                    "chamber": {
-                      "$ref": "#/components/schemas/UpdateChamber"
+                    {
+                      "type": "object",
+                      "properties": {
+                        "incident": {
+                          "$ref": "#/components/schemas/FallbackIncident"
+                        },
+                        "chamber": {
+                          "$ref": "#/components/schemas/UpdateChamber"
+                        }
+                      },
+                      "required": [
+                        "incident",
+                        "chamber"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "proposal": {
+                          "type": "object",
+                          "properties": {
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "reason": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "by",
+                            "at",
+                            "reason",
+                            "version"
+                          ]
+                        },
+                        "chamber": {
+                          "$ref": "#/components/schemas/UpdateChamber"
+                        }
+                      },
+                      "required": [
+                        "pending",
+                        "proposal",
+                        "chamber"
+                      ]
                     }
-                  },
-                  "required": [
-                    "incident",
-                    "chamber"
                   ]
                 },
                 "examples": {
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
-                      "incident": {
-                        "id": "ID-0001",
-                        "nationId": "ID-0001",
-                        "releaseId": "ID-0001",
-                        "fromVersion": "string",
-                        "toVersion": "string",
-                        "restorePointId": "ID-0001",
-                        "trigger": "approved",
-                        "state": "awaiting-decision",
-                        "dataRestored": {
-                          "at": "2026-01-15T09:30:00.000Z",
-                          "by": "A. Official",
-                          "snapshotAt": "2026-01-15T09:30:00.000Z"
-                        },
-                        "failedChecks": [
-                          "audit-chain"
-                        ],
-                        "timeline": [
-                          {
-                            "at": "2026-01-15T09:30:00.000Z",
-                            "text": "string"
-                          }
-                        ],
-                        "openedAt": "2026-01-15T09:30:00.000Z",
-                        "acknowledgedAt": "2026-01-15T09:30:00.000Z",
-                        "acknowledgedBy": "A. Official",
-                        "auditSeq": 1
-                      },
+                      "cancelled": true,
                       "chamber": {
                         "nation": {
                           "id": "ID-0001",
@@ -29399,7 +29520,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/break-glass/route.ts"
       }
     },
@@ -29635,7 +29756,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/change-control/route.ts"
       }
     },
@@ -29927,7 +30048,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/contract/route.ts"
       }
     },
@@ -30402,7 +30523,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/escrow/route.ts"
       }
     },
@@ -30646,6 +30767,12 @@
                           "action": "approve",
                           "by": "A. Official",
                           "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "breakGlass": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text",
+                          "version": "string"
                         }
                       }
                     }
@@ -30842,7 +30969,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/hosting/[id]/route.ts"
       }
     },
@@ -31338,7 +31465,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/hosting/route.ts"
       }
     },
@@ -31453,7 +31580,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/incidents/[id]/route.ts"
       }
     },
@@ -31882,7 +32009,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/mirror/route.ts"
       }
     },
@@ -35589,7 +35716,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/security/byo/route.ts"
       }
     },
@@ -35675,7 +35802,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/security/definitions/route.ts"
       }
     },
@@ -35874,7 +36001,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/security/orders/[id]/route.ts"
       }
     },
@@ -36012,7 +36139,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/security/orders/route.ts"
       }
     },
@@ -36314,7 +36441,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/security/software/route.ts"
       }
     },
@@ -36408,7 +36535,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/settings/agent-credential/route.ts"
       }
     },
@@ -36586,7 +36713,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/settings/route.ts"
       }
     },
@@ -36978,7 +37105,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/sovereignty/route.ts"
       }
     },
@@ -37159,7 +37286,7 @@
             "officialSession": []
           }
         ],
-        "x-permission-rule": "official",
+        "x-permission-rule": "installation",
         "x-source": "src/app/api/releases/staging/route.ts"
       }
     },
@@ -46575,7 +46702,7 @@
         ],
         "operationId": "get_work",
         "summary": "GET /api/work",
-        "description": "What is waiting on officials across the government, from the records that hold it: every institution's queue (open or escalated items), its active incidents, permits awaiting a decision and open operational incidents. Read-only; the actions stay on their own endpoints (queue act, incident escalate/resolve, permit decide, ops incident ack/resolve), each audited.",
+        "description": "What is waiting on officials across the government, from the records that hold it: every institution's queue (open or escalated items), its active incidents, permits awaiting a decision and open operational incidents. Read-only; the actions stay on their own endpoints (queue act, incident escalate/resolve, permit decide, ops incident ack/resolve), each audited. Cases and permits carry personal data: a signed-in official sees only those they may read (lib/auth/roles.ts canReadInstitution(), canReadPermits(); review M-3); the whole government and auditors see all of them.",
         "parameters": [],
         "responses": {
           "200": {
@@ -55133,6 +55260,33 @@
               "at"
             ],
             "description": "Four-eyes: a production approve or install proposed by one official, awaiting a second."
+          },
+          "breakGlass": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason",
+              "version"
+            ],
+            "description": "Dual control: break-glass proposed by one official for the running release, awaiting a different signed-in official's confirmation (lapses after DUAL_CONTROL_HOURS). `byId` is the proposer's verified identity."
           }
         },
         "required": [
@@ -57317,7 +57471,27 @@
               "reason",
               "at"
             ],
-            "description": "A blocking finding waived by two named officials."
+            "description": "A blocking finding waived by two officials: `by` proposed it, `secondBy` (a different signed-in official) confirmed it."
+          },
+          "waiverProposal": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "reason",
+              "at"
+            ],
+            "description": "A waiver proposed by one official, awaiting a different official's confirmation (dual control)."
           }
         },
         "required": [

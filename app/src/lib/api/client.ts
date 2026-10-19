@@ -482,8 +482,9 @@ export const api = {
       req<{ nation: SubscribedNation }>('/api/releases/settings', { method: 'PUT', body: JSON.stringify(patch) }),
     readiness: (id: string, link?: string) =>
       req<{ preflight: PreflightReport | null; staging: StagingEnvironment; run: StagingRun | null; stagingRequired: boolean }>(`/api/releases/${encodeURIComponent(id)}/readiness${linkQ(link)}`),
-    readinessAction: (id: string, body: { action: 'preflight' | 'waive' | 'stage' | 'stage-fail' | 'uat'; by?: string; secondBy?: string; reason?: string; findingKey?: string; tester?: string; date?: string; evidence?: string; link?: string }) =>
-      req<{ preflight?: PreflightReport; run?: StagingRun }>(`/api/releases/${encodeURIComponent(id)}/readiness`, { method: 'POST', body: JSON.stringify(body) }),
+    // waive: the first official proposes (with a reason), a different signed-in official confirms in their own request.
+    readinessAction: (id: string, body: { action: 'preflight' | 'waive' | 'cancel-waiver' | 'stage' | 'stage-fail' | 'uat'; by?: string; reason?: string; findingKey?: string; tester?: string; date?: string; evidence?: string; link?: string }) =>
+      req<{ preflight?: PreflightReport; run?: StagingRun; pending?: boolean }>(`/api/releases/${encodeURIComponent(id)}/readiness`, { method: 'POST', body: JSON.stringify(body) }),
     advisories: (link?: string) =>
       req<{ exposure: AdvisoryExposure[]; commitments: PatchCommitment[]; policy: Record<AdvisorySeverity, number> }>(`/api/releases/advisories${linkQ(link)}`),
     support: (link?: string) =>
@@ -532,8 +533,9 @@ export const api = {
       req<{ incident: FallbackIncident }>(`/api/releases/incidents/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify({ by, link }) }),
     restoreData: (id: string, body: { by: string; acknowledgeLoss: boolean; link?: string }) =>
       req<{ chamber: UpdateChamber }>(`/api/releases/${encodeURIComponent(id)}/restore-data`, { method: 'POST', body: JSON.stringify(body) }),
-    breakGlass: (body: { by: string; secondBy: string; reason: string; link?: string }) =>
-      req<{ incident: FallbackIncident; chamber: UpdateChamber }>('/api/releases/break-glass', { method: 'POST', body: JSON.stringify(body) }),
+    // Dual control by two sign-ins: the first call proposes (with what failed), a different official's call confirms and runs it.
+    breakGlass: (body: { by: string; reason?: string; action?: 'propose' | 'confirm' | 'cancel'; link?: string }) =>
+      req<{ incident?: FallbackIncident; chamber: UpdateChamber; pending?: true; cancelled?: true; proposal?: { by: string; at: string; reason: string; version: string } }>('/api/releases/break-glass', { method: 'POST', body: JSON.stringify(body) }),
     // Security store
     security: (link?: string) => req<{ security: SecurityCenter }>(`/api/releases/security${linkQ(link)}`),
     quote: (body: { productId: string; edition: string; seats: number; years: number; by: string; link?: string }) =>

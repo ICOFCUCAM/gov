@@ -135,6 +135,26 @@ const ADMIN_ONLY: RegExp[] = [
   // Provisioning a new municipality (/admin/onboarding).
   /^\/api\/municipalities\/?$/,
 ];
+/**
+ * The nation's Update Center work that any official who is not an auditor may
+ * do: ask for a feature, open and work a support ticket, and send the
+ * installation's crash reports (which the data-sovereignty gate still holds
+ * back unless an administrator enabled them).
+ */
+const UPDATE_CENTER_WORK: RegExp[] = [/^\/api\/releases\/(requests|support)(\/|$)/, /^\/api\/releases\/telemetry$/];
+/**
+ * Installation-level decisions on this nation's own deployment (review H-4):
+ * what operational data may leave for the publisher (sovereignty), the
+ * deployment agent's credential, break-glass, restoring data, preflight
+ * waivers, staging, the release decisions themselves (approve, install,
+ * rollback), change control, Update Center settings, the contract, hosting,
+ * security-store orders, escrow, the mirror and who is alerted. Only this
+ * nation's government-wide administrators (installationAdmin()); no central
+ * operator and no other nation takes part. The publisher's own console
+ * (/api/releases/publisher) and the agent's health reports keep their own
+ * credentials (BEARER_ROUTES, SELF_AUTHENTICATED).
+ */
+const INSTALLATION: RegExp[] = [/^\/api\/releases(\/|$)/];
 /** Signing in and out, one's own second step and one's own password stay open to every role;
  *  the health probe is public. */
 const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/];
@@ -159,13 +179,15 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/payments$/,
   /^\/api\/permits(\/|$)/,
   /^\/api\/signatures$/,
-  /^\/api\/public-sites\/[a-z-]+(\/|$)/,       // Site editor: proposed by one official, published by another (lib/data/site-editorial.ts)
-  /^\/api\/releases(\/|$)/,                   // the nation's Update Center (four-eyes and named officials in lib/data/*)
+  // Site editor and site settings: proposed by one official, published by another (lib/data/site-editorial.ts);
+  // only officials of the site's own institution or of the whole government (canActForSite() in the route).
+  /^\/api\/public-sites\/[a-z-]+(\/|$)/,
+  // The Update Center's ordinary work is UPDATE_CENTER_WORK; the rest of /api/releases is INSTALLATION.
   /^\/api\/twin\/(keys|metrics|runs|scenarios|sources)(\/|$)/, // registering metrics and withdrawing imports are audited with the official
   /^\/api\/twin\/tasking\/tasks(\/|$)/,       // a signed-in official allowed by canTaskSensor() (checked in the route)
 ];
 
-export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'ministry' | 'official';
+export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official';
 
 /** The rule that covers a change to `pathname`, or null when none does (refused). */
 export function mutationRule(pathname: string): MutationRule | null {
@@ -174,6 +196,8 @@ export function mutationRule(pathname: string): MutationRule | null {
   if (ANY_ROLE.some(re => re.test(pathname))) return 'any-role';
   if (ADMIN_ONLY.some(re => re.test(pathname))) return 'admin';
   if (BEARER_ROUTES.some(re => re.test(pathname))) return 'bearer';
+  if (UPDATE_CENTER_WORK.some(re => re.test(pathname))) return 'official';
+  if (INSTALLATION.some(re => re.test(pathname))) return 'installation';
   if (MINISTRY.test(pathname)) return 'ministry';
   if (OFFICIAL_WORK.some(re => re.test(pathname))) return 'official';
   return null;
@@ -195,6 +219,7 @@ export function apiPermission(s: Scope, method: string, pathname: string): strin
   const role = roleOf(s);
   if (role === 'auditor') return 'Auditors can read records but not change them';
   if (rule === 'admin') return adminOnly(s);
+  if (rule === 'installation') return installationAdmin(s);
   if (rule === 'ministry') return ministryPermission(s, decodeURIComponent(MINISTRY.exec(pathname)![1]!));
   if (rule === 'official' || rule === 'bearer') return null;
   return 'No permission rule covers this change, so it is refused (lib/auth/roles.ts)';
@@ -202,6 +227,17 @@ export function apiPermission(s: Scope, method: string, pathname: string): strin
 
 export function adminOnly(s: Scope): string | null {
   return roleOf(s) === 'administrator' ? null : 'Only an administrator can make this change';
+}
+
+/**
+ * Installation-level decisions on this nation's deployment (the INSTALLATION
+ * paths, and both officials of a dual-control step there): an administrator
+ * who serves the whole government of this nation. An administrator scoped to
+ * one institution, and every officer, signatory or auditor, may not.
+ */
+export function installationAdmin(s: Scope): string | null {
+  if (roleOf(s) === 'administrator' && wholeGovernment(s)) return null;
+  return 'Only an administrator serving the whole government can take installation-level decisions (Update Center)';
 }
 
 /** Whether the official may act inside one ministry's workspace. */
@@ -251,6 +287,62 @@ export function canSignForSite(s: Scope, ownerId: string): string | null {
   if (where) return where;
   const role = roleOf(s);
   return role === 'administrator' || role === 'signatory' ? null : 'Only an official who can sign for the institution may do this';
+}
+
+/**
+ * Changing an institution's public website (review M-2): proposing or
+ * publishing in the Site editor, its settings (Link, Embed, Migrate, Host and
+ * the registered website) and fetching its feed. Officials of the institution
+ * that owns the site (lib/data/site-settings.ts siteOwner()), or of the whole
+ * government; a site no registered institution owns is for the whole
+ * government only. Publishing still needs a different official (site-editorial.ts).
+ */
+export function canActForSite(s: Scope, ownerId: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors can read records but not change them';
+  if (wholeGovernment(s) || (ownerId !== undefined && s.institution === ownerId)) return null;
+  return 'Only officials of the institution that owns this website (or of the whole government) may change it';
+}
+
+// ── Who may read an institution's personal data (review M-3) ─────────────
+/**
+ * Reads that carry personal data held for one institution (case subjects,
+ * assignees and notes, permit applicants, and the case register's loads and
+ * connected systems). Each route on this list checks canReadInstitution() or
+ * canReadPermits() (api-permission-coverage.test.ts holds them to it).
+ */
+export const INSTITUTION_READS: RegExp[] = [
+  /^\/api\/org\/ministries\/[^/]+\/queue$/,
+  /^\/api\/org\/ministries\/[^/]+\/queue\/import$/,
+  /^\/api\/org\/ministries\/[^/]+\/queue\/feeds$/,
+  /^\/api\/org\/ministries\/[^/]+\/queue\/feeds\/[^/]+\/signing-key$/,
+  /^\/api\/permits(\/[^/]+)?$/,
+  /^\/api\/work$/,
+];
+
+/** Officials who see every institution's records: those serving the whole government, and auditors. */
+const fullView = (s: Scope): boolean => wholeGovernment(s) || roleOf(s) === 'auditor';
+
+/** Reading one institution's cases and the records around them: its own officials, the whole government and auditors. */
+export function canReadInstitution(s: Scope, ministryId: string): string | null {
+  if (fullView(s) || s.institution === ministryId) return null;
+  return 'You can read only your own institution\'s records';
+}
+
+/**
+ * Reading permits and their applicants: officials of an institution that
+ * holds the permit register (lib/data/store permitHolders(): from the
+ * registry, the institutions whose kind keeps permits), the whole government
+ * and auditors.
+ */
+export function canReadPermits(s: Scope, holders: string[]): string | null {
+  if (fullView(s) || (s.institution !== undefined && holders.includes(s.institution))) return null;
+  return 'Permits and their applicants are read only by the institution that issues them';
+}
+
+/** Deciding a permit: the same officials as canReadPermits(), except auditors. */
+export function canDecidePermit(s: Scope, holders: string[]): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors can read records but not change them';
+  return canReadPermits(s, holders);
 }
 
 /** Certifying a site's location for the national mapping agency: its officials (or the whole government's administrators while none is named). */
