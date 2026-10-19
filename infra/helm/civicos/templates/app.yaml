@@ -8,11 +8,21 @@ app runs a single replica, replaced with the Recreate strategy so two
 writers never overlap during a rollout. A second instance would only be a
 standby (it refuses changes and reports not ready), so the chart refuses
 more than one replica unless app.allowMultipleWriters is set.
+
+With app.state.mode=postgres (CIVICOS_STATE=postgres, DATABASE_URL from the
+postgres secret) the audit chain, the twin, the facility register and the
+boundary versions are per-record tables that every replica writes through
+and follows (lib/data/repo/postgres.ts); the other stores keep their
+snapshot under the single writer's lease. Several replicas are allowed then:
+one holds the lease, the others serve reads and record changes (facility
+actions, boundary versions, twin keys and withdrawals) and answer 503 to
+any other change until it reaches the lease holder. Rollouts may overlap.
 */ -}}
-{{- if and (gt (int .Values.app.replicas) 1) (not .Values.app.allowMultipleWriters) }}
-{{- fail "app.replicas must be 1: the platform state has a single writer (lib/data/persist.ts). Horizontal scale waits on the persistence move (architecture review R6)." }}
-{{- end }}
 {{- $state := .Values.app.state | default dict }}
+{{- $mode := $state.mode | default "supabase" }}
+{{- if and (gt (int .Values.app.replicas) 1) (ne $mode "postgres") (not .Values.app.allowMultipleWriters) }}
+{{- fail "app.replicas must be 1 unless app.state.mode is postgres: the platform state has a single writer (lib/data/persist.ts). With postgres, the per-record registers take changes on every replica (architecture review R6)." }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,9 +33,10 @@ metadata:
 spec:
   replicas: {{ .Values.app.replicas }}
   # The old pod stops (saving its state and giving up the writer's lease)
-  # before the new one starts; never two writers at once.
+  # before the new one starts; never two writers at once. In postgres mode a
+  # new pod starts as a standby beside the old one and takes the lease after it.
   strategy:
-    type: Recreate
+    type: {{ if eq $mode "postgres" }}RollingUpdate{{ else }}Recreate{{ end }}
   selector:
     matchLabels: { app.kubernetes.io/name: civic-app }
   template:
@@ -49,12 +60,21 @@ spec:
             # Access gate (app/src/middleware.ts): enforce requires a verified official for every non-public page, read and change.
             - name: CIVICOS_AUTH
               value: {{ .Values.app.auth | quote }}
-            # Where the platform state is saved (lib/data/persist.ts): supabase or file.
+            # Where the platform state is saved (lib/data/persist.ts): supabase, file or postgres.
             - name: CIVICOS_STATE
-              value: {{ $state.mode | default "supabase" | quote }}
-            {{- if eq ($state.mode | default "supabase") "file" }}
+              value: {{ $mode | quote }}
+            {{- if eq $mode "file" }}
             - name: CIVICOS_STATE_DIR
               value: /var/lib/civicos/state
+            {{- end }}
+            {{- if eq $mode "postgres" }}
+            # The nation's Postgres: per-record tables (migration civicos_records) and the other stores' snapshots.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.postgres.existingSecret }}, key: {{ .Values.postgres.secretKey }} }
+            # The write queue's journal: changes not yet committed survive a crash of the process.
+            - name: CIVICOS_PG_JOURNAL_DIR
+              value: /var/lib/civicos/journal
             {{- end }}
             # The middleware asks this same server who a session belongs to and whether it holds the writer's lease.
             - name: CIVICOS_INTERNAL_URL
@@ -102,16 +122,26 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }
-          {{- if eq ($state.mode | default "supabase") "file" }}
+          {{- if eq $mode "file" }}
           volumeMounts:
             - name: state
               mountPath: /var/lib/civicos/state
           {{- end }}
-      {{- if eq ($state.mode | default "supabase") "file" }}
+          {{- if eq $mode "postgres" }}
+          volumeMounts:
+            - name: journal
+              mountPath: /var/lib/civicos/journal
+          {{- end }}
+      {{- if eq $mode "file" }}
       volumes:
         - name: state
           persistentVolumeClaim:
             claimName: civicos-app-state
+      {{- end }}
+      {{- if eq $mode "postgres" }}
+      volumes:
+        - name: journal
+          emptyDir: {}
       {{- end }}
 ---
 apiVersion: v1

@@ -332,6 +332,14 @@ What has been built is locked. Work only upgrades it toward the vision in
   them defaults for snapshots saved before the change (`withDefaults()` in
   `lib/data/defaults.ts` fills them at any depth; name dictionaries of records
   as `opaque`).
+- The audit chain, twin (entities, keys, sources, runs, observations),
+  facility records and boundary versions change only through the persistence
+  port (`lib/data/repo`: `auditRepo`, `twinRepo`, `facilityRepo`,
+  `boundaryRepo`); under `CIVICOS_STATE=postgres` it writes them through to
+  per-record tables (`lib/data/repo/postgres.ts`, migration
+  `civicos_records`). Never push to those arrays directly. `lib/data/store.ts`
+  is a barrel over `lib/data/store/*`; stores that only audit import
+  `@/lib/data/store/audit`.
 
 ## Who acted
 
