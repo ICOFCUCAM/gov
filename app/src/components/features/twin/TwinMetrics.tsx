@@ -9,6 +9,7 @@
 
 import * as React from 'react';
 import { ENGINE_METRICS } from '@/lib/twin/engine-metrics';
+import { DERIVED_METRICS, formulaOf } from '@/lib/twin/derived';
 
 interface Metric {
   id: string; label: string; unit: string; aggregation: 'sum' | 'mean' | 'weighted-mean' | 'none';
@@ -114,6 +115,23 @@ export function TwinMetrics({ by, onChange }: { by: string; onChange?: () => voi
               </li>
             );
           })}
+        </ul>
+        <h3 className="mb-1 mt-4 text-[12px] font-bold uppercase tracking-[0.12em] text-ink">Derived from observed figures</h3>
+        <p className="mb-2 text-[12px] text-ink-muted">Worked out from the figures below once both are reported for the same date; always shown as modelled, never as observed.</p>
+        <ul className="divide-y divide-line text-[12px]">
+          {DERIVED_METRICS.map(d => (
+            <li key={d.id} className="py-1.5">
+              <span className="font-semibold">{d.label}</span> <span className="font-mono text-ink-muted">{d.id}</span> = <span className="font-mono">{formulaOf(d)}</span> · <span className="text-ink-soft">{d.engines.join('; ')}</span>
+              <span className="mt-1 flex flex-wrap gap-2">
+                {[d.numerator, d.denominator].map(i => {
+                  const def = list.find(m => m.id === i.id && m.origin !== 'observed');
+                  return def ? <span key={i.id} className="text-ok">{i.label}: defined</span> : (
+                    <button key={i.id} type="button" className={btn} onClick={() => { setEditing(false); setF({ id: i.id, label: i.label, unit: i.unit, aggregation: i.aggregation, weightMetric: '', period: i.period, sdmxConcept: '', description: '' }); }}>Use this definition: {i.label}</button>
+                  );
+                })}
+              </span>
+            </li>
+          ))}
         </ul>
       </section>
 

@@ -8,8 +8,13 @@
 // `scope` says where the figure is read: the nation's own figure (national;
 // a source reporting for the nation, or every region reporting a metric
 // that combines), or each operational region. Pure data: runs in the browser.
+//
+// Engine indexes without a metric of their own are either derived metrics (a
+// formula over observed metrics, lib/twin/derived.ts) or modelled indexes
+// marked on screen (lib/twin/engine-indexes.ts).
 
 import type { Aggregation, MetricPeriod } from './metrics';
+import { DERIVED_METRIC_IDS } from './derived';
 
 export interface EngineMetric {
   id: string;
@@ -47,5 +52,5 @@ export const ENGINE_METRICS: readonly EngineMetric[] = [
     engines: ['health-systems.ts · patientServices · insuranceCoverage'] },
 ];
 
-/** The metric ids a page with these engines primes (useTwinPrimed). */
-export const ENGINE_METRIC_IDS: readonly string[] = ENGINE_METRICS.map(m => m.id);
+/** The metric ids a page with these engines primes (useTwinPrimed): the metrics above and the derived ones. */
+export const ENGINE_METRIC_IDS: readonly string[] = [...ENGINE_METRICS.map(m => m.id), ...DERIVED_METRIC_IDS];

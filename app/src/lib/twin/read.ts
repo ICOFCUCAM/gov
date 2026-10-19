@@ -15,7 +15,9 @@
 //
 // The cache lives in module memory only (never under a __civicos key, so it is
 // not persisted) and holds observations only: samples and scenarios are never
-// cached as facts.
+// cached as facts. A derived metric (lib/twin/derived.ts: a formula over
+// observed metrics) is cached and answered as modelled, with its formula as the
+// source, never as observed.
 
 import * as React from 'react';
 import { REFERENCE_MODEL, type Signal, type SignalKind } from './signal';
@@ -37,13 +39,15 @@ export interface ReadOptions {
 }
 
 /**
- * The one rule: an observed value when the twin has one, otherwise the
- * engine's value marked as a sample. Used by the client cache and the server.
+ * The one rule: an observed value when the twin has one (or, for a derived
+ * metric, the value computed from observed inputs, kept modelled), otherwise
+ * the engine's value marked as a sample. Used by the client cache and the server.
  */
 export function figureFrom(observed: ObservedFigure | null | undefined, sampleValue: number, opts: Pick<ReadOptions, 'unit' | 'source' | 'scale'> = {}): Signal<number> {
-  if (observed && observed.value !== null && Number.isFinite(observed.value) && (observed.kind ?? 'observed') === 'observed') {
+  const kind = observed?.kind ?? 'observed';
+  if (observed && observed.value !== null && Number.isFinite(observed.value) && (kind === 'observed' || kind === 'modelled')) {
     const scale = opts.scale ?? 1;
-    return { value: observed.value / scale, unit: scale === 1 ? observed.unit : opts.unit ?? observed.unit, kind: 'observed', source: observed.source, ...(observed.asOf ? { asOf: observed.asOf } : {}) };
+    return { value: observed.value / scale, unit: scale === 1 ? observed.unit : opts.unit ?? observed.unit, kind, source: observed.source, ...(observed.asOf ? { asOf: observed.asOf } : {}) };
   }
   return { value: sampleValue, ...(opts.unit ? { unit: opts.unit } : {}), kind: 'sample', source: opts.source ?? REFERENCE_MODEL };
 }
@@ -88,11 +92,13 @@ export function primeTwin(metrics: string[], fetcher: Fetcher = (u => fetch(u, {
     if (entities) regionIds = new Map(entities.entities.filter(e => e.region).map(e => [fold(e.name), e.id]));
     const names = new Map((sources?.sources ?? []).map(s => [s.id, s.name]));
     await Promise.all(todo.map(async metric => {
-      const st = await get<{ observations: { entityId: string; value: number; unit: string; validFrom: string; sourceId: string }[]; national?: ObservedFigure | null }>(`/api/twin/state?metric=${encodeURIComponent(metric)}`);
+      const st = await get<{ observations: { entityId: string; value: number; unit: string; validFrom: string; sourceId?: string; kind?: string; formula?: string }[]; national?: ObservedFigure | null; derived?: { formula: string } }>(`/api/twin/state?metric=${encodeURIComponent(metric)}`);
       if (!st) return;
+      // A derived metric stays modelled (its formula is the source); everything else the twin returns is observed.
+      const kind = st.derived ? 'modelled' as const : 'observed' as const;
       cache.set(metric, {
-        national: st.national && st.national.value !== null ? { ...st.national, kind: 'observed' } : null,
-        byEntity: new Map(st.observations.map(o => [o.entityId, { value: o.value, unit: o.unit, source: names.get(o.sourceId) ?? o.sourceId, asOf: o.validFrom, kind: 'observed' as const }])),
+        national: st.national && st.national.value !== null && (st.national.kind === 'observed' || st.national.kind === 'modelled') ? { ...st.national, kind } : null,
+        byEntity: new Map(st.observations.map(o => [o.entityId, { value: o.value, unit: o.unit, source: st.derived ? `Derived: ${o.formula ?? st.derived.formula}` : names.get(o.sourceId ?? '') ?? o.sourceId ?? '', asOf: o.validFrom, kind }])),
       });
     }));
     version++;

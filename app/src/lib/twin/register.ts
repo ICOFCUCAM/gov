@@ -31,6 +31,7 @@ import { METRIC_ID, getMetric, isKnownMetric, listMetrics, toUcum, sameUnit, typ
 import { readSdmx, isSdmxFormat, SDMX_MEDIA, SDMX_ROW, type SdmxOptions, type SdmxFormat } from './sdmx';
 import type { Signal } from './signal';
 import { twinPolicy } from './policy';
+import { derivedMetric, formulaOf } from './derived';
 import { checkStreamSpec, checkIngestSpec, streamRows, STREAM_ROW, STA_WRITE_SCOPE, type StreamSpec, type StreamLineage, type TelemetryReader, type StreamIngest } from './stream';
 import { declarePushedStream, undeclarePushedStream, holdBrokerPassword, hasBrokerPassword } from './readings';
 
@@ -602,6 +603,8 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
       if (!entity) return reject(ref ? `"${ref}" is not an entity of the register (link it to one with its id)` : 'No entity');
       const metric = (col(row, mapping.metric) ?? '').trim().toLowerCase();
       if (!METRIC.test(metric)) return reject(`"${metric}" is not a metric name`);
+      const derivedFrom = derivedMetric(metric);
+      if (derivedFrom) return reject(`${metric} is derived (${formulaOf(derivedFrom)}), never imported: import its inputs`);
       const def = getMetric(metric);
       if (!def) return reject(`"${metric}" is not a registered metric (register it with its unit first)`);
       // A registered metric has one UCUM unit: a row in another unit is refused, never converted or guessed.

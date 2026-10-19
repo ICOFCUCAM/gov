@@ -21,6 +21,7 @@
 import { recordAudit } from '@/lib/data/store';
 import { twinDb } from './db';
 import { archivedMetrics } from './archive';
+import { derivedMetric, formulaOf } from './derived';
 
 export type Aggregation = 'sum' | 'mean' | 'weighted-mean' | 'none';
 export type MetricPeriod = 'instant' | 'year' | 'quarter' | 'month' | 'day';
@@ -194,6 +195,8 @@ export function registerMetric(input: MetricInput): MetricDef | { error: string 
   if (!by) return { error: 'Name the official registering the metric' };
   const id = (input.id ?? '').trim().toLowerCase();
   if (!METRIC_ID.test(id)) return { error: 'A metric is lower case letters, digits, dots and underscores, e.g. population or cpi.all_items' };
+  const derived = derivedMetric(id);
+  if (derived) return { error: `${id} is derived (${formulaOf(derived)}) and computed from its inputs: register ${derived.numerator.id} and ${derived.denominator.id} instead` };
   const label = (input.label ?? '').trim().slice(0, 120);
   if (!label) return { error: 'Give the metric a label' };
   const unit = (input.unit ?? '').trim();

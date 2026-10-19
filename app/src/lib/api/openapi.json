@@ -28349,7 +28349,7 @@
         ],
         "operationId": "get_twin_state",
         "summary": "GET /api/twin/state",
-        "description": "What the twin knew at a moment (?asOf=ISO time, default now): the latest value of each entity's metric recorded by then and true by then, with its source and run (lineage). ?knownAt= separates the two: true by asOf, as recorded by knownAt (e.g. knownAt=now for \"true then, as known today\"). Filter with ?metric= and ?entity=.",
+        "description": "What the twin knew at a moment (?asOf=ISO time, default now): the latest value of each entity's metric recorded by then and true by then, with its source and run (lineage). ?knownAt= separates the two: true by asOf, as recorded by knownAt (e.g. knownAt=now for \"true then, as known today\"). Filter with ?metric= and ?entity=. A derived metric (lib/twin/derived.ts, e.g. population.share_65_plus) is computed from its inputs' observed values and answered as modelled, never observed: each value carries kind \"modelled\", the formula and the inputs it used (lib/twin/derived-server.ts); `derived` describes the formula.",
         "parameters": [
           {
             "name": "asOf",
@@ -28390,31 +28390,99 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "national": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/components/schemas/NationalFigure"
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "asOf": {
+                          "type": "string"
                         },
-                        {
-                          "type": "null"
+                        "derived": {
+                          "type": "object",
+                          "properties": {
+                            "metric": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "unit": {
+                              "type": "string"
+                            },
+                            "formula": {
+                              "type": "string"
+                            },
+                            "inputs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "kind": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "metric",
+                            "label",
+                            "unit",
+                            "formula",
+                            "inputs",
+                            "kind"
+                          ]
+                        },
+                        "observations": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/DerivedObservation"
+                          }
+                        },
+                        "national": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/components/schemas/DerivedNational"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
+                      },
+                      "required": [
+                        "asOf",
+                        "derived",
+                        "observations",
+                        "national"
                       ]
                     },
-                    "asOf": {
-                      "type": "string"
-                    },
-                    "observations": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Observation"
-                      }
+                    {
+                      "type": "object",
+                      "properties": {
+                        "national": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/components/schemas/NationalFigure"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "asOf": {
+                          "type": "string"
+                        },
+                        "observations": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Observation"
+                          }
+                        }
+                      },
+                      "required": [
+                        "asOf",
+                        "observations"
+                      ]
                     }
-                  },
-                  "required": [
-                    "asOf",
-                    "observations"
                   ]
                 }
               }
@@ -32535,6 +32603,135 @@
           "state",
           "gates",
           "startedAt"
+        ]
+      },
+      "DerivedInputUsed": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric",
+          "value"
+        ]
+      },
+      "DerivedNational": {
+        "type": "object",
+        "properties": {
+          "formula": {
+            "type": "string"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DerivedInputUsed"
+            }
+          },
+          "refused": {
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "unit": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "modelled",
+              "observed",
+              "reported",
+              "sample",
+              "unavailable"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "description": "Where it comes from, in words (a stream, a register, \"Reference model\")."
+          },
+          "asOf": {
+            "type": "string",
+            "description": "When it was true (ISO time), for observed and reported figures."
+          }
+        },
+        "required": [
+          "formula",
+          "inputs",
+          "value",
+          "kind",
+          "source"
+        ]
+      },
+      "DerivedObservation": {
+        "description": "One entity's derived value: modelled, with its inputs.",
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "const": "modelled"
+          },
+          "formula": {
+            "type": "string"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DerivedInputUsed"
+            }
+          }
+        },
+        "required": [
+          "entityId",
+          "metric",
+          "value",
+          "unit",
+          "validFrom",
+          "kind",
+          "formula",
+          "inputs"
         ]
       },
       "DirectiveRow": {
