@@ -5916,6 +5916,33 @@
         "x-source": "src/app/api/platform/lifecycle/transition/route.ts"
       }
     },
+    "/api/platform/owners": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "get_platform_owners",
+        "summary": "GET /api/platform/owners",
+        "description": "Which store owns each register (lib/data/register-owners.ts): the owner, the one API that changes it, and every other copy with its role.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/platform/owners/route.ts"
+      }
+    },
     "/api/platform/releases/{id}/promote": {
       "post": {
         "tags": [
