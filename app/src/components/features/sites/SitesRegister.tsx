@@ -238,9 +238,10 @@ export function SitesRegister() {
         source="Declared by the institutions that own them; certified locations have been checked"
         points={large ? undefined : sitePoints(mapSites, data.categories)}
         pointTiles={tiles}
+        cluster
         selectedPoint={selected ?? undefined}
         pointsLabel="Published sites (circle: location certified; diamond: awaiting certification; triangle: location rejected)"
-        emptyNote={tiles || mapSites.length ? undefined :'No published site matches yet. Institutions add sites below, on the phone page or from a file; each is published by a second official.'}
+        emptyNote={tiles || mapSites.length ? undefined : 'No published site matches yet. Institutions add sites below, on the phone page or from a file; each is published by a second official.'}
       />
 
       <details className="rounded-[3px] border border-line p-3 text-[13px]">

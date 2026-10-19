@@ -18,7 +18,9 @@
 // the canvas without WebGL or while a lost context is restored. Polygons
 // (`areas`, e.g. building footprints) are SVG paths up to 2,000 and WebGL
 // triangles above. The table view lists every unit and every located item
-// either way.
+// either way. With `cluster`, points drawn on the canvas or with WebGL merge
+// into numbered cluster marks at low zoom (lib/map/cluster.ts); activating one
+// (click, Enter or Space) zooms the map to it, and "Whole map" zooms back.
 
 import * as React from 'react';
 import { nationCapital, nationIso3, nationProjection, nationRegions, nationWorldview } from '@/lib/nation/registry';
@@ -40,6 +42,7 @@ import { triangulate } from '@/lib/map/triangulate';
 import { CanvasPoints } from './CanvasPoints';
 import { WebGLPoints, type WebGLPointsHandle } from './WebGLPoints';
 import { useTileFeatures } from './useTileFeatures';
+import { CLUSTER_MAX_ZOOM, clusterCount, clusterLabel, clusterPoints, clusterRadius, zoomToCluster, type ClusterOptions, type PointCluster } from '@/lib/map/cluster';
 import type { PointTileSource } from '@/lib/map/tile-loader';
 
 export type { MapPoint, MapValue, MapTone };
@@ -86,7 +89,7 @@ export interface OverlayContext {
 export function NationMap({
   title, values = NO_VALUES, kind, source, valueLabel = 'Value', unit = '', points, pointsLabel = 'Located items',
   asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap, onPick, pin, zoom, header = 'auto', below, notes = 'normal',
-  webglAbove, selectedPoint, areas, pointStyle, pointTiles, pointLabels,
+  webglAbove, selectedPoint, areas, pointStyle, pointTiles, pointLabels, cluster, onZoom,
 }: {
   /** What the map shows, e.g. "Open incidents by county"; used for the accessible name and the table caption. */
   title: string;
@@ -166,6 +169,18 @@ export function NationMap({
   pointTiles?: PointTileSource;
   /** Name up to this many WebGL or canvas points where the names do not run into each other. */
   pointLabels?: number;
+  /**
+   * Merge nearby points into numbered cluster marks at low zoom (canvas and
+   * WebGL layers, page or tile points; never the SVG points of a small map,
+   * which stay focusable links). Activating a cluster zooms to it.
+   */
+  cluster?: boolean | ClusterOptions;
+  /**
+   * A map whose `zoom` the page controls is told the zoom a cluster asks for
+   * here; without it (or without `zoom`) the map zooms itself and offers
+   * "Whole map" to zoom back.
+   */
+  onZoom?: (zoom: { z: number; tx: number; ty: number }) => void;
 }) {
   const iso3 = isoOverride ?? nationIso3();
   const regionsKey = (regionsOverride ?? nationRegions()).join('|');
@@ -181,7 +196,11 @@ export function NationMap({
   const pathRefs = React.useRef<(SVGPathElement | null)[]>([]);
   const theatre = variant === 'theatre';
   const headerOver = header === 'over' || (header === 'auto' && theatre);
-  const z = zoom && zoom.z > 1 ? zoom : null;
+  // The map's own zoom (a cluster activated) over the page's, until the page's zoom changes.
+  const [ownZoom, setOwnZoom] = React.useState<{ z: number; tx: number; ty: number } | null>(null);
+  React.useEffect(() => { setOwnZoom(null); }, [zoom?.z, zoom?.tx, zoom?.ty]);
+  const zoomIn = ownZoom ?? zoom;
+  const z = zoomIn && zoomIn.z > 1 ? zoomIn : null;
   /** A point on the screen back to the map's own coordinates under the zoom. */
   const unzoom = (v: number, axis: 'x' | 'y') => (z ? (v - (axis === 'x' ? z.tx : z.ty)) / z.z : v);
   const [cursor, setCursor] = React.useState<[number, number] | null>(null);
@@ -213,7 +232,7 @@ export function NationMap({
     return () => { live = false; };
   }, [iso3, regionsKey, opened]);
   React.useEffect(() => { setOpened(null); }, [iso3, regionsKey]);
-  const open = (u: { name: string; code?: string } | null) => { setOpenNote(''); setActive(null); setFocus(0); setOpened(u); };
+  const open = (u: { name: string; code?: string } | null) => { setOpenNote(''); setActive(null); setFocus(0); setOwnZoom(null); setOpened(u); };
   React.useEffect(() => {
     if (!wrap.current || typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(es => { const w = es[0]?.contentRect.width; if (w) setW(Math.max(200, Math.round(w))); });
@@ -285,9 +304,45 @@ export function NationMap({
   const renderer = pointRenderer(exactPoints.length, { webgl: webglOk, webglAbove, tiles: !!pointTiles });
   const onGL = renderer === 'webgl';
   const onCanvas = renderer === 'canvas' || (onGL && glLost);
-  const pIndex = React.useMemo(() => (renderer !== 'svg' ? pointIndex(exactPoints) : null), [renderer, exactPoints]);
+  // Clusters at low zoom (canvas and WebGL only): the layers draw the points left on their own
+  // (`layerPoints`); `layerIdx[k]` is the index in exactPoints of the k-th drawn point.
+  const clusterOn = !!cluster && renderer !== 'svg' && !geo?.parent && !!model;
+  const cOpts: ClusterOptions = typeof cluster === 'object' ? cluster : {};
+  const clustered = React.useMemo(() => (clusterOn ? clusterPoints(exactPoints, { ...cOpts, zoom: z?.z ?? 1 }) : null),
+    [clusterOn, exactPoints, z?.z, cOpts.radius, cOpts.minPoints, cOpts.maxZoom]); // eslint-disable-line react-hooks/exhaustive-deps
+  const layerIdx = clustered?.singles ?? null;
+  const layerPoints = React.useMemo(() => (layerIdx ? layerIdx.map(i => exactPoints[i]!) : exactPoints), [layerIdx, exactPoints]);
+  const toLayer = React.useMemo(() => {
+    if (!layerIdx) return null;
+    const m = new Int32Array(exactPoints.length).fill(-1);
+    layerIdx.forEach((i, k) => { m[i] = k; });
+    return m;
+  }, [layerIdx, exactPoints.length]);
+  const toExact = (k: number | null): number | null => (k == null ? null : layerIdx ? layerIdx[k] ?? null : k);
+  const layerOf = (i: number | null): number | null => (i == null || i < 0 ? null : toLayer ? (toLayer[i]! >= 0 ? toLayer[i]! : null) : i);
+  // Every cluster is worked out (each point is in one or drawn alone); only those in view are drawn as marks.
+  const allClusters = React.useMemo(() => clustered?.clusters ?? [], [clustered]);
+  const clusters = React.useMemo(() => {
+    if (!z || !model) return allClusters;
+    const m = 40 / z.z, x0 = -z.tx / z.z - m, y0 = -z.ty / z.z - m, x1 = (model.width - z.tx) / z.z + m, y1 = (model.height - z.ty) / z.z + m;
+    return allClusters.filter(c => c.x >= x0 && c.x <= x1 && c.y >= y0 && c.y <= y1);
+  }, [allClusters, z?.z, z?.tx, z?.ty, model?.width, model?.height]); // eslint-disable-line react-hooks/exhaustive-deps
+  const clusteredCount = React.useMemo(() => allClusters.reduce((s, c) => s + c.count, 0), [allClusters]);
+  const [hoverCluster, setHoverCluster] = React.useState<number | null>(null);
+  const [clusterFocus, setClusterFocus] = React.useState(0);
+  const clusterRefs = React.useRef<(SVGGElement | null)[]>([]);
+  React.useEffect(() => { setHoverCluster(null); setClusterFocus(0); }, [clusters]);
+  const openCluster = (c: PointCluster) => {
+    if (!model) return;
+    const target = zoomToCluster(c, model.width, model.height, z?.z ?? 1, Math.max(64, (cOpts.maxZoom ?? CLUSTER_MAX_ZOOM) * 2));
+    setHoverCluster(null);
+    if (zoom && onZoom) onZoom(target); else setOwnZoom(target);
+  };
+  const pIndex = React.useMemo(() => (renderer !== 'svg' ? pointIndex(layerPoints) : null), [renderer, layerPoints]);
   React.useEffect(() => { setHoverPoint(null); setListed(LIST_PAGE); }, [exactPoints]);
+  React.useEffect(() => { setHoverPoint(null); }, [layerPoints]);
   const selectedIndex = React.useMemo(() => (selectedPoint ? exactPoints.findIndex(p => p.key === selectedPoint) : -1), [selectedPoint, exactPoints]);
+  const selectedCluster = React.useMemo(() => (selectedIndex >= 0 && clustered && toLayer && toLayer[selectedIndex]! < 0 ? clusters.findIndex(c => c.members.includes(selectedIndex)) : -1), [selectedIndex, clustered, clusters, toLayer]);
   // Outlines in the map's own pixels; triangles only when WebGL draws them.
   const areaShapes = React.useMemo(() => {
     if (!model || geo?.parent || !areas?.length) return [];
@@ -303,31 +358,34 @@ export function NationMap({
   const pointAt = (e: { clientX: number; clientY: number }): number | null => {
     if (anyGL && glRef.current) {
       const hit = glRef.current.pick(e.clientX, e.clientY, 8);
-      if (hit) { setHoverArea(hit.point == null ? hit.polygon : null); if (onGL) return hit.point; }
+      if (hit) { setHoverArea(hit.point == null ? hit.polygon : null); if (onGL) return toExact(hit.point); }
     }
     const el = svgRef.current;
     if (!pIndex || !el || !model) return null;
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height) return null;
     const x = unzoom(((e.clientX - r.left) / r.width) * model.width, 'x'), y = unzoom(((e.clientY - r.top) / r.height) * model.height, 'y');
-    return pIndex.nearest(x, y, 8 / (z?.z ?? 1));
+    return toExact(pIndex.nearest(x, y, 8 / (z?.z ?? 1)));
   };
+  const inCluster = (t: EventTarget | null) => !!(t as Element | null)?.closest?.('[data-cluster]');
   const picking = renderer !== 'svg' || areasOnGL;
   const hoverHref = hoverPoint != null ? exactPoints[hoverPoint]?.href : hoverArea != null ? areaShapes[hoverArea]?.href : undefined;
   const locatedLabel = pointTiles?.label ?? pointsLabel;
+  /** What the points are, without the legend in brackets ("published sites"), for cluster names. */
+  const clusterNoun = locatedLabel.replace(/\s*\(.*\)\s*$/, '').toLowerCase() || 'items';
   const glStyle: PointStyle = pointStyle ?? (theatre ? 'tile' : 'dot');
   // Names where they do not run into each other (the 'ok' tone, e.g. certified sites, first), as the SVG theatre names its sites.
   const labels = React.useMemo(() => {
     if (!pointLabels || renderer === 'svg') return [];
     const zz = z?.z ?? 1;
-    const order = exactPoints.map((p, i) => i).filter(i => {
-      const p = exactPoints[i]!, sx = p.x * zz + (z?.tx ?? 0), sy = p.y * zz + (z?.ty ?? 0);
+    const order = layerPoints.map((p, i) => i).filter(i => {
+      const p = layerPoints[i]!, sx = p.x * zz + (z?.tx ?? 0), sy = p.y * zz + (z?.ty ?? 0);
       return sx >= 0 && sy >= 0 && sx <= (model?.width ?? 0) && sy <= (model?.height ?? 0);
-    }).slice(0, 4000).sort((a, b) => Number(exactPoints[b]!.tone === 'ok') - Number(exactPoints[a]!.tone === 'ok'));
+    }).slice(0, 4000).sort((a, b) => Number(layerPoints[b]!.tone === 'ok') - Number(layerPoints[a]!.tone === 'ok'));
     const boxes: [number, number, number, number][] = [], out: { key: string; x: number; y: number; text: string }[] = [];
     const below = (glStyle === 'tile' ? 20 : 13) / zz;
     for (const i of order) {
-      const p = exactPoints[i]!, text = p.name ?? p.label;
+      const p = layerPoints[i]!, text = p.name ?? p.label;
       const w = Math.min(180, text.length * 4.6) / zz;
       const bx: [number, number, number, number] = [p.x - w / 2, p.y + below - 9 / zz, p.x + w / 2, p.y + below + 3 / zz];
       if (boxes.some(o => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) continue;
@@ -335,7 +393,7 @@ export function NationMap({
       if (out.length >= pointLabels) break;
     }
     return out;
-  }, [pointLabels, renderer, exactPoints, z?.z, z?.tx, z?.ty, model?.width, model?.height, glStyle]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pointLabels, renderer, layerPoints, z?.z, z?.tx, z?.ty, model?.width, model?.height, glStyle]); // eslint-disable-line react-hooks/exhaustive-deps
   const marked = needsMarker(kind);
   const shown = model?.units.filter(u => u.value).length ?? 0;
   const drawn = model?.units.map((u, i) => ({ u, i })).filter(x => x.u.d) ?? [];
@@ -391,6 +449,10 @@ export function NationMap({
           {title}<SignalTag kind={kind} source={source} />
         </figcaption>
         <div className="flex flex-wrap items-center gap-1">
+          {ownZoom && !opened ? (
+            <button type="button" onClick={() => setOwnZoom(null)} data-testid="map-zoom-out"
+              className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[11px] text-ink-soft hover:text-ink">Whole map</button>
+          ) : null}
           {opened ? (
             <button type="button" onClick={() => open(null)}
               className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[11px] text-ink-soft hover:text-ink">Back to {nationGeo?.name ?? 'the nation'}</button>
@@ -421,11 +483,12 @@ export function NationMap({
       <div ref={wrap} className={view === 'map' ? 'relative w-full' : 'hidden'}
         onMouseMove={picking ? e => {
           // One pick a frame however fast the pointer moves (the last position wins).
+          if (inCluster(e.target)) { hoverAt.current = null; setHoverPoint(null); return; }
           hoverAt.current = { clientX: e.clientX, clientY: e.clientY };
           if (hoverFrame.current == null) hoverFrame.current = requestAnimationFrame(() => { hoverFrame.current = null; if (hoverAt.current) setHoverPoint(pointAt(hoverAt.current)); });
         } : undefined}
-        onMouseLeave={picking ? () => { hoverAt.current = null; setHoverPoint(null); setHoverArea(null); } : undefined}
-        onClickCapture={picking ? e => { const i = pointAt(e); const href = i != null ? exactPoints[i]?.href : hoverArea != null ? areaShapes[hoverArea]?.href : undefined; if (href) { e.preventDefault(); e.stopPropagation(); window.location.assign(href); } } : undefined}
+        onMouseLeave={picking ? () => { hoverAt.current = null; setHoverPoint(null); setHoverArea(null); setHoverCluster(null); } : undefined}
+        onClickCapture={picking ? e => { if (inCluster(e.target)) return; const i = pointAt(e); const href = i != null ? exactPoints[i]?.href : hoverArea != null ? areaShapes[hoverArea]?.href : undefined; if (href) { e.preventDefault(); e.stopPropagation(); window.location.assign(href); } } : undefined}
         style={picking && hoverHref ? { cursor: 'pointer' } : undefined}>
         {geo === undefined ? <p className="p-3 text-[13px] text-ink-soft" style={{ minHeight }}>Loading the nation&rsquo;s boundaries…</p>
           : geo === null || !model ? <p className="p-3 text-[13px] text-ink-soft">No boundaries are available for this country yet.</p> : (
@@ -531,15 +594,45 @@ export function NationMap({
           </svg>
         )}
         {(onGL || areasOnGL) && model ? (
-          <WebGLPoints ref={glRef} points={onGL ? exactPoints : []} polygons={glAreas} width={model.width} height={model.height} zoom={z}
-            selected={selectedIndex >= 0 ? selectedIndex : null} style={glStyle} area={model.coverage * model.width * model.height} onLost={setGlLost} />
+          <WebGLPoints ref={glRef} points={onGL ? layerPoints : []} polygons={glAreas} width={model.width} height={model.height} zoom={z}
+            selected={layerOf(selectedIndex)} style={glStyle} area={model.coverage * model.width * model.height} onLost={setGlLost} />
         ) : null}
         {onCanvas && model ? (
-          <CanvasPoints points={exactPoints} width={model.width} height={model.height} zoom={z} highlight={hoverPoint ?? (selectedIndex >= 0 ? selectedIndex : null)} />
+          <CanvasPoints points={layerPoints} width={model.width} height={model.height} zoom={z} highlight={layerOf(hoverPoint) ?? layerOf(selectedIndex)} />
         ) : null}
         {overTop && model && overlayContent ? (
           <svg className="absolute start-0 top-0" width={model.width} height={model.height} style={{ pointerEvents: 'none' }} aria-hidden={overlay ? undefined : true}>
             <g transform={z ? `translate(${z.tx} ${z.ty}) scale(${z.z})` : undefined} style={{ transition: 'transform 260ms ease', pointerEvents: 'auto' }}>{overlayContent}</g>
+          </svg>
+        ) : null}
+        {/* Clusters over the canvas or WebGL layer: one mark with the count, activated to zoom in (keyboard: Tab to the first, arrows between them). */}
+        {clusterOn && model ? (
+          <svg className="absolute start-0 top-0" width={model.width} height={model.height} style={{ pointerEvents: 'none' }}
+            role="group" aria-label={`${clusters.length.toLocaleString('en')} clusters of ${clusterNoun} in view`}
+            data-testid="map-clusters" data-clusters={allClusters.length} data-shown={clusters.length} data-clustered={clusteredCount} data-singles={layerPoints.length} data-zoom={(z?.z ?? 1).toFixed(3)}>
+            <g transform={z ? `translate(${z.tx} ${z.ty}) scale(${z.z})` : undefined} style={{ transition: 'transform 260ms ease' }} className="motion-reduce:transition-none">
+              {clusters.map((c, k) => {
+                const zz = z?.z ?? 1, r = clusterRadius(c.count) / zz, on = hoverCluster === k || selectedCluster === k;
+                const label = clusterLabel(c, clusterNoun);
+                return (
+                  <g key={c.id} ref={el => { clusterRefs.current[k] = el; }} data-cluster="" data-testid="map-cluster" data-count={c.count}
+                    role="button" tabIndex={k === clusterFocus ? 0 : -1} aria-label={label}
+                    className="cursor-pointer outline-none" style={{ pointerEvents: 'auto' }}
+                    onClick={e => { e.stopPropagation(); openCluster(c); }}
+                    onKeyDown={e => {
+                      const step: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+                      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCluster(c); }
+                      else if (e.key in step && clusters.length) { e.preventDefault(); const n = (k + step[e.key]! + clusters.length) % clusters.length; setClusterFocus(n); clusterRefs.current[n]?.focus(); }
+                    }}
+                    onFocus={() => { setClusterFocus(k); setHoverCluster(k); }} onBlur={() => setHoverCluster(h => (h === k ? null : h))}
+                    onMouseEnter={() => setHoverCluster(k)} onMouseLeave={() => setHoverCluster(h => (h === k ? null : h))}>
+                    <circle cx={c.x} cy={c.y} r={r} fill="rgb(var(--c-surface))" fillOpacity={0.92} stroke={on ? 'rgb(var(--c-ink))' : STATUS[c.tone]} strokeWidth={(on ? 3 : 2.5) / zz} />
+                    {selectedCluster === k ? <circle cx={c.x} cy={c.y} r={r + 4 / zz} fill="none" stroke="rgb(var(--c-ink))" strokeWidth={1.6 / zz} aria-hidden /> : null}
+                    <text x={c.x} y={c.y + 3.6 / zz} textAnchor="middle" fontSize={10.5 / zz} fontWeight="700" fill="rgb(var(--c-ink))" aria-hidden>{clusterCount(c.count)}</text>
+                  </g>
+                );
+              })}
+            </g>
           </svg>
         ) : null}
         {/* Over the WebGL layer: the hovered point's ring and the names (SVG, so hovering never redraws the layer). */}
@@ -556,9 +649,13 @@ export function NationMap({
           </svg>
         ) : null}
         {renderer !== 'svg' && model ? (
-          <p className="sr-only">{exactPoints.length.toLocaleString('en')} {locatedLabel.toLowerCase()} are drawn as dots; the Table view lists them.</p>
+          <p className="sr-only">{exactPoints.length.toLocaleString('en')} {locatedLabel.toLowerCase()} are drawn as dots{allClusters.length ? `, ${clusteredCount.toLocaleString('en')} of them in ${allClusters.length.toLocaleString('en')} clusters (${clusters.length.toLocaleString('en')} in view) that zoom in when activated` : ''}; the Table view lists them.</p>
         ) : null}
-        {picking && hoverPoint != null && exactPoints[hoverPoint] ? (
+        {hoverCluster != null && clusters[hoverCluster] ? (
+          <div className={`pointer-events-none absolute ${hud ? 'start-12' : 'start-2'} bottom-2 max-w-[70%] rounded-[3px] border border-line bg-surface px-2 py-1 text-[12px] shadow`} role="status" data-testid="map-cluster-hover">
+            {clusterLabel(clusters[hoverCluster]!, clusterNoun)}
+          </div>
+        ) : picking && hoverPoint != null && exactPoints[hoverPoint] ? (
           <div className={`pointer-events-none absolute ${hud ? 'start-12' : 'start-2'} bottom-2 max-w-[70%] rounded-[3px] border border-line bg-surface px-2 py-1 text-[12px] shadow`} role="status" data-testid="map-point-hover">
             {exactPoints[hoverPoint]!.label}{exactPoints[hoverPoint]!.unit ? <span className="text-ink-muted"> · {exactPoints[hoverPoint]!.unit}</span> : null}
           </div>

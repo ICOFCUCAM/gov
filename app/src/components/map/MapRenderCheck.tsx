@@ -18,7 +18,7 @@ const rand = (seed: number) => { let s = seed >>> 0; return () => ((s = (s * 166
 const TONES = ['ok', 'ok', 'ok', 'warn', 'warn', 'alert', 'neutral'] as const;
 const GLYPHS = ['✚', '✎', '⛨', '⚖', '⌂', '⚡', '✈', '⚓'];
 
-export function MapRenderCheck({ n, areas: areaCount, style, webglAbove }: { n: number; areas: number; style: 'dot' | 'tile'; webglAbove?: number }) {
+export function MapRenderCheck({ n, areas: areaCount, style, webglAbove, cluster = false }: { n: number; areas: number; style: 'dot' | 'tile'; webglAbove?: number; cluster?: boolean }) {
   const [box, setBox] = React.useState<[[number, number], [number, number]] | null>(null);
   const iso3 = nationIso3();
   React.useEffect(() => {
@@ -67,7 +67,7 @@ export function MapRenderCheck({ n, areas: areaCount, style, webglAbove }: { n: 
       </p>
       {points.length ? (
         <NationMap title="Synthetic points" kind="sample" source="Generated for the renderer check" points={points} pointsLabel="Synthetic points" areas={areas}
-          maxHeight={640} pointStyle={style} webglAbove={webglAbove} selectedPoint={hash.startsWith('#pt-') ? hash.slice(1) : undefined} />
+          maxHeight={640} pointStyle={style} webglAbove={webglAbove} cluster={cluster} selectedPoint={hash.startsWith('#pt-') ? hash.slice(1) : undefined} />
       ) : <p className="text-[13px] text-ink-muted">Preparing the synthetic points…</p>}
     </main>
   );
