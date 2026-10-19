@@ -6,7 +6,8 @@ Sovereign-portable deployment. No vendor lock-in (Companion 139).
 
 ```
 infra/
-├── docker/docker-compose.yml   # local full stack (pg, nats, redis, api, app)
+├── docker/docker-compose.yml   # local full stack (pg, nats, redis, api, app; one state writer)
+├── docker/prometheus.yml       # optional metrics collection (--profile observability)
 ├── k8s/namespace.yaml          # raw namespace (Helm is the primary path)
 ├── helm/civicos/               # the chart: api + app + ingress + netpol + hpa + pdb
 ├── helm/profiles/              # small-municipality | mid-city | ministry | national
@@ -17,6 +18,7 @@ infra/
 
 ```bash
 docker compose -f infra/docker/docker-compose.yml up --build
+# with metrics: docker compose -f infra/docker/docker-compose.yml --profile observability up --build
 # app  → http://localhost:3000
 # api  → http://localhost:4000/api  (docs at /api/docs; under Helm it is served at /svc/api)
 ```

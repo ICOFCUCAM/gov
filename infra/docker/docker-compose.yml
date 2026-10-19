@@ -1,5 +1,6 @@
 # CivicOS — local sovereign stack.
-# Brings up Postgres, NATS, Redis, the API, and the Next.js app.
+# Brings up Postgres, NATS, Redis, the API, and the Next.js app (one state
+# writer, file state on a volume, health-checked); optionally Prometheus.
 # Mirrors the production topology at small scale (single-node).
 #
 #   docker compose -f infra/docker/docker-compose.yml up --build
@@ -62,9 +63,49 @@ services:
     environment:
       NEXT_TELEMETRY_DISABLED: '1'
       CIVIC_API_URL: http://api:4000/api
+      # The platform keeps its state in files on the app-state volume; one app
+      # instance is the state writer (lib/data/persist.ts holds a lock file and
+      # refuses to overwrite newer state). Do not scale this service.
+      CIVICOS_STATE: file
+      CIVICOS_STATE_DIR: /data
+      # Leave CIVICOS_AUTH empty for a local demo; set it to enforce (with a
+      # real CIVICOS_SESSION_SECRET of 32+ characters) for anything shared.
+      CIVICOS_AUTH: ${CIVICOS_AUTH:-}
+      CIVICOS_SESSION_SECRET: ${CIVICOS_SESSION_SECRET:-local-only-session-secret-change-me-0001}
+      CIVICOS_CRON_SECRET: ${CIVICOS_CRON_SECRET:-local-only-cron-secret-change-me-0001}
+      CIVICOS_METRICS_TOKEN: ${CIVICOS_METRICS_TOKEN:-local-only-metrics-token-change-me-0001}
+      CIVICOS_INTERNAL_URL: http://localhost:3000
+      CIVICOS_LOG_LEVEL: ${CIVICOS_LOG_LEVEL:-info}
+    volumes: ['appstate:/data']
     ports: ['3000:3000']
+    deploy:
+      replicas: 1
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://localhost:3000/api/health?ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 4
     depends_on:
       api: { condition: service_started }
 
+  # Optional: the nation's own metrics collection (docker compose --profile observability up).
+  # Prometheus scrapes /api/metrics with the metrics token; nothing leaves the host.
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    profiles: ['observability']
+    command: ['--config.file=/etc/prometheus/prometheus.yml', '--storage.tsdb.retention.time=30d']
+    environment:
+      CIVICOS_METRICS_TOKEN: ${CIVICOS_METRICS_TOKEN:-local-only-metrics-token-change-me-0001}
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./metrics-token:/etc/prometheus/metrics-token:ro
+      - promdata:/prometheus
+    ports: ['9090:9090']
+    depends_on:
+      app: { condition: service_healthy }
+
 volumes:
   pgdata:
+  appstate:
+  promdata:
