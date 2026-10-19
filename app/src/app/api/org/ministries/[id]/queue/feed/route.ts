@@ -34,6 +34,10 @@ function signatureOf(feed: CaseFeed, req: NextRequest, raw: string): { state: Si
   return { state: 'refused', keyId: s.keyId, reason: s.reason };
 }
 
+/**
+ * @example request {"cases":[{"reference":"CASE-2026-0001","subject":"Permit application","received":"2026-01-15","priority":"normal","state":"open"}]}
+ * @example response 200 {"added":1,"updated":0,"unchanged":0,"refused":[],"receipt":{"v":"civicos-exchange-receipt-v1","id":"…","at":"2026-01-15T09:30:00.000Z","channel":"case-feed","status":200,"result":"1 added, 0 updated, 0 unchanged, 0 refused","platformKeyId":"ed25519:…","signature":"…"}}
+ */
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const feed = feedForKey(params.id, req.headers.get('authorization'));
