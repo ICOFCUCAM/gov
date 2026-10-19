@@ -65,7 +65,7 @@ export function CandidatesPanel({ vocab, institutions, onChanged }: { vocab: Voc
         </label>
         <label className={label}>Kind of site, when the file does not say
           <select className={`${input} mt-1`} value={form.category} onChange={e => setForm({ ...form, category: e.currentTarget.value })}>
-            <option value="">From the file</option>
+            <option value="">From the file (its category column, or OpenStreetMap tags such as amenity=school)</option>
             {vocab.categories.map(c => <option key={c.key} value={c.key}>{c.glyph} {c.label}</option>)}
           </select>
         </label>
@@ -96,7 +96,7 @@ export function CandidatesPanel({ vocab, institutions, onChanged }: { vocab: Voc
               const src = data!.sources.find(s => s.id === c.sourceId);
               return (
                 <tr key={c.id} className="border-b border-line-soft align-top">
-                  <td data-label="Suggestion" className="py-1.5"><strong>{c.name}</strong><div className="text-ink-muted">{catName(c.category)} · {src?.name}{c.ref ? ` · ${c.ref}` : ''}</div></td>
+                  <td data-label="Suggestion" className="py-1.5"><strong>{c.name}</strong><div className="text-ink-muted">{catName(c.category)}{c.kindFrom === 'osm' ? ' (from its OpenStreetMap tags)' : ''} · {src?.name}{c.ref ? ` · ${c.ref}` : ''}</div></td>
                   <td data-label="Where">{c.region ?? '—'}<div className="font-mono text-[11px] text-ink-muted">{c.lat.toFixed(5)}, {c.lng.toFixed(5)}</div></td>
                   <td data-label="Already recorded?">{c.match ? <>{site(c.match.id)?.name ?? c.match.name} <span className="text-ink-muted">({c.match.metres} m away)</span></> : <span className="text-ink-muted">Nothing close by</span>}</td>
                   <td data-label="Decide" className="space-y-1.5">

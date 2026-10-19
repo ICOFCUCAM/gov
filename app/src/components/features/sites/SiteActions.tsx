@@ -103,10 +103,16 @@ export function SiteDetail({ site, vocab, act, busy, ownerName, onClose }: { sit
         <dd className="font-mono">{site.location.lat}, {site.location.lng}{site.generalised ? <span className="ms-2 font-sans text-warn">position generalised (restricted site)</span> : null}</dd>
         <dt className="text-ink-muted">Where</dt><dd>{site.place.region ?? 'Outside the drawn boundary'}{site.place.district ? `, ${site.place.district}` : ''}</dd>
         <dt className="text-ink-muted">How captured</dt>
-        <dd>{methodLabel(site.location.method)}{site.location.accuracyM ? ` · within ${site.location.accuracyM} m` : ''}{site.location.capturedBy ? ` · by ${site.location.capturedBy}` : ''}{site.location.capturedAt ? ` · ${when(site.location.capturedAt)}` : ''}{site.location.original ? ` · given as “${site.location.original}”` : ''}</dd>
+        <dd>{methodLabel(site.location.method)}{site.location.accuracyM ? ` · within ${site.location.accuracyM} m` : ''}{site.location.capturedBy ? ` · by ${site.location.capturedBy}` : ''}{site.location.capturedAt ? ` · ${when(site.location.capturedAt)}` : ''}{site.location.original ? ` · given as “${site.location.original}”` : ''}{site.location.sourceCrs ? <span title={site.location.sourceCrs.transformation}> · converted from {site.location.sourceCrs.name} on the server</span> : null}</dd>
         <dt className="text-ink-muted">Sensitivity</dt><dd>{LEVEL_WORD[site.sensitivity]}</dd>
+        {site.footprint || site.heightM || site.levels ? (
+          <><dt className="text-ink-muted">Building</dt>
+          <dd>{[site.footprint ? `footprint of ${site.footprint.coordinates[0]!.length - 1} corners` : '', site.heightM ? `${site.heightM} m high` : '', site.levels ? `${site.levels} storey${site.levels === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ')}{site.footprint && site.heightM ? ' (LoD1 in the 3D export)' : ''}</dd></>
+        ) : null}
+        <dt className="text-ink-muted">National facility ID</dt>
+        <dd>{site.ids.national ? <span className="font-mono">{site.ids.national}</span> : <span className="text-ink-muted">Given when the site is published</span>}</dd>
         <dt className="text-ink-muted">Identifiers</dt>
-        <dd>{Object.keys(site.ids).length ? Object.entries(site.ids).map(([k, v]) => <span key={k} className="me-3">{k}: <span className="font-mono">{v}</span></span>) : <span className="text-ink-muted">None recorded{site.generalised ? ' (hidden for restricted sites)' : ''}</span>}</dd>
+        <dd>{Object.keys(site.ids).some(k => k !== 'national') ? Object.entries(site.ids).filter(([k]) => k !== 'national').map(([k, v]) => <span key={k} className="me-3">{k}: <span className="font-mono">{v}</span></span>) : <span className="text-ink-muted">None recorded{site.generalised ? ' (hidden for restricted sites)' : ''}</span>}</dd>
         <dt className="text-ink-muted">Source</dt><dd>{site.source.kind === 'form' ? 'Recorded on the form' : site.source.kind === 'field' ? 'Captured in the field' : site.source.kind === 'import' ? `Loaded from a file${site.source.sha256 ? ` (fingerprint ${site.source.sha256.slice(0, 12)}…)` : ''}` : 'Connected system'}</dd>
         {site.note ? <><dt className="text-ink-muted">Note</dt><dd>{site.note}</dd></> : null}
         <dt className="text-ink-muted">Location certification</dt>

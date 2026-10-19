@@ -2324,6 +2324,42 @@
         "x-source": "src/app/api/facilities/check/route.ts"
       }
     },
+    "/api/facilities/cityjson": {
+      "get": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "get_facilities_cityjson",
+        "summary": "GET /api/facilities/cityjson",
+        "description": "The national facility register as CityJSON 2.0 (lib/data/cityjson.ts): sites with a footprint and height as LoD1 building solids, with a footprint only as LoD0 surfaces, others as LoD0 points (?category= to narrow). As the viewer may see them: restricted sites generalised, without their footprint, for viewers without need. Download as application/city+json.",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/cityjson/route.ts"
+      }
+    },
     "/api/facilities/connections": {
       "get": {
         "tags": [
@@ -2331,7 +2367,7 @@
         ],
         "operationId": "get_facilities_connections",
         "summary": "GET /api/facilities/connections",
-        "description": "Digital interoperability on the map (lib/data/interop-map.ts): institutions at their registered seats, agreed exchanges (approved grants and integrations), live exchanges (institutions' systems calling the platform, with health) and, by region, the share of published sites that reported in the last 31 days. Only records the platform holds; nothing generated.",
+        "description": "Digital interoperability on the map (lib/data/interop-map.ts): institutions at their registered seats, agreed exchanges (approved grants and integrations), live exchanges (institutions' systems calling the platform, with health) and, by region, the share of published sites that reported in the last 31 days. Only records the platform holds; nothing generated. Seats are placed as the viewer may see them (restricted seats not placed for viewers without need).",
         "parameters": [],
         "responses": {
           "200": {
@@ -3960,7 +3996,7 @@
         ],
         "operationId": "get_org_ministries_id_facilities_import",
         "summary": "GET /api/org/ministries/{id}/facilities/import",
-        "description": "Load an institution's existing site data: a survey or registry export (CSV), GeoJSON points or GPX waypoints from a GNSS receiver or phone. POST { text, format, dryRun?, method? }: with dryRun, what would be loaded and every refused row with its reason; otherwise each accepted row is proposed (and published by a second official), the file's SHA-256 recorded and audited.",
+        "description": "Load an institution's existing site data: a survey or registry export (CSV), GeoJSON points or GPX waypoints from a GNSS receiver or phone. POST { text, format, dryRun?, method?, crs?, prj? }: crs is the EPSG code the positions are given in (a national grid, e.g. EPSG:21037), prj the WKT of a .prj file; they are converted to WGS 84 on the server (lib/geo/crs.ts). With dryRun, what would be loaded and every refused row with its reason; otherwise each accepted row is proposed (and published by a second official), the file's SHA-256 recorded and audited.",
         "parameters": [
           {
             "name": "id",
@@ -3994,7 +4030,7 @@
         ],
         "operationId": "post_org_ministries_id_facilities_import",
         "summary": "POST /api/org/ministries/{id}/facilities/import",
-        "description": "Load an institution's existing site data: a survey or registry export (CSV), GeoJSON points or GPX waypoints from a GNSS receiver or phone. POST { text, format, dryRun?, method? }: with dryRun, what would be loaded and every refused row with its reason; otherwise each accepted row is proposed (and published by a second official), the file's SHA-256 recorded and audited.",
+        "description": "Load an institution's existing site data: a survey or registry export (CSV), GeoJSON points or GPX waypoints from a GNSS receiver or phone. POST { text, format, dryRun?, method?, crs?, prj? }: crs is the EPSG code the positions are given in (a national grid, e.g. EPSG:21037), prj the WKT of a .prj file; they are converted to WGS 84 on the server (lib/geo/crs.ts). With dryRun, what would be loaded and every refused row with its reason; otherwise each accepted row is proposed (and published by a second official), the file's SHA-256 recorded and audited.",
         "parameters": [
           {
             "name": "id",
@@ -10512,7 +10548,7 @@
         ],
         "operationId": "get_twin_ogc_collections_collectionId_items",
         "summary": "GET /api/twin/ogc/collections/{collectionId}/items",
-        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime), or the national facility register's published sites (also ?category), as the viewer may see them, or the published boundaries in force (also ?level).",
+        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime, ?level=1|2), or the national facility register's published sites (also ?category), as the viewer may see them, or the published boundaries in force (also ?level). Each collection's queryables (/collections/{id}/queryables) are accepted as equality filters (e.g. ?regionCode=KE-30&status=operational); any other parameter is refused with 400.",
         "parameters": [
           {
             "name": "collectionId",
@@ -10531,23 +10567,7 @@
             }
           },
           {
-            "name": "category",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "datetime",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "level",
             "in": "query",
             "required": false,
             "schema": {
@@ -10587,6 +10607,42 @@
           }
         },
         "x-source": "src/app/api/twin/ogc/collections/[collectionId]/items/route.ts"
+      }
+    },
+    "/api/twin/ogc/collections/{collectionId}/queryables": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_ogc_collections_collectionId_queryables",
+        "summary": "GET /api/twin/ogc/collections/{collectionId}/queryables",
+        "description": "OGC API – Features Part 3 queryables of one collection of the national twin: a JSON Schema of the properties a client may filter on, each accepted as a query parameter on /items (lib/twin/ogc-queryables.ts).",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/ogc/collections/[collectionId]/queryables/route.ts"
       }
     },
     "/api/twin/ogc/collections/{collectionId}": {
@@ -11082,6 +11138,69 @@
         "x-source": "src/app/api/twin/sources/route.ts"
       }
     },
+    "/api/twin/sta/v1.1/{path}": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_sta_v1_1_path",
+        "summary": "GET /api/twin/sta/v1.1/{path}",
+        "description": "OGC SensorThings API v1.1 resources of the national twin (read-only): /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, and substrate telemetry streams when the substrate is reachable; restricted sites' positions as the viewer may see them (lib/twin/sta.ts).",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/sta/v1.1/[...path]/route.ts"
+      }
+    },
+    "/api/twin/sta/v1.1": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_sta_v1_1",
+        "summary": "GET /api/twin/sta/v1.1",
+        "description": "OGC SensorThings API v1.1 service root of the national twin (read-only): the entity sets (Things, Locations, Sensors, ObservedProperties, Datastreams, Observations) and the conformance classes served (lib/twin/sta.ts).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/sta/v1.1/route.ts"
+      }
+    },
     "/api/twin/state": {
       "get": {
         "tags": [
@@ -11140,6 +11259,85 @@
           }
         },
         "x-source": "src/app/api/twin/state/route.ts"
+      }
+    },
+    "/api/twin/tiles/facilities/{z}/{x}/{y}": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tiles_facilities_z_x_y",
+        "summary": "GET /api/twin/tiles/facilities/{z}/{x}/{y}",
+        "description": "One Mapbox Vector Tile (MVT 2.1) of the national facility register: layer \"facilities\", published sites as points with their id, national id, name, category, status, region and certification. Restricted sites are placed where the viewer may see them (generalised for viewers without need), so a tile is private to its viewer. y may end in .mvt or .pbf (lib/twin/tiles.ts).",
+        "parameters": [
+          {
+            "name": "z",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "y",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/tiles/facilities/[z]/[x]/[y]/route.ts"
+      }
+    },
+    "/api/twin/tiles/facilities": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tiles_facilities",
+        "summary": "GET /api/twin/tiles/facilities",
+        "description": "TileJSON 3.0.0 for the national facility register's vector tiles: the tile address template (/api/twin/tiles/facilities/{z}/{x}/{y}.mvt), zoom range, bounds of the sites the viewer may see and the layer's fields (lib/twin/tiles.ts).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/tiles/facilities/route.ts"
       }
     },
     "/api/twin/timeline": {

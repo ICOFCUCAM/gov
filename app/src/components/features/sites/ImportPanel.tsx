@@ -10,7 +10,7 @@ import * as React from 'react';
 import { useOfficial, useSignIn } from '@/lib/official';
 import { Msg, btn, callApi, input, label, type CaptureMethod, type FacilityImport, type Institution, type Vocabulary } from './shared';
 
-interface Template { columns: { name: string; required: boolean; means: string; aliases: readonly string[] }[]; maxRows: number; formats: string[] }
+interface Template { columns: { name: string; required: boolean; means: string; aliases: readonly string[] }[]; maxRows: number; formats: string[]; crs?: { epsg: number; name: string; area: string }[] }
 type Result = FacilityImport & { dryRun: boolean; preview: { row: number; name: string; category: string; region?: string; warnings: string[] }[] };
 
 const FILE_METHODS: CaptureMethod[] = ['survey-import', 'gnss-survey', 'system-feed', 'imagery', 'cadastre', 'national-grid', 'typed'];
@@ -22,6 +22,9 @@ export function ImportPanel({ vocab, institutions, fixedMinistry, onLoaded }: { 
   const [template, setTemplate] = React.useState<Template | null>(null);
   const [file, setFile] = React.useState<{ name: string; text: string; format: 'csv' | 'geojson' | 'gpx' } | null>(null);
   const [method, setMethod] = React.useState<CaptureMethod | ''>('');
+  // The coordinate system of the positions: WGS 84 unless a national grid is chosen, typed (EPSG code) or given as a .prj.
+  const [crs, setCrs] = React.useState('');
+  const [prj, setPrj] = React.useState<{ name: string; text: string } | null>(null);
   const [result, setResult] = React.useState<Result | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
@@ -35,7 +38,7 @@ export function ImportPanel({ vocab, institutions, fixedMinistry, onLoaded }: { 
     if (!inst) { setMsg({ ok: false, text: 'Choose the institution the sites belong to.' }); return; }
     setBusy(true); setMsg(null);
     try {
-      const r = await callApi<Result>(`/api/org/ministries/${encodeURIComponent(inst)}/facilities/import`, { text: f.text, format: f.format, dryRun, method: method || undefined, by: official });
+      const r = await callApi<Result>(`/api/org/ministries/${encodeURIComponent(inst)}/facilities/import`, { text: f.text, format: f.format, dryRun, method: method || undefined, by: official, ...(prj ? { prj: prj.text } : crs.trim() ? { crs: crs.trim() } : {}) });
       setResult(r);
       if (!dryRun) {
         setMsg({ ok: !!r.accepted, text: `Loaded ${r.accepted} of ${r.rows} rows from ${f.name} (fingerprint ${r.sha256.slice(0, 12)}…). Each site waits for a different official to publish it.` });
@@ -76,6 +79,20 @@ export function ImportPanel({ vocab, institutions, fixedMinistry, onLoaded }: { 
           </select>
         </label>
       </div>
+      <fieldset className="grid gap-3 sm:grid-cols-2">
+        <legend className="mb-1 font-semibold text-ink">Coordinate system of the positions</legend>
+        <label className={label}>Given in
+          <input className={`${input} mt-1`} list="crs-choices" value={crs} placeholder="WGS 84 longitude/latitude (or e.g. EPSG:21037)" onChange={e => { setCrs(e.currentTarget.value); setResult(null); }} />
+          <datalist id="crs-choices">
+            {(template?.crs ?? []).map(c => <option key={c.epsg} value={`EPSG:${c.epsg}`}>{c.name} · {c.area}</option>)}
+          </datalist>
+          <span className="mt-1 block text-ink-muted">A national grid gives easting and northing in metres in the longitude and latitude columns (also read from easting and northing); they are converted on the server and the system kept with each site.</span>
+        </label>
+        <label className={label}>Or its .prj file
+          <input type="file" accept=".prj,text/plain" className="mt-1 block text-[13px]" onChange={async e => { const f = e.currentTarget.files?.[0]; setResult(null); setPrj(f ? { name: f.name, text: await f.text() } : null); }} />
+          {prj ? <span className="mt-1 block text-ink-soft">Using {prj.name}</span> : null}
+        </label>
+      </fieldset>
       {template ? (
         <details>
           <summary className="cursor-pointer text-link">Columns the file needs (spreadsheet saved as CSV; GeoJSON properties use the same names; GPX waypoints give name, type, position)</summary>

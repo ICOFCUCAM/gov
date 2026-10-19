@@ -16,6 +16,10 @@
 //   the nation's official subdivisions (ISO 3166-2), and the rest listed;
 // - districts get their region from the map (never typed);
 // - coverage against the boundaries in force (area, units outside, overlaps);
+// - topology (lib/geo/topology.ts): rings that cross themselves, gaps between
+//   neighbours and overlaps by area (a raster of the units against the
+//   outline: the regions in force for districts), slivers, and how much of
+//   each district lies in the region it is filed under;
 // - fewer units than the boundaries in force must be confirmed.
 // One official proposes, a different one publishes (four-eyes); every
 // version is kept with its SHA-256, nothing is overwritten, and withdrawing a
@@ -36,6 +40,7 @@ import { installedDistricts } from '@/lib/map/districts-installed';
 import type { Geom } from '@/lib/geo/admin1';
 import { nameKeys } from '@/lib/map/names';
 import { pickActive, type ActiveBoundary, type BoundarySource, type BoundaryUnit } from '@/lib/map/boundary-active';
+import { coverage, kinksOf, nesting, sliversOf } from '@/lib/geo/topology';
 
 export type { BoundarySource, BoundaryUnit, BoundaryFormat, Simplification };
 export type Level = 1 | 2;
@@ -68,6 +73,8 @@ export interface BoundaryCheck {
     reprojectedFrom?: string;
     /** Attribute fields of the file (to choose the code and name fields). */
     fields?: string[];
+    /** Topology: self-crossing rings, gaps and overlaps by area (raster estimate at cellKm), slivers, districts outside their region. */
+    topology?: { kinks: number; gapKm2: number; overlapKm2: number; unionKm2: number; outlineKm2?: number; cellKm: number; slivers: number; misnested: number };
   };
   /** How the file was read: format, reprojection, encoding, layer, simplification. */
   notes?: string[];
@@ -295,6 +302,31 @@ export async function proposeBoundaries(input: LoadInput, by: string, opts: { dr
   }
   if (overlaps.length) warnings.push(`Units overlap: ${overlaps.join(', ')}`);
 
+  // Topology beyond centre points.
+  const fmt = (p: [number, number]) => `${p[1].toFixed(4)}, ${p[0].toFixed(4)}`;
+  const kinked = units.map(u => ({ u, k: kinksOf(u.geometry, 3) })).filter(x => x.k.length);
+  if (kinked.length) warnings.push(`${kinked.length} unit${kinked.length === 1 ? '\'s boundary crosses itself' : 's\' boundaries cross themselves'} (the inside is ambiguous there): ${kinked.slice(0, 6).map(x => `${x.u.name} near ${fmt(x.k[0]!)}`).join('; ')}`);
+  const sliverUnits = units.map(u => ({ u, s: sliversOf(u.geometry) })).filter(x => x.s.length);
+  if (sliverUnits.length) warnings.push(`Slivers (thin fragments, usually digitising errors along a border): ${sliverUnits.slice(0, 6).map(x => `${x.u.name} (${x.s.length} part${x.s.length === 1 ? '' : 's'}, ${x.s.map(p => p.areaKm2).sort((a, b) => a - b)[0]} km² smallest)`).join(', ')}`);
+  const outlineUnits = input.level === 2 ? regions.filter(r => r.geometry) : [];
+  const outline: Geom | undefined = outlineUnits.length
+    ? { type: 'MultiPolygon', coordinates: outlineUnits.flatMap(r => (r.geometry!.type === 'Polygon' ? [r.geometry!.coordinates as number[][][]] : (r.geometry!.coordinates as number[][][][]))) }
+    : undefined;
+  const cov = units.length ? coverage(units, outline) : null;
+  const gaps = cov?.patches.filter(p => p.kind === 'gap') ?? [], over = cov?.patches.filter(p => p.kind === 'overlap') ?? [];
+  const patchText = (ps: typeof gaps) => ps.slice(0, 5).map(p => `about ${p.areaKm2} km²${p.between.length ? ` ${p.between.length === 1 ? 'beside' : 'between'} ${p.between.join(', ')}` : ''} near ${fmt(p.at)}`).join('; ');
+  if (gaps.length) warnings.push(`Gaps ${outline ? 'inside the regions not covered by any district' : 'between neighbouring units'} (${gaps.length}, about ${Math.round(gaps.reduce((a, p) => a + p.areaKm2, 0))} km² at ${cov!.cellKm} km precision): ${patchText(gaps)}`);
+  if (over.length) warnings.push(`Units overlap by area (${over.length}, about ${Math.round(over.reduce((a, p) => a + p.areaKm2, 0))} km² at ${cov!.cellKm} km precision): ${patchText(over)}`);
+  let misnested = 0;
+  if (input.level === 2 && outlineUnits.length) {
+    const filed = units.filter(u => u.parent);
+    const nest = nesting(filed, outlineUnits.map(r => ({ code: r.code, name: r.name, geometry: r.geometry! })));
+    const regionName = new Map(outlineUnits.map(r => [r.code, r.name]));
+    const off = nest.filter((x, i) => x.shares.length && (x.shares.find(s => s.parent === filed[i]!.parent)?.share ?? 0) < 0.75);
+    misnested = off.length;
+    if (off.length) warnings.push(`${off.length} district${off.length === 1 ? ' lies' : 's lie'} largely outside the region ${off.length === 1 ? 'it is' : 'they are'} filed under: ${off.slice(0, 6).map(x => `${x.child} (${x.shares.slice(0, 2).map(s => `${Math.round(s.share * 100)}% in ${regionName.get(s.parent) ?? s.parent}`).join(', ')})`).join('; ')}`);
+  }
+
   const prev = await current(iso3, input.level);
   const area = units.reduce((s, u) => s + areaKm2(u.geometry), 0);
   const prevArea = prev.reduce((s, u) => s + (u.geometry ? areaKm2(u.geometry) : 0), 0);
@@ -316,6 +348,7 @@ export async function proposeBoundaries(input: LoadInput, by: string, opts: { dr
     summary: {
       units: units.length, matched: units.length - unofficial.length, missing, unofficial, areaKm2: Math.round(area), ...(prevArea ? { previousAreaKm2: Math.round(prevArea) } : {}), ...(prev.length ? { previousUnits: prev.length } : {}), rewound, fewer,
       vertices: simplified ? simplified.verticesAfter : verticesRead, ...(simplified ? { simplified } : {}), ...(read.crs ? { crs: read.crs } : {}), ...(read.reprojectedFrom ? { reprojectedFrom: read.reprojectedFrom } : {}), fields,
+      ...(cov ? { topology: { kinks: kinked.length, gapKm2: Math.round(gaps.reduce((a, p) => a + p.areaKm2, 0)), overlapKm2: Math.round(over.reduce((a, p) => a + p.areaKm2, 0)), unionKm2: cov.unionKm2, ...(cov.outlineKm2 != null ? { outlineKm2: cov.outlineKm2 } : {}), cellKm: cov.cellKm, slivers: sliverUnits.reduce((a, x) => a + x.s.length, 0), misnested } } : {}),
     },
     notes,
   };

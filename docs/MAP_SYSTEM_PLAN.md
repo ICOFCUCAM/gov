@@ -252,6 +252,33 @@ layouts. The fix is one shared map engine grown from it.
   the facility register replace the samples of their kind. The public
   sites' "find us" maps show each ministry's published sites. The engine
   gained zoom, header placement, a slot under the map and small notes.
+- **National scale and standards (architecture review R9, R13, R20),
+  done.** The OGC collections read shapes through
+  `loadNationGeography()` / `loadDistricts()` (published versions and
+  installed districts apply; `level=2` districts), the boundaries bbox meets
+  each unit's shape, every paged collection links next and prev, and each
+  collection has Part 3 queryables with equality filters. The twin is also
+  served as SensorThings API v1.1 (`lib/twin/sta.ts`). The facility register
+  keeps a 0.01° grid index and an identifier index beside its sites (rebuilt
+  on restore), so duplicate checks and bbox queries no longer read every
+  site; each published site gets an opaque national FacilityID (UUID v7).
+  Boundary versions are checked for topology beyond centre points: rings
+  crossing themselves, gaps and overlaps by area, slivers, districts
+  outside the region they are filed under (`lib/geo/topology.ts`). Site
+  files may be in a national grid (EPSG code, GeoJSON crs or .prj), converted
+  on the server from bundled proj4 definitions (`lib/geo/crs.ts`), the
+  system and transformation kept with each site. Above 2,000 located points
+  `NationMap` paints them on one canvas (`components/map/CanvasPoints.tsx`,
+  `lib/map/point-layer.ts`) with grid hit-testing for hover and click; the
+  SVG points below the threshold are unchanged and the table view still
+  lists every point for keyboard and screen-reader users. Published sites
+  are also served as Mapbox Vector Tiles with a TileJSON
+  (`/api/twin/tiles/facilities`, `lib/geo/mvt.ts`), viewer-aware. Sites may
+  carry a building footprint, height and storeys (checked), exported as
+  CityJSON 2.0 (LoD1 solids, LoD0 otherwise; `/api/facilities/cityjson`).
+  Each kind of site maps to INSPIRE, HXL, OpenStreetMap and Smart Data
+  Models (`lib/data/facility-standards.ts`): in the OGC properties, the
+  open-data candidate matching and the register's legend.
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

@@ -7,6 +7,7 @@ import { listMinistries } from './store';
 import { applyNation } from '@/lib/nation/registry';
 
 const NAIROBI = { lng: 36.81724, lat: -1.28638 };
+const GOV = { signedIn: true } as const;
 let health: string, interior: string, survey: string;
 
 beforeEach(() => {
@@ -125,11 +126,11 @@ describe('national facility register', () => {
     if ('error' in dry) throw new Error(dry.error);
     expect(dry).toEqual(expect.objectContaining({ dryRun: true, rows: 4, accepted: 1 }));
     expect(dry.refused.map(r => r.row)).toEqual([3, 4, 5]);
-    expect(listFacilities({ state: 'all' }, { signedIn: true })).toHaveLength(0);
+    expect(listFacilities({ state: 'all' }, GOV)).toHaveLength(0);
     const real = await importSites(health, csv, 'csv', 'Officer A');
     if ('error' in real) throw new Error(real.error);
     expect(real.accepted).toBe(1);
-    const f = listFacilities({ state: 'all' }, { signedIn: true })[0]!;
+    const f = listFacilities({ state: 'all' }, GOV)[0]!;
     expect(f).toEqual(expect.objectContaining({ name: 'KNH', state: 'proposed', source: expect.objectContaining({ kind: 'import', sha256: real.sha256 }) }));
     expect(f.ids['Master Facility List code']).toBe('13023');
 
@@ -171,7 +172,7 @@ describe('connected ministry systems (4b)', () => {
     ] };
     const first = await receiveSiteFeed(r.feed, body, JSON.stringify(body));
     expect(first).toEqual(expect.objectContaining({ added: 1, refused: [expect.objectContaining({ index: 1, reason: 'The position is outside the nation' }), expect.objectContaining({ index: 2 })] }));
-    const site = listFacilities({ state: 'all' }, { signedIn: true }).find(f => f.source.ref === 'MFL-13023')!;
+    const site = listFacilities({ state: 'all' }, GOV).find(f => f.source.ref === 'MFL-13023')!;
     expect(site).toEqual(expect.objectContaining({ state: 'proposed', source: expect.objectContaining({ kind: 'feed', feedId: r.feed.id }) }));
     expect(site.location.method).toBe('system-feed');
     expect(site.ids['Master Facility List code']).toBe('13023');
@@ -179,7 +180,7 @@ describe('connected ministry systems (4b)', () => {
     await actOnFacility(site.id, { action: 'publish' }, 'Signer B');
     const upd = { sites: [{ ref: 'MFL-13023', name: 'Kenyatta National Hospital (KNH)', category: 'health', lat: -1.3012, lng: 36.8068, status: 'partial' }] };
     expect(await receiveSiteFeed(r.feed, upd, JSON.stringify(upd))).toEqual(expect.objectContaining({ updated: 1, movesWaiting: 1 }));
-    const after = listFacilities({ state: 'all' }, { signedIn: true }).find(f => f.id === site.id)!;
+    const after = listFacilities({ state: 'all' }, GOV).find(f => f.id === site.id)!;
     expect(after).toEqual(expect.objectContaining({ name: 'Kenyatta National Hospital (KNH)', status: 'partial' }));
     expect(after.location.lat).toBe(-1.30096); // the move waits for an official
     expect(after.pendingVersion?.location.lat).toBe(-1.3012);
@@ -207,14 +208,14 @@ describe('open-data candidates (4c)', () => {
     const src = await loadOpenSource({ name: 'OSM health', publisher: 'OpenStreetMap contributors', licence: 'ODbL 1.0', text: geojson, category: 'health' }, 'Officer A');
     if ('error' in src) throw new Error(src.error);
     expect(src).toEqual(expect.objectContaining({ shareAlike: true, rows: 3, candidates: 2, refused: [expect.objectContaining({ row: 3 })] }));
-    expect(listFacilities({ state: 'all' }, { signedIn: true })).toHaveLength(1); // nothing became a site
+    expect(listFacilities({ state: 'all' }, GOV)).toHaveLength(1); // nothing became a site
     const [knh, clinic] = listCandidates();
     expect(knh!.match?.id).toBe(recorded.facility.id);
     expect(await decideCandidate(knh!.id, { decision: 'link', facilityId: recorded.facility.id }, 'Officer A')).toEqual(expect.objectContaining({ state: 'linked' }));
-    expect(listFacilities({ state: 'all' }, { signedIn: true }).find(f => f.id === recorded.facility.id)!.ids['OSM health']).toBe('node/1');
+    expect(listFacilities({ state: 'all' }, GOV).find(f => f.id === recorded.facility.id)!.ids['OSM health']).toBe('node/1');
     const confirmed = await decideCandidate(clinic!.id, { decision: 'confirm', ministryId: health }, 'Officer A');
     expect(confirmed).toEqual(expect.objectContaining({ state: 'confirmed', facilityId: expect.any(String) }));
-    const site = listFacilities({ state: 'all' }, { signedIn: true }).find(f => f.name === 'Clinic X')!;
+    const site = listFacilities({ state: 'all' }, GOV).find(f => f.name === 'Clinic X')!;
     expect(site).toEqual(expect.objectContaining({ state: 'proposed', location: expect.objectContaining({ method: 'open-data' }), source: expect.objectContaining({ kind: 'candidate' }) }));
     expect(await decideCandidate(clinic!.id, { decision: 'reject', reason: 'x' }, 'B')).toEqual({ error: expect.stringMatching(/already confirmed/) });
   }, 60_000);
@@ -227,5 +228,84 @@ describe('open-data candidates (4c)', () => {
     const r = await loadOpenSource({ name: 'OurAirports', publisher: 'OurAirports', licence: 'Public domain', url: 'https://example.org/airports.csv' }, 'A', { fetch: fetchStub, resolve: async () => ['93.184.216.34'] });
     expect(r).toEqual(expect.objectContaining({ candidates: 1, shareAlike: false, url: 'https://example.org/airports.csv' }));
     expect(await loadOpenSource({ name: 'X', publisher: 'Y', licence: 'Z', url: 'http://10.0.0.1/x.csv' }, 'A', { fetch: fetchStub, resolve: async () => ['10.0.0.1'] })).toEqual({ error: expect.stringMatching(/could not be fetched/) });
+  }, 60_000);
+  it('mints an opaque national FacilityID (UUID v7) at publication, kept for restricted sites and old snapshots', async () => {
+    const { NATIONAL_ID, nationalId, getFacility } = await import('./facilities');
+    const { UUID7, uuid7Time } = await import('./uuid7');
+    const { facilityItem, facilityItems } = await import('@/lib/twin/ogc-facilities');
+    const r = await proposeFacility(interior, { name: 'Central Police Station', category: 'police', ...NAIROBI, ids: { national: 'chosen-by-me', 'National station code': 'NBI-001' } }, 'Officer A');
+    if ('error' in r) throw new Error(r.error);
+    expect(r.facility.ids).toEqual({ 'National station code': 'NBI-001' }); // never given, only minted
+    const pub = await actOnFacility(r.facility.id, { action: 'publish' }, 'Signer B');
+    if ('error' in pub) throw new Error(pub.error);
+    const nid = nationalId(pub)!;
+    expect(nid).toMatch(UUID7);
+    expect(Math.abs(uuid7Time(nid)! - Date.parse(pub.publishedAt!))).toBe(0);
+    expect(pub.id).toMatch(/^FAC-\d{5}$/); // the display id stays
+    // A moved site keeps its national id.
+    await actOnFacility(r.facility.id, { action: 'status', status: 'partial' }, 'Signer B');
+    expect(nationalId(getFacility(r.facility.id)!)).toBe(nid);
+    // The public sees a restricted site generalised, without its sector codes, but with its national id.
+    const seen = listFacilities({}, { signedIn: false }).find(f => f.id === r.facility.id)!;
+    expect(seen.generalised).toBe(true);
+    expect(seen.ids).toEqual({ [NATIONAL_ID]: nid });
+    // OGC: a property, and the feature found by either id.
+    const items = facilityItems('http://x', {}, { signedIn: false });
+    if ('error' in items) throw new Error(items.error);
+    expect(items.features[0]!.properties.nationalId).toBe(nid);
+    expect(facilityItem('http://x', nid, { signedIn: false })?.id).toBe(r.facility.id);
+    // A snapshot saved before national ids gets one for each published site when restored.
+    const g = globalThis as unknown as { __civicosFacilities: { facilities: { ids: Record<string, string> }[] } };
+    const old = structuredClone(g.__civicosFacilities);
+    delete old.facilities[0]!.ids[NATIONAL_ID];
+    g.__civicosFacilities = old;
+    const restored = nationalId(getFacility(r.facility.id)!)!;
+    expect(restored).toMatch(UUID7);
+    expect(nationalId(getFacility(r.facility.id)!)).toBe(restored); // minted once
+  }, 60_000);
+
+  it('refuses to list sites without being told who is looking', () => {
+    expect(() => (listFacilities as unknown as (f: object) => unknown)({})).toThrow(/viewer/);
+  });
+
+  it('loads positions given on a national grid (EPSG code, GeoJSON crs or .prj), converting them and keeping the system and transformation', async () => {
+    const proj4 = (await import('proj4')).default;
+    const { listImports } = await import('./facilities');
+    const { readCrs } = await import('@/lib/geo/crs');
+    const arc = readCrs({ crs: 'EPSG:21037' });
+    if ('error' in arc) throw new Error(arc.error);
+    const [e, n] = (proj4('WGS84', arc.transformation, [NAIROBI.lng, NAIROBI.lat]) as number[]).map(v => Math.round(v * 100) / 100) as [number, number];
+    const csv = `name,category,easting,northing\nNairobi Primary,school,${e},${n}\n`;
+    // Undeclared metres are refused with the remedy.
+    const plain = await importSites(health, csv, 'csv', 'Officer A', { dryRun: true });
+    if ('error' in plain) throw new Error(plain.error);
+    expect(plain.refused[0]!.reason).toMatch(/easting and northing.*declare the file's coordinate system/);
+    expect(await importSites(health, csv, 'csv', 'Officer A', { crs: 'EPSG:99999' })).toEqual({ error: expect.stringMatching(/bundled/) });
+    const r = await importSites(health, csv, 'csv', 'Officer A', { crs: 'EPSG:21037' });
+    if ('error' in r) throw new Error(r.error);
+    expect(r.accepted).toBe(1);
+    expect(r.crs).toEqual({ name: 'Arc 1960 / UTM zone 37S (EPSG:21037)', epsg: 21037, transformation: expect.stringContaining('+proj=utm +zone=37 +south') });
+    expect(listImports(health)[0]!.crs?.epsg).toBe(21037);
+    const site = listFacilities({ state: 'all' }, GOV).find(f => f.name === 'Nairobi Primary')!;
+    expect(site.location.method).toBe('national-grid');
+    expect(Math.abs(site.location.lng - NAIROBI.lng)).toBeLessThan(1e-5);
+    expect(Math.abs(site.location.lat - NAIROBI.lat)).toBeLessThan(1e-5);
+    expect(site.location.sourceCrs).toEqual({ name: 'Arc 1960 / UTM zone 37S (EPSG:21037)', epsg: 21037, transformation: arc.transformation, x: e, y: n });
+    expect(site.location.original).toBe(`Arc 1960 / UTM zone 37S (EPSG:21037) easting ${e} northing ${n}`);
+    expect(site.place.regionCode).toBe('KE-30');
+    // A GeoJSON file naming its system in its own "crs" member.
+    const gj = JSON.stringify({ type: 'FeatureCollection', crs: { type: 'name', properties: { name: 'urn:ogc:def:crs:EPSG::21037' } }, features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [e + 2000, n] }, properties: { name: 'East School', category: 'school' } }] });
+    const g = await importSites(health, gj, 'geojson', 'Officer A', { dryRun: true });
+    if ('error' in g) throw new Error(g.error);
+    expect(g.accepted).toBe(1);
+    expect(g.crs?.epsg).toBe(21037);
+    // A .prj with the file.
+    const { UTM37S_PRJ } = await import('@/lib/geo/boundary-fixtures');
+    const p = await importSites(health, `name,category,x,y\nWest Clinic,health,${e - 3000},${n}\n`, 'csv', 'Officer A', { dryRun: true, prj: UTM37S_PRJ });
+    if ('error' in p) throw new Error(p.error);
+    expect(p.accepted).toBe(1);
+    expect(p.crs?.transformation).toBe(UTM37S_PRJ);
+    // GPX is always WGS 84.
+    expect(await importSites(health, '<gpx><wpt lat="-1" lon="36"><name>x</name><type>school</type></wpt></gpx>', 'gpx', 'A', { crs: 'EPSG:21037' })).toEqual({ error: expect.stringMatching(/GPX/) });
   }, 60_000);
 });

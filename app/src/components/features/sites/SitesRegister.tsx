@@ -84,6 +84,7 @@ export function SitesRegister() {
             where it stands. Positions are declared by the institutions; a certified location has been checked
             ({data.policy.certification === 'institution' ? 'by the institution' : data.policy.certification === 'mapping-agency' ? 'by the mapping agency' : 'by the institution, then the mapping agency'}).
             {' '}<Link href="/gov/sites/capture" className="text-link underline">Capture a site on a phone</Link>
+            {' · '}<a href="/api/facilities/cityjson" className="text-link underline" download>Download in 3D (CityJSON)</a>
           </p>
         </div>
         <ActingOfficial name={official} onChange={setOfficial} />
@@ -133,6 +134,31 @@ export function SitesRegister() {
         pointsLabel="Published sites (circle: location certified; diamond: awaiting certification; triangle: location rejected)"
         emptyNote={shown.some(s => s.state === 'published') ? undefined : 'No published site matches yet. Institutions add sites below, on the phone page or from a file; each is published by a second official.'}
       />
+
+      <details className="rounded-[3px] border border-line p-3 text-[13px]">
+        <summary className="cursor-pointer font-semibold">Kinds of site and the standards they map to</summary>
+        <p className="mt-1 text-ink-soft">Each kind of site is exchanged in the vocabularies other systems use: INSPIRE themes and codes, HXL hashtags (humanitarian data), OpenStreetMap tags (which also recognise kinds of site in open datasets) and Smart Data Models types. The open data service carries them with every site.</p>
+        <div className="mt-2 overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <caption className="sr-only">Kinds of site and their INSPIRE, HXL, OpenStreetMap and Smart Data Models equivalents</caption>
+            <thead><tr className="border-b border-line text-ink-muted">
+              <th className="py-1 text-start font-semibold">Kind of site</th><th className="text-start font-semibold">INSPIRE</th><th className="text-start font-semibold">HXL</th>
+              <th className="text-start font-semibold">OpenStreetMap</th><th className="text-start font-semibold">Smart Data Models</th>
+            </tr></thead>
+            <tbody>
+              {data.categories.filter(c => c.standards).map(c => (
+                <tr key={c.key} className="border-b border-line-soft align-top">
+                  <td className="py-1"><span aria-hidden className="me-1.5">{c.glyph}</span>{c.label}</td>
+                  <td>{c.standards!.inspire.theme} · {c.standards!.inspire.featureType}{c.standards!.inspire.code ? <span className="font-mono"> {c.standards!.inspire.code}</span> : null}</td>
+                  <td className="font-mono">{c.standards!.hxl.tag}</td>
+                  <td className="font-mono">{Object.entries(c.standards!.osm.tags).flatMap(([k, vs]) => vs.map(v => `${k}=${v}`)).join(', ')}</td>
+                  <td>{c.standards!.smartDataModel.type} <span className="text-ink-muted">({c.standards!.smartDataModel.category})</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
 
       <Panel id="waiting" title="Waiting on you" meta="publish, certify, confirm moves">
         <Msg msg={msg} />

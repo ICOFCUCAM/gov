@@ -64,6 +64,19 @@ export function SiteForm({ ministryId, ministryName, vocab, onRecorded }: {
   const [outsideReason, setOutsideReason] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
+  // 3D readiness (optional): the building's outline as GeoJSON, its height and storeys; checked here, then on the server.
+  const [building, setBuilding] = React.useState({ footprint: '', heightM: '', levels: '' });
+  const footprintProblem = React.useMemo(() => {
+    const t = building.footprint.trim();
+    if (!t) return '';
+    try {
+      const j = JSON.parse(t) as { type?: string; geometry?: { type?: string }; coordinates?: unknown };
+      const g = j.type === 'Feature' ? j.geometry : j;
+      return g?.type === 'Polygon' ? '' : 'Paste a GeoJSON Polygon (or a Feature holding one).';
+    } catch { return 'This is not valid GeoJSON.'; }
+  }, [building.footprint]);
+  const heightProblem = building.heightM.trim() && !(Number(building.heightM) >= 0.5 && Number(building.heightM) <= 1000) ? 'Between 0.5 and 1,000 metres.' : '';
+  const levelsProblem = building.levels.trim() && !(Number.isInteger(Number(building.levels)) && Number(building.levels) >= 1 && Number(building.levels) <= 250) ? 'A whole number from 1 to 250.' : '';
   const cat = vocab.categories.find(c => c.key === f.category);
   const set = (k: keyof typeof blank) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.currentTarget.value });
 
@@ -140,6 +153,7 @@ export function SiteForm({ ministryId, ministryName, vocab, onRecorded }: {
     e.preventDefault();
     if (!official) { setMsg({ ok: false, text: 'Sign in or name the acting official first: every site is recorded under a person.' }); return; }
     if (!pos || !method || !cat) return;
+    if (footprintProblem || heightProblem || levelsProblem) { setMsg({ ok: false, text: `Building: ${footprintProblem || heightProblem || levelsProblem}` }); return; }
     setBusy(true); setMsg(null);
     try {
       const r = await callApi<{ facility: Site; check: LocationCheck }>(`/api/org/ministries/${encodeURIComponent(ministryId)}/facilities`, {
@@ -148,9 +162,12 @@ export function SiteForm({ ministryId, ministryName, vocab, onRecorded }: {
         lng: pos.lng, lat: pos.lat, accuracyM: pos.accuracyM, method, capturedAt: pos.capturedAt, original: pos.original,
         region: f.region || undefined, note: f.note || undefined, outsideReason: outside ? outsideReason : undefined,
         confirmDuplicate: needTick ? different : undefined, by: official,
+        ...(building.footprint.trim() ? { footprint: JSON.parse(building.footprint) } : {}),
+        ...(building.heightM.trim() ? { heightM: Number(building.heightM) } : {}),
+        ...(building.levels.trim() ? { levels: Number(building.levels) } : {}),
       });
       setMsg({ ok: true, text: `Recorded: ${r.facility.name} (${r.facility.id})${r.facility.place.region ? ` in ${r.facility.place.region}` : ''}. Another official publishes it.` });
-      setF({ ...blank, category: f.category }); setPos(null); setLatText(''); setLngText(''); setDmsText(''); setOriginal(''); setAccuracy(''); setCheck(null); setOutsideReason(''); setPosNote('');
+      setF({ ...blank, category: f.category }); setPos(null); setLatText(''); setLngText(''); setDmsText(''); setOriginal(''); setAccuracy(''); setCheck(null); setOutsideReason(''); setPosNote(''); setBuilding({ footprint: '', heightM: '', levels: '' });
       onRecorded?.(r.facility);
     } catch (err) {
       const b = (err as Error & { body?: { check?: LocationCheck } }).body;
@@ -202,6 +219,25 @@ export function SiteForm({ ministryId, ministryName, vocab, onRecorded }: {
           <input className={`${input} mt-1`} value={f.note} onChange={set('note')} maxLength={400} />
         </label>
       </div>
+
+      <details className="rounded-[3px] border border-line p-3">
+        <summary className="cursor-pointer text-[13px] font-semibold text-ink">The building, for 3D maps (optional)</summary>
+        <div className="mt-2 grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
+          <label className={label}>Footprint: the outline on the ground as a GeoJSON Polygon (longitude, latitude)
+            <textarea className={`${input} mt-1 font-mono text-[12px]`} rows={3} value={building.footprint} onChange={e => { const v = e.currentTarget.value; setBuilding(b => ({ ...b, footprint: v })); }}
+              placeholder='{"type":"Polygon","coordinates":[[[36.8170,-1.2866],[36.8175,-1.2866],[36.8175,-1.2861],[36.8170,-1.2861],[36.8170,-1.2866]]]}' aria-invalid={!!footprintProblem} />
+            {footprintProblem ? <span className="mt-1 block text-[12px] text-alert">{footprintProblem}</span> : <span className="mt-1 block text-[12px] text-ink-muted">Checked on the server: one ring that does not cross itself, at the site, at most 5 km².</span>}
+          </label>
+          <label className={label}>Height (metres)
+            <input className={`${input} mt-1`} inputMode="decimal" value={building.heightM} onChange={e => { const v = e.currentTarget.value; setBuilding(b => ({ ...b, heightM: v })); }} aria-invalid={!!heightProblem} />
+            {heightProblem ? <span className="mt-1 block text-[12px] text-alert">{heightProblem}</span> : null}
+          </label>
+          <label className={label}>Storeys above ground
+            <input className={`${input} mt-1`} inputMode="numeric" value={building.levels} onChange={e => { const v = e.currentTarget.value; setBuilding(b => ({ ...b, levels: v })); }} aria-invalid={!!levelsProblem} />
+            {levelsProblem ? <span className="mt-1 block text-[12px] text-alert">{levelsProblem}</span> : null}
+          </label>
+        </div>
+      </details>
 
       <fieldset className="space-y-3 rounded-[3px] border border-line p-3">
         <legend className="px-1 text-[13px] font-semibold text-ink">Where it stands</legend>
