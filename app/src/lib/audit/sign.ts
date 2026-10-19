@@ -17,6 +17,7 @@
 // the entries it needs as arguments.
 
 import { signingKey, signBytes, verifyBytes } from '@/lib/crypto/signing-key';
+import { withSpanSync } from '@/lib/ops/trace';
 
 export const AUDIT_KEY_ENV = 'CIVICOS_AUDIT_KEY';
 
@@ -77,8 +78,20 @@ export function signHead(head: { seq: number; hash: string }, now = Date.now()):
   return signed;
 }
 
-/** Called after every append: signs the head when the count or time policy says so. */
-export function maybeSignHead(head: { seq: number; hash: string }, now = Date.now()): SignedHead | null {
+/**
+ * Called after every append: signs the head when the count or time policy
+ * says so. The store calls it once per audit entry, so this is also where an
+ * append shows in a trace (span `audit.append`, sequence and action only).
+ */
+export function maybeSignHead(head: { seq: number; hash: string; action?: string }, now = Date.now()): SignedHead | null {
+  return withSpanSync('audit.append', { 'civicos.audit.seq': head.seq, ...(head.action ? { 'civicos.audit.action': head.action } : {}) }, span => {
+    const signed = signHeadIfDue(head, now);
+    if (signed) span.setAttribute('civicos.audit.signed_head', signed.seq);
+    return signed;
+  });
+}
+
+function signHeadIfDue(head: { seq: number; hash: string }, now: number): SignedHead | null {
   const last = lastSignedHead();
   if (!last) return head.seq >= signEvery() ? signHead(head, now) : null;
   if (head.seq <= last.seq) return null;

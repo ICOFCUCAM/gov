@@ -54,6 +54,30 @@ app:
     requests: { cpu: "250m", memory: "768Mi" }
     limits: { cpu: "1", memory: "1Gi" }
 
+# Traces (app/src/lib/ops/otel.ts): off unless enabled. Spans go only to the
+# nation's own collector: the one this chart runs (collector.enabled) or an
+# existing one named in `endpoint` (http(s), OTLP/HTTP). Nothing is sent
+# otherwise.
+otel:
+  enabled: false
+  # An existing collector, e.g. http://otel-collector.observability.svc:4318.
+  # Empty with collector.enabled: the chart's own collector.
+  endpoint: ""
+  # Fraction of new traces kept (parent-based), 0..1.
+  sampleRatio: "1"
+  collector:
+    enabled: false
+    image: otel/opentelemetry-collector-contrib
+    tag: "0.111.0"
+    resources:
+      requests: { cpu: "50m", memory: "128Mi" }
+      limits: { cpu: "500m", memory: "512Mi" }
+    # The collector's exporters (the nation's own Jaeger, Tempo, OpenSearch…).
+    # Default: the collector's own log only.
+    exporters:
+      debug: { verbosity: basic }
+    pipelineExporters: [debug]
+
 postgres:
   # In production, point at the sovereign managed Postgres (HA, PITR).
   # The chart does NOT run the database; it consumes a connection secret.

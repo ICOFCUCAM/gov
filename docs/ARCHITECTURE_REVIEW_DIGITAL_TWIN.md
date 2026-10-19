@@ -651,6 +651,6 @@ Every finding of section 2 has been worked on in place (nothing removed). What a
 | I6 SDMX | SDMX-CSV reader | SDMX-JSON/ML |
 | G1–G6 geospatial | Shapefile/GeoPackage with reprojection, national grids for site imports, topology checks, spatial index, canvas layer and vector tiles, footprints and CityJSON export, INSPIRE/HXL/OSM/Smart Data Models mapping | WebGL renderer, PMTiles |
 | M1–M3 scenarios and engines | verified authors, model registry and v2 evidence hash, intervals, calibration log, twin read API wired into two engines | wiring the remaining engines |
-| O2 observability | structured JSON logs with redaction and request ids, Prometheus metrics, health with audit chain, freshness and problems | OpenTelemetry traces |
+| O2 observability | structured JSON logs with redaction and request ids, Prometheus metrics, health with audit chain, freshness and problems, OpenTelemetry traces (route handlers, outbound fetches, saves, audit appends) to the nation's own collector, joined to log lines | — |
 | O4 tests | architecture tests, gate coverage tests, property tests for as-of, soak test with a recorded baseline, console smoke tests on desktop and phone, OGC checks | — |
 | C1, C2, C5 code structure | deep snapshot defaults (`withDefaults`), layering enforced by tests | splitting `lib/data/store.ts`; persistence port (R6) |

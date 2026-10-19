@@ -74,6 +74,13 @@ spec:
             - name: SUPABASE_SERVICE_ROLE_KEY
               valueFrom:
                 secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: SUPABASE_SERVICE_ROLE_KEY, optional: true }
+            {{- if .Values.otel.enabled }}
+            # Traces to the nation's own collector only (lib/ops/otel.ts).
+            - name: CIVICOS_OTEL_ENDPOINT
+              value: {{ .Values.otel.endpoint | default "http://civicos-otel-collector:4318" | quote }}
+            - name: CIVICOS_OTEL_SAMPLE_RATIO
+              value: {{ .Values.otel.sampleRatio | default "1" | quote }}
+            {{- end }}
             {{- range $k, $v := .Values.app.env }}
             - name: {{ $k }}
               value: {{ $v | quote }}
