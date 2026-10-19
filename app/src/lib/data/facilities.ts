@@ -774,9 +774,14 @@ export async function actOnFacility(id: string, a: FacilityAction, by: string): 
 /** Who is looking: their institution (undefined = whole government) or the public. */
 export type Viewer = { institution?: string; signedIn: boolean };
 
+/** Whether this viewer sees the site exactly: a public site, or an official of the owning institution or of the whole government. */
+function seesExactly(f: Facility, v: Viewer): boolean {
+  return f.sensitivity === 'public' || (v.signedIn && (!v.institution || v.institution === f.ownerId));
+}
+
 /** A site as a viewer may see it: restricted sites generalised for anyone without need, versions only for officials. */
 export function viewFacility(f: Facility, v: Viewer): Facility & { generalised?: boolean } {
-  const exact = f.sensitivity === 'public' || (v.signedIn && (!v.institution || v.institution === f.ownerId));
+  const exact = seesExactly(f, v);
   const out: Facility & { generalised?: boolean } = structuredClone(f);
   if (!exact) {
     const step = db().policy.generaliseDegrees;
@@ -810,6 +815,81 @@ export function listFacilities(filter: { ministryId?: string; category?: string;
     .filter(f => !filter.region || f.place.regionCode === filter.region || f.place.region === filter.region)
     .map(f => viewFacility(f, viewer))
     .filter(inBox);
+}
+
+/** Filters of the paged register (the table on /gov/sites). */
+export interface FacilityPageFilter {
+  ministryId?: string;
+  category?: string;
+  /** 'current' is every stage but withdrawn. */
+  state?: Facility['state'] | 'all' | 'current';
+  region?: string;
+  /** The site's own status (open, closed, …). */
+  status?: FacilityStatus;
+  /** Words in the name, the FAC id, the national id or the region; a sector code or district only when the viewer sees the site exactly. */
+  q?: string;
+  /** Only what waits on an official: a site to publish, a location to certify, a move to confirm. */
+  waiting?: boolean;
+  bbox?: [number, number, number, number];
+}
+
+export interface FacilityPage { sites: (Facility & { generalised?: boolean })[]; total: number; offset: number; limit: number; next: number | null }
+
+/** Most rows one page may ask for. */
+export const FACILITY_PAGE_MAX = 1000;
+
+/**
+ * One page of the register as the viewer may see it, with how many sites
+ * match. Filters run on the records before they are viewed but only on what
+ * this viewer is shown (a search cannot find a restricted site by a code or
+ * district its generalised view hides); only the page itself goes through
+ * viewFacility(), so a page of 100 out of 10⁵ sites costs 100 copies. The
+ * order is the register's own (as listFacilities), so offsets are stable
+ * between pages while nothing changes.
+ */
+export function pageFacilities(filter: FacilityPageFilter, viewer: Viewer, page: { offset?: number; limit: number }): FacilityPage {
+  if (!viewer || typeof viewer.signedIn !== 'boolean') throw new Error('pageFacilities needs the viewer');
+  const limit = Math.max(1, Math.min(FACILITY_PAGE_MAX, Math.floor(page.limit) || 1));
+  const offset = Math.max(0, Math.floor(page.offset ?? 0) || 0);
+  const q = (filter.q ?? '').trim().toLowerCase();
+  const stateOk = (f: Facility) => (filter.state === 'all' ? true : filter.state === 'current' ? f.state !== 'withdrawn' : f.state === (filter.state ?? 'published'));
+  const searchOk = (f: Facility) => {
+    if (!q) return true;
+    const exact = seesExactly(f, viewer);
+    const words = [f.name, f.localName ?? '', f.id, f.ids[NATIONAL_ID] ?? '', f.place.region ?? '', ...(exact ? [...Object.values(f.ids), f.place.district ?? ''] : [])];
+    return words.some(w => w.toLowerCase().includes(q));
+  };
+  // A move waiting is shown only to officials who see the site exactly (viewFacility drops it otherwise).
+  const waitingOk = (f: Facility) => !filter.waiting || f.state === 'proposed'
+    || (f.state === 'published' && f.certification.state === 'awaiting')
+    || (!!f.pendingVersion && viewer.signedIn && seesExactly(f, viewer));
+  const match = (f: Facility) => stateOk(f)
+    && (!filter.ministryId || f.ownerId === filter.ministryId)
+    && (!filter.category || f.category === filter.category)
+    && (!filter.region || f.place.regionCode === filter.region || f.place.region === filter.region)
+    && (!filter.status || f.status === filter.status)
+    && waitingOk(f) && searchOk(f);
+  if (filter.bbox) {
+    // A box matches each site where this viewer sees it (listFacilities), then the other filters.
+    const byId = new Map(db().facilities.map(f => [f.id, f]));
+    const all = listFacilities({ state: 'all', bbox: filter.bbox }, viewer).filter(v => { const f = byId.get(v.id); return !!f && match(f); });
+    return { sites: all.slice(offset, offset + limit), total: all.length, offset, limit, next: offset + limit < all.length ? offset + limit : null };
+  }
+  const out: Facility[] = [];
+  let total = 0;
+  for (const f of db().facilities) {
+    if (!match(f)) continue;
+    if (total >= offset && out.length < limit) out.push(f);
+    total++;
+  }
+  return { sites: out.map(f => viewFacility(f, viewer)), total, offset, limit, next: offset + limit < total ? offset + limit : null };
+}
+
+/** The regions sites are recorded in (not withdrawn), for a register's filter. */
+export function facilityRegions(): string[] {
+  const set = new Set<string>();
+  for (const f of db().facilities) if (f.state !== 'withdrawn' && f.place.region) set.add(f.place.region);
+  return [...set].sort();
 }
 
 export function getFacility(id: string): Facility | undefined {

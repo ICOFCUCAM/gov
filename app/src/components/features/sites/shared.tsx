@@ -20,7 +20,11 @@ export type Category = FacilityCategory & { rule: SensitivityRule; standards?: C
 export interface Method { key: CaptureMethod; label: string; how: string; typicalAccuracyM: number }
 export interface Vocabulary {
   sites: Site[];
-  counts: { total: number; published: number; certified: number; awaiting: number; byCategory: Record<string, number> };
+  /** With ?limit=: which page of the register `sites` is, and how many sites match. */
+  page?: RegisterPage;
+  /** The regions sites are recorded in (not withdrawn). */
+  regions?: string[];
+  counts:{ total: number; published: number; certified: number; awaiting: number; byCategory: Record<string, number> };
   policy: FacilityPolicy;
   mappingAgency: { id: string; name: string } | null;
   categories: Category[];
@@ -29,6 +33,7 @@ export interface Vocabulary {
   statuses: FacilityStatus[];
 }
 export interface Institution { id: string; name: string; status: string }
+export interface RegisterPage { total: number; offset: number; limit: number; next: number | null }
 
 export const input = 'focus-ring w-full rounded-[3px] border border-line bg-surface px-2.5 py-2 text-[14px] text-ink';
 export const btn = 'focus-ring rounded-[3px] border border-line px-3 py-1.5 text-[13px] font-semibold text-ink hover:bg-surface-2 disabled:opacity-50';
