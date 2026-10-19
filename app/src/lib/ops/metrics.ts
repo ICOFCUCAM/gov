@@ -39,6 +39,19 @@ function records(store: unknown): number {
 
 const PERIOD_S: Record<string, number> = { daily: 86_400, weekly: 7 * 86_400 };
 
+/** Twin sources and those overdue against their schedule (not run within twice their period). */
+export function twinFreshness(now = Date.now()): { sources: number; scheduled: number; overdue: string[] } {
+  const sources = listSources();
+  const scheduled = sources.filter(s => PERIOD_S[s.schedule]);
+  return { sources: sources.length, scheduled: scheduled.length, overdue: scheduled.filter(s => !s.lastRun || now - Date.parse(s.lastRun) > 2 * PERIOD_S[s.schedule]! * 1000).map(s => s.id) };
+}
+
+/** Warnings and errors logged in the last hour. */
+export function problemsLastHour(now = Date.now()): { warn: number; error: number } {
+  const p = recentProblems(200).filter(e => now - Date.parse(e.ts) < 3_600_000);
+  return { warn: p.filter(e => e.level === 'warn').length, error: p.filter(e => e.level === 'error').length };
+}
+
 export function collect(now = Date.now()): Family[] {
   const mem = process.memoryUsage();
   const persist = persistenceStatus();

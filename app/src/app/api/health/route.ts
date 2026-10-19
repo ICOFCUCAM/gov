@@ -10,10 +10,17 @@
 // (a standby without the writer's lease, a writer that stopped saving, or a
 // failed restore), so no traffic reaches it (readiness). Without either, the
 // answer is always 200, as before.
+//
+// Also (counts only, nothing personal): the platform audit chain (entries,
+// intact), twin sources overdue against their schedule, warnings and errors
+// logged in the last hour, and an overall status: ok, degraded (something
+// needs attention but changes are safe) or down (changes are not safe).
 
 import { NextResponse } from 'next/server';
 import { publicClient } from '@/lib/db/client';
 import { persistenceStatus, stateWritable } from '@/lib/data/persist';
+import { listAudit, verifyAuditChain } from '@/lib/data/store';
+import { problemsLastHour, twinFreshness } from '@/lib/ops/metrics';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,11 +58,20 @@ export async function GET(req: Request) {
     latency_ms = Date.now() - start;
   }
   const p = persistence();
+  const chain = verifyAuditChain();
+  const twin = twinFreshness();
+  const problems = problemsLastHour();
+  const down = !p.writable || !chain.ok || (p.error ?? '').startsWith('restore failed');
+  const degraded = !!p.error || twin.overdue.length > 0 || problems.error > 0 || (configured && !reachable);
   const body = {
     ok: configured && reachable,
+    status: down ? 'down' : degraded ? 'degraded' : 'ok',
     at: new Date().toISOString(),
     substrate: { configured, reachable, latency_ms },
     persistence: p,
+    audit: { entries: listAudit().length, intact: chain.ok, ...(chain.brokenAtSeq != null ? { brokenAtSeq: chain.brokenAtSeq } : {}) },
+    twin: { sources: twin.sources, scheduled: twin.scheduled, overdue: twin.overdue.length },
+    problems,
   };
   if (q.has('ready')) {
     const ready = p.writable && !(p.error ?? '').startsWith('restore failed');

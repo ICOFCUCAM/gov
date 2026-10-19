@@ -95,3 +95,19 @@ describe('GET /api/health', () => {
     }
   });
 });
+
+describe('health: audit, twin freshness and problems', () => {
+  it('reports the audit chain, overdue twin sources, recent problems and an overall status, counts only', async () => {
+    const { GET } = await import('./route');
+    const r = await GET(new Request('http://x/api/health'));
+    const j = await r.json();
+    expect(j).toEqual(expect.objectContaining({
+      status: expect.stringMatching(/^(ok|degraded|down)$/),
+      audit: expect.objectContaining({ entries: expect.any(Number), intact: true }),
+      twin: expect.objectContaining({ sources: expect.any(Number), overdue: expect.any(Number) }),
+      problems: expect.objectContaining({ warn: expect.any(Number), error: expect.any(Number) }),
+    }));
+    // Nothing that names a person or a message.
+    expect(JSON.stringify(j.problems)).not.toMatch(/message|by|official/);
+  });
+});
