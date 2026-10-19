@@ -383,8 +383,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   (`lib/auth/official.ts`) or `chamberBody()`, so a signed-in official's
   verified name replaces any name in the request. Never trust a `by`,
   `actor` or `officerName` from the body when someone is signed in.
-  `CIVICOS_AUTH=enforce` (with `CIVICOS_SESSION_SECRET`) refuses API changes
-  without a verified official.
+  Sign-in is enforced (`lib/auth/mode.ts`, the one place that decides) with
+  `CIVICOS_AUTH=enforce`, and by default in a production build unless
+  `CIVICOS_AUTH=open` is set (which warns at start and shows a banner on
+  console pages); it refuses API changes without a verified official. The
+  first administrator needs the one-time setup code (`lib/auth/setup-token.ts`).
 - What an official may do is one rule set, `lib/auth/roles.ts` (Administrator,
   Can sign, Officer, Auditor; an institution or the whole government). The
   middleware applies `apiPermission()` to every API change, on the account as

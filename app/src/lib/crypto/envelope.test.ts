@@ -23,6 +23,6 @@ describe('parseKek', () => {
   it('accepts hex and refuses a key of the wrong length', () => {
     const key = randomBytes(32);
     expect(parseKek(key.toString('hex'))).toEqual(key);
-    expect(() => parseKek(randomBytes(16).toString('base64'))).toThrow(/32 bytes/);
+    expect(() => parseKek(Buffer.alloc(16, 7).toString('base64'))).toThrow(/32 bytes/);
   });
 });
