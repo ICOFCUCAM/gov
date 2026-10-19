@@ -181,7 +181,12 @@ export function InteropConsole() {
                   <span className="font-mono text-xs text-ink-muted">{i.id}</span>
                 </div>
                 <div className="mt-1 text-sm text-ink-muted">
-                  {i.ownerOrg} · scopes: {i.scopes.join(', ')} · {i.rateLimitRpm} rpm
+                  {i.ownerOrg} · scopes: {i.scopes.join(', ')} · {i.rateLimitRpm} requests a minute (enforced)
+                </div>
+                <div className="mt-0.5 text-xs text-ink-muted">
+                  {i.keyPrefix
+                    ? <>Key <code className="font-mono">civ_{i.keyPrefix}…</code> · shown once when issued, kept only as a SHA-256 hash{i.lastUsedAt ? ` · last used ${new Date(i.lastUsedAt).toLocaleString()} (${i.calls ?? 0} calls)` : ' · not used yet'}</>
+                    : 'No usable key: registered before keys were kept. Issue a new key (shown once).'}
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                   {i.status === 'approved' ? (
@@ -199,6 +204,11 @@ export function InteropConsole() {
                   {i.status === 'approved' ? (
                     <Button variant="secondary" onClick={async () => { await api.interop.integrations.revoke(i.id); await load(); }}>
                       Revoke
+                    </Button>
+                  ) : null}
+                  {i.status !== 'revoked' ? (
+                    <Button variant="secondary" onClick={async () => { const r = await api.interop.integrations.rotate(i.id); setSecret({ label: 'New API key', value: r.apiKey }); await load(); }}>
+                      {i.keyPrefix ? 'Issue new key' : 'Issue key'}
                     </Button>
                   ) : null}
                 </div>

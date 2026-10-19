@@ -9,7 +9,8 @@
 // process. It is sufficient for Phase 1 demo/preview. Production uses a
 // durable sovereign datastore.
 
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
+import { take } from '@/lib/exchange/rate-limit';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { locales } from '@/lib/i18n/config';
 import type {
@@ -290,7 +291,9 @@ function seed() {
   };
   const setup = null as PlatformSetup | null;
 
-  return { setup, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
+  // SHA-256 of each integration's API key, by client id (the key itself is shown once and never kept).
+  const integrationKeys: Record<string, string> = {};
+  return { setup, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, integrationKeys, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
 }
 
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
@@ -757,9 +760,7 @@ export function registerIntegration(input: {
   if (db.integrations.some(i => i.name === input.name)) {
     return { error: 'Name already registered' };
   }
-  const rawKey = `civ_${Math.random().toString(36).slice(2)}${Math.random()
-    .toString(36)
-    .slice(2)}`;
+  const { rawKey, prefix } = newIntegrationKey();
   const client: IntegrationClient = {
     id: uid('IC'),
     kind: input.kind,
@@ -769,15 +770,72 @@ export function registerIntegration(input: {
     status: 'pending',
     rateLimitRpm: 120,
     createdAt: new Date().toISOString(),
+    keyPrefix: prefix,
+    keyIssuedAt: new Date().toISOString(),
   };
   db.integrations.unshift(client);
-  appendAudit('operator', 'integration.register', `Integration:${client.id}`, 'ok', input.name);
+  db.integrationKeys[client.id] = sha256Hex(rawKey);
+  appendAudit('operator', 'integration.register', `Integration:${client.id}`, 'ok', `${input.name} · civ_${prefix}…`);
   return {
     id: client.id,
     status: client.status,
     apiKey: rawKey,
-    note: 'Store this key now — it is not recoverable. PENDING until a ministry operator approves it.',
+    note: 'Store this key now: it is shown once and kept only as a SHA-256 hash. PENDING until a ministry operator approves it.',
   };
+}
+
+const sha256Hex = (v: string) => createHash('sha256').update(v, 'utf8').digest('hex');
+const INTEGRATION_KEY = /^civ_([0-9a-f]{8})_[A-Za-z0-9_-]{43}$/;
+
+/** `civ_<8 hex prefix>_<32 random bytes, base64url>`: the prefix finds the client, the hash proves the key. */
+function newIntegrationKey(): { rawKey: string; prefix: string } {
+  const prefix = randomBytes(4).toString('hex');
+  return { rawKey: `civ_${prefix}_${randomBytes(32).toString('base64url')}`, prefix };
+}
+
+/** Issue a new key for a client (the old one stops working at once); shown once, audited. */
+export function rotateIntegrationKey(id: string, by: string): IntegrationRegistered | { error: string } {
+  const c = db.integrations.find(i => i.id === id);
+  if (!c) return { error: 'Integration not found' };
+  if (c.status === 'revoked') return { error: 'A revoked integration gets no new key' };
+  const { rawKey, prefix } = newIntegrationKey();
+  c.keyPrefix = prefix;
+  c.keyIssuedAt = new Date().toISOString();
+  db.integrationKeys[c.id] = sha256Hex(rawKey);
+  appendAudit(by, 'integration.key.rotate', `Integration:${c.id}`, 'ok', `civ_${prefix}…`);
+  return { id: c.id, status: c.status, apiKey: rawKey, note: 'Store this key now: it is shown once. The previous key no longer works.' };
+}
+
+export type IntegrationAccess =
+  | { ok: true; client: IntegrationClient; remaining: number }
+  | { ok: false; status: 401 | 403 | 429; error: string; retryAfterSeconds?: number };
+
+/**
+ * Check an integration's API key on use (Authorization: Bearer civ_…): the
+ * key's SHA-256 is compared in constant time with the one kept, the client
+ * must be approved and hold `scope` (when given), and its `rateLimitRpm` is
+ * enforced as a token bucket per client.
+ */
+export function verifyIntegrationKey(authorization: string | null | undefined, scope?: string, now = Date.now()): IntegrationAccess {
+  const key = (authorization ?? '').replace(/^Bearer\s+/i, '').trim();
+  const m = INTEGRATION_KEY.exec(key);
+  if (!m) return { ok: false, status: 401, error: 'Send the integration key: Authorization: Bearer civ_…' };
+  const want = Buffer.from(sha256Hex(key), 'hex');
+  const client = db.integrations.find(c => {
+    if (c.keyPrefix !== m[1]) return false;
+    const h = db.integrationKeys[c.id];
+    if (!h) return false;
+    const have = Buffer.from(h, 'hex');
+    return have.length === want.length && timingSafeEqual(have, want);
+  });
+  if (!client) return { ok: false, status: 401, error: 'Unknown or replaced integration key' };
+  if (client.status !== 'approved') return { ok: false, status: 403, error: `This integration is ${client.status}` };
+  if (scope && !client.scopes.includes(scope)) return { ok: false, status: 403, error: `Scope '${scope}' is not granted to this integration` };
+  const rate = take(`integration:${client.id}`, client.rateLimitRpm, now);
+  if (!rate.allowed) return { ok: false, status: 429, error: `Rate limit of ${client.rateLimitRpm} requests a minute reached`, retryAfterSeconds: rate.retryAfterSeconds };
+  client.lastUsedAt = new Date(now).toISOString();
+  client.calls = (client.calls ?? 0) + 1;
+  return { ok: true, client, remaining: rate.remaining };
 }
 
 export function setIntegrationStatus(

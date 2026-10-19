@@ -275,6 +275,8 @@ export const api = {
         req<{ integration: IntegrationClient }>(`/api/integrations/${id}/approve`, { method: 'POST', body: '{}' }),
       revoke: (id: string) =>
         req<{ integration: IntegrationClient }>(`/api/integrations/${id}/revoke`, { method: 'POST', body: '{}' }),
+      rotate: (id: string) =>
+        req<IntegrationRegistered>(`/api/integrations/${id}/rotate`, { method: 'POST', body: '{}' }),
     },
     federation: {
       grants: () => req<{ grants: FederationGrant[] }>('/api/federation/grants'),

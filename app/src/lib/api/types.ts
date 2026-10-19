@@ -277,6 +277,11 @@ export interface IntegrationClient {
   rateLimitRpm: number;
   createdAt: ISODate;
   approvedBy?: string;
+  /** First 8 hex of the API key (`civ_<prefix>_…`), to recognise it; the key is shown once and kept only as a SHA-256 hash. Absent on clients registered before keys were kept. */
+  keyPrefix?: string;
+  keyIssuedAt?: ISODate;
+  lastUsedAt?: ISODate;
+  calls?: number;
 }
 
 export interface IntegrationRegistered {
