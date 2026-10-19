@@ -264,7 +264,10 @@ layouts. The fix is one shared map engine grown from it.
   site; each published site gets an opaque national FacilityID (UUID v7).
   Boundary versions are checked for topology beyond centre points: rings
   crossing themselves, gaps and overlaps by area, slivers, districts
-  outside the region they are filed under (`lib/geo/topology.ts`).
+  outside the region they are filed under (`lib/geo/topology.ts`). Site
+  files may be in a national grid (EPSG code, GeoJSON crs or .prj), converted
+  on the server from bundled proj4 definitions (`lib/geo/crs.ts`), the
+  system and transformation kept with each site.
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

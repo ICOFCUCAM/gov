@@ -35,6 +35,7 @@ import { parseCsv } from '@/lib/twin/csv';
 import { upsertFacilityEntity } from '@/lib/twin/register';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { uuid7 } from './uuid7';
+import { readCrs, toWgs84, type SourceCrs } from '@/lib/geo/crs';
 import type { Geom } from '@/lib/geo/admin1';
 
 // ── Vocabulary ────────────────────────────────────────────────────────────
@@ -85,7 +86,7 @@ export const CAPTURE_METHODS: { key: CaptureMethod; label: string; how: string; 
   { key: 'photo-geotag', label: 'Geotagged photo', how: 'A photo taken on site; its position is read from the picture.', typicalAccuracyM: 15 },
   { key: 'map-pin', label: 'Pin on the map', how: 'An official places the site on the national map.', typicalAccuracyM: 100 },
   { key: 'typed', label: 'Typed coordinates', how: 'Decimal degrees or degrees-minutes-seconds from a record.', typicalAccuracyM: 30 },
-  { key: 'national-grid', label: 'National grid', how: 'Easting and northing on the national grid, converted by the mapping agency.', typicalAccuracyM: 5 },
+  { key: 'national-grid', label: 'National grid', how: 'Easting and northing on the national grid (its EPSG code or .prj declared), converted to longitude/latitude on the server; the system and transformation are kept.', typicalAccuracyM: 5 },
   { key: 'gazetteer', label: 'National gazetteer', how: 'A named place or address matched in the nation\'s own gazetteer (low accuracy).', typicalAccuracyM: 1000 },
   { key: 'cadastre', label: 'Land registry parcel', how: 'The parcel the site stands on, from the cadastre.', typicalAccuracyM: 20 },
   { key: 'imagery', label: 'Digitised from imagery', how: 'The mapping agency marks the site on aerial or satellite imagery.', typicalAccuracyM: 5 },
@@ -156,7 +157,11 @@ export interface FacilityLocation {
   capturedBy?: string;
   /** What the position was given in before conversion (e.g. "EPSG:21037 easting 257000 northing 9857000"). */
   original?: string;
+  /** The national grid or other system the position was given in, and the exact transformation to WGS 84 (lib/geo/crs.ts). */
+  sourceCrs?: FacilitySourceCrs;
 }
+
+export interface FacilitySourceCrs { name: string; epsg?: number; transformation: string; x: number; y: number }
 
 export interface FacilityVersion {
   n: number;
@@ -202,6 +207,8 @@ export interface Facility {
 export interface FacilityImport {
   id: string; ministryId: string; by: string; at: string; format: 'csv' | 'geojson' | 'gpx';
   sha256: string; rows: number; accepted: number; refused: { row: number; reason: string }[]; facilityIds: string[];
+  /** The coordinate system the file declared, when not WGS 84 longitude/latitude, and the transformation applied. */
+  crs?: { name: string; epsg?: number; transformation: string };
 }
 
 interface Db { facilities: Facility[]; policy: FacilityPolicy; changes: PolicyChange[]; imports: FacilityImport[]; seq: number }
@@ -512,6 +519,8 @@ export interface ProposeInput {
   name?: string; localName?: string; category?: string; operator?: string; ids?: Record<string, string>; status?: FacilityStatus;
   lng?: number; lat?: number; accuracyM?: number; method?: CaptureMethod; capturedAt?: string; original?: string;
   region?: string; note?: string; outsideReason?: string; confirmDuplicate?: boolean;
+  /** Set by a load that converted the position from a declared coordinate system. */
+  sourceCrs?: FacilitySourceCrs;
 }
 
 /** An official of the owning institution proposes a site; the position is checked first. */
@@ -546,6 +555,7 @@ export async function proposeFacility(ministryId: string, input: ProposeInput, b
       accuracyM: Number.isFinite(accuracy) && accuracy > 0 ? Math.round(accuracy) : CAPTURE_METHODS.find(m => m.key === method)!.typicalAccuracyM,
       capturedAt: input.capturedAt && !Number.isNaN(Date.parse(input.capturedAt)) ? new Date(input.capturedAt).toISOString() : now(),
       capturedBy: by.trim(), ...(clean(input.original, 200) ? { original: clean(input.original, 200) } : {}),
+      ...(input.sourceCrs ? { sourceCrs: { name: clean(input.sourceCrs.name, 160), ...(input.sourceCrs.epsg ? { epsg: input.sourceCrs.epsg } : {}), transformation: String(input.sourceCrs.transformation).slice(0, 2000), x: Number(input.sourceCrs.x), y: Number(input.sourceCrs.y) } } : {}),
     },
     place: check.place,
     state: 'proposed', proposedBy: by.trim(), proposedAt: now(),
@@ -714,8 +724,8 @@ export function mappingAgency(): { id: string; name: string } | null {
 export const IMPORT_COLUMNS = [
   { name: 'name', required: true, means: 'The site\'s name.', aliases: ['site', 'facility', 'facility name', 'school name', 'title'] },
   { name: 'category', required: true, means: `One of: ${FACILITY_CATEGORIES.map(c => c.key).join(', ')}.`, aliases: ['type', 'kind', 'class'] },
-  { name: 'latitude', required: true, means: 'Decimal degrees, e.g. -1.28638.', aliases: ['lat', 'y'] },
-  { name: 'longitude', required: true, means: 'Decimal degrees, e.g. 36.81724.', aliases: ['lon', 'lng', 'long', 'x'] },
+  { name: 'latitude', required: true, means: 'Decimal degrees, e.g. -1.28638; or the northing (metres) when the file declares a national grid.', aliases: ['lat', 'y', 'northing'] },
+  { name: 'longitude', required: true, means: 'Decimal degrees, e.g. 36.81724; or the easting (metres) when the file declares a national grid.', aliases: ['lon', 'lng', 'long', 'x', 'easting'] },
   { name: 'code', required: false, means: 'The sector identifier (e.g. Master Facility List code, ICAO code).', aliases: ['id', 'identifier', 'mfl', 'emis', 'icao', 'locode'] },
   { name: 'status', required: false, means: `One of: ${STATUSES.join(', ')} (operational by default).`, aliases: ['state'] },
   { name: 'accuracy', required: false, means: 'Accuracy of the position in metres.', aliases: ['accuracy_m', 'precision', 'hdop'] },
@@ -755,16 +765,27 @@ export function readSitesFile(text: string, format: 'csv' | 'geojson' | 'gpx'): 
 export const MAX_SITE_ROWS = 5000;
 
 /** Load sites from a file: every row checked, refusals with reasons; dry run first. Each accepted row is proposed (published by a second official). */
-export async function importSites(ministryId: string, text: string, format: 'csv' | 'geojson' | 'gpx', by: string, opts: { dryRun?: boolean; method?: CaptureMethod } = {}): Promise<FacilityImport & { dryRun: boolean; preview: { row: number; name: string; category: string; region?: string; warnings: string[] }[] } | { error: string }> {
+export async function importSites(ministryId: string, text: string, format: 'csv' | 'geojson' | 'gpx', by: string, opts: { dryRun?: boolean; method?: CaptureMethod; crs?: string; prj?: string } = {}): Promise<FacilityImport & { dryRun: boolean; preview: { row: number; name: string; category: string; region?: string; warnings: string[] }[] } | { error: string }> {
   if (!getMinistry(ministryId)) return { error: 'No such institution' };
   if (!by.trim()) return { error: 'Name the official loading the file' };
   if (text.length > 10_000_000) return { error: 'The file is larger than 10 MB' };
   const rows = readSitesFile(text, format);
   if ('error' in rows) return rows;
   if (rows.length > MAX_SITE_ROWS) return { error: `More than ${MAX_SITE_ROWS} rows: split the file` };
-  const method: CaptureMethod = opts.method && isCaptureMethod(opts.method) ? opts.method : format === 'gpx' ? 'gnss-survey' : 'survey-import';
+  // The coordinate system: declared with the load (EPSG code or .prj), or named in a GeoJSON file's own "crs" member.
+  let declared = opts.crs;
+  if (!declared && !opts.prj && format === 'geojson') { try { const n = (JSON.parse(text) as { crs?: { properties?: { name?: unknown } } }).crs?.properties?.name; if (typeof n === 'string') declared = n; } catch { /* read above */ } }
+  const crs: SourceCrs | { error: string } = readCrs({ crs: declared, prj: opts.prj });
+  if ('error' in crs) return crs;
+  if (format === 'gpx' && !crs.wgs84) return { error: 'GPX positions are always WGS 84 longitude/latitude: do not declare another coordinate system' };
+  const fromGrid = crs.projected && !crs.wgs84;
+  const method: CaptureMethod = opts.method && isCaptureMethod(opts.method) ? opts.method
+    : format === 'gpx' ? 'gnss-survey' : fromGrid && db().policy.methods.includes('national-grid') ? 'national-grid' : 'survey-import';
   const sha256 = createHash('sha256').update(text).digest('hex');
-  const imp: FacilityImport = { id: `FIM-${randomUUID().slice(0, 8)}`, ministryId, by: by.trim(), at: now(), format, sha256, rows: rows.length, accepted: 0, refused: [], facilityIds: [] };
+  const imp: FacilityImport = {
+    id: `FIM-${randomUUID().slice(0, 8)}`, ministryId, by: by.trim(), at: now(), format, sha256, rows: rows.length, accepted: 0, refused: [], facilityIds: [],
+    ...(!crs.wgs84 ? { crs: { name: crs.name, ...(crs.epsg ? { epsg: crs.epsg } : {}), transformation: crs.transformation } } : {}),
+  };
   const preview: { row: number; name: string; category: string; region?: string; warnings: string[] }[] = [];
   const seenInFile = new Set<string>();
   for (const [i, r] of rows.entries()) {
@@ -774,7 +795,16 @@ export async function importSites(ministryId: string, text: string, format: 'csv
     const cat = categoryOf((r.category ?? '').trim().toLowerCase());
     if (!(r.name ?? '').trim()) { refuse('No name'); continue; }
     if (!cat) { refuse(`"${r.category ?? ''}" is not a category`); continue; }
-    const lat = Number((r.latitude ?? '').replace(',', '.')), lng = Number((r.longitude ?? '').replace(',', '.'));
+    let lat = Number((r.latitude ?? '').replace(',', '.')), lng = Number((r.longitude ?? '').replace(',', '.'));
+    let sourceCrs: FacilitySourceCrs | undefined;
+    if (!crs.wgs84) {
+      const p = toWgs84(crs, lng, lat);
+      if (!p) { refuse(`The position ${r.longitude ?? ''}, ${r.latitude ?? ''} cannot be converted from ${crs.name}`); continue; }
+      sourceCrs = { name: crs.name, ...(crs.epsg ? { epsg: crs.epsg } : {}), transformation: crs.transformation, x: lng, y: lat };
+      lng = p.lng; lat = p.lat;
+    } else if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      refuse('The coordinates look like easting and northing in metres: declare the file\'s coordinate system (EPSG code or .prj)'); continue;
+    }
     const key = `${cat.key}|${lat.toFixed(5)}|${lng.toFixed(5)}`;
     if (seenInFile.has(key)) { refuse('The same site appears twice in the file'); continue; }
     seenInFile.add(key);
@@ -791,13 +821,14 @@ export async function importSites(ministryId: string, text: string, format: 'csv
     const res = await proposeFacility(ministryId, {
       name: r.name, category: cat.key, lat, lng, ids, status: (r.status as FacilityStatus) || undefined, accuracyM: r.accuracy ? Number(r.accuracy) : undefined,
       method, region: r.region, operator: r.operator, confirmDuplicate: false,
+      ...(sourceCrs ? { sourceCrs, original: `${sourceCrs.name} ${crs.projected ? 'easting' : 'x'} ${sourceCrs.x} ${crs.projected ? 'northing' : 'y'} ${sourceCrs.y}` } : {}),
     }, by, { kind: 'import', importId: imp.id, sha256 });
     if ('error' in res) { refuse(res.error); continue; }
     imp.accepted++; imp.facilityIds.push(res.facility.id);
   }
   if (!opts.dryRun) {
     db().imports.unshift(imp);
-    recordAudit(imp.by, 'facility.import', `FacilityImport:${imp.id}`, imp.accepted ? 'ok' : 'error', `${imp.accepted} of ${imp.rows} rows (${format}, sha256 ${sha256.slice(0, 12)}…)`);
+    recordAudit(imp.by, 'facility.import', `FacilityImport:${imp.id}`, imp.accepted ? 'ok' : 'error', `${imp.accepted} of ${imp.rows} rows (${format}${imp.crs ? `, converted from ${imp.crs.name}` : ''}, sha256 ${sha256.slice(0, 12)}…)`);
   }
   return { ...imp, dryRun: !!opts.dryRun, preview: preview.slice(0, 200) };
 }

@@ -103,7 +103,7 @@ export function SiteDetail({ site, vocab, act, busy, ownerName, onClose }: { sit
         <dd className="font-mono">{site.location.lat}, {site.location.lng}{site.generalised ? <span className="ms-2 font-sans text-warn">position generalised (restricted site)</span> : null}</dd>
         <dt className="text-ink-muted">Where</dt><dd>{site.place.region ?? 'Outside the drawn boundary'}{site.place.district ? `, ${site.place.district}` : ''}</dd>
         <dt className="text-ink-muted">How captured</dt>
-        <dd>{methodLabel(site.location.method)}{site.location.accuracyM ? ` · within ${site.location.accuracyM} m` : ''}{site.location.capturedBy ? ` · by ${site.location.capturedBy}` : ''}{site.location.capturedAt ? ` · ${when(site.location.capturedAt)}` : ''}{site.location.original ? ` · given as “${site.location.original}”` : ''}</dd>
+        <dd>{methodLabel(site.location.method)}{site.location.accuracyM ? ` · within ${site.location.accuracyM} m` : ''}{site.location.capturedBy ? ` · by ${site.location.capturedBy}` : ''}{site.location.capturedAt ? ` · ${when(site.location.capturedAt)}` : ''}{site.location.original ? ` · given as “${site.location.original}”` : ''}{site.location.sourceCrs ? <span title={site.location.sourceCrs.transformation}> · converted from {site.location.sourceCrs.name} on the server</span> : null}</dd>
         <dt className="text-ink-muted">Sensitivity</dt><dd>{LEVEL_WORD[site.sensitivity]}</dd>
         <dt className="text-ink-muted">National facility ID</dt>
         <dd>{site.ids.national ? <span className="font-mono">{site.ids.national}</span> : <span className="text-ink-muted">Given when the site is published</span>}</dd>

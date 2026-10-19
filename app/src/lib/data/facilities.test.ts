@@ -267,4 +267,45 @@ describe('open-data candidates (4c)', () => {
   it('refuses to list sites without being told who is looking', () => {
     expect(() => (listFacilities as unknown as (f: object) => unknown)({})).toThrow(/viewer/);
   });
+
+  it('loads positions given on a national grid (EPSG code, GeoJSON crs or .prj), converting them and keeping the system and transformation', async () => {
+    const proj4 = (await import('proj4')).default;
+    const { listImports } = await import('./facilities');
+    const { readCrs } = await import('@/lib/geo/crs');
+    const arc = readCrs({ crs: 'EPSG:21037' });
+    if ('error' in arc) throw new Error(arc.error);
+    const [e, n] = (proj4('WGS84', arc.transformation, [NAIROBI.lng, NAIROBI.lat]) as number[]).map(v => Math.round(v * 100) / 100) as [number, number];
+    const csv = `name,category,easting,northing\nNairobi Primary,school,${e},${n}\n`;
+    // Undeclared metres are refused with the remedy.
+    const plain = await importSites(health, csv, 'csv', 'Officer A', { dryRun: true });
+    if ('error' in plain) throw new Error(plain.error);
+    expect(plain.refused[0]!.reason).toMatch(/easting and northing.*declare the file's coordinate system/);
+    expect(await importSites(health, csv, 'csv', 'Officer A', { crs: 'EPSG:99999' })).toEqual({ error: expect.stringMatching(/bundled/) });
+    const r = await importSites(health, csv, 'csv', 'Officer A', { crs: 'EPSG:21037' });
+    if ('error' in r) throw new Error(r.error);
+    expect(r.accepted).toBe(1);
+    expect(r.crs).toEqual({ name: 'Arc 1960 / UTM zone 37S (EPSG:21037)', epsg: 21037, transformation: expect.stringContaining('+proj=utm +zone=37 +south') });
+    expect(listImports(health)[0]!.crs?.epsg).toBe(21037);
+    const site = listFacilities({ state: 'all' }, GOV).find(f => f.name === 'Nairobi Primary')!;
+    expect(site.location.method).toBe('national-grid');
+    expect(Math.abs(site.location.lng - NAIROBI.lng)).toBeLessThan(1e-5);
+    expect(Math.abs(site.location.lat - NAIROBI.lat)).toBeLessThan(1e-5);
+    expect(site.location.sourceCrs).toEqual({ name: 'Arc 1960 / UTM zone 37S (EPSG:21037)', epsg: 21037, transformation: arc.transformation, x: e, y: n });
+    expect(site.location.original).toBe(`Arc 1960 / UTM zone 37S (EPSG:21037) easting ${e} northing ${n}`);
+    expect(site.place.regionCode).toBe('KE-30');
+    // A GeoJSON file naming its system in its own "crs" member.
+    const gj = JSON.stringify({ type: 'FeatureCollection', crs: { type: 'name', properties: { name: 'urn:ogc:def:crs:EPSG::21037' } }, features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [e + 2000, n] }, properties: { name: 'East School', category: 'school' } }] });
+    const g = await importSites(health, gj, 'geojson', 'Officer A', { dryRun: true });
+    if ('error' in g) throw new Error(g.error);
+    expect(g.accepted).toBe(1);
+    expect(g.crs?.epsg).toBe(21037);
+    // A .prj with the file.
+    const { UTM37S_PRJ } = await import('@/lib/geo/boundary-fixtures');
+    const p = await importSites(health, `name,category,x,y\nWest Clinic,health,${e - 3000},${n}\n`, 'csv', 'Officer A', { dryRun: true, prj: UTM37S_PRJ });
+    if ('error' in p) throw new Error(p.error);
+    expect(p.accepted).toBe(1);
+    expect(p.crs?.transformation).toBe(UTM37S_PRJ);
+    // GPX is always WGS 84.
+    expect(await importSites(health, '<gpx><wpt lat="-1" lon="36"><name>x</name><type>school</type></wpt></gpx>', 'gpx', 'A', { crs: 'EPSG:21037' })).toEqual({ error: expect.stringMatching(/GPX/) });
+  }, 60_000);
 });
