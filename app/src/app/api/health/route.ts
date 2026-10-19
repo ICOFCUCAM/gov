@@ -15,6 +15,12 @@
 // intact), twin sources overdue against their schedule, warnings and errors
 // logged in the last hour, whether traces go to the nation's collector, and an overall status: ok, degraded (something
 // needs attention but changes are safe) or down (changes are not safe).
+//
+// With CIVICOS_STATE=postgres, `persistence.database` reports the per-record
+// tables (lib/data/repo/postgres.ts): the adapter, PostGIS, the write queue's
+// depth, how far behind other instances' changes this one is (outbox lag) and
+// any write error. A standby there still serves reads and record changes, so
+// it reports ready while its tables are healthy.
 
 import { NextResponse } from 'next/server';
 import { publicClient } from '@/lib/db/client';
@@ -41,6 +47,17 @@ function persistence() {
     leaseHolder: s.lease?.holder ?? null,
     leaseExpiresAt: s.lease?.expiresAt ?? null,
     error: s.error ?? null,
+    database: s.records ? {
+      adapter: s.records.adapter,
+      postgis: s.records.postgis,
+      queueDepth: s.records.queueDepth,
+      lagMs: s.records.lagMs,
+      lastFlushAt: s.records.lastFlushAt ?? null,
+      lastPullAt: s.records.lastPullAt ?? null,
+      followed: s.records.followed,
+      rebased: s.records.rebased,
+      error: s.records.error ?? null,
+    } : null,
   };
 }
 
@@ -64,8 +81,10 @@ export async function GET(req: Request) {
   const twin = twinFreshness();
   const problems = problemsLastHour();
   const keys = keyCustodyStatus();
-  const down = !p.writable || !chain.ok || (p.error ?? '').startsWith('restore failed');
-  const degraded = !!p.error || !keys.ready || twin.overdue.length > 0 || problems.error > 0 || (configured && !reachable);
+  // A standby in postgres mode serves reads and record changes while its tables are healthy.
+  const serving = p.writable || (p.database !== null && p.role === 'standby' && !p.database.error);
+  const down = !serving || !chain.ok || (p.error ?? '').startsWith('restore failed');
+  const degraded = !!p.error || !keys.ready || !!p.database?.error || (p.database?.queueDepth ?? 0) > 1000 || twin.overdue.length > 0 || problems.error > 0 || (configured && !reachable);
   const body = {
     ok: configured && reachable,
     status: down ? 'down' : degraded ? 'degraded' : 'ok',
@@ -81,7 +100,7 @@ export async function GET(req: Request) {
     keys: { provider: keys.provider, ready: keys.ready },
   };
   if (q.has('ready')) {
-    const ready = p.writable && !(p.error ?? '').startsWith('restore failed');
+    const ready = serving && !(p.error ?? '').startsWith('restore failed');
     return NextResponse.json({ ...body, ready }, { status: ready ? 200 : 503 });
   }
   return NextResponse.json(body);

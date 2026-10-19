@@ -32,7 +32,8 @@ import { createHash } from 'node:crypto';
 import { geoArea, geoCentroid, geoContains } from 'd3-geo';
 import { readBoundaryFile, type BoundaryFormat, type Feature } from '@/lib/geo/boundary-files';
 import { countVertices, needsSimplifying, simplifyFeatures, SIMPLIFY_TARGET_VERTICES, type Simplification } from '@/lib/geo/boundary-simplify';
-import { recordAudit } from '@/lib/data/store';
+import { recordAudit } from '@/lib/data/store/audit';
+import { boundaryRepo } from '@/lib/data/repo';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
 import { loadAdmin2 } from '@/lib/geo/admin2';
@@ -111,6 +112,8 @@ export interface BoundaryVersion {
 interface Db { versions: BoundaryVersion[]; seq: number }
 const g = globalThis as unknown as { __civicosBoundaries?: Db };
 const db = (): Db => { const d = (g.__civicosBoundaries ??= { versions: [], seq: 1 }); d.versions ??= []; d.seq ??= 1; return d; };
+/** Versions change through the persistence port (lib/data/repo): memory, or written through to Postgres. */
+const repo = () => boundaryRepo(db);
 export function resetBoundaries(): void { g.__civicosBoundaries = undefined; }
 
 /** Largest file accepted (zipped Shapefiles and GeoPackages travel as multipart uploads). */
@@ -359,13 +362,13 @@ export async function proposeBoundaries(input: LoadInput, by: string, opts: { dr
   const d = db();
   const n = d.versions.filter(v => v.iso3 === iso3 && v.level === input.level).length + 1;
   const v: BoundaryVersion = {
-    id: `bnd-${String(d.seq++).padStart(4, '0')}`, iso3, level: input.level, n, source, validFrom, units,
+    id: `bnd-${String(repo().nextSeq()).padStart(4, '0')}`, iso3, level: input.level, n, source, validFrom, units,
     sha256: createHash('sha256').update(JSON.stringify(units)).digest('hex'),
     fileSha256: createHash('sha256').update(input.bytes ?? input.text ?? '').digest('hex'),
     format, ...(simplified ? { simplified } : {}), ...(read.reprojectedFrom ? { reprojectedFrom: read.reprojectedFrom } : {}), check, state: 'proposed', proposedBy: by.trim(), proposedAt: now(),
     ...(input.confirmFewer ? { confirmFewer: true } : {}), ...(clean(input.note, 400) ? { note: clean(input.note, 400) } : {}),
   };
-  d.versions.push(v);
+  repo().add(v);
   recordAudit(v.proposedBy, 'boundary.propose', `Boundary:${v.id}`, 'ok', `level ${v.level} v${v.n}, ${format}, ${units.length} units, valid from ${validFrom}${read.reprojectedFrom ? `, reprojected from ${read.reprojectedFrom}` : ''}${simplified ? `, simplified ${simplified.verticesBefore}→${simplified.verticesAfter} points (min ${simplified.minAreaKm2} km²)` : ''}, sha256 ${v.sha256.slice(0, 12)}`);
   return { version: strip(v), check, dryRun: false };
 }
@@ -379,6 +382,7 @@ export function publishBoundaries(id: string, by: string): BoundaryVersion | { e
   if (by.trim() === v.proposedBy) return { error: 'A different official must publish the boundaries they did not load (four-eyes)' };
   if (v.iso3 !== nationIso3()) return { error: 'These boundaries were loaded for another nation' };
   v.state = 'published'; v.publishedBy = by.trim(); v.publishedAt = now();
+  repo().save(v);
   recordAudit(v.publishedBy, 'boundary.publish', `Boundary:${v.id}`, 'ok', `level ${v.level} v${v.n}, valid from ${v.validFrom}`);
   return strip(v);
 }
@@ -391,6 +395,7 @@ export function withdrawBoundaries(id: string, by: string, reason?: string): Bou
   const why = clean(reason, 400);
   if (v.state === 'published' && !why) return { error: 'Give the reason for withdrawing published boundaries' };
   v.state = 'withdrawn'; v.withdrawnBy = by.trim() || 'operator'; v.withdrawnAt = now(); if (why) v.withdrawReason = why;
+  repo().save(v);
   recordAudit(v.withdrawnBy, 'boundary.withdraw', `Boundary:${v.id}`, 'ok', why || 'proposal withdrawn');
   return strip(v);
 }

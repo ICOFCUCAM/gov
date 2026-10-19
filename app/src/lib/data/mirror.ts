@@ -15,7 +15,7 @@
 
 import { createHash } from 'node:crypto';
 import type { DistributionRelease, LocalMirror, MediaShipment, ReleaseArtifact, SyncItem, SyncManifest } from '@/lib/api/types';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { allReleases, nationRecord, visibleTo } from './updates';
 import { compareVersions } from '@/lib/updates/semver';
 

@@ -10,7 +10,7 @@
 // change control (register 11.3). In-memory like the rest of the store (1.1).
 
 import routes from '@/app/route-lock.json';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { updateSiteSettings, getSiteSettings, setSiteBrand } from './site-settings';
 import { brandProblem, type SiteBrand } from '@/lib/public-sites/brand';
 import { SITE_IDS } from '@/lib/public-sites';

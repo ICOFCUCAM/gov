@@ -18,7 +18,17 @@ export interface RegisterOwner {
   /** The API that changes it (the only write path). */
   api: string;
   copies: Copy[];
+  /**
+   * How the owner's records are kept durably when it is not the store's JSON
+   * snapshot alone: with CIVICOS_STATE=postgres the persistence port
+   * (lib/data/repo) writes them through to per-record tables. The tables are
+   * the same register, not a copy.
+   */
+  storage?: string;
 }
+
+const RECORD_TABLES = (tables: string, rest?: string) =>
+  `CIVICOS_STATE=postgres: per-record tables ${tables} (lib/data/repo/postgres.ts, migration civicos_records), written through by every instance in one transaction with the audit entry and an outbox row, followed by the others through the outbox${rest ? `; ${rest}` : ''}. Otherwise the store's snapshot (lib/data/persist.ts).`;
 
 const civicApi = (module: string, note = 'NestJS module from the first build; no app route calls it. Kept reachable, not written.'): Copy =>
   ({ where: 'civic-api', what: `services/civic-api/src/modules/${module}`, role: 'retired', note });
@@ -28,8 +38,9 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     copies: [civicApi('tenancy')] },
   { id: 'institutions', name: 'Institutions (ministry registry)', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/org/ministries',
     copies: [{ where: 'substrate', what: 'institutions (civicos_seed_institutions)', role: 'mirror', note: 'Charter ids the substrate needs for its own rows; seeded from the registry.' }, civicApi('org')] },
-  { id: 'audit-platform', name: 'Audit chain of platform actions', owner: { where: 'platform', keys: ['__civicos'] }, api: 'recordAudit() (lib/data/store.ts)',
-    copies: [{ where: 'substrate', what: 'audit_witnesses (civicos_audit_witnesses)', role: 'mirror', note: 'Anchors of chain heads only; the entries stay in the platform chain.' }, civicApi('audit')] },
+  { id: 'audit-platform', name: 'Audit chain of platform actions', owner: { where: 'platform', keys: ['__civicos'] }, api: 'recordAudit() (lib/data/store/audit.ts)',
+    copies: [{ where: 'substrate', what: 'audit_witnesses (civicos_audit_witnesses)', role: 'mirror', note: 'Anchors of chain heads only; the entries stay in the platform chain.' }, civicApi('audit')],
+    storage: RECORD_TABLES('civicos.audit_entry (append-only, each entry chained to the one before by the database)') },
   { id: 'audit-substrate', name: 'Audit trail of substrate actions (citizen runtime)', owner: { where: 'substrate', objects: ['audit_log', 'audit_witnesses'] }, api: 'substrate RPCs', copies: [] },
   { id: 'permits', name: 'Permits and licences', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/permits', copies: [civicApi('permits')] },
   { id: 'payments', name: 'Bills and receipts', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/payments', copies: [civicApi('payments')] },
@@ -47,9 +58,12 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
   { id: 'keyring', name: 'Wrapped envelope data keys (key custody)', owner: { where: 'platform', keys: ['__civicosKeyring'] }, api: 'lib/keys/custody.ts (issued and unwrapped by the key provider at start)', copies: [] },
   { id: 'exchange', name: 'Exchanges between institutions: feed signing keys, exchange log, event outbox', owner: { where: 'platform', keys: ['__civicosFeedKeys', '__civicosExchangeLog', '__civicosEventOutbox', '__civicosPartnerCerts'] }, api: '/api/exchange, feed signing-key routes, webhooks delivery', copies: [] },
   { id: 'telemetry', name: 'Telemetry streams', owner: { where: 'substrate', objects: ['telemetry_streams', 'telemetry_readings'] }, api: 'substrate RPCs', copies: [] },
-  { id: 'twin', name: 'National twin: sources, runs, observations, metrics, scenarios, policy', owner: { where: 'platform', keys: ['__civicosTwin', '__civicosTwinScenarios', '__civicosTwinArchive', '__civicosTwinPolicy'] }, api: '/api/twin', copies: [] },
-  { id: 'facilities', name: 'National facility register', owner: { where: 'platform', keys: ['__civicosFacilities', '__civicosOpenSites', '__civicosSiteFeeds'] }, api: '/api/facilities, /api/org/ministries/{id}/facilities', copies: [] },
-  { id: 'boundaries', name: 'Boundary versions and installed districts', owner: { where: 'platform', keys: ['__civicosBoundaries', '__civicosMapPack'] }, api: '/api/boundaries, /api/map-pack', copies: [] },
+  { id: 'twin', name: 'National twin: sources, runs, observations, metrics, scenarios, policy', owner: { where: 'platform', keys: ['__civicosTwin', '__civicosTwinScenarios', '__civicosTwinArchive', '__civicosTwinPolicy'] }, api: '/api/twin', copies: [],
+    storage: RECORD_TABLES('civicos.twin_entity, twin_key, twin_source, twin_run and twin_observation (bitemporal: valid range, recorded and superseded times)', 'metrics, scenarios, the withdrawal policy and the archive\'s move log stay in the snapshot') },
+  { id: 'facilities', name: 'National facility register', owner: { where: 'platform', keys: ['__civicosFacilities', '__civicosOpenSites', '__civicosSiteFeeds'] }, api: '/api/facilities, /api/org/ministries/{id}/facilities', copies: [],
+    storage: RECORD_TABLES('civicos.facility (with a geography point and GiST index where PostGIS is present)', 'the policy, its changes, loads, feeds and open-data candidates stay in the snapshot') },
+  { id: 'boundaries', name: 'Boundary versions and installed districts', owner: { where: 'platform', keys: ['__civicosBoundaries', '__civicosMapPack'] }, api: '/api/boundaries, /api/map-pack', copies: [],
+    storage: RECORD_TABLES('civicos.boundary_version and boundary_unit (geometry(MultiPolygon, 4326) checked with ST_IsValid where PostGIS is present)', 'installed district packs stay in the snapshot') },
   { id: 'case-imports', name: 'Case loads and connected case systems', owner: { where: 'platform', keys: ['__civicosCaseImports', '__civicosCaseFeedKeys'] }, api: '/api/org/ministries/{id}/queue', copies: [] },
   { id: 'public-sites', name: 'Public sites: settings, editorial, subscriptions', owner: { where: 'platform', keys: ['__civicosSites', '__civicosEditorial', '__civicosSiteSubs'] }, api: '/api/public-sites, /api/subscriptions', copies: [] },
   { id: 'update-center', name: 'Update Center', owner: { where: 'platform', keys: ['__civicosUpdates', '__civicosSecurity', '__civicosHosting', '__civicosReadiness', '__civicosChange', '__civicosAdvisories', '__civicosSupport', '__civicosSupply', '__civicosLifecycle', '__civicosMirror', '__civicosComms', '__civicosContracts', '__civicosSovereignty'] }, api: '/api/releases', copies: [] },

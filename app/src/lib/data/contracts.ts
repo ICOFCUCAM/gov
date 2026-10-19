@@ -16,7 +16,7 @@
 // Every change is audited. Figures are placeholders (§13.7).
 
 import type { Contract, ContractInvoice, ContractKind, ContractModule, HostingPath, SubscribedNation, SupportTier } from '@/lib/api/types';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { currentPath } from './hosting';
 import { listOrders, pricing, catalogue } from './security-store';
 import { supportTier, setSupportTier } from './support';

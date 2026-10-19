@@ -17,7 +17,7 @@
 
 import type { DataCategory, DataCategoryInfo, DataSharingState, DataTransmission } from '@/lib/api/types';
 import { createHash } from 'node:crypto';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 
 export const DATA_CATEGORIES: DataCategoryInfo[] = [
   { key: 'crash-reports', label: 'Crash reports', purpose: 'Help the publisher fix crashes faster.', contains: ['Release version and component', 'Error type and code location (hashed stack frames)', 'Time of the crash'], never: ['Citizen or officer data', 'Request bodies, file contents or form fields', 'IP addresses or user identifiers'], destination: 'Publisher engineering', whenOff: 'Crashes are still logged locally; the publisher learns of them only through your support tickets.' },

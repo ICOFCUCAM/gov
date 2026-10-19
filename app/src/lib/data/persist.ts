@@ -14,6 +14,12 @@
 //   file      JSON files in CIVICOS_STATE_DIR (default ./.civicos-state), written
 //             atomically — for a nation's own servers, including air-gapped ones
 //   supabase  the nation's substrate: civicos.platform_state (service role only)
+//   postgres  the nation's own Postgres (DATABASE_URL): the audit chain, the
+//             twin's entities, keys, sources, runs and observations, the
+//             facility register and the boundary versions as per-record tables,
+//             written through on every change (lib/data/repo/postgres.ts);
+//             every other store as a snapshot in civicos.platform_state, as in
+//             supabase mode, under the same single writer's lease
 //   unset     memory only, as before (development and demonstrations)
 //
 // One writer: one running server owns the state. Before it restores anything
@@ -29,12 +35,19 @@
 // a newer version stops saving rather than overwrite. Changes from the last
 // few seconds before a crash can still be lost. Status: persistenceStatus(),
 // shown in /api/health. Recorded in docs/INTEGRATION_REGISTER.md 1.1.
+//
+// With CIVICOS_STATE=postgres the per-record registers are not single-writer:
+// any instance takes their changes (RECORD_ROUTES, also on a standby), they
+// are durable when committed, and every instance follows the others through
+// the outbox. The other stores stay single-writer until they move too.
 
 import { promises as fs, readFileSync, unlinkSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { withSpan } from '@/lib/ops/trace';
+import { useBackend } from '@/lib/data/repo';
+import type { Records, RecordsStatus } from '@/lib/data/repo/postgres';
 
 /** Who holds the writer's lease, and whether the caller now does. */
 export interface Lease { holder: string; expiresAt: string; acquired: boolean }
@@ -42,7 +55,7 @@ export interface Lease { holder: string; expiresAt: string; acquired: boolean }
 export interface SaveFence { writer: string; expected: number }
 
 export interface StateAdapter {
-  name: 'file' | 'supabase' | 'memory';
+  name: 'file' | 'supabase' | 'postgres' | 'memory';
   loadAll(): Promise<Record<string, unknown>>;
   /** Save one store. With a fence, refuses (StateConflictError) when the stored version is not `expected`; returns the new version. */
   save(key: string, json: string, fence?: SaveFence): Promise<number | void>;
@@ -257,9 +270,36 @@ export interface PersistenceStatus {
   lease?: { holder: string; expiresAt: string };
   /** Save ticks skipped because nothing was audited since the last save (review D2). */
   skipped?: number;
+  /** CIVICOS_STATE=postgres: the per-record tables (queue depth, outbox lag, PostGIS). */
+  records?: RecordsStatus;
 }
 type Status = PersistenceStatus;
-const g = globalThis as unknown as Record<string, unknown> & { __persistStatus?: Status; __persistLast?: Map<string, string>; __persistVersions?: Map<string, number>; __persistChanges?: number; __persistSeen?: number; __persistLastSweep?: number };
+const g = globalThis as unknown as Record<string, unknown> & { __persistStatus?: Status; __persistLast?: Map<string, string>; __persistVersions?: Map<string, number>; __persistChanges?: number; __persistSeen?: number; __persistLastSweep?: number; __persistRecords?: Records; __persistExcluded?: Map<string, string[]> };
+
+/**
+ * Changes that touch only the per-record registers (CIVICOS_STATE=postgres):
+ * facility actions, boundary versions, twin crosswalk keys and import
+ * withdrawals. Any instance takes them, a standby too. Everything else
+ * changes a snapshot store and needs the single writer.
+ */
+export const RECORD_ROUTES: RegExp[] = [/^\/api\/boundaries(\/[^/]+)?$/, /^\/api\/facilities\/[^/]+$/, /^\/api\/twin\/keys$/, /^\/api\/twin\/runs\/[^/]+\/withdraw$/];
+
+/** The header the middleware names a change's path in when it asks GET /api/auth/official whether this server takes it. */
+export const CHANGE_PATH_HEADER = 'x-civicos-change-path';
+
+/** Leave these fields of these stores out of every snapshot (they live in tables). */
+export function keepOutOfSnapshot(fields: Record<string, string[]>): void {
+  const m = (g.__persistExcluded ??= new Map());
+  for (const [k, v] of Object.entries(fields)) m.set(k, v);
+}
+/** A store as its snapshot holds it: without the fields kept in tables. */
+function snapshotOf(key: string): unknown {
+  const v = g[key], drop = g.__persistExcluded?.get(key);
+  if (!drop || !v || typeof v !== 'object') return v;
+  const out: Record<string, unknown> = { ...(v as Record<string, unknown>) };
+  for (const f of drop) delete out[f];
+  return out;
+}
 
 /**
  * Note that the state changed. The audit chain calls it for every audited
@@ -307,7 +347,7 @@ export async function flush(adapter: StateAdapter, now = new Date(), writer?: st
   const versions = (g.__persistVersions ??= new Map());
   const written: string[] = [];
   for (const key of liveKeys()) {
-    const data = encode(g[key]);
+    const data = encode(snapshotOf(key));
     if (last.get(key) === data) continue;
     const json = JSON.stringify({ v: SNAPSHOT_FORMAT, at: now.toISOString(), ...(writer ? { writer } : {}), data: JSON.parse(data) });
     const v = await withSpan('state.save', { 'civicos.store': key, 'civicos.adapter': adapter.name, 'civicos.bytes': json.length }, () => adapter.save(key, json, writer ? { writer, expected: versions.get(key) ?? 0 } : undefined));
@@ -320,14 +360,24 @@ export async function flush(adapter: StateAdapter, now = new Date(), writer?: st
 }
 
 export function persistenceStatus(): Status {
-  return g.__persistStatus ?? { adapter: 'memory', restored: [], saves: 0, startedAt: new Date(0).toISOString() };
+  const s = g.__persistStatus ?? { adapter: 'memory', restored: [], saves: 0, startedAt: new Date(0).toISOString() };
+  return g.__persistRecords ? { ...s, records: g.__persistRecords.status() } : s;
 }
 
-/** Whether this server may accept changes: false on a standby, or on a writer that stopped saving (its changes would be lost). */
-export function stateWritable(): boolean {
+/**
+ * Whether this server may accept changes: false on a standby, or on a writer
+ * that stopped saving (its changes would be lost). With CIVICOS_STATE=postgres
+ * and the change's path given, a change that touches only the per-record
+ * registers (RECORD_ROUTES) is accepted on any instance.
+ */
+export function stateWritable(pathname?: string): boolean {
   const r = g.__persistStatus?.role;
-  return r !== 'standby' && r !== 'stopped';
+  if (r !== 'standby' && r !== 'stopped') return true;
+  return !!g.__persistRecords && !!pathname && RECORD_ROUTES.some(re => re.test(pathname));
 }
+
+/** The per-record backend when CIVICOS_STATE=postgres started it. */
+export const recordsBackend = (): Records | undefined => g.__persistRecords;
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -340,14 +390,28 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
  */
 export async function startFromEnv(env = process.env): Promise<Status> {
   const mode = (env.CIVICOS_STATE ?? '').toLowerCase();
-  const adapter = mode === 'file' ? fileAdapter(env.CIVICOS_STATE_DIR || path.join(process.cwd(), '.civicos-state'))
+  const stateDir = env.CIVICOS_STATE_DIR || path.join(process.cwd(), '.civicos-state');
+  // postgres: per-record tables for the ported registers, snapshots for the rest, over one connection pool.
+  let pg: typeof import('@/lib/data/repo/postgres') | undefined;
+  let sql: import('@/lib/data/repo/postgres').Sql | undefined;
+  let pgError: string | undefined;
+  if (mode === 'postgres') {
+    if (!env.DATABASE_URL) pgError = 'CIVICOS_STATE=postgres but DATABASE_URL is not set; keeping state in memory';
+    else {
+      try { pg = await import('@/lib/data/repo/postgres'); sql = await pg.connect(env.DATABASE_URL, { max: Number(env.CIVICOS_PG_POOL) || 5 }); await pg.ensureSchema(sql); }
+      catch (e) { pgError = `CIVICOS_STATE=postgres: could not connect or apply the schema: ${(e as Error).message}; keeping state in memory`; sql = undefined; }
+    }
+  }
+  const adapter = mode === 'file' ? fileAdapter(stateDir)
     : mode === 'supabase' ? await supabaseAdapter()
+    : pg && sql ? pg.postgresSnapshotAdapter(sql, m => new StateConflictError(m))
     : null;
   const writer = `${os.hostname()}-${process.pid}-${randomUUID().slice(0, 8)}`;
   const status: Status = { adapter: adapter?.name ?? 'memory', restored: [], saves: 0, startedAt: new Date().toISOString(), writer, role: 'writer', fencing: 'none' };
   g.__persistStatus = status;
   if (!adapter) {
     if (mode === 'supabase') status.error = 'CIVICOS_STATE=supabase but the substrate is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY); keeping state in memory';
+    if (pgError) status.error = pgError;
     return status;
   }
   const ttl = Number(env.CIVICOS_STATE_LEASE_TTL_MS) || 30_000;
@@ -388,10 +452,34 @@ export async function startFromEnv(env = process.env): Promise<Status> {
     else status.error = `restore failed: ${(e as Error).message}`;
   }
   status.fencing = fenced ? 'lease+version' : 'none';
+
+  // 3. postgres: the per-record registers, on writer and standby alike (lib/data/repo/postgres.ts).
+  let records: Records | undefined;
+  if (pg && sql) {
+    try {
+      records = await pg.startRecords({
+        sql, instance: writer, isPrimary: () => status.role === 'writer',
+        journalDir: env.CIVICOS_PG_JOURNAL_DIR || path.join(stateDir, 'journal'),
+        pollMs: Number(env.CIVICOS_PG_POLL_MS) || 2000,
+      });
+      useBackend(records.backend);
+      keepOutOfSnapshot(pg.RECORD_FIELDS);
+      g.__persistRecords = records;
+    } catch (e) {
+      status.role = 'standby';
+      status.error = `the per-record tables could not be started: ${(e as Error).message}; this server refuses changes`;
+    }
+  }
+
   // Baseline: what was just restored needs no immediate write.
   const last = (g.__persistLast ??= new Map());
-  for (const k of status.restored) last.set(k, encode(g[k]));
-  if (status.role === 'standby') return status;
+  for (const k of status.restored) last.set(k, encode(snapshotOf(k)));
+  if (status.role === 'standby') {
+    if (records && status.error?.startsWith('standby:')) status.error = status.error.replace('saves nothing and refuses changes', 'saves no snapshot and takes only changes to the per-record registers (RECORD_ROUTES)');
+    // A standby still takes record changes: write them out before it stops.
+    if (records) for (const sig of ['SIGTERM', 'SIGINT'] as const) process.once(sig, () => { void records!.drain(5000).finally(() => process.exit(0)); });
+    return status;
+  }
 
   let timer: ReturnType<typeof setInterval> | undefined;
   const stop = (why: string) => { status.role = 'stopped'; status.error = why; if (timer) clearInterval(timer); };
@@ -420,7 +508,7 @@ export async function startFromEnv(env = process.env): Promise<Status> {
   process.once('exit', () => { if (status.role === 'writer' && fenced) adapter.releaseSync?.(writer); });
   for (const sig of ['SIGTERM', 'SIGINT'] as const) {
     process.once(sig, () => {
-      void save().finally(async () => {
+      void (records ? records.drain(5000) : Promise.resolve(true)).then(save).finally(async () => {
         if (status.role === 'writer' && fenced) await adapter.release?.(writer).catch(() => undefined);
         process.exit(0);
       });

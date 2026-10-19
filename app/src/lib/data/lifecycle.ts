@@ -10,7 +10,7 @@
 // notices. A nation's chamber warns when the line it runs nears its end.
 
 import type { DistributionRelease, LifecycleKind, LifecycleLine, LifecyclePolicy, LifecycleWarning, SubscribedNation } from '@/lib/api/types';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { parseVersion } from '@/lib/updates/semver';
 
 const DAY = 86_400_000;

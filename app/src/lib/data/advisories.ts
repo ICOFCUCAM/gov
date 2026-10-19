@@ -10,7 +10,7 @@
 // Advisory data is a placeholder feed (docs/INTEGRATION_REGISTER.md §12).
 
 import type { AdvisoryExposure, AdvisoryNationStatus, AdvisorySeverity, DistributionRelease, PatchCommitment, SecurityAdvisory, SubscribedNation } from '@/lib/api/types';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { compareVersions, gte } from '@/lib/updates/semver';
 
 /** Publisher patch-time commitments: from disclosure to a released fix. */

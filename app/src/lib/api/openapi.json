@@ -7482,7 +7482,7 @@
         ],
         "operationId": "get_health",
         "summary": "GET /api/health",
-        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, whether traces go to the nation's collector, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe).",
+        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, whether traces go to the nation's collector, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe). With CIVICOS_STATE=postgres, `persistence.database` reports the per-record tables (lib/data/repo/postgres.ts): the adapter, PostGIS, the write queue's depth, how far behind other instances' changes this one is (outbox lag) and any write error. A standby there still serves reads and record changes, so it reports ready while its tables are healthy.",
         "parameters": [],
         "responses": {
           "200": {
@@ -7556,6 +7556,7 @@
                               "enum": [
                                 "file",
                                 "memory",
+                                "postgres",
                                 "supabase"
                               ]
                             },
@@ -7635,6 +7636,78 @@
                                   "type": "string"
                                 }
                               ]
+                            },
+                            "database": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "adapter": {
+                                      "type": "string",
+                                      "const": "postgres"
+                                    },
+                                    "postgis": {
+                                      "type": "boolean"
+                                    },
+                                    "queueDepth": {
+                                      "type": "number"
+                                    },
+                                    "lagMs": {
+                                      "type": "number"
+                                    },
+                                    "lastFlushAt": {
+                                      "anyOf": [
+                                        {
+                                          "type": "null"
+                                        },
+                                        {
+                                          "type": "string"
+                                        }
+                                      ]
+                                    },
+                                    "lastPullAt": {
+                                      "anyOf": [
+                                        {
+                                          "type": "null"
+                                        },
+                                        {
+                                          "type": "string"
+                                        }
+                                      ]
+                                    },
+                                    "followed": {
+                                      "type": "number"
+                                    },
+                                    "rebased": {
+                                      "type": "number"
+                                    },
+                                    "error": {
+                                      "anyOf": [
+                                        {
+                                          "type": "null"
+                                        },
+                                        {
+                                          "type": "string"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "adapter",
+                                    "postgis",
+                                    "queueDepth",
+                                    "lagMs",
+                                    "lastFlushAt",
+                                    "lastPullAt",
+                                    "followed",
+                                    "rebased",
+                                    "error"
+                                  ]
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -7649,7 +7722,8 @@
                             "writer",
                             "leaseHolder",
                             "leaseExpiresAt",
-                            "error"
+                            "error",
+                            "database"
                           ]
                         },
                         "audit": {
@@ -7796,6 +7870,7 @@
                               "enum": [
                                 "file",
                                 "memory",
+                                "postgres",
                                 "supabase"
                               ]
                             },
@@ -7875,6 +7950,78 @@
                                   "type": "string"
                                 }
                               ]
+                            },
+                            "database": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "adapter": {
+                                      "type": "string",
+                                      "const": "postgres"
+                                    },
+                                    "postgis": {
+                                      "type": "boolean"
+                                    },
+                                    "queueDepth": {
+                                      "type": "number"
+                                    },
+                                    "lagMs": {
+                                      "type": "number"
+                                    },
+                                    "lastFlushAt": {
+                                      "anyOf": [
+                                        {
+                                          "type": "null"
+                                        },
+                                        {
+                                          "type": "string"
+                                        }
+                                      ]
+                                    },
+                                    "lastPullAt": {
+                                      "anyOf": [
+                                        {
+                                          "type": "null"
+                                        },
+                                        {
+                                          "type": "string"
+                                        }
+                                      ]
+                                    },
+                                    "followed": {
+                                      "type": "number"
+                                    },
+                                    "rebased": {
+                                      "type": "number"
+                                    },
+                                    "error": {
+                                      "anyOf": [
+                                        {
+                                          "type": "null"
+                                        },
+                                        {
+                                          "type": "string"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "adapter",
+                                    "postgis",
+                                    "queueDepth",
+                                    "lagMs",
+                                    "lastFlushAt",
+                                    "lastPullAt",
+                                    "followed",
+                                    "rebased",
+                                    "error"
+                                  ]
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -7889,7 +8036,8 @@
                             "writer",
                             "leaseHolder",
                             "leaseExpiresAt",
-                            "error"
+                            "error",
+                            "database"
                           ]
                         },
                         "audit": {
@@ -8014,7 +8162,7 @@
         ],
         "operationId": "post_health",
         "summary": "POST /api/health",
-        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, whether traces go to the nation's collector, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe).",
+        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, whether traces go to the nation's collector, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe). With CIVICOS_STATE=postgres, `persistence.database` reports the per-record tables (lib/data/repo/postgres.ts): the adapter, PostGIS, the write queue's depth, how far behind other instances' changes this one is (outbox lag) and any write error. A standby there still serves reads and record changes, so it reports ready while its tables are healthy.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -15364,6 +15512,7 @@
                           "enum": [
                             "file",
                             "memory",
+                            "postgres",
                             "supabase"
                           ]
                         },
@@ -15424,6 +15573,9 @@
                         "skipped": {
                           "type": "number",
                           "description": "Save ticks skipped because nothing was audited since the last save (review D2)."
+                        },
+                        "records": {
+                          "$ref": "#/components/schemas/RecordsStatus"
                         }
                       },
                       "required": [
@@ -39059,6 +39211,68 @@
           "breaching"
         ]
       },
+      "RecordsStatus": {
+        "type": "object",
+        "properties": {
+          "adapter": {
+            "type": "string",
+            "const": "postgres"
+          },
+          "postgis": {
+            "type": "boolean"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "queueDepth": {
+            "type": "number",
+            "description": "Changes written in memory and not yet committed."
+          },
+          "flushes": {
+            "type": "number"
+          },
+          "lastFlushAt": {
+            "type": "string"
+          },
+          "lastFlushMs": {
+            "type": "number"
+          },
+          "rebased": {
+            "type": "number",
+            "description": "Audit entries moved up the chain because another instance appended first."
+          },
+          "followed": {
+            "type": "number",
+            "description": "Outbox rows applied from other instances, the last one's id, and how far behind its commit time this instance applied it (ms)."
+          },
+          "outboxSeen": {
+            "type": "number"
+          },
+          "lagMs": {
+            "type": "number"
+          },
+          "lastPullAt": {
+            "type": "string"
+          },
+          "journal": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "adapter",
+          "postgis",
+          "instance",
+          "queueDepth",
+          "flushes",
+          "rebased",
+          "followed",
+          "outboxSeen",
+          "lagMs"
+        ]
+      },
       "RegionReporting": {
         "type": "object",
         "properties": {
@@ -39179,6 +39393,10 @@
             "items": {
               "$ref": "#/components/schemas/Copy"
             }
+          },
+          "storage": {
+            "type": "string",
+            "description": "How the owner's records are kept durably when it is not the store's JSON snapshot alone: with CIVICOS_STATE=postgres the persistence port (lib/data/repo) writes them through to per-record tables. The tables are the same register, not a copy."
           }
         },
         "required": [

@@ -6,6 +6,7 @@
 // and sign-out is written to the audit chain; addresses never are.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { OFFICIAL_COOKIE, SESSION_HOURS, type OfficialClaims } from '@/lib/auth/session-token';
 import { checkPassword, hasAccounts, sessionSecretProblem } from '@/lib/auth/officials';
 import { currentOfficial, actorLabel, issueSession } from '@/lib/auth/official';
@@ -13,7 +14,7 @@ import { serverClient } from '@/lib/db/client';
 import { recordAudit, getMinistry } from '@/lib/data/store';
 import { roleFromSubstrate, type OfficialRole } from '@/lib/auth/roles';
 import { deviceOf } from '@/lib/auth/activity';
-import { stateWritable } from '@/lib/data/persist';
+import { stateWritable, CHANGE_PATH_HEADER } from '@/lib/data/persist';
 import { roleOf } from '@/lib/auth/roles';
 
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,9 @@ const enforced = () => process.env.CIVICOS_AUTH === 'enforce';
 
 export async function GET() {
   const o = await currentOfficial();
+  // The path of the change the middleware is checking (lib/data/persist.ts RECORD_ROUTES).
+  let forPath: string | undefined;
+  try { forPath = headers().get(CHANGE_PATH_HEADER) ?? undefined; } catch { forPath = undefined; }
   const official = o ? { ...o, institutionName: o.institution ? getMinistry(o.institution)?.name : undefined } : null;
   return NextResponse.json({
     official,
@@ -29,8 +33,9 @@ export async function GET() {
     accounts: hasAccounts(),
     enforced: enforced(),
     // Whether this server accepts changes: false on a standby that does not hold the
-    // state writer's lease (lib/data/persist.ts). The middleware refuses changes then.
-    state: { writable: stateWritable() },
+    // state writer's lease (lib/data/persist.ts), unless the change touches only the
+    // per-record registers (CIVICOS_STATE=postgres). The middleware refuses changes then.
+    state: { writable: stateWritable(forPath) },
     // Why no session can be issued or verified (CIVICOS_AUTH=enforce without CIVICOS_SESSION_SECRET), else null.
     sessionKeyProblem: sessionSecretProblem(),
   });

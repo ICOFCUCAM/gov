@@ -29,7 +29,7 @@ import type {
   ByoSecurityTool, NationSoftware, OrderStage, SecurityCategory, SecurityCenter, SecurityDefinitions,
   SecurityGate, SecurityOrder, SecurityPosture, SecurityProduct, StorePolicy, SubscribedNation,
 } from '@/lib/api/types';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { nationPaymentRail } from '@/lib/nation/registry';
 
 export const REFERENCE_CURRENCY = 'USD';

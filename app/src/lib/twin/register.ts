@@ -25,6 +25,7 @@ import { loadDivisions } from '@/lib/geo/divisions';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { parseCsv } from './csv';
 import { twinDb, resetTwinDb, type TwinDb } from './db';
+import { twinRepo } from '@/lib/data/repo';
 import { archive, archivedRuns, archivedMetrics, archivedObservations, forEachArchived, resetTwinArchive } from './archive';
 import { METRIC_ID, getMetric, isKnownMetric, listMetrics, toUcum, sameUnit, type Aggregation } from './metrics';
 import { readSdmx, isSdmxFormat, SDMX_MEDIA, SDMX_ROW, type SdmxOptions, type SdmxFormat } from './sdmx';
@@ -136,6 +137,8 @@ export interface Observation {
 }
 
 const db = twinDb;
+/** Changes go through the persistence port (lib/data/repo): memory, or written through to Postgres. */
+const repo = () => twinRepo(twinDb);
 export type { TwinDb };
 export function resetTwin(): void { resetTwinDb(); resetTwinArchive(); }
 
@@ -194,9 +197,11 @@ export const entityIdFor = (kind: string, code: string): string => `${kind}:${co
  */
 function ensureUris(): void {
   const base = uriBase();
+  const changed: TwinEntity[] = [];
   for (const e of Object.values(db().entities)) {
-    if (!e.uri || (e.uri.startsWith(PLACEHOLDER_URI_BASE) && base !== PLACEHOLDER_URI_BASE)) e.uri = `${base}${uriPath(e.id)}`;
+    if (!e.uri || (e.uri.startsWith(PLACEHOLDER_URI_BASE) && base !== PLACEHOLDER_URI_BASE)) { e.uri = `${base}${uriPath(e.id)}`; changed.push(e); }
   }
+  if (changed.length) repo().putEntities(changed);
 }
 
 export async function syncRegister(): Promise<{ entities: number }> {
@@ -226,6 +231,7 @@ export async function syncRegister(): Promise<{ entities: number }> {
     const uri = d.entities[id]?.uri;
     d.entities[id] = { id, kind: 'institution', name: m.name, parent: nationId, ...(uri ? { uri } : {}) };
   }
+  repo().putEntities(Object.values(d.entities));
   d.syncedFor = stamp;
   ensureUris();
   return { entities: Object.keys(d.entities).length };
@@ -241,10 +247,8 @@ export function upsertFacilityEntity(f: { id: string; name: string; location: { 
   const d = db();
   const id = `facility:${f.id}`;
   const uri = d.entities[id]?.uri;
-  d.entities[id] = { id, kind: 'facility', name: f.name, code: f.id, ...(uri ? { uri } : {}), location: { lat: f.location.lat, lng: f.location.lng }, ...(f.regionCode ? { parent: `place:${f.regionCode}` } : {}) };
-  for (const [system, key] of Object.entries(f.ids)) {
-    if (!d.keys.some(k => k.system === system && k.key === key)) d.keys.push({ entityId: id, system, key });
-  }
+  repo().putEntity({ id, kind: 'facility', name: f.name, code: f.id, ...(uri ? { uri } : {}), location: { lat: f.location.lat, lng: f.location.lng }, ...(f.regionCode ? { parent: `place:${f.regionCode}` } : {}) });
+  for (const [system, key] of Object.entries(f.ids)) repo().addKey({ entityId: id, system, key });
   ensureUris();
 }
 
@@ -285,7 +289,7 @@ export function linkKey(entityId: string, system: string, key: string, by: strin
   if (!system.trim() || !key.trim()) return { error: 'Give the system and its id' };
   const clash = d.keys.find(x => x.system === system && x.key === key);
   if (clash && clash.entityId !== entityId) return { error: `"${key}" in ${system} already means ${clash.entityId}` };
-  if (!clash) d.keys.push({ entityId, system, key });
+  if (!clash) repo().addKey({ entityId, system, key });
   recordAudit(by, 'twin.key.link', `Twin:${entityId}`, 'ok', `${system}:${key}`);
   return { ok: true };
 }
@@ -352,14 +356,14 @@ export function registerSource(input: Partial<TwinSource> & { by?: string }): Tw
   }
   const d = db();
   const s: TwinSource = {
-    id: `SRC-${d.seq++}`, name: name.slice(0, 120), publisher: publisher.slice(0, 120), kind: input.kind, ...(url ? { url } : {}),
+    id: `SRC-${repo().nextSeq()}`, name: name.slice(0, 120), publisher: publisher.slice(0, 120), kind: input.kind, ...(url ? { url } : {}),
     system: (input.system ?? slug(publisher)).slice(0, 60) || 'source', mapping: m,
     ...(sdmx ? { format: sdmx, ...(input.sdmx ? { sdmx: cleanSdmx(input.sdmx) } : {}) } : {}),
     ...(input.licence?.trim() ? { licence: input.licence.trim().slice(0, 120) } : {}),
     schedule: input.schedule === 'daily' || input.schedule === 'weekly' ? input.schedule : 'manual',
     registeredBy: by, registeredAt: new Date().toISOString(),
   };
-  d.sources.push(s);
+  repo().addSource(s);
   recordAudit(by, 'twin.source.register', `Twin:${s.id}`, 'ok', `${s.name} (${s.publisher})${url ? ` ${url}` : ''}`);
   return s;
 }
@@ -424,15 +428,14 @@ function registerStreamSource(input: Partial<TwinSource>, by: string, name: stri
   const spec = checkStreamSpec(input.stream);
   if ('error' in spec) return spec;
   if (spec.entity && !resolveEntity(spec.entity)) return { error: `${spec.entity} is not an entity of the register` };
-  const d = db();
   const s: TwinSource = {
-    id: `SRC-${d.seq++}`, name: name.slice(0, 120), publisher: publisher.slice(0, 120), kind: 'stream', stream: spec,
+    id: `SRC-${repo().nextSeq()}`, name: name.slice(0, 120), publisher: publisher.slice(0, 120), kind: 'stream', stream: spec,
     system: (input.system ?? slug(publisher)).slice(0, 60) || 'source', mapping: STREAM_MAPPING,
     ...(input.licence?.trim() ? { licence: input.licence.trim().slice(0, 120) } : {}),
     schedule: input.schedule === 'manual' || input.schedule === 'weekly' ? input.schedule : 'daily',
     registeredBy: by, registeredAt: new Date().toISOString(),
   };
-  d.sources.push(s);
+  repo().addSource(s);
   recordAudit(by, 'twin.source.register', `Twin:${s.id}`, 'ok', `${s.name} (${s.publisher}) telemetry stream ${spec.streamId}: ${spec.metrics.map(m => `${m.metric}=${m.statistic}`).join(', ')}`);
   return s;
 }
@@ -480,7 +483,7 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
   if (!by.trim()) return { error: 'Name the official running the import' };
   await syncRegister();
   const now = deps.now ?? new Date();
-  const run: TwinRun = { id: `RUN-${d.seq++}`, sourceId, at: now.toISOString(), by: by.trim(), status: 'ok', rows: 0, accepted: 0, rejected: [] };
+  const run: TwinRun = { id: `RUN-${repo().nextSeq()}`, sourceId, at: now.toISOString(), by: by.trim(), status: 'ok', rows: 0, accepted: 0, rejected: [] };
   let text = csv;
   let streamed: Record<string, string>[] | undefined;
   try {
@@ -542,14 +545,15 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
     // A stream with no complete new day since its last run has nothing to add: not a failure.
     if (streamed && run.rows === 0) run.status = 'ok';
     else if (run.accepted === 0 && !run.error) run.error = 'No row could be accepted';
-    d.observations.push(...fresh);
+    repo().addObservations(fresh);
     if (fresh.length) notifyObservations(fresh);
   } catch (e) {
     run.status = 'failed';
     run.error = (e as Error).message;
   }
   s.lastRun = run.at;
-  d.runs.unshift(run);
+  repo().saveSource(s);
+  repo().addRun(run);
   // Over the working limits: the oldest move to the history archive, never dropped (audited).
   const oldObs = d.observations.length > LIMITS.observations ? d.observations.splice(0, d.observations.length - LIMITS.observations) : [];
   const oldRuns = d.runs.length > LIMITS.runs ? d.runs.splice(LIMITS.runs).reverse() : [];
@@ -575,11 +579,9 @@ export function withdrawRun(runId: string, by: string, reason: string, now = new
   if (why.length < 4) return { error: 'Give the reason for withdrawing it' };
   if (run.withdrawn) return { error: `Already withdrawn on ${run.withdrawn.at.slice(0, 10)} by ${run.withdrawn.by}` };
   const at = now.toISOString();
-  let superseded = 0;
-  const mark = (o: Observation) => { if (o.runId === runId && !o.supersededAt) { o.supersededAt = at; superseded++; } };
-  d.observations.forEach(mark);
-  forEachArchived(undefined, mark);
+  const superseded = repo().supersedeRun(runId, at);
   run.withdrawn = { at, by: who, reason: why.slice(0, 500) };
+  repo().saveRun(run);
   recordAudit(who, 'twin.run.withdraw', `Twin:${run.sourceId}/${run.id}`, 'ok', `${superseded} observations superseded · ${run.withdrawn.reason}`);
   return { run: { ...run }, superseded };
 }

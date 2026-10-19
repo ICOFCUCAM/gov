@@ -35,6 +35,7 @@ import { parseCsv } from '@/lib/twin/csv';
 import { upsertFacilityEntity } from '@/lib/twin/register';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { uuid7 } from './uuid7';
+import { facilityRepo } from '@/lib/data/repo';
 import { readCrs, toWgs84, type SourceCrs } from '@/lib/geo/crs';
 import { kinksOf } from '@/lib/geo/topology';
 import { categoryFromOsm } from './facility-standards';
@@ -250,6 +251,8 @@ const db = (): Db => {
  */
 export const NATIONAL_ID = 'national';
 export const nationalId = (f: Pick<Facility, 'ids'>): string | undefined => f.ids?.[NATIONAL_ID];
+/** Site records change through the persistence port (lib/data/repo): memory, or written through to Postgres. */
+const repo = () => facilityRepo(db);
 export function resetFacilities(): void { g.__civicosFacilities = undefined; gi.__facilityGrid = undefined; }
 
 // ── Spatial index ─────────────────────────────────────────────────────────
@@ -515,6 +518,7 @@ export async function checkLocation(input: { lng: number; lat: number; category:
 
 function pushVersion(f: Facility, by: string, what: string): void {
   f.versions.push({ n: f.versions.length + 1, at: now(), by, what, name: f.name, category: f.category, status: f.status, location: { ...f.location }, sensitivity: f.sensitivity });
+  repo().save(f);
 }
 
 function certificationFor(): Facility['certification'] {
@@ -640,7 +644,7 @@ export async function proposeFacility(ministryId: string, input: ProposeInput, b
   const status = STATUSES.includes(input.status as FacilityStatus) ? input.status as FacilityStatus : 'operational';
   const accuracy = Number(input.accuracyM);
   const f: Facility = {
-    id: `FAC-${String(db().seq++).padStart(5, '0')}`,
+    id: `FAC-${String(repo().nextSeq()).padStart(5, '0')}`,
     name, ...(clean(input.localName) ? { localName: clean(input.localName) } : {}),
     category: cat.key, ownerId: ministryId, ...(clean(input.operator) ? { operator: clean(input.operator) } : {}),
     ids, status, sensitivity: rule.level,
@@ -658,7 +662,7 @@ export async function proposeFacility(ministryId: string, input: ProposeInput, b
   };
   applyStructure(f, structure.value);
   pushVersion(f, f.proposedBy, 'proposed');
-  db().facilities.push(f);
+  repo().add(f);
   gridInsert(f);
   recordAudit(f.proposedBy, 'facility.propose', `Facility:${f.id}`, 'ok', `${cat.label}: ${f.name} (${f.location.lat}, ${f.location.lng}; ${method})`);
   return { facility: structuredClone(f), check };
@@ -760,6 +764,7 @@ export async function actOnFacility(id: string, a: FacilityAction, by: string): 
     }
     default: return { error: 'Unknown action' };
   }
+  repo().save(f);
   return structuredClone(f);
 }
 
