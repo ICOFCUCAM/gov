@@ -36,6 +36,8 @@ Last reviewed: 17 Oct 2026.
 
 **Logging** (review R12): server code logs through `app/src/lib/ops/log.ts` — one JSON line per entry (time, level, event, service, request id, fields) on stdout/stderr for the nation's own collector; personal data and secrets are redacted by field name; `CIVICOS_LOG_LEVEL` sets the level (default info, warn in tests); the latest warnings and errors are kept in memory for health reports. `architecture.test.ts` refuses `console.*` in server code. Not yet: shipping to a collector (the deployment's log agent reads stdout).
 
+**Metrics** (review R12): `GET /api/metrics` serves Prometheus text (`app/src/lib/ops/metrics.ts`): process memory and uptime, records per durable store, persistence saves/age/error, audit chain length and integrity, twin source age/overdue/last-run status, facility register counts, warnings and errors in the last hour. Scrapers send `CIVICOS_METRICS_TOKEN` as a bearer token; without it a signed-in official may read them. Not yet: per-route request rates and latencies (golden signals) — the middleware runs at the edge and cannot count into the Node process; an OpenTelemetry collector in the deployment can take them from the ingress.
+
 ## 2. AI assistant (per-nation opt-in)
 
 | # | Area | Today | To integrate | Where |

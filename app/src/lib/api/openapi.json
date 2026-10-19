@@ -54,6 +54,9 @@
       "name": "map-pack"
     },
     {
+      "name": "metrics"
+    },
+    {
       "name": "municipalities"
     },
     {
@@ -3072,6 +3075,33 @@
           }
         },
         "x-source": "src/app/api/map-pack/route.ts"
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "operationId": "get_metrics",
+        "summary": "GET /api/metrics",
+        "description": "Prometheus scrape endpoint (lib/ops/metrics.ts). With CIVICOS_METRICS_TOKEN set, the scraper sends it as a bearer token; without it, a signed-in official may read the metrics (or anyone, outside enforce mode).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/metrics/route.ts"
       }
     },
     "/api/municipalities": {
