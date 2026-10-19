@@ -52,14 +52,14 @@ function client(opts: {
 
 describe('GET /api/cron/deliver-events', () => {
   it('401 without the secret', async () => {
-    const res = await GET(new Request('http://x?token=x'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer x' } }));
     expect(res.status).toBe(401);
   });
 
   it('503 when substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -73,7 +73,7 @@ describe('GET /api/cron/deliver-events', () => {
     }));
     fetchMock.mockResolvedValue({ ok: true, status: 200 });
 
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.total_delivered).toBe(2);
     expect(json.ok).toBe(true);
@@ -109,7 +109,7 @@ describe('GET /api/cron/deliver-events', () => {
       .mockResolvedValueOnce({ ok: true, status: 200 })
       .mockResolvedValueOnce({ ok: false, status: 500 });
 
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.total_delivered).toBe(1);
     expect(json.ok).toBe(false);
@@ -136,7 +136,7 @@ describe('GET /api/cron/deliver-events', () => {
     }));
     fetchMock.mockResolvedValue({ ok: false, status: 502 });
 
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.total_delivered).toBe(0);
     const markCalls = rpc.mock.calls.filter((c: unknown[]) => c[0] === 'civicos_mark_webhook_delivered');
@@ -154,7 +154,7 @@ describe('GET /api/cron/deliver-events', () => {
     }));
     fetchMock.mockRejectedValue(new Error('aborted'));
 
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.ok).toBe(false);
     expect(json.total_delivered).toBe(0);
@@ -163,7 +163,7 @@ describe('GET /api/cron/deliver-events', () => {
   it('reports an empty run when there are no active webhooks', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(client({ webhooks: [], events: {} }));
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.webhooks_processed).toBe(0);
     expect(json.total_delivered).toBe(0);

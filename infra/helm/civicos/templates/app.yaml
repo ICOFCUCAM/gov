@@ -88,6 +88,22 @@ spec:
             - name: CIVICOS_CRON_SECRET
               valueFrom:
                 secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_CRON_SECRET }
+            # One secret per purpose (go-live review M-7): the cron secret opens only /api/cron/*.
+            # Each is optional; a purpose without its secret accepts no machine caller.
+            - name: CIVICOS_EXPORT_SECRET
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_EXPORT_SECRET, optional: true }
+            - name: CIVICOS_PUBLISHER_SECRET
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_PUBLISHER_SECRET, optional: true }
+            - name: CIVICOS_PROVISIONING_SECRET
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_PROVISIONING_SECRET, optional: true }
+            # The one-time code for creating the first administrator (go-live review C-1). Optional: without it the
+            # server writes a code to its log at start. Remove it from the secret once the first account exists.
+            - name: CIVICOS_SETUP_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_SETUP_TOKEN, optional: true }
             - name: NEXT_PUBLIC_SUPABASE_URL
               valueFrom:
                 secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: NEXT_PUBLIC_SUPABASE_URL, optional: true }

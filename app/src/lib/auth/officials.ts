@@ -13,6 +13,7 @@ import { seal, open as openSealed } from '@/lib/crypto/envelope';
 import { recordAudit, getMinistry } from '@/lib/data/store';
 import { isRole, roleLabel, roleOf, type OfficialRole } from './roles';
 import { touch } from '@/lib/data/repo/track';
+import { checkSetupCode, consumeSetupCode, localAccountsAllowed, LOCAL_ACCOUNTS_REFUSED } from './setup-token';
 
 export interface OfficialAccount {
   id: string;
@@ -44,7 +45,17 @@ export type PublicAccount = Omit<OfficialAccount, 'passwordHash' | 'twoStep' | '
 
 /** Who must use the second sign-in step: nobody (default), officials who can sign (and administrators), or everyone. */
 export type TwoStepPolicy = 'none' | 'signers' | 'all';
-interface Db { accounts: OfficialAccount[]; failures: Record<string, number[]>; secret?: string; twoStepPolicy?: TwoStepPolicy }
+interface Db {
+  accounts: OfficialAccount[]; failures: Record<string, number[]>; secret?: string; twoStepPolicy?: TwoStepPolicy;
+  /** SHA-256 (hex) of each CIVICOS_SETUP_TOKEN already used for a first account: never accepted again (lib/auth/setup-token.ts). */
+  setupTokensUsed?: string[];
+  /** What substrate officers may do on the platform, set by an administrator (keyed by officer id; lib/auth/substrate-officials.ts). */
+  substrateOfficers?: Record<string, SubstrateAssignment>;
+  /** Sessions ended before they expire (sign-out): SHA-256 of the token → its expiry (seconds). */
+  revoked?: Record<string, number>;
+}
+/** An administrator's decision about a substrate officer's role and institution on the platform. */
+export interface SubstrateAssignment { role: OfficialRole; institution?: string; by: string; at: string }
 const g = globalThis as unknown as { __civicosOfficials?: Db };
 const db = (): Db => touch('__civicosOfficials', g.__civicosOfficials ??= { accounts: [], failures: {} });
 export function resetOfficials(): void { g.__civicosOfficials = undefined; }
@@ -136,12 +147,23 @@ export const listAccounts = (): PublicAccount[] => db().accounts.map(pub);
 
 /**
  * Create an account. The first account of an installation needs no signed-in
- * official (it is made at installation, like setup); every later one is made
- * by a signed-in official, named in the audit chain.
+ * official (it is made at installation, like setup) but needs the one-time
+ * setup code (lib/auth/setup-token.ts, review C-1); every later one is made
+ * by a signed-in official, named in the audit chain. While the substrate is
+ * the sign-in method no platform account is created (unless the operator
+ * allows them, CIVICOS_LOCAL_ACCOUNTS=allow).
  */
-export async function createAccount(input: { email?: string; name?: string; office?: string; password?: string; role?: string; institution?: string }, by: string | null): Promise<PublicAccount | { error: string }> {
+export async function createAccount(input: { email?: string; name?: string; office?: string; password?: string; role?: string; institution?: string; setupToken?: string }, by: string | null): Promise<PublicAccount | { error: string }> {
   const d = db();
+  if (!localAccountsAllowed()) return { error: LOCAL_ACCOUNTS_REFUSED };
   if (d.accounts.length && !by) return { error: 'Only a signed-in official can create accounts' };
+  if (!d.accounts.length) {
+    const why = checkSetupCode(input.setupToken, d.setupTokensUsed ?? []);
+    if (why) {
+      if (input.setupToken) recordAudit('first account attempt', 'auth.setup-code', 'Officials:first', 'denied', why);
+      return { error: why };
+    }
+  }
   const email = norm(input.email ?? '');
   const name = (input.name ?? '').trim();
   const office = (input.office ?? '').trim();
@@ -159,8 +181,15 @@ export async function createAccount(input: { email?: string; name?: string; offi
   // Hashing yields the thread: check again that nobody took the address (or became the first account) meanwhile.
   if (d.accounts.some(x => x.email === email)) return { error: 'An account with that email already exists' };
   if (first && d.accounts.length) return { error: 'The first account was created meanwhile; sign in to create more' };
+  if (first) {
+    // Checked again after the hash yielded the thread, then used up in the same step as the account is added.
+    const why = checkSetupCode(input.setupToken, d.setupTokensUsed ?? []);
+    if (why) return { error: why };
+    const used = consumeSetupCode();
+    if (used) d.setupTokensUsed = [...(d.setupTokensUsed ?? []), used];
+  }
   d.accounts.push(a);
-  recordAudit(by ?? `${a.name} (first account)`, 'auth.account.create', `Official:${a.id}`, 'ok', `${a.name} · ${a.office} · ${roleLabel(role)}${institution ? ` · ${getMinistry(institution)?.name ?? institution}` : ' · whole government'}`);
+  recordAudit(by ?? `${a.name} (first account, setup code)`, 'auth.account.create', `Official:${a.id}`, 'ok', `${a.name} · ${a.office} · ${roleLabel(role)}${institution ? ` · ${getMinistry(institution)?.name ?? institution}` : ' · whole government'}`);
   return pub(a);
 }
 
@@ -410,3 +439,52 @@ export async function resetPassword(emailRaw: string, code: string, next: string
   recordAudit(a!.name, 'auth.password.reset', `Official:${a!.id}`, 'ok', 'new password set with a reset code; other sessions ended');
   return pub(a!);
 }
+
+// ── Substrate officers' role and institution on the platform (review H-3) ──
+// Officials who sign in through the substrate have no platform account; what
+// they may do here is the administrator's decision recorded below, or, when
+// none is recorded, the least the officer register supports
+// (lib/auth/substrate-officials.ts).
+
+export const substrateAssignment = (officerId: string): SubstrateAssignment | undefined => db().substrateOfficers?.[officerId];
+export const listSubstrateAssignments = (): ({ officerId: string } & SubstrateAssignment)[] =>
+  Object.entries(db().substrateOfficers ?? {}).map(([officerId, a]) => ({ officerId, ...a }));
+
+/** Record (or, with role null, remove) what a substrate officer may do on the platform. Administrators only; audited. */
+export function setSubstrateAssignment(officerId: string, input: { role?: string | null; institution?: string | null; name?: string }, by: string, now = Date.now()): ({ officerId: string } & SubstrateAssignment) | { removed: string } | { error: string } {
+  const id = (officerId ?? '').trim();
+  if (!/^[0-9a-zA-Z-]{1,64}$/.test(id)) return { error: 'Give the officer\'s id from the substrate\'s officer register' };
+  const d = db();
+  const label = (input.name ?? '').trim().slice(0, 120) || `officer ${id}`;
+  if (input.role === null) {
+    if (d.substrateOfficers?.[id]) {
+      delete d.substrateOfficers[id];
+      recordAudit(by, 'auth.substrate-officer.role', `Official:officer:${id}`, 'ok', `${label} · assignment removed (register default applies)`);
+    }
+    return { removed: id };
+  }
+  if (!isRole(input.role)) return { error: 'Unknown role' };
+  const institution = (input.institution ?? '').trim() || undefined;
+  if (institution && !getMinistry(institution)) return { error: 'Unknown institution' };
+  const a: SubstrateAssignment = { role: input.role, institution, by, at: new Date(now).toISOString() };
+  (d.substrateOfficers ??= {})[id] = a;
+  recordAudit(by, 'auth.substrate-officer.role', `Official:officer:${id}`, 'ok', `${label} · ${roleLabel(a.role)}${institution ? ` · ${getMinistry(institution)?.name ?? institution}` : ' · whole government'}`);
+  return { officerId: id, ...a };
+}
+
+// ── Ended sessions (review M-1) ──────────────────────────────────────
+// Signing out ends the session on the server, not only in the browser: the
+// token's SHA-256 is kept until the token would have expired, and
+// currentOfficial() refuses it (so the middleware does too, for reads and
+// changes alike).
+
+/** End a session before it expires. `exp` is the token's expiry (seconds since 1970). */
+export function revokeSession(tokenHash: string, exp: number, now = Date.now()): void {
+  const d = db();
+  const nowS = Math.floor(now / 1000);
+  const kept: Record<string, number> = {};
+  for (const [h, e] of Object.entries(d.revoked ?? {})) if (e > nowS) kept[h] = e;
+  if (exp > nowS) kept[tokenHash] = exp;
+  d.revoked = kept;
+}
+export const sessionRevoked = (tokenHash: string): boolean => !!db().revoked?.[tokenHash];

@@ -20,7 +20,7 @@ beforeEach(() => {
 
 describe('GET /api/cron/audit-anchor', () => {
   it('returns 401 without the secret', async () => {
-    const res = await GET(new Request('http://x?token=x'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer x' } }));
     expect(res.status).toBe(401);
   });
 
@@ -28,7 +28,7 @@ describe('GET /api/cron/audit-anchor', () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
     recordAudit('Director', 'test.anchor', 'T:1', 'ok');
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(res.status).toBe(200);
     expect(json.substrate).toBe('not configured');
@@ -43,9 +43,9 @@ describe('GET /api/cron/audit-anchor', () => {
     serverClientMock.mockReturnValue(null);
     try {
       recordAudit('Director', 'test.anchor', 'T:2', 'ok');
-      await GET(new Request('http://x?token=correct'));
+      await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
       recordAudit('Director', 'test.anchor', 'T:3', 'ok');
-      const json = await (await GET(new Request('http://x?token=correct'))).json();
+      const json = await (await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).json();
       expect(json.platform.anchored_to).toEqual(['file']);
       const lines = readFileSync(join(dir, 'heads.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
       expect(lines).toHaveLength(2);
@@ -67,7 +67,7 @@ describe('GET /api/cron/audit-anchor', () => {
       }),
       rpc: vi.fn(),
     });
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(500);
   });
 
@@ -98,7 +98,7 @@ describe('GET /api/cron/audit-anchor', () => {
       },
       rpc,
     });
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(res.status).toBe(200);
     expect(json.scopes_swept).toBe(2);
@@ -131,7 +131,7 @@ describe('GET /api/cron/audit-anchor', () => {
       },
       rpc,
     });
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.scopes_anchored).toBe(0);
     // Only the platform head is published; the empty scope makes no call.
@@ -152,7 +152,7 @@ describe('GET /api/cron/audit-anchor', () => {
       }),
       rpc: async () => ({ data: null, error: null }),
     });
-    const res = await GET(new Request('http://x?token=correct&scopes=10'));
+    const res = await GET(new Request('http://x?scopes=10', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.scopes_swept).toBe(10);
   });

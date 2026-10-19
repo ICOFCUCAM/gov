@@ -6,13 +6,13 @@
 // which entries succeeded and which failed.
 //
 // Auth: callers must hold a platform-tier session OR pass the
-// CIVICOS_CRON_SECRET (so CLI/automation can use it without a UI sign-in).
+// CIVICOS_PROVISIONING_SECRET as a bearer (so CLI/automation can use it without a UI sign-in).
 // The substrate enforces the platform-tier check separately, so this
 // route is a defense-in-depth gate, not the sole authorisation.
 
 import { NextResponse } from 'next/server';
 import { serverClient } from '@/lib/db/client';
-import { platformOrCronAuthorized } from '@/lib/platform-auth';
+import { platformOrSecretAuthorized } from '@/lib/platform-auth';
 import { parseOfficerCsv, type OfficerInputRow as InputRow } from '@/lib/officer-csv';
 
 export const dynamic = 'force-dynamic';
@@ -28,7 +28,7 @@ interface OutputRow {
 }
 
 export async function POST(req: Request) {
-  if (!await platformOrCronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!await platformOrSecretAuthorized(req, 'provisioning')) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const sb = serverClient();
   if (!sb) return NextResponse.json({ error: 'substrate not configured' }, { status: 503 });
 

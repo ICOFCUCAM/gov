@@ -3,7 +3,7 @@ import { resetReadiness } from '@/lib/data/readiness';
 import { stagingOff } from '@/lib/data/testkit';
 
 const platformAuth = vi.fn();
-vi.mock('@/lib/platform-auth', () => ({ platformOrCronAuthorized: (req: Request) => platformAuth(req) }));
+vi.mock('@/lib/platform-auth', () => ({ platformOrSecretAuthorized: (req: Request) => platformAuth(req) }));
 
 import { GET as chamberGET } from './route';
 import { POST as decisionPOST } from './[id]/decision/route';

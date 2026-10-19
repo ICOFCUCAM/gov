@@ -17,6 +17,9 @@ import { STA_WRITE_SCOPE } from '@/lib/twin/stream';
 import { applyNation } from '@/lib/nation/registry';
 import { listAudit, registerIntegration, setIntegrationStatus } from '@/lib/data/store';
 import { apiPermission, mutationRule, canTaskSensor } from '@/lib/auth/roles';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 process.env.CIVICOS_SCRYPT_N = '16384';
 let cookie: string | undefined;
@@ -53,7 +56,7 @@ let source: TwinSource;
 let capId: string;
 beforeEach(async () => {
   resetOfficials(); resetTwin(); resetReadings(); resetTasking(); cookie = undefined;
-  await createAccount({ email: 'admin@gov.test', name: 'Admin', office: 'Head of Service', password: PW }, null);
+  await createAccount({ email: 'admin@gov.test', name: 'Admin', office: 'Head of Service', password: PW , setupToken: SETUP_TOKEN }, null);
   applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Garissa', 'Nairobi City'] });
   await syncRegister();
   registerMetric({ by: 'A', id: 'river.level_max', label: 'Highest river level', unit: 'm', aggregation: 'none', period: 'day' });

@@ -4,7 +4,7 @@
 // website with a feed (Link, Embed or Migrate mode). A site whose website is
 // unreachable keeps its last good copy and records the error.
 //
-// Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=),
+// Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only),
 // like every /api/cron/* worker.
 
 import { NextResponse } from 'next/server';

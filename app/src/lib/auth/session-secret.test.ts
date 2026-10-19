@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import { resetOfficials, createAccount, sessionSecret, sessionSecretProblem, SessionSecretMissing } from './officials';
 import { signClaims } from './session-token';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 process.env.CIVICOS_SCRYPT_N = '16384';
 
@@ -30,7 +33,7 @@ describe('the session key under CIVICOS_AUTH=enforce', () => {
   });
 
   it('refuses to sign anyone in, and says why, when enforce mode has no secret', async () => {
-    await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null);
+    await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null);
     process.env.CIVICOS_AUTH = 'enforce';
     const res = await POST(new NextRequest('http://localhost/api/auth/official', { method: 'POST', body: JSON.stringify({ email: 'a@g.gov', password: PW }) }));
     expect(res.status).toBe(503);
@@ -41,7 +44,7 @@ describe('the session key under CIVICOS_AUTH=enforce', () => {
   });
 
   it('accepts no session, even one signed with the earlier generated key', async () => {
-    const a = await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null);
+    const a = await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null);
     if ('error' in a) throw new Error(a.error);
     const now = Math.floor(Date.now() / 1000);
     cookie = await signClaims({ sub: `local:${a.id}`, name: 'A', method: 'local', iat: now, exp: now + 600 }, sessionSecret());

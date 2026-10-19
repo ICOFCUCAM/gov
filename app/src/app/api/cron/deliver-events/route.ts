@@ -7,7 +7,7 @@
 // cursor holds (so the next run retries from the same point) and the
 // failure is recorded.
 //
-// Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
+// Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only).
 // Delivery is at-least-once per cursor; consumers dedupe on event id.
 // Cadence: recommended every 1–5 minutes.
 

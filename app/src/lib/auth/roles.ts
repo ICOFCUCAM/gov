@@ -69,16 +69,16 @@ export const SELF_AUTHENTICATED: RegExp[] = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/ap
   /^\/api\/oauth\/token$/];         // OAuth2 client credentials: the integration's id and key (lib/auth/client-credentials.ts)
 /**
  * Routes that verify an `Authorization` bearer themselves (the automation
- * secret or a platform-tier substrate session: lib/platform-auth.ts,
+ * secret of the route's purpose or a platform-tier substrate session: lib/platform-auth.ts,
  * lib/updates/access.ts). Only on these, and on SELF_AUTHENTICATED, does a
  * request carrying an Authorization header skip the session gate; anywhere
  * else the header counts for nothing.
  */
 export const BEARER_ROUTES: RegExp[] = [
   /^\/api\/releases\/publisher(\/|$)/,       // publisherAuthorized() under CIVICOS_AUTH=enforce
-  /^\/api\/admin\/officers\/bulk$/,           // platformOrCronAuthorized()
-  /^\/api\/federation\/webhooks\/test$/,      // platformOrCronAuthorized()
-  /^\/api\/substrate\/(digest|export)$/,     // CIVICOS_CRON_SECRET
+  /^\/api\/admin\/officers\/bulk$/,           // platformOrSecretAuthorized(req, 'provisioning')
+  /^\/api\/federation\/webhooks\/test$/,      // platformOrSecretAuthorized(req, 'provisioning')
+  /^\/api\/substrate\/(digest|export)$/,     // CIVICOS_EXPORT_SECRET
   // SensorThings create on a twin stream source's Datastream and DELETE (withdrawal) of a reading it sent: the bound
   // integration's own key, scope sta:write (verifyIntegrationKey in staCreate / staDelete, lib/twin/sta-write.ts);
   // PATCH answers 405. POST Tasks there takes no key: a signed-in official allowed by canTaskSensor (checked in the route).

@@ -72,14 +72,29 @@ const bearerRequest = (req: NextRequest): boolean =>
 
 /**
  * Under enforcement, a page or read outside the public lists needs a verified
- * official: the signed civicos_official cookie, not the page cookie. API reads
- * are answered 401; pages go to sign-in (citizen pages to /login).
+ * official: the signed civicos_official cookie, not the page cookie, and a
+ * session that still counts now (review M-1): the platform is asked, as for
+ * changes, whether the account is still enabled, the password unchanged and
+ * the session not signed out (answers cached READ_CHECK_MS per token). API
+ * reads are answered 401; pages go to sign-in (citizen pages to /login).
+ * When the platform cannot be asked, reads are refused (503), as changes are.
  */
 async function readGate(req: NextRequest, res: NextResponse): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   if (bearerRequest(req)) return res;
-  if (await verifyToken(req.cookies.get(OFFICIAL_COOKIE)?.value, process.env.CIVICOS_SESSION_SECRET)) return res;
-  if (pathname.startsWith('/api/')) {
+  const token = req.cookies.get(OFFICIAL_COOKIE)?.value;
+  if (await verifyToken(token, process.env.CIVICOS_SESSION_SECRET)) {
+    const live = await liveForRead(req, token!);
+    if (live) return res;
+    if (live === undefined) {
+      return pathname.startsWith('/api/')
+        ? NextResponse.json({ error: 'Your session could not be checked just now; try again' }, { status: 503 })
+        : new NextResponse('Your session could not be checked just now; try again shortly.', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8', 'retry-after': '5' } });
+    }
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Your session has ended (signed out, password changed or account disabled); sign in again (/sign-in)' }, { status: 401 });
+    }
+  } else if (pathname.startsWith('/api/')) {
     return NextResponse.json({ error: 'Sign in as an official to read this (/sign-in)' }, { status: 401 });
   }
   const url = req.nextUrl.clone();
@@ -110,6 +125,32 @@ async function liveOfficial(req: NextRequest): Promise<{ official: OfficialClaim
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Reads ask the platform too (review M-1), but a page loads many reads at
+ * once, so each token's answer is kept READ_CHECK_MS: a disabled account or
+ * an ended session loses read access within seconds, not at the token's
+ * expiry. Keyed by the token's SHA-256, never the token. Changes are always
+ * asked afresh (roleGate).
+ */
+export const READ_CHECK_MS = 5_000;
+const READ_CACHE_MAX = 2_000;
+const readChecks = new Map<string, { at: number; ok: boolean }>();
+export function clearReadChecks(): void { readChecks.clear(); }
+
+async function liveForRead(req: NextRequest, token: string): Promise<boolean | undefined> {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)));
+  const key = btoa(String.fromCharCode(...digest));
+  const now = Date.now();
+  const hit = readChecks.get(key);
+  if (hit && now - hit.at < READ_CHECK_MS) return hit.ok;
+  const asked = await liveOfficial(req);
+  if (!asked) return undefined; // not remembered: ask again next time
+  const ok = !!asked.official;
+  if (readChecks.size >= READ_CACHE_MAX) readChecks.delete(readChecks.keys().next().value!);
+  readChecks.set(key, { at: now, ok });
+  return ok;
 }
 
 /**

@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { resetOfficials, createAccount, checkPassword, setDisabled, setRole, listAccounts, sessionSecret, MAX_FAILURES } from './officials';
 import { signClaims, verifyToken, type OfficialClaims } from './session-token';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 // The full N=2^17 cost is covered by password-hash.test.ts; these tests check behaviour, not cost.
 process.env.CIVICOS_SCRYPT_N = '16384';
@@ -16,7 +19,7 @@ describe('platform accounts for officials', () => {
   beforeEach(async () => { resetOfficials(); cookie = undefined; });
 
   it('lets the installation create its first account, then only signed-in officials', async () => {
-    const a = ok(await createAccount({ email: 'PS@Agri.gov', name: 'J. Otieno', office: 'Permanent Secretary', password: PW }, null));
+    const a = ok(await createAccount({ email: 'PS@Agri.gov', name: 'J. Otieno', office: 'Permanent Secretary', password: PW , setupToken: SETUP_TOKEN }, null));
     expect(a).toMatchObject({ email: 'ps@agri.gov', createdBy: 'installation' });
     expect(a).not.toHaveProperty('passwordHash');
     expect(await createAccount({ email: 'x@y.gov', name: 'X', office: 'Y', password: PW }, null)).toEqual({ error: expect.stringMatching(/signed-in/) });
@@ -25,7 +28,7 @@ describe('platform accounts for officials', () => {
   });
 
   it('checks passwords against a salted hash and stops guessing after repeated failures', async () => {
-    ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW }, null));
+    ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW , setupToken: SETUP_TOKEN }, null));
     expect(await checkPassword('ps@agri.gov', PW)).toMatchObject({ name: 'J. Otieno' });
     for (let i = 0; i < MAX_FAILURES; i++) expect(await checkPassword('ps@agri.gov', 'wrong password!!')).toEqual({ error: 'Wrong email or password' });
     expect(await checkPassword('ps@agri.gov', PW)).toEqual({ error: expect.stringMatching(/Too many/) });
@@ -33,7 +36,7 @@ describe('platform accounts for officials', () => {
   });
 
   it('gives the first account administration and later ones the role they are given', async () => {
-    const a = ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW, role: 'auditor' }, null));
+    const a = ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW, role: 'auditor' , setupToken: SETUP_TOKEN }, null));
     expect(a).toMatchObject({ role: 'administrator' });
     expect(a.institution).toBeUndefined();
     expect(ok(await createAccount({ email: 'b@g.gov', name: 'B', office: 'O', password: PW }, 'A'))).toMatchObject({ role: 'officer' });
@@ -45,14 +48,14 @@ describe('platform accounts for officials', () => {
   });
 
   it('always keeps one active administrator', async () => {
-    const a = ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    const a = ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null));
     ok(await createAccount({ email: 'b@g.gov', name: 'B', office: 'O', password: PW }, 'A'));
     expect(setRole(a.id, { role: 'officer' }, 'B')).toEqual({ error: expect.stringMatching(/last active administrator/) });
     expect(setDisabled(a.id, true, 'B')).toEqual({ error: expect.stringMatching(/last active administrator/) });
   });
 
   it('never disables the last active account, and refuses disabled accounts', async () => {
-    const a = ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    const a = ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null));
     expect(setDisabled(a.id, true, 'A')).toEqual({ error: expect.stringMatching(/last active/) });
     const b = ok(await createAccount({ email: 'b@g.gov', name: 'B', office: 'O', password: PW }, 'A'));
     ok(setDisabled(b.id, true, 'A'));
@@ -63,7 +66,7 @@ describe('platform accounts for officials', () => {
 
 describe('signed sessions', () => {
   let id = '1';
-  beforeEach(async () => { resetOfficials(); cookie = undefined; id = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'Permanent Secretary', password: PW }, null)).id; });
+  beforeEach(async () => { resetOfficials(); cookie = undefined; id = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'Permanent Secretary', password: PW , setupToken: SETUP_TOKEN }, null)).id; });
   const claims = (exp: number): OfficialClaims => ({ sub: `local:${id}`, name: 'J. Otieno', office: 'Permanent Secretary', method: 'local', iat: 0, exp });
 
   it('verifies only unexpired tokens signed with this installation\'s key', async () => {
@@ -90,7 +93,7 @@ describe('the second sign-in step', () => {
   it('is set up with a confirmed code, then asked for at every sign-in, each code once', async () => {
     const { startTwoStep, confirmTwoStep } = await import('./officials');
     const { hotp, stepAt } = await import('./totp');
-    const a = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW }, null));
+    const a = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW , setupToken: SETUP_TOKEN }, null));
     const { secret } = ok(startTwoStep(a.id, 'Test State'));
     expect(confirmTwoStep(a.id, '000000', now)).toEqual({ error: expect.stringMatching(/not right/) });
     const { recoveryCodes } = ok(confirmTwoStep(a.id, hotp(secret, stepAt(now)), now));
@@ -110,7 +113,7 @@ describe('the second sign-in step', () => {
     const { setTwoStepPolicy, startTwoStep, confirmTwoStep, removeTwoStep, accountById } = await import('./officials');
     const { hotp, stepAt } = await import('./totp');
     const { apiPermission } = await import('./roles');
-    const admin = ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    const admin = ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null));
     const officer = ok(await createAccount({ email: 'o@g.gov', name: 'B', office: 'O', password: PW, role: 'officer' }, 'A'));
     ok(setTwoStepPolicy('signers', 'A'));
     expect(accountById(admin.id)?.twoStepRequired).toBe(true);
@@ -134,7 +137,7 @@ describe('changing and resetting passwords', () => {
   it('changes a password with the current one and ends sessions issued before', async () => {
     const { changePassword } = await import('./officials');
     const { currentOfficial } = await import('./official');
-    const a = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW }, null));
+    const a = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW , setupToken: SETUP_TOKEN }, null));
     const iat = Math.floor(Date.now() / 1000) - 60;
     cookie = await signClaims({ sub: `local:${a.id}`, name: 'J. Otieno', method: 'local', iat, exp: iat + 3600 }, sessionSecret());
     expect(await currentOfficial()).not.toBeNull();
@@ -150,7 +153,7 @@ describe('changing and resetting passwords', () => {
   it('resets a forgotten password with a one-time code that expires, never shown again', async () => {
     const { issueReset, resetPassword, accountById } = await import('./officials');
     const now = Date.now();
-    ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null));
     const b = ok(await createAccount({ email: 'b@g.gov', name: 'B', office: 'O', password: PW }, 'A'));
     const { code, expiresAt } = ok(issueReset(b.id, 'A (administrator)', now));
     expect(code).toMatch(/^[0-9A-F]{6}-[0-9A-F]{6}-[0-9A-F]{6}$/);
@@ -166,7 +169,7 @@ describe('changing and resetting passwords', () => {
 
   it('counts wrong reset codes toward the lockout', async () => {
     const { resetPassword } = await import('./officials');
-    ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null));
     for (let i = 0; i < MAX_FAILURES; i++) await resetPassword('a@g.gov', 'nope', NEW);
     expect(await resetPassword('a@g.gov', 'nope', NEW)).toEqual({ error: expect.stringMatching(/Too many/) });
   });
@@ -179,7 +182,7 @@ describe('an official\'s sign-in activity', () => {
     const { accountActivity, deviceOf } = await import('./activity');
     const { recordAudit } = await import('@/lib/data/store');
     const { issueReset } = await import('./officials');
-    ok(await createAccount({ email: 'a@g.gov', name: 'Admin', office: 'O', password: PW }, null));
+    ok(await createAccount({ email: 'a@g.gov', name: 'Admin', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null));
     const b = ok(await createAccount({ email: 'b@g.gov', name: 'Bea', office: 'Clerk', password: PW }, 'Admin, O'));
     recordAudit('Bea, Clerk', 'auth.sign-in', `Official:local:${b.id}`, 'ok', 'local · Firefox on Linux');
     await checkPassword('b@g.gov', 'wrong password!!');

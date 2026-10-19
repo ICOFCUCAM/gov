@@ -7,17 +7,17 @@
 //
 // Publisher side (/api/releases/publisher/*): behind the middleware session
 // gate like every non-public route, and, when CIVICOS_AUTH=enforce, also
-// requires a platform-tier officer session or the automation secret.
+// requires a platform-tier officer session or CIVICOS_PUBLISHER_SECRET (bearer).
 
 import { NextResponse } from 'next/server';
-import { platformOrCronAuthorized } from '@/lib/platform-auth';
+import { platformOrSecretAuthorized } from '@/lib/platform-auth';
 import { resolveNation } from '@/lib/data/updates';
 import type { SubscribedNation } from '@/lib/api/types';
 import { withOfficial } from '@/lib/auth/official';
 
 export async function publisherAuthorized(req: Request): Promise<boolean> {
   if (process.env.CIVICOS_AUTH !== 'enforce') return true;
-  return platformOrCronAuthorized(req);
+  return platformOrSecretAuthorized(req, 'publisher');
 }
 
 export const unauthorized = () => NextResponse.json({ error: 'Publisher access requires a platform-tier session' }, { status: 401 });

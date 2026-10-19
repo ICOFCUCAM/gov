@@ -16,7 +16,7 @@ beforeEach(() => {
   serverClientMock.mockReset();
   tokenScopedClientMock.mockReset();
   tokenScopedClientMock.mockReturnValue(null);
-  delete process.env.CIVICOS_CRON_SECRET;
+  delete process.env.CIVICOS_PROVISIONING_SECRET;
 });
 
 describe('parseOfficerCsv', () => {
@@ -58,25 +58,25 @@ describe('POST /api/admin/officers/bulk', () => {
   });
 
   it('returns 503 when the substrate is not configured', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_PROVISIONING_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await POST(new Request('http://x?token=correct', { method: 'POST', body: '' }));
+    const res = await POST(new Request('http://x', { headers: { authorization: 'Bearer correct' }, method: 'POST', body: '' }));
     expect(res.status).toBe(503);
   });
 
   it('rejects a JSON payload without the rows array', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_PROVISIONING_SECRET = 'correct';
     serverClientMock.mockReturnValue({ rpc: vi.fn() });
-    const res = await POST(new Request('http://x?token=correct', {
+    const res = await POST(new Request('http://x', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { authorization: 'Bearer correct', 'content-type': 'application/json' },
       body: JSON.stringify({ wrong: [] }),
     }));
     expect(res.status).toBe(400);
   });
 
   it('forwards JSON rows to the RPC and counts the results', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_PROVISIONING_SECRET = 'correct';
     const rpc = vi.fn(async () => ({
       data: [
         { email: 'a@b', name: 'A', charter_id: 'MIN-X', role: 'officer', officer_id: 'o-1', status: 'created', error: null },
@@ -85,9 +85,9 @@ describe('POST /api/admin/officers/bulk', () => {
       error: null,
     }));
     serverClientMock.mockReturnValue({ rpc });
-    const res = await POST(new Request('http://x?token=correct', {
+    const res = await POST(new Request('http://x', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { authorization: 'Bearer correct', 'content-type': 'application/json' },
       body: JSON.stringify({ rows: [
         { email: 'a@b', name: 'A', charter_id: 'MIN-X', role: 'officer' },
         { email: 'c@d', name: 'C', charter_id: 'MIN-X', role: 'officer' },
@@ -101,16 +101,16 @@ describe('POST /api/admin/officers/bulk', () => {
   });
 
   it('parses a CSV payload when content-type is not JSON', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_PROVISIONING_SECRET = 'correct';
     const rpc = vi.fn(async () => ({
       data: [{ email: 'a@b', name: 'A', charter_id: 'MIN-X', role: 'officer',
         officer_id: 'o-1', status: 'created', error: null }],
       error: null,
     }));
     serverClientMock.mockReturnValue({ rpc });
-    const res = await POST(new Request('http://x?token=correct', {
+    const res = await POST(new Request('http://x', {
       method: 'POST',
-      headers: { 'content-type': 'text/csv' },
+      headers: { authorization: 'Bearer correct', 'content-type': 'text/csv' },
       body: 'email,name,charter_id,role\na@b,Alice,MIN-X,officer',
     }));
     const json = await res.json();
@@ -119,27 +119,27 @@ describe('POST /api/admin/officers/bulk', () => {
   });
 
   it('rejects a batch larger than 500 rows', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_PROVISIONING_SECRET = 'correct';
     serverClientMock.mockReturnValue({ rpc: vi.fn() });
     const rows = Array.from({ length: 501 }, (_, i) => ({
       email: `e${i}@x`, name: `n${i}`, charter_id: 'MIN-X', role: 'officer',
     }));
-    const res = await POST(new Request('http://x?token=correct', {
+    const res = await POST(new Request('http://x', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { authorization: 'Bearer correct', 'content-type': 'application/json' },
       body: JSON.stringify({ rows }),
     }));
     expect(res.status).toBe(413);
   });
 
   it('returns 500 when the RPC errors', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_PROVISIONING_SECRET = 'correct';
     serverClientMock.mockReturnValue({
       rpc: async () => ({ data: null, error: { message: 'denied' } }),
     });
-    const res = await POST(new Request('http://x?token=correct', {
+    const res = await POST(new Request('http://x', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { authorization: 'Bearer correct', 'content-type': 'application/json' },
       body: JSON.stringify({ rows: [
         { email: 'a@b', name: 'A', charter_id: 'MIN-X', role: 'officer' },
       ] }),

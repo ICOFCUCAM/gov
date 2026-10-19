@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { randomBytes, scryptSync } from 'node:crypto';
 import { resetOfficials, createAccount, checkPassword, needsRehash, SCRYPT } from './officials';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 const PW = 'correct horse battery';
 type Acc = { passwordHash: string };
@@ -12,7 +15,7 @@ describe('password hashing (async scrypt, N=2^17)', { timeout: 60_000 }, () => {
   beforeEach(() => { resetOfficials(); });
 
   it('hashes new passwords with N=2^17, r=8, p=1', async () => {
-    ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null));
     const h = stored()[0]!.passwordHash;
     expect(h.split('$')[1]).toBe(String(2 ** 17));
     expect(SCRYPT).toMatchObject({ N: 131072, r: 8, p: 1 });
@@ -21,7 +24,7 @@ describe('password hashing (async scrypt, N=2^17)', { timeout: 60_000 }, () => {
   });
 
   it('accepts an old N=2^14 hash and replaces it at the next successful sign-in', async () => {
-    ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    ok(await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null));
     const salt = randomBytes(16);
     const old = `scrypt$16384$${salt.toString('base64')}$${scryptSync(PW, salt, 32, { N: 16384 }).toString('base64')}`;
     stored()[0]!.passwordHash = old;
@@ -38,15 +41,15 @@ describe('password hashing (async scrypt, N=2^17)', { timeout: 60_000 }, () => {
   it('does not block the event loop while hashing', async () => {
     let ticks = 0;
     const timer = setInterval(() => { ticks++; }, 1);
-    await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null);
+    await createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null);
     clearInterval(timer);
     expect(ticks).toBeGreaterThan(0);
   });
 
   it('refuses a second first account created while the first was hashing', async () => {
     const [a, b] = await Promise.all([
-      createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null),
-      createAccount({ email: 'b@g.gov', name: 'B', office: 'O', password: PW }, null),
+      createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null),
+      createAccount({ email: 'b@g.gov', name: 'B', office: 'O', password: PW , setupToken: SETUP_TOKEN }, null),
     ]);
     expect([a, b].filter(r => 'error' in r)).toHaveLength(1);
     expect(stored()).toHaveLength(1);

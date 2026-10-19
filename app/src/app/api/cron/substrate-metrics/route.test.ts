@@ -14,14 +14,14 @@ beforeEach(() => {
 
 describe('GET /api/cron/substrate-metrics', () => {
   it('returns 401 without the secret', async () => {
-    const res = await GET(new Request('http://x/api/cron/substrate-metrics?token=x'));
+    const res = await GET(new Request('http://x/api/cron/substrate-metrics', { headers: { authorization: 'Bearer x' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x/api/cron/substrate-metrics?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/substrate-metrics', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -43,7 +43,7 @@ describe('GET /api/cron/substrate-metrics', () => {
         };
       },
     });
-    const res = await GET(new Request('http://x/api/cron/substrate-metrics?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/substrate-metrics', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(res.status).toBe(200);
     expect(json.samples.length).toBe(6);
@@ -70,7 +70,7 @@ describe('GET /api/cron/substrate-metrics', () => {
         return { select: () => builder };
       },
     });
-    const res = await GET(new Request('http://x/api/cron/substrate-metrics?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/substrate-metrics', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.samples.every((s: { value: number; sampled: boolean }) => s.value === -1 && !s.sampled)).toBe(true);
   });

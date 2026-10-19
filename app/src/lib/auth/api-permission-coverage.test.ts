@@ -45,7 +45,7 @@ describe('every mutating API route is covered by a permission rule', () => {
     for (const r of mutating) {
       const rule = mutationRule(r.path);
       if (rule !== 'bearer' && rule !== 'self-authenticated') continue;
-      expect(r.src, r.file).toMatch(/publisherAuthorized|platformOrCronAuthorized|cronAuthorized|authorized\(req\)|ForKey\(|authorization/);
+      expect(r.src, r.file).toMatch(/publisherAuthorized|platformOrSecretAuthorized|secretAuthorized|cronAuthorized|authorized\(req\)|ForKey\(|authorization/);
     }
     // The bearer list names only routes that exist.
     for (const re of [...BEARER_ROUTES, ...SELF_AUTHENTICATED]) expect(mutating.some(r => re.test(r.path)), String(re)).toBe(true);

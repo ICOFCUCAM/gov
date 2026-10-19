@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 const platformAuth = vi.fn();
-vi.mock('@/lib/platform-auth', () => ({ platformOrCronAuthorized: (req: Request) => platformAuth(req), cronAuthorized: () => false }));
+vi.mock('@/lib/platform-auth', () => ({ platformOrSecretAuthorized: (req: Request) => platformAuth(req), cronAuthorized: () => false }));
 
 import { GET as hostingGET, POST as hostingPOST } from './hosting/route';
 import { POST as nationPOST } from './hosting/[id]/route';

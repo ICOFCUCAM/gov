@@ -7,7 +7,7 @@
 // audit-chain entry per expired consent on the citizen's scope, so the
 // citizen can trace exactly which consent expired and when.
 //
-// Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
+// Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only).
 // Cadence: recommended hourly.
 
 import { NextResponse } from 'next/server';

@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { NextRequest } from 'next/server';
-import { middleware } from './middleware';
+import { middleware, clearReadChecks } from './middleware';
 import { signClaims } from './lib/auth/session-token';
 
 const CRON = path.join(__dirname, 'app', 'api', 'cron');
@@ -16,9 +16,24 @@ async function officialCookie(extra: Record<string, unknown> = {}) {
   return `civicos_session=official; civicos_official=${await signClaims({ sub: 'local:1', name: 'A. Official', method: 'local', iat: now, exp: now + 600, ...extra }, SECRET)}`;
 }
 
+/** Stand-in for the platform's GET /api/auth/official: answers from the session cookie, unless `answer` says otherwise. */
+function standInPlatform(answer: () => ((cookie: string) => unknown) | 'down' | null) {
+  return (async (_url: unknown, init?: { headers?: Record<string, string> }) => {
+    const a = answer();
+    if (a === 'down') throw new Error('unreachable');
+    const cookie = init?.headers?.cookie ?? '';
+    const token = /civicos_official=([^;]+)/.exec(cookie)?.[1];
+    const official = a ? a(cookie) : token ? JSON.parse(Buffer.from(token.split('.')[0]!.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()) : null;
+    return new Response(JSON.stringify({ official }), { status: 200 });
+  }) as typeof fetch;
+}
+
 describe('access gate (CIVICOS_AUTH=enforce)', () => {
   const before = { auth: process.env.CIVICOS_AUTH, secret: process.env.CIVICOS_SESSION_SECRET };
-  afterEach(() => { process.env.CIVICOS_AUTH = before.auth; process.env.CIVICOS_SESSION_SECRET = before.secret; });
+  const realFetch = globalThis.fetch;
+  let live: ((cookie: string) => unknown) | 'down' | null = null;
+  beforeEach(() => { live = null; clearReadChecks(); globalThis.fetch = standInPlatform(() => live); });
+  afterEach(() => { process.env.CIVICOS_AUTH = before.auth; process.env.CIVICOS_SESSION_SECRET = before.secret; globalThis.fetch = realFetch; });
 
   it('lets every scheduled job reach its route without a session', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
@@ -76,6 +91,39 @@ describe('access gate (CIVICOS_AUTH=enforce)', () => {
     const signed = await officialCookie();
     expect((await call('/api/twin/state', signed)).status).toBe(200);
     expect((await call('/gov/twin', signed)).headers.get('location')).toBeNull();
+  });
+
+  it('refuses reads with a session that no longer counts, within seconds, and fails closed when it cannot ask (review M-1)', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    const signed = await officialCookie();
+    expect((await call('/api/audit', signed)).status).toBe(200);
+    // The account is disabled (or the session signed out): the answer kept for READ_CHECK_MS still counts...
+    live = () => null;
+    expect((await call('/api/audit', signed)).status).toBe(200);
+    // ...and once it is older than that, the platform is asked again and reads stop.
+    clearReadChecks();
+    const ended = await call('/api/audit', signed);
+    expect(ended.status).toBe(401);
+    expect((await ended.json()).error).toMatch(/session has ended/);
+    expect((await call('/gov/home', signed)).headers.get('location')).toMatch(/\/sign-in\?from=%2Fgov%2Fhome$/);
+    expect((await call('/api/parcels', signed)).status).toBe(401);
+    // The platform cannot be asked: refused, never waved through.
+    clearReadChecks();
+    live = 'down';
+    expect((await call('/api/audit', signed)).status).toBe(503);
+    expect((await call('/gov/home', signed)).status).toBe(503);
+  });
+
+  it('asks the platform at most once per token within READ_CHECK_MS', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    let asked = 0;
+    const inner = standInPlatform(() => null);
+    globalThis.fetch = (async (...a: Parameters<typeof fetch>) => { asked++; return inner(...a); }) as typeof fetch;
+    const signed = await officialCookie();
+    for (const p of ['/api/audit', '/api/parcels', '/gov/home', '/api/releases']) await call(p, signed);
+    expect(asked).toBe(1);
   });
 
   it('keeps the citizen demo session for the Civic Wallet pages only', async () => {

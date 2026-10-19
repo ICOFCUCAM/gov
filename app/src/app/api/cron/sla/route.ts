@@ -4,7 +4,7 @@
 // function, etc.) at a regular cadence.
 //
 // Protection: requires a shared secret in the CIVICOS_CRON_SECRET env
-// var, presented either via ?token=… or Authorization: Bearer. The
+// var, presented as Authorization: Bearer (header only). The
 // secret never reaches the client bundle (server-only route).
 
 import { NextResponse } from 'next/server';

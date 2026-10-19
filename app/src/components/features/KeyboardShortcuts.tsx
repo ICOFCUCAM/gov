@@ -204,9 +204,10 @@ export function KeyboardShortcuts() {
           </Panel>
 
           <p className="text-[11px] text-ink-muted">
-            All of these except <span className="font-mono">/api/health</span> require
-            <span className="font-mono"> CIVICOS_CRON_SECRET</span> (either
-            <span className="font-mono"> ?token=…</span> or Bearer header). Cadence recipes
+            The scheduled jobs (<span className="font-mono">/api/cron/*</span>) require
+            <span className="font-mono"> CIVICOS_CRON_SECRET</span>, the substrate digest
+            <span className="font-mono"> CIVICOS_EXPORT_SECRET</span>, each as a Bearer header only
+            (never <span className="font-mono">?token=</span>); <span className="font-mono">/api/health</span> is open. Cadence recipes
             for Vercel Cron / pg_cron live in <span className="font-mono">supabase/README.md</span>.
             The full platform API is described at <Link href="/developers" className="text-link underline">Developers</Link> and
             <span className="font-mono"> /api/openapi</span>.

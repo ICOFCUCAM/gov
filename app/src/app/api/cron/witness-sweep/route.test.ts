@@ -14,14 +14,14 @@ beforeEach(() => {
 
 describe('GET /api/cron/witness-sweep', () => {
   it('returns 401 without the secret', async () => {
-    const res = await GET(new Request('http://x/api/cron/witness-sweep?token=x'));
+    const res = await GET(new Request('http://x/api/cron/witness-sweep', { headers: { authorization: 'Bearer x' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when the substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x/api/cron/witness-sweep?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/witness-sweep', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -55,7 +55,7 @@ describe('GET /api/cron/witness-sweep', () => {
       },
       rpc: rpcMock,
     });
-    const res = await GET(new Request('http://x/api/cron/witness-sweep?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/witness-sweep', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(res.status).toBe(200);
     expect(json.scopes_swept).toBe(2);
@@ -91,7 +91,7 @@ describe('GET /api/cron/witness-sweep', () => {
       },
       rpc: rpcMock,
     });
-    const res = await GET(new Request('http://x/api/cron/witness-sweep?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/witness-sweep', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.attested).toBe(0);
     expect(json.results[0].latestSeq).toBeNull();
@@ -118,7 +118,7 @@ describe('GET /api/cron/witness-sweep', () => {
       }),
       rpc: async () => ({ data: null, error: null }),
     });
-    const res = await GET(new Request('http://x/api/cron/witness-sweep?token=correct&scopes=5'));
+    const res = await GET(new Request('http://x/api/cron/witness-sweep?scopes=5', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.scopes_swept).toBe(5);
   });

@@ -3,6 +3,9 @@ import { randomBytes } from 'node:crypto';
 import { resetOfficials, createAccount, checkPassword, startTwoStep, confirmTwoStep } from './officials';
 import { hotp, stepAt } from './totp';
 import { seal, open, isSealed, parseKek } from '@/lib/crypto/envelope';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 // The full N=2^17 cost is covered by password-hash.test.ts; these tests check behaviour, not cost.
 process.env.CIVICOS_SCRYPT_N = '16384';
@@ -34,7 +37,7 @@ describe('authenticator secrets at rest (AES-256-GCM under CIVICOS_DATA_KEK)', (
   });
 
   it('keeps the secret sealed in the state through setup and sign-in', async () => {
-    const a = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW }, null));
+    const a = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW , setupToken: SETUP_TOKEN }, null));
     const { secret } = ok(startTwoStep(a.id, 'State'));
     expect(isSealed(stored()[0]!.twoStepPending!.secret)).toBe(true);
     ok(confirmTwoStep(a.id, hotp(secret, stepAt(now)), now));
@@ -46,7 +49,7 @@ describe('authenticator secrets at rest (AES-256-GCM under CIVICOS_DATA_KEK)', (
   });
 
   it('still reads a plaintext secret from before, and seals it on its next use', async () => {
-    const a = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW }, null));
+    const a = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW , setupToken: SETUP_TOKEN }, null));
     const secret = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
     stored()[0]!.twoStep = { secret, since: '2026-01-01', lastStep: 0, recovery: [] } as never;
     const later = now + 90_000;
@@ -56,7 +59,7 @@ describe('authenticator secrets at rest (AES-256-GCM under CIVICOS_DATA_KEK)', (
   });
 
   it('re-seals under a rotated key and says clearly when the key is missing', async () => {
-    const a = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW }, null));
+    const a = ok(await createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW , setupToken: SETUP_TOKEN }, null));
     const { secret } = ok(startTwoStep(a.id, 'State'));
     ok(confirmTwoStep(a.id, hotp(secret, stepAt(now)), now));
     const before = stored()[0]!.twoStep!.secret;

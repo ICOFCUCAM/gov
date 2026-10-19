@@ -49,10 +49,10 @@ if (out > 0 && process.argv[out + 1]) fs.writeFileSync(process.argv[out + 1], JS
 
 // --publish <base url>: send the findings to the Update Center so they become
 // advisories with patch-time commitments (lib/data/advisories.ts). Uses the
-// automation bearer (CIVICOS_CRON_SECRET) or CIVICOS_PUBLISHER_TOKEN.
+// publisher bearer: CIVICOS_PUBLISHER_TOKEN (the value of the server's CIVICOS_PUBLISHER_SECRET).
 const pub = process.argv.indexOf('--publish');
 if (pub > 0 && process.argv[pub + 1]) {
-  const token = process.env.CIVICOS_PUBLISHER_TOKEN || process.env.CIVICOS_CRON_SECRET;
+  const token = process.env.CIVICOS_PUBLISHER_TOKEN || process.env.CIVICOS_PUBLISHER_SECRET;
   const version = JSON.parse(fs.readFileSync(path.join(here, '..', 'package.json'), 'utf8')).version;
   const r = await fetch(`${process.argv[pub + 1].replace(/\/$/, '')}/api/releases/publisher/advisories/dependencies`, {
     method: 'POST', headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },

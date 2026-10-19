@@ -23,14 +23,14 @@ beforeEach(() => {
 
 describe('GET /api/cron/witness-divergence', () => {
   it('returns 401 without the secret', async () => {
-    const res = await GET(new Request('http://x?token=x'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer x' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when the substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -62,7 +62,7 @@ describe('GET /api/cron/witness-divergence', () => {
       },
       rpc,
     });
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(res.status).toBe(200);
     expect(json.ok).toBe(true);
@@ -105,7 +105,7 @@ describe('GET /api/cron/witness-divergence', () => {
       },
       rpc,
     });
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.alarmed).toBe(1);
     expect(json.ok).toBe(false);
@@ -155,7 +155,7 @@ describe('GET /api/cron/witness-divergence', () => {
       },
       rpc,
     });
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(200);
     // No RPC fired because the escalation already exists.
     expect(rpc).not.toHaveBeenCalled();

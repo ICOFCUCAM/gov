@@ -145,7 +145,7 @@
         ],
         "operationId": "post_admin_officers_bulk",
         "summary": "POST /api/admin/officers/bulk",
-        "description": "/api/admin/officers/bulk — server-side bulk officer onboarding. Accepts a CSV or JSON array of {email,name,charter_id,role,title?} and forwards to civicos_admin_bulk_create_officers via the service-role client. Returns the substrate's per-row result so the UI can show which entries succeeded and which failed. Auth: callers must hold a platform-tier session OR pass the CIVICOS_CRON_SECRET (so CLI/automation can use it without a UI sign-in). The substrate enforces the platform-tier check separately, so this route is a defense-in-depth gate, not the sole authorisation.",
+        "description": "/api/admin/officers/bulk — server-side bulk officer onboarding. Accepts a CSV or JSON array of {email,name,charter_id,role,title?} and forwards to civicos_admin_bulk_create_officers via the service-role client. Returns the substrate's per-row result so the UI can show which entries succeeded and which failed. Auth: callers must hold a platform-tier session OR pass the CIVICOS_PROVISIONING_SECRET as a bearer (so CLI/automation can use it without a UI sign-in). The substrate enforces the platform-tier check separately, so this route is a defense-in-depth gate, not the sole authorisation.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -855,7 +855,7 @@
         ],
         "operationId": "get_auth_official",
         "summary": "GET /api/auth/official",
-        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out (and ends the session on the server). Every sign-in and sign-out is written to the audit chain; addresses never are.",
         "parameters": [],
         "responses": {
           "200": {
@@ -1038,7 +1038,7 @@
         ],
         "operationId": "post_auth_official",
         "summary": "POST /api/auth/official",
-        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out (and ends the session on the server). Every sign-in and sign-out is written to the audit chain; addresses never are.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -1142,7 +1142,7 @@
         ],
         "operationId": "delete_auth_official",
         "summary": "DELETE /api/auth/official",
-        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out (and ends the session on the server). Every sign-in and sign-out is written to the audit chain; addresses never are.",
         "parameters": [],
         "responses": {
           "200": {
@@ -1330,7 +1330,7 @@
         ],
         "operationId": "get_auth_officials",
         "summary": "GET /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes) for a signed-in official. POST creates one: the first account at installation, every later one by an administrator.",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes) for a signed-in official. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
         "parameters": [],
         "responses": {
           "200": {
@@ -1396,7 +1396,7 @@
         ],
         "operationId": "post_auth_officials",
         "summary": "POST /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes) for a signed-in official. POST creates one: the first account at installation, every later one by an administrator.",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes) for a signed-in official. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -1422,6 +1422,9 @@
                   },
                   "institution": {
                     "type": "string"
+                  },
+                  "setupToken": {
+                    "type": "string"
                   }
                 }
               },
@@ -1434,7 +1437,8 @@
                     "office": "string",
                     "password": "string",
                     "role": "string",
-                    "institution": "string"
+                    "institution": "string",
+                    "setupToken": "string"
                   }
                 }
               }
@@ -1501,6 +1505,253 @@
         ],
         "x-permission-rule": "admin",
         "x-source": "src/app/api/auth/officials/route.ts"
+      }
+    },
+    "/api/auth/officials/substrate": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_officials_substrate",
+        "summary": "GET /api/auth/officials/substrate",
+        "description": "What officials who sign in through the substrate may do on the platform (go-live review H-3; lib/auth/substrate-officials.ts). GET lists the administrators' assignments; POST records one ({ officerId, role, institution, name? }; institution null or \"\" for the whole government) or removes it ({ officerId, role: null }), after which the officer register's least applies again. Administrators only; audited. Takes effect at the officer's next request.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "assignments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "officerId": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "administrator",
+                              "auditor",
+                              "officer",
+                              "signatory"
+                            ]
+                          },
+                          "institution": {
+                            "type": "string"
+                          },
+                          "by": {
+                            "type": "string"
+                          },
+                          "at": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "officerId",
+                          "role",
+                          "by",
+                          "at"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "assignments"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "assignments": [
+                        {
+                          "officerId": "ID-0001",
+                          "role": "administrator",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/auth/officials/substrate/route.ts"
+      },
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "post_auth_officials_substrate",
+        "summary": "POST /api/auth/officials/substrate",
+        "description": "What officials who sign in through the substrate may do on the platform (go-live review H-3; lib/auth/substrate-officials.ts). GET lists the administrators' assignments; POST records one ({ officerId, role, institution, name? }; institution null or \"\" for the whole government) or removes it ({ officerId, role: null }), after which the officer register's least applies again. Administrators only; audited. Takes effect at the officer's next request.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "officerId": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "institution": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "officerId": "ID-0001",
+                    "role": "string",
+                    "institution": "string",
+                    "name": "Example"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "assignment": {
+                          "type": "object",
+                          "properties": {
+                            "officerId": {
+                              "type": "string"
+                            },
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "administrator",
+                                "auditor",
+                                "officer",
+                                "signatory"
+                              ]
+                            },
+                            "institution": {
+                              "type": "string"
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "officerId",
+                            "role",
+                            "by",
+                            "at"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "assignment"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "removed": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "removed"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "assignment": {
+                        "officerId": "ID-0001",
+                        "role": "administrator",
+                        "institution": "string",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/auth/officials/substrate/route.ts"
       }
     },
     "/api/auth/password": {
@@ -2846,7 +3097,7 @@
         ],
         "operationId": "get_cron_audit_anchor",
         "summary": "GET /api/cron/audit-anchor",
-        "description": "Audit-chain anchoring cron — periodically broadcasts the head of every visible audit scope as a federation event of type 'audit.anchor' on channel 'constitutional'. External systems that subscribe to the federation stream get a continuous live record of where each chain pointed at known wall-clock times. Complements the witness-attestation system: - audit_witnesses table is the append-only, public, tamper-proof record (provable retroactively). - federation 'audit.anchor' events are the realtime broadcast channel (subscribers see it as it happens; consumers can persist externally for an independent record). The platform's own chain (lib/data/store.ts) is anchored too: its head is signed (lib/audit/sign.ts), written to the append-only anchor file outside the state (file mode, lib/audit/anchor.ts) and, with the substrate connected, broadcast as scope 'platform' with its signature. Without the substrate only the platform head is anchored. With CIVICOS_TSA_URL the head is first time-stamped by the nation's RFC 3161 TSA (lib/audit/tsa.ts) and the token travels with it. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: every 5–15 minutes. Idempotent — anchoring the same head produces an event with the same content, but federation events are append-only so duplicate broadcasts are allowed (consumers dedupe by (scope, seq) if they care).",
+        "description": "Audit-chain anchoring cron — periodically broadcasts the head of every visible audit scope as a federation event of type 'audit.anchor' on channel 'constitutional'. External systems that subscribe to the federation stream get a continuous live record of where each chain pointed at known wall-clock times. Complements the witness-attestation system: - audit_witnesses table is the append-only, public, tamper-proof record (provable retroactively). - federation 'audit.anchor' events are the realtime broadcast channel (subscribers see it as it happens; consumers can persist externally for an independent record). The platform's own chain (lib/data/store.ts) is anchored too: its head is signed (lib/audit/sign.ts), written to the append-only anchor file outside the state (file mode, lib/audit/anchor.ts) and, with the substrate connected, broadcast as scope 'platform' with its signature. Without the substrate only the platform head is anchored. With CIVICOS_TSA_URL the head is first time-stamped by the nation's RFC 3161 TSA (lib/audit/tsa.ts) and the token travels with it. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: every 5–15 minutes. Idempotent — anchoring the same head produces an event with the same content, but federation events are append-only so duplicate broadcasts are allowed (consumers dedupe by (scope, seq) if they care).",
         "parameters": [
           {
             "name": "scopes",
@@ -3218,7 +3469,7 @@
         ],
         "operationId": "post_cron_audit_anchor",
         "summary": "POST /api/cron/audit-anchor",
-        "description": "Audit-chain anchoring cron — periodically broadcasts the head of every visible audit scope as a federation event of type 'audit.anchor' on channel 'constitutional'. External systems that subscribe to the federation stream get a continuous live record of where each chain pointed at known wall-clock times. Complements the witness-attestation system: - audit_witnesses table is the append-only, public, tamper-proof record (provable retroactively). - federation 'audit.anchor' events are the realtime broadcast channel (subscribers see it as it happens; consumers can persist externally for an independent record). The platform's own chain (lib/data/store.ts) is anchored too: its head is signed (lib/audit/sign.ts), written to the append-only anchor file outside the state (file mode, lib/audit/anchor.ts) and, with the substrate connected, broadcast as scope 'platform' with its signature. Without the substrate only the platform head is anchored. With CIVICOS_TSA_URL the head is first time-stamped by the nation's RFC 3161 TSA (lib/audit/tsa.ts) and the token travels with it. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: every 5–15 minutes. Idempotent — anchoring the same head produces an event with the same content, but federation events are append-only so duplicate broadcasts are allowed (consumers dedupe by (scope, seq) if they care).",
+        "description": "Audit-chain anchoring cron — periodically broadcasts the head of every visible audit scope as a federation event of type 'audit.anchor' on channel 'constitutional'. External systems that subscribe to the federation stream get a continuous live record of where each chain pointed at known wall-clock times. Complements the witness-attestation system: - audit_witnesses table is the append-only, public, tamper-proof record (provable retroactively). - federation 'audit.anchor' events are the realtime broadcast channel (subscribers see it as it happens; consumers can persist externally for an independent record). The platform's own chain (lib/data/store.ts) is anchored too: its head is signed (lib/audit/sign.ts), written to the append-only anchor file outside the state (file mode, lib/audit/anchor.ts) and, with the substrate connected, broadcast as scope 'platform' with its signature. Without the substrate only the platform head is anchored. With CIVICOS_TSA_URL the head is first time-stamped by the nation's RFC 3161 TSA (lib/audit/tsa.ts) and the token travels with it. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: every 5–15 minutes. Idempotent — anchoring the same head produces an event with the same content, but federation events are append-only so duplicate broadcasts are allowed (consumers dedupe by (scope, seq) if they care).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -3533,7 +3784,7 @@
         ],
         "operationId": "get_cron_deliver_events",
         "summary": "GET /api/cron/deliver-events",
-        "description": "Outbound federation webhook delivery worker. For each active civicos.event_webhooks row, finds federation events on its channel newer than its cursor and POSTs each to the registered URL with an HMAC-SHA256 signature header. On an all-2xx run the cursor advances to the last delivered event's at_ms; on the first failure the cursor holds (so the next run retries from the same point) and the failure is recorded. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Delivery is at-least-once per cursor; consumers dedupe on event id. Cadence: recommended every 1–5 minutes.",
+        "description": "Outbound federation webhook delivery worker. For each active civicos.event_webhooks row, finds federation events on its channel newer than its cursor and POSTs each to the registered URL with an HMAC-SHA256 signature header. On an all-2xx run the cursor advances to the last delivered event's at_ms; on the first failure the cursor holds (so the next run retries from the same point) and the failure is recorded. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Delivery is at-least-once per cursor; consumers dedupe on event id. Cadence: recommended every 1–5 minutes.",
         "parameters": [],
         "responses": {
           "200": {
@@ -3648,7 +3899,7 @@
         ],
         "operationId": "post_cron_deliver_events",
         "summary": "POST /api/cron/deliver-events",
-        "description": "Outbound federation webhook delivery worker. For each active civicos.event_webhooks row, finds federation events on its channel newer than its cursor and POSTs each to the registered URL with an HMAC-SHA256 signature header. On an all-2xx run the cursor advances to the last delivered event's at_ms; on the first failure the cursor holds (so the next run retries from the same point) and the failure is recorded. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Delivery is at-least-once per cursor; consumers dedupe on event id. Cadence: recommended every 1–5 minutes.",
+        "description": "Outbound federation webhook delivery worker. For each active civicos.event_webhooks row, finds federation events on its channel newer than its cursor and POSTs each to the registered URL with an HMAC-SHA256 signature header. On an all-2xx run the cursor advances to the last delivered event's at_ms; on the first failure the cursor holds (so the next run retries from the same point) and the failure is recorded. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Delivery is at-least-once per cursor; consumers dedupe on event id. Cadence: recommended every 1–5 minutes.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -3698,7 +3949,7 @@
         ],
         "operationId": "get_cron_expire_consents",
         "summary": "GET /api/cron/expire-consents",
-        "description": "Periodic consent auto-expiry. Citizens grant time-bound consents (`expires_at` in the future); past expiry they should flip to 'expired' so officer-side surfaces see them as no-longer-valid and the citizen's wallet doesn't show them as live. civicos.expire_due_consents performs the flip and writes one audit-chain entry per expired consent on the citizen's scope, so the citizen can trace exactly which consent expired and when. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: recommended hourly.",
+        "description": "Periodic consent auto-expiry. Citizens grant time-bound consents (`expires_at` in the future); past expiry they should flip to 'expired' so officer-side surfaces see them as no-longer-valid and the citizen's wallet doesn't show them as live. civicos.expire_due_consents performs the flip and writes one audit-chain entry per expired consent on the citizen's scope, so the citizen can trace exactly which consent expired and when. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: recommended hourly.",
         "parameters": [],
         "responses": {
           "200": {
@@ -3797,7 +4048,7 @@
         ],
         "operationId": "post_cron_expire_consents",
         "summary": "POST /api/cron/expire-consents",
-        "description": "Periodic consent auto-expiry. Citizens grant time-bound consents (`expires_at` in the future); past expiry they should flip to 'expired' so officer-side surfaces see them as no-longer-valid and the citizen's wallet doesn't show them as live. civicos.expire_due_consents performs the flip and writes one audit-chain entry per expired consent on the citizen's scope, so the citizen can trace exactly which consent expired and when. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: recommended hourly.",
+        "description": "Periodic consent auto-expiry. Citizens grant time-bound consents (`expires_at` in the future); past expiry they should flip to 'expired' so officer-side surfaces see them as no-longer-valid and the citizen's wallet doesn't show them as live. civicos.expire_due_consents performs the flip and writes one audit-chain entry per expired consent on the citizen's scope, so the citizen can trace exactly which consent expired and when. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: recommended hourly.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -4013,7 +4264,7 @@
         ],
         "operationId": "get_cron_promote_directives",
         "summary": "GET /api/cron/promote-directives",
-        "description": "Periodic directive-promotion worker. Directives are the platform's register (lib/data/directives.ts, architecture review D8): this flips every directive signed for a future effective date to 'effective' once that date arrives (reads settle them too; this makes it happen without one), then, with the substrate connected, re-copies the platform's directives and institutions to their substrate mirrors (lib/db/mirror.ts: retries anything a write after a change could not copy). Designed for a scheduler (pg_cron in supabase/cron/schedule.sql, Vercel Cron, …). The substrate's own civicos_promote_due_directives is no longer called: its table is a mirror. Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
+        "description": "Periodic directive-promotion worker. Directives are the platform's register (lib/data/directives.ts, architecture review D8): this flips every directive signed for a future effective date to 'effective' once that date arrives (reads settle them too; this makes it happen without one), then, with the substrate connected, re-copies the platform's directives and institutions to their substrate mirrors (lib/db/mirror.ts: retries anything a write after a change could not copy). Designed for a scheduler (pg_cron in supabase/cron/schedule.sql, Vercel Cron, …). The substrate's own civicos_promote_due_directives is no longer called: its table is a mirror. Protection: shared CIVICOS_CRON_SECRET as Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
         "parameters": [],
         "responses": {
           "200": {
@@ -4050,7 +4301,7 @@
         ],
         "operationId": "post_cron_promote_directives",
         "summary": "POST /api/cron/promote-directives",
-        "description": "Periodic directive-promotion worker. Directives are the platform's register (lib/data/directives.ts, architecture review D8): this flips every directive signed for a future effective date to 'effective' once that date arrives (reads settle them too; this makes it happen without one), then, with the substrate connected, re-copies the platform's directives and institutions to their substrate mirrors (lib/db/mirror.ts: retries anything a write after a change could not copy). Designed for a scheduler (pg_cron in supabase/cron/schedule.sql, Vercel Cron, …). The substrate's own civicos_promote_due_directives is no longer called: its table is a mirror. Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
+        "description": "Periodic directive-promotion worker. Directives are the platform's register (lib/data/directives.ts, architecture review D8): this flips every directive signed for a future effective date to 'effective' once that date arrives (reads settle them too; this makes it happen without one), then, with the substrate connected, re-copies the platform's directives and institutions to their substrate mirrors (lib/db/mirror.ts: retries anything a write after a change could not copy). Designed for a scheduler (pg_cron in supabase/cron/schedule.sql, Vercel Cron, …). The substrate's own civicos_promote_due_directives is no longer called: its table is a mirror. Protection: shared CIVICOS_CRON_SECRET as Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -4268,7 +4519,7 @@
         ],
         "operationId": "get_cron_site_feeds",
         "summary": "GET /api/cron/site-feeds",
-        "description": "Site feeds cron — every 30 minutes (supabase/cron/schedule.sql). Refreshes the news of every public site whose ministry keeps an existing website with a feed (Link, Embed or Migrate mode). A site whose website is unreachable keeps its last good copy and records the error. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
+        "description": "Site feeds cron — every 30 minutes (supabase/cron/schedule.sql). Refreshes the news of every public site whose ministry keeps an existing website with a feed (Link, Embed or Migrate mode). A site whose website is unreachable keeps its last good copy and records the error. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
         "parameters": [],
         "responses": {
           "200": {
@@ -4355,7 +4606,7 @@
         ],
         "operationId": "post_cron_site_feeds",
         "summary": "POST /api/cron/site-feeds",
-        "description": "Site feeds cron — every 30 minutes (supabase/cron/schedule.sql). Refreshes the news of every public site whose ministry keeps an existing website with a feed (Link, Embed or Migrate mode). A site whose website is unreachable keeps its last good copy and records the error. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
+        "description": "Site feeds cron — every 30 minutes (supabase/cron/schedule.sql). Refreshes the news of every public site whose ministry keeps an existing website with a feed (Link, Embed or Migrate mode). A site whose website is unreachable keeps its last good copy and records the error. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -4405,7 +4656,7 @@
         ],
         "operationId": "get_cron_sla",
         "summary": "GET /api/cron/sla",
-        "description": "Periodic SLA worker — call civicos.escalate_stale_service_requests to surface citizen requests that have been ignored too long. Designed to be hit by a scheduler (cron, Vercel Cron, Supabase scheduled function, etc.) at a regular cadence. Protection: requires a shared secret in the CIVICOS_CRON_SECRET env var, presented either via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
+        "description": "Periodic SLA worker — call civicos.escalate_stale_service_requests to surface citizen requests that have been ignored too long. Designed to be hit by a scheduler (cron, Vercel Cron, Supabase scheduled function, etc.) at a regular cadence. Protection: requires a shared secret in the CIVICOS_CRON_SECRET env var, presented as Authorization: Bearer (header only). The secret never reaches the client bundle (server-only route).",
         "parameters": [
           {
             "name": "hours",
@@ -4451,7 +4702,7 @@
         ],
         "operationId": "post_cron_sla",
         "summary": "POST /api/cron/sla",
-        "description": "Periodic SLA worker — call civicos.escalate_stale_service_requests to surface citizen requests that have been ignored too long. Designed to be hit by a scheduler (cron, Vercel Cron, Supabase scheduled function, etc.) at a regular cadence. Protection: requires a shared secret in the CIVICOS_CRON_SECRET env var, presented either via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
+        "description": "Periodic SLA worker — call civicos.escalate_stale_service_requests to surface citizen requests that have been ignored too long. Designed to be hit by a scheduler (cron, Vercel Cron, Supabase scheduled function, etc.) at a regular cadence. Protection: requires a shared secret in the CIVICOS_CRON_SECRET env var, presented as Authorization: Bearer (header only). The secret never reaches the client bundle (server-only route).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -4675,7 +4926,7 @@
         ],
         "operationId": "get_cron_telemetry_stale",
         "summary": "GET /api/cron/telemetry-stale",
-        "description": "Periodic silent-sensor worker — call civicos.escalate_stale_telemetry_streams to surface active telemetry streams that have stopped reporting. A sensor going silent emits no sample to trip the threshold trigger, so this is the only path by which a blind spot becomes a visible escalation. Designed for a scheduler (Vercel Cron, Supabase scheduled function, etc.). Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
+        "description": "Periodic silent-sensor worker — call civicos.escalate_stale_telemetry_streams to surface active telemetry streams that have stopped reporting. A sensor going silent emits no sample to trip the threshold trigger, so this is the only path by which a blind spot becomes a visible escalation. Designed for a scheduler (Vercel Cron, Supabase scheduled function, etc.). Protection: shared CIVICOS_CRON_SECRET as Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
         "parameters": [
           {
             "name": "minutes",
@@ -4721,7 +4972,7 @@
         ],
         "operationId": "post_cron_telemetry_stale",
         "summary": "POST /api/cron/telemetry-stale",
-        "description": "Periodic silent-sensor worker — call civicos.escalate_stale_telemetry_streams to surface active telemetry streams that have stopped reporting. A sensor going silent emits no sample to trip the threshold trigger, so this is the only path by which a blind spot becomes a visible escalation. Designed for a scheduler (Vercel Cron, Supabase scheduled function, etc.). Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
+        "description": "Periodic silent-sensor worker — call civicos.escalate_stale_telemetry_streams to surface active telemetry streams that have stopped reporting. A sensor going silent emits no sample to trip the threshold trigger, so this is the only path by which a blind spot becomes a visible escalation. Designed for a scheduler (Vercel Cron, Supabase scheduled function, etc.). Protection: shared CIVICOS_CRON_SECRET as Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -4801,7 +5052,7 @@
         ],
         "operationId": "get_cron_twin_ingest",
         "summary": "GET /api/cron/twin-ingest",
-        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due: files at an address, and telemetry streams (their complete days since the last run, as daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never fetched here. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
+        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due: files at an address, and telemetry streams (their complete days since the last run, as daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never fetched here. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
         "parameters": [],
         "responses": {
           "200": {
@@ -4910,7 +5161,7 @@
         ],
         "operationId": "post_cron_twin_ingest",
         "summary": "POST /api/cron/twin-ingest",
-        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due: files at an address, and telemetry streams (their complete days since the last run, as daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never fetched here. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
+        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due: files at an address, and telemetry streams (their complete days since the last run, as daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never fetched here. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -4960,7 +5211,7 @@
         ],
         "operationId": "get_cron_update_watchdog",
         "summary": "GET /api/cron/update-watchdog",
-        "description": "Update watchdog cron — every minute (supabase/cron/schedule.sql). Concludes due probations for every nation: passes a release whose window ended healthy, records overdue health reports as missing, and on a confirmed failure either switches the software back to the last known good release or leaves it waiting for the nation's decision (ask-first, or a release that is not backward compatible). It never installs anything: it can only conclude probations and switch back to the last known good release. The same evaluation also runs when the chamber, a release, the publisher console or the health endpoint is read, as a fallback if the schedule stops. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
+        "description": "Update watchdog cron — every minute (supabase/cron/schedule.sql). Concludes due probations for every nation: passes a release whose window ended healthy, records overdue health reports as missing, and on a confirmed failure either switches the software back to the last known good release or leaves it waiting for the nation's decision (ask-first, or a release that is not backward compatible). It never installs anything: it can only conclude probations and switch back to the last known good release. The same evaluation also runs when the chamber, a release, the publisher console or the health endpoint is read, as a fallback if the schedule stops. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
         "parameters": [],
         "responses": {
           "200": {
@@ -5049,7 +5300,7 @@
         ],
         "operationId": "post_cron_update_watchdog",
         "summary": "POST /api/cron/update-watchdog",
-        "description": "Update watchdog cron — every minute (supabase/cron/schedule.sql). Concludes due probations for every nation: passes a release whose window ended healthy, records overdue health reports as missing, and on a confirmed failure either switches the software back to the last known good release or leaves it waiting for the nation's decision (ask-first, or a release that is not backward compatible). It never installs anything: it can only conclude probations and switch back to the last known good release. The same evaluation also runs when the chamber, a release, the publisher console or the health endpoint is read, as a fallback if the schedule stops. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
+        "description": "Update watchdog cron — every minute (supabase/cron/schedule.sql). Concludes due probations for every nation: passes a release whose window ended healthy, records overdue health reports as missing, and on a confirmed failure either switches the software back to the last known good release or leaves it waiting for the nation's decision (ask-first, or a release that is not backward compatible). It never installs anything: it can only conclude probations and switch back to the last known good release. The same evaluation also runs when the chamber, a release, the publisher console or the health endpoint is read, as a fallback if the schedule stops. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -5099,7 +5350,7 @@
         ],
         "operationId": "get_cron_witness_divergence",
         "summary": "GET /api/cron/witness-divergence",
-        "description": "Tamper-detection watchdog. Runs after witness-sweep on the same cadence (or slower) and looks for any audit scope where a recorded attestation disagrees with the live chain. Each divergence becomes: 1. A `civicos.escalations` row at severity 'major', source 'substrate', reason 'witness-divergence:<scope>'. 2. A `civicos.federation_events` entry on channel 'constitutional', type 'audit.divergence', so any subscribed watcher sees it. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: every 15 minutes (same as witness-sweep, but staggered). Idempotent: re-recording the same divergence is silently deduplicated by escalation reason — the operator sees one row, not one per cron tick.",
+        "description": "Tamper-detection watchdog. Runs after witness-sweep on the same cadence (or slower) and looks for any audit scope where a recorded attestation disagrees with the live chain. Each divergence becomes: 1. A `civicos.escalations` row at severity 'major', source 'substrate', reason 'witness-divergence:<scope>'. 2. A `civicos.federation_events` entry on channel 'constitutional', type 'audit.divergence', so any subscribed watcher sees it. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: every 15 minutes (same as witness-sweep, but staggered). Idempotent: re-recording the same divergence is silently deduplicated by escalation reason — the operator sees one row, not one per cron tick.",
         "parameters": [],
         "responses": {
           "200": {
@@ -5183,7 +5434,7 @@
         ],
         "operationId": "post_cron_witness_divergence",
         "summary": "POST /api/cron/witness-divergence",
-        "description": "Tamper-detection watchdog. Runs after witness-sweep on the same cadence (or slower) and looks for any audit scope where a recorded attestation disagrees with the live chain. Each divergence becomes: 1. A `civicos.escalations` row at severity 'major', source 'substrate', reason 'witness-divergence:<scope>'. 2. A `civicos.federation_events` entry on channel 'constitutional', type 'audit.divergence', so any subscribed watcher sees it. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: every 15 minutes (same as witness-sweep, but staggered). Idempotent: re-recording the same divergence is silently deduplicated by escalation reason — the operator sees one row, not one per cron tick.",
+        "description": "Tamper-detection watchdog. Runs after witness-sweep on the same cadence (or slower) and looks for any audit scope where a recorded attestation disagrees with the live chain. Each divergence becomes: 1. A `civicos.escalations` row at severity 'major', source 'substrate', reason 'witness-divergence:<scope>'. 2. A `civicos.federation_events` entry on channel 'constitutional', type 'audit.divergence', so any subscribed watcher sees it. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: every 15 minutes (same as witness-sweep, but staggered). Idempotent: re-recording the same divergence is silently deduplicated by escalation reason — the operator sees one row, not one per cron tick.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -5233,7 +5484,7 @@
         ],
         "operationId": "get_cron_witness_sweep",
         "summary": "GET /api/cron/witness-sweep",
-        "description": "Witness-sweep cron — emits a substrate-self attestation per visible scope. The substrate becomes its own first witness, so even before any external auditor signs the chain there's a continuous attestation timeline. Any divergence between the cron's recorded hash and the live hash is a tamper indicator. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: recommended every 15 minutes. Idempotent per (scope, seq) — the substrate's unique constraint deduplicates by witness_label.",
+        "description": "Witness-sweep cron — emits a substrate-self attestation per visible scope. The substrate becomes its own first witness, so even before any external auditor signs the chain there's a continuous attestation timeline. Any divergence between the cron's recorded hash and the live hash is a tamper indicator. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: recommended every 15 minutes. Idempotent per (scope, seq) — the substrate's unique constraint deduplicates by witness_label.",
         "parameters": [
           {
             "name": "scopes",
@@ -5353,7 +5604,7 @@
         ],
         "operationId": "post_cron_witness_sweep",
         "summary": "POST /api/cron/witness-sweep",
-        "description": "Witness-sweep cron — emits a substrate-self attestation per visible scope. The substrate becomes its own first witness, so even before any external auditor signs the chain there's a continuous attestation timeline. Any divergence between the cron's recorded hash and the live hash is a tamper indicator. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: recommended every 15 minutes. Idempotent per (scope, seq) — the substrate's unique constraint deduplicates by witness_label.",
+        "description": "Witness-sweep cron — emits a substrate-self attestation per visible scope. The substrate becomes its own first witness, so even before any external auditor signs the chain there's a continuous attestation timeline. Any divergence between the cron's recorded hash and the live hash is a tamper indicator. Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only). Cadence: recommended every 15 minutes. Idempotent per (scope, seq) — the substrate's unique constraint deduplicates by witness_label.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -9753,7 +10004,7 @@
         ],
         "operationId": "post_federation_webhooks_test",
         "summary": "POST /api/federation/webhooks/test",
-        "description": "/api/federation/webhooks/test — send a synthetic signed ping to one registered federation webhook, so an operator can confirm an endpoint is reachable and validates the HMAC signature BEFORE relying on it for real events. The ping is out-of-band: it does NOT advance the delivery cursor and a failure does NOT count toward the circuit breaker. It simply reports the HTTP result back to the caller. Auth: platform-tier officer session OR CIVICOS_CRON_SECRET. The secret lives only in the service-role-readable table, so the signing happens server-side here — the browser never sees it.",
+        "description": "/api/federation/webhooks/test — send a synthetic signed ping to one registered federation webhook, so an operator can confirm an endpoint is reachable and validates the HMAC signature BEFORE relying on it for real events. The ping is out-of-band: it does NOT advance the delivery cursor and a failure does NOT count toward the circuit breaker. It simply reports the HTTP result back to the caller. Auth: platform-tier officer session OR CIVICOS_PROVISIONING_SECRET (bearer). The webhook secret lives only in the service-role-readable table, so the signing happens server-side here — the browser never sees it.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -38751,7 +39002,7 @@
         ],
         "operationId": "get_substrate_digest",
         "summary": "GET /api/substrate/digest",
-        "description": "Substrate digest API — programmatic equivalent of the /gov/substrate \"download digest\" button. Computes per-view row counts and (optionally) the chain integrity sweep, returning a JSON snapshot. Auth: requires the CIVICOS_CRON_SECRET shared secret (Bearer or ?token=). The endpoint uses the service-role client so counts are global (RLS-unfiltered) — that's what an external archive/auditor wants. Do not expose without the secret.",
+        "description": "Substrate digest API — programmatic equivalent of the /gov/substrate \"download digest\" button. Computes per-view row counts and (optionally) the chain integrity sweep, returning a JSON snapshot. Auth: requires the CIVICOS_EXPORT_SECRET (Authorization: Bearer only, never ?token=). The endpoint uses the service-role client so counts are global (RLS-unfiltered) — that's what an external archive/auditor wants. Do not expose without the secret.",
         "parameters": [
           {
             "name": "verify",
@@ -38903,7 +39154,7 @@
         ],
         "operationId": "post_substrate_digest",
         "summary": "POST /api/substrate/digest",
-        "description": "Substrate digest API — programmatic equivalent of the /gov/substrate \"download digest\" button. Computes per-view row counts and (optionally) the chain integrity sweep, returning a JSON snapshot. Auth: requires the CIVICOS_CRON_SECRET shared secret (Bearer or ?token=). The endpoint uses the service-role client so counts are global (RLS-unfiltered) — that's what an external archive/auditor wants. Do not expose without the secret.",
+        "description": "Substrate digest API — programmatic equivalent of the /gov/substrate \"download digest\" button. Computes per-view row counts and (optionally) the chain integrity sweep, returning a JSON snapshot. Auth: requires the CIVICOS_EXPORT_SECRET (Authorization: Bearer only, never ?token=). The endpoint uses the service-role client so counts are global (RLS-unfiltered) — that's what an external archive/auditor wants. Do not expose without the secret.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -38956,7 +39207,7 @@
         ],
         "operationId": "get_substrate_export",
         "summary": "GET /api/substrate/export",
-        "description": "Comprehensive substrate export — compliance / handover artifact. Returns a single self-describing JSON document containing every row the configured service-role client can see across the lifecycle tables. The audit chain is included verbatim so the receiving party can re-verify integrity offline. Witnesses are included so a successor administration inherits the same tamper-after-the-fact proofs. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cost: O(rows). Capped per table via the ?cap query parameter (default 5000, max 50000) so a single response can't blow the lambda budget. Use the existing /api/substrate/digest endpoint for lightweight count snapshots; this endpoint is the full dump.",
+        "description": "Comprehensive substrate export — compliance / handover artifact. Returns a single self-describing JSON document containing every row the configured service-role client can see across the lifecycle tables. The audit chain is included verbatim so the receiving party can re-verify integrity offline. Witnesses are included so a successor administration inherits the same tamper-after-the-fact proofs. Auth: CIVICOS_EXPORT_SECRET as Authorization: Bearer (never ?token=; lib/platform-auth.ts). Cost: O(rows). Capped per table via the ?cap query parameter (default 5000, max 50000) so a single response can't blow the lambda budget. Use the existing /api/substrate/digest endpoint for lightweight count snapshots; this endpoint is the full dump.",
         "parameters": [
           {
             "name": "cap",
@@ -39086,7 +39337,7 @@
         ],
         "operationId": "post_substrate_export",
         "summary": "POST /api/substrate/export",
-        "description": "Comprehensive substrate export — compliance / handover artifact. Returns a single self-describing JSON document containing every row the configured service-role client can see across the lifecycle tables. The audit chain is included verbatim so the receiving party can re-verify integrity offline. Witnesses are included so a successor administration inherits the same tamper-after-the-fact proofs. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cost: O(rows). Capped per table via the ?cap query parameter (default 5000, max 50000) so a single response can't blow the lambda budget. Use the existing /api/substrate/digest endpoint for lightweight count snapshots; this endpoint is the full dump.",
+        "description": "Comprehensive substrate export — compliance / handover artifact. Returns a single self-describing JSON document containing every row the configured service-role client can see across the lifecycle tables. The audit chain is included verbatim so the receiving party can re-verify integrity offline. Witnesses are included so a successor administration inherits the same tamper-after-the-fact proofs. Auth: CIVICOS_EXPORT_SECRET as Authorization: Bearer (never ?token=; lib/platform-auth.ts). Cost: O(rows). Capped per table via the ?cap query parameter (default 5000, max 50000) so a single response can't blow the lambda budget. Use the existing /api/substrate/digest endpoint for lightweight count snapshots; this endpoint is the full dump.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -46745,7 +46996,7 @@
       "automation": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Scheduled jobs and the publisher: CIVICOS_CRON_SECRET (pg_cron, Vercel cron) or a platform-tier substrate session, checked by the route."
+        "description": "Machine secrets, one per purpose, as Authorization: Bearer only (never ?token=): CIVICOS_CRON_SECRET for /api/cron/*, CIVICOS_EXPORT_SECRET for the substrate export and digest, CIVICOS_PUBLISHER_SECRET for the publisher console, CIVICOS_PROVISIONING_SECRET for bulk officer creation and webhook test pings; where the route allows, a platform-tier substrate session instead. Checked by the route."
       },
       "agentCredential": {
         "type": "http",

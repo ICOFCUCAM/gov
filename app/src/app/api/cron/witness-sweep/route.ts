@@ -4,7 +4,7 @@
 // timeline. Any divergence between the cron's recorded hash and the
 // live hash is a tamper indicator.
 //
-// Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
+// Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only).
 // Cadence: recommended every 15 minutes. Idempotent per (scope, seq) —
 // the substrate's unique constraint deduplicates by witness_label.
 

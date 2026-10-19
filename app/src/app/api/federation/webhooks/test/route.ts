@@ -7,14 +7,14 @@
 // failure does NOT count toward the circuit breaker. It simply reports the
 // HTTP result back to the caller.
 //
-// Auth: platform-tier officer session OR CIVICOS_CRON_SECRET. The secret
+// Auth: platform-tier officer session OR CIVICOS_PROVISIONING_SECRET (bearer). The webhook secret
 // lives only in the service-role-readable table, so the signing happens
 // server-side here — the browser never sees it.
 
 import { NextResponse } from 'next/server';
 import { createHmac } from 'node:crypto';
 import { serverClient } from '@/lib/db/client';
-import { platformOrCronAuthorized } from '@/lib/platform-auth';
+import { platformOrSecretAuthorized } from '@/lib/platform-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +23,7 @@ const PING_TIMEOUT_MS = 5000;
 interface WebhookRow { id: string; channel: string; url: string; secret: string; active: boolean; }
 
 export async function POST(req: Request) {
-  if (!await platformOrCronAuthorized(req)) {
+  if (!await platformOrSecretAuthorized(req, 'provisioning')) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const sb = serverClient();

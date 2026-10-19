@@ -14,14 +14,14 @@ beforeEach(() => {
 
 describe('GET /api/cron/expire-consents', () => {
   it('returns 401 without the secret', async () => {
-    const res = await GET(new Request('http://x?token=x'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer x' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -32,7 +32,7 @@ describe('GET /api/cron/expire-consents', () => {
       return { data: null, error: null };
     });
     serverClientMock.mockReturnValue({ rpc });
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(res.status).toBe(200);
     expect(json.expired_count).toBe(0);
@@ -59,7 +59,7 @@ describe('GET /api/cron/expire-consents', () => {
       return { data: null, error: null };
     });
     serverClientMock.mockReturnValue({ rpc });
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.expired_count).toBe(2);
     expect(json.rows).toHaveLength(2);
@@ -71,7 +71,7 @@ describe('GET /api/cron/expire-consents', () => {
     serverClientMock.mockReturnValue({
       rpc: async () => ({ data: null, error: { message: 'boom' } }),
     });
-    const res = await GET(new Request('http://x?token=correct'));
+    const res = await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(500);
     const json = await res.json();
     expect(json.error).toBe('boom');

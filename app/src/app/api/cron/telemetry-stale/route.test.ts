@@ -14,20 +14,20 @@ beforeEach(() => {
 
 describe('POST /api/cron/telemetry-stale', () => {
   it('returns 401 when CIVICOS_CRON_SECRET is unset', async () => {
-    const res = await POST(new Request('http://x/api/cron/telemetry-stale?token=anything'));
+    const res = await POST(new Request('http://x/api/cron/telemetry-stale', { headers: { authorization: 'Bearer anything' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 401 when the token does not match', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
-    const res = await POST(new Request('http://x/api/cron/telemetry-stale?token=wrong'));
+    const res = await POST(new Request('http://x/api/cron/telemetry-stale', { headers: { authorization: 'Bearer wrong' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when the substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await POST(new Request('http://x/api/cron/telemetry-stale?token=correct'));
+    const res = await POST(new Request('http://x/api/cron/telemetry-stale', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -49,7 +49,7 @@ describe('POST /api/cron/telemetry-stale', () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     const rpc = vi.fn(async () => ({ data: 0, error: null }));
     serverClientMock.mockReturnValue({ rpc });
-    await POST(new Request('http://x/api/cron/telemetry-stale?token=correct&minutes=30'));
+    await POST(new Request('http://x/api/cron/telemetry-stale?minutes=30', { headers: { authorization: 'Bearer correct' } }));
     expect(rpc).toHaveBeenCalledWith('civicos_escalate_stale_telemetry_streams', { p_stale_minutes: 30 });
   });
 
@@ -58,7 +58,7 @@ describe('POST /api/cron/telemetry-stale', () => {
     serverClientMock.mockReturnValue({
       rpc: async () => ({ data: null, error: { message: 'boom' } }),
     });
-    const res = await POST(new Request('http://x/api/cron/telemetry-stale?token=correct'));
+    const res = await POST(new Request('http://x/api/cron/telemetry-stale', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(500);
     expect((await res.json()).error).toBe('boom');
   });

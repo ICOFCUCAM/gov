@@ -14,6 +14,9 @@ import { PMTilesReader, bufferSource } from '@/lib/geo/pmtiles';
 import { decodeTile, fromTile } from '@/lib/geo/mvt';
 import { institutionArchive, resetArchive, stateSource } from '@/lib/twin/tiles-archive';
 import { canDownloadSiteArchive } from '@/lib/auth/roles';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 process.env.CIVICOS_SCRYPT_N = '16384';
 let cookie: string | undefined;
@@ -46,7 +49,7 @@ beforeEach(async () => {
   tmp = mkdtempSync(path.join(os.tmpdir(), 'civicos-inst-tiles-'));
   process.env.CIVICOS_TILES_DIR = tmp; process.env.CIVICOS_TILES_ZOOMS = '0-10';
   applyNation({ iso3: 'KEN', regions: [] });
-  await createAccount({ email: 'admin@gov.test', name: 'Admin', office: 'Head of Service', password: PW }, null);
+  await createAccount({ email: 'admin@gov.test', name: 'Admin', office: 'Head of Service', password: PW , setupToken: SETUP_TOKEN }, null);
   const [m, n] = listMinistries();
   owner = m!.id; other = n!.id;
   const add = async (name: string, category: string, lng: number, lat: number) => {
