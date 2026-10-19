@@ -11,7 +11,7 @@ import type { StateForm, NationalConstitution, NationMapSettings } from '@/lib/a
 import { defaultCapital } from '@/lib/geo/capitals';
 import { constitutionFor, type ConstitutionModel } from '@/lib/gov/constitution';
 import { nationOffices, chamberText, type NationOffices } from '@/lib/nation/offices';
-import { getMessages, type Messages } from '@/lib/i18n';
+import { getMessages, hasMessages, loadMessages, type Messages } from '@/lib/i18n';
 import type { Locale } from '@/lib/types';
 import { locales as LOCALES } from '@/lib/i18n/config';
 
@@ -74,6 +74,11 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.seal = f.seal?.trim() || undefined;
   state.accent = f.accent && /^#[0-9a-fA-F]{6}$/.test(f.accent) ? f.accent : undefined;
   state.map = f.map;
+  // A browser carries English and the languages the page came with (lib/i18n, review L-7): a language
+  // chosen since (in setup, with the page open) is fetched now and shows from the next render.
+  if (typeof window !== 'undefined') {
+    for (const l of [state.locale, ...state.languages]) if (KNOWN_LOCALES.includes(l) && !hasMessages(l as Locale)) void loadMessages(l as Locale);
+  }
 }
 
 /** The global the root layout's inline script fills with the nation's facts (see app/layout.tsx). */

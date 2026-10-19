@@ -3,6 +3,7 @@
 // upload is only read and checked here — it becomes a proposal in the editor,
 // which a second official publishes.
 
+import { readText, TOO_LARGE, tooLargeAnswer } from '@/lib/net/body-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { SITE_IDS, siteContent } from '@/lib/public-sites';
 import { publishedOverride, publishedTranslation } from '@/lib/data/site-editorial';
@@ -31,8 +32,9 @@ export async function POST(
 ) {
   const params = await props.params;
   if (!known(params.id, params.locale)) return NextResponse.json({ error: 'Unknown site or language' }, { status: 404 });
-  const xml = await req.text();
-  if (xml.length > 2_000_000) return NextResponse.json({ error: 'The file is larger than 2 MB' }, { status: 413 });
+  // Read with a byte cap (lib/net/body-limit.ts, review L-4).
+  const xml = await readText(req, 2_000_000);
+  if (xml === TOO_LARGE) return tooLargeAnswer(2_000_000, 'The file');
   const r = importXliff(xml, siteContent(params.id, publishedOverride(params.id)), params.locale);
   if ('error' in r) return NextResponse.json(r, { status: 422 });
   return NextResponse.json(r);

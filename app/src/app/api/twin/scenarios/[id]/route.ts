@@ -1,5 +1,6 @@
 // One scenario. POST adds a version (earlier versions are kept unchanged).
 
+import { authEnforced } from '@/lib/auth/mode';
 import { NextRequest, NextResponse } from 'next/server';
 import { getScenario, reviseScenario, verifyVersion, calibrate, calibrationLog } from '@/lib/twin/scenarios';
 import { syncRegister } from '@/lib/twin/register';
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   await syncRegister();
   // Who acted is the verified official when one is signed in, never a name from the body
   // (CLAUDE.md "Who acted"); with sign-in enforced, nobody else may record a scenario.
-  if (process.env.CIVICOS_AUTH === 'enforce' && !(await currentOfficial())) {
+  if (authEnforced() && !(await currentOfficial())) {
     return NextResponse.json({ error: 'Sign in as an official to record a scenario (/sign-in)' }, { status: 401 });
   }
   const b = await withOfficial(await req.json().catch(() => ({})));

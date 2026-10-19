@@ -3,13 +3,17 @@
 // unsubscribe (RFC 8058, List-Unsubscribe-Post) posts here directly with the
 // token in the address.
 
+import { readForm, TOO_LARGE, tooLargeAnswer } from '@/lib/net/body-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { confirmSubscription, unsubscribe } from '@/lib/data/site-subscriptions';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  const form = await req.formData().catch(() => null);
+  // A public form of a few fields: read with a 16 kB cap (lib/net/body-limit.ts, review L-4).
+  const read = await readForm(req, 16_000);
+  if (read === TOO_LARGE) return tooLargeAnswer(16_000, 'The request');
+  const form = read;
   const token = String(form?.get('token') ?? req.nextUrl.searchParams.get('token') ?? '');
   const oneClick = form?.get('List-Unsubscribe') === 'One-Click';
   const action = oneClick ? 'unsubscribe' : String(form?.get('action') ?? req.nextUrl.searchParams.get('action') ?? '');

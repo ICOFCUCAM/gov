@@ -7,6 +7,7 @@
 // while sign-in is neither used nor enforced, as before). POST drafts one
 // under the named (verified, when signed in) official; an official with an
 // institution always drafts for it, and auditors cannot draft.
+import { authEnforced } from '@/lib/auth/mode';
 import { NextRequest, NextResponse } from 'next/server';
 import { listDirectives, draftDirective, settleDirectives } from '@/lib/data/directives';
 import { withOfficial, currentOfficial, refusal } from '@/lib/auth/official';
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
   for (const ref of settleDirectives()) queueMirror('directive', ref);
   const q = req.nextUrl.searchParams;
   const o = await currentOfficial();
-  const hideDrafts = !o && process.env.CIVICOS_AUTH === 'enforce';
+  const hideDrafts = !o && authEnforced();
   const rows = listDirectives({ status: q.get('status') ?? undefined, issuer: q.get('issuer') ?? undefined, limit: Number(q.get('limit')) || undefined, q: q.get('q') ?? undefined })
     .filter(d => d.status !== 'drafting' || (o ? canSeeDraft(o, d.issued_by_charter_id) : !hideDrafts));
   return NextResponse.json({ directives: rows });

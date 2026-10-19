@@ -27,6 +27,7 @@
 // task sensors (canTaskSensor, lib/auth/roles.ts), with { taskingParameters,
 // TaskingCapability: { "@iot.id" }, reason }; the executing integration pulls
 // it from /api/twin/tasking/executor (lib/twin/tasking.ts).
+import { readText, TOO_LARGE } from '@/lib/net/body-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { staRequest } from '@/lib/twin/sta';
 import { staCreate, staDelete, STA_UPDATE_REFUSAL } from '@/lib/twin/sta-write';
@@ -55,8 +56,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ path: str
 
 export async function POST(req: NextRequest, props: { params: Promise<{ path: string[] }> }) {
   const params = await props.params;
-  const text = await req.text().catch(() => '');
-  if (text.length > MAX_BODY) return NextResponse.json({ code: 413, type: 'error', message: `The request is larger than ${MAX_BODY / 1_000_000} MB` }, { status: 413 });
+  // Read with the byte cap, also when no length is declared (lib/net/body-limit.ts, review L-4).
+  const text = await readText(req, MAX_BODY).catch(() => '');
+  if (text === TOO_LARGE) return NextResponse.json({ code: 413, type: 'error', message: `The request is larger than ${MAX_BODY / 1_000_000} MB` }, { status: 413 });
   let body: unknown;
   try { body = JSON.parse(text); } catch { return NextResponse.json({ code: 400, type: 'error', message: 'Send JSON' }, { status: 400 }); }
   await syncRegister();
@@ -91,7 +93,9 @@ export const PUT = refuseUpdate;
 
 export async function DELETE(req: NextRequest, props: { params: Promise<{ path: string[] }> }) {
   const params = await props.params;
-  const text = await req.text().catch(() => '');
+  const read = await readText(req, 16_000).catch(() => '');
+  if (read === TOO_LARGE) return NextResponse.json({ code: 413, type: 'error', message: 'A deletion\'s body (its reason) is at most 16 kB' }, { status: 413 });
+  const text = read;
   let reason = req.nextUrl.searchParams.get('reason') ?? req.headers.get('x-reason') ?? undefined;
   if (!reason && text) { try { const b = JSON.parse(text) as { reason?: unknown }; if (typeof b?.reason === 'string') reason = b.reason; } catch { /* no JSON body: no reason given */ } }
   await syncRegister();

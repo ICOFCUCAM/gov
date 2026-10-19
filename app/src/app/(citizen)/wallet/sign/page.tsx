@@ -6,7 +6,7 @@ export default function SignPage() {
   const m = nationMessages();
   const x = m.pages;
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet"
         header={
@@ -19,6 +19,6 @@ export default function SignPage() {
       >
         <SignClient />
       </PhoneShell>
-    </main>
+    </div>
   );
 }

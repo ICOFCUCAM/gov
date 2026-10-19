@@ -3,12 +3,14 @@
 // Double opt-in: this only queues a confirmation email (lib/data/site-subscriptions.ts),
 // in the language the visitor chose on the site.
 
+import { readForm, readJson, TOO_LARGE, tooLargeAnswer } from '@/lib/net/body-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { SITE_IDS, siteContent } from '@/lib/public-sites';
 import { publishedOverride } from '@/lib/data/site-editorial';
 import { fillDeep, siteTokens } from '@/lib/public-sites/tokens';
 import { subscribe } from '@/lib/data/site-subscriptions';
 import { visitorLocale } from '@/apps/_shared/public/site-props';
+import { clientAddress } from '@/lib/ops/rate-limit-core';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,10 +18,14 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   const params = await props.params;
   if (!SITE_IDS.includes(params.id)) return NextResponse.json({ error: 'No such site' }, { status: 404 });
   const isForm = !(req.headers.get('content-type') ?? '').includes('application/json');
-  const body: Record<string, unknown> = isForm
-    ? Object.fromEntries(((await req.formData().catch(() => null))?.entries() ?? []) as Iterable<[string, unknown]>)
-    : ((await req.json().catch(() => ({}))) as Record<string, unknown>);
-  const sender = (req.headers.get('x-forwarded-for') ?? '').split(',')[0]!.trim() || (req.headers.get('x-real-ip') ?? '').trim() || 'unknown';
+  // A public form of a few fields: read with a 16 kB cap (lib/net/body-limit.ts, review L-4).
+  const read = isForm ? await readForm(req, 16_000) : await readJson(req, 16_000);
+  if (read === TOO_LARGE) return tooLargeAnswer(16_000, 'The request');
+  const body: Record<string, unknown> = read instanceof FormData
+    ? Object.fromEntries(read.entries() as Iterable<[string, unknown]>)
+    : (read && typeof read === 'object' ? read : {}) as Record<string, unknown>;
+  // The same client address every per-address limit uses (trusted proxies counted from the right; review L-1).
+  const sender = clientAddress(req.headers);
   // A field people never see: filled only by bots, which get the usual answer and nothing happens.
   const r = typeof body.website === 'string' && body.website
     ? { ok: true as const }

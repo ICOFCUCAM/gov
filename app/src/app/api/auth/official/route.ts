@@ -12,6 +12,7 @@
 // provider's sign-out address when the session came from it. Every sign-in
 // and sign-out is written to the audit chain; addresses never are.
 
+import { authEnforced, openInProduction } from '@/lib/auth/mode';
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { OFFICIAL_COOKIE, SESSION_HOURS, verifyToken, type OfficialClaims } from '@/lib/auth/session-token';
@@ -31,7 +32,7 @@ import { limit } from '@/lib/ops/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-const enforced = () => process.env.CIVICOS_AUTH === 'enforce';
+const enforced = () => authEnforced();
 
 export async function GET() {
   const o = await currentOfficial();
@@ -46,11 +47,13 @@ export async function GET() {
     methods: { local: true, substrate: !!serverClient(), oidc: providerPublic(), passkey: !('error' in relyingParty()) },
     accounts: hasAccounts(),
     enforced: enforced(),
+    // A production server left open on purpose (CIVICOS_AUTH=open; lib/auth/mode.ts, review L-2).
+    openInProduction: openInProduction(),
     // Whether this server accepts changes: false on a standby that does not hold the
     // state writer's lease (lib/data/persist.ts), unless the change touches only the
     // per-record registers (CIVICOS_STATE=postgres). The middleware refuses changes then.
     state: { writable: stateWritable(forPath) },
-    // Why no session can be issued or verified (CIVICOS_AUTH=enforce without CIVICOS_SESSION_SECRET), else null.
+    // Why no session can be issued or verified (sign-in enforced without CIVICOS_SESSION_SECRET), else null.
     sessionKeyProblem: sessionSecretProblem(),
   });
 }

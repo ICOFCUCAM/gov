@@ -49,9 +49,16 @@ app:
   replicas: 1
   allowMultipleWriters: false
   # Access gate (app/src/middleware.ts): "enforce" requires a verified
-  # official for every non-public page, read and change. Anything else leaves
-  # the gate open (demonstrations only).
+  # official for every non-public page, read and change. The production image
+  # keeps the gate on for any other value too; only "open" (with a warning at
+  # start and a banner on every console page) leaves it open, for
+  # demonstrations (go-live review L-2).
   auth: enforce
+  # Proxies in front of the app that append to X-Forwarded-For
+  # (CIVICOS_TRUSTED_PROXIES, go-live review L-1): 1 for the ingress-nginx
+  # controller; 2 when a cloud load balancer that appends sits in front of it.
+  # Per-address rate limits count this many hops from the right.
+  trustedProxies: 1
   # A kubernetes.io/tls secret (tls.crt, tls.key, ca.crt) with this
   # installation's client certificate for calling partner installations under
   # mutual TLS (lib/exchange/federation-client.ts); "" for none.

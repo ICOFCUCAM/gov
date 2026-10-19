@@ -6,8 +6,10 @@
 //
 // Usage: node scripts/smoke-console.mjs --base http://localhost:3000
 //        [--chromium /path/to/chromium] [--report smoke.json]
-// The run signs in as the demo session (CIVICOS_AUTH unset) unless
-// --cookie name=value is given for an enforce-mode server. --nation KEN
+// The run signs in as the demo session (a server started with
+// CIVICOS_AUTH=open, or next dev; a production build enforces sign-in by
+// default, go-live review L-2) unless --cookie name=value is given for an
+// enforce-mode server. --nation KEN
 // installs a nation first (never on a real installation).
 
 import { writeFileSync } from 'node:fs';
