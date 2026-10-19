@@ -88,6 +88,54 @@ jobs:
           path: app/public-sites-audit.json
           if-no-files-found: ignore
 
+  console-smoke:
+    name: console smoke tests and OGC API Features conformance
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright-core install --with-deps chromium
+      - name: Build
+        run: pnpm build
+      - name: Start the server
+        run: |
+          pnpm start -p 3000 > /tmp/next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/api/setup > /dev/null && exit 0; sleep 2; done
+          cat /tmp/next.log; exit 1
+      - name: Console pages on desktop and phone (page errors, CSP, maps, layout)
+        run: node scripts/smoke-console.mjs --base http://localhost:3000 --nation KEN --report console-smoke.json
+      - name: OGC API Features Part 1 core checks
+        run: node scripts/ogc-check.mjs --base http://localhost:3000 --report ogc-check.json
+      - name: OGC CITE TEAM Engine (official executable test suite)
+        # Advisory until the suite's optional classes are reviewed: the report is kept either way.
+        continue-on-error: true
+        run: |
+          docker run -d --name teamengine --network host ogccite/ets-ogcapi-features10:latest
+          for i in $(seq 1 60); do curl -sf http://localhost:8080/teamengine/ > /dev/null && break; sleep 3; done
+          curl -sf -u ogctest:ogctest -H 'Accept: application/xml' \
+            "http://localhost:8080/teamengine/rest/suites/ogcapi-features-1.0/run?iut=http://localhost:3000/api/twin/ogc" -o ogc-cite.xml
+          ! grep -q 'status="FAIL"' ogc-cite.xml
+      - name: Keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: console-smoke
+          path: |
+            app/console-smoke.json
+            app/ogc-check.json
+            app/ogc-cite.xml
+          if-no-files-found: ignore
+
   substrate-tests:
     name: substrate SQL suite
     runs-on: ubuntu-latest
