@@ -230,10 +230,9 @@ first.
 
 ### Status of recommendations 1–4 (19 Oct 2026)
 
-Addressed in commit "Close the access-gate bypasses, patch Next.js, fence the
-single state writer" on branch `worktree-agent-a7d30eb5cafc2d555` (merged
-into `claude/festive-meitner-ivhxsn`); `git log --grep "fence the single state writer"`
-finds it.
+Addressed in commit `3f10206` ("Close the access-gate bypasses, patch
+Next.js, fence the single state writer"); after a rebase or merge,
+`git log --grep "fence the single state writer"` finds it.
 
 - **R1 (S1, S2, S4, M1).** `middleware.ts`: an `Authorization` header skips
   the session gate only on routes that verify it (`SELF_AUTHENTICATED`,
