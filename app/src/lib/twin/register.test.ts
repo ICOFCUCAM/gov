@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { parseCsv } from './csv';
 import { setTwinLimits, getRun, metricsKnown, withdrawRun, metricDates, entityProfile, resetTwin, syncRegister, registerSource, runSource, stateAsOf, nationalTotal, signalFor, resolveEntity, linkKey, regionEntities, isoDate, dueSources, type TwinSource } from './register';
 import { withTwin } from './national';
@@ -30,6 +30,18 @@ describe('the national twin core', () => {
     expect(resolveEntity('nairobi city')?.id).toBe('place:KE-30');
     expect(regionEntities().map(e => e.name)).toEqual(['Mombasa', 'Nairobi City', 'Kisumu']);
     expect(resolveEntity('Atlantis')).toBeUndefined();
+  });
+
+  it('takes the later of two imports recorded in the same millisecond', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-19T12:00:00Z'));
+    try {
+      const s = ok(registerSource({ by: 'Director of Statistics', name: 'Estimates', publisher: 'KNBS', kind: 'csv-upload', mapping }));
+      ok(await runSource(s.id, { by: 'Director of Statistics', csv: 'region,value,year\nMombasa,1000,2023\n' }));
+      const second = ok(await runSource(s.id, { by: 'Director of Statistics', csv: 'region,value,year\nMombasa,1100,2023\n' }));
+      const [o] = stateAsOf({ metric: 'population', entityId: 'place:KE-28', asOf: '2024-01-01T00:00:00Z', knownAt: '2026-10-19T12:00:00Z' });
+      expect(o).toMatchObject({ value: 1100, runId: second.id });
+    } finally { vi.useRealTimers(); }
   });
 
   it('imports an uploaded CSV, refusing rows it cannot place or read, with reasons and lineage', async () => {

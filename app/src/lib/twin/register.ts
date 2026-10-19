@@ -829,7 +829,9 @@ export function stateAsOf({ asOf, knownAt, metric, entityId }: { asOf?: string; 
     if (o.validTo && o.validTo <= day) return;
     const k = `${o.entityId}|${o.metric}`;
     const cur = best.get(k);
-    if (!cur || o.validFrom > cur.validFrom || (o.validFrom === cur.validFrom && o.recordedAt > cur.recordedAt)) best.set(k, o);
+    // Observations arrive here in recording order (archive, then the live
+    // register), so of two recorded in the same millisecond the later import wins.
+    if (!cur || o.validFrom > cur.validFrom || (o.validFrom === cur.validFrom && o.recordedAt >= cur.recordedAt)) best.set(k, o);
   };
   // The history archive first (older), then the live register.
   forEachArchived(metric, consider);
