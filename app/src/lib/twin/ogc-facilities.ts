@@ -8,7 +8,7 @@
 
 import { listFacilities, categoryOf, type Viewer } from '@/lib/data/facilities';
 import { getMinistry } from '@/lib/data/store';
-import { MAX_LIMIT, parseBbox, parseDatetime } from './ogc';
+import { DATETIME_AS_OF, MAX_LIMIT, pageLinks, parseBbox, parseDatetime } from './ogc';
 
 export const FACILITY_COLLECTION = 'facilities';
 const CRS84 = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84';
@@ -19,7 +19,7 @@ export function facilitiesInfo(base: string) {
   return {
     id: FACILITY_COLLECTION,
     title: 'National facility register',
-    description: 'Published sites (schools, health facilities, police, power, airports and more) recorded by their institutions. Restricted sites are generalised for viewers without need; confidential sites are not included.',
+    description: `Published sites (schools, health facilities, police, power, airports and more) recorded by their institutions. Restricted sites are generalised for viewers without need; confidential sites are not included. ${DATETIME_AS_OF} Here it keeps the sites published by then.`,
     itemType: 'feature',
     crs: [CRS84],
     ...(sites.length ? { extent: { spatial: { bbox: [[Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]], crs: CRS84 } } } : {}),
@@ -68,8 +68,7 @@ export function facilityItems(base: string, q: { limit?: string | null; offset?:
     numberReturned: page.length,
     timeStamp: new Date().toISOString(),
     links: [
-      { href: href + qs(offset), rel: 'self', type: 'application/geo+json' },
-      ...(offset + limit < all.length ? [{ href: href + qs(offset + limit), rel: 'next', type: 'application/geo+json' }] : []),
+      ...pageLinks(href, qs, offset, limit, all.length),
       { href: `${base}/collections/${FACILITY_COLLECTION}`, rel: 'collection', type: 'application/json' },
     ],
   };

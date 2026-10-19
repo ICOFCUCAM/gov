@@ -2,28 +2,29 @@
 // "boundaries": the units of the version in force (regions and districts)
 // as GeoJSON polygons (CRS84), each with its code, level, version, the date
 // the version took effect and its source and licence. `datetime` picks the
-// version in force on that date (as known now); `level` 1 or 2; bbox by the
-// unit's centre. Only versions published by the nation's mapping authority
-// (lib/data/boundaries.ts); the bundled shapes stay in "subdivisions".
+// version in force on that date (as known now); `level` 1 or 2; `bbox`
+// selects units whose geometry's bounding box meets it (a unit whose centre
+// lies outside the box but whose shape reaches into it is included). Only
+// versions published by the nation's mapping authority (lib/data/boundaries.ts);
+// the bundled shapes stay in "subdivisions".
 
 import { boundariesInForce } from '@/lib/data/boundaries';
 import type { ActiveBoundary } from '@/lib/map/boundary-active';
-import { MAX_LIMIT, parseBbox, parseDatetime } from './ogc';
+import { DATETIME_AS_OF, MAX_LIMIT, bboxOf, intersects, pageLinks, parseBbox, parseDatetime } from './ogc';
 
 export const BOUNDARY_COLLECTION = 'boundaries';
 const CRS84 = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84';
 
 export function boundariesInfo(base: string) {
   const force = boundariesInForce();
-  const pts = force.flatMap(b => b.units);
-  const xs = pts.map(u => u.lng), ys = pts.map(u => u.lat);
+  const boxes = force.flatMap(b => b.units).map(u => bboxOf(u.geometry));
   return {
     id: BOUNDARY_COLLECTION,
     title: 'National boundaries (published versions)',
-    description: `Regions and districts as the nation's mapping authority publishes them, version in force by date.${force.length ? ` In force now: ${force.map(b => `${b.level === 1 ? 'regions' : 'districts'} version ${b.n} from ${b.validFrom} (${b.credit})`).join('; ')}.` : ' None published yet.'}`,
+    description: `Regions and districts as the nation's mapping authority publishes them, version in force by date. ${DATETIME_AS_OF} \`bbox\` meets each unit's shape (its bounding box), not its centre.${force.length ? ` In force now: ${force.map(b => `${b.level === 1 ? 'regions' : 'districts'} version ${b.n} from ${b.validFrom} (${b.credit})`).join('; ')}.` : ' None published yet.'}`,
     itemType: 'feature',
     crs: [CRS84],
-    ...(pts.length ? { extent: { spatial: { bbox: [[Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]], crs: CRS84 } } } : {}),
+    ...(boxes.length ? { extent: { spatial: { bbox: [[Math.min(...boxes.map(b => b[0])), Math.min(...boxes.map(b => b[1])), Math.max(...boxes.map(b => b[2])), Math.max(...boxes.map(b => b[3]))]], crs: CRS84 } } } : {}),
     links: [
       { href: `${base}/collections/${BOUNDARY_COLLECTION}`, rel: 'self', type: 'application/json', title: 'This collection' },
       { href: `${base}/collections/${BOUNDARY_COLLECTION}/items`, rel: 'items', type: 'application/geo+json', title: 'Features' },
@@ -52,7 +53,7 @@ export function boundaryItems(base: string, q: { limit?: string | null; offset?:
   if (typeof datetime !== 'string') return datetime;
   const all = boundariesInForce(new Date(datetime))
     .filter(v => !q.level || String(v.level) === q.level)
-    .flatMap(v => (bbox ? { ...v, units: v.units.filter(u => u.lng >= bbox[0] && u.lng <= bbox[2] && u.lat >= bbox[1] && u.lat <= bbox[3]) } : v))
+    .flatMap(v => (bbox ? { ...v, units: v.units.filter(u => intersects(bboxOf(u.geometry), bbox)) } : v))
     .flatMap(featuresOf);
   const page = all.slice(offset, offset + limit);
   const href = `${base}/collections/${BOUNDARY_COLLECTION}/items`;
@@ -64,8 +65,7 @@ export function boundaryItems(base: string, q: { limit?: string | null; offset?:
     numberReturned: page.length,
     timeStamp: new Date().toISOString(),
     links: [
-      { href: href + qs(offset), rel: 'self', type: 'application/geo+json' },
-      ...(offset + limit < all.length ? [{ href: href + qs(offset + limit), rel: 'next', type: 'application/geo+json' }] : []),
+      ...pageLinks(href, qs, offset, limit, all.length),
       { href: `${base}/collections/${BOUNDARY_COLLECTION}`, rel: 'collection', type: 'application/json' },
     ],
   };

@@ -55,7 +55,19 @@ export function parseDatetime(v: string | null): string | { error: string } {
   return Number.isFinite(t) ? new Date(t).toISOString() : { error: 'datetime must be an RFC 3339 instant or interval' };
 }
 
-export const parseLevel = (v: string | null | undefined): 1 | 2 | { error: string } =>
+/** self, next and prev links of a page of items (every paged collection has all three where they apply). */
+export function pageLinks(href: string, qs: (offset: number) => string, offset: number, limit: number, matched: number) {
+  return [
+    { href: href + qs(offset), rel: 'self', type: 'application/geo+json' },
+    ...(offset + limit < matched ? [{ href: href + qs(offset + limit), rel: 'next', type: 'application/geo+json' }] : []),
+    ...(offset > 0 ? [{ href: href + qs(Math.max(0, offset - limit)), rel: 'prev', type: 'application/geo+json' }] : []),
+  ];
+}
+
+/** How `datetime` is read, said in every collection's description (an as-of selector, an extension of the OGC temporal filter). */
+export const DATETIME_AS_OF = '`datetime` is an as-of selector: an RFC 3339 instant, or the end of an interval (`start/end`, `../end`; an open end means now), picks what was true then as the platform knows it now; it defaults to now.';
+
+export const parseLevel =(v: string | null | undefined): 1 | 2 | { error: string } =>
   (!v || v === '1' ? 1 : v === '2' ? 2 : { error: 'level must be 1 (subdivisions) or 2 (districts)' });
 
 /** A unit as served: its code, name and shape (null while the nation has no shape for it). */
@@ -86,7 +98,7 @@ export async function collectionInfo(base: string) {
   return {
     id: COLLECTION,
     title: g.title ? `${g.title}: official subdivisions` : 'Official subdivisions',
-    description: 'ISO 3166-2 subdivisions (level=1, the default) or districts (level=2) with the latest observed value of each twin metric true at `datetime` (as known now). Shapes are the boundary version in force, as every map draws them. Observations only.',
+    description: `ISO 3166-2 subdivisions (level=1, the default) or districts (level=2) with the latest observed value of each twin metric true at \`datetime\` (as known now). Shapes are the boundary version in force, as every map draws them. Observations only. ${DATETIME_AS_OF}`,
     itemType: 'feature',
     crs: [CRS84],
     ...(bbox ? { extent: { spatial: { bbox: [bbox], crs: CRS84 } } } : {}),
@@ -150,9 +162,7 @@ export async function items(base: string, q: { limit?: string | null; offset?: s
     numberReturned: page.length,
     timeStamp: new Date().toISOString(),
     links: [
-      { href: href + qs(offset), rel: 'self', type: 'application/geo+json' },
-      ...(offset + limit < matched.length ? [{ href: href + qs(offset + limit), rel: 'next', type: 'application/geo+json' }] : []),
-      ...(offset > 0 ? [{ href: href + qs(Math.max(0, offset - limit)), rel: 'prev', type: 'application/geo+json' }] : []),
+      ...pageLinks(href, qs, offset, limit, matched.length),
       { href: `${base}/collections/${COLLECTION}`, rel: 'collection', type: 'application/json' },
     ],
   };

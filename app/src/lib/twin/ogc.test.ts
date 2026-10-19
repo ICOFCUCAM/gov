@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { resetTwin, syncRegister, registerSource, runSource } from './register';
-import { items, item, collectionInfo, landing, parseBbox, parseDatetime, CONFORMANCE } from './ogc';
+import { items, item, collectionInfo, landing, parseBbox, parseDatetime, bboxOf, CONFORMANCE, DATETIME_AS_OF } from './ogc';
+import { boundaryItems, boundariesInfo } from './ogc-boundaries';
+import { facilityItems, facilitiesInfo } from './ogc-facilities';
 import { applyNation } from '@/lib/nation/registry';
 import { loadNationGeography } from '@/lib/map/geography';
 import { resetBoundaries, proposeBoundaries, publishBoundaries, getBoundaryVersion } from '@/lib/data/boundaries';
@@ -75,6 +77,29 @@ describe('subdivisions follow the boundaries every map draws', () => {
     const after = ok(await item(B, 'KE-30', null))!;
     expect(after.properties).toMatchObject({ code: 'KE-30', level: 1 });
     expect(after.geometry).toEqual(getBoundaryVersion(r.version!.id)!.units.find(u => u.code === 'KE-30')!.geometry);
+  }, 60_000);
+
+  it('boundaries: bbox meets each unit\'s shape, not its centre; every paged collection links back', async () => {
+    const geo = await loadNationGeography('KEN', [], 'full');
+    const fc = { type: 'FeatureCollection', features: geo!.units.filter(u => u.geometry).map(u => ({ type: 'Feature', properties: { shapeName: u.name, shapeISO: u.code! }, geometry: structuredClone(u.geometry) })) };
+    const r = await proposeBoundaries({ level: 1, text: JSON.stringify(fc), source: { publisher: 'Survey of Kenya', licence: 'Open Government Licence', year: '2024' }, validFrom: '2024-01-01' }, 'Officer A');
+    if ('error' in r) throw new Error(r.error);
+    publishBoundaries(r.version!.id, 'Signer B');
+    const u = getBoundaryVersion(r.version!.id)!.units.find(x => x.code === 'KE-25')!;
+    const [minX, minY] = bboxOf(u.geometry);
+    // A small box at the corner of the unit's extent: far from its centre.
+    const box = [minX, minY, minX + 0.05, minY + 0.05] as const;
+    expect(u.lng >= box[0] && u.lng <= box[2] && u.lat >= box[1] && u.lat <= box[3]).toBe(false);
+    const hit = ok(boundaryItems(B, { bbox: box.join(','), limit: '100' }));
+    expect(hit.features.map(f => f.properties.code)).toContain('KE-25');
+    expect(hit.numberMatched).toBeLessThan(47);
+    const p2 = ok(boundaryItems(B, { limit: '10', offset: '10' }));
+    expect(p2.links.find(l => l.rel === 'prev')?.href).toContain('offset=0');
+    expect(p2.links.find(l => l.rel === 'next')?.href).toContain('offset=20');
+    const f2 = ok(facilityItems(B, { limit: '10', offset: '10' }, { signedIn: false }));
+    expect(f2.links.find(l => l.rel === 'prev')?.href).toContain('offset=0');
+    // Every collection says how datetime is read.
+    for (const c of [await collectionInfo(B), boundariesInfo(B), facilitiesInfo(B)]) expect(c.description).toContain(DATETIME_AS_OF);
   }, 60_000);
 
   it('serves districts at level 2 and refuses an unknown level', async () => {
