@@ -7,6 +7,7 @@ import { seed, wave, domainStress } from '@/lib/telemetry';
 import { scenarioFor, type ScenarioKey } from '@/lib/gov/simulation';
 import type { ArchetypeKey } from '@/lib/api/types';
 import { nationRegions } from '@/lib/nation/registry';
+import { readTwinValue } from '@/lib/twin/read';
 
 export interface RegionInfra { l: string; coverage: number }
 export interface RegionModel {
@@ -64,7 +65,8 @@ export function nationalRegions(t: number): RegionModel[] {
     }));
     const capitalDependency = r.cap ? 0 : 40 + Math.round(seed(`rcd:${r.n}`) * 45);
     return {
-      name: r.n, archetype: r.a, capital: r.cap, populationM: r.popM,
+      // Observed from the twin when a statistics source reports the region (lib/twin/read.ts), else the sample.
+      name: r.n, archetype: r.a, capital: r.cap, populationM: Math.round(readTwinValue('population', r.popM * 1e6, { region: r.n }) / 1e4) / 100,
       composite, readiness, incidents, posture: postureOf(composite),
       infra, capitalDependency, domains,
     };

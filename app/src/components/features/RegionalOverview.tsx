@@ -9,6 +9,7 @@ import { SCENARIOS, type ScenarioKey } from '@/lib/gov/simulation';
 import { regionName } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { api } from '@/lib/api/client';
+import { useTwinPrimed } from '@/lib/twin/read';
 
 const POS_TONE: Record<string, string> = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' };
 
@@ -30,6 +31,8 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
     }).catch(() => {});
   }, []);
 
+  // Regional population from the twin where a source reports it (the engine falls back to its sample).
+  useTwinPrimed(['population']);
   const regions = nationalRegions(ts);
   const roll = regionRollup(regions);
   const crit = roll.critical;
