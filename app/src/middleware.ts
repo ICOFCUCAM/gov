@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { OFFICIAL_COOKIE, verifyToken, type OfficialClaims } from '@/lib/auth/session-token';
 import { apiPermission, PUBLIC_WRITE, SELF_AUTHENTICATED, verifiesOwnCredential } from '@/lib/auth/roles';
 import { contentSecurityPolicy } from '../security-headers.mjs';
+import { POLICIES, take, tooMany, clientAddress, type Scope } from '@/lib/ops/rate-limit-core';
 
 // Sovereign access gate. Real and correct, but enforcement is opt-in so a
 // public prototype/preview is not bricked: set CIVICOS_AUTH=enforce to
@@ -165,6 +166,33 @@ function handle(req: NextRequest, requestId: string, nonce: string): NextRespons
   }
   const forwarded = new Headers(req.headers);
   forwarded.set('x-request-id', requestId);
+  const limited = rateGate(req);
+  if (limited) return limited.then(r => r ?? next(req, forwarded, nonce));
+  return next(req, forwarded, nonce);
+}
+
+/**
+ * Rate limits for every change through the API (review S9; lib/ops/rate-limit-core.ts):
+ * `public` for the citizens' email-update requests, `write` for every other
+ * change, per verified official (else per client address). Routes that apply
+ * a tighter scope themselves (uploads, checks) and machine callers that are
+ * limited by their own credential (integration and feed keys, the cron and
+ * agent secrets) are left to it, as before. The ingress adds the global
+ * limits in front (Helm ingress annotations).
+ */
+const ROUTE_LIMITED = [/^\/api\/boundaries$/, /^\/api\/map-pack$/, /^\/api\/facilities\/check$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/import$/];
+function rateGate(req: NextRequest): Promise<NextResponse | null> | null {
+  const { pathname } = req.nextUrl;
+  if (!pathname.startsWith('/api/') || !MUTATING.has(req.method)) return null;
+  if (ROUTE_LIMITED.some(re => re.test(pathname)) || verifiesOwnCredential(pathname)) return null;
+  const scope: Scope = PUBLIC_WRITE.some(re => re.test(pathname)) ? 'public' : 'write';
+  return verifyToken(req.cookies.get(OFFICIAL_COOKIE)?.value, process.env.CIVICOS_SESSION_SECRET).then(c => {
+    const r = take(`${scope}|${c ? `o:${c.sub}` : `a:${clientAddress(req.headers)}`}`, POLICIES[scope]);
+    return r.ok ? null : tooMany(scope, r.retryAfterS);
+  });
+}
+
+function next(req: NextRequest, forwarded: Headers, nonce: string): NextResponse | Promise<NextResponse> {
   // Whatever a caller sent in these is replaced: only the middleware's nonce counts.
   forwarded.delete(NONCE_HEADER);
   forwarded.delete('content-security-policy');

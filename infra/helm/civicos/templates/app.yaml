@@ -203,6 +203,18 @@ metadata:
   name: civicos
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    {{- with .Values.ingress.limits }}
+    {{- if .enabled }}
+    # Global limits per client address (values ingress.limits); the app adds its own per official.
+    nginx.ingress.kubernetes.io/limit-rps: {{ .rps | quote }}
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: {{ .burstMultiplier | quote }}
+    nginx.ingress.kubernetes.io/limit-connections: {{ .connections | quote }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ .bodySize | quote }}
+    {{- with .allowlist }}
+    nginx.ingress.kubernetes.io/limit-allowlist: {{ . | quote }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
     {{- if .Values.ingress.stripInternalHeaders }}
     # Next.js's internal subrequest header (CVE-2025-29927) never comes from
     # outside; drop it before it reaches the app (the app also refuses it).
@@ -257,6 +269,52 @@ spec:
             pathType: ImplementationSpecific
             backend:
               service: { name: civicos-api, port: { number: 4000 } }
+{{- end }}
+{{- with .Values.ingress.limits }}
+{{- if .enabled }}
+{{- $limits := . }}
+{{- range $name, $g := .groups }}
+---
+# Path group "{{ $name }}": its own body size and limits (values ingress.limits.groups).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: civicos-limits-{{ $name }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/limit-rps: {{ $g.rps | quote }}
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: {{ $limits.burstMultiplier | quote }}
+    nginx.ingress.kubernetes.io/limit-connections: {{ $g.connections | quote }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ $g.bodySize | quote }}
+    nginx.ingress.kubernetes.io/proxy-read-timeout: {{ $g.readTimeout | default 60 | quote }}
+    nginx.ingress.kubernetes.io/proxy-send-timeout: {{ $g.readTimeout | default 60 | quote }}
+    {{- with $limits.allowlist }}
+    nginx.ingress.kubernetes.io/limit-allowlist: {{ . | quote }}
+    {{- end }}
+    {{- if $.Values.ingress.stripInternalHeaders }}
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_clear_input_headers "x-middleware-subrequest" "ssl-client-verify" "ssl-client-subject-dn" "ssl-client-issuer-dn" "ssl-client-cert";
+    {{- end }}
+spec:
+  ingressClassName: {{ $.Values.ingress.className }}
+  {{- if $.Values.ingress.tls.enabled }}
+  tls:
+    - hosts: [{{ $.Values.ingress.host | quote }}]
+      secretName: {{ $.Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ $.Values.ingress.host | quote }}
+      http:
+        paths:
+          {{- range $g.paths }}
+          - path: {{ . | quote }}
+            pathType: ImplementationSpecific
+            backend:
+              service: { name: civicos-app, port: { number: 3000 } }
+          {{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- with .Values.ingress.federation }}
 {{- if .enabled }}

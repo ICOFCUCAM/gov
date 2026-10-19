@@ -107,6 +107,43 @@ ingress:
   tls:
     enabled: true
     secretName: civicos-tls
+  # Global limits at the ingress (ingress-nginx), per client address, in
+  # front of the app's own per-official limits (app/src/lib/ops/rate-limit*.ts):
+  # requests a second (limit-rps, with a burst of rps × burstMultiplier),
+  # open connections (limit-connections) and the largest request body
+  # (proxy-body-size). Path groups that take files get their own body size
+  # and tighter rates (one Ingress per group; paths are regular expressions,
+  # as the civic-api Ingress already turns them on for this host).
+  limits:
+    enabled: true
+    rps: 20
+    burstMultiplier: 5
+    connections: 20
+    bodySize: 2m
+    # Addresses never limited (CIDRs, comma-separated), e.g. the nation's monitoring.
+    allowlist: ""
+    groups:
+      # Boundary files (up to 100 MB, base64 in JSON) and district packs (60 MB).
+      uploads:
+        paths: ["/api/boundaries$", "/api/map-pack$"]
+        bodySize: 140m
+        rps: 2
+        connections: 4
+        readTimeout: 300
+      # CSV runs (20 MB), site candidates (10 MB), site imports, XLIFF files.
+      imports:
+        paths: ["/api/twin/sources/[^/]+/run$", "/api/facilities/candidates$", "/api/org/ministries/[^/]+/facilities/import$", "/api/public-sites/[^/]+/translations/[^/]+/xliff$"]
+        bodySize: 25m
+        rps: 5
+        connections: 6
+        readTimeout: 120
+      # Connected case and site systems (2 MB and 4 MB a call).
+      feeds:
+        paths: ["/api/org/ministries/[^/]+/(queue|facilities)/feed$"]
+        bodySize: 5m
+        rps: 10
+        connections: 10
+        readTimeout: 60
   # Mutual TLS for exchanges between installations (app/src/lib/exchange/mtls.ts):
   # a separate host that requires a client certificate from the federation CA
   # and serves only POST /api/federation/exchange. A grant then names the

@@ -18,12 +18,10 @@ processors:
     check_interval: 1s
     limit_mib: 256
   batch: {}
-  # Second line of defence after the app's own redaction: no query strings.
+  # Second line of defence after the app's own redaction (which already cuts
+  # query strings from URLs): no query attribute.
   attributes/strip-query:
     actions:
-      - key: http.target
-        pattern: ^(?P<path>[^?]*)\?.*$
-        action: extract
       - key: url.query
         action: delete
 
