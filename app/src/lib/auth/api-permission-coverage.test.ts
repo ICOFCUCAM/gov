@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { apiPermission, mutationRule, BEARER_READS, BEARER_ROUTES, SELF_AUTHENTICATED } from './roles';
+import { apiPermission, mutationRule, BEARER_READS, BEARER_ROUTES, INSTITUTION_READS, SELF_AUTHENTICATED } from './roles';
 
 const API = path.join(__dirname, '..', '..', 'app', 'api');
 const METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'] as const;
@@ -75,6 +75,42 @@ describe('every mutating API route is covered by a permission rule', () => {
     // Citizens' email updates and machine routes stay open whoever is signed in.
     expect(apiPermission({ role: 'auditor' }, 'POST', '/api/public-sites/police/subscribe')).toBeNull();
     expect(apiPermission({ role: 'auditor' }, 'POST', '/api/cron/sla')).toBeNull();
+  });
+
+  it('keeps the Update Center\'s installation-level decisions for the nation\'s government-wide administrators (review H-4)', () => {
+    const releases = mutating.filter(r => r.path.startsWith('/api/releases'));
+    expect(releases.length).toBeGreaterThan(20);
+    const work = /^\/api\/releases\/(requests|support|telemetry)(\/|$)/;
+    for (const r of releases) {
+      const rule = mutationRule(r.path);
+      if (r.path.startsWith('/api/releases/publisher')) { expect(rule, r.file).toBe('bearer'); continue; }
+      if (r.path === '/api/releases/health') { expect(rule, r.file).toBe('self-authenticated'); continue; }
+      if (work.test(r.path)) {
+        expect(rule, r.file).toBe('official');
+        expect(apiPermission({ role: 'officer', institution: 'min-agriculture' }, 'POST', r.path), r.file).toBeNull();
+        continue;
+      }
+      expect(rule, r.file).toBe('installation');
+      // Checked again in the route against the account as it stands now (chamberBody() or pathRefusal()).
+      expect(r.src, r.file).toMatch(/chamberBody|pathRefusal\(req\)/);
+      for (const m of r.methods) {
+        expect(apiPermission({ role: 'administrator' }, m, r.path), r.file).toBeNull();
+        expect(apiPermission({ role: 'officer', institution: 'min-agriculture' }, m, r.path), r.file).toMatch(/whole government/);
+        expect(apiPermission({ role: 'signatory' }, m, r.path), r.file).toMatch(/whole government/);
+        expect(apiPermission({ role: 'administrator', institution: 'min-health' }, m, r.path), r.file).toMatch(/whole government/);
+        expect(apiPermission({ role: 'auditor' }, m, r.path), r.file).toMatch(/Auditors/);
+      }
+    }
+    for (const p of ['/api/releases/sovereignty', '/api/releases/settings/agent-credential', '/api/releases/break-glass', '/api/releases/DR-1/restore-data', '/api/releases/DR-1/readiness', '/api/releases/settings']) {
+      expect(mutationRule(p), p).toBe('installation');
+    }
+  });
+
+  it('every read of an institution\'s personal data checks who may read it (review M-3)', () => {
+    const files = routeFiles(API).map(file => ({ file, path: samplePath(file), src: fs.readFileSync(file, 'utf8') }))
+      .filter(r => /export (async function|function) GET\b/.test(r.src) && INSTITUTION_READS.some(re => re.test(r.path)));
+    expect(files.length).toBe(INSTITUTION_READS.length + 1); // /api/permits and /api/permits/[id] share one pattern
+    for (const r of files) expect(r.src, r.file).toMatch(/canReadInstitution|canReadPermits/);
   });
 
   it('read routes reached with a bearer check it in constant time', () => {

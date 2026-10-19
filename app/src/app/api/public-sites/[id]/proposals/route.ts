@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { proposeSiteChange, proposeRestore, type SiteChange } from '@/lib/data/site-editorial';
-import { withOfficial } from '@/lib/auth/official';
+import { siteOwner } from '@/lib/data/site-settings';
+import { refusal, withOfficial } from '@/lib/auth/official';
+import { canActForSite } from '@/lib/auth/roles';
 
 export const dynamic = 'force-dynamic';
 
 /** Propose a change to a site's content or design (or `restore` an earlier version); a second official publishes it. */
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  const refused = await refusal(s => canActForSite(s, siteOwner(params.id)));
+  if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { change?: SiteChange; restore?: number; note?: string; by?: string };
   const r = typeof b.restore === 'number'
     ? proposeRestore(params.id, b.restore, b.by ?? '', b.note)

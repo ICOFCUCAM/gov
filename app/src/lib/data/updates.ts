@@ -33,6 +33,7 @@
 // Same persistence note as ./store: in-memory for the life of the process,
 // behind function signatures a durable datastore can replace.
 
+import { dualControlRefusal, proposalLapsed } from './dual-control';
 import type {
   ChamberRelease,
   DeliveryMode,
@@ -488,7 +489,8 @@ function chamberRelease(n: SubscribedNation, r: DistributionRelease): ChamberRel
   const install = installOf(n.id, r.id);
   return {
     ...r,
-    install: { ...install, events: [...install.events] },
+    // The proposer's verified identity stays on the server (dual control compares it there).
+    install: { ...install, events: [...install.events], ...(install.breakGlass ? { breakGlass: { ...install.breakGlass, byId: undefined } } : {}) },
     newer: gt(r.version, n.installedVersion),
     compatible: gte(n.installedVersion, r.minCompatibleVersion),
     superseded: install.state === 'installed' && r.id !== n.installedReleaseId,
@@ -1429,23 +1431,77 @@ export function acknowledgeIncident(nationId: string, incidentId: string, by: st
   return inc;
 }
 
+export type BreakGlassInput = {
+  /** The official taking this step (the verified official's name when signed in, lib/auth/official.ts). */
+  by?: string;
+  /** The verified official's session subject, set by the route from the session, never from the body. */
+  byId?: string;
+  /** What failed (the proposal's reason). */
+  reason?: string;
+  /** Omitted: propose, or confirm a pending proposal. confirm: only confirm. cancel: withdraw the pending proposal. */
+  action?: 'propose' | 'confirm' | 'cancel';
+  /** No longer accepted: the second official confirms in their own request. */
+  secondBy?: string;
+};
+export type BreakGlassResult =
+  | { incident: FallbackIncident; chamber: UpdateChamber }
+  | { pending: true; proposal: NonNullable<NationInstall['breakGlass']>; chamber: UpdateChamber }
+  | { cancelled: true; chamber: UpdateChamber }
+  | { error: string; status: number };
+
 /**
  * Break-glass — the worst case: the running release is broken and probation
- * is over. Two named people switch the software back to the version the
- * restore point protects. Data is not touched here either; restoring the
- * snapshot remains restoreData(). Audited with both names.
+ * is over. Dual control by two sign-ins, as the four-eyes decisions: the first
+ * official proposes (with what failed), a different official confirms in their
+ * own request, and only then is the software switched back to the version the
+ * restore point protects. A second name typed into the first request is
+ * refused. Data is not touched here either; restoring the snapshot remains
+ * restoreData(). Proposal, cancellation and the switch are audited, the switch
+ * with both names.
  */
-export function breakGlass(nationId: string, input: { by?: string; secondBy?: string; reason?: string }): { incident: FallbackIncident; chamber: UpdateChamber } | { error: string; status: number } {
+export function breakGlass(nationId: string, input: BreakGlassInput): BreakGlassResult {
   const n = nationById(nationId);
   if (!n) return { error: 'Nation not found', status: 404 };
-  const by = (input.by ?? '').trim(), second = (input.secondBy ?? '').trim(), reason = (input.reason ?? '').trim();
-  if (!by || !second) return { error: 'Break-glass needs two named people', status: 422 };
-  if (by.toLowerCase() === second.toLowerCase()) return { error: 'The second person must be someone else (dual control)', status: 422 };
-  if (reason.length < 20) return { error: 'Describe the failure (at least 20 characters)', status: 422 };
+  if (typeof input.secondBy === 'string' && input.secondBy.trim()) {
+    return { error: 'A second name is not accepted: the second official confirms break-glass by signing in and confirming it themselves', status: 422 };
+  }
+  const by = (input.by ?? '').trim();
+  if (!by || by.length > 160) return { error: 'Name the official taking this step', status: 422 };
   const rid = n.installedReleaseId;
   const inst = rid ? installRecord(n, rid) : undefined;
   const rp = inst?.restorePoint;
   if (!rid || !inst || !rp || !rp.verified) return { error: 'No verified restore point protects the running release; restore from your own backups and record it with a rollback', status: 409 };
+  const chamberNow = (): UpdateChamber | undefined => { const c = getChamber(nationId); return 'error' in c ? undefined : c; };
+  const target = `UpdateChamber:${nationId}/${inst.releaseId}`;
+  let proposal = inst.breakGlass;
+  if (proposal && proposalLapsed(proposal.at)) { inst.breakGlass = undefined; proposal = undefined; }
+
+  if (input.action === 'cancel') {
+    if (!proposal) return { error: 'There is no break-glass proposal to cancel', status: 409 };
+    inst.breakGlass = undefined;
+    recordAudit(by, 'update.break-glass.cancel', target, 'ok', `cancelled ${proposal.by}’s proposal`);
+    const c = chamberNow();
+    return c ? { cancelled: true, chamber: c } : { error: 'Nation not found', status: 500 };
+  }
+  if (!proposal) {
+    if (input.action === 'confirm') return { error: 'There is no break-glass proposal to confirm', status: 409 };
+    const why = (input.reason ?? '').trim();
+    if (why.length < 20) return { error: 'Describe the failure (at least 20 characters)', status: 422 };
+    if (why.length > 1000) return { error: 'The description is too long (1000 characters at most)', status: 422 };
+    inst.breakGlass = { by, ...(input.byId ? { byId: input.byId } : {}), at: new Date().toISOString(), reason: why, version: rp.version };
+    recordAudit(by, 'update.break-glass.propose', target, 'ok', `awaiting a second official · back to ${rp.version} · ${why}`);
+    const c = chamberNow();
+    return c ? { pending: true, proposal: { ...inst.breakGlass, byId: undefined }, chamber: c } : { error: 'Nation not found', status: 500 };
+  }
+  if (input.action === 'propose') return { error: `${proposal.by} has already proposed break-glass; a different official confirms it, or cancel it`, status: 409 };
+  const refused = dualControlRefusal(proposal, { by, byId: input.byId });
+  if (refused) return { error: refused, status: 409 };
+  if (proposal.version !== rp.version) {
+    inst.breakGlass = undefined;
+    return { error: `The restore point changed since ${proposal.by} proposed break-glass (to ${proposal.version}); propose it again`, status: 409 };
+  }
+  const first = proposal.by, second = by, reason = proposal.reason;
+  inst.breakGlass = undefined;
   const r = udb().releases.find(x => x.id === rid)!;
   const at = new Date().toISOString();
   const top = n.history[n.history.length - 1];
@@ -1456,13 +1512,13 @@ export function breakGlass(nationId: string, input: { by?: string; secondBy?: st
   if (inst.probation && (inst.probation.state === 'running' || inst.probation.state === 'awaiting-decision')) { inst.probation.state = 'ended'; inst.probation.concludedAt = at; }
   const from = inst.state;
   inst.state = 'rolled-back';
-  const a = recordAudit(`${by} + ${second}`, 'update.break-glass', `UpdateChamber:${nationId}/${r.version}`, 'ok', `software now ${rp.version} · data untouched · ${reason}`);
-  inst.events.push({ at, by: `${by} + ${second}`, action: 'rollback', from, to: 'rolled-back', note: `Break-glass: software switched back to ${rp.version}: ${reason}`, auditSeq: a.seq });
+  const a = recordAudit(`${first} + ${second}`, 'update.break-glass', `UpdateChamber:${nationId}/${r.version}`, 'ok', `software now ${rp.version} · data untouched · ${reason}`);
+  inst.events.push({ at, by: `${first} + ${second}`, action: 'rollback', from, to: 'rolled-back', note: `Break-glass: software switched back to ${rp.version}: ${reason}`, auditSeq: a.seq });
   const inc: FallbackIncident = {
     id: `INC-U-${digest(`${nationId}:bg:${at}`, 5).toUpperCase()}`, nationId, releaseId: r.id, fromVersion: r.version, toVersion: rp.version,
     restorePointId: rp.id, trigger: 'break-glass', state: 'restored', failedChecks: [], openedAt: at, auditSeq: a.seq,
     timeline: [
-      { at, text: `Break-glass by ${by} and ${second}: software switched back to ${rp.version}. ${reason}` },
+      { at, text: `Break-glass proposed by ${first} and confirmed by ${second}: software switched back to ${rp.version}. ${reason}` },
       { at, text: `Data untouched. Restore point ${rp.id} (${rp.createdAt}) remains available as a separate decision.` },
     ],
   };

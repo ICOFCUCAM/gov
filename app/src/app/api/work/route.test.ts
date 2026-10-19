@@ -4,7 +4,7 @@ import { actOnQueueItem, listMinistries } from '@/lib/data/store';
 
 describe('GET /api/work', () => {
   it('lists open work across active institutions with consistent counts', async () => {
-    const d = await GET().json();
+    const d = await (await GET()).json();
     expect(d.queue.length).toBeGreaterThan(0);
     expect(d.counts.decisions).toBe(d.queue.length + d.permits.length);
     expect(d.counts.overdue).toBe(d.queue.filter((q: { overdue: boolean }) => q.overdue).length);
@@ -14,10 +14,10 @@ describe('GET /api/work', () => {
   });
 
   it('drops an item once it is cleared', async () => {
-    const before = await GET().json();
+    const before = await (await GET()).json();
     const q = before.queue[0];
     actOnQueueItem(q.ministryId, q.id, 'clear', 'Test official');
-    const after = await GET().json();
+    const after = await (await GET()).json();
     expect(after.queue.some((x: { id: string; ministryId: string }) => x.id === q.id && x.ministryId === q.ministryId)).toBe(false);
   });
 });

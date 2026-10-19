@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSiteSettings, updateSiteSettings, type SiteSettingsInput } from '@/lib/data/site-settings';
+import { getSiteSettings, siteOwner, updateSiteSettings, type SiteSettingsInput } from '@/lib/data/site-settings';
 import { SITE_IDS } from '@/lib/public-sites';
-import { withOfficial } from '@/lib/auth/official';
+import { refusal, withOfficial } from '@/lib/auth/official';
+import { canActForSite } from '@/lib/auth/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,8 @@ export async function GET(_: NextRequest, props: { params: Promise<{ id: string 
 /** Change a site's settings; `by` names the official (written to the audit chain). */
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  const refused = await refusal(s => canActForSite(s, siteOwner(params.id)));
+  if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as SiteSettingsInput & { by?: string };
   const r = updateSiteSettings(params.id, b, b.by ?? '');
   if ('error' in r) return NextResponse.json(r, { status: 422 });

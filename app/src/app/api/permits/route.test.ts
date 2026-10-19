@@ -5,6 +5,7 @@ const createMock = vi.fn();
 vi.mock('@/lib/data/store', () => ({
   listPermits: () => listMock(),
   createPermit: (input: unknown) => createMock(input),
+  permitHolders: () => ['min-interior'],
 }));
 
 import { GET, POST } from './route';
@@ -17,7 +18,7 @@ beforeEach(() => {
 describe('GET /api/permits', () => {
   it('returns the current permit list', async () => {
     listMock.mockReturnValue([{ id: 'p-1' }, { id: 'p-2' }]);
-    const res = GET();
+    const res = await GET();
     const json = await res.json();
     expect(json.permits).toHaveLength(2);
   });
