@@ -643,7 +643,7 @@ Every finding of section 2 has been worked on in place (nothing removed). What a
 | D3, D4, D5 twin semantics | metric registry (UCUM, aggregation, period), unit checks, `nationalTotal` refusals with coverage and vintage, run withdrawal, `validTo` and quality, durable archive instead of eviction | four-eyes withdrawal |
 | D6, D7 identifiers, catalogue, provenance | entity URIs with a 303 resolver, DCAT-AP catalogue, PROV-O for runs and scenarios, NGSI-LD view, UUID v7 national facility ids | nation domain field in setup |
 | D8 several sources of truth | ownership map with coverage test (`lib/data/register-owners.ts`, `/api/platform/owners`) | moving each duplicate behind its owner (R6) |
-| D9 audit integrity | Ed25519-signed chain heads, anchored by the audit-anchor cron, shown on /audit | RFC 3161 time-stamps from the nation's TSA |
+| D9 audit integrity | Ed25519-signed chain heads, anchored by the audit-anchor cron, shown on /audit; RFC 3161 time-stamps from the nation's TSA, checked and kept with each head | — |
 | I1, I2 OGC | subdivisions through the nation's geography, geometry bbox, prev links, queryables and filters, conformance checker and TEAM Engine in CI | machine read keys for GIS clients, CQL2 |
 | I3 sensors | SensorThings API v1.1 read-only over the twin and substrate telemetry | telemetry streams as a twin source kind |
 | I4, I7 exchange | RFC 9421 signatures on feeds, exchange log with signed receipts, federation usage policies, CloudEvents outbox with signed webhooks, AsyncAPI | mutual TLS between installations |

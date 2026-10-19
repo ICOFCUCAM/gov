@@ -15,7 +15,9 @@
 // signed (lib/audit/sign.ts), written to the append-only anchor file outside
 // the state (file mode, lib/audit/anchor.ts) and, with the substrate
 // connected, broadcast as scope 'platform' with its signature. Without the
-// substrate only the platform head is anchored.
+// substrate only the platform head is anchored. With CIVICOS_TSA_URL the
+// head is first time-stamped by the nation's RFC 3161 TSA (lib/audit/tsa.ts)
+// and the token travels with it.
 //
 // Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
 // Cadence: every 5–15 minutes. Idempotent — anchoring the same head
@@ -46,6 +48,7 @@ export async function GET(req: Request) {
     head_seq: h.seq, head_hash: h.hash, signed_at: h.at, key_id: h.keyId, production: h.production,
     file: platformAnchor.file ?? null,
     ...(platformAnchor.error ? { error: platformAnchor.error } : {}),
+    timestamp: h.timestamp ? { tsa: h.timestamp.tsa, gen_time: h.timestamp.genTime, serial: h.timestamp.serial } : h.timestampError ? { error: h.timestampError } : null,
     anchored_to: platformAnchor.file?.written ? ['file'] : [] as string[],
   } : null;
   const sb = serverClient();
@@ -63,6 +66,7 @@ export async function GET(req: Request) {
       p_payload: {
         scope: 'platform', head_seq: h.seq, head_hash: h.hash, signed_at: h.at,
         key_id: h.keyId, public_key: h.publicKeyPem, signature: h.signature, production: h.production,
+        ...(h.timestamp ? { tsa_token: h.timestamp.token, tsa_gen_time: h.timestamp.genTime } : {}),
       },
       p_target: null,
     })).catch(e => ({ error: e as Error }));

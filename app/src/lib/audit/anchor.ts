@@ -10,12 +10,14 @@
 //     chain of its own. CIVICOS_AUDIT_ANCHOR_FILE names it; with
 //     CIVICOS_STATE=file and no name it is `.civicos-anchors/platform-audit-heads.jsonl`
 //     next to (never inside) the state directory.
+// With CIVICOS_TSA_URL the head is time-stamped by the nation's TSA first
+// (lib/audit/tsa.ts) and the token goes into the anchor line with it.
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { auditHead } from '@/lib/data/store';
-import { signHead, settledHead, markAnchored, type SignedHead } from './sign';
+import { signHead, settledHead, stampHead, markAnchored, type SignedHead } from './sign';
 
 export function anchorFilePath(env: NodeJS.ProcessEnv = process.env): string | null {
   if (env.CIVICOS_AUDIT_ANCHOR_FILE) return env.CIVICOS_AUDIT_ANCHOR_FILE;
@@ -70,6 +72,8 @@ export async function anchorPlatformHead(now = Date.now()): Promise<PlatformAnch
   if (!h) return { head: null };
   const head = await settledHead(signHead(h, now));
   if (head.pending) return { head, error: `the key provider has not signed head ${head.seq}: ${head.signError ?? 'no answer'}` };
+  // With CIVICOS_TSA_URL the anchored head carries the nation's RFC 3161 time-stamp.
+  await stampHead(head);
   const file = anchorFilePath();
   if (!file) return { head };
   try {

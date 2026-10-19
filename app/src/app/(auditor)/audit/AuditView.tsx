@@ -48,7 +48,7 @@ async function seal(events: AuditEntry[], verify: Verification): Promise<string>
   return `Seal (SHA-256 over head entry ${head?.seq ?? 0} and ${verify.checked} verified links): ${hex}`;
 }
 
-/** "Signed head N at T, anchored": the last head signed with the platform's audit key (lib/audit/sign.ts). */
+/** "Signed head N at T, anchored, time-stamped by <TSA> at <genTime>": the last head signed with the platform's audit key (lib/audit/sign.ts), with the nation's RFC 3161 time-stamp when there is one. */
 function SignedHeadLine({ verify }: { verify: Verification }) {
   const s = verify?.signed;
   if (!verify) return null;
@@ -61,6 +61,9 @@ function SignedHeadLine({ verify }: { verify: Verification }) {
       Signed head {h.seq} at {new Date(h.at).toLocaleString()}{where} · key {h.keyId}
       {h.production ? '' : ' · development key, not evidence for production'}
       {s.currentKey === false ? ' · signed with an earlier key' : ''}
+      {h.timestamp ? <span data-testid="head-timestamp"> · time-stamped by {h.timestamp.tsa} at {new Date(h.timestamp.genTime).toLocaleString()}{h.timestamp.trusted === false ? ' (TSA certificate not trusted)' : ''}</span> : null}
+      {!h.timestamp && h.timestampError ? ` · not time-stamped: ${h.timestampError}` : ''}
+      {s.pending ? ` · ${s.pending} head${s.pending === 1 ? '' : 's'} waiting for the key provider's signature` : ''}
     </p>
   );
 }

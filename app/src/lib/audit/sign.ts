@@ -26,6 +26,8 @@ import { verifyBytes } from '@/lib/crypto/signing-key';
 import { signer, type Signer } from '@/lib/keys/custody';
 import { logger } from '@/lib/ops/log';
 import { withSpanSync } from '@/lib/ops/trace';
+import { checkToken, timestamp, tsaConfig } from './tsa';
+import { createHash } from 'node:crypto';
 
 export const AUDIT_KEY_ENV = 'CIVICOS_AUDIT_KEY';
 
@@ -46,10 +48,34 @@ export interface SignedHead {
   pending?: boolean;
   /** Why the provider has not signed it (it is tried again). */
   signError?: string;
+  /** RFC 3161 time-stamp of the signed head from the nation's TSA (CIVICOS_TSA_URL). */
+  timestamp?: HeadTimestamp;
+  /** Why the TSA did not time-stamp it. */
+  timestampError?: string;
   /** Set by the anchor cron once the head was copied outside the platform state. */
   anchoredAt?: string;
   anchoredTo?: string[];
 }
+
+export interface HeadTimestamp {
+  /** The TSA, from its certificate (CN, O). */
+  tsa: string;
+  /** The time the TSA vouches for (ISO 8601). */
+  genTime: string;
+  /** The token's serial number (hex) and policy OID. */
+  serial: string;
+  policy: string;
+  /** The TSA address asked. */
+  url: string;
+  /** The certificate chains to CIVICOS_TSA_CA (absent when none was configured). */
+  trusted?: boolean;
+  /** The TimeStampToken (CMS SignedData, DER, base64). */
+  token: string;
+}
+
+/** What the TSA time-stamps: the SHA-256 of the signed head (sequence, hash, time, key and signature). */
+export const tsaImprint = (h: Pick<SignedHead, 'seq' | 'hash' | 'at' | 'keyId' | 'signature'>): Buffer =>
+  createHash('sha256').update(JSON.stringify(['civicos-audit-head-tsa-v1', h.seq, h.hash, h.at, h.keyId, h.signature]), 'utf8').digest();
 
 interface HeadsDb { heads: SignedHead[] }
 const g = globalThis as unknown as { __civicosAuditHeads?: HeadsDb };
@@ -86,6 +112,7 @@ function completeRemote(h: SignedHead, s: Signer): Promise<SignedHead> {
     h.keyId = r.keyId; h.publicKeyPem = r.publicKeyPem; h.signature = r.signature; h.production = s.production;
     delete h.pending; delete h.signError;
     markChanged();
+    void stampHead(h);
     return h;
   }, (e: Error) => {
     h.signError = e.message.slice(0, 300);
@@ -110,6 +137,7 @@ export function signHead(head: { seq: number; hash: string }, now = Date.now()):
     const r = s.signSync(payload);
     signed = { seq: head.seq, hash: head.hash, at, keyId: r.keyId, publicKeyPem: r.publicKeyPem, signature: r.signature, production: s.production };
     db().heads.push(signed);
+    void stampHead(signed);
   } else {
     const cur = s.current();
     signed = { seq: head.seq, hash: head.hash, at, keyId: cur?.keyId ?? '', publicKeyPem: cur?.publicKeyPem ?? '', signature: '', production: s.production, pending: true };
@@ -117,6 +145,36 @@ export function signHead(head: { seq: number; hash: string }, now = Date.now()):
     void completeRemote(signed, s);
   }
   return signed;
+}
+
+// Time-stamps in flight (process-local; by sequence number).
+const stamping = new Map<number, Promise<SignedHead>>();
+
+/**
+ * Time-stamp a signed head with the nation's TSA (when CIVICOS_TSA_URL is
+ * set; otherwise nothing). Resolves to the head, with `timestamp` or
+ * `timestampError`. Never throws.
+ */
+export function stampHead(h: SignedHead): Promise<SignedHead> {
+  if (h.pending || h.timestamp) return Promise.resolve(h);
+  const running = stamping.get(h.seq);
+  if (running) return running;
+  let cfg: ReturnType<typeof tsaConfig>;
+  try { cfg = tsaConfig(); } catch (e) { h.timestampError = (e as Error).message; return Promise.resolve(h); }
+  if (!cfg) return Promise.resolve(h);
+  const p = timestamp(tsaImprint(h), cfg).then(st => {
+    h.timestamp = { tsa: st.tsa ?? cfg!.url.host, genTime: st.genTime!, serial: st.serial!, policy: st.policy!, url: st.url, ...(st.trusted !== undefined ? { trusted: st.trusted } : {}), token: st.token };
+    delete h.timestampError;
+    markChanged();
+    return h;
+  }, (e: Error) => {
+    h.timestampError = e.message.slice(0, 300);
+    markChanged();
+    logger.warn('audit.timestamp_failed', { seq: h.seq, message: h.timestampError });
+    return h;
+  }).finally(() => stamping.delete(h.seq));
+  stamping.set(h.seq, p);
+  return p;
 }
 
 /** The head once its signature is settled (at once for a local key; when the remote provider answered otherwise). */
@@ -168,8 +226,14 @@ export function markAnchored(seq: number, where: string[], now = Date.now()): vo
 export interface SignedHeadCheck {
   ok: boolean;
   /** The last signed head, as checked. */
-  head?: Pick<SignedHead, 'seq' | 'hash' | 'at' | 'keyId' | 'production' | 'anchoredAt' | 'anchoredTo'>;
+  head?: Pick<SignedHead, 'seq' | 'hash' | 'at' | 'keyId' | 'production' | 'anchoredAt' | 'anchoredTo'> & {
+    /** "time-stamped by <tsa> at <genTime>" (RFC 3161), when the nation's TSA stamped it. */
+    timestamp?: Pick<HeadTimestamp, 'tsa' | 'genTime' | 'serial' | 'trusted'>;
+    timestampError?: string;
+  };
   signedHeads: number;
+  /** Heads time-stamped by the nation's TSA (each token checked again). */
+  timestamped?: number;
   /** Heads a remote key provider has not signed yet (not counted as evidence). */
   pending?: number;
   /** The signed heads' key is the one configured now (CIVICOS_AUDIT_KEY or the key provider's). */
@@ -187,6 +251,7 @@ export function verifySignedHeads(entryAt: (seq: number) => { hash: string } | u
   const heads = db().heads;
   let prev = 0;
   let pending = 0;
+  let stamped = 0;
   let last: SignedHead | undefined;
   for (const h of heads) {
     if (h.pending) pending++;
@@ -197,11 +262,17 @@ export function verifySignedHeads(entryAt: (seq: number) => { hash: string } | u
     prev = h.seq;
     const e = entryAt(h.seq);
     if (!e || e.hash !== h.hash) return { ok: false, signedHeads: heads.length, problem: `the chain no longer matches signed head ${h.seq}` };
+    if (h.timestamp) {
+      const c = checkToken(Buffer.from(h.timestamp.token, 'base64'), { digest: tsaImprint(h) });
+      if (!c.ok) return { ok: false, signedHeads: heads.length, problem: `the time-stamp of signed head ${h.seq} does not check: ${c.problem}` };
+      stamped++;
+    }
     if (!h.pending) last = h;
   }
-  const extra = pending ? { pending } : {};
+  const extra = { ...(pending ? { pending } : {}), ...(stamped ? { timestamped: stamped } : {}) };
   if (!last) return { ok: true, signedHeads: heads.length - pending, ...extra };
-  const { seq, hash, at, keyId, production, anchoredAt, anchoredTo } = last;
+  const { seq, hash, at, keyId, production, anchoredAt, anchoredTo, timestamp: ts, timestampError } = last;
   const cur = signer('audit').current();
-  return { ok: true, signedHeads: heads.length - pending, ...extra, head: { seq, hash, at, keyId, production, anchoredAt, anchoredTo }, ...(cur ? { currentKey: cur.keyId === keyId } : {}) };
+  const stamp = ts ? { timestamp: { tsa: ts.tsa, genTime: ts.genTime, serial: ts.serial, ...(ts.trusted !== undefined ? { trusted: ts.trusted } : {}) } } : timestampError ? { timestampError } : {};
+  return { ok: true, signedHeads: heads.length - pending, ...extra, head: { seq, hash, at, keyId, production, anchoredAt, anchoredTo, ...stamp }, ...(cur ? { currentKey: cur.keyId === keyId } : {}) };
 }
