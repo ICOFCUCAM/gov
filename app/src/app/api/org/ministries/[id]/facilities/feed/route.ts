@@ -8,44 +8,59 @@
 // position. GET ?since=<date-time>: what officials did with this system's sites.
 // When the institution registered a public key for this system
 // (…/facilities/feeds/[feedId]/signing-key), every call must also be signed
-// (RFC 9421, Ed25519, with Content-Digest) by that key.
+// (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is
+// recorded in the exchange log (lib/exchange/log.ts) and answered with a
+// receipt signed by the platform (`receipt`, and the CivicOS-Receipt header).
 import { NextRequest, NextResponse } from 'next/server';
-import { receiveSiteFeed, siteFeedChanges, siteFeedForKey } from '@/lib/data/facilities';
+import { receiveSiteFeed, siteFeedChanges, siteFeedForKey, type SiteFeed } from '@/lib/data/facilities';
 import { checkFeedSignature } from '@/lib/exchange/feed-keys';
+import { exchangeResponse, type SignatureState } from '@/lib/exchange/log';
 import { recordAudit } from '@/lib/data/store';
 export const dynamic = 'force-dynamic';
 
 const MAX_BYTES = 4_000_000;
-const denied = () => NextResponse.json({ error: 'Send this system\'s key: Authorization: Bearer csf_…' }, { status: 401 });
+const KEY_HELP = 'Send this system\'s key: Authorization: Bearer csf_…';
 
-/** Refuse an unsigned or badly signed call when the feed has a registered key (audited). */
-function badSignature(feed: { id: string; name: string; prefix: string }, req: NextRequest, raw: string): NextResponse | null {
+function answer(req: NextRequest, ministryId: string, feed: SiteFeed | null, body: string, sig: { state: SignatureState; keyId?: string }, status: number, json: Record<string, unknown>, result: string): NextResponse {
+  return exchangeResponse({ channel: 'site-feed', feedId: feed?.id ?? null, ministryId, method: req.method, path: req.nextUrl.pathname, body, signature: sig.state, signatureKeyId: sig.keyId, status, result }, json);
+}
+
+/** The signature state of a call; refused (and audited) when the feed has a key and the call is not signed by it. */
+function signatureOf(feed: SiteFeed, req: NextRequest, raw: string): { state: SignatureState; keyId?: string; reason?: string } {
   const s = checkFeedSignature('site', feed.id, req, raw);
-  if (!s.required || s.ok) return null;
+  if (!s.required) return { state: 'absent' };
+  if (s.ok) return { state: 'verified', keyId: s.keyId };
   recordAudit(`Site system: ${feed.name} (csf_${feed.prefix}…)`, 'exchange.signature', `SiteFeed:${feed.id}`, 'denied', s.reason);
-  return NextResponse.json({ error: s.reason }, { status: 401 });
+  return { state: 'refused', keyId: s.keyId, reason: s.reason };
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const feed = siteFeedForKey(params.id, req.headers.get('authorization'));
-  if (!feed) return denied();
   const raw = await req.text();
-  if (Buffer.byteLength(raw) > MAX_BYTES) return NextResponse.json({ error: 'A call is at most 4 MB; send fewer sites at a time' }, { status: 413 });
-  const unsigned = badSignature(feed, req, raw);
-  if (unsigned) return unsigned;
+  if (!feed) return answer(req, params.id, null, raw, { state: 'absent' }, 401, { error: KEY_HELP }, 'unknown key');
+  if (Buffer.byteLength(raw) > MAX_BYTES) return answer(req, params.id, feed, raw, { state: 'absent' }, 413, { error: 'A call is at most 4 MB; send fewer sites at a time' }, 'too large');
+  const sig = signatureOf(feed, req, raw);
+  if (sig.reason) return answer(req, params.id, feed, raw, sig, 401, { error: sig.reason }, `signature refused: ${sig.reason}`);
   let body: unknown;
-  try { body = JSON.parse(raw); } catch { return NextResponse.json({ error: 'The body must be JSON' }, { status: 400 }); }
+  try { body = JSON.parse(raw); } catch { return answer(req, params.id, feed, raw, sig, 400, { error: 'The body must be JSON' }, 'not JSON'); }
   const r = await receiveSiteFeed(feed, body, raw);
-  if ('error' in r) return NextResponse.json(r, { status: 422 });
-  return NextResponse.json(r);
+  if ('error' in r) return answer(req, params.id, feed, raw, sig, 422, r, r.error);
+  return answer(req, params.id, feed, raw, sig, 200, r as unknown as Record<string, unknown>, summary(r));
+}
+
+function summary(r: object): string {
+  const o = r as Record<string, unknown>;
+  const parts = ['added', 'updated', 'unchanged', 'movesWaiting'].filter(k => typeof o[k] === 'number').map(k => `${o[k]} ${k === 'movesWaiting' ? 'moves waiting' : k}`);
+  if (Array.isArray(o.refused)) parts.push(`${o.refused.length} refused`);
+  return parts.join(', ') || 'received';
 }
 
 export function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const feed = siteFeedForKey(params.id, req.headers.get('authorization'));
-  if (!feed) return denied();
-  const unsigned = badSignature(feed, req, '');
-  if (unsigned) return unsigned;
+  if (!feed) return answer(req, params.id, null, '', { state: 'absent' }, 401, { error: KEY_HELP }, 'unknown key');
+  const sig = signatureOf(feed, req, '');
+  if (sig.reason) return answer(req, params.id, feed, '', sig, 401, { error: sig.reason }, `signature refused: ${sig.reason}`);
   const r = siteFeedChanges(feed, req.nextUrl.searchParams.get('since'));
-  if ('error' in r) return NextResponse.json(r, { status: 422 });
-  return NextResponse.json({ ...r, asOf: new Date().toISOString() });
+  if ('error' in r) return answer(req, params.id, feed, '', sig, 422, r, r.error);
+  return answer(req, params.id, feed, '', sig, 200, { ...r, asOf: new Date().toISOString() }, `${r.sites.length} changes read`);
 }

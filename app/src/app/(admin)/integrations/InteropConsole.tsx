@@ -26,6 +26,36 @@ function Secret({ value, label }: { value: string; label: string }) {
   );
 }
 
+interface ExchangeRow { id: string; at: string; feedId: string; tenant?: string; grantId?: string; status: number; result: string; requestDigest: string; receiptId: string }
+
+/** The platform's side of the federation exchange log (lib/exchange/log.ts): each partner request, its decision and the receipt it was given. */
+function FederationExchanges() {
+  const [rows, setRows] = React.useState<ExchangeRow[] | null>(null);
+  React.useEffect(() => {
+    void fetch('/api/exchange/log?channel=federation&limit=20').then(r => r.json()).then((j: { exchanges?: ExchangeRow[] }) => setRows(j.exchanges ?? [])).catch(() => setRows([]));
+  }, []);
+  return (
+    <Card tight>
+      <h3 className="font-semibold">Recent exchanges</h3>
+      <p className="mb-2 text-sm text-ink-muted">
+        Partners call <code>POST /api/federation/exchange</code> with their integration key (scope <code>federation:exchange</code>).
+        Every request is decided by the grants above, kept here, and answered with a receipt signed by the platform.
+      </p>
+      {rows === null ? <p className="text-sm text-ink-muted">Loading…</p> : rows.length === 0 ? <p className="text-sm text-ink-muted">No exchanges yet.</p> : (
+        <ul className="space-y-1 text-sm">
+          {rows.map(r => (
+            <li key={r.id} className="border-b border-line-soft pb-1">
+              <span className="font-mono text-xs text-ink-muted">{new Date(r.at).toISOString().slice(0, 16).replace('T', ' ')} UTC</span>{' '}
+              {r.tenant ?? '—'} · {r.status} · {r.result}
+              <div className="font-mono text-xs text-ink-muted">client {r.feedId}{r.grantId ? ` · grant ${r.grantId}` : ''} · {r.requestDigest.slice(0, 21)}… · receipt {r.receiptId.slice(0, 15)}…</div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
 export function InteropConsole() {
   const [tab, setTab] = React.useState<'integrations' | 'federation' | 'webhooks'>('integrations');
   const [ints, setInts] = React.useState<IntegrationClient[]>([]);
@@ -274,6 +304,7 @@ export function InteropConsole() {
               </div>
             </Card>
           ))}
+          <FederationExchanges />
         </>
       )}
 

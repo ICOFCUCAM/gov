@@ -925,6 +925,18 @@ export function federationCheck(
   return { allowed: true, reason: 'granted' };
 }
 
+/**
+ * A partner's exchange under a grant (/api/federation/exchange): the
+ * default-deny decision of federationCheck(), the grant it rests on, and an
+ * audit entry naming the calling integration.
+ */
+export function federationExchange(input: { tenant: string; scope: string; client: Pick<IntegrationClient, 'id' | 'name'> }): FederationCheck & { grantId?: string } {
+  const d = federationCheck(input.tenant, input.scope);
+  const grant = db.grants.find(x => x.fromTenant === HOME_TENANT && x.toTenant === input.tenant);
+  appendAudit(`Integration: ${input.client.name} (${input.client.id})`, 'federation.exchange', grant ? `Grant:${grant.id}` : `Tenant:${input.tenant}`, d.allowed ? 'ok' : 'denied', `${input.scope} · ${d.reason}`);
+  return { ...d, ...(grant ? { grantId: grant.id } : {}) };
+}
+
 export function listWebhooks(): WebhookSubscription[] {
   return [...db.webhooks].sort(
     (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),

@@ -39,6 +39,9 @@
       "name": "documents"
     },
     {
+      "name": "exchange"
+    },
+    {
       "name": "facilities"
     },
     {
@@ -2063,6 +2066,93 @@
         "x-source": "src/app/api/documents/verify/route.ts"
       }
     },
+    "/api/exchange/key": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_key",
+        "summary": "GET /api/exchange/key",
+        "description": "The platform's exchange public key (Ed25519 SPKI PEM): what senders verify their receipts with (lib/exchange/log.ts). `production: false` means a development key signed them (CIVICOS_EXCHANGE_KEY not set).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/exchange/key/route.ts"
+      }
+    },
+    "/api/exchange/log": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_log",
+        "summary": "GET /api/exchange/log",
+        "description": "The platform's side of the exchange log (lib/exchange/log.ts): recent requests from connected systems and federation partners, newest first. ?channel=case-feed|site-feed|federation &feedId= &ministry= &limit= (≤ 500).",
+        "parameters": [
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ministry",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/exchange/log/route.ts"
+      }
+    },
     "/api/facilities/{fid}": {
       "get": {
         "tags": [
@@ -2549,6 +2639,43 @@
           }
         },
         "x-source": "src/app/api/federation/check/route.ts"
+      }
+    },
+    "/api/federation/exchange": {
+      "post": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "post_federation_exchange",
+        "summary": "POST /api/federation/exchange",
+        "description": "A federation partner's request for data under a grant (review R10): the partner's system presents its integration key (Authorization: Bearer civ_…, scope `federation:exchange`) and POSTs { tenant, scope }. The platform decides with the same default-deny rule as /api/federation/check, records the exchange in the exchange log on its side and answers with a signed receipt for the partner's side. Every decision is audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/federation/exchange/route.ts"
       }
     },
     "/api/federation/grants/{id}/approve": {
@@ -3782,7 +3909,7 @@
         ],
         "operationId": "get_org_ministries_id_facilities_feed",
         "summary": "GET /api/org/ministries/{id}/facilities/feed",
-        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key.",
+        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header).",
         "parameters": [
           {
             "name": "id",
@@ -3824,7 +3951,7 @@
         ],
         "operationId": "post_org_ministries_id_facilities_feed",
         "summary": "POST /api/org/ministries/{id}/facilities/feed",
-        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key.",
+        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header).",
         "parameters": [
           {
             "name": "id",
@@ -4750,7 +4877,7 @@
         ],
         "operationId": "get_org_ministries_id_queue_feed",
         "summary": "GET /api/org/ministries/{id}/queue/feed",
-        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key.",
+        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header), so both sides keep the record.",
         "parameters": [
           {
             "name": "id",
@@ -4792,7 +4919,7 @@
         ],
         "operationId": "post_org_ministries_id_queue_feed",
         "summary": "POST /api/org/ministries/{id}/queue/feed",
-        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key.",
+        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header), so both sides keep the record.",
         "parameters": [
           {
             "name": "id",
