@@ -220,7 +220,88 @@ const db = (): Db => {
   d.policy.methods ??= DEFAULT_POLICY.methods; d.policy.sensitivity ??= {}; d.policy.generaliseDegrees ??= DEFAULT_POLICY.generaliseDegrees;
   return d;
 };
-export function resetFacilities(): void { g.__civicosFacilities = undefined; }
+export function resetFacilities(): void { g.__civicosFacilities = undefined; gi.__facilityGrid = undefined; }
+
+// ── Spatial index ─────────────────────────────────────────────────────────
+// A grid of cells of GRID degrees (about 1 km) keyed by floor(lng/GRID),
+// floor(lat/GRID), and an index of identifiers, kept beside facilities[] so
+// duplicate checks and bbox queries read the few cells around a position
+// instead of every site (a national load of 20k schools was O(n²)). The index
+// is derived, never persisted: it is rebuilt whenever the facilities array is
+// not the one it was built from (a snapshot restored by lib/data/persist.ts,
+// a reset) or its length differs; proposals, moves and new identifiers update
+// it in place.
+
+export const GRID = 0.01;
+interface GridIndex { ref: Facility[]; count: number; cells: Map<string, Facility[]>; cellOf: Map<string, string>; ids: Map<string, Facility[]>; order: Map<string, number> }
+const gi = globalThis as unknown as { __facilityGrid?: GridIndex };
+const cellKey = (lng: number, lat: number) => `${Math.floor(lng / GRID)},${Math.floor(lat / GRID)}`;
+const idKey = (k: string, v: string) => `${k}\u0000${v}`;
+
+function gridAdd(ix: GridIndex, f: Facility): void {
+  const c = cellKey(f.location.lng, f.location.lat);
+  (ix.cells.get(c) ?? ix.cells.set(c, []).get(c)!).push(f);
+  ix.cellOf.set(f.id, c);
+  if (!ix.order.has(f.id)) ix.order.set(f.id, ix.order.size);
+  for (const [k, v] of Object.entries(f.ids)) if (v) { const key = idKey(k, v); const a = ix.ids.get(key) ?? ix.ids.set(key, []).get(key)!; if (!a.includes(f)) a.push(f); }
+}
+
+/** The index for the facilities as they stand: rebuilt after a restore or reset. */
+function grid(): GridIndex {
+  const list = db().facilities;
+  let ix = gi.__facilityGrid;
+  if (!ix || ix.ref !== list || ix.count !== list.length) {
+    ix = { ref: list, count: 0, cells: new Map(), cellOf: new Map(), ids: new Map(), order: new Map() };
+    for (const f of list) gridAdd(ix, f);
+    ix.count = list.length;
+    gi.__facilityGrid = ix;
+  }
+  return ix;
+}
+
+/** Record a new site in the index (after it is pushed to facilities[]). */
+function gridInsert(f: Facility): void {
+  const list = db().facilities, ix = gi.__facilityGrid;
+  if (ix && ix.ref === list && ix.count === list.length - 1 && list[list.length - 1] === f) { gridAdd(ix, f); ix.count = list.length; return; }
+  grid();
+}
+
+/** A site's position or identifiers changed: re-file it. */
+function gridUpdate(f: Facility): void {
+  const ix = grid();
+  const old = ix.cellOf.get(f.id);
+  if (old) { const a = ix.cells.get(old); if (a) { const i = a.indexOf(f); if (i >= 0) a.splice(i, 1); if (!a.length) ix.cells.delete(old); } }
+  gridAdd(ix, f);
+}
+
+/** Sites whose cell lies within `metres` of a position (a superset; callers measure exactly), in register order. */
+export function sitesNear(lng: number, lat: number, metres: number, category?: string): Facility[] {
+  const ix = grid();
+  const dLat = metres / 111_000 + GRID;
+  const dLng = metres / (111_000 * Math.max(0.01, Math.cos((Math.min(89, Math.abs(lat)) * Math.PI) / 180))) + GRID;
+  return sitesInCells([lng - dLng, lat - dLat, lng + dLng, lat + dLat], ix, category);
+}
+
+function sitesInCells(b: [number, number, number, number], ix = grid(), category?: string): Facility[] {
+  const [x0, y0, x1, y1] = [Math.floor(b[0] / GRID), Math.floor(b[1] / GRID), Math.floor(b[2] / GRID), Math.floor(b[3] / GRID)];
+  const out: Facility[] = [];
+  const take = (a: Facility[]) => { for (const f of a) if (!category || f.category === category) out.push(f); };
+  if ((x1 - x0 + 1) * (y1 - y0 + 1) > ix.cells.size) {
+    // A box wider than the occupied cells: walk the cells instead of the box.
+    for (const [k, a] of ix.cells) { const c = k.indexOf(','); const x = Number(k.slice(0, c)), y = Number(k.slice(c + 1)); if (x >= x0 && x <= x1 && y >= y0 && y <= y1) take(a); }
+  } else {
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) { const a = ix.cells.get(`${x},${y}`); if (a) take(a); }
+  }
+  return out.sort((p, q) => ix.order.get(p.id)! - ix.order.get(q.id)!);
+}
+
+/** Sites carrying any of these identifiers (scheme → value), in register order. */
+function sitesWithIds(ids: Record<string, string>): Facility[] {
+  const ix = grid();
+  const out = new Set<Facility>();
+  for (const [k, v] of Object.entries(ids)) if (v) for (const f of ix.ids.get(idKey(k, v)) ?? []) if (f.ids[k] === v) out.add(f);
+  return [...out].sort((p, q) => ix.order.get(p.id)! - ix.order.get(q.id)!);
+}
 
 const now = () => new Date().toISOString();
 const clean = (s: unknown, max = 160) => String(s ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
@@ -359,6 +440,33 @@ export async function placePoint(input: { lng: number; lat: number; region?: str
   return { errors, warnings, place };
 }
 
+/** Same-named sites further apart than this are different sites. */
+export const SAME_NAME_METRES = 5000;
+
+/**
+ * Sites of the same category that may be this one: within the category's
+ * duplicate distance, of the same name within 5 km, or carrying one of its
+ * identifiers anywhere. Reads the spatial and identifier indexes, not every site.
+ */
+export function findDuplicates(input: { lng: number; lat: number; category: string; name?: string; ids?: Record<string, string>; exceptId?: string }): { id: string; name: string; metres: number }[] {
+  const { lng, lat } = input;
+  const cat = categoryOf(input.category);
+  const name = clean(input.name).toLowerCase();
+  const near = cat?.duplicateMetres ?? 200;
+  const reach = name ? Math.max(near, SAME_NAME_METRES) : near;
+  const pool = sitesNear(lng, lat, reach, input.category);
+  const byId = sitesWithIds(input.ids ?? {}).filter(f => f.category === input.category && !pool.includes(f));
+  if (byId.length) { const order = grid().order; pool.push(...byId); pool.sort((p, q) => order.get(p.id)! - order.get(q.id)!); }
+  // Cheap bound before the great-circle distance: a degree of latitude is at least 110.5 km.
+  const far = (f: Facility) => Math.abs(f.location.lat - lat) * 110_500 > reach + 1;
+  const wanted = (f: Facility) => Object.entries(input.ids ?? {}).some(([key, v]) => v && f.ids[key] === v);
+  return pool
+    .filter(f => f.state !== 'withdrawn' && f.id !== input.exceptId && (!far(f) || wanted(f)))
+    .map(f => ({ f, m: metres([lng, lat], [f.location.lng, f.location.lat]) }))
+    .filter(({ f, m }) => m <= near || (name && f.name.toLowerCase() === name && m < SAME_NAME_METRES) || wanted(f))
+    .map(({ f, m }) => ({ id: f.id, name: f.name, metres: m }));
+}
+
 /** Check a position for a category: ranges, inside the nation and the stated region, duplicates; works out its region and district. */
 export async function checkLocation(input: { lng: number; lat: number; category: string; region?: string; name?: string; ids?: Record<string, string>; exceptId?: string; outsideReason?: string }): Promise<LocationCheck> {
   const { lng, lat } = input;
@@ -368,14 +476,7 @@ export async function checkLocation(input: { lng: number; lat: number; category:
   // Without a category the map is not consulted; ranges still are.
   const located = await placePoint({ lng, lat, region: input.region, nearCoast: coastal, outsideReason: input.outsideReason, skipMap: noCategory });
   const errors = [...located.errors, ...(noCategory ? ['Choose a category'] : [])], warnings = located.warnings, place = located.place;
-  const cat = categoryOf(input.category);
-  const name = clean(input.name).toLowerCase();
-  const duplicates = db().facilities
-    .filter(f => f.state !== 'withdrawn' && f.id !== input.exceptId && f.category === input.category)
-    .map(f => ({ f, m: metres([lng, lat], [f.location.lng, f.location.lat]) }))
-    .filter(({ f, m }) => m <= (cat?.duplicateMetres ?? 200) || (name && f.name.toLowerCase() === name && m < 5000)
-      || Object.entries(input.ids ?? {}).some(([k, v]) => v && f.ids[k] === v))
-    .map(({ f, m }) => ({ id: f.id, name: f.name, metres: m }));
+  const duplicates = findDuplicates({ lng, lat, category: input.category, name: input.name, ids: input.ids, exceptId: input.exceptId });
   if (duplicates.length) warnings.push(`Possible duplicate of ${duplicates.map(d => `${d.name} (${d.metres} m)`).join(', ')}`);
   return { ok: !errors.length, errors, warnings, place, duplicates };
 }
@@ -437,6 +538,7 @@ export async function proposeFacility(ministryId: string, input: ProposeInput, b
   };
   pushVersion(f, f.proposedBy, 'proposed');
   db().facilities.push(f);
+  gridInsert(f);
   recordAudit(f.proposedBy, 'facility.propose', `Facility:${f.id}`, 'ok', `${cat.label}: ${f.name} (${f.location.lat}, ${f.location.lng}; ${method})`);
   return { facility: structuredClone(f), check };
 }
@@ -501,6 +603,7 @@ export async function actOnFacility(id: string, a: FacilityAction, by: string): 
       if (p.by === who) return { error: 'A different official must confirm the move' };
       const check = await checkLocation({ lng: p.location.lng, lat: p.location.lat, category: f.category, exceptId: f.id, outsideReason: p.reason });
       f.location = p.location; f.place = check.place; f.pendingVersion = undefined;
+      gridUpdate(f);
       // A moved site's location is certified again under the current policy.
       if (f.state === 'published') f.certification = certificationFor();
       pushVersion(f, who, `moved: ${p.reason ?? ''}`);
@@ -547,13 +650,20 @@ export function viewFacility(f: Facility, v: Viewer): Facility & { generalised?:
   return out;
 }
 
-export function listFacilities(filter: { ministryId?: string; category?: string; state?: Facility['state'] | 'all'; region?: string } = {}, viewer: Viewer = { signedIn: true }): (Facility & { generalised?: boolean })[] {
-  return db().facilities
+export function listFacilities(filter: { ministryId?: string; category?: string; state?: Facility['state'] | 'all'; region?: string; bbox?: [number, number, number, number] } = {}, viewer: Viewer = { signedIn: true }): (Facility & { generalised?: boolean })[] {
+  const b = filter.bbox;
+  // A bbox reads the grid around the box, widened by the generalisation step so
+  // a restricted site is matched where the viewer sees it, never where it is.
+  const m = b ? db().policy.generaliseDegrees : 0;
+  const from = b ? sitesInCells([b[0] - m, b[1] - m, b[2] + m, b[3] + m]) : db().facilities;
+  const inBox = (f: { location: { lng: number; lat: number } }) => !b || (f.location.lng >= b[0] && f.location.lng <= b[2] && f.location.lat >= b[1] && f.location.lat <= b[3]);
+  return from
     .filter(f => (filter.state === 'all' ? true : f.state === (filter.state ?? 'published')))
     .filter(f => !filter.ministryId || f.ownerId === filter.ministryId)
     .filter(f => !filter.category || f.category === filter.category)
     .filter(f => !filter.region || f.place.regionCode === filter.region || f.place.region === filter.region)
-    .map(f => viewFacility(f, viewer));
+    .map(f => viewFacility(f, viewer))
+    .filter(inBox);
 }
 
 export function getFacility(id: string): Facility | undefined {
@@ -911,7 +1021,7 @@ export async function decideCandidate(id: string, d: { decision: 'confirm'; mini
     const f = db().facilities.find(x => x.id === d.facilityId);
     if (!f || f.state === 'withdrawn') return { error: 'No such site' };
     if (f.category !== c.category) return { error: 'The candidate is a different kind of site' };
-    if (c.ref) f.ids[src.name] = c.ref;
+    if (c.ref) { f.ids[src.name] = c.ref; gridUpdate(f); }
     pushVersion(f, by.trim(), `linked to ${src.name}${c.ref ? ` (${c.ref})` : ''}`);
     Object.assign(c, { state: 'linked', decidedBy: by.trim(), decidedAt: now(), facilityId: f.id });
   } else {

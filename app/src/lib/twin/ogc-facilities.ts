@@ -59,9 +59,9 @@ export function facilityItems(base: string, q: { limit?: string | null; offset?:
   if (typeof datetime !== 'string') return datetime;
   const { category: cat, ...filters } = q.filters ?? {};
   const category = q.category ?? cat;
-  const all = listFacilities({ category: category ?? undefined }, viewer)
+  // bbox reads the register's spatial index, on the positions the viewer may see.
+  const all = listFacilities({ category: category ?? undefined, ...(bbox ? { bbox } : {}) }, viewer)
     .filter(s => !s.publishedAt || s.publishedAt <= datetime)
-    .filter(s => !bbox || (s.location.lng >= bbox[0] && s.location.lng <= bbox[2] && s.location.lat >= bbox[1] && s.location.lat <= bbox[3]))
     .map(featureOf)
     .filter(f => matchesFilters(f.properties, filters));
   const page = all.slice(offset, offset + limit);
