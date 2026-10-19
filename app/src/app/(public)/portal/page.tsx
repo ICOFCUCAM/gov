@@ -1,6 +1,7 @@
 // Public — Citizen Super-Portal homepage.
 
 import { PublicSite } from '@/apps/_shared/public/PublicSite';
+import { siteRequest } from '@/apps/_shared/public/site-props';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 
 export const dynamic = 'force-dynamic';
@@ -12,9 +13,10 @@ const THEME = {
   emergencyA: '#b8460e', emergencyB: '#7a2e08',
 };
 
-export default function PublicPortalPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+export default async function PublicPortalPage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
   return (
-    <PublicSite id="portal" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
+    <PublicSite id="portal" request={await siteRequest()} theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="parliament" primary={THEME.primary} accent={THEME.accent} aria="Citizen wallet" />} />
   );
 }

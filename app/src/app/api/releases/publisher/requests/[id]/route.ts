@@ -7,8 +7,9 @@ import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  if (!await publisherAuthorized(req)) return unauthorized();
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  if (!(await publisherAuthorized(req))) return unauthorized();
   let b: { to?: string; by?: string; note?: string; targetVersion?: string };
   try { b = await withOfficial(await req.json()); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
   if (!b || typeof b.to !== 'string') return NextResponse.json({ error: 'to is required' }, { status: 422 });

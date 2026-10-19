@@ -140,12 +140,12 @@ describe('CQL2 on the collections', () => {
   }, 60_000);
 
   it('answers 400 with the reason through the items route', async () => {
-    const res = await itemsRoute(new NextRequest(`${B}/collections/facilities/items?filter=${encodeURIComponent("colour = 'red'")}`), { params: { collectionId: 'facilities' } });
+    const res = await itemsRoute(new NextRequest(`${B}/collections/facilities/items?filter=${encodeURIComponent("colour = 'red'")}`), { params: Promise.resolve({ collectionId: 'facilities' }) });
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.code).toBe('InvalidParameterValue');
     expect(body.description).toMatch(/not a queryable/);
-    const good = await itemsRoute(new NextRequest(`${B}/collections/boundaries/items?filter=${encodeURIComponent("T_INTERSECTS(validFrom, INTERVAL('..', '..'))")}`), { params: { collectionId: 'boundaries' } });
+    const good = await itemsRoute(new NextRequest(`${B}/collections/boundaries/items?filter=${encodeURIComponent("T_INTERSECTS(validFrom, INTERVAL('..', '..'))")}`), { params: Promise.resolve({ collectionId: 'boundaries' }) });
     expect(good.status).toBe(200);
   });
 });

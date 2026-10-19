@@ -15,7 +15,7 @@ describe('POST /api/ops/incidents/[id]/resolve', () => {
     const res = await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({ by: 'NOC' }),
       headers: { 'content-type': 'application/json' },
-    }) as never, { params: { id: 'i-1' } });
+    }) as never, { params: Promise.resolve({ id: 'i-1' }) });
     expect(res.status).toBe(404);
   });
 
@@ -24,7 +24,7 @@ describe('POST /api/ops/incidents/[id]/resolve', () => {
     const res = await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({ by: 'NOC', note: 'restored' }),
       headers: { 'content-type': 'application/json' },
-    }) as never, { params: { id: 'i-1' } });
+    }) as never, { params: Promise.resolve({ id: 'i-1' }) });
     expect(res.status).toBe(200);
     expect(resolveMock).toHaveBeenCalledWith('i-1', 'NOC', 'restored');
   });
@@ -34,7 +34,7 @@ describe('POST /api/ops/incidents/[id]/resolve', () => {
     await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({}),
       headers: { 'content-type': 'application/json' },
-    }) as never, { params: { id: 'i-1' } });
+    }) as never, { params: Promise.resolve({ id: 'i-1' }) });
     expect(resolveMock).toHaveBeenCalledWith('i-1', 'operator', undefined);
   });
 });

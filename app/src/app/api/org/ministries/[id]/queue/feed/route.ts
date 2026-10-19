@@ -34,7 +34,8 @@ function signatureOf(feed: CaseFeed, req: NextRequest, raw: string): { state: Si
   return { state: 'refused', keyId: s.keyId, reason: s.reason };
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const feed = feedForKey(params.id, req.headers.get('authorization'));
   const raw = await req.text();
   if (!feed) return answer(req, params.id, null, raw, { state: 'absent' }, 401, { error: KEY_HELP }, 'unknown key');
@@ -48,7 +49,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   return answer(req, params.id, feed, raw, sig, 200, r, `${r.added} added, ${r.updated} updated, ${r.unchanged} unchanged, ${r.refused.length} refused`);
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const feed = feedForKey(params.id, req.headers.get('authorization'));
   if (!feed) return answer(req, params.id, null, '', { state: 'absent' }, 401, { error: KEY_HELP }, 'unknown key');
   const sig = signatureOf(feed, req, '');

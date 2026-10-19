@@ -11,12 +11,14 @@ import { listGrants } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!listGrants().some(g => g.id === params.id)) return NextResponse.json({ error: 'Grant not found' }, { status: 404 });
   return NextResponse.json({ grant: params.id, certificate: grantCertificate(params.id) ?? null });
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { by?: string; certificate?: unknown; sha256?: unknown; subject?: unknown };
   const by = typeof b.by === 'string' && b.by.trim() ? b.by.trim() : null;
   if (!by) return NextResponse.json({ error: 'Name the official making the change (sign in)' }, { status: 422 });
@@ -25,7 +27,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({ grant: params.id, certificate: r });
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { by?: string };
   const by = typeof b.by === 'string' && b.by.trim() ? b.by.trim() : null;
   if (!by) return NextResponse.json({ error: 'Name the official making the change (sign in)' }, { status: 422 });

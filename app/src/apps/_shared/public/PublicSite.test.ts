@@ -13,6 +13,8 @@ import TreasuryPage from '@/app/(public)/treasury/page';
 
 const LIVE = { totalSites: '295', healthAlert: 'No national health emergency is in effect. Follow the advisories from your regional health authority.' };
 const theme = { ink: '#0b1a2c', inkSoft: '#13294b', primary: '#1e63b8', accent: '#3a82d0', surface: '#f4f6f9', surfaceMute: '#e8eef6', line: '#dde3ec', emergencyA: '#c1252f', emergencyB: '#a01c25' };
+// Pages are async server components (Next.js 15): run one, then render what it returns.
+const renderPage = async (Page: (props: object) => Promise<React.ReactElement>) => renderToStaticMarkup(await Page({}));
 const render = (id: string, preset?: string) =>
   renderToStaticMarkup(React.createElement(PublicSite, { id, theme, illustration: null, live: LIVE, preset }));
 const hrefs = (html: string) => new Set([...html.matchAll(/href="([^"]+)"/g)].map(m => m[1]!.replace(/&amp;/g, '&')));
@@ -76,9 +78,9 @@ describe('public-site design presets', () => {
     expect(presetFor('police', 'response-community').id).toBe('response-community');
   });
 
-  it('keep every item, link and anchor of the record in the bespoke Health and Treasury designs', () => {
+  it('keep every item, link and anchor of the record in the bespoke Health and Treasury designs', async () => {
     for (const [id, Page] of [['health', HealthPage], ['treasury', TreasuryPage]] as const) {
-      const html = renderToStaticMarkup(React.createElement(Page, {}));
+      const html = await renderPage(Page);
       const text = decode(html);
       // The Health alert is live (health-operations engine), so its text is not fixed.
       for (const t of expected(id).filter(t => t !== LIVE.healthAlert)) expect(text, `${id}: "${t}"`).toContain(t);
@@ -115,7 +117,7 @@ describe('public-site design presets', () => {
     }
     expect(presetFor('police').id).toBe('response-community');
     updateSiteSettings('health', { website: 'https://health.example.gov' }, 'CIO');
-    const health = decode(renderToStaticMarkup(React.createElement(HealthPage, {})));
+    const health = decode(await renderPage(HealthPage));
     expect(health).toContain('Its main website is health.example.gov.');
     resetSiteSettings();
   });
@@ -124,14 +126,14 @@ describe('public-site design presets', () => {
 describe('public-site accessibility foundations (WCAG 2.2 AA)', () => {
   beforeEach(() => applyNation({ configured: false }));
 
-  const pages = () => [
+  const pages = async () => [
     ...SITE_IDS.flatMap(id => presetsFor(id).filter(p => !p.bespoke).map(p => [`${id} / ${p.id}`, render(id, p.id)] as const)),
-    ['health', renderToStaticMarkup(React.createElement(HealthPage, {}))] as const,
-    ['treasury', renderToStaticMarkup(React.createElement(TreasuryPage, {}))] as const,
+    ['health', await renderPage(HealthPage)] as const,
+    ['treasury', await renderPage(TreasuryPage)] as const,
   ];
 
-  it('give every design a skip link, one main region, banner, footer, one h1 and a language', () => {
-    for (const [name, html] of pages()) {
+  it('give every design a skip link, one main region, banner, footer, one h1 and a language', async () => {
+    for (const [name, html] of await pages()) {
       expect(html, `${name}: skip link`).toMatch(/<a href="#main"[^>]*>/);
       expect(html.match(/<main[\s>]/g)?.length, `${name}: one <main>`).toBe(1);
       expect(html, `${name}: main is the skip target`).toMatch(/<main id="main"/);
@@ -143,8 +145,8 @@ describe('public-site accessibility foundations (WCAG 2.2 AA)', () => {
     }
   });
 
-  it('name every control and image', () => {
-    for (const [name, html] of pages()) {
+  it('name every control and image', async () => {
+    for (const [name, html] of await pages()) {
       for (const b of html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g) ?? []) {
         const named = /aria-label="[^"]+"/.test(b) || /\p{L}/u.test(b.replace(/<[^>]+>/g, ''));
         expect(named, `${name}: unnamed button ${b.slice(0, 80)}`).toBe(true);

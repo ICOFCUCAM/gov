@@ -55,7 +55,7 @@ describe('security headers', () => {
 
   it('the root layout puts the nonce on its inline script', () => {
     const layout = readFileSync(join(__dirname, 'app', 'layout.tsx'), 'utf8');
-    expect(layout).toMatch(/headers\(\)\.get\('x-nonce'\)/);
+    expect(layout).toMatch(/\(await headers\(\)\)\.get\('x-nonce'\)/);
     expect(layout).toMatch(/<script nonce=\{nonce\}/);
   });
 

@@ -6,17 +6,13 @@ const nextConfig = {
   // Doctrine: no third-party analytics, no remote images by default,
   // no telemetry to the vendor. Sovereign cloud portable.
   poweredByHeader: false,
-  // No next/image is used; the image optimizer stays off (it carries a
-  // Next.js 14 advisory, GHSA-2xp9-vwfh-vxw4: scripts/audit-accepted.json).
+  // No next/image is used; the image optimizer stays off.
   images: { unoptimized: true },
-  experimental: {
-    // App Router is stable in 14.x.
-    // src/instrumentation.ts restores and saves the platform's state (lib/data/persist.ts).
-    instrumentationHook: true,
-    // Read by Node at run time, not bundled: sql.js (GeoPackage boundary
-    // files, lib/geo/boundary-files.ts) carries its WebAssembly inline.
-    serverComponentsExternalPackages: ['sql.js'],
-  },
+  // Read by Node at run time, not bundled: sql.js (GeoPackage boundary
+  // files, lib/geo/boundary-files.ts) carries its WebAssembly inline.
+  // (src/instrumentation.ts, which restores and saves the platform's state, is
+  // loaded by Next.js 15 without a flag.)
+  serverExternalPackages: ['sql.js'],
   // Security headers (security-headers.mjs, mirrored in vercel.json). The
   // Content-Security-Policy carries a nonce per request and is set by the
   // middleware (src/middleware.ts).

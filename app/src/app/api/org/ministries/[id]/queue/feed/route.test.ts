@@ -6,7 +6,7 @@ import { listMinistries } from '@/lib/data/store';
 
 const M = listMinistries().find(m => m.status === 'active')!.id;
 const url = `http://localhost/api/org/ministries/${M}/queue/feed`;
-const ctx = { params: { id: M } };
+const ctx = { params: Promise.resolve({ id: M }) };
 
 describe('the case feed endpoint', () => {
   it('answers only a connected system\'s key', async () => {

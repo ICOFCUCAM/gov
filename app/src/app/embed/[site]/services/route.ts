@@ -16,7 +16,8 @@ export const dynamic = 'force-dynamic';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
-export function GET(req: Request, { params }: { params: { site: string } }) {
+export async function GET(req: Request, props: { params: Promise<{ site: string }> }) {
+  const params = await props.params;
   if (!SITE_IDS.includes(params.site)) return new NextResponse('Not found', { status: 404 });
   const { content, settings } = effectiveContent(params.site);
   const c = fillDeep(content, siteTokens(new Date().getFullYear()));

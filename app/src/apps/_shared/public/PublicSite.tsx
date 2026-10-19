@@ -13,7 +13,7 @@ import { GatewayBar, LanguageSwitch, SiteLogo, NewsletterForm, SkipLink, Preview
 import { FontSizeControls } from './controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { getSiteSettings } from '@/lib/data/site-settings';
-import { siteProps } from './site-props';
+import { siteProps, type SiteRequest } from './site-props';
 import { siteLocations } from './locator-data';
 import { LocatorPanel } from './LocatorPanel';
 import { PRESETS, DEFAULT_PRESET, presetsFor, type Preset, type PresetDesign, type BlockRef } from './design/presets';
@@ -31,6 +31,8 @@ export interface PublicSiteProps {
   preset?: string;
   /** A pending proposal to preview (?preview=, officials only). */
   preview?: string;
+  /** The visitor's language and the page's origin, read by the page with siteRequest(). */
+  request?: SiteRequest;
 }
 
 /** The preset a site uses: the requested one when the site may use it, else the one its ministry chose, else its default. */
@@ -40,8 +42,8 @@ export function presetFor(id: string, requested?: string): Preset {
   return allowed.find(p => p.id === requested) ?? allowed.find(p => p.id === chosen) ?? PRESETS[DEFAULT_PRESET[id] ?? 'civic-standard'] ?? PRESETS['civic-standard']!;
 }
 
-export function PublicSite({ id, theme, illustration, live, preset, preview, extra }: PublicSiteProps) {
-  const props = siteProps(id, { theme, illustration, live, preview });
+export function PublicSite({ id, theme, illustration, live, preset, preview, request, extra }: PublicSiteProps) {
+  const props = siteProps(id, { theme, illustration, live, preview, request });
   // The locator shows the institution's own published sites from the national facility register.
   const site = props.locator ? { ...props, locations: siteLocations(id, props.locator.tabs) } : props;
   const p = presetFor(id, preset ?? (preview ? effectiveContent(id, preview).previewPreset ?? undefined : undefined));

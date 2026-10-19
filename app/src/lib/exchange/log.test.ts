@@ -21,7 +21,7 @@ describe('the exchange log and signed receipts', () => {
     const r = issueFeed(M, `Logged feed ${Date.now()}`, 'PS');
     if ('error' in r) throw new Error(r.error);
     const url = `http://localhost/api/org/ministries/${M}/queue/feed`;
-    const ctx = { params: { id: M } };
+    const ctx = { params: Promise.resolve({ id: M }) };
     const k = generateKeyPairSync('ed25519');
     const reg = registerFeedKey('case', M, r.feed.id, { publicKey: k.publicKey.export({ type: 'spki', format: 'pem' }).toString(), by: 'PS' });
     if ('error' in reg) throw new Error(reg.error);
@@ -52,7 +52,7 @@ describe('the exchange log and signed receipts', () => {
   });
 
   it('logs unknown callers without naming a feed', async () => {
-    const res = await casePost(new NextRequest(`http://localhost/api/org/ministries/${M}/queue/feed`, { method: 'POST', body: '{}' }), { params: { id: M } });
+    const res = await casePost(new NextRequest(`http://localhost/api/org/ministries/${M}/queue/feed`, { method: 'POST', body: '{}' }), { params: Promise.resolve({ id: M }) });
     expect(res.status).toBe(401);
     expect(listExchanges()[0]).toMatchObject({ feedId: '?', status: 401, result: 'unknown key' });
   });

@@ -10,7 +10,8 @@ import { resolveRedirect } from '@/lib/data/site-settings';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(req: Request, { params }: { params: { site: string; path: string[] } }) {
+export async function GET(req: Request, props: { params: Promise<{ site: string; path: string[] }> }) {
+  const params = await props.params;
   const r = resolveRedirect(params.site, (params.path ?? []).join('/'));
   if (!r) return new NextResponse('Not found', { status: 404 });
   return NextResponse.redirect(new URL(r.to, req.url), r.mapped ? 301 : 302);

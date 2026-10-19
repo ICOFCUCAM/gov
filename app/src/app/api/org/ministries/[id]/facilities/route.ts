@@ -9,7 +9,8 @@ import { currentOfficial, refusal, withOfficial } from '@/lib/auth/official';
 import { ministryPermission } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
-export async function GET(_r: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_r: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!getMinistry(params.id)) return NextResponse.json({ error: 'Ministry not found' }, { status: 404 });
   const o = await currentOfficial();
   return NextResponse.json({
@@ -18,7 +19,8 @@ export async function GET(_r: NextRequest, { params }: { params: { id: string } 
   });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const refused = await refusal(s => ministryPermission(s, params.id));
   if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as ProposeInput & { by?: string; field?: boolean };

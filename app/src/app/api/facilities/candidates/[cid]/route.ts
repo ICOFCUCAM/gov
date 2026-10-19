@@ -10,7 +10,8 @@ import { refusal, withOfficial } from '@/lib/auth/official';
 import { ministryPermission } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { cid: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ cid: string }> }) {
+  const params = await props.params;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { decision?: string; ministryId?: string; facilityId?: string; name?: string; status?: string; reason?: string; by?: string };
   let decision: Parameters<typeof decideCandidate>[1];
   if (b.decision === 'confirm') {

@@ -17,8 +17,11 @@ export const metadata = { title: 'Email updates', robots: { index: false } };
 
 const INK = '#0b1a2c';
 
-export default function SubscriptionsPage({ searchParams }: { searchParams?: { token?: string; action?: string; status?: string; site?: string } }) {
-  const t = siteMessages(visitorLocale());
+export default async function SubscriptionsPage(
+  props: { searchParams?: Promise<{ token?: string; action?: string; status?: string; site?: string }> }
+) {
+  const searchParams = await props.searchParams;
+  const t = siteMessages(await visitorLocale());
   const token = searchParams?.token ?? '';
   const action = searchParams?.action === 'unsubscribe' ? 'unsubscribe' : 'confirm';
   const link = token ? lookupToken(token) : null;

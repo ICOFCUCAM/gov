@@ -21,12 +21,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false }, // prototype default
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { iso3, regions, currency, locale, languages, stateForm, constitution, stateName, executiveTitle, legislatureName, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant, seal, accent, map } = getSovereign();
   const configured = !!getSetup();
   const facts = { iso3, regions, currency, locale, languages, stateForm, constitution, stateName, executiveTitle, legislatureName, configured, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant, seal, accent, map };
   // The request's script nonce (src/middleware.ts): the Content-Security-Policy runs no inline script without it.
-  const nonce = headers().get('x-nonce') ?? undefined;
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     <html lang="en" dir="ltr">
       <head>

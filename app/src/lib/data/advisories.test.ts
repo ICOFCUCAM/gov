@@ -73,10 +73,10 @@ describe('CSAF export', () => {
     const c = getChamber('sandbox'); if ('error' in c) throw new Error(c.error);
     const sb = await (await advGET(new Request(`http://x/api/releases/advisories?link=${c.nation.channelKey}`) as never)).json();
     expect(sb.exposure.find((x: { advisory: { id: string } }) => x.advisory.id === 'CSA-2026-07').status).toBe('fixed');
-    const dl = csafGET(new Request('http://x') as never, { params: { id: 'CSA-2026-03' } });
+    const dl = await csafGET(new Request('http://x') as never, { params: Promise.resolve({ id: 'CSA-2026-03' }) });
     expect(dl.headers.get('content-disposition')).toMatch(/csa-2026-03\.csaf\.json/);
-    expect(csafGET(new Request('http://x') as never, { params: { id: 'NOPE' } }).status).toBe(404);
-    const v = await vexPOST(new Request('http://x', { method: 'POST', body: JSON.stringify({ nationId: 'sandbox', status: 'not-affected', justification: 'component_not_present' }), headers: { 'content-type': 'application/json' } }) as never, { params: { id: 'CSA-2026-09' } });
+    expect((await csafGET(new Request('http://x') as never, { params: Promise.resolve({ id: 'NOPE' }) })).status).toBe(404);
+    const v = await vexPOST(new Request('http://x', { method: 'POST', body: JSON.stringify({ nationId: 'sandbox', status: 'not-affected', justification: 'component_not_present' }), headers: { 'content-type': 'application/json' } }) as never, { params: Promise.resolve({ id: 'CSA-2026-09' }) });
     expect(v.status).toBe(200);
   });
 });

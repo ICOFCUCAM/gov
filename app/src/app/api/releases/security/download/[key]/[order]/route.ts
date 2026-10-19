@@ -7,7 +7,8 @@ import { securityDownload } from '@/lib/data/security-store';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(_req: Request, { params }: { params: { key: string; order: string } }) {
+export async function GET(_req: Request, props: { params: Promise<{ key: string; order: string }> }) {
+  const params = await props.params;
   const n = resolveNation(params.key);
   if (!n) return NextResponse.json({ error: 'Unknown distribution link' }, { status: 404 });
   const m = securityDownload(n, params.order);

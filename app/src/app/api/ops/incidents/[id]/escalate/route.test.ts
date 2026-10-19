@@ -15,7 +15,7 @@ describe('POST /api/ops/incidents/[id]/escalate', () => {
     const res = await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({ by: 'NOC' }),
       headers: { 'content-type': 'application/json' },
-    }) as never, { params: { id: 'i-1' } });
+    }) as never, { params: Promise.resolve({ id: 'i-1' }) });
     expect(res.status).toBe(404);
   });
 
@@ -24,7 +24,7 @@ describe('POST /api/ops/incidents/[id]/escalate', () => {
     const res = await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({ by: 'NOC', note: 'cascading' }),
       headers: { 'content-type': 'application/json' },
-    }) as never, { params: { id: 'i-1' } });
+    }) as never, { params: Promise.resolve({ id: 'i-1' }) });
     expect(res.status).toBe(200);
     expect(escalateMock).toHaveBeenCalledWith('i-1', 'NOC', 'cascading');
   });
@@ -32,7 +32,7 @@ describe('POST /api/ops/incidents/[id]/escalate', () => {
   it('tolerates invalid JSON', async () => {
     escalateMock.mockReturnValue({ id: 'i-1' });
     const res = await POST(new Request('http://x', { method: 'POST', body: 'no' }) as never,
-      { params: { id: 'i-1' } });
+      { params: Promise.resolve({ id: 'i-1' }) });
     expect(res.status).toBe(200);
     expect(escalateMock).toHaveBeenCalledWith('i-1', 'operator', undefined);
   });

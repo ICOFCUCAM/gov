@@ -6,7 +6,8 @@ import { decidePolicyChange } from '@/lib/data/facilities';
 import { withOfficial } from '@/lib/auth/official';
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { cid: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ cid: string }> }) {
+  const params = await props.params;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { decision?: string; by?: string };
   if (b.decision !== 'confirm' && b.decision !== 'withdraw') return NextResponse.json({ error: 'Confirm or withdraw' }, { status: 422 });
   const r = decidePolicyChange(params.cid, b.decision, b.by ?? '');

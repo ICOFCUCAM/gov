@@ -1,6 +1,7 @@
 // Public — Ministry of Interior homepage.
 
 import { PublicSite } from '@/apps/_shared/public/PublicSite';
+import { siteRequest } from '@/apps/_shared/public/site-props';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 
 export const dynamic = 'force-dynamic';
@@ -12,9 +13,10 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicInteriorPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+export default async function PublicInteriorPage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
   return (
-    <PublicSite id="interior" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
+    <PublicSite id="interior" request={await siteRequest()} theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="shield" primary={THEME.primary} accent={THEME.accent} aria="Interior shield emblem" />} />
   );
 }

@@ -8,12 +8,14 @@ import { refusal, withOfficial } from '@/lib/auth/official';
 import { canManageFeeds } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
-export function GET(_r: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_r: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!getMinistry(params.id)) return NextResponse.json({ error: 'Ministry not found' }, { status: 404 });
   return NextResponse.json({ feeds: listSiteFeeds(params.id) });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const refused = await refusal(s => canManageFeeds(s, params.id));
   if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { name?: string; by?: string };

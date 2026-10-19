@@ -175,9 +175,9 @@ describe('routes', () => {
     const good = await supportPOST(json('http://x/api/releases/support', { priority: 'P3', title: 'About 1.4.1', description: 'Is 1.4.1 safe to install mid-month?', by: 'CIO', about: { kind: 'release', id: 'DR-141' } }));
     expect(good.status).toBe(201);
     // Home cannot read or reply to the sandbox's ticket.
-    expect((await ticketGET(new Request('http://x') as never, { params: { ticketId: 'SUP-3101' } })).status).toBe(404);
-    expect((await ticketPOST(json('http://x', { action: 'reply', by: 'CIO', text: 'hi there' }), { params: { ticketId: 'SUP-3101' } })).status).toBe(404);
-    const sbReply = await ticketPOST(json(`http://x?link=${sandboxKey()}`, { action: 'close', by: 'Owner' }), { params: { ticketId: 'SUP-3101' } });
+    expect((await ticketGET(new Request('http://x') as never, { params: Promise.resolve({ ticketId: 'SUP-3101' }) })).status).toBe(404);
+    expect((await ticketPOST(json('http://x', { action: 'reply', by: 'CIO', text: 'hi there' }), { params: Promise.resolve({ ticketId: 'SUP-3101' }) })).status).toBe(404);
+    const sbReply = await ticketPOST(json(`http://x?link=${sandboxKey()}`, { action: 'close', by: 'Owner' }), { params: Promise.resolve({ ticketId: 'SUP-3101' }) });
     expect(sbReply.status).toBe(200);
   });
 

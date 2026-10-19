@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { rollbackDeployment } from '@/lib/data/store';
 import { withOfficial } from '@/lib/auth/official';
 export const dynamic = 'force-dynamic';
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { note?: string; by?: string };
   const r = rollbackDeployment(params.id, b.by ?? 'W. Tanaka', b.note ?? 'operator rollback');
   if ('error' in r) return NextResponse.json(r, { status: 409 });

@@ -39,7 +39,7 @@ describe('directives under official roles', () => {
     const r = await list.POST(req({ ref: 'DIR-T1', title: 'Release of reserves', issuedByCharterId: 'fed-health', by: 'Typed' }));
     expect(r.status).toBe(201);
     expect((await r.json()).directive).toMatchObject({ issued_by_charter_id: 'fed-treasury', issued_by_name: 'officer, Office' });
-    const ctx = { params: { ref: 'DIR-T1' } };
+    const ctx = { params: Promise.resolve({ ref: 'DIR-T1' }) };
     expect((await one.POST(req({ action: 'sign' }), ctx)).status).toBe(403);
 
     await signInAs(other);

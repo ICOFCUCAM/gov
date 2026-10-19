@@ -8,7 +8,8 @@ import { scenarioProv } from '@/lib/twin/prov';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(req: NextRequest, { params }: { params: { id: string; v: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string; v: string }> }) {
+  const params = await props.params;
   const doc = scenarioProv(params.id, Number(params.v), req.nextUrl.origin);
   if (!doc) return NextResponse.json({ error: 'No such scenario version' }, { status: 404 });
   return NextResponse.json(doc, { headers: { 'content-type': 'application/ld+json; charset=utf-8' } });

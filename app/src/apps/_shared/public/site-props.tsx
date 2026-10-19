@@ -23,6 +23,8 @@ export interface SitePropsOptions {
   year?: number;
   /** A pending proposal to show instead of the published content (officials only). */
   preview?: string;
+  /** The visitor's language and the page's origin (siteRequest()); the nation's language and no address without it. */
+  request?: SiteRequest;
 }
 
 const hostOf = (url: string) => new URL(url).hostname.replace(/^www\./, '');
@@ -33,33 +35,40 @@ export function siteHref(id: string, to: SiteLink): string {
   return to === 'home' ? `/${id}` : `/${id}#${to}`;
 }
 
-/** The page's absolute address, from the request (none outside a request, e.g. in tests). */
-function absolute(path: string): string | undefined {
-  try {
-    const h = headers();
-    const host = h.get('x-forwarded-host') ?? h.get('host');
-    if (!host) return undefined;
-    const proto = h.get('x-forwarded-proto') ?? (/^(localhost|127\.|\[::1\])/.test(host) ? 'http' : 'https');
-    return `${proto}://${host}${path}`;
-  } catch {
-    return undefined;
-  }
-}
-
 /** The cookie that holds a visitor's language choice on the public sites (set by /api/public-sites/language). */
 export const SITE_LANG_COOKIE = 'civicos_site_lang';
 
-/** The visitor's language among the nation's official languages; the nation's main language otherwise. */
-export function visitorLocale(): string {
-  try {
-    const v = cookies().get(SITE_LANG_COOKIE)?.value;
-    if (v && nationLanguages().includes(v)) return v;
-  } catch { /* outside a request */ }
-  return nationLocale();
+/** What a public page reads from its request: the visitor's language and the page's origin. */
+export interface SiteRequest {
+  /** The visitor's language among the nation's official languages; the nation's main language otherwise. */
+  locale: string;
+  /** The page's origin (scheme and host) for absolute addresses; none outside a request. */
+  origin?: string;
 }
 
-export function siteProps(id: string, { theme: given, illustration, live = {}, year = new Date().getFullYear(), preview }: SitePropsOptions): PublicSiteShellProps {
-  const { content: raw, settings, previewing, previewBrand, language } = effectiveContent(id, preview, visitorLocale());
+/** Read the visitor's language and the page's origin from the request (defaults outside one, e.g. in tests). */
+export async function siteRequest(): Promise<SiteRequest> {
+  let locale = nationLocale();
+  let origin: string | undefined;
+  try {
+    const v = (await cookies()).get(SITE_LANG_COOKIE)?.value;
+    if (v && nationLanguages().includes(v)) locale = v;
+  } catch { /* outside a request */ }
+  try {
+    const h = await headers();
+    const host = h.get('x-forwarded-host') ?? h.get('host');
+    if (host) origin = `${h.get('x-forwarded-proto') ?? (/^(localhost|127\.|\[::1\])/.test(host) ? 'http' : 'https')}://${host}`;
+  } catch { /* outside a request */ }
+  return { locale, origin };
+}
+
+/** The visitor's language among the nation's official languages; the nation's main language otherwise. */
+export async function visitorLocale(): Promise<string> {
+  return (await siteRequest()).locale;
+}
+
+export function siteProps(id: string, { theme: given, illustration, live = {}, year = new Date().getFullYear(), preview, request }: SitePropsOptions): PublicSiteShellProps {
+  const { content: raw, settings, previewing, previewBrand, language } = effectiveContent(id, preview, request?.locale ?? nationLocale());
   // The ministry's own colours when it brought them (a previewed proposal's first), darkened where
   // needed so text in them stays readable (WCAG AA).
   const brand = previewBrand !== undefined ? previewBrand ?? undefined : settings.brand;
@@ -77,7 +86,7 @@ export function siteProps(id: string, { theme: given, illustration, live = {}, y
 
   return {
     theme,
-    url: absolute(`/${id}`),
+    url: request?.origin ? `${request.origin}/${id}` : undefined,
     institution: {
       name: c.institution.name,
       tagline: c.institution.tagline,

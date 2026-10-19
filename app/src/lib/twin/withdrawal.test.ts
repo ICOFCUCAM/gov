@@ -59,7 +59,7 @@ describe('four-eyes withdrawal of twin imports', () => {
 
   it('through the route: propose, then the same official cannot confirm (403), another can', async () => {
     const run = await anImport();
-    const post = (body: Record<string, unknown>) => withdrawRoute(new NextRequest(`https://gov.example/api/twin/runs/${run.id}/withdraw`, { method: 'POST', body: JSON.stringify(body) }), { params: { id: run.id } });
+    const post = (body: Record<string, unknown>) => withdrawRoute(new NextRequest(`https://gov.example/api/twin/runs/${run.id}/withdraw`, { method: 'POST', body: JSON.stringify(body) }), { params: Promise.resolve({ id: run.id }) });
     const a = await post({ by: 'Officer A', reason: 'wrong year' });
     expect(a.status).toBe(200);
     expect((await a.json()).pending).toBe(true);

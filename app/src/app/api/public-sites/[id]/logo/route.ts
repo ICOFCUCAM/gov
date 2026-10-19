@@ -10,7 +10,8 @@ import { logoBytes } from '@/lib/public-sites/brand';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const logo = SITE_IDS.includes(params.id) ? getSiteSettings(params.id).brand?.logo : undefined;
   const bytes = logo ? logoBytes(logo.data) : null;
   if (!logo || !bytes) return NextResponse.json({ error: 'No logo' }, { status: 404 });

@@ -34,7 +34,8 @@ function signatureOf(feed: SiteFeed, req: NextRequest, raw: string): { state: Si
   return { state: 'refused', keyId: s.keyId, reason: s.reason };
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const feed = siteFeedForKey(params.id, req.headers.get('authorization'));
   const raw = await req.text();
   if (!feed) return answer(req, params.id, null, raw, { state: 'absent' }, 401, { error: KEY_HELP }, 'unknown key');
@@ -55,7 +56,8 @@ function summary(r: object): string {
   return parts.join(', ') || 'received';
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const feed = siteFeedForKey(params.id, req.headers.get('authorization'));
   if (!feed) return answer(req, params.id, null, '', { state: 'absent' }, 401, { error: KEY_HELP }, 'unknown key');
   const sig = signatureOf(feed, req, '');

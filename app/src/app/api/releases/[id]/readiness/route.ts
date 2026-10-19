@@ -9,7 +9,8 @@ import { latestPreflight, runPreflight, waiveFinding, stagingEnvironment, stagin
 
 export const dynamic = 'force-dynamic';
 
-export function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const n = nationFor(new URL(req.url).searchParams.get('link'));
   if (n instanceof NextResponse) return n;
   const r = releaseFor(n.id, params.id);
@@ -18,7 +19,8 @@ export function GET(req: NextRequest, { params }: { params: { id: string } }) {
   return NextResponse.json({ preflight: latestPreflight(n.id, r.id) ?? null, staging: stagingEnvironment(n), run: stagingRun(n.id, r.id) ?? null, stagingRequired: n.settings.stagingRequired });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const body = await chamberBody<{ action?: string; by?: string; secondBy?: string; reason?: string; findingKey?: string; tester?: string; date?: string; evidence?: string }>(req);
   if (body instanceof NextResponse) return body;
   const { nation: n, b } = body;

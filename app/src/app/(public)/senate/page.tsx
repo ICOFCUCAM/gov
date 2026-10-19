@@ -1,6 +1,7 @@
 // Public — Senate (Upper House) homepage.
 
 import { PublicSite } from '@/apps/_shared/public/PublicSite';
+import { siteRequest } from '@/apps/_shared/public/site-props';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 import { getSovereign, getSetup } from '@/lib/data/store';
 import { nationOffices } from '@/lib/nation/offices';
@@ -18,9 +19,10 @@ const THEME = {
   emergencyA: '#7a4d8a', emergencyB: '#5a3768',
 };
 
-export default function PublicSenatePage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+export default async function PublicSenatePage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
   return (
-    <PublicSite id="senate" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
+    <PublicSite id="senate" request={await siteRequest()} theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="parliament" primary={THEME.primary} accent={THEME.accent} aria="Senate chamber" />} />
   );
 }

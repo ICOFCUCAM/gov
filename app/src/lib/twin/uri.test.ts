@@ -40,13 +40,13 @@ describe('persistent entity URIs', () => {
   });
 
   it('resolves /id/<kind>/<code> with 303 to the page, or to the JSON for machines', async () => {
-    const ctx = { params: { kind: 'place', code: 'KE-30' } };
+    const ctx = { params: Promise.resolve({ kind: 'place', code: 'KE-30' }) };
     const page = await resolve(new NextRequest('https://p.example/id/place/KE-30', { headers: { accept: 'text/html,*/*' } }), ctx);
     expect(page.status).toBe(303);
     expect(page.headers.get('location')).toBe('https://p.example/gov/twin?entity=place%3AKE-30');
     const json = await resolve(new NextRequest('https://p.example/id/place/KE-30', { headers: { accept: 'application/ld+json' } }), ctx);
     expect(json.headers.get('location')).toBe('https://p.example/api/twin/entities/place%3AKE-30');
-    expect((await resolve(new NextRequest('https://p.example/id/place/XX-1'), { params: { kind: 'place', code: 'XX-1' } })).status).toBe(404);
-    expect((await resolve(new NextRequest('https://p.example/id/planet/earth'), { params: { kind: 'planet', code: 'earth' } })).status).toBe(404);
+    expect((await resolve(new NextRequest('https://p.example/id/place/XX-1'), { params: Promise.resolve({ kind: 'place', code: 'XX-1' }) })).status).toBe(404);
+    expect((await resolve(new NextRequest('https://p.example/id/planet/earth'), { params: Promise.resolve({ kind: 'planet', code: 'earth' }) })).status).toBe(404);
   });
 });

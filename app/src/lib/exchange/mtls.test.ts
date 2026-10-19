@@ -44,7 +44,7 @@ describe('mutual TLS on the federation exchange', () => {
   const call = (headers: Record<string, string> = {}, host = 'localhost') => federationPost(new NextRequest(`http://${host}/api/federation/exchange`, {
     method: 'POST', headers: { authorization: `Bearer ${apiKey}`, ...headers }, body: JSON.stringify({ tenant, scope: 'permit:read', purpose: 'oversight' }),
   }));
-  const put = (body: unknown) => certPut(new NextRequest(`http://localhost/api/federation/grants/${grantId}/certificate`, { method: 'PUT', body: JSON.stringify(body) }), { params: { id: grantId } });
+  const put = (body: unknown) => certPut(new NextRequest(`http://localhost/api/federation/grants/${grantId}/certificate`, { method: 'PUT', body: JSON.stringify(body) }), { params: Promise.resolve({ id: grantId }) });
 
   it('changes nothing for a grant that names no certificate', async () => {
     expect((await call()).status).toBe(200);
@@ -56,7 +56,7 @@ describe('mutual TLS on the federation exchange', () => {
     const fp = fingerprintOf(CLIENT_CERT_PEM).sha256;
     expect((await r.json()).certificate).toMatchObject({ sha256: fp, by: 'Director of Interoperability' });
     expect(listAudit()[0]).toMatchObject({ action: 'federation.certificate.register', resource: `Grant:${grantId}` });
-    expect((await (await certGet(new NextRequest('http://localhost/x'), { params: { id: grantId } })).json()).certificate.sha256).toBe(fp);
+    expect((await (await certGet(new NextRequest('http://localhost/x'), { params: Promise.resolve({ id: grantId }) })).json()).certificate.sha256).toBe(fp);
 
     // The integration key alone is no longer enough.
     const noTrust = await call(ingress(CLIENT_CERT_PEM));
@@ -92,7 +92,7 @@ describe('mutual TLS on the federation exchange', () => {
     expect((await put({ certificate: '-----BEGIN CERTIFICATE-----\nnope\n-----END CERTIFICATE-----', by: 'Director' })).status).toBe(422);
     expect((await put({ sha256: 'abc', by: 'Director' })).status).toBe(422);
     await put({ certificate: CLIENT_CERT_PEM, by: 'Director' });
-    const del = await certDelete(new NextRequest(`http://localhost/api/federation/grants/${grantId}/certificate`, { method: 'DELETE', body: JSON.stringify({ by: 'Director' }) }), { params: { id: grantId } });
+    const del = await certDelete(new NextRequest(`http://localhost/api/federation/grants/${grantId}/certificate`, { method: 'DELETE', body: JSON.stringify({ by: 'Director' }) }), { params: Promise.resolve({ id: grantId }) });
     expect(del.status).toBe(200);
     expect(listAudit()[0]).toMatchObject({ action: 'federation.certificate.remove' });
     expect((await call()).status).toBe(200);

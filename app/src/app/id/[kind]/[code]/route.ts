@@ -13,7 +13,11 @@ export const dynamic = 'force-dynamic';
 
 const KINDS = new Set(['nation', 'place', 'institution', 'facility']);
 
-export async function GET(req: NextRequest, { params }: { params: { kind: string; code: string } }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ kind: string; code: string }> }
+) {
+  const params = await props.params;
   if (!KINDS.has(params.kind)) return NextResponse.json({ error: 'No such kind of entity' }, { status: 404 });
   await syncRegister();
   const id = entityIdFor(params.kind, decodeURIComponent(params.code));

@@ -8,7 +8,8 @@ import { recordAudit } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const u = new URL(req.url);
   const n = nationFor(u.searchParams.get('link'));
   if (n instanceof NextResponse) return n;

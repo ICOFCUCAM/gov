@@ -22,7 +22,7 @@ describe('RFC 9421 signatures (Ed25519) and RFC 9530 digests', () => {
   it('verifies a signature over method, target and content-digest', () => {
     const h = signRequest({ method: 'POST', url, body, privateKey: k.privateKey, keyId: key.keyId, headers: { 'content-type': 'application/json' } });
     expect(h['content-digest']).toBe(contentDigest(body));
-    expect(parseSignatureInput(h['signature-input']!)[0]).toMatchObject({ label: 'sig1', components: ['@method', '@target-uri', 'content-digest'], params: { keyid: 'ministry-key-1', alg: 'ed25519' } });
+    expect(parseSignatureInput(h['signature-input']!)[0]).toMatchObject({ label: 'sig1', components: ['@method', '@target-uri', 'content-digest'], params: Promise.resolve({ keyid: 'ministry-key-1', alg: 'ed25519' }) });
     expect(verifyRequestSignature(req(h), body, key)).toMatchObject({ ok: true, keyId: 'ministry-key-1' });
   });
 
@@ -57,7 +57,7 @@ describe('signed feeds', () => {
     const r = issueFeed(M, `Signed feed ${Date.now()}`, 'PS');
     if ('error' in r) throw new Error(r.error);
     const url = `http://localhost/api/org/ministries/${M}/queue/feed`;
-    const ctx = { params: { id: M } };
+    const ctx = { params: Promise.resolve({ id: M }) };
     const auth = { authorization: `Bearer ${r.key}` };
     const body = JSON.stringify({ cases: [{ reference: `SG-${Date.now()}`, subject: 'Signed', received: '2026-10-01' }] });
     expect((await casePost(new NextRequest(url, { method: 'POST', headers: auth, body: '{"cases":[]}' }), ctx)).status).toBe(200);
@@ -94,7 +94,7 @@ describe('signed feeds', () => {
     const r = issueSiteFeed(M, `Signed sites ${Date.now()}`, 'PS');
     if ('error' in r) throw new Error(r.error);
     const url = `http://localhost/api/org/ministries/${M}/facilities/feed`;
-    const ctx = { params: { id: M } };
+    const ctx = { params: Promise.resolve({ id: M }) };
     const auth = { authorization: `Bearer ${r.key}` };
     const k = pair();
     const reg = registerFeedKey('site', M, r.feed.id, { publicKey: pem(k), keyId: 'mfl-2026', by: 'PS' });

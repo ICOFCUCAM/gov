@@ -13,7 +13,7 @@ import { siteMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
-import { siteProps } from '@/apps/_shared/public/site-props';
+import { siteProps, siteRequest } from '@/apps/_shared/public/site-props';
 import { GatewayBar, LanguageSwitch, SiteLogo, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
 import { FontSizeControls } from '@/apps/_shared/public/controls';
 import { siteLocations } from '@/apps/_shared/public/locator-data';
@@ -42,15 +42,16 @@ const SURVEILLANCE = [['New Cases', '248'], ['Active Cases', '1,286'], ['Recover
 const label = (i: PublicSiteLinkItem) => (typeof i === 'string' ? i : i.label);
 const href = (i: PublicSiteLinkItem) => (typeof i === 'string' ? '/health' : i.href);
 
-export default function PublicHealthHomepage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+export default async function PublicHealthHomepage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
   const s = publicHealthSite(100); // deterministic, SSR-stable
   const live = {
     healthAlert: s.emergencyBanner.active ? s.emergencyBanner.text : 'No national health emergency is in effect. Follow the advisories from your regional health authority.',
   };
   const preview = searchParams?.preview;
   const preset = presetFor('health', searchParams?.preset ?? (preview ? effectiveContent('health', preview).previewPreset ?? undefined : undefined));
-  if (!preset.bespoke) return <PublicSite id="health" theme={THEME} preset={preset.id} preview={preview} live={live} illustration={ART} />;
-  return <HealthPortal site={siteProps('health', { theme: THEME, illustration: ART, live, preview })} />;
+  if (!preset.bespoke) return <PublicSite id="health" request={await siteRequest()} theme={THEME} preset={preset.id} preview={preview} live={live} illustration={ART} />;
+  return <HealthPortal site={siteProps('health', { theme: THEME, illustration: ART, live, preview, request: await siteRequest() })} />;
 }
 
 function HealthPortal({ site }: { site: PublicSiteShellProps }) {

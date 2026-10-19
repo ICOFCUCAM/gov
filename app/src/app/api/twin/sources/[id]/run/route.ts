@@ -8,7 +8,8 @@ import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { by?: string; csv?: string };
   if (b.csv !== undefined && (typeof b.csv !== 'string' || b.csv.length > 20_000_000)) return NextResponse.json({ error: 'The CSV must be text up to 20 MB' }, { status: 413 });
   const r = await runSource(params.id, { by: b.by ?? '', csv: b.csv });

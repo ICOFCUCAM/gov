@@ -14,7 +14,8 @@ import { t as fill } from '@/lib/i18n';
 import { rich } from '@/lib/i18n/rich';
 export const dynamic = 'force-dynamic';
 
-export default function PermitDetailPage({ params }: { params: { id: string } }) {
+export default async function PermitDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const m = nationMessages();
   const permit = getPermit(params.id);
 

@@ -5,7 +5,8 @@ import { ministryPermission } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
 /** Record or move where an incident is: a region, a point on the map, or a registered site. */
-export async function PUT(req: NextRequest, { params }: { params: { id: string; key: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string; key: string }> }) {
+  const params = await props.params;
   const refused = await refusal(s => ministryPermission(s, params.id));
   if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as Record<string, unknown> & { by?: string };
@@ -17,7 +18,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string; 
 }
 
 /** Clear an incident's place (kept in its history). */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string; key: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string; key: string }> }) {
+  const params = await props.params;
   const refused = await refusal(s => ministryPermission(s, params.id));
   if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { by?: string; reason?: string };

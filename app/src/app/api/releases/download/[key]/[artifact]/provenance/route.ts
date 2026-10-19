@@ -7,7 +7,11 @@ import { attestationFor } from '@/lib/data/supply-chain';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(_req: Request, { params }: { params: { key: string; artifact: string } }) {
+export async function GET(
+  _req: Request,
+  props: { params: Promise<{ key: string; artifact: string }> }
+) {
+  const params = await props.params;
   const n = resolveNation(params.key);
   if (!n) return NextResponse.json({ error: 'Unknown distribution link' }, { status: 404 });
   const att = attestationFor(n.id, params.artifact);

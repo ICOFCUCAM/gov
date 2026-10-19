@@ -15,7 +15,8 @@ import { subscriberCounts } from '@/lib/data/site-subscriptions';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!SITE_IDS.includes(params.id)) return NextResponse.json({ error: 'No such site' }, { status: 404 });
   return NextResponse.json({
     content: siteContent(params.id, publishedOverride(params.id)),

@@ -21,15 +21,15 @@ const chamber = (id = HOME_NATION): UpdateChamber => { const c = getChamber(id);
 const MIN = 60_000;
 /** Four-eyes over HTTP: a proposal returns `pending`; a second official then approves. */
 async function cosignPOST(body: Record<string, unknown>, id = 'DR-141') {
-  const first = await decisionPOST(post(body), { params: { id } });
+  const first = await decisionPOST(post(body), { params: Promise.resolve({ id }) });
   if (first.status !== 200 || !(await first.clone().json()).pending) return first;
-  return decisionPOST(post({ ...body, by: 'Second official' }), { params: { id } });
+  return decisionPOST(post({ ...body, by: 'Second official' }), { params: Promise.resolve({ id }) });
 }
 
 async function installSecurityRelease() {
   updateSettings(HOME_NATION, { healthSource: 'agent' }, 'CIO');
   await cosignPOST({ action: 'approve', by: 'CIO' });
-  await decisionPOST(post({ action: 'prepare', by: 'Ops' }), { params: { id: 'DR-141' } });
+  await decisionPOST(post({ action: 'prepare', by: 'Ops' }), { params: Promise.resolve({ id: 'DR-141' }) });
   const r = await cosignPOST({ action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
   expect(r.status).toBe(200);
 }
@@ -125,7 +125,7 @@ describe('scheduled watchdog (/api/cron/update-watchdog)', () => {
     process.env.CIVICOS_CRON_SECRET = 'cron-test-secret';
     updateSettings(HOME_NATION, { healthSource: 'simulated' }, 'CIO');
     await cosignPOST({ action: 'approve', by: 'CIO' });
-    await decisionPOST(post({ action: 'prepare', by: 'Ops' }), { params: { id: 'DR-141' } });
+    await decisionPOST(post({ action: 'prepare', by: 'Ops' }), { params: Promise.resolve({ id: 'DR-141' }) });
     await cosignPOST({ action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
     const end = Date.parse(chamber().probation!.endsAt);
     vi.useFakeTimers({ toFake: ['Date'] });

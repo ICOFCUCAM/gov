@@ -10,13 +10,14 @@ import { subscribe } from '@/lib/data/site-subscriptions';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!SITE_IDS.includes(params.id)) return NextResponse.json({ error: 'No such site' }, { status: 404 });
   const isForm = !(req.headers.get('content-type') ?? '').includes('application/json');
   const body: Record<string, unknown> = isForm
     ? Object.fromEntries(((await req.formData().catch(() => null))?.entries() ?? []) as Iterable<[string, unknown]>)
     : ((await req.json().catch(() => ({}))) as Record<string, unknown>);
-  const sender = (req.headers.get('x-forwarded-for') ?? '').split(',')[0]!.trim() || req.ip || 'unknown';
+  const sender = (req.headers.get('x-forwarded-for') ?? '').split(',')[0]!.trim() || (req.headers.get('x-real-ip') ?? '').trim() || 'unknown';
   // A field people never see: filled only by bots, which get the usual answer and nothing happens.
   const r = typeof body.website === 'string' && body.website
     ? { ok: true as const }

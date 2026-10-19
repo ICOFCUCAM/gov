@@ -5,6 +5,7 @@ export const metadata = { title: 'Evidence pack · Update Center' };
 
 // A release's compliance evidence pack for this nation, readable; the same
 // pack downloads as a JSON manifest with a digest.
-export default function Page({ params }: { params: { id: string } }) {
+export default async function Page(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   return <Suspense><EvidencePage id={params.id} /></Suspense>;
 }

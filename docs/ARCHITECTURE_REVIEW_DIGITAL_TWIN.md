@@ -255,8 +255,8 @@ Next.js, fence the single state writer"); after a rebase or merge,
   fails on high or critical advisories not recorded with a reason and a
   review date in `scripts/audit-accepted.json`. Overrides lift PostCSS,
   nanoid and source-map-js under Next.js to patched versions. Ten Next.js
-  advisories are fixed only in 15.5.x: accepted with mitigations (image
-  optimizer off) until the Next.js 15 move (register 17.9). Not done:
+  advisories were fixed only in 15.5.x: accepted with mitigations (image
+  optimizer off) until the Next.js 15 move, since done (register 17.9). Not done:
   container image scanning, feeding findings into `lib/data/advisories.ts`.
 - **R3 (O1, D1 stop-gap, O3).** `infra/helm/civicos/templates/app.yaml`:
   every page and `/api` route goes to the app; civic-api moves to
@@ -632,7 +632,7 @@ Every finding of section 2 has been worked on in place (nothing removed). What a
 | Finding | Addressed by | Still open |
 |---|---|---|
 | S1, S2, S4 gate bypasses, open reads, fail-open defaults | bearer and self-authenticated lists in `lib/auth/roles.ts`, verified official for every non-public read under enforce, deny-by-default for unlisted changes with a coverage test, role-less sessions newer than roles act as officer, `listFacilities` viewer required | — |
-| S3 Next.js CVE | Next 14.2.35, `x-middleware-subrequest` refused, dependency audit in CI with reviewed exceptions, findings raised as Update Center advisories, container image scan and SBOM | Next 15 / React 19 for the advisories only fixed there (register 17.9) |
+| S3 Next.js CVE | Next.js 15.5 with React 19 (register 17.9; the accepted Next.js 14 advisories closed, nothing accepted), `x-middleware-subrequest` refused, dependency audit in CI with reviewed exceptions, findings raised as Update Center advisories, container image scan and SBOM | — |
 | S5, S6 keys with the data, weak randomness | TOTP secrets under AES-256-GCM (`CIVICOS_DATA_KEK`), async scrypt N=2¹⁷ with rehash, session secret required under enforce, CSPRNG ids and SHA-256 content hashes, integration keys hashed, key custody providers (`lib/keys/`: environment, Vault / OpenBao Transit, KMS over HTTP) for the audit, exchange and data keys | — |
 | S7 DNS rebinding | pinned vetted address in `safeFetchText`; twin downloads up to 20 MB; through the nation's egress proxy as a CONNECT tunnel to the vetted address (`CIVICOS_EGRESS_PROXY`) | — |
 | S8 headers | one CSP/HSTS source (`security-headers.mjs`) mirrored in `vercel.json`, checked by the console smoke tests; scripts run only with a per-request nonce (`script-src 'self' 'nonce-…' 'strict-dynamic'`, set by the middleware, no `'unsafe-inline'` for scripts) | — |

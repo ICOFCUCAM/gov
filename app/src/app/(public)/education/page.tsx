@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import { PublicSite } from '@/apps/_shared/public/PublicSite';
+import { siteRequest } from '@/apps/_shared/public/site-props';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 import { accessibleTheme } from '@/apps/_shared/public/design/contrast';
 import { educationPublicInstitutions } from '@/lib/gov/education-public-institutions';
@@ -16,12 +17,13 @@ const THEME = accessibleTheme({
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 });
 
-export default function PublicEducationPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+export default async function PublicEducationPage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
   const institutions = educationPublicInstitutions();
   const totalSites = institutions.reduce((s, b) => s + b.publicSites, 0);
 
   return (
-    <PublicSite id="education" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
+    <PublicSite id="education" request={await siteRequest()} theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       live={{ totalSites: totalSites.toLocaleString('en-US') }}
       illustration={<HeroIllustration kind="lecture" primary={THEME.primary} accent={THEME.accent} aria="Lecture hall" />}
       extra={<>

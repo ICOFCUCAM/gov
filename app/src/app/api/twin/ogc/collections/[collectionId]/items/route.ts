@@ -19,7 +19,8 @@ import { machineReadRefusal } from '@/lib/twin/machine-read';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest, { params }: { params: { collectionId: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ collectionId: string }> }) {
+  const params = await props.params;
   // A GIS client's integration key (scope ogc:read), when it sends one; otherwise the official's session.
   const refused = machineReadRefusal(req);
   if (refused) return refused;

@@ -11,7 +11,8 @@ import type { SiteLink } from '@/lib/public-sites/types';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!SITE_IDS.includes(params.id)) return NextResponse.json({ error: 'No such site' }, { status: 404 });
   const { content, settings } = effectiveContent(params.id);
   const c = fillDeep(content, siteTokens(new Date().getFullYear()));

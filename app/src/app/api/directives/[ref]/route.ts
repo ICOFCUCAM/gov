@@ -9,7 +9,8 @@ import { canSeeDraft, canSignDirective } from '@/lib/auth/roles';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: NextRequest, { params }: { params: { ref: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ ref: string }> }) {
+  const params = await props.params;
   settleDirectives();
   const d = directive(params.ref);
   const o = await currentOfficial();
@@ -18,7 +19,8 @@ export async function GET(_req: NextRequest, { params }: { params: { ref: string
   return NextResponse.json({ directive: d });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { ref: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ ref: string }> }) {
+  const params = await props.params;
   const d = directive(params.ref);
   if (!d) return NextResponse.json({ error: 'No such directive' }, { status: 404 });
   const refused = await refusal(s => canSignDirective(s, d.issued_by_charter_id));

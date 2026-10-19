@@ -6,7 +6,8 @@ import { chamberBody } from '@/lib/updates/access';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const r = await chamberBody<{ action?: string; by?: string; note?: string }>(req);
   if (r instanceof NextResponse) return r;
   const out = nationAction(r.nation, params.id, { action: r.b.action, by: r.b.by, note: r.b.note });

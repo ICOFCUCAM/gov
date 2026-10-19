@@ -47,9 +47,9 @@ describe('a ministry\'s own colours and logo', () => {
   it('cannot be set through the integration settings, and the logo is served from the platform', async () => {
     updateSiteSettings('police', { brand: BRAND } as never, 'CIO');
     expect(getSiteSettings('police').brand).toBeUndefined();
-    expect((await logoRoute(new NextRequest('http://x/api/public-sites/police/logo'), { params: { id: 'police' } })).status).toBe(404);
+    expect((await logoRoute(new NextRequest('http://x/api/public-sites/police/logo'), { params: Promise.resolve({ id: 'police' }) })).status).toBe(404);
     ok(decideProposal('police', ok(proposeSiteChange('police', { brand: BRAND }, 'A')).id, 'publish', 'B'));
-    const r = await logoRoute(new NextRequest('http://x/api/public-sites/police/logo'), { params: { id: 'police' } });
+    const r = await logoRoute(new NextRequest('http://x/api/public-sites/police/logo'), { params: Promise.resolve({ id: 'police' }) });
     expect(r.headers.get('content-type')).toBe('image/png');
     expect(r.headers.get('x-content-type-options')).toBe('nosniff');
     expect(new Uint8Array(await r.arrayBuffer())[1]).toBe(0x50);

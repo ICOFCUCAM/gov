@@ -39,7 +39,7 @@ describe('the NGSI-LD view of twin entities', () => {
   });
 
   it('answers NGSI-LD on Accept: application/ld+json and the unchanged JSON otherwise', async () => {
-    const ctx = { params: { id: 'place%3AKE-30' } };
+    const ctx = { params: Promise.resolve({ id: 'place%3AKE-30' }) };
     const ld = await GET(new NextRequest('https://t.example/api/twin/entities/place%3AKE-30', { headers: { accept: 'application/ld+json' } }), ctx);
     expect(ld.headers.get('content-type')).toMatch(/application\/ld\+json/);
     expect((await ld.json()).type).toBe('AdministrativeArea');

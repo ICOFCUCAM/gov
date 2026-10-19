@@ -17,7 +17,8 @@ export function GET() {
   return NextResponse.json({ columns: IMPORT_COLUMNS, maxRows: MAX_SITE_ROWS, formats: ['csv', 'geojson', 'gpx'], crs: crsChoices() });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const limited = await limit(req, 'upload');
   if (limited) return limited;
   const refused = await refusal(s => ministryPermission(s, params.id));

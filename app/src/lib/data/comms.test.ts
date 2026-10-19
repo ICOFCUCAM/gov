@@ -35,9 +35,9 @@ describe("what's new", () => {
   it('labels come from the nation’s dictionary; the route uses the installed nation’s language', async () => {
     applyNation({ locale: 'fr' });
     expect(nationMessages().releaseNotes.translationPending).toMatch(/Traduction en attente/);
-    const r = await (await wnGET(new Request('http://x') as never, { params: { id: 'DR-141' } })).json();
+    const r = await (await wnGET(new Request('http://x') as never, { params: Promise.resolve({ id: 'DR-141' }) })).json();
     expect(r.whatsNew).toMatchObject({ locale: 'fr', translated: true });
-    const r2 = await (await wnGET(new Request('http://x') as never, { params: { id: 'DR-140' } })).json();
+    const r2 = await (await wnGET(new Request('http://x') as never, { params: Promise.resolve({ id: 'DR-140' }) })).json();
     expect(r2.whatsNew).toMatchObject({ locale: 'fr', pending: true });
   });
 

@@ -6,7 +6,11 @@ import { withOfficial, refusal } from '@/lib/auth/official';
 import { canManageFeeds } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string; feedId: string } }) {
+export async function POST(
+  req: NextRequest,
+  props: { params: Promise<{ id: string; feedId: string }> }
+) {
+  const params = await props.params;
   const refused = await refusal(s => canManageFeeds(s, params.id));
   if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { action?: string; by?: string };

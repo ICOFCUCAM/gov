@@ -17,8 +17,9 @@ export const metadata = { title: 'Search', robots: { index: false } };
 
 const INK = '#0b1a2c';
 
-export default function SearchPage({ searchParams }: { searchParams?: { q?: string; site?: string } }) {
-  const locale = visitorLocale();
+export default async function SearchPage(props: { searchParams?: Promise<{ q?: string; site?: string }> }) {
+  const searchParams = await props.searchParams;
+  const locale = await visitorLocale();
   const t = siteMessages(locale);
   const q = (searchParams?.q ?? '').slice(0, 200);
   const site = searchParams?.site && SITE_IDS.includes(searchParams.site) ? searchParams.site : undefined;

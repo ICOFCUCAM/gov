@@ -9,7 +9,8 @@ import { nationLanguage } from '@/lib/updates/language';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const n = nationFor(new URL(req.url).searchParams.get('link'));
   if (n instanceof NextResponse) return n;
   const r = releaseFor(n.id, params.id);

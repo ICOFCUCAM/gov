@@ -1,6 +1,7 @@
 // Public — Presidency / Cabinet Office homepage.
 
 import { PublicSite } from '@/apps/_shared/public/PublicSite';
+import { siteRequest } from '@/apps/_shared/public/site-props';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 import { getSovereign, getSetup } from '@/lib/data/store';
 import { nationOffices } from '@/lib/nation/offices';
@@ -18,9 +19,10 @@ const THEME = {
   emergencyA: '#1f3a7a', emergencyB: '#0a1326',
 };
 
-export default function PublicPresidencyPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+export default async function PublicPresidencyPage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
   return (
-    <PublicSite id="presidency" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
+    <PublicSite id="presidency" request={await siteRequest()} theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="parliament" primary={THEME.primary} accent={THEME.accent} aria="Executive mansion" />} />
   );
 }

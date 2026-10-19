@@ -50,8 +50,8 @@ describe('evidence packs', () => {
     expect(evidencePack('sandbox', 'DR-141-H1')).toBeUndefined();
     const sb = evidencePack('sandbox', 'DR-141') as unknown as Pack;
     expect(sb.auditChain.entries.every(e => !e.resource.includes(`:${HOME_NATION}/`))).toBe(true);
-    expect((await evGET(new Request(`http://x?link=${key('sandbox')}`) as never, { params: { id: 'DR-141-H1' } })).status).toBe(404);
-    const dl = await evGET(new Request('http://x?download=1') as never, { params: { id: 'DR-140' } });
+    expect((await evGET(new Request(`http://x?link=${key('sandbox')}`) as never, { params: Promise.resolve({ id: 'DR-141-H1' }) })).status).toBe(404);
+    const dl = await evGET(new Request('http://x?download=1') as never, { params: Promise.resolve({ id: 'DR-140' }) });
     expect(dl.headers.get('content-disposition')).toMatch(/evidence-1\.4\.0\.json/);
   });
 });

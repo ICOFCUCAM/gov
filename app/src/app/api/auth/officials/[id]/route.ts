@@ -12,7 +12,8 @@ import { roleOf } from '@/lib/auth/roles';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const o = await currentOfficial();
   if (!o) return NextResponse.json({ error: 'Sign in as an official' }, { status: 401 });
   if (roleOf(o) !== 'administrator') return NextResponse.json({ error: 'Only an administrator can change accounts' }, { status: 403 });

@@ -101,12 +101,12 @@ describe('staging and user acceptance', () => {
 
 describe('readiness route isolation', () => {
   it('another nation’s release is not found; another nation’s link sees its own staging', async () => {
-    expect(readinessGET(new Request('http://x/api/releases/DR-141-S1/readiness') as never, { params: { id: 'DR-141-S1' } }).status).toBe(404);
+    expect((await readinessGET(new Request('http://x/api/releases/DR-141-S1/readiness') as never, { params: Promise.resolve({ id: 'DR-141-S1' }) })).status).toBe(404);
     const c = getChamber('sandbox'); if ('error' in c) throw new Error(c.error);
-    const res = readinessGET(new Request(`http://x/api/releases/DR-141-S1/readiness?link=${c.nation.channelKey}`) as never, { params: { id: 'DR-141-S1' } });
+    const res = await readinessGET(new Request(`http://x/api/releases/DR-141-S1/readiness?link=${c.nation.channelKey}`) as never, { params: Promise.resolve({ id: 'DR-141-S1' }) });
     expect(res.status).toBe(200);
     expect((await res.json()).staging.nationId).toBe('sandbox');
-    const post = await readinessPOST(new Request('http://x/api/releases/DR-141/readiness', { method: 'POST', body: JSON.stringify({ action: 'preflight', by: 'CIO' }), headers: { 'content-type': 'application/json' } }) as never, { params: { id: 'DR-141' } });
+    const post = await readinessPOST(new Request('http://x/api/releases/DR-141/readiness', { method: 'POST', body: JSON.stringify({ action: 'preflight', by: 'CIO' }), headers: { 'content-type': 'application/json' } }) as never, { params: Promise.resolve({ id: 'DR-141' }) });
     expect((await post.json()).preflight.approvable).toBe(true);
   });
 });

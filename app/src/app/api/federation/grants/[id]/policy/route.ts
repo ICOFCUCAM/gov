@@ -6,7 +6,8 @@ import { grantAsOdrl } from '@/lib/exchange/usage-policy';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const g = listGrants().find(x => x.id === params.id);
   if (!g) return NextResponse.json({ error: 'Grant not found' }, { status: 404 });
   return NextResponse.json(grantAsOdrl(g), { headers: { 'content-type': 'application/ld+json' } });

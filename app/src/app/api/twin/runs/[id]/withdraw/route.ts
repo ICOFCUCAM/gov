@@ -14,7 +14,8 @@ import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { by?: string; reason?: string; action?: 'propose' | 'confirm' | 'cancel' };
   const action = b.action ?? 'propose';
   if (!['propose', 'confirm', 'cancel'].includes(action)) return NextResponse.json({ error: 'action is propose, confirm or cancel' }, { status: 400 });

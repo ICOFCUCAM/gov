@@ -22,8 +22,8 @@ async function request(path: string, body: Record<string, unknown> = {}): Promis
   expect(res.status).toBe(201);
   return (await res.json()).request;
 }
-const nationAct = (id: string, body: Record<string, unknown>) => nationPOST(post(body), { params: { id } });
-const review = (id: string, body: Record<string, unknown>) => reviewPOST(post(body), { params: { id } });
+const nationAct = (id: string, body: Record<string, unknown>) => nationPOST(post(body), { params: Promise.resolve({ id }) });
+const review = (id: string, body: Record<string, unknown>) => reviewPOST(post(body), { params: Promise.resolve({ id }) });
 
 beforeEach(() => { resetUpdates(); resetSecurity(); resetHosting(); platformAuth.mockReset(); });
 afterEach(() => { delete process.env.CIVICOS_AUTH; });

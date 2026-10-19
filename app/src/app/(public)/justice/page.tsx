@@ -1,6 +1,7 @@
 // Public — Ministry of Justice homepage.
 
 import { PublicSite } from '@/apps/_shared/public/PublicSite';
+import { siteRequest } from '@/apps/_shared/public/site-props';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 
 export const dynamic = 'force-dynamic';
@@ -12,9 +13,10 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#7a1f2b',
 };
 
-export default function PublicJusticePage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+export default async function PublicJusticePage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
   return (
-    <PublicSite id="justice" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
+    <PublicSite id="justice" request={await siteRequest()} theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="scales" primary={THEME.primary} accent={THEME.accent} aria="Scales of justice" />} />
   );
 }

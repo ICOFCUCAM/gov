@@ -3,7 +3,8 @@ import { mergeMinistry } from '@/lib/data/store';
 import { refusal } from '@/lib/auth/official';
 import { adminOnly } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const refused = await refusal(adminOnly);
   if (refused) return refused;
   const b = (await req.json().catch(() => ({}))) as { targetId?: string };

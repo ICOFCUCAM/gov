@@ -20,7 +20,7 @@ import { logger } from '@/lib/ops/log';
  */
 export async function currentOfficial(): Promise<OfficialClaims | null> {
   let token: string | undefined;
-  try { token = cookies().get(OFFICIAL_COOKIE)?.value; } catch { return null; }
+  try { token = (await cookies()).get(OFFICIAL_COOKIE)?.value; } catch { return null; }
   // With sign-in enforced and no CIVICOS_SESSION_SECRET, no session is accepted (sessionSecretProblem()).
   const problem = sessionSecretProblem();
   if (problem) {

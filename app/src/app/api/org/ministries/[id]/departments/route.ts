@@ -3,7 +3,8 @@ import { addDepartment } from '@/lib/data/store';
 import { refusal } from '@/lib/auth/official';
 import { ministryPermission } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const refused = await refusal(s => ministryPermission(s, params.id));
   if (refused) return refused;
   const b = (await req.json().catch(() => ({}))) as { name?: string };

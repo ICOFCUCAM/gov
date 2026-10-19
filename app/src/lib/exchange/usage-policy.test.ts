@@ -47,7 +47,7 @@ describe('usage policies enforced at the exchange', () => {
     expect(grant.policy).toEqual({ purposes: ['oversight'], retentionDays: 30, onwardSharing: false });
     expect(listAudit()[0]).toMatchObject({ action: 'federation.propose', detail: expect.stringMatching(/keep 30 days/) });
     setGrantStatus(grant.id, 'approved', 'Official');
-    expect((await policyGet(new Request('http://x'), { params: { id: grant.id } })).headers.get('content-type')).toMatch(/ld\+json/);
+    expect((await policyGet(new Request('http://x'), { params: Promise.resolve({ id: grant.id }) })).headers.get('content-type')).toMatch(/ld\+json/);
 
     const reg = registerIntegration({ kind: 'integration', name: `p-${tenant}`, ownerOrg: 'Partner', contact: 'x@y', scopes: ['federation:exchange'] });
     if ('error' in reg) throw new Error(reg.error);

@@ -25,7 +25,7 @@ export async function GET() {
   const o = await currentOfficial();
   // The path of the change the middleware is checking (lib/data/persist.ts RECORD_ROUTES).
   let forPath: string | undefined;
-  try { forPath = headers().get(CHANGE_PATH_HEADER) ?? undefined; } catch { forPath = undefined; }
+  try { forPath = (await headers()).get(CHANGE_PATH_HEADER) ?? undefined; } catch { forPath = undefined; }
   const official = o ? { ...o, institutionName: o.institution ? getMinistry(o.institution)?.name : undefined } : null;
   return NextResponse.json({
     official,

@@ -58,23 +58,23 @@ describe('GET /api/releases (update chamber)', () => {
 
 describe('GET /api/releases/[id]', () => {
   it('returns a visible release with the chamber', async () => {
-    const res = releaseGET(get('/api/releases/DR-141'), { params: { id: 'DR-141' } });
+    const res = await releaseGET(get('/api/releases/DR-141'), { params: Promise.resolve({ id: 'DR-141' }) });
     expect(res.status).toBe(200);
     expect((await res.json()).release.version).toBe('1.4.1');
   });
 
-  it('404s on another nation’s build', () => {
-    expect(releaseGET(get('/api/releases/DR-141-S1'), { params: { id: 'DR-141-S1' } }).status).toBe(404);
+  it('404s on another nation’s build', async () => {
+    expect((await releaseGET(get('/api/releases/DR-141-S1'), { params: Promise.resolve({ id: 'DR-141-S1' }) })).status).toBe(404);
   });
 });
 
 describe('POST /api/releases/[id]/decision', () => {
   /** Four-eyes over HTTP: a proposal returns `pending`; a second official then approves. */
   const decide = async (id: string, body: unknown) => {
-    const first = await decisionPOST(post(`/api/releases/${id}/decision`, body), { params: { id } });
+    const first = await decisionPOST(post(`/api/releases/${id}/decision`, body), { params: Promise.resolve({ id }) });
     const action = (body as { action?: string })?.action;
     if ((action !== 'approve' && action !== 'install') || first.status !== 200 || !(await first.clone().json()).pending) return first;
-    return decisionPOST(post(`/api/releases/${id}/decision`, { ...(body as object), by: 'Second official' }), { params: { id } });
+    return await decisionPOST(post(`/api/releases/${id}/decision`, { ...(body as object), by: 'Second official' }), { params: Promise.resolve({ id }) });
   };
 
   it('rejects invalid JSON, unknown actions and missing names', async () => {
@@ -137,15 +137,15 @@ describe('GET /api/releases/download/[key]/[artifact]', () => {
     const home = o.nations.find(n => n.home)!;
     const sandbox = o.nations.find(n => n.id === 'sandbox')!;
     const own = o.releases.find(r => r.id === 'DR-141-H1')!.artifacts[0]!;
-    const res = downloadGET(get('/x'), { params: { key: home.channelKey, artifact: own.id } });
+    const res = await downloadGET(get('/x'), { params: Promise.resolve({ key: home.channelKey, artifact: own.id }) });
     expect(res.status).toBe(200);
     expect(res.headers.get('content-disposition')).toMatch(/attachment; filename=".*\.manifest\.json"/);
     const m = await res.json();
     expect(m.placeholder).toBe(true);
     expect(m.artifact.sha256).toBe(own.sha256);
     // The same artifact through another nation's link does not exist.
-    expect(downloadGET(get('/x'), { params: { key: sandbox.channelKey, artifact: own.id } }).status).toBe(404);
-    expect(downloadGET(get('/x'), { params: { key: 'nk_nope', artifact: own.id } }).status).toBe(404);
+    expect((await downloadGET(get('/x'), { params: Promise.resolve({ key: sandbox.channelKey, artifact: own.id }) })).status).toBe(404);
+    expect((await downloadGET(get('/x'), { params: Promise.resolve({ key: 'nk_nope', artifact: own.id }) })).status).toBe(404);
   });
 });
 
@@ -174,10 +174,10 @@ describe('publisher routes', () => {
   });
 
   it('advances requests and enrols nations', async () => {
-    const a = await advancePOST(post('/x', { to: 'under-review' }), { params: { id: 'FR-1003' } });
+    const a = await advancePOST(post('/x', { to: 'under-review' }), { params: Promise.resolve({ id: 'FR-1003' }) });
     expect(a.status).toBe(200);
-    expect((await advancePOST(post('/x', { to: 'under-review' }), { params: { id: 'FR-9999' } })).status).toBe(404);
-    expect((await advancePOST(post('/x', {}), { params: { id: 'FR-1003' } })).status).toBe(422);
+    expect((await advancePOST(post('/x', { to: 'under-review' }), { params: Promise.resolve({ id: 'FR-9999' }) })).status).toBe(404);
+    expect((await advancePOST(post('/x', {}), { params: Promise.resolve({ id: 'FR-1003' }) })).status).toBe(422);
     const e = await enrolPOST(post('/x', { name: 'Coastal deployment', deliveryMode: 'saas', installedVersion: '1.4.1' }));
     expect(e.status).toBe(201);
     expect((await e.json()).nation.channelKey).toMatch(/^nk_/);
@@ -188,7 +188,7 @@ describe('publisher routes', () => {
     platformAuth.mockResolvedValue(false);
     expect((await publisherGET(get('/api/releases/publisher'))).status).toBe(401);
     expect((await publisherPOST(post('/api/releases/publisher', {}))).status).toBe(401);
-    expect((await advancePOST(post('/x', { to: 'under-review' }), { params: { id: 'FR-1003' } })).status).toBe(401);
+    expect((await advancePOST(post('/x', { to: 'under-review' }), { params: Promise.resolve({ id: 'FR-1003' }) })).status).toBe(401);
     expect((await enrolPOST(post('/x', {}))).status).toBe(401);
     platformAuth.mockResolvedValue(true);
     expect((await publisherGET(get('/api/releases/publisher'))).status).toBe(200);

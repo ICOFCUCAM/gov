@@ -10,17 +10,19 @@ import { withOfficial, refusal } from '@/lib/auth/official';
 import { canManageFeeds } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
-type P = { params: { id: string; feedId: string } };
-const known = (p: P['params']) => listFeeds(p.id).some(f => f.id === p.feedId);
+type P = { params: Promise<{ id: string; feedId: string }> };
+const known = (p: Awaited<P['params']>) => listFeeds(p.id).some(f => f.id === p.feedId);
 const notFound = () => NextResponse.json({ error: 'No such connected system' }, { status: 404 });
 
-export function GET(_r: NextRequest, { params }: P) {
+export async function GET(_r: NextRequest, props: P) {
+  const params = await props.params;
   if (!known(params)) return notFound();
   const key = feedSigningKey('case', params.feedId);
   return NextResponse.json({ key: key ? { keyId: key.keyId, publicKey: key.publicKeyPem, registeredAt: key.registeredAt, registeredBy: key.registeredBy } : null });
 }
 
-export async function POST(req: NextRequest, { params }: P) {
+export async function POST(req: NextRequest, props: P) {
+  const params = await props.params;
   const refused = await refusal(s => canManageFeeds(s, params.id));
   if (refused) return refused;
   if (!known(params)) return notFound();
@@ -30,7 +32,8 @@ export async function POST(req: NextRequest, { params }: P) {
   return NextResponse.json({ key: { keyId: r.keyId, registeredAt: r.registeredAt, registeredBy: r.registeredBy } }, { status: 201 });
 }
 
-export async function DELETE(req: NextRequest, { params }: P) {
+export async function DELETE(req: NextRequest, props: P) {
+  const params = await props.params;
   const refused = await refusal(s => canManageFeeds(s, params.id));
   if (refused) return refused;
   if (!known(params)) return notFound();

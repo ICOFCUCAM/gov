@@ -50,13 +50,13 @@ describe('SLSA provenance', () => {
     expect(releaseProvenance('sandbox', 'DR-141-H1')).toBeUndefined(); // the home nation's own build
     const homeBuild = releaseFor(HOME_NATION, 'DR-141-H1')!;
     expect(attestationFor('sandbox', homeBuild.artifacts[0]!.id)).toBeUndefined();
-    expect((await attGET(new Request('http://x'), { params: { key: key('sandbox'), artifact: homeBuild.artifacts[0]!.id } })).status).toBe(404);
-    const res = await attGET(new Request('http://x'), { params: { key: key(HOME_NATION), artifact: homeBuild.artifacts[0]!.id } });
+    expect((await attGET(new Request('http://x'), { params: Promise.resolve({ key: key('sandbox'), artifact: homeBuild.artifacts[0]!.id }) })).status).toBe(404);
+    const res = await attGET(new Request('http://x'), { params: Promise.resolve({ key: key(HOME_NATION), artifact: homeBuild.artifacts[0]!.id }) });
     expect(res.headers.get('content-disposition')).toMatch(/\.intoto\.jsonl"$/);
     expect(listAudit()[0]).toMatchObject({ action: 'update.provenance.download' });
-    const list = await (await provGET(new Request('http://x') as never, { params: { id: 'DR-141' } })).json();
+    const list = await (await provGET(new Request('http://x') as never, { params: Promise.resolve({ id: 'DR-141' }) })).json();
     expect(list.provenance.length).toBe(releaseFor(HOME_NATION, 'DR-141')!.artifacts.length);
-    expect((await provGET(new Request(`http://x?link=${key('sandbox')}`) as never, { params: { id: 'DR-141-H1' } })).status).toBe(404);
+    expect((await provGET(new Request(`http://x?link=${key('sandbox')}`) as never, { params: Promise.resolve({ id: 'DR-141-H1' }) })).status).toBe(404);
   });
 });
 

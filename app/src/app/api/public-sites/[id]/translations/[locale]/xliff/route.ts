@@ -13,7 +13,8 @@ export const dynamic = 'force-dynamic';
 
 const known = (id: string, locale: string) => SITE_IDS.includes(id) && locale !== 'en' && locales.some(l => l.code === locale);
 
-export function GET(_: NextRequest, { params }: { params: { id: string; locale: string } }) {
+export async function GET(_: NextRequest, props: { params: Promise<{ id: string; locale: string }> }) {
+  const params = await props.params;
   if (!known(params.id, params.locale)) return NextResponse.json({ error: 'Unknown site or language' }, { status: 404 });
   const xml = exportXliff(params.id, siteContent(params.id, publishedOverride(params.id)), params.locale, publishedTranslation(params.id, params.locale));
   return new NextResponse(xml, {
@@ -24,7 +25,11 @@ export function GET(_: NextRequest, { params }: { params: { id: string; locale: 
   });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string; locale: string } }) {
+export async function POST(
+  req: NextRequest,
+  props: { params: Promise<{ id: string; locale: string }> }
+) {
+  const params = await props.params;
   if (!known(params.id, params.locale)) return NextResponse.json({ error: 'Unknown site or language' }, { status: 404 });
   const xml = await req.text();
   if (xml.length > 2_000_000) return NextResponse.json({ error: 'The file is larger than 2 MB' }, { status: 413 });

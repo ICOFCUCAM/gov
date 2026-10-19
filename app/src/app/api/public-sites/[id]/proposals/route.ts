@@ -5,7 +5,8 @@ import { withOfficial } from '@/lib/auth/official';
 export const dynamic = 'force-dynamic';
 
 /** Propose a change to a site's content or design (or `restore` an earlier version); a second official publishes it. */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { change?: SiteChange; restore?: number; note?: string; by?: string };
   const r = typeof b.restore === 'number'
     ? proposeRestore(params.id, b.restore, b.by ?? '', b.note)

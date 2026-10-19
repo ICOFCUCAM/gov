@@ -14,7 +14,7 @@ import { publicTreasurySite } from '@/lib/gov/treasury-systems';
 import { siteMessages, nationInsignia, nationLocale } from '@/lib/nation/registry';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
-import { siteProps } from '@/apps/_shared/public/site-props';
+import { siteProps, siteRequest } from '@/apps/_shared/public/site-props';
 import { GatewayBar, LanguageSwitch, SiteLogo, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
 import { FontSizeControls } from '@/apps/_shared/public/controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
@@ -145,11 +145,12 @@ function BudgetDonut({ segments, total, size = 188 }: {
   );
 }
 
-export default function PublicTreasuryHomepage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+export default async function PublicTreasuryHomepage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
   const preview = searchParams?.preview;
   const preset = presetFor('treasury', searchParams?.preset ?? (preview ? effectiveContent('treasury', preview).previewPreset ?? undefined : undefined));
-  if (!preset.bespoke) return <PublicSite id="treasury" theme={THEME} preset={preset.id} preview={preview} illustration={ART} />;
-  return <TreasuryPortal site={siteProps('treasury', { theme: THEME, illustration: ART, preview })} />;
+  if (!preset.bespoke) return <PublicSite id="treasury" request={await siteRequest()} theme={THEME} preset={preset.id} preview={preview} illustration={ART} />;
+  return <TreasuryPortal site={siteProps('treasury', { theme: THEME, illustration: ART, preview, request: await siteRequest() })} />;
 }
 
 const label = (i: PublicSiteLinkItem) => (typeof i === 'string' ? i : i.label);

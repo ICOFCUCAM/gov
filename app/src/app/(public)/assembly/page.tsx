@@ -1,6 +1,7 @@
 // Public — National Assembly (Lower House) homepage.
 
 import { PublicSite } from '@/apps/_shared/public/PublicSite';
+import { siteRequest } from '@/apps/_shared/public/site-props';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 import { getSovereign, getSetup } from '@/lib/data/store';
 import { nationOffices } from '@/lib/nation/offices';
@@ -22,9 +23,10 @@ const THEME = {
   emergencyA: '#0f6e6a', emergencyB: '#0a4f4c',
 };
 
-export default function PublicAssemblyPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+export default async function PublicAssemblyPage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
   return (
-    <PublicSite id="assembly" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
+    <PublicSite id="assembly" request={await siteRequest()} theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="parliament" primary={THEME.primary} accent={THEME.accent} aria="Assembly chamber" />} />
   );
 }

@@ -33,10 +33,10 @@ const chamber = async (): Promise<UpdateChamber> => (await chamberGET(get('/api/
 const security = async (): Promise<SecurityCenter> => (await securityGET(get('/api/releases/security')).json()).security;
 /** Four-eyes over HTTP: a proposal returns `pending`; a second official then approves. */
 const decide = async (id: string, body: unknown) => {
-  const first = await decisionPOST(post(body), { params: { id } });
+  const first = await decisionPOST(post(body), { params: Promise.resolve({ id }) });
   const action = (body as { action?: string })?.action;
   if ((action !== 'approve' && action !== 'install') || first.status !== 200 || !(await first.clone().json()).pending) return first;
-  return decisionPOST(post({ ...(body as object), by: 'Second official' }), { params: { id } });
+  return await decisionPOST(post({ ...(body as object), by: 'Second official' }), { params: Promise.resolve({ id }) });
 };
 const healthy = () => HEALTH_CHECKS.map(c => ({ key: c.key, ok: true, value: c.key === 'latency' ? 230 : c.key === 'error-rate' ? 0.3 : undefined }));
 
@@ -87,8 +87,8 @@ describe('health, probation and fallback over HTTP', () => {
     const inc = c.incidents[0]!;
     expect(inc).toMatchObject({ trigger: 'automatic' });
     expect(inc.failedChecks).toEqual(expect.arrayContaining(['smoke-registry', 'readiness']));
-    expect((await ackPOST(post({ by: '' }), { params: { id: inc.id } })).status).toBe(422);
-    expect((await ackPOST(post({ by: 'CIO' }), { params: { id: inc.id } })).status).toBe(200);
+    expect((await ackPOST(post({ by: '' }), { params: Promise.resolve({ id: inc.id }) })).status).toBe(422);
+    expect((await ackPOST(post({ by: 'CIO' }), { params: Promise.resolve({ id: inc.id }) })).status).toBe(200);
   });
 
   it('settings validate', async () => {
@@ -108,21 +108,21 @@ describe('health, probation and fallback over HTTP', () => {
 
 describe('publisher halt / recall', () => {
   it('halts a release; nations can no longer approve it; the console shows failure rates', async () => {
-    const res = await statusPOST(post({ action: 'halt', reason: 'Failures reported in the pilot ring' }), { params: { id: 'DR-141' } });
+    const res = await statusPOST(post({ action: 'halt', reason: 'Failures reported in the pilot ring' }), { params: Promise.resolve({ id: 'DR-141' }) });
     expect(res.status).toBe(200);
     expect((await decide('DR-141', { action: 'approve', by: 'CIO' })).status).toBe(409);
     const o: PublisherOverview = (await (await publisherGET(get('/api/releases/publisher'))).json()).overview;
     expect(o.releases.find(r => r.id === 'DR-141')!.status).toBe('halted');
     expect(o.releases.find(r => r.id === 'DR-141-S1')!.stats).toMatchObject({ fallbacks: 1, failureRate: 100 });
     expect(o.incidents.length).toBeGreaterThan(0);
-    expect((await statusPOST(post({ action: 'explode' }), { params: { id: 'DR-141' } })).status).toBe(422);
-    expect((await statusPOST(post({ action: 'halt' }), { params: { id: 'NOPE' } })).status).toBe(404);
+    expect((await statusPOST(post({ action: 'explode' }), { params: Promise.resolve({ id: 'DR-141' }) })).status).toBe(422);
+    expect((await statusPOST(post({ action: 'halt' }), { params: Promise.resolve({ id: 'NOPE' }) })).status).toBe(404);
   });
 
   it('is gated under CIVICOS_AUTH=enforce', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
     platformAuth.mockResolvedValue(false);
-    expect((await statusPOST(post({ action: 'halt', reason: 'Failures reported' }), { params: { id: 'DR-141' } })).status).toBe(401);
+    expect((await statusPOST(post({ action: 'halt', reason: 'Failures reported' }), { params: Promise.resolve({ id: 'DR-141' }) })).status).toBe(401);
   });
 });
 
@@ -136,13 +136,13 @@ describe('security store over HTTP', () => {
     expect(q.status).toBe(201);
     const id = (await q.json()).order.id as string;
     const home = (await chamber()).nation;
-    expect(secDownloadGET(get('/x'), { params: { key: home.channelKey, order: id } }).status).toBe(403);
-    expect((await orderPOST(post({ action: 'order', poNumber: 'P', by: 'CIO' }), { params: { id } })).status).toBe(422);
-    expect((await orderPOST(post({ action: 'order', poNumber: 'PO-2026-12', by: 'CIO' }), { params: { id } })).status).toBe(200);
-    expect((await orderPOST(post({ action: 'pay', by: 'Accountant General' }), { params: { id } })).status).toBe(422);
-    const paid = await orderPOST(post({ action: 'pay', paymentReference: 'TRF-55120', by: 'Accountant General' }), { params: { id } });
+    expect((await secDownloadGET(get('/x'), { params: Promise.resolve({ key: home.channelKey, order: id }) })).status).toBe(403);
+    expect((await orderPOST(post({ action: 'order', poNumber: 'P', by: 'CIO' }), { params: Promise.resolve({ id }) })).status).toBe(422);
+    expect((await orderPOST(post({ action: 'order', poNumber: 'PO-2026-12', by: 'CIO' }), { params: Promise.resolve({ id }) })).status).toBe(200);
+    expect((await orderPOST(post({ action: 'pay', by: 'Accountant General' }), { params: Promise.resolve({ id }) })).status).toBe(422);
+    const paid = await orderPOST(post({ action: 'pay', paymentReference: 'TRF-55120', by: 'Accountant General' }), { params: Promise.resolve({ id }) });
     expect((await paid.json()).order.stage).toBe('active');
-    expect(secDownloadGET(get('/x'), { params: { key: home.channelKey, order: id } }).status).toBe(200);
+    expect((await secDownloadGET(get('/x'), { params: Promise.resolve({ key: home.channelKey, order: id }) })).status).toBe(200);
     expect((await security()).posture.gate.platformCovered).toBe(true);
   });
 
@@ -150,7 +150,7 @@ describe('security store over HTTP', () => {
     const q = await quotePOST(post({ productId: 'SEC-WAF', edition: 'standard', seats: 10, by: 'CIO' }));
     const id = (await q.json()).order.id as string;
     const sandboxKey = (await (await publisherGET(get('/api/releases/publisher'))).json()).overview.nations.find((n: { id: string }) => n.id === 'sandbox').channelKey;
-    expect((await orderPOST(post({ action: 'cancel', by: 'x', link: sandboxKey }), { params: { id } })).status).toBe(404);
+    expect((await orderPOST(post({ action: 'cancel', by: 'x', link: sandboxKey }), { params: Promise.resolve({ id }) })).status).toBe(404);
   });
 
   it('BYO, nation software and definitions', async () => {

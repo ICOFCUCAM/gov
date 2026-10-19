@@ -7,10 +7,8 @@ export const dynamic = 'force-dynamic';
 
 const VALID = ['approve', 'decline', 'request-info', 'escalate'];
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   let body: Partial<DecidePermitInput>;
   try {
     body = (await withOfficial(await req.json())) as Partial<DecidePermitInput>;

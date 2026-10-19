@@ -9,14 +9,16 @@ import { currentOfficial, refusal, withOfficial } from '@/lib/auth/official';
 import { canCertifyForAgency, canSignForSite, ministryPermission } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
-export async function GET(_r: NextRequest, { params }: { params: { fid: string } }) {
+export async function GET(_r: NextRequest, props: { params: Promise<{ fid: string }> }) {
+  const params = await props.params;
   const f = getFacility(params.fid);
   if (!f) return NextResponse.json({ error: 'No such site' }, { status: 404 });
   const o = await currentOfficial();
   return NextResponse.json({ site: viewFacility(f, o ? { institution: o.institution, signedIn: true } : { signedIn: false }) });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { fid: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ fid: string }> }) {
+  const params = await props.params;
   const f = getFacility(params.fid);
   if (!f) return NextResponse.json({ error: 'No such site' }, { status: 404 });
   const b = (await withOfficial(await req.json().catch(() => ({})))) as FacilityAction & { by?: string };

@@ -8,7 +8,8 @@ import { chamberBody } from '@/lib/updates/access';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const r = await chamberBody<{ by?: string; acknowledgeLoss?: boolean }>(req);
   if (r instanceof NextResponse) return r;
   const out = restoreData(r.nation.id, params.id, { by: typeof r.b.by === 'string' ? r.b.by : undefined, acknowledgeLoss: r.b.acknowledgeLoss === true });

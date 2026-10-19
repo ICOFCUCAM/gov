@@ -20,11 +20,12 @@ export const metadata = { title: 'Ministry Control' };
 // Service health is CONFIG-DRIVEN, not a hardcoded single ministry. It
 // renders whatever institutions exist in the tenant: each ministry's name,
 // departments, and enabled modules come from the institutional framework.
-export default function MinistryControlPage({
-  searchParams,
-}: {
-  searchParams: { ministry?: string };
-}) {
+export default async function MinistryControlPage(
+  props: {
+    searchParams: Promise<{ ministry?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const ministries = listMinistries().filter(m => m.status !== 'merged');
   const selected =
     ministries.find(m => m.slug === searchParams.ministry) ??

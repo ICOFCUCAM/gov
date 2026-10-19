@@ -28,10 +28,11 @@ const receiptsFor = (): Record<string, Receipt> => ({
 });
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function ReceiptPage({ params }: PageProps) {
+export default async function ReceiptPage(props: PageProps) {
+  const params = await props.params;
   const m = nationMessages();
   const receipt = receiptsFor()[params.id];
 

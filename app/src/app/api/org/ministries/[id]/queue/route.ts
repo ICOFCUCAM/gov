@@ -8,12 +8,14 @@ import { addCase } from '@/lib/data/case-import';
 import { withOfficial, refusal } from '@/lib/auth/official';
 import { ministryPermission } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
-export function GET(_r: Request, { params }: { params: { id: string } }) {
+export async function GET(_r: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const r = queueFor(params.id);
   if ('error' in r) return NextResponse.json(r, { status: 404 });
   return NextResponse.json(r);
 }
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const refused = await refusal(s => ministryPermission(s, params.id));
   if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as Record<string, string | undefined>;

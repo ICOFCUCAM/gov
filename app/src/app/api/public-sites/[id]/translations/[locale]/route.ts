@@ -10,7 +10,8 @@ import { locales } from '@/lib/i18n/config';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(_: NextRequest, { params }: { params: { id: string; locale: string } }) {
+export async function GET(_: NextRequest, props: { params: Promise<{ id: string; locale: string }> }) {
+  const params = await props.params;
   if (!SITE_IDS.includes(params.id)) return NextResponse.json({ error: 'No such site' }, { status: 404 });
   if (params.locale === 'en' || !locales.some(l => l.code === params.locale)) return NextResponse.json({ error: 'Unknown language' }, { status: 404 });
   const content = siteContent(params.id, publishedOverride(params.id));

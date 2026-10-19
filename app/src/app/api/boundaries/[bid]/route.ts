@@ -7,12 +7,14 @@ import { refusal, withOfficial } from '@/lib/auth/official';
 import { canManageBoundaries } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: NextRequest, { params }: { params: { bid: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ bid: string }> }) {
+  const params = await props.params;
   const v = getBoundaryVersion(params.bid);
   return v ? NextResponse.json({ version: v }) : NextResponse.json({ error: 'Boundary version not found' }, { status: 404 });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { bid: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ bid: string }> }) {
+  const params = await props.params;
   const refused = await refusal(s => canManageBoundaries(s, mappingAgency()?.id));
   if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { by?: string; action?: string; reason?: string };

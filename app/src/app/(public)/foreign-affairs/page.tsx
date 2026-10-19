@@ -1,6 +1,7 @@
 // Public — Ministry of Foreign Affairs homepage.
 
 import { PublicSite } from '@/apps/_shared/public/PublicSite';
+import { siteRequest } from '@/apps/_shared/public/site-props';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 
 export const dynamic = 'force-dynamic';
@@ -12,9 +13,10 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicForeignAffairsPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+export default async function PublicForeignAffairsPage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
   return (
-    <PublicSite id="foreign-affairs" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
+    <PublicSite id="foreign-affairs" request={await siteRequest()} theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="globe" primary={THEME.primary} accent={THEME.accent} aria="World globe" />} />
   );
 }
