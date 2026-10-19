@@ -10187,12 +10187,20 @@
         ],
         "operationId": "get_twin_entities_id",
         "summary": "GET /api/twin/entities/{id}",
-        "description": "One twin entity: its stable id, the ids other systems use for it, its latest observations and the sources behind them.",
+        "description": "One twin entity: its stable id, the ids other systems use for it, its latest observations and the sources behind them. With Accept: application/ld+json the same entity as NGSI-LD (lib/twin/ngsi.ts): places as AdministrativeArea, facilities as PointOfInterest, observations as properties with observedAt; ?options=temporalValues gives every value over time. The JSON answer is unchanged.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "options",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }

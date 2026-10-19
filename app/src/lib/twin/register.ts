@@ -645,6 +645,15 @@ export function metricDates(metric: string): string[] {
   return [...new Set([...archivedObservations(metric), ...db().observations].filter(o => o.metric === metric && !o.supersededAt).map(o => o.validFrom))].sort();
 }
 
+/** Every current value recorded for an entity over time (withdrawn imports excluded; live register and archive), oldest first. */
+export function entityHistory(entityId: string): Observation[] {
+  const out: Observation[] = [];
+  const visit = (o: Observation) => { if (o.entityId === entityId && !o.supersededAt) out.push({ ...o }); };
+  forEachArchived(undefined, visit);
+  db().observations.forEach(visit);
+  return out.sort((a, b) => a.validFrom.localeCompare(b.validFrom) || a.recordedAt.localeCompare(b.recordedAt));
+}
+
 /** An entity as the register holds it. */
 export function getEntity(id: string): TwinEntity | undefined {
   const e = db().entities[id];
