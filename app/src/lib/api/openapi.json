@@ -26786,7 +26786,7 @@
         ],
         "operationId": "get_twin_policy",
         "summary": "GET /api/twin/policy",
-        "description": "The nation's rules for its twin (lib/twin/policy.ts): whether withdrawing an import needs a second official to confirm it (four-eyes, on by default). GET reads it; POST { fourEyesWithdrawal: boolean } changes it, administrators only (ADMIN_ONLY in lib/auth/roles.ts), named and audited. A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "description": "The nation's rules for its twin (lib/twin/policy.ts): whether withdrawing an import needs a second official to confirm it (four-eyes, on by default), and whether a stream's MQTT broker may be on the nation's own private network (privateBrokers, off by default). GET reads it; POST { fourEyesWithdrawal?: boolean, privateBrokers?: boolean } changes it, administrators only (ADMIN_ONLY in lib/auth/roles.ts), named and audited. A signed-in official's verified name replaces any name in the request (withOfficial).",
         "parameters": [],
         "responses": {
           "200": {
@@ -26831,7 +26831,7 @@
         ],
         "operationId": "post_twin_policy",
         "summary": "POST /api/twin/policy",
-        "description": "The nation's rules for its twin (lib/twin/policy.ts): whether withdrawing an import needs a second official to confirm it (four-eyes, on by default). GET reads it; POST { fourEyesWithdrawal: boolean } changes it, administrators only (ADMIN_ONLY in lib/auth/roles.ts), named and audited. A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "description": "The nation's rules for its twin (lib/twin/policy.ts): whether withdrawing an import needs a second official to confirm it (four-eyes, on by default), and whether a stream's MQTT broker may be on the nation's own private network (privateBrokers, off by default). GET reads it; POST { fourEyesWithdrawal?: boolean, privateBrokers?: boolean } changes it, administrators only (ADMIN_ONLY in lib/auth/roles.ts), named and audited. A signed-in official's verified name replaces any name in the request (withOfficial).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -26844,6 +26844,9 @@
                     "type": "string"
                   },
                   "fourEyesWithdrawal": {
+                    "type": "boolean"
+                  },
+                  "privateBrokers": {
                     "type": "boolean"
                   }
                 }
@@ -27628,6 +27631,87 @@
         "x-source": "src/app/api/twin/scenarios/route.ts"
       }
     },
+    "/api/twin/sources/{id}/ingest": {
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_sources_id_ingest",
+        "summary": "POST /api/twin/sources/{id}/ingest",
+        "description": "How a twin stream source receives readings pushed to the platform (lib/twin/register.ts setStreamIngest): POST { ingest: { integrationId?, mqtt?: { url: \"mqtts://host:port\", topic, username?, password? } }, unit? } binds the integration whose key may post its Datastream's Observations through SensorThings (scope sta:write) and/or the nation's own MQTT broker (the password is sealed under the platform's key custody, never kept in the source); { ingest: null } stops receiving them. Administrators or officials who can sign (canConnectStream, lib/auth/roles.ts); a signed-in official's verified name replaces any name in the request (withOfficial); audited. The MQTT subscribers are brought in line at once (lib/twin/mqtt.ts).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  },
+                  "ingest": {},
+                  "unit": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "$ref": "#/components/schemas/TwinSource"
+                    },
+                    "subscribers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SubscriberStatus"
+                      }
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "subscribers"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/twin/sources/[id]/ingest/route.ts"
+      }
+    },
     "/api/twin/sources/{id}/run": {
       "post": {
         "tags": [
@@ -27710,7 +27794,7 @@
         ],
         "operationId": "get_twin_sources",
         "summary": "GET /api/twin/sources",
-        "description": "Registered sources of the national twin and their recent imports, and the size of the history archive (older observations and runs, still queried). POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "description": "Registered sources of the national twin and their recent imports, and the size of the history archive (older observations and runs, still queried). POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial). A stream source that receives pushed readings (`stream.ingest`: an integration for SensorThings, the nation's MQTT broker) needs an administrator or an official who can sign (canConnectStream), as /api/twin/sources/[id]/ingest.",
         "parameters": [],
         "responses": {
           "200": {
@@ -27827,7 +27911,7 @@
         ],
         "operationId": "post_twin_sources",
         "summary": "POST /api/twin/sources",
-        "description": "Registered sources of the national twin and their recent imports, and the size of the history archive (older observations and runs, still queried). POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "description": "Registered sources of the national twin and their recent imports, and the size of the history archive (older observations and runs, still queried). POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial). A stream source that receives pushed readings (`stream.ingest`: an integration for SensorThings, the nation's MQTT broker) needs an administrator or an official who can sign (canConnectStream), as /api/twin/sources/[id]/ingest.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -27956,7 +28040,7 @@
         ],
         "operationId": "get_twin_sta_v1_1_path",
         "summary": "GET /api/twin/sta/v1.1/{path}",
-        "description": "OGC SensorThings API v1.1 resources of the national twin (read-only): /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, and substrate telemetry streams when the substrate is reachable; restricted sites' positions as the viewer may see them (lib/twin/sta.ts).",
+        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts).",
         "parameters": [
           {
             "name": "path",
@@ -27997,6 +28081,176 @@
             "officialSession": []
           }
         ],
+        "x-source": "src/app/api/twin/sta/v1.1/[...path]/route.ts"
+      },
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_sta_v1_1_path",
+        "summary": "POST /api/twin/sta/v1.1/{path}",
+        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts).",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          },
+          {
+            "automation": []
+          }
+        ],
+        "x-permission-rule": "bearer",
+        "x-source": "src/app/api/twin/sta/v1.1/[...path]/route.ts"
+      },
+      "patch": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "patch_twin_sta_v1_1_path",
+        "summary": "PATCH /api/twin/sta/v1.1/{path}",
+        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts).",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          },
+          {
+            "automation": []
+          }
+        ],
+        "x-permission-rule": "bearer",
+        "x-source": "src/app/api/twin/sta/v1.1/[...path]/route.ts"
+      },
+      "delete": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "delete_twin_sta_v1_1_path",
+        "summary": "DELETE /api/twin/sta/v1.1/{path}",
+        "description": "OGC SensorThings API v1.1 resources of the national twin: /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, substrate telemetry streams when the substrate is reachable, and the streams that receive pushed readings; restricted sites' positions as the viewer may see them (lib/twin/sta.ts). POST creates Observations on a twin stream source's Datastream (/Observations, /Datastreams('telemetry:<stream id>')/Observations, and the Data Array /CreateObservations), only with the key of the integration bound to that source (Authorization: Bearer civ_…, scope sta:write; BEARER_ROUTES in lib/auth/roles.ts). They are checked, refused with reasons, audited and kept as readings the stream's daily run turns into observations (lib/twin/sta-write.ts, lib/twin/stream-ingest.ts).",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          },
+          {
+            "automation": []
+          }
+        ],
+        "x-permission-rule": "bearer",
         "x-source": "src/app/api/twin/sta/v1.1/[...path]/route.ts"
       }
     },
@@ -36524,6 +36778,30 @@
           "alerts"
         ]
       },
+      "MqttSpec": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "mqtts://host[:port] (TLS only; default port 8883). The platform connects only to this host."
+          },
+          "topic": {
+            "type": "string",
+            "description": "The topic the readings are published on (no wildcards). Subscribed with QoS 1."
+          },
+          "username": {
+            "type": "string"
+          },
+          "hasPassword": {
+            "type": "boolean",
+            "description": "Whether a password is held for it: the password itself is kept sealed (lib/crypto/envelope.ts, under the key custody of lib/keys), never in the source."
+          }
+        },
+        "required": [
+          "url",
+          "topic"
+        ]
+      },
       "MunicipalityOnboardingInput": {
         "type": "object",
         "properties": {
@@ -44827,6 +45105,18 @@
           "decision"
         ]
       },
+      "StreamIngest": {
+        "type": "object",
+        "properties": {
+          "integrationId": {
+            "type": "string",
+            "description": "The integration (Connected systems, scope sta:write) whose key may post this stream's readings through SensorThings."
+          },
+          "mqtt": {
+            "$ref": "#/components/schemas/MqttSpec"
+          }
+        }
+      },
       "StreamLineage": {
         "description": "What a stream run read, for the run's lineage.",
         "type": "object",
@@ -44902,6 +45192,9 @@
           "backfillDays": {
             "type": "number",
             "description": "Days back the first run aggregates (default 7, at most 90)."
+          },
+          "ingest": {
+            "$ref": "#/components/schemas/StreamIngest"
           }
         },
         "required": [
@@ -45047,6 +45340,55 @@
           "enrolledAt",
           "settings",
           "estate"
+        ]
+      },
+      "SubscriberStatus": {
+        "type": "object",
+        "properties": {
+          "sourceId": {
+            "type": "string"
+          },
+          "broker": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "connecting",
+              "error",
+              "refused",
+              "stopped",
+              "subscribed"
+            ]
+          },
+          "error": {
+            "type": "string",
+            "description": "Why it is not running, or the last connection error."
+          },
+          "messages": {
+            "type": "number"
+          },
+          "accepted": {
+            "type": "number"
+          },
+          "refused": {
+            "type": "number"
+          },
+          "lastMessageAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceId",
+          "broker",
+          "topic",
+          "state",
+          "messages",
+          "accepted",
+          "refused"
         ]
       },
       "SupportTicket": {
@@ -45679,6 +46021,10 @@
             "type": "boolean",
             "description": "Withdrawing an import needs a second official to confirm the proposal (default on)."
           },
+          "privateBrokers": {
+            "type": "boolean",
+            "description": "A stream's MQTT broker may resolve to a private or internal address (the nation's own network); default off."
+          },
           "changedBy": {
             "type": "string"
           },
@@ -45687,7 +46033,8 @@
           }
         },
         "required": [
-          "fourEyesWithdrawal"
+          "fourEyesWithdrawal",
+          "privateBrokers"
         ]
       },
       "TwinRun": {

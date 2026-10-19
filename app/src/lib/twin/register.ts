@@ -19,7 +19,7 @@
 // Kept as a server store (persisted by lib/data/persist.ts).
 
 import { createHash } from 'node:crypto';
-import { recordAudit, listMinistries, getSovereign } from '@/lib/data/store';
+import { recordAudit, listMinistries, getSovereign, listIntegrations } from '@/lib/data/store';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
 import { safeFetchText } from '@/lib/net/safe-fetch';
@@ -31,7 +31,8 @@ import { METRIC_ID, getMetric, isKnownMetric, listMetrics, toUcum, sameUnit, typ
 import { readSdmx, isSdmxFormat, SDMX_MEDIA, SDMX_ROW, type SdmxOptions, type SdmxFormat } from './sdmx';
 import type { Signal } from './signal';
 import { twinPolicy } from './policy';
-import { checkStreamSpec, streamRows, STREAM_ROW, type StreamSpec, type StreamLineage, type TelemetryReader } from './stream';
+import { checkStreamSpec, checkIngestSpec, streamRows, STREAM_ROW, STA_WRITE_SCOPE, type StreamSpec, type StreamLineage, type TelemetryReader, type StreamIngest } from './stream';
+import { declarePushedStream, undeclarePushedStream, holdBrokerPassword, hasBrokerPassword } from './readings';
 
 export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
 
@@ -428,6 +429,8 @@ function registerStreamSource(input: Partial<TwinSource>, by: string, name: stri
   const spec = checkStreamSpec(input.stream);
   if ('error' in spec) return spec;
   if (spec.entity && !resolveEntity(spec.entity)) return { error: `${spec.entity} is not an entity of the register` };
+  const bad = spec.ingest ? ingestRefusal(spec, spec.ingest) : null;
+  if (bad) return { error: bad };
   const s: TwinSource = {
     id: `SRC-${repo().nextSeq()}`, name: name.slice(0, 120), publisher: publisher.slice(0, 120), kind: 'stream', stream: spec,
     system: (input.system ?? slug(publisher)).slice(0, 60) || 'source', mapping: STREAM_MAPPING,
@@ -435,13 +438,97 @@ function registerStreamSource(input: Partial<TwinSource>, by: string, name: stri
     schedule: input.schedule === 'manual' || input.schedule === 'weekly' ? input.schedule : 'daily',
     registeredBy: by, registeredAt: new Date().toISOString(),
   };
+  if (spec.ingest) applyIngest(s, spec.ingest, brokerPasswordIn(input.stream));
   repo().addSource(s);
-  recordAudit(by, 'twin.source.register', `Twin:${s.id}`, 'ok', `${s.name} (${s.publisher}) telemetry stream ${spec.streamId}: ${spec.metrics.map(m => `${m.metric}=${m.statistic}`).join(', ')}`);
+  recordAudit(by, 'twin.source.register', `Twin:${s.id}`, 'ok', `${s.name} (${s.publisher}) telemetry stream ${spec.streamId}: ${spec.metrics.map(m => `${m.metric}=${m.statistic}`).join(', ')}${spec.ingest ? `; ${ingestWords(s.stream!.ingest!)}` : ''}`);
   return s;
 }
 
+/** The password given for a stream's broker, if any (never kept in the source). */
+function brokerPasswordIn(stream: unknown): string | undefined {
+  const p = (stream as { ingest?: { mqtt?: { password?: unknown } } } | undefined)?.ingest?.mqtt?.password;
+  return typeof p === 'string' && p ? p.slice(0, 512) : undefined;
+}
+
+/** Why a stream's readings cannot be received this way, or null: the integration exists and holds sta:write; every averaged metric is in the stream's unit. */
+function ingestRefusal(spec: StreamSpec, ingest: StreamIngest): string | null {
+  if (ingest.integrationId) {
+    const c = listIntegrations().find(i => i.id === ingest.integrationId);
+    if (!c) return `No integration ${ingest.integrationId}: register the sending system under Connected systems first`;
+    if (!c.scopes.includes(STA_WRITE_SCOPE)) return `The integration ${c.name} does not hold the scope ${STA_WRITE_SCOPE}`;
+    if (c.status === 'revoked') return `The integration ${c.name} is revoked`;
+  }
+  for (const m of spec.metrics) {
+    if (m.statistic === 'count') continue;
+    const def = getMetric(m.metric);
+    if (def && def.origin !== 'observed' && !sameUnit(spec.unit, def.unit)) return `Readings in ${spec.unit} cannot record ${m.metric}, counted in ${def.unit}`;
+  }
+  return null;
+}
+
+/**
+ * Bind the ingest settings to the source: the stream is declared to the
+ * readings store and a broker password sealed there. A password held for
+ * another broker or user is never carried over to a new one.
+ */
+function applyIngest(s: TwinSource, ingest: StreamIngest, password: string | undefined, before?: StreamIngest): void {
+  const spec = s.stream!;
+  if (ingest.mqtt) {
+    const { hasPassword: _claimed, ...mqtt } = ingest.mqtt;
+    void _claimed;
+    const sameBroker = before?.mqtt?.url === mqtt.url && before?.mqtt?.username === mqtt.username;
+    if (password !== undefined) holdBrokerPassword(s.id, password);
+    else if (!sameBroker) holdBrokerPassword(s.id, undefined);
+    ingest = { ...ingest, mqtt: { ...mqtt, ...(hasBrokerPassword(s.id) ? { hasPassword: true } : {}) } };
+  } else holdBrokerPassword(s.id, undefined);
+  s.stream = { ...spec, ingest };
+  declarePushedStream(spec.streamId, { unit: spec.unit!, label: s.name, sourceId: s.id });
+}
+
+const ingestWords = (i: StreamIngest): string => [i.integrationId ? `readings through SensorThings from integration ${i.integrationId}` : '', i.mqtt ? `readings from MQTT ${i.mqtt.url} topic ${i.mqtt.topic}` : ''].filter(Boolean).join(' and ');
+
+/**
+ * Change how a stream source receives readings (a named official; audited):
+ * bind an integration that may post them through SensorThings, name the
+ * nation's own MQTT broker (a password given here is sealed, never kept in the
+ * source), or stop receiving them (`ingest: null`). Readings already received
+ * stay until they age out.
+ */
+export function setStreamIngest(sourceId: string, input: { ingest?: unknown; unit?: unknown; by?: string }): TwinSource | { error: string } {
+  const by = (input.by ?? '').trim();
+  if (!by) return { error: 'Name the official changing how the stream receives readings' };
+  const s = db().sources.find(x => x.id === sourceId);
+  if (!s) return { error: 'No such source' };
+  if (s.kind !== 'stream' || !s.stream) return { error: 'Only a stream source receives readings' };
+  if (input.ingest === null) {
+    if (!s.stream.ingest) return { ...s };
+    const { ingest: _was, ...rest } = s.stream;
+    void _was;
+    s.stream = rest;
+    holdBrokerPassword(s.id, undefined);
+    undeclarePushedStream(rest.streamId, s.id);
+    repo().saveSource(s);
+    recordAudit(by, 'twin.source.ingest', `Twin:${s.id}`, 'ok', 'Stops receiving readings');
+    return { ...s };
+  }
+  const unit = typeof input.unit === 'string' && input.unit.trim() ? input.unit.trim().slice(0, 24) : s.stream.unit;
+  const spec = checkStreamSpec({ ...s.stream, unit, ingest: input.ingest });
+  if ('error' in spec) return spec;
+  const ingest = checkIngestSpec(input.ingest);
+  if ('error' in ingest) return ingest;
+  const bad = ingestRefusal(spec, ingest);
+  if (bad) return { error: bad };
+  const before = s.stream.ingest;
+  if (before) undeclarePushedStream(s.stream.streamId, s.id);
+  s.stream = spec;
+  applyIngest(s, ingest, brokerPasswordIn({ ingest: input.ingest }), before);
+  repo().saveSource(s);
+  recordAudit(by, 'twin.source.ingest', `Twin:${s.id}`, 'ok', ingestWords(s.stream.ingest!));
+  return { ...s };
+}
+
 /** Where a stream source's next run starts: the end of the latest run that stands (not withdrawn); undefined before the first. */
-function streamResumesAt(sourceId: string): string | undefined {
+export function streamResumesAt(sourceId: string): string | undefined {
   let to: string | undefined;
   for (const r of [...db().runs, ...archivedRuns()]) {
     if (r.sourceId !== sourceId || r.withdrawn || !r.stream || r.status === 'failed') continue;

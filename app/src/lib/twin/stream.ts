@@ -11,11 +11,22 @@
 //
 // The substrate is read in-process (lib/db/repos/telemetry.ts); tests and
 // installations without a substrate pass their own reader (TelemetryReader).
+//
+// A stream source may also receive readings pushed to the platform
+// (`ingest`, review I3): through SensorThings (POST Observations or
+// CreateObservations on its Datastream, lib/twin/sta-write.ts) with the key of
+// the integration bound to it (scope sta:write), and from an MQTT broker of
+// the nation's own (lib/twin/mqtt.ts). Both write readings into the platform's
+// readings store (lib/twin/readings.ts) through one path
+// (lib/twin/stream-ingest.ts); the daily aggregation reads them beside the
+// substrate's samples (PLATFORM_TELEMETRY), so they become observations only
+// through a run.
 
 import { createHash } from 'node:crypto';
 import { telemetryStreamRow, telemetrySamplesBetween } from '@/lib/db/repos/telemetry';
 import type { TelemetrySampleRow, TelemetryStreamRow } from '@/lib/db/types';
-import { METRIC_ID, isKnownMetric } from './metrics';
+import { METRIC_ID, isKnownMetric, toUcum } from './metrics';
+import { pushedStreamRow, pushedReadingsBetween } from './readings';
 
 export type StreamStatistic = 'mean' | 'min' | 'max' | 'count' | 'sum';
 export const STREAM_STATISTICS: readonly StreamStatistic[] = ['mean', 'min', 'max', 'count', 'sum'];
@@ -31,6 +42,67 @@ export interface StreamSpec {
   unit?: string;
   /** Days back the first run aggregates (default 7, at most 90). */
   backfillDays?: number;
+  /** Readings pushed to the platform for this stream (SensorThings create, MQTT); needs `unit`. */
+  ingest?: StreamIngest;
+}
+
+/** SensorThings: the scope an integration needs to post a stream source's readings. */
+export const STA_WRITE_SCOPE = 'sta:write';
+
+export interface StreamIngest {
+  /** The integration (Connected systems, scope sta:write) whose key may post this stream's readings through SensorThings. */
+  integrationId?: string;
+  /** An MQTT broker of the nation's own that the platform subscribes to for this stream's readings. */
+  mqtt?: MqttSpec;
+}
+
+export interface MqttSpec {
+  /** mqtts://host[:port] (TLS only; default port 8883). The platform connects only to this host. */
+  url: string;
+  /** The topic the readings are published on (no wildcards). Subscribed with QoS 1. */
+  topic: string;
+  username?: string;
+  /** Whether a password is held for it: the password itself is kept sealed (lib/crypto/envelope.ts, under the key custody of lib/keys), never in the source. */
+  hasPassword?: boolean;
+}
+
+const MQTT_TOPIC = /^[^\u0000+#$][^\u0000+#]{0,199}$/;
+
+/** An MQTT broker as a stream source names it, checked; or the reason it cannot be used. */
+export function checkMqttSpec(input: unknown): MqttSpec | { error: string } {
+  if (!input || typeof input !== 'object') return { error: 'Give the broker\'s address and the topic' };
+  const i = input as Partial<MqttSpec>;
+  let u: URL;
+  try { u = new URL(String(i.url ?? '').trim()); } catch { return { error: 'Give the broker as mqtts://host:port' }; }
+  if (u.protocol !== 'mqtts:') return { error: 'The broker must be reached over TLS (mqtts://host:port)' };
+  if (u.username || u.password) return { error: 'Do not put credentials in the broker\'s address: give the user name and password separately' };
+  if (!u.hostname) return { error: 'The broker\'s address has no host' };
+  if ((u.pathname && u.pathname !== '/') || u.search || u.hash) return { error: 'The broker\'s address is mqtts://host:port only (the topic is given separately)' };
+  const port = u.port ? Number(u.port) : 8883;
+  if (!(port >= 1 && port <= 65535)) return { error: 'The broker\'s port is 1 to 65535' };
+  const topic = String(i.topic ?? '').trim();
+  if (!MQTT_TOPIC.test(topic)) return { error: 'Give one topic (at most 200 characters, no + or # wildcards, not a $ system topic)' };
+  const username = i.username === undefined ? undefined : String(i.username).trim().slice(0, 120);
+  return { url: `mqtts://${u.hostname}:${port}`, topic, ...(username ? { username } : {}), ...(i.hasPassword ? { hasPassword: true } : {}) };
+}
+
+/** A stream's ingest settings, checked (the password is handled by the caller, never kept here). */
+export function checkIngestSpec(input: unknown): StreamIngest | { error: string } {
+  if (!input || typeof input !== 'object') return { error: 'Say how readings reach the platform: an integration (SensorThings) or an MQTT broker' };
+  const i = input as { integrationId?: unknown; mqtt?: unknown };
+  const out: StreamIngest = {};
+  if (i.integrationId !== undefined && i.integrationId !== null && i.integrationId !== '') {
+    const id = String(i.integrationId).trim();
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return { error: 'Name the integration by its id (Connected systems)' };
+    out.integrationId = id;
+  }
+  if (i.mqtt !== undefined && i.mqtt !== null) {
+    const m = checkMqttSpec(i.mqtt);
+    if ('error' in m) return m;
+    out.mqtt = m;
+  }
+  if (!out.integrationId && !out.mqtt) return { error: 'Say how readings reach the platform: an integration (SensorThings) or an MQTT broker' };
+  return out;
 }
 
 /** Columns of the plain rows a stream run produces (the mapping runSource applies to them). */
@@ -42,6 +114,22 @@ export interface TelemetryReader {
   samples: (streamId: string, from: string, to: string, limit: number) => Promise<TelemetrySampleRow[]>;
 }
 export const SUBSTRATE_TELEMETRY: TelemetryReader = { stream: telemetryStreamRow, samples: telemetrySamplesBetween };
+
+/**
+ * What a stream run reads by default: the substrate's samples and the
+ * readings pushed to the platform for the stream (SensorThings, MQTT), merged
+ * by time. A stream the substrate does not know is still read when the
+ * platform receives readings for it.
+ */
+export const PLATFORM_TELEMETRY: TelemetryReader = {
+  stream: async id => (await telemetryStreamRow(id).catch(() => null)) ?? pushedStreamRow(id),
+  samples: async (id, from, to, limit) => {
+    const [a, b] = await Promise.all([telemetrySamplesBetween(id, from, to, limit).catch(() => [] as TelemetrySampleRow[]), Promise.resolve(pushedReadingsBetween(id, from, to, limit))]);
+    if (!b.length) return a;
+    if (!a.length) return b;
+    return [...a, ...b].sort((x, y) => Date.parse(x.ts) - Date.parse(y.ts)).slice(0, limit);
+  },
+};
 
 /** Samples read in one run at most; a run that reaches it stops at the last complete day and the next run continues. */
 export const STREAM_SAMPLE_LIMIT = 50_000;
@@ -70,7 +158,16 @@ export function checkStreamSpec(input: unknown): StreamSpec | { error: string } 
   const backfill = i.backfillDays === undefined ? undefined : Math.trunc(Number(i.backfillDays));
   if (backfill !== undefined && !(backfill >= 1 && backfill <= 90)) return { error: 'Backfill is 1 to 90 days' };
   const unit = i.unit?.trim().slice(0, 24);
-  return { streamId: raw, ...(entity ? { entity } : {}), metrics, ...(unit ? { unit } : {}), ...(backfill ? { backfillDays: backfill } : {}) };
+  let ingest: StreamIngest | undefined;
+  if (i.ingest !== undefined && i.ingest !== null) {
+    const r = checkIngestSpec(i.ingest);
+    if ('error' in r) return r;
+    // Pushed readings carry no unit of their own: the stream declares it, as UCUM.
+    if (!unit || !toUcum(unit)) return { error: 'A stream that receives readings declares the unit they are sent in (a UCUM code, e.g. MW or Cel)' };
+    if (!entity) return { error: 'A stream that receives readings names the entity they describe (e.g. facility:FAC-00012)' };
+    ingest = r;
+  }
+  return { streamId: raw, ...(entity ? { entity } : {}), metrics, ...(unit ? { unit } : {}), ...(backfill ? { backfillDays: backfill } : {}), ...(ingest ? { ingest } : {}) };
 }
 
 const DAY = 86_400_000;
@@ -85,7 +182,7 @@ export interface StreamLineage { streamId: string; from: string; to: string; sam
  * run goes back `backfillDays`), up to yesterday (UTC), as plain rows for
  * runSource, with the SHA-256 of the samples read (for provenance).
  */
-export async function streamRows(spec: StreamSpec, since: string | undefined, now: Date, reader: TelemetryReader = SUBSTRATE_TELEMETRY): Promise<{ rows: Record<string, string>[]; sha256: string; lineage: StreamLineage }> {
+export async function streamRows(spec: StreamSpec, since: string | undefined, now: Date, reader: TelemetryReader = PLATFORM_TELEMETRY): Promise<{ rows: Record<string, string>[]; sha256: string; lineage: StreamLineage }> {
   const stream = await reader.stream(spec.streamId);
   if (!stream) throw new Error(`Telemetry stream ${spec.streamId} is not reachable (no substrate, or no such stream)`);
   const entity = spec.entity ?? (stream.facility_id ? `facility:${stream.facility_id}` : '');
