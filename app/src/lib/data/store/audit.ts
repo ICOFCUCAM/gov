@@ -5,8 +5,9 @@
 
 import { createHash } from 'node:crypto';
 import type { AuditEntry } from '@/lib/api/types';
-import { maybeSignHead, verifySignedHeads, type SignedHeadCheck } from '@/lib/audit/sign';
-import { noteAudit } from '@/lib/events/outbox';
+import { verifySignedHeads, type SignedHeadCheck } from '@/lib/audit/sign';
+import { auditRepo } from '@/lib/data/repo';
+import { auditCommitted } from './audit-committed';
 import { uid, hash } from './shared';
 
 const g = globalThis as unknown as { __civicos?: { audit?: AuditEntry[] } };
@@ -32,7 +33,9 @@ function appendAudit(
   outcome: string,
   detail?: string,
 ): AuditEntry {
-  const prev = chain()[chain().length - 1];
+  // Through the persistence port (lib/data/repo): memory, or written through to Postgres.
+  const repo = auditRepo(chain);
+  const prev = repo.head();
   const seq = (prev?.seq ?? 0) + 1;
   const prevHash = prev?.hash ?? null;
   const base = { id: uid('AU'), at: new Date().toISOString(), actor, action, resource, outcome, detail, seq, prevHash };
@@ -40,11 +43,9 @@ function appendAudit(
   // Tell the save loop the state changed (lib/data/persist.ts markChanged; no import, the store stays edge-safe).
   const pg = globalThis as { __persistChanges?: number };
   pg.__persistChanges = (pg.__persistChanges ?? 0) + 1;
-  chain().push(entry);
-  // The CloudEvent for this change, in the same step as its audit entry (lib/events/outbox.ts).
-  noteAudit(entry);
-  // Every N entries or T minutes the head is signed (lib/audit/sign.ts).
-  maybeSignHead(entry);
+  // Once durable (at once in memory): the CloudEvent for this change (lib/events/outbox.ts) and,
+  // every N entries or T minutes, a signed head (lib/audit/sign.ts) — ./audit-committed.ts.
+  repo.append(entry, auditCommitted);
   return entry;
 }
 
