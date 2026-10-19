@@ -1,6 +1,8 @@
 // Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every
-// registered source whose schedule (daily, weekly) says it is due. Manual and
-// uploaded sources are never fetched here.
+// registered source whose schedule (daily, weekly) says it is due: files at an
+// address, and telemetry streams (their complete days since the last run, as
+// daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never
+// fetched here.
 //
 // Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=),
 // like every /api/cron/* worker.

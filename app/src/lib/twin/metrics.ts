@@ -23,7 +23,7 @@ import { twinDb } from './db';
 import { archivedMetrics } from './archive';
 
 export type Aggregation = 'sum' | 'mean' | 'weighted-mean' | 'none';
-export type MetricPeriod = 'instant' | 'year' | 'quarter' | 'month';
+export type MetricPeriod = 'instant' | 'year' | 'quarter' | 'month' | 'day';
 export type MetricOrigin = 'official' | 'standard' | 'observed';
 
 export interface MetricDef {
@@ -48,7 +48,7 @@ export interface MetricDef {
 
 export const METRIC_ID = /^[a-z][a-z0-9_.]{1,63}$/;
 export const AGGREGATIONS: Aggregation[] = ['sum', 'mean', 'weighted-mean', 'none'];
-export const PERIODS: MetricPeriod[] = ['instant', 'year', 'quarter', 'month'];
+export const PERIODS: MetricPeriod[] = ['instant', 'year', 'quarter', 'month', 'day'];
 
 // ── UCUM ──────────────────────────────────────────────────────────────────
 
@@ -201,7 +201,7 @@ export function registerMetric(input: MetricInput): MetricDef | { error: string 
   const aggregation = input.aggregation as Aggregation;
   if (!AGGREGATIONS.includes(aggregation)) return { error: 'Choose how regional values combine: sum, mean, weighted-mean or none' };
   const period = (input.period ?? 'instant') as MetricPeriod;
-  if (!PERIODS.includes(period)) return { error: 'The period is instant, year, quarter or month' };
+  if (!PERIODS.includes(period)) return { error: 'The period is instant, year, quarter, month or day' };
   const weightMetric = input.weightMetric?.trim().toLowerCase() || undefined;
   if (aggregation === 'weighted-mean') {
     if (!weightMetric) return { error: 'A weighted mean names the metric that weights it, e.g. population' };

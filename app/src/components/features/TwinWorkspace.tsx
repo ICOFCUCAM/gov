@@ -18,7 +18,7 @@ type Tab = 'facts' | 'metrics';
 const TABS: { id: Tab; label: string }[] = [{ id: 'facts', label: 'Facts and sources' }, { id: 'metrics', label: 'Metrics' }];
 
 interface Entity { id: string; kind: string; name: string; code?: string; region?: boolean }
-interface Source { id: string; name: string; publisher: string; kind: 'csv-url' | 'csv-upload'; url?: string; schedule: string; registeredBy: string; registeredAt: string; lastRun?: string; mapping: { entity: string; value: string; metric: { column: string } | { fixed: string } } }
+interface Source { id: string; name: string; publisher: string; kind: 'csv-url' | 'csv-upload' | 'stream'; url?: string; stream?: { streamId: string; entity?: string; metrics: { metric: string; statistic: string }[] }; schedule: string; registeredBy: string; registeredAt: string; lastRun?: string; mapping: { entity: string; value: string; metric: { column: string } | { fixed: string } } }
 interface Run { id: string; sourceId: string; at: string; by: string; status: 'ok' | 'partial' | 'failed'; rows: number; accepted: number; rejected: { row: number; reason: string }[]; error?: string; withdrawn?: { at: string; by: string; reason: string } }
 interface Obs { entityId: string; metric: string; value: number; unit: string; validFrom: string; recordedAt: string; sourceId: string; runId: string }
 /** The national figure for a metric, or why there is none (lib/twin/register.ts nationalTotal). */
@@ -233,12 +233,13 @@ function Withdraw({ run, by, busy, act }: { run: Run; by: string; busy: boolean;
 }
 
 function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (done: string, fn: () => Promise<unknown>) => Promise<void> }) {
-  const [f, setF] = React.useState({ name: '', publisher: '', kind: 'csv-upload', url: '', entity: 'region', value: 'value', metricMode: 'fixed', metric: 'population', unit: 'persons', date: 'year', validTo: '', status: '', stdErr: '', schedule: 'manual', format: 'csv', licence: '', sdmxUnits: '' });
+  const [f, setF] = React.useState({ name: '', publisher: '', kind: 'csv-upload', url: '', entity: 'region', value: 'value', metricMode: 'fixed', metric: 'population', unit: 'persons', date: 'year', validTo: '', status: '', stdErr: '', schedule: 'manual', format: 'csv', licence: '', sdmxUnits: '', streamId: '', streamEntity: '', streamMetrics: '', streamUnit: '' });
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { const v = e.currentTarget.value; setF(x => ({ ...x, [k]: v })); };
   const submit = () => act('Source registered', () => call('/api/twin/sources', {
     method: 'POST',
     body: JSON.stringify({
-      by, name: f.name, publisher: f.publisher, kind: f.kind, url: f.url || undefined, schedule: f.schedule, licence: f.licence || undefined,
+      by, name: f.name, publisher: f.publisher, kind: f.kind, url: f.url || undefined, schedule: f.kind === 'stream' && f.schedule === 'manual' ? 'daily' : f.schedule, licence: f.licence || undefined,
+      ...(f.kind === 'stream' ? { stream: { streamId: f.streamId, entity: f.streamEntity || undefined, unit: f.streamUnit || undefined, metrics: f.streamMetrics.split(',').map(x => x.split('=').map(y => y.trim())).filter(p => p.length === 2 && p[0] && p[1]).map(([metric, statistic]) => ({ metric, statistic })) } } : {}),
       ...(f.format.startsWith('sdmx-') ? { format: f.format, sdmx: { units: Object.fromEntries(f.sdmxUnits.split(',').map(x => x.split('=').map(y => y.trim())).filter(p => p.length === 2 && p[0] && p[1])) } } : {}),
       mapping: {
         entity: f.entity, value: f.value,
@@ -262,25 +263,32 @@ function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (do
           <select className={`${input} mt-1`} value={f.kind} onChange={set('kind')}>
             <option value="csv-upload">CSV uploaded here (works offline)</option>
             <option value="csv-url">CSV at the publisher's address</option>
+            <option value="stream">Sensor readings (daily values from a readings stream)</option>
           </select>
         </label>
+        {f.kind === 'stream' ? <>
+        {F({ k: 'streamId', l: 'Readings stream', hint: 'The stream\'s id, or its sensor data stream (telemetry:<id>). Read from the platform\'s own database.', ph: 'grid.load.nairobi' })}
+        {F({ k: 'streamEntity', l: 'What it measures (optional)', hint: 'A twin id such as facility:FAC-00012 or place:KE-30; default: the stream\'s site.' })}
+        {F({ k: 'streamMetrics', l: 'Daily values to record', hint: 'Each registered metric and the day\'s statistic: mean, min, max, count or sum, e.g. load.mean=mean, load.peak=max.' })}
+        {F({ k: 'streamUnit', l: 'Unit of the readings (optional)', hint: 'As UCUM when the stream\'s own unit is not, e.g. MW.' })}
+        </> : null}
         {f.kind === 'csv-url' ? F({ k: 'url', l: 'CSV address', hint: 'Fetched only from this host, by the platform\'s server, within size and time limits.', ph: 'https://stats.example.gov/population.csv' }) : null}
-        {f.kind === 'csv-url' ? (
+        {f.kind === 'csv-url' || f.kind === 'stream' ? (
           <label className="block"><span className={label}>Schedule</span>
             <select className={`${input} mt-1`} value={f.schedule} onChange={set('schedule')}><option value="manual">When run by hand</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select>
           </label>
         ) : null}
-        <label className="block"><span className={label}>File format</span>
+        {f.kind !== 'stream' ? <label className="block"><span className={label}>File format</span>
           <select className={`${input} mt-1`} value={f.format} onChange={set('format')}>
             <option value="csv">CSV (say which columns hold what)</option>
             <option value="sdmx-csv">SDMX-CSV (statistics office format)</option>
             <option value="sdmx-json">SDMX-JSON (statistics office format)</option>
             <option value="sdmx-ml">SDMX-ML 2.1 structure-specific (statistics office XML)</option>
           </select>
-        </label>
+        </label> : null}
         {F({ k: 'licence', l: 'Licence (optional)', ph: 'e.g. CC BY 4.0' })}
-        {f.format.startsWith('sdmx-') ? F({ k: 'sdmxUnits', l: 'SDMX unit codes (optional)', hint: 'The publisher\'s unit codes as UCUM, e.g. PS={persons}, HH={households}. Metrics are matched by their statistics office code (Metrics tab).' }) : null}
-        {f.format === 'csv' ? <>
+        {f.kind !== 'stream' && f.format.startsWith('sdmx-') ? F({ k: 'sdmxUnits', l: 'SDMX unit codes (optional)', hint: 'The publisher\'s unit codes as UCUM, e.g. PS={persons}, HH={households}. Metrics are matched by their statistics office code (Metrics tab).' }) : null}
+        {f.kind !== 'stream' && f.format === 'csv' ? <>
         {F({ k: 'entity', l: 'Column with the place or institution', hint: 'Its ISO 3166-2 code, its name, or the publisher\'s own id (link ids below).' })}
         {F({ k: 'value', l: 'Column with the value' })}
         <label className="block"><span className={label}>Metric</span>
@@ -308,15 +316,15 @@ function SourceRow({ s, by, busy, act }: { s: Source; by: string; busy: boolean;
     <li className="flex flex-wrap items-center justify-between gap-3 py-2.5">
       <div className="min-w-0">
         <div className="font-semibold">{s.name}</div>
-        <div className="text-[12px] text-ink-soft">{s.publisher} · {s.kind === 'csv-url' ? s.url : 'uploaded'} · {s.schedule} · registered by {s.registeredBy} · last run {when(s.lastRun)}</div>
+        <div className="text-[12px] text-ink-soft">{s.publisher} · {s.kind === 'csv-url' ? s.url : s.kind === 'stream' ? `telemetry stream ${s.stream?.streamId ?? ''}${s.stream ? ` (${s.stream.metrics.map(m => `${m.metric}: daily ${m.statistic}`).join(', ')})` : ''}` : 'uploaded'} · {s.schedule} · registered by {s.registeredBy} · last run {when(s.lastRun)}</div>
       </div>
       <div className="flex items-center gap-2">
-        {s.kind === 'csv-url' ? <button type="button" className={btn} disabled={busy || !by.trim()} onClick={() => void run()}>Run now</button> : null}
-        <label className={`${btn} cursor-pointer ${busy || !by.trim() ? 'pointer-events-none opacity-50' : ''}`}>
+        {s.kind === 'csv-url' || s.kind === 'stream' ? <button type="button" className={btn} disabled={busy || !by.trim()} onClick={() => void run()}>Run now</button> : null}
+        {s.kind !== 'stream' ? <label className={`${btn} cursor-pointer ${busy || !by.trim() ? 'pointer-events-none opacity-50' : ''}`}>
           Upload CSV
           <input ref={file} type="file" accept=".csv,text/csv,text/plain" className="sr-only" disabled={busy || !by.trim()}
             onChange={async e => { const f = e.currentTarget.files?.[0]; if (f) await run(await f.text()); if (file.current) file.current.value = ''; }} />
-        </label>
+        </label> : null}
       </div>
     </li>
   );

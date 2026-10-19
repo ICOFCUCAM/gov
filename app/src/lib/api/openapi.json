@@ -3612,7 +3612,7 @@
         ],
         "operationId": "get_cron_twin_ingest",
         "summary": "GET /api/cron/twin-ingest",
-        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due. Manual and uploaded sources are never fetched here. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
+        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due: files at an address, and telemetry streams (their complete days since the last run, as daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never fetched here. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
         "parameters": [],
         "responses": {
           "200": {
@@ -3708,7 +3708,7 @@
         ],
         "operationId": "post_cron_twin_ingest",
         "summary": "POST /api/cron/twin-ingest",
-        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due. Manual and uploaded sources are never fetched here. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
+        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due: files at an address, and telemetry streams (their complete days since the last run, as daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never fetched here. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -27119,11 +27119,16 @@
                     "type": "string",
                     "enum": [
                       "csv-upload",
-                      "csv-url"
-                    ]
+                      "csv-url",
+                      "stream"
+                    ],
+                    "description": "A CSV at an address or uploaded, or a substrate telemetry stream read as daily aggregates (lib/twin/stream.ts)."
                   },
                   "url": {
                     "type": "string"
+                  },
+                  "stream": {
+                    "$ref": "#/components/schemas/StreamSpec"
                   },
                   "system": {
                     "type": "string",
@@ -35144,6 +35149,7 @@
           "period": {
             "type": "string",
             "enum": [
+              "day",
               "instant",
               "month",
               "quarter",
@@ -43924,6 +43930,88 @@
           "decision"
         ]
       },
+      "StreamLineage": {
+        "description": "What a stream run read, for the run's lineage.",
+        "type": "object",
+        "properties": {
+          "streamId": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "samples": {
+            "type": "number"
+          },
+          "days": {
+            "type": "number"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "streamId",
+          "from",
+          "to",
+          "samples",
+          "days"
+        ]
+      },
+      "StreamSpec": {
+        "type": "object",
+        "properties": {
+          "streamId": {
+            "type": "string",
+            "description": "The substrate telemetry stream's id (a SensorThings Datastream id `telemetry:<id>` is read as the same stream)."
+          },
+          "entity": {
+            "type": "string",
+            "description": "The twin entity the values describe (e.g. facility:FAC-00012, place:KE-30); default: the stream's facility."
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "metric": {
+                  "type": "string"
+                },
+                "statistic": {
+                  "type": "string",
+                  "enum": [
+                    "count",
+                    "max",
+                    "mean",
+                    "min",
+                    "sum"
+                  ]
+                }
+              },
+              "required": [
+                "metric",
+                "statistic"
+              ]
+            },
+            "description": "Each registered metric and the daily statistic of the samples it records."
+          },
+          "unit": {
+            "type": "string",
+            "description": "The samples' unit as UCUM, when the stream's own unit text is not (e.g. \"megawatts\" → MW)."
+          },
+          "backfillDays": {
+            "type": "number",
+            "description": "Days back the first run aggregates (default 7, at most 90)."
+          }
+        },
+        "required": [
+          "streamId",
+          "metrics"
+        ]
+      },
       "SubscribedNation": {
         "type": "object",
         "properties": {
@@ -44759,7 +44847,10 @@
           },
           "sha256": {
             "type": "string",
-            "description": "SHA-256 of the file as read (UTF-8 text), for provenance; absent on runs recorded before it was kept or that failed before reading."
+            "description": "SHA-256 of the file as read (UTF-8 text), for provenance; absent on runs recorded before it was kept or that failed before reading. For a stream, of the samples read."
+          },
+          "stream": {
+            "$ref": "#/components/schemas/StreamLineage"
           }
         },
         "required": [
@@ -44790,11 +44881,16 @@
             "type": "string",
             "enum": [
               "csv-upload",
-              "csv-url"
-            ]
+              "csv-url",
+              "stream"
+            ],
+            "description": "A CSV at an address or uploaded, or a substrate telemetry stream read as daily aggregates (lib/twin/stream.ts)."
           },
           "url": {
             "type": "string"
+          },
+          "stream": {
+            "$ref": "#/components/schemas/StreamSpec"
           },
           "system": {
             "type": "string",

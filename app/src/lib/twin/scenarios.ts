@@ -236,6 +236,7 @@ export function reviseScenario(id: string, input: Draft): Scenario | { error: st
 
 /** The period an observation must fall in to count for a horizon: the metric's own period, a month for instant figures. */
 function sameWindow(period: string | undefined, horizon: string, validFrom: string): boolean {
+  if (period === 'day') return validFrom === horizon.slice(0, 10);
   if (period === 'year') return validFrom.slice(0, 4) === horizon.slice(0, 4);
   if (period === 'quarter') return validFrom.slice(0, 4) === horizon.slice(0, 4) && Math.floor((Number(validFrom.slice(5, 7)) - 1) / 3) === Math.floor((Number(horizon.slice(5, 7)) - 1) / 3);
   return validFrom.slice(0, 7) === horizon.slice(0, 7);
@@ -243,6 +244,7 @@ function sameWindow(period: string | undefined, horizon: string, validFrom: stri
 
 /** The last day of the horizon's window. */
 function windowEnd(period: string | undefined, horizon: string): string {
+  if (period === 'day') return horizon.slice(0, 10);
   const y = Number(horizon.slice(0, 4)), m = Number(horizon.slice(5, 7));
   const endMonth = period === 'year' ? 12 : period === 'quarter' ? Math.ceil(m / 3) * 3 : m;
   return new Date(Date.UTC(y, endMonth, 0)).toISOString().slice(0, 10);

@@ -60,9 +60,13 @@ export function runProv(runId: string, origin: string): Record<string, unknown> 
     personAgent(api, run.by),
     {
       '@id': fileIri, '@type': ['prov:Entity', 'dcat:Distribution'],
-      'dct:title': src?.kind === 'csv-url' ? 'The file fetched from the publisher' : 'The file uploaded by the official',
+      'dct:title': src?.kind === 'stream'
+        ? `The telemetry samples read from stream ${run.stream?.streamId ?? src.stream?.streamId ?? ''}${run.stream ? ` (${run.stream.samples} samples, ${run.stream.from.slice(0, 10)} to ${run.stream.to.slice(0, 10)}, ${run.stream.days} daily aggregates)` : ''}`
+        : src?.kind === 'csv-url' ? 'The file fetched from the publisher' : 'The file uploaded by the official',
       ...(src?.kind === 'csv-url' && src.url ? { 'dcat:accessURL': { '@id': src.url } } : {}),
-      'dcat:mediaType': isSdmxFormat(src?.format) ? SDMX_MEDIA[src.format].type : 'text/csv',
+      // A stream's samples are the SensorThings Datastream of the same stream.
+      ...(src?.kind === 'stream' && src.stream ? { 'dcat:accessURL': { '@id': `${api}/sta/v1.1/Datastreams('telemetry:${src.stream.streamId}')/Observations` } } : {}),
+      'dcat:mediaType': src?.kind === 'stream' ? 'application/json' : isSdmxFormat(src?.format) ? SDMX_MEDIA[src.format].type : 'text/csv',
       ...(run.sha256
         ? { 'spdx:checksum': { '@type': 'spdx:Checksum', 'spdx:algorithm': 'spdx:checksumAlgorithm_sha256', 'spdx:checksumValue': run.sha256 } }
         : { 'dct:description': 'The file\'s SHA-256 was not recorded for this import (recorded before it was kept, or the file could not be read).' }),

@@ -29,6 +29,7 @@ import { archive, archivedRuns, archivedMetrics, archivedObservations, forEachAr
 import { METRIC_ID, getMetric, isKnownMetric, listMetrics, toUcum, sameUnit, type Aggregation } from './metrics';
 import { readSdmx, isSdmxFormat, SDMX_MEDIA, SDMX_ROW, type SdmxOptions, type SdmxFormat } from './sdmx';
 import type { Signal } from './signal';
+import { checkStreamSpec, streamRows, STREAM_ROW, type StreamSpec, type StreamLineage, type TelemetryReader } from './stream';
 
 export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
 
@@ -74,8 +75,11 @@ export interface TwinSource {
   name: string;
   /** Who publishes it, e.g. "National Statistics Office". */
   publisher: string;
-  kind: 'csv-url' | 'csv-upload';
+  /** A CSV at an address or uploaded, or a substrate telemetry stream read as daily aggregates (lib/twin/stream.ts). */
+  kind: 'csv-url' | 'csv-upload' | 'stream';
   url?: string;
+  /** For a telemetry stream source: the stream, the entity and the daily statistic of each metric. */
+  stream?: StreamSpec;
   /** System name used in the crosswalk for this source's own entity ids. */
   system: string;
   mapping: SourceMapping;
@@ -103,8 +107,10 @@ export interface TwinRun {
   error?: string;
   /** Set when an official withdrew the import: its observations are superseded from that moment, never deleted. */
   withdrawn?: { at: string; by: string; reason: string };
-  /** SHA-256 of the file as read (UTF-8 text), for provenance; absent on runs recorded before it was kept or that failed before reading. */
+  /** SHA-256 of the file as read (UTF-8 text), for provenance; absent on runs recorded before it was kept or that failed before reading. For a stream, of the samples read. */
   sha256?: string;
+  /** For a telemetry stream source: the stream and the time read (from inclusive, to exclusive), samples and days aggregated. */
+  stream?: StreamLineage;
 }
 
 export interface Observation {
@@ -254,6 +260,8 @@ export function resolveEntity(ref: string, system?: string): TwinEntity | undefi
   const d = db();
   const r = ref.trim();
   if (!r) return undefined;
+  // The register's own id (place:KE-30, facility:FAC-00012), as stream sources name their entity.
+  if (/^(nation|place|institution|facility):/.test(r) && d.entities[r]) return d.entities[r];
   if (system) {
     const k = d.keys.find(x => x.system === system && x.key === r);
     if (k) return d.entities[k.entityId];
@@ -322,6 +330,7 @@ export function registerSource(input: Partial<TwinSource> & { by?: string }): Tw
   if (!by) return { error: 'Name the official registering the source' };
   const name = (input.name ?? '').trim(), publisher = (input.publisher ?? '').trim();
   if (!name || !publisher) return { error: 'Give the source a name and its publisher' };
+  if (input.kind === 'stream') return registerStreamSource(input, by, name, publisher);
   if (input.kind !== 'csv-url' && input.kind !== 'csv-upload') return { error: 'A source is a CSV at an address, or uploaded' };
   let url: string | undefined;
   if (input.kind === 'csv-url') {
@@ -400,6 +409,41 @@ function cleanSdmx(o: SdmxOptions): SdmxOptions {
   return { ...(o.metricDimension?.trim() ? { metricDimension: o.metricDimension.trim().slice(0, 64) } : {}), ...(codes ? { codes } : {}), ...(units ? { units } : {}) };
 }
 
+// ── Telemetry streams ────────────────────────────────────────────────────
+
+const STREAM_MAPPING: SourceMapping = {
+  entity: STREAM_ROW.entity, value: STREAM_ROW.value, metric: { column: STREAM_ROW.metric }, unit: { column: STREAM_ROW.unit },
+  date: { column: STREAM_ROW.date }, validTo: { column: STREAM_ROW.validTo },
+};
+
+/** A telemetry stream as a source: checked, daily by default, audited like any registration. */
+function registerStreamSource(input: Partial<TwinSource>, by: string, name: string, publisher: string): TwinSource | { error: string } {
+  const spec = checkStreamSpec(input.stream);
+  if ('error' in spec) return spec;
+  if (spec.entity && !resolveEntity(spec.entity)) return { error: `${spec.entity} is not an entity of the register` };
+  const d = db();
+  const s: TwinSource = {
+    id: `SRC-${d.seq++}`, name: name.slice(0, 120), publisher: publisher.slice(0, 120), kind: 'stream', stream: spec,
+    system: (input.system ?? slug(publisher)).slice(0, 60) || 'source', mapping: STREAM_MAPPING,
+    ...(input.licence?.trim() ? { licence: input.licence.trim().slice(0, 120) } : {}),
+    schedule: input.schedule === 'manual' || input.schedule === 'weekly' ? input.schedule : 'daily',
+    registeredBy: by, registeredAt: new Date().toISOString(),
+  };
+  d.sources.push(s);
+  recordAudit(by, 'twin.source.register', `Twin:${s.id}`, 'ok', `${s.name} (${s.publisher}) telemetry stream ${spec.streamId}: ${spec.metrics.map(m => `${m.metric}=${m.statistic}`).join(', ')}`);
+  return s;
+}
+
+/** Where a stream source's next run starts: the end of the latest run that stands (not withdrawn); undefined before the first. */
+function streamResumesAt(sourceId: string): string | undefined {
+  let to: string | undefined;
+  for (const r of [...db().runs, ...archivedRuns()]) {
+    if (r.sourceId !== sourceId || r.withdrawn || !r.stream || r.status === 'failed') continue;
+    if (!to || r.stream.to > to) to = r.stream.to;
+  }
+  return to;
+}
+
 /** The registered metric an SDMX code stands for: the one with that SDMX concept, or a metric of that name. */
 function sdmxMetric(code: string): string | undefined {
   const c = code.trim();
@@ -418,7 +462,7 @@ function nationArea(row: Record<string, string>): Record<string, string> {
   return area.toUpperCase() === alpha2 ? { ...row, [SDMX_ROW.entity]: nation.code } : row;
 }
 
-export interface RunDeps { fetch?: typeof fetch; resolve?: (host: string) => Promise<string[]>; now?: Date }
+export interface RunDeps { fetch?: typeof fetch; resolve?: (host: string) => Promise<string[]>; now?: Date; /** Reads telemetry for stream sources (default: the substrate). */ telemetry?: TelemetryReader }
 
 /**
  * Import a source: fetch its CSV (from its own host only, under the platform's
@@ -435,7 +479,14 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
   const now = deps.now ?? new Date();
   const run: TwinRun = { id: `RUN-${d.seq++}`, sourceId, at: now.toISOString(), by: by.trim(), status: 'ok', rows: 0, accepted: 0, rejected: [] };
   let text = csv;
+  let streamed: Record<string, string>[] | undefined;
   try {
+    if (s.kind === 'stream') {
+      // Daily aggregates of the telemetry stream since the last run that stands (lib/twin/stream.ts).
+      if (!s.stream) throw new Error('This stream source has no stream');
+      const r = await streamRows(s.stream, streamResumesAt(s.id), now, deps.telemetry);
+      streamed = r.rows; run.sha256 = r.sha256; run.stream = r.lineage; text = '';
+    }
     if (text === undefined) {
       if (s.kind !== 'csv-url' || !s.url) throw new Error('This source is uploaded: send its CSV');
       const host = new URL(s.url).host;
@@ -444,9 +495,9 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
     }
     if (text.length > 20_000_000) throw new Error('The CSV is larger than 20 MB');
     const sdmxFile = isSdmxFormat(s.format) ? s.format : undefined;
-    const mapping = sdmxFile ? SDMX_MAPPING : s.mapping;
-    run.sha256 = createHash('sha256').update(text, 'utf8').digest('hex');
-    const rows = sdmxFile ? readSdmx(sdmxFile, text, sdmxMetric, s.sdmx).map(r => nationArea(r)) : parseCsv(text);
+    const mapping = streamed ? STREAM_MAPPING : sdmxFile ? SDMX_MAPPING : s.mapping;
+    run.sha256 ??= createHash('sha256').update(text, 'utf8').digest('hex');
+    const rows = streamed ?? (sdmxFile ? readSdmx(sdmxFile, text, sdmxMetric, s.sdmx).map(r => nationArea(r)) : parseCsv(text));
     run.rows = rows.length;
     if (rows.length > LIMITS.rows) throw new Error(`More than ${LIMITS.rows} rows`);
     const fresh: Observation[] = [];
@@ -485,7 +536,9 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
     run.accepted = fresh.length;
     const refused = run.rows - run.accepted;
     run.status = run.accepted === 0 ? 'failed' : refused > 0 ? 'partial' : 'ok';
-    if (run.accepted === 0 && !run.error) run.error = 'No row could be accepted';
+    // A stream with no complete new day since its last run has nothing to add: not a failure.
+    if (streamed && run.rows === 0) run.status = 'ok';
+    else if (run.accepted === 0 && !run.error) run.error = 'No row could be accepted';
     d.observations.push(...fresh);
     if (fresh.length) notifyObservations(fresh);
   } catch (e) {
@@ -540,7 +593,7 @@ function notifyObservations(fresh: Observation[]): void {
 /** Sources whose schedule says they are due (for /api/cron/twin-ingest). */
 export function dueSources(now = new Date()): TwinSource[] {
   const gap = { daily: 86_400_000, weekly: 7 * 86_400_000 } as const;
-  return db().sources.filter(s => s.kind === 'csv-url' && s.schedule !== 'manual' && (!s.lastRun || now.getTime() - Date.parse(s.lastRun) >= gap[s.schedule] - 60_000));
+  return db().sources.filter(s => (s.kind === 'csv-url' || s.kind === 'stream') && s.schedule !== 'manual' && (!s.lastRun || now.getTime() - Date.parse(s.lastRun) >= gap[s.schedule] - 60_000));
 }
 
 // ── As-of queries ─────────────────────────────────────────────────────────

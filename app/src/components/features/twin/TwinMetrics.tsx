@@ -11,7 +11,7 @@ import * as React from 'react';
 
 interface Metric {
   id: string; label: string; unit: string; aggregation: 'sum' | 'mean' | 'weighted-mean' | 'none';
-  weightMetric?: string; sdmxConcept?: string; period: 'instant' | 'year' | 'quarter' | 'month'; description?: string;
+  weightMetric?: string; sdmxConcept?: string; period: 'instant' | 'year' | 'quarter' | 'month' | 'day'; description?: string;
   origin: 'official' | 'standard' | 'observed'; registeredBy?: string; registeredAt?: string; updatedBy?: string; updatedAt?: string;
 }
 
@@ -21,7 +21,7 @@ const btn = 'focus-ring rounded-[3px] border border-line px-3 py-1.5 text-[13px]
 
 const COMBINE: Record<Metric['aggregation'], string> = { sum: 'Added up', mean: 'Average', 'weighted-mean': 'Weighted average', none: 'Not combined' };
 const ORIGIN: Record<Metric['origin'], string> = { official: 'Defined here', standard: 'Standard definition', observed: 'Not defined yet' };
-const PERIOD: Record<Metric['period'], string> = { instant: 'On a date', year: 'Per year', quarter: 'Per quarter', month: 'Per month' };
+const PERIOD: Record<Metric['period'], string> = { instant: 'On a date', year: 'Per year', quarter: 'Per quarter', month: 'Per month', day: 'Per day' };
 
 const blank = { id: '', label: '', unit: '', aggregation: 'none', weightMetric: '', period: 'instant', sdmxConcept: '', description: '' };
 
