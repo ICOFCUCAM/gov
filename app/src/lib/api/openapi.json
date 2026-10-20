@@ -74,6 +74,9 @@
       "name": "health"
     },
     {
+      "name": "immigration"
+    },
+    {
       "name": "integrations"
     },
     {
@@ -15958,6 +15961,203 @@
         },
         "security": [],
         "x-source": "src/app/api/health/route.ts"
+      }
+    },
+    "/api/immigration": {
+      "get": {
+        "tags": [
+          "immigration"
+        ],
+        "operationId": "get_immigration",
+        "summary": "GET /api/immigration",
+        "description": "GET /api/immigration — visas and residence permits (lib/immigration/register.ts) for the immigration authority's officials, and auditors with a purpose: ?number= or ?nationality=&documentNumber= finds grants with their holder and every step; with neither, counts by kind, category and state (no holder data). Every search and read, allowed or refused, is written to the access log. Changes happen only through decided immigration cases (/api/cases); other institutions check status through the exchange service immigration.status, never this file.",
+        "parameters": [
+          {
+            "name": "documentNumber",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nationality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "residence-permit",
+                                  "visa"
+                                ]
+                              },
+                              "category": {
+                                "type": "string"
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "active",
+                                  "cancelled",
+                                  "expired",
+                                  "issued",
+                                  "refused",
+                                  "revoked"
+                                ]
+                              },
+                              "count": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "category",
+                              "state",
+                              "count"
+                            ]
+                          }
+                        },
+                        "grants": {
+                          "type": "array",
+                          "items": {
+                            "not": {}
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "grants"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "residence-permit",
+                                  "visa"
+                                ]
+                              },
+                              "category": {
+                                "type": "string"
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "active",
+                                  "cancelled",
+                                  "expired",
+                                  "issued",
+                                  "refused",
+                                  "revoked"
+                                ]
+                              },
+                              "count": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "category",
+                              "state",
+                              "count"
+                            ]
+                          }
+                        },
+                        "grants": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ImmigrationGrant"
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "grants"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "counts": [
+                        {
+                          "kind": "residence-permit",
+                          "category": "string",
+                          "state": "active",
+                          "count": 1
+                        }
+                      ],
+                      "grants": [
+                        null
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/immigration/route.ts"
       }
     },
     "/api/integrations/{id}/approve": {
@@ -64170,6 +64370,46 @@
           "coordinates"
         ]
       },
+      "GrantStep": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "cancelled",
+              "expired",
+              "issued",
+              "refused",
+              "revoked"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "at",
+          "by",
+          "reason"
+        ]
+      },
       "GroupRule": {
         "type": "object",
         "properties": {
@@ -64256,6 +64496,28 @@
           "source",
           "checks",
           "ok"
+        ]
+      },
+      "Holder": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "nationality": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "nationality",
+          "documentNumber"
         ]
       },
       "HostingAssessment": {
@@ -65060,6 +65322,95 @@
           "lastAt",
           "attempts",
           "status"
+        ]
+      },
+      "ImmigrationGrant": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "residence-permit",
+              "visa"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "holder": {
+            "$ref": "#/components/schemas/Holder"
+          },
+          "documentKey": {
+            "type": "string",
+            "description": "SHA-256 of the normalised nationality and travel document number: how a status check finds a grant without a name."
+          },
+          "validFrom": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "string",
+            "enum": [
+              "multiple",
+              "single"
+            ]
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "cancelled",
+              "expired",
+              "issued",
+              "refused",
+              "revoked"
+            ]
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "certificate": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrantStep"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "kind",
+          "category",
+          "holder",
+          "documentKey",
+          "conditions",
+          "state",
+          "case",
+          "history",
+          "createdAt"
         ]
       },
       "Incident": {

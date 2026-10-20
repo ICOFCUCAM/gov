@@ -548,6 +548,13 @@ export function canReadCivil(s: Scope, authority: string | undefined, purpose?: 
   return 'The civil register is read by the civil registration authority';
 }
 
+/** Visas and residence permits (lib/immigration/register.ts): the immigration authority's officials; auditors with a purpose. Never the whole government by default (directions 15.1). */
+export function canReadImmigration(s: Scope, authority: string | undefined, purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read immigration records';
+  if (authority && s.institution === authority) return null;
+  return 'Immigration records are read by the immigration authority; other institutions check status through the exchange (immigration.status)';
+}
+
 /**
  * An organisation's full record (representatives, every version and step):
  * officials of an institution that keeps a register it is in, officials of

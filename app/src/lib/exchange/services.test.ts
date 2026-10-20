@@ -21,6 +21,20 @@ describe('exchange services', () => {
   });
 
   it('lists every service with its owner, scope and the fields it returns', () => {
-    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['civil.birth.registered', 'event', 'events:civil']]);
+    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
+  });
+});
+
+describe('immigration.status', () => {
+  it('answers validity without naming the holder, with a receipt', async () => {
+    const { resetImmigration, recordGrant } = await import('@/lib/immigration/register');
+    resetImmigration();
+    recordGrant({ kind: 'residence-permit', category: 'work', holder: { name: 'Private Holder', nationality: 'KEN', documentNumber: 'AK998877' }, validFrom: '2026-01-01', validUntil: '2028-01-01', conditions: ['Work for the sponsoring employer only'] }, 'issued', 'case-x', 'ok', 'Officer');
+    const caller = { kind: 'integration' as const, id: 'employer-check', name: 'Labour inspectorate' };
+    const r = await callService(caller, 'immigration.status', { nationality: 'ken', documentNumber: 'AK 998877', on: '2027-03-01' }, 'Right-to-work check');
+    expect(r.data).toEqual({ valid: 'yes', kind: 'residence-permit', category: 'work', validUntil: '2028-01-01', conditions: ['Work for the sponsoring employer only'] });
+    expect(JSON.stringify(r)).not.toContain('Private Holder');
+    expect(r.receipt).toBeTruthy();
+    expect((await callService(caller, 'immigration.status', { nationality: 'KEN', documentNumber: 'NOPE' }, 'Check')).data).toEqual({ valid: 'no' });
   });
 });

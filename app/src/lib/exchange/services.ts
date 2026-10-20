@@ -12,6 +12,7 @@
 
 import { logExchange, type ExchangeReceipt } from './log';
 import { getPerson, current, fold } from '@/lib/civil/register';
+import { statusOn } from '@/lib/immigration/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
 export interface Caller { kind: 'module' | 'integration'; id: string; name: string; institution?: string }
@@ -47,6 +48,19 @@ export const SERVICES: ServiceDef[] = [
       if (!family && !birthDate) return { status: 200, result: 'nothing to compare', data: { match: 'unknown', status: 'unknown' } };
       const same = (!family || fold(family) === fold(v.names.family)) && (!given || fold(given) === fold(v.names.given)) && (!birthDate || birthDate === v.birth?.date);
       return { status: 200, result: same ? 'match' : 'no match', data: { match: same ? 'yes' : 'no', status: same ? v.status : 'unknown' } };
+    },
+  },
+  {
+    id: 'immigration.status', version: 1, kind: 'query', title: 'Does this travel document hold a valid visa or residence permit on this date?', owner: 'immigration', scope: 'service:immigration.status',
+    returns: { valid: 'yes or no', kind: 'visa or residence-permit', category: 'the category granted', validUntil: 'YYYY-MM-DD', conditions: 'conditions attached (e.g. no work)' }, dataClass: 'personal',
+    legalBasis: 'The immigration law\'s provisions on checking status (named by the immigration authority when it approves the service for a caller)',
+    handle: input => {
+      const nationality = str(input.nationality), documentNumber = str(input.documentNumber);
+      if (!/^[A-Za-z]{3}$/.test(nationality) || !documentNumber) return { status: 422, result: 'nationality (3 letters) and documentNumber needed', data: { valid: 'no' } };
+      const kind = input.kind === 'visa' || input.kind === 'residence-permit' ? input.kind : undefined;
+      const a = statusOn({ nationality, documentNumber, ...(kind ? { kind } : {}), ...(str(input.on) ? { on: str(input.on) } : {}) });
+      // The answer never names the holder or the file: what is valid, until when, under which conditions.
+      return { status: 200, result: a.valid ? 'valid' : 'not valid', data: a.valid ? { valid: 'yes', kind: a.kind, category: a.category, validUntil: a.validUntil, conditions: a.conditions } : { valid: 'no' } };
     },
   },
   {
