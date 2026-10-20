@@ -140,6 +140,9 @@
       "name": "platform"
     },
     {
+      "name": "professions"
+    },
+    {
       "name": "public"
     },
     {
@@ -10216,6 +10219,26 @@
                       "required": [
                         "published"
                       ]
+                    },
+                    "health": {
+                      "type": "object",
+                      "properties": {
+                        "published": {
+                          "type": "boolean"
+                        },
+                        "run": {
+                          "type": "string"
+                        },
+                        "accepted": {
+                          "type": "number"
+                        },
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "published"
+                      ]
                     }
                   },
                   "required": [
@@ -10224,7 +10247,8 @@
                     "civil",
                     "organisations",
                     "cases",
-                    "education"
+                    "education",
+                    "health"
                   ]
                 },
                 "examples": {
@@ -10258,6 +10282,12 @@
                         "error": "Text"
                       },
                       "education": {
+                        "published": true,
+                        "run": "string",
+                        "accepted": 1,
+                        "error": "Text"
+                      },
+                      "health": {
                         "published": true,
                         "run": "string",
                         "accepted": 1,
@@ -34702,6 +34732,344 @@
           }
         ],
         "x-source": "src/app/api/platform/state/route.ts"
+      }
+    },
+    "/api/professions": {
+      "get": {
+        "tags": [
+          "professions"
+        ],
+        "operationId": "get_professions",
+        "summary": "GET /api/professions",
+        "description": "GET /api/professions — the register of regulated professionals for the regulators and auditors with a purpose: ?number= one full record (person reference, qualifications, every step); ?person= a person's registrations; ?profession= a list; with none, counts per profession and standing. A regulator reads the professions it keeps. Every search and read, allowed or refused, is in the access log. Anyone can check standing publicly at /api/registers/professionals. Changes only through decided cases.",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "person",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "profession",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "lapsed": {
+                                "type": "number"
+                              },
+                              "registered": {
+                                "type": "number"
+                              },
+                              "revoked": {
+                                "type": "number"
+                              },
+                              "suspended": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "lapsed",
+                              "registered",
+                              "revoked",
+                              "suspended"
+                            ]
+                          }
+                        },
+                        "professionals": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Professional"
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "professionals"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "lapsed": {
+                                "type": "number"
+                              },
+                              "registered": {
+                                "type": "number"
+                              },
+                              "revoked": {
+                                "type": "number"
+                              },
+                              "suspended": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "lapsed",
+                              "registered",
+                              "revoked",
+                              "suspended"
+                            ]
+                          }
+                        },
+                        "professions": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Profession"
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "professions"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "counts": {
+                        "key": {
+                          "lapsed": 1,
+                          "registered": 1,
+                          "revoked": 1,
+                          "suspended": 1
+                        }
+                      },
+                      "professionals": [
+                        {
+                          "id": "ID-0001",
+                          "number": "string",
+                          "profession": "string",
+                          "personRef": "string",
+                          "name": "Example",
+                          "qualifications": [
+                            "string"
+                          ],
+                          "state": "lapsed",
+                          "conditions": [
+                            "string"
+                          ],
+                          "history": [
+                            {}
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/professions/route.ts"
+      }
+    },
+    "/api/professions/types": {
+      "get": {
+        "tags": [
+          "professions"
+        ],
+        "operationId": "get_professions_types",
+        "summary": "GET /api/professions/types",
+        "description": "/api/professions/types — the regulated professions (lib/professions/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, authority, permitType?, publicCheck? } configures one, naming the regulator that keeps its register (administrators, audited).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "professions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Profession"
+                      }
+                    }
+                  },
+                  "required": [
+                    "professions"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "professions": [
+                        {
+                          "key": "string",
+                          "title": "Example",
+                          "authority": "string",
+                          "permitType": "string",
+                          "publicCheck": true,
+                          "reference": true,
+                          "createdBy": "A. Official",
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/professions/types/route.ts"
+      },
+      "post": {
+        "tags": [
+          "professions"
+        ],
+        "operationId": "post_professions_types",
+        "summary": "POST /api/professions/types",
+        "description": "/api/professions/types — the regulated professions (lib/professions/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, authority, permitType?, publicCheck? } configures one, naming the regulator that keeps its register (administrators, audited).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "profession": {
+                      "$ref": "#/components/schemas/Profession"
+                    }
+                  },
+                  "required": [
+                    "profession"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "profession": {
+                        "key": "string",
+                        "title": "Example",
+                        "authority": "string",
+                        "permitType": "string",
+                        "publicCheck": true,
+                        "reference": true,
+                        "createdBy": "A. Official",
+                        "createdAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/professions/types/route.ts"
       }
     },
     "/api/public-sites/{id}/content": {
@@ -74072,6 +74440,159 @@
           "failedChecks",
           "failStreak",
           "degraded"
+        ]
+      },
+      "Profession": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "authority": {
+            "type": "string",
+            "description": "Who keeps its register: a deployment-profile authority or an institution id."
+          },
+          "permitType": {
+            "type": "string",
+            "description": "The permit type whose approved authority mapping governs it."
+          },
+          "publicCheck": {
+            "type": "boolean",
+            "description": "Anyone may check a professional's standing in it."
+          },
+          "reference": {
+            "type": "boolean"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "authority",
+          "permitType",
+          "publicCheck",
+          "reference",
+          "createdBy",
+          "createdAt"
+        ]
+      },
+      "Professional": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "description": "The registration number: PRN-YYYY-NNNNNN."
+          },
+          "profession": {
+            "type": "string"
+          },
+          "personRef": {
+            "type": "string",
+            "description": "The person: a reference in the civil register or identity provider. Personal data."
+          },
+          "name": {
+            "type": "string"
+          },
+          "qualifications": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "lapsed",
+              "registered",
+              "revoked",
+              "suspended"
+            ]
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfessionalStep"
+            }
+          },
+          "certificate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "profession",
+          "personRef",
+          "name",
+          "qualifications",
+          "state",
+          "conditions",
+          "history"
+        ]
+      },
+      "ProfessionalStep": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "lapsed",
+              "registered",
+              "revoked",
+              "suspended"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "state",
+          "at",
+          "by",
+          "reason",
+          "case"
         ]
       },
       "Proposal": {

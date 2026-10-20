@@ -143,6 +143,7 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/municipalities\/?$/,
   // The register types of the organisations register (which authority keeps which register).
   /^\/api\/organisations\/types$/,
+  /^\/api\/professions\/types$/,
   // Which authority the law designates for each permit and licence type (four-eyes in the route).
   /^\/api\/permit-authorities$/,
 ];
@@ -595,6 +596,13 @@ export function canRecordHealthReturn(s: Scope, authority: string | undefined): 
   if (roleOf(s) === 'auditor') return 'Auditors read returns but do not record them';
   if (authority && s.institution === authority) return null;
   return 'Capacity returns are recorded by the health regulator (named under Who is responsible)';
+}
+
+/** Full records of regulated professionals: officials of a regulator that keeps a profession (they see only those); auditors with a purpose. */
+export function canReadProfessionals(s: Scope, keptHere: string[], purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read professionals\' records';
+  if (keptHere.length) return null;
+  return 'Professionals\' records are read by the regulator that keeps the profession; anyone can check standing on the public registers';
 }
 
 /** Visas and residence permits (lib/immigration/register.ts): the immigration authority's officials; auditors with a purpose. Never the whole government by default (directions 15.1). */
