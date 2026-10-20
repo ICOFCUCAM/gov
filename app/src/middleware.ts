@@ -50,7 +50,8 @@ const CITIZEN_DEMO = /^\/wallet(\/|$)/;
 const ENTITY_URI = /^\/id\/[a-z]+\/[^/]+(\/about)?\/?$/;
 // Next.js before 14.2.25 skipped middleware for requests carrying this header
 // (CVE-2025-29927). The patched version never sends it, so a request that
-// arrives with it is an attempt to skip this gate. The ingress strips it too.
+// arrives with it is an attempt to skip this gate, except the middleware's own
+// session check on a host that adds it (see handle()). The ingress strips it too.
 const SUBREQUEST_HEADER = 'x-middleware-subrequest';
 // Signing in, creating the installation's first account (the route refuses once one exists),
 // setting a new password with an administrator's reset code, and the challenge for signing
@@ -224,7 +225,11 @@ function handle(req: NextRequest, requestId: string, nonce: string): NextRespons
   // Defence in depth for CVE-2025-29927: a request carrying Next.js's former
   // internal subrequest header is refused (the patched Next.js no longer sends
   // it, so only an outside caller can).
-  if (req.headers.has(SUBREQUEST_HEADER)) {
+  // One exception: the middleware's own session check (liveOfficial, a GET of
+  // /api/auth/official). Some hosts (Vercel) add this header to a middleware's
+  // fetch of its own site; that route is on the sign-in list and gated by
+  // nothing, so skipping the middleware there skips no check.
+  if (req.headers.has(SUBREQUEST_HEADER) && !(req.method === 'GET' && req.nextUrl.pathname === '/api/auth/official')) {
     return NextResponse.json({ error: 'Refused' }, { status: 400 });
   }
   const crossSite = crossSiteRefusal(req);

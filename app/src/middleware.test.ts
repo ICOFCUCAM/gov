@@ -153,6 +153,18 @@ describe('access gate (CIVICOS_AUTH=enforce)', () => {
     }
   });
 
+  it('lets through only its own session check when a host adds the subrequest header to it (Vercel)', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    const sub = { 'x-middleware-subrequest': 'middleware' };
+    // The read-only session check the middleware itself makes: on the sign-in list, gated by nothing.
+    expect((await call('/api/auth/official', undefined, sub)).status).not.toBe(400);
+    // Anything else with the header, including a change to the same path, is still refused.
+    expect((await middleware(new NextRequest('http://localhost/api/auth/official', { method: 'POST', headers: sub }))).status).toBe(400);
+    expect((await call('/api/auth/officials', undefined, sub)).status).toBe(400);
+    expect((await call('/api/twin/state', undefined, sub)).status).toBe(400);
+  });
+
   it('stays open without enforcement, so the demo flow keeps working', async () => {
     delete process.env.CIVICOS_AUTH;
     expect((await call('/gov/twin', 'civicos_session=demo')).headers.get('location')).toBeNull();
