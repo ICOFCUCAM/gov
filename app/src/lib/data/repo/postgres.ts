@@ -75,10 +75,27 @@ export interface Sql {
   end?(opts?: { timeout?: number }): Promise<void>;
 }
 
+/**
+ * Whether the database is reached through a transaction-mode pooler
+ * (Supabase/Supavisor or PgBouncer on port 6543, or CIVICOS_PG_POOLER=transaction):
+ * many short-lived servers share its connections, but a connection is theirs
+ * only for one transaction, so no prepared statements and no LISTEN.
+ */
+export function transactionPooler(url: string, env: Record<string, string | undefined> = process.env): boolean {
+  const mode = (env.CIVICOS_PG_POOLER ?? '').toLowerCase();
+  if (mode === 'transaction') return true;
+  if (mode === 'session' || mode === 'direct') return false;
+  try { return new URL(url).port === '6543'; } catch { return false; }
+}
+
 /** Connect with the `postgres` driver (loaded only in this mode). */
 export async function connect(url: string, opts: { max?: number } = {}): Promise<Sql> {
   const { default: postgres } = await import('postgres');
-  return postgres(url, { max: opts.max ?? 5, onnotice: () => undefined, idle_timeout: 60, connect_timeout: 10 }) as unknown as Sql;
+  if (!transactionPooler(url)) return postgres(url, { max: opts.max ?? 5, onnotice: () => undefined, idle_timeout: 60, connect_timeout: 10 }) as unknown as Sql;
+  // Behind a transaction pooler: unnamed statements, short idle connections, and no LISTEN
+  // (other instances' changes are then followed by the poll in startRecords).
+  const db = postgres(url, { max: opts.max ?? 5, onnotice: () => undefined, idle_timeout: 20, connect_timeout: 10, prepare: false }) as unknown as Sql;
+  return { unsafe: db.unsafe.bind(db), begin: db.begin.bind(db) as Sql['begin'], ...(db.end ? { end: db.end.bind(db) } : {}) };
 }
 
 const q = (sql: Sql, text: string, params: unknown[] = []): Promise<Row[]> => sql.unsafe(text, params);

@@ -100,7 +100,9 @@ Vercel applies environment variables only to new deployments, so redeploy
 after changing any. Set `CIVICOS_MODE` (production, training or demo; unset,
 a production build runs as production and shows a banner). Each invocation
 may start a new server: keep state in a database (`CIVICOS_STATE=postgres`
-with `DATABASE_URL`), set `CIVICOS_SETUP_TOKEN` (a code written to one
+with `DATABASE_URL`; with Supabase use the **Transaction pooler**, port 6543:
+the session pooler allows only its pool size of clients, which Vercel's many
+short-lived servers use up, and `CIVICOS_PG_POOL=1`), set `CIVICOS_SETUP_TOKEN` (a code written to one
 server's output does not reach the others), and point `CIVICOS_STATE_DIR` at
 `/tmp` (the deployment's own files are read-only). The `NEXT_PUBLIC_SUPABASE_*`
 values are written into browser code at build time. With
