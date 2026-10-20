@@ -17,6 +17,9 @@ interface Pkg { key: string; version: number; title: string; owner: string; owne
 export function ProceduresBoard({ demonstration = false }: { demonstration?: boolean }) {
   const [list, setList] = React.useState<Pkg[]>([]);
   const [msg, setMsg] = React.useState<string | null>(null);
+  const [institutions, setInstitutions] = React.useState<{ id: string; name: string }[]>([]);
+  const [referTo, setReferTo] = React.useState('');
+  React.useEffect(() => { fetch('/api/org/ministries', { cache: 'no-store' }).then(r => r.json()).then(j => setInstitutions((j.ministries ?? []) as { id: string; name: string }[])).catch(() => setInstitutions([])); }, []);
   const load = React.useCallback(() => {
     fetch('/api/case-packages', { cache: 'no-store' }).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error ?? 'Could not load'); setList(j.packages as Pkg[]); }).catch(e => setMsg((e as Error).message));
   }, []);
@@ -53,6 +56,18 @@ export function ProceduresBoard({ demonstration = false }: { demonstration?: boo
             }}>Load the demonstration set</Button>
           </div>
         ) : null}
+      </Section>
+      <Section title="Referrals between institutions" meta="a case at the other institution, linked to yours">
+        <p className="text-sm text-ink-muted">When a case needs another institution's work (an inspection, an opinion, a determination), it is referred as a case under that institution's referral procedure, with a deadline, and reported back. Each institution adopts the template as its own procedure and approves it.</p>
+        <div className="mt-2 flex flex-wrap items-end gap-2">
+          <label className="text-sm">Institution<select className="mt-1 block rounded border border-line bg-surface px-2 py-1 text-sm" value={referTo} onChange={e => setReferTo(e.target.value)}><option value="">Choose</option>{institutions.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
+          <Button variant="secondary" disabled={!referTo} onClick={async () => {
+            const r = await fetch('/api/case-packages', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'draft-referral', institution: referTo }) });
+            const j = await r.json();
+            setMsg(r.ok ? (j.drafted ? `Referral procedure drafted (${j.drafted}): approve it below.` : `That institution already has its referral procedure (${j.present}).`) : j.error);
+            load();
+          }}>Draft its referral procedure</Button>
+        </div>
       </Section>
       <Section title="Versions" meta={`${list.length}`}>
         {list.length ? (

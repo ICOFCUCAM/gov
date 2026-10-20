@@ -4,6 +4,7 @@
 // itself here.
 import '@/lib/civil/procedures';
 import '@/lib/organisations/procedures';
+import './referral';
 import { installReferenceProcedures as installCivil } from '@/lib/civil/procedures';
 import { installOrganisationProcedures } from '@/lib/organisations/procedures';
 export { REFERENCE_PROCEDURES } from '@/lib/civil/procedures';

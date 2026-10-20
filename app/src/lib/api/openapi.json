@@ -5003,7 +5003,7 @@
         ],
         "operationId": "get_case_packages",
         "summary": "GET /api/case-packages",
-        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only); { op: 'load-demonstration' } loads the demonstration set (a sample act and the civil procedures approved under it; administrators, demo and training installations only, lib/casework/demo.ts).",
+        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only); { op: 'load-demonstration' } loads the demonstration set (a sample act and the civil procedures approved under it; administrators, demo and training installations only, lib/casework/demo.ts); { op: 'draft-referral', institution } drafts that institution's referral procedure from the template (its own officials or administrators; lib/casework/referral.ts).",
         "parameters": [
           {
             "name": "key",
@@ -5332,7 +5332,7 @@
         ],
         "operationId": "post_case_packages",
         "summary": "POST /api/case-packages",
-        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only); { op: 'load-demonstration' } loads the demonstration set (a sample act and the civil procedures approved under it; administrators, demo and training installations only, lib/casework/demo.ts).",
+        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only); { op: 'load-demonstration' } loads the demonstration set (a sample act and the civil procedures approved under it; administrators, demo and training installations only, lib/casework/demo.ts); { op: 'draft-referral', institution } drafts that institution's referral procedure from the template (its own officials or administrators; lib/casework/referral.ts).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -5527,6 +5527,32 @@
                         "act",
                         "approved",
                         "present"
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "drafted": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "drafted"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "present": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "present"
+                          ]
+                        }
                       ]
                     }
                   ]
@@ -7920,12 +7946,31 @@
                           "onLapse"
                         ]
                       }
+                    },
+                    "expired": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "organisation": {
+                            "type": "string"
+                          },
+                          "register": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "organisation",
+                          "register"
+                        ]
+                      }
                     }
                   },
                   "required": [
                     "ok",
                     "lapsed",
-                    "cases"
+                    "cases",
+                    "expired"
                   ]
                 },
                 "examples": {
@@ -7939,6 +7984,12 @@
                           "ref": "string",
                           "deadline": "string",
                           "onLapse": "string"
+                        }
+                      ],
+                      "expired": [
+                        {
+                          "organisation": "string",
+                          "register": "string"
                         }
                       ]
                     }
@@ -9805,12 +9856,36 @@
                       "required": [
                         "published"
                       ]
+                    },
+                    "organisations": {
+                      "type": "object",
+                      "properties": {
+                        "published": {
+                          "type": "boolean"
+                        },
+                        "entities": {
+                          "type": "number"
+                        },
+                        "run": {
+                          "type": "string"
+                        },
+                        "accepted": {
+                          "type": "number"
+                        },
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "published"
+                      ]
                     }
                   },
                   "required": [
                     "ok",
                     "runs",
-                    "civil"
+                    "civil",
+                    "organisations"
                   ]
                 },
                 "examples": {
@@ -9828,6 +9903,13 @@
                         "run": "string",
                         "accepted": 1,
                         "rejected": 1,
+                        "error": "Text"
+                      },
+                      "organisations": {
+                        "published": true,
+                        "entities": 1,
+                        "run": "string",
+                        "accepted": 1,
                         "error": "Text"
                       }
                     }
@@ -79243,6 +79325,7 @@
               "facility",
               "institution",
               "nation",
+              "organisation",
               "place"
             ]
           },

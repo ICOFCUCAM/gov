@@ -7,7 +7,9 @@
 // that the installation does not have yet (administrators; drafts only);
 // { op: 'load-demonstration' } loads the demonstration set (a sample act and
 // the civil procedures approved under it; administrators, demo and training
-// installations only, lib/casework/demo.ts).
+// installations only, lib/casework/demo.ts); { op: 'draft-referral',
+// institution } drafts that institution's referral procedure from the
+// template (its own officials or administrators; lib/casework/referral.ts).
 import { NextRequest, NextResponse } from 'next/server';
 import { caseActRefusal } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
@@ -18,6 +20,7 @@ import type { CasePackage } from '@/lib/casework/types';
 import { installReferenceProcedures } from '@/lib/casework/modules';
 import { adminOnly } from '@/lib/auth/roles';
 import { loadDemonstration } from '@/lib/casework/demo';
+import { draftReferralProcedure } from '@/lib/casework/referral';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,5 +74,14 @@ export async function POST(req: NextRequest) {
     const r = loadDemonstration(actor.name);
     return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json(r);
   }
-  return NextResponse.json({ error: 'op must be draft, approve, install-references or load-demonstration' }, { status: 422 });
+  if (b.op === 'draft-referral') {
+    const institution = String((b as { institution?: unknown }).institution ?? '');
+    if (actor.scope) {
+      const why = actor.scope.institution === institution ? null : adminOnly(actor.scope);
+      if (why) return NextResponse.json({ error: why }, { status: 403 });
+    }
+    const r = draftReferralProcedure(institution, actor.name);
+    return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json(r);
+  }
+  return NextResponse.json({ error: 'op must be draft, approve, install-references, load-demonstration or draft-referral' }, { status: 422 });
 }
