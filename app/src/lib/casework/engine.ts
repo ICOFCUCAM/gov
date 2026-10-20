@@ -164,7 +164,7 @@ export type ActResult = { case: Case; pending?: boolean; decision?: SignedDecisi
 export async function act(caseId: string, input: ActInput, actor: Actor, now = new Date()): Promise<ActResult> {
   const c = db().cases.find(x => x.id === caseId);
   if (!c) return { error: 'No such case' };
-  if (input.idempotencyKey && c.history.some(s => s.idempotencyKey === input.idempotencyKey)) return { case: clone(c) };
+  if (input.idempotencyKey && (c.pending?.idempotencyKey === input.idempotencyKey || c.history.some(s => s.idempotencyKey === input.idempotencyKey || s.confirmIdempotencyKey === input.idempotencyKey))) return { case: clone(c), ...(c.pending ? { pending: true } : {}) };
   if (input.expectedVersion !== undefined && input.expectedVersion !== c.version) return { error: 'This case changed since you opened it: reload it and check before acting' };
   const pkg = getPackage(c.package.key, c.package.version);
   if (!pkg) return { error: 'The procedure version this case runs under is missing' };
@@ -248,7 +248,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   const from = c.stage;
   c.fields = merged;
   c.stage = a.to;
-  const step: Step = { seq: c.history.length + 1, action: a.key, from, to: a.to, by: decidedBy, ...(confirmedBy ? { confirmedBy } : {}), at, ...(reason ? { reason } : {}), ...(citations.length ? { citations } : {}), ...(decision ? { decision: decision.id } : {}), ...((pending?.idempotencyKey ?? input.idempotencyKey) ? { idempotencyKey: pending?.idempotencyKey ?? input.idempotencyKey } : {}) };
+  const step: Step = { seq: c.history.length + 1, action: a.key, from, to: a.to, by: decidedBy, ...(confirmedBy ? { confirmedBy } : {}), at, ...(reason ? { reason } : {}), ...(citations.length ? { citations } : {}), ...(decision ? { decision: decision.id } : {}), ...((pending?.idempotencyKey ?? input.idempotencyKey) ? { idempotencyKey: pending?.idempotencyKey ?? input.idempotencyKey } : {}), ...(pending?.idempotencyKey && input.idempotencyKey && input.idempotencyKey !== pending.idempotencyKey ? { confirmIdempotencyKey: input.idempotencyKey } : {}) };
   c.history.push(step);
   delete c.pending;
   for (const d of c.deadlines) if (!d.met && !d.lapsed && pkg.deadlines.find(x => x.key === d.key)?.from === from) d.met = at;

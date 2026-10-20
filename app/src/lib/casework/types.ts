@@ -98,6 +98,8 @@ export interface Step {
   citations?: Citation[];
   decision?: string;
   idempotencyKey?: string;
+  /** The confirming official's own key on a four-eyes step, so a repeated confirmation is recognised too. */
+  confirmIdempotencyKey?: string;
 }
 
 export interface Proposal {
