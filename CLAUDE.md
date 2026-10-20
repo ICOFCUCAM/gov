@@ -19,6 +19,21 @@ What has been built is locked. Work only upgrades it toward the vision in
   `/admin/onboarding`) and use or extend it. New backends only for genuinely
   missing capability.
 
+## Government operating model
+
+- Agreed directions for running a whole government (registers, casework,
+  laws, identity, exchange, records, the twin's provenance, sequence and open
+  decisions): `docs/GOVERNMENT_OPERATING_DIRECTIONS.md`. Read it before work
+  on any agency, register, case, identity or exchange feature. Findings it
+  rests on: `docs/GOVERNMENT_OPERATING_REVIEW.md`; external review in full:
+  `docs/reviews/2026-10-external-architecture-review.md`.
+- Progress is measured by legally valid services working end to end, not by
+  screens. Each register and record type has one named owner; the twin
+  derives from records and never creates authoritative facts.
+- Every decision cites the law version that applied; a status change is an
+  authorised action with evidence, time and reason. AI never makes a legally
+  material decision.
+
 ## Entry flow
 
 - `/` is the cover page, Plaza (`app/src/components/features/cover/CoverPlaza.tsx`):

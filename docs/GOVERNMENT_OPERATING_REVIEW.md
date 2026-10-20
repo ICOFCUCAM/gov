@@ -1,6 +1,7 @@
 # Running a whole government: review, decisions and plan
 
-Status: working record, October 2026. Kept so later work (design document,
+Status: working record, October 2026. The agreed directions built on it,
+which govern where they differ, are in `docs/GOVERNMENT_OPERATING_DIRECTIONS.md`. Kept so later work (design document,
 implementation, re-evaluation of outside advice) starts from what was found
 and decided, not from memory. Update it when a decision is made or a finding
 changes.
