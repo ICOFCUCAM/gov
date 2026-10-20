@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { installReferenceProcedures } from './procedures';
-import { resetCivil, getEvent, searchPersons } from './register';
+import { resetCivil, getEvent, searchPersons, getPerson, current } from './register';
 import { approvePackage, resetPackages, runPackageTests, getPackage } from '@/lib/casework/packages';
 import { openCase, act, attach, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
 import { addDocument, resetDocuments } from '@/lib/records/documents';
@@ -31,8 +31,8 @@ describe('birth registration on the workflow foundation', () => {
   });
 
   it('ships as a draft whose own tests pass, and runs only once the authority approves it', async () => {
-    expect(installReferenceProcedures('Administrator')).toEqual({ drafted: ['civil.birth'], present: [] });
-    expect(installReferenceProcedures('Administrator').present).toEqual(['civil.birth']);
+    expect(installReferenceProcedures('Administrator').drafted).toContain('civil.birth');
+    expect(installReferenceProcedures('Administrator').present).toContain('civil.birth');
     expect(runPackageTests(getPackage('civil.birth', 1)!)).toEqual({ ok: true, failures: [] });
     expect(openCase({ procedure: 'civil.birth' }, as('clerk'))).toHaveProperty('error');
     expect(approvePackage('civil.birth', 1, 'Chief Registrar', 'chief', '2026-01-01', registeredEffects(), new Date('2026-01-01'))).toMatchObject({ state: 'approved' });
@@ -69,5 +69,38 @@ describe('birth registration on the workflow foundation', () => {
     await act(second.id, { action: 'refer-adjudication', reason: 'Same names and date of birth' }, as('clerk'));
     expect(await act(second.id, { action: 'adjudicate', reason: 'Twins: different persons' }, as('r1', 'signatory'))).toMatchObject({ case: { stage: 'pending-approval' } });
     expect(searchPersons({ family: 'Okafor' })).toHaveLength(1);
+  });
+});
+
+describe('the other civil procedures', () => {
+  beforeEach(() => {
+    for (const r of [resetCivil, resetPackages, resetCases, resetDocuments, resetDecisions, resetCertificates]) r();
+    vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 4).toString('base64'));
+    CIVIL = listMinistries()[0]!.id;
+    setSovereign({ deployment: { authorities: { civilRegistration: CIVIL } } }, 'test');
+  });
+
+  it('ship as drafts whose tests pass, and register deaths, marriages and corrections of persons in the register', async () => {
+    expect(installReferenceProcedures('Administrator').drafted).toEqual(['civil.birth', 'civil.late-birth', 'civil.death', 'civil.marriage', 'civil.correction']);
+    for (const k of ['civil.birth', 'civil.late-birth', 'civil.death', 'civil.marriage', 'civil.correction']) {
+      expect(runPackageTests(getPackage(k, 1)!), k).toEqual({ ok: true, failures: [] });
+      approvePackage(k, 1, 'Chief Registrar', 'chief', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
+    }
+    const a = await registerOne(); await act(a.id, { action: 'verify' }, as('clerk'));
+    await act(a.id, { action: 'register', reason: 'ok' }, as('r1', 'signatory')); await act(a.id, { action: 'register' }, as('r2', 'signatory'));
+    const b = await registerOne({ ...fields, childGiven: 'Tunde', childFamily: 'Bello', motherFamily: 'Bello' }); await act(b.id, { action: 'verify' }, as('clerk'));
+    await act(b.id, { action: 'register', reason: 'ok' }, as('r1', 'signatory')); await act(b.id, { action: 'register' }, as('r2', 'signatory'));
+    const run = async (procedure: string, f: Record<string, unknown>, docs: string[], decision: string) => {
+      const c = openCase({ procedure, fields: f }, as('clerk')) as { id: string };
+      for (const cls of docs) { const d = addDocument({ class: cls, title: cls, institution: CIVIL, belongsTo: { kind: 'case', id: c.id }, bytes: pdf }, 'clerk') as { id: string }; attach(c.id, d.id, as('clerk')); }
+      await act(c.id, { action: 'check' }, as('clerk')); await act(c.id, { action: 'verify' }, as('clerk'));
+      await act(c.id, { action: decision, reason: 'Evidence verified' }, as('r1', 'signatory'));
+      return act(c.id, { action: decision }, as('r2', 'signatory'));
+    };
+    expect(await run('civil.marriage', { spouseOneRegistration: 'BR-2026-000001', spouseTwoRegistration: 'BR-2026-000002', marriageDate: '2026-10-01', form: 'customary' }, ['marriage-record', 'consent'], 'register')).toMatchObject({ case: { stage: 'registered' }, decision: { content: { facts: { registrationNumber: 'MR-2026-000001', form: 'customary' } } } });
+    expect(await run('civil.correction', { personRegistration: 'BR-2026-000001', correctGiven: 'Amarachi', grounds: 'Spelling on the hospital record' }, ['supporting-evidence'], 'correct')).toMatchObject({ case: { stage: 'registered' } });
+    expect(current(getPerson('BR-2026-000001')!).names.given).toBe('Amarachi');
+    expect(await run('civil.death', { deceasedRegistration: 'BR-2026-000002', deathDate: '2026-10-10' }, ['death-notification'], 'register')).toMatchObject({ decision: { content: { facts: { registrationNumber: 'DR-2026-000001' } } } });
+    expect(await run('civil.death', { deceasedRegistration: 'BR-9999', deathDate: '2026-10-10' }, ['death-notification'], 'register')).toMatchObject({ error: expect.stringMatching(/No person/) });
   });
 });
