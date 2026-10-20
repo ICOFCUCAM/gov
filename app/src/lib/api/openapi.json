@@ -1424,6 +1424,110 @@
         "x-source": "src/app/api/auth/activity/route.ts"
       }
     },
+    "/api/auth/citizen/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_citizen_callback",
+        "summary": "GET /api/auth/citizen/callback",
+        "description": "GET /api/auth/citizen/callback — the identity service sends the citizen back here (lib/auth/citizen-oidc.ts); on success the citizen's session (lib/auth/citizen-session.ts) is set and they continue to the wallet.",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/auth/citizen/callback/route.ts"
+      }
+    },
+    "/api/auth/citizen/start": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_citizen_start",
+        "summary": "GET /api/auth/citizen/start",
+        "description": "GET /api/auth/citizen/start?from=/wallet/... — send the citizen to the nation's identity service (lib/auth/citizen-oidc.ts), with this browser's one-time state in a short cookie.",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/auth/citizen/start/route.ts"
+      }
+    },
     "/api/auth/official": {
       "get": {
         "tags": [

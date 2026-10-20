@@ -1,5 +1,6 @@
 import { authEnforced } from '@/lib/auth/mode';
 import { samplesAllowed } from '@/lib/ops/mode';
+import { verifyCitizen, CITIZEN_COOKIE } from '@/lib/auth/citizen-session';
 import { PUBLIC_SITES } from '@/lib/auth/public-paths';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -35,7 +36,7 @@ import { POLICIES, take, tooMany, clientAddress, type Scope } from '@/lib/ops/ra
 const PUBLIC_READ = [/^\/api\/public\/charters$/, /^\/api\/public\/accountability$/, /^\/api\/public\/directives$/, /^\/api\/auth\/official$/, /^\/api\/sovereign$/, /^\/api\/boundaries\/active$/, /^\/api\/exchange\/key$/, /^\/api\/map-pack\/districts$/,/^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/, /^\/api\/twin\/tiles\/facilities\.pmtiles$/, /^\/api\/law$/, /^\/api\/law\/(cite|export)$/];
 // Public writes (email updates) and self-authenticating machine routes are
 // defined with the permission rules in lib/auth/roles.ts.
-const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/fonts\//, /^\/api\/health/];
+const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/fonts\//, /^\/api\/health/, /^\/api\/auth\/citizen\/(start|callback)$/];
 // The public institution websites and their shared pages (lib/auth/public-paths.ts):
 // every page in the (public) route group is for citizens without an account
 // (middleware.test.ts fails if a page there is not covered), plus /embed and /r.
@@ -339,6 +340,9 @@ function gate(req: NextRequest, res: NextResponse): NextResponse | Promise<NextR
   // The citizen demo session opens the Civic Wallet pages only (no API, no console page).
   // Never in a production installation, which has no demo citizen (lib/ops/mode.ts).
   if (CITIZEN_DEMO.test(pathname) && samplesAllowed() && req.cookies.get('civicos_session')?.value) return res;
+  // A citizen signed in through the nation's identity service (lib/auth/citizen-session.ts).
+  const citizen = CITIZEN_DEMO.test(pathname) ? req.cookies.get(CITIZEN_COOKIE)?.value : undefined;
+  if (citizen) return verifyCitizen(citizen, process.env.CIVICOS_SESSION_SECRET).then(c => (c ? res : readGate(req, res)));
   return readGate(req, res);
 }
 
