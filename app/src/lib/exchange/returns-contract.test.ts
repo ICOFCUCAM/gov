@@ -17,7 +17,7 @@ describe('exchange services return only what they declare', () => {
   for (const s of SERVICES.filter(x => x.kind === 'query' && INPUTS[x.id])) {
     it(s.id, async () => {
       for (const input of INPUTS[s.id]!) {
-        const r = await s.handle!(input);
+        const r = await s.handle!(input, { kind: 'integration', id: 'contract-test', name: 'Contract test' });
         for (const k of Object.keys(r.data ?? {})) expect(Object.keys(s.returns), `${s.id} returned ${k}`).toContain(k);
       }
     });
