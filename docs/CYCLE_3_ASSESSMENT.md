@@ -50,7 +50,7 @@ decisions off until a country approves its rules) is the brief.
 
 ## Progress
 
-Steps 1–5 built (integration register 18.19–18.22). Steps 6–9 follow.
+Steps 1–6 built (integration register 18.19–18.23). Steps 7–9 follow.
 
 ## Kept out of cycle 3 (unchanged decisions)
 

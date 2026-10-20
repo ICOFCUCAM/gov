@@ -84,6 +84,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   read in the access log); others use the `taxpayer.status` exchange service.
   Liabilities are bills with a domain reference (`issueBill()`), reconciled
   from receipts once each.
+- Education (`lib/education/`): schools are organisations (a standing in the
+  `schools` register), never a second identity. Qualifications are recorded,
+  corrected and revoked only through education cases; anyone else checks one
+  through `qualification.verify` (number and holder's name). Returns carry
+  aggregate counts only; there is no student record system.
 - Audit administration stays apart from operations: administrators do not
   read the access log, reading it is itself logged, and shortening it needs
   the data-protection authority after two administrators
