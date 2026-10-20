@@ -4,11 +4,13 @@
 // from the records that hold it (/api/work). Past-SLA items first, then
 // escalated, then oldest. Each row carries the actions that exist for it
 // today, sent under the named official and written to the audit chain.
+// Cases under approved procedures open on their own page (/gov/cases/[id]),
+// where every step runs through the procedure's rules.
 
 import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
-import type { WorkOverview, WorkQueueItem } from '@/lib/api/types';
+import type { WorkOverview, WorkQueueItem, WorkCase } from '@/lib/api/types';
 import { useOfficial, useSignIn } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
 import { SignalTag } from '@/components/ui/SignalTag';
@@ -48,10 +50,12 @@ export function WorkCenter() {
     finally { setBusy(null); }
   }
 
-  const institutions = [...new Set([...(data?.queue ?? []).map(q => q.ministry), ...(data?.ministryIncidents ?? []).map(i => i.ministry)])].sort();
+  const institutions = [...new Set([...(data?.queue ?? []).map(q => q.ministry), ...(data?.ministryIncidents ?? []).map(i => i.ministry), ...(data?.cases ?? []).map(c => c.ministry)])].sort();
   const keep = (m: string) => !inst || m === inst;
   const queue = (data?.queue ?? []).filter(q => keep(q.ministry) && (view !== 'overdue' || q.overdue))
     .sort((a, b) => Number(b.overdue) - Number(a.overdue) || Number(b.state === 'escalated') - Number(a.state === 'escalated') || b.ageHours - a.ageHours);
+  const cases = (data?.cases ?? []).filter(c => keep(c.ministry) && (view !== 'overdue' || c.overdue))
+    .sort((a, b) => Number(b.overdue) - Number(a.overdue) || Number(b.pendingApproval) - Number(a.pendingApproval) || (a.nextDeadline?.due ?? '9').localeCompare(b.nextDeadline?.due ?? '9'));
   const mInc = (data?.ministryIncidents ?? []).filter(i => keep(i.ministry));
   const opsInc = inst ? [] : data?.incidents ?? [];
   const permits = inst ? [] : data?.permits ?? [];
@@ -114,6 +118,26 @@ export function WorkCenter() {
               </li>
             ))}
             {!mInc.length && !opsInc.length ? <li className="px-3 py-2 text-ink-muted">No open incidents.</li> : null}
+          </ul>
+        </section>
+      ) : null}
+
+      {showDecisions ? (
+        <section aria-labelledby="w-cases" className="space-y-2">
+          <h2 id="w-cases" className="text-[15px] font-semibold">Cases under procedures <span className="font-normal text-ink-muted">({cases.length})</span></h2>
+          <ul className="divide-y divide-line-soft rounded-[3px] border border-line bg-surface">
+            {cases.slice(0, 200).map((c: WorkCase) => (
+              <li key={c.id} className="flex flex-wrap items-center gap-2 px-3 py-2">
+                <span aria-hidden className="text-[11px]" style={{ color: c.overdue ? 'rgb(var(--c-alert))' : c.pendingApproval ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink-muted))' }}>{c.overdue ? TONE_SHAPE.alert : c.pendingApproval ? TONE_SHAPE.warn : TONE_SHAPE.neutral}</span>
+                <Link href={`/gov/cases/${c.id}`} className="font-mono text-[12px] text-link underline underline-offset-2">{c.ref}</Link>
+                {c.source === 'sample' ? <SignalTag kind="sample" source={EXAMPLE_CASE} /> : null}
+                <span className="min-w-0 flex-1">{c.procedure} <span className="text-ink-muted">· {c.ministry} · {c.stage}{c.priority !== 'routine' ? ` · ${c.priority}` : ''}</span></span>
+                {c.pendingApproval ? <span className="text-[12px] text-ink-soft">Waiting for a second official</span> : null}
+                {c.nextDeadline ? <span className="text-[12px] tabular-nums" style={{ color: c.overdue ? 'rgb(var(--c-alert))' : undefined }}>{c.overdue ? 'Late: ' : ''}{c.nextDeadline.label} by {c.nextDeadline.due.slice(0, 10)}</span> : null}
+                <span className="text-[12px] text-ink-muted">{c.assignee ?? 'Not assigned'}</span>
+              </li>
+            ))}
+            {!cases.length ? <li className="px-3 py-2 text-ink-muted">{view === 'overdue' ? 'No case is late.' : <>No open cases. Procedures are approved under <Link href="/gov/law/procedures" className="text-link underline">Procedures</Link>.</>}</li> : null}
           </ul>
         </section>
       ) : null}
