@@ -21,7 +21,7 @@ import { db } from './state';
 import { seededInt } from './shared';
 import { verifyAuditChain } from './audit';
 import { seedQueue, seedIncidents } from './seeds';
-import { installationMode } from '@/lib/ops/mode';
+import { installationMode, samplesAllowed } from '@/lib/ops/mode';
 
 const MODE_WORD = { production: 'Production', training: 'Training', demo: 'Demonstration' } as const;
 
@@ -70,6 +70,22 @@ const RELATION_COUPLING: Record<string, number> = {
   funds: 0.9, supplies: 0.8, secures: 0.7, moves: 0.6, staffs: 0.55,
   regulates: 0.5, feeds: 0.5, enables: 0.5, adjudicates: 0.5,
 };
+
+/**
+ * The queue items a posture may count. A production installation counts only
+ * real cases (imported, typed in, from a connected case system); example items
+ * (absent source means example) count only where samples are allowed.
+ */
+function countedQueue(id: string, samples: boolean) {
+  const q = (db.ministryQueues[id] ?? []).filter(x => x.state !== 'cleared');
+  return samples ? q : q.filter(x => x.source !== undefined && x.source !== 'sample');
+}
+
+/** Where a posture comes from, in words (lib/twin/signal.ts). */
+export const POSTURE_SOURCE = {
+  records: 'Recorded ministry incidents and real queue items (no generated pressure)',
+  sample: `Seeded incidents and queues with the generated pressure model · ${REFERENCE_MODEL}`,
+} as const;
 
 function toneForRisk(r: number): OpsTone {
   return r >= 67 ? 'alert' : r >= 34 ? 'warn' : 'ok';
@@ -220,6 +236,10 @@ function fabricChronology(tickNow: number): ChronologyEvent[] {
 
 export function nationalCoordination(): NationalCoordination {
   ensureIncidentsSeeded();
+  // A production installation shows no invented posture (lib/ops/mode.ts):
+  // the generated pressure field, its chronology and invented times are left
+  // out, and the posture rests on recorded incidents and real queue items only.
+  const samples = samplesAllowed();
   const tick = fabricTick();
   const active = db.ministries.filter(m => m.status === 'active');
   const byArch = new Map<ArchetypeKey, typeof active[number]>();
@@ -227,7 +247,7 @@ export function nationalCoordination(): NationalCoordination {
 
   const nodes: CoordinationNode[] = active.map(m => {
     const incs = (db.ministryIncidents[m.id] ?? []).filter(i => i.active);
-    const queue = (db.ministryQueues[m.id] ?? []).filter(x => x.state !== 'cleared');
+    const queue = countedQueue(m.id, samples);
     const slaBreaching = queue.length > 6;
     let risk = incs.reduce((mx, i) => Math.max(mx, SEV_WEIGHT[i.severity]), 0);
     if (slaBreaching) risk = Math.min(100, risk + 15 + Math.min(20, (queue.length - 6) * 3));
@@ -253,10 +273,10 @@ export function nationalCoordination(): NationalCoordination {
 
   // Live fabric: blend the time-stepped pressure field into node risk so
   // the national picture visibly moves and propagates between ticks.
-  const curCells = pressuresAt(tick);
-  const prevCells = pressuresAt(tick - 1);
+  const curCells = samples ? pressuresAt(tick) : new Map<string, FabricCell>();
+  const prevCells = samples ? pressuresAt(tick - 1) : new Map<string, FabricCell>();
   const fabric: FabricPressure[] = [];
-  for (const m of active) {
+  for (const m of samples ? active : []) {
     const cell = curCells.get(m.id);
     if (!cell) continue;
     const prevP = prevCells.get(m.id)?.pressure ?? cell.pressure;
@@ -318,9 +338,14 @@ export function nationalCoordination(): NationalCoordination {
   }
   for (const m of active) {
     for (const inc of (db.ministryIncidents[m.id] ?? []).filter(i => i.active)) {
-      const offsetMin = seededInt(`tl:${m.id}:${inc.key}`, 6, 2160);
+      // A generated time only for an example; a production incident is placed
+      // in time only by what was recorded about it (its place), never guessed.
+      const at = samples
+        ? new Date(now - seededInt(`tl:${m.id}:${inc.key}`, 6, 2160) * 60_000).toISOString()
+        : inc.place?.at;
+      if (!at) continue;
       timeline.push({
-        at: new Date(now - offsetMin * 60_000).toISOString(),
+        at,
         ministryId: m.id,
         ministry: m.name,
         kind: 'incident',
@@ -332,7 +357,7 @@ export function nationalCoordination(): NationalCoordination {
     const n = nodeById.get(m.id);
     if (n?.slaBreaching) {
       timeline.push({
-        at: new Date(now - seededInt(`tl:sla:${m.id}`, 12, 600) * 60_000).toISOString(),
+        at: samples ? new Date(now - seededInt(`tl:sla:${m.id}`, 12, 600) * 60_000).toISOString() : new Date(now).toISOString(),
         ministryId: m.id,
         ministry: m.name,
         kind: 'sla',
@@ -342,7 +367,7 @@ export function nationalCoordination(): NationalCoordination {
       });
     }
   }
-  const chronology = fabricChronology(tick);
+  const chronology = samples ? fabricChronology(tick) : [];
   const tlKind: Record<ChronologyEvent['kind'], OpsTimelineEvent['kind']> = {
     incident: 'incident', escalation: 'escalation', recovery: 'audit',
     propagation: 'incident', degradation: 'sla',
@@ -387,7 +412,15 @@ export function nationalCoordination(): NationalCoordination {
   const maxEdge = edges.reduce((mx, e) => Math.max(mx, e.propagatedRisk), 0);
   const nationalRisk = Math.round(0.65 * avgNode + 0.35 * maxEdge);
   const cascadeRisks = edges.filter(e => e.propagatedRisk >= 50).length;
-  const level = toneForRisk(nationalRisk);
+  // On recorded data alone a serious incident is never averaged away by quiet
+  // institutions: a recorded sev1 makes the posture critical, a sev2 strained.
+  const worst = nodes.reduce<OpsTone>((w, n) => n.topSeverity === 'sev1' ? 'alert' : n.topSeverity === 'sev2' && w !== 'alert' ? 'warn' : w, 'ok');
+  const byRisk = toneForRisk(nationalRisk);
+  const rank: Record<string, number> = { ok: 0, neutral: 0, warn: 1, alert: 2 };
+  const level: OpsTone = samples || rank[byRisk]! >= rank[worst]! ? byRisk : worst;
+  // Nothing recorded is said as such in production, never as "stable".
+  const recordedAnything = nodes.some(n => n.activeIncidents > 0 || n.queueDepth > 0);
+  const label = level === 'alert' ? 'CRITICAL' : level === 'warn' ? 'STRAINED' : !samples && !recordedAnything ? 'NONE RECORDED' : 'STABLE';
 
   return {
     sovereign: db.sovereign,
@@ -396,10 +429,12 @@ export function nationalCoordination(): NationalCoordination {
     tickMs: FABRIC_TICK_MS,
     posture: {
       level,
-      label: level === 'alert' ? 'CRITICAL' : level === 'warn' ? 'STRAINED' : 'STABLE',
+      label,
       nationalRisk,
       coordinatingMinistries: nodes.length,
       cascadeRisks,
+      basis: samples ? 'sample' : 'records',
+      source: samples ? POSTURE_SOURCE.sample : POSTURE_SOURCE.records,
     },
     nodes,
     edges,
@@ -454,9 +489,8 @@ export function nationalSnapshot(): NationalSnapshot {
   }
   crossMinistryIncidents.sort((a, b) => a.severity.localeCompare(b.severity));
 
-  const queuesBreaching = active.filter(
-    m => (db.ministryQueues[m.id] ?? []).filter(x => x.state !== 'cleared').length > 6,
-  ).length;
+  const samples = samplesAllowed();
+  const queuesBreaching = active.filter(m => countedQueue(m.id, samples).length > 6).length;
   const audit = verifyAuditChain();
 
   return {
@@ -465,6 +499,7 @@ export function nationalSnapshot(): NationalSnapshot {
     classification: 'OFFICIAL',
     // The installation's mode (lib/ops/mode.ts), never a fixed word: a demo must not read as production.
     environment: MODE_WORD[installationMode()],
+    samples,
     indicators,
     crossMinistryIncidents,
     totals: {

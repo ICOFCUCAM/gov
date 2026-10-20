@@ -893,10 +893,18 @@ export interface NationalCoordination {
   tickMs: number;
   posture: {
     level: OpsTone;
-    label: string;              // STABLE | STRAINED | CRITICAL
+    label: string;              // STABLE | STRAINED | CRITICAL; NONE RECORDED (production, nothing recorded)
     nationalRisk: number;       // 0..100
     coordinatingMinistries: number;
     cascadeRisks: number;       // dependency edges over threshold
+    /**
+     * What the posture rests on: 'records' (recorded incidents and real queue
+     * items only; a production installation) or 'sample' (also the generated
+     * pressure model; demo and training). Screens mark a 'sample' posture.
+     */
+    basis?: 'records' | 'sample';
+    /** Where the posture comes from, in words (lib/twin/signal.ts). */
+    source?: string;
   };
   nodes: CoordinationNode[];
   edges: CoordinationEdge[];
@@ -951,6 +959,8 @@ export interface NationalSnapshot {
   generatedAt: ISODate;
   classification: string; // e.g. "OFFICIAL"
   environment: string;    // e.g. "Production"
+  /** Whether this installation may show sample figures (lib/ops/mode.ts samplesAllowed()); false in production. */
+  samples?: boolean;
   indicators: NationalIndicator[];
   crossMinistryIncidents: CrossMinistryIncident[];
   totals: {
