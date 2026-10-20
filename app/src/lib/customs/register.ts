@@ -40,7 +40,10 @@ export interface Declaration {
   currency: string;
   /** Every version of the goods lines: amendments and reclassifications add one. */
   versions: { n: number; lines: GoodsLine[]; at: string; by: string; case: string; reason: string }[];
+  /** The channel in force: the latest of `channels`. */
   channel?: { kind: Channel; reasons: string; by: string; at: string };
+  /** Every channel chosen, in order (kept when a later choice raises it). */
+  channels?: { kind: Channel; reasons: string; by: string; at: string }[];
   inspections: { at: string; by: string; outcome: 'no-discrepancy' | 'discrepancy'; findings: string; case: string }[];
   assessment?: { reference: string; totalMinor: number; lines: LineDuty[]; at: string; by: string; case: string; decision?: string; paidMinor: number };
   state: 'lodged' | 'assessed' | 'released' | 'release-refused' | 'withdrawn';
@@ -124,15 +127,23 @@ export function amendGoods(number: string, goods: string, reason: string, caseId
   return clone(d);
 }
 
-/** The control channel, chosen by an officer with reasons; no score decides it. */
+/**
+ * The control channel, chosen by an officer with reasons; no score decides it.
+ * Every choice is kept. Once an inspection has been recorded the channel can
+ * only be raised, never lowered (a discrepancy cannot be followed by release
+ * on documents).
+ */
 export function chooseChannel(number: string, channel: string, reasons: string, by: string, now = new Date()): Declaration | { error: string } {
   const d = find(number);
   if (!d) return { error: `No declaration ${number}` };
   if (!CHANNELS.includes(channel as Channel)) return { error: `The channel is one of ${CHANNELS.join(', ')}` };
   if (!reasons.trim()) return { error: 'State why this channel was chosen' };
   if (d.state === 'released' || d.state === 'withdrawn') return { error: `The declaration is ${d.state}` };
-  d.channel = { kind: channel as Channel, reasons: reasons.slice(0, 500), by, at: now.toISOString() };
-  recordAudit(by, 'customs.channel', `Declaration:${d.number}`, 'ok', channel);
+  if (d.channel && d.inspections.length && CHANNELS.indexOf(channel as Channel) < CHANNELS.indexOf(d.channel.kind)) return { error: `An inspection has been recorded under ${d.channel.kind}: the channel can be raised, not lowered` };
+  const choice = { kind: channel as Channel, reasons: reasons.slice(0, 500), by, at: now.toISOString() };
+  d.channels = [...(d.channels ?? (d.channel ? [d.channel] : [])), choice];
+  d.channel = choice;
+  recordAudit(by, 'customs.channel', `Declaration:${d.number}`, 'ok', d.channels.length > 1 ? `${channel} (choice ${d.channels.length})` : channel);
   return clone(d);
 }
 
@@ -170,11 +181,10 @@ export function attachDutyDecision(number: string, decision: string): void {
 export function releaseBlocker(d: Declaration): string | null {
   if (d.state !== 'assessed') return d.state === 'lodged' ? 'The duty is not assessed yet' : `The declaration is ${d.state}`;
   if (!d.channel) return 'No control channel has been chosen';
-  if (d.channel.kind !== 'release-on-documents') {
-    const last = d.inspections.at(-1);
-    if (!last) return `The ${d.channel.kind.replace(/-/g, ' ')} has not been recorded`;
-    if (last.outcome === 'discrepancy') return 'The last inspection found a discrepancy: amend and reassess, or refuse release';
-  }
+  const last = d.inspections.at(-1);
+  if (d.channel.kind !== 'release-on-documents' && !last) return `The ${d.channel.kind.replace(/-/g, ' ')} has not been recorded`;
+  // Whatever the channel, a discrepancy must be followed by a clean inspection.
+  if (last?.outcome === 'discrepancy') return 'The last inspection found a discrepancy: inspect again after correcting, or refuse release';
   if (d.assessment && d.assessment.paidMinor < d.assessment.totalMinor) return `Duty of ${d.assessment.totalMinor - d.assessment.paidMinor} minor units is unpaid`;
   return null;
 }

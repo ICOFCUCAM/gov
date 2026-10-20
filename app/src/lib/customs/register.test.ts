@@ -48,4 +48,20 @@ describe('customs register', () => {
     expect(releaseGoods(d.number, 'Paid by bank transfer', 'case-p', 'Officer')).toMatchObject({ state: 'released' });
     vi.unstubAllEnvs();
   });
+
+  it('keeps every channel choice and never lets a discrepancy be followed by release on documents', () => {
+    const d = lodgeDeclaration({ ...base, shipment: { ...base.shipment, transportRef: 'BL-DOWN' } }, 'case-d', 'Officer A') as { number: string };
+    chooseChannel(d.number, 'physical-inspection', 'Suspicious', 'Officer A');
+    recordCustomsInspection(d.number, { outcome: 'discrepancy', findings: 'Undeclared goods' }, 'case-d', 'Inspector');
+    amendGoods(d.number, goods, 'Corrected lines', 'case-d', 'Officer B');
+    expect(chooseChannel(d.number, 'release-on-documents', 'Changed my mind', 'Officer B')).toMatchObject({ error: /raised, not lowered/ });
+    expect(chooseChannel(d.number, 'documentary-check', 'Lower', 'Officer B')).toMatchObject({ error: /raised, not lowered/ });
+    recordDuty(d.number, [{ n: 1, code: '0901110000', valueMinor: 480000, dutyMinor: 0, method: { kind: 'entered', reasons: 'r' } }, { n: 2, code: '8471300000', valueMinor: 1500000, dutyMinor: 0, method: { kind: 'entered', reasons: 'r' } }], 'case-d', 'Assessor');
+    expect(releaseGoods(d.number, 'ok', 'case-d', 'Signer')).toMatchObject({ error: /discrepancy/ });
+    // Before any inspection a choice can be changed, and every choice is kept.
+    const e = lodgeDeclaration({ ...base, shipment: { ...base.shipment, transportRef: 'BL-KEEP' } }, 'case-e', 'Officer A') as { number: string };
+    chooseChannel(e.number, 'physical-inspection', 'First view', 'Officer A');
+    chooseChannel(e.number, 'documentary-check', 'Supervisor review: documents suffice', 'Supervisor');
+    expect(getDeclaration(e.number)!.channels!.map(c => c.kind)).toEqual(['physical-inspection', 'documentary-check']);
+  });
 });

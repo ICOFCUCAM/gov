@@ -16,7 +16,7 @@ import { formatMoney } from '@/lib/nation/registry';
 
 interface Line { n: number; code: string; description: string; origin: string; quantity: number; unit: string; valueMinor: number }
 interface Declaration { number: string; direction: string; state: string; currency: string; case: string; declarant: { name: string; ref: string }; shipment: { mode: string; transportRef: string; from: string; to: string };
-  versions: { n: number; lines: Line[]; reason: string; at: string }[]; channel?: { kind: string; reasons: string; by: string };
+  versions: { n: number; lines: Line[]; reason: string; at: string }[]; channel?: { kind: string; reasons: string; by: string }; channels?: { kind: string; reasons: string; by: string; at: string }[];
   inspections: { at: string; outcome: string; findings: string; by: string }[];
   assessment?: { reference: string; totalMinor: number; paidMinor: number; lines: { n: number; dutyMinor: number; method: { kind: string; rule?: string; version?: number; reasons?: string } }[] };
   release?: { at: string; reasons: string } }
@@ -61,6 +61,7 @@ export function CustomsRegister() {
             ); })}</tbody>
           </table>
           <p className="mt-2 text-sm">Channel: {d.channel ? `${d.channel.kind} — ${d.channel.reasons} (${d.channel.by})` : 'not chosen yet'}</p>
+          {(d.channels?.length ?? 0) > 1 ? <ul className="text-xs text-ink-muted">{d.channels!.map((c, k) => <li key={k}>Channel choice {k + 1}: {c.kind} — {c.reasons} ({c.by}, {c.at.slice(0, 10)})</li>)}</ul> : null}
           {d.inspections.length ? <ul className="text-xs">{d.inspections.map((i, k) => <li key={k}>{i.at.slice(0, 10)} · {i.outcome} · {i.findings} · {i.by}</li>)}</ul> : null}
           {d.assessment ? <p className="text-sm">Duty {money(d.assessment.totalMinor, d.currency)}, paid {money(d.assessment.paidMinor, d.currency)} · {d.assessment.reference}</p> : null}
           {d.release ? <p className="text-sm">{d.state === 'released' ? 'Released' : 'Release refused'} on {d.release.at.slice(0, 10)}: {d.release.reasons}</p> : null}
