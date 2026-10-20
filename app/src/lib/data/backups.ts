@@ -32,6 +32,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { recordAudit } from './store/audit';
+import { afterRestore } from '@/lib/events/outbox';
 import { touch } from './repo/track';
 import { packArchive, openArchive, peekArchive, sha256, type BackupReason, type Manifest } from '@/lib/backup/archive';
 import { captureState, dryRun, applySnapshot, applyPostgres, liveDigest, serverMode, KEPT_ON_RESTORE, EXCLUDED_NOTES, type DryRun, type Applied } from '@/lib/backup/state';
@@ -264,7 +265,7 @@ async function lossWarning(entry: BackupEntry, manifest: Manifest): Promise<Loss
     `Restoring backup ${entry.id} returns the platform's data to ${entry.createdAt}.`,
     `Everything recorded after that time is lost from the running platform: ${lost} audit entr${lost === 1 ? 'y' : 'ies'}${lost ? ` (${manifest.audit.seq + 1}–${live.audit.seq})` : ''}${stores.length ? ` and the changes in ${stores.length} store${stores.length === 1 ? '' : 's'} (${stores.slice(0, 12).join(', ')}${stores.length > 12 ? ', …' : ''})` : ''} — payments, applications, registrations, decisions and accounts made since.`,
     divergent ? 'The running audit chain does not contain this backup\'s head: it holds another history.' : '',
-    `Kept as they are: ${KEPT_ON_RESTORE.join(', ')} (the backup records and the Update Center's record of the software running).`,
+    `Kept as they are: ${KEPT_ON_RESTORE.join(', ')} (the backup records, the Update Center's record of the software running, the access log and the event delivery state: consumers are told to re-read, and events after the restored point are never delivered).`,
     'The current state is backed up first; its backup and hash are named in the audit entry that records the restore.',
   ].filter(Boolean).join(' ');
   return { backupId: entry.id, backupAt: entry.createdAt, auditEntriesLost: lost, ...(lost ? { auditFrom: manifest.audit.seq + 1, auditTo: live.audit.seq } : {}), divergent, changed, added, kept: KEPT_ON_RESTORE, text };
@@ -359,12 +360,15 @@ async function executeRestore(t: BackupTarget, entry: BackupEntry, proposal: Res
   }
   setRestoring(false);
   const at = new Date().toISOString();
+  // Events after the restored point are voided, consumers' cursors go back to it, the restore epoch grows (lib/events/outbox.ts).
+  const events = afterRestore(entry.audit.seq, entry.id);
   // The restored chain, plus this entry: who, what, and the hash of the state it replaced.
   const a = recordAudit(confirmedBy, 'backup.restore', `Backup:${entry.id}`, applied.check.differing.length ? 'partial' : 'ok', [
     `proposed by ${proposal.by}; confirmed by ${confirmedBy}`,
     `state of ${entry.createdAt} restored (audit head ${entry.audit.seq} ${entry.audit.hash?.slice(0, 16) ?? '-'}…)`,
     `replaced state sha256 ${safety.stateDigest} kept as backup ${safety.id}`,
     `${proposal.warning.auditEntriesLost} later audit entries left the live chain (kept in ${safety.id})`,
+    `restore epoch ${events.epoch}: ${events.voided} undelivered later events voided, ${events.cursorsReset} consumer cursors reset to ${entry.audit.seq}`,
     applied.check.differing.length ? `differs after restore: ${applied.check.differing.join(', ')}` : `${applied.check.compared} parts match the backup`,
   ].join(' · '));
   const record: RestoreRecord = {

@@ -19,7 +19,7 @@ class MemoryStore implements MirrorStore {
   seqs: Record<string, number> = {};
   async write(all: MirrorBatch, mark: MirrorMark) {
     // The same rule as the Prisma store: an older read never lands over a newer one.
-    const fresh = freshRegisters(all, this.seqs, mark.dataSeq);
+    const fresh = freshRegisters(all, mark.restore ? {} : this.seqs, mark.dataSeq);
     this.seqs = fresh.seqs;
     const batch = onlyRegisters(all, fresh.write);
     this.writes.push({ batch, mark });
@@ -27,7 +27,7 @@ class MemoryStore implements MirrorStore {
       const list = Array.isArray(v) ? v : v && typeof v === 'object' ? Object.values(v).flat() : [];
       for (const r of list as { id: string }[]) this.rows.set(`${k}:${r.id}`, r);
     }
-    this.st.cursor = Math.max(this.st.cursor, mark.cursor);
+    this.st.cursor = mark.restore ? mark.cursor : Math.max(this.st.cursor, mark.cursor);
     if (mark.event) { this.applied.set(mark.event.id, mark.event.auditSeq); this.st.lastEventAt = 'now'; }
     if (mark.fullSyncAt) this.st.lastFullSyncAt = mark.fullSyncAt.toISOString();
     this.st.lastError = null;
@@ -209,4 +209,32 @@ test('several followers at once: an older read never lands over a newer one', as
   const partial = { ...toBatch(snap(70, 'Latest')), permits: undefined };
   await store.write(onlyRegisters(partial, ['institutions']), { cursor: 70, dataSeq: 70 });
   assert.deepEqual(freshRegisters(toBatch(snap(65)), store.seqs, 65).stale.sort(), ['institutions']);
+});
+
+test('a platform restore: the restore event re-reads every register and resets the cursor, so later events with restarted sequences apply', async () => {
+  const store = new MemoryStore();
+  const f = new MirrorFollower(store, { base, key: KEY, secret: SECRET });
+  feedCalls = []; feedStatus = 200;
+  // Before the restore: the mirror is current to 90 with a name written after the backup.
+  snapshot = snap(90, 'Name written after the backup');
+  const before = signed(event('evt-90', 'ministry.rename', 90));
+  await f.receive(before.headers, before.raw);
+  assert.equal(store.st.cursor, 90);
+  // The platform restores a backup taken at 60; its restore entry is 61 and carries a new epoch.
+  snapshot = snap(61, 'Name at the backup');
+  const restore = signed({ ...event('evt-restore', 'backup.restore', 61), restoreepoch: 1 });
+  const r = await f.receive(restore.headers, restore.raw);
+  assert.equal(r.status, 200);
+  assert.equal(r.body.applied, true);
+  assert.match(String(r.body.reason), /restored a backup/);
+  assert.equal(store.st.cursor, 61, 'the cursor goes back to the restored point');
+  assert.equal((store.rows.get('institutions:min-health') as { name: string }).name, 'Name at the backup');
+  // A change after the restore has sequence 62 (below the old cursor 90) and is applied, not taken as covered.
+  snapshot = snap(62, 'Name after the restore');
+  const after = signed({ ...event('evt-62', 'ministry.rename', 62), restoreepoch: 1 });
+  const a = await f.receive(after.headers, after.raw);
+  assert.equal(a.body.applied, true);
+  assert.equal((store.rows.get('institutions:min-health') as { name: string }).name, 'Name after the restore');
+  // The restore event delivered again changes nothing.
+  assert.equal((await f.receive(restore.headers, restore.raw)).body.reason, 'already applied');
 });

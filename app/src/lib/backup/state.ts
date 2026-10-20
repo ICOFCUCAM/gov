@@ -46,7 +46,7 @@ import { sha256, type Manifest, type ManifestPart, type OpenedArchive, type Plai
 export const EXCLUDED_STORES = new Set(['__civicosBackups']);
 /** Left as they are by a restore: the backup system's records and the Update Center's install records (the software that runs). */
 // The access log is oversight evidence of who read what: a data restore never takes it back.
-export const KEPT_ON_RESTORE = ['__civicosBackups', '__civicosUpdates', '__civicosAccessLog'];
+export const KEPT_ON_RESTORE = ['__civicosBackups', '__civicosUpdates', '__civicosAccessLog', '__civicosEventOutbox'];
 export const EXCLUDED_NOTES: Manifest['excluded'] = [
   { what: 'Vector tile archives (facilities, parcels, boundaries)', why: 'Derived from the published records; rebuilt after a restore' },
   { what: 'The backup catalogue, retention policy and restore proposals (__civicosBackups)', why: 'The backup system\'s own records; kept in the target and in the running server' },

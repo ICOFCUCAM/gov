@@ -5,7 +5,9 @@
 # and delivered to webhook subscribers (/integrations → Webhooks) as a
 # CloudEvent 1.0 in structured mode (app/src/lib/events/deliver.ts, run by
 # /api/cron/deliver-cloudevents). Delivery is at least once, in audit order
-# per subscription; consumers deduplicate on the event `id` (or `auditseq`).
+# per subscription; consumers deduplicate on the event `id` and order by
+# (`restoreepoch`, `auditseq`): a data restore starts the audit sequence again
+# from the restored point and raises `restoreepoch` (docs/DISASTER_RECOVERY.md).
 #
 # A subscription's topic selects events by action: "*" (all), an action
 # ("facility.publish"), or a prefix ("facility", "twin.source"). The
@@ -154,6 +156,7 @@ components:
         time: { type: string, format: date-time }
         datacontenttype: { const: application/json }
         auditseq: { type: integer, description: Extension attribute — the audit-chain sequence number this event was written with. }
+        restoreepoch: { type: integer, description: Extension attribute — how many data restores the platform had had when the event was written; when it grows (the backup.restore event), re-read the registers you hold. }
         data:
           type: object
           required: [action, resource, actor, outcome, audit]

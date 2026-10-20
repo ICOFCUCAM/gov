@@ -48,7 +48,8 @@ export class PrismaMirrorStore implements MirrorStore {
       // One writer at a time across replicas: the state row is locked for the transaction.
       await tx.mirrorState.upsert({ where: { id: STATE_ID }, update: {}, create: { id: STATE_ID } });
       const locked = await tx.$queryRaw<{ registerSeqs: Record<string, number> | null }[]>`SELECT "registerSeqs" FROM "MirrorState" WHERE "id" = ${STATE_ID} FOR UPDATE`;
-      const fresh = freshRegisters(batch, locked[0]?.registerSeqs ?? {}, mark.dataSeq);
+      // After a platform restore the read sequences start again: the restored read replaces the held ones.
+      const fresh = freshRegisters(batch, mark.restore ? {} : (locked[0]?.registerSeqs ?? {}), mark.dataSeq);
       if (fresh.stale.length) skipped.push(`older read of ${fresh.stale.join(', ')} (a newer one is written)`);
       const b = onlyRegisters(batch, fresh.write);
       const home = b.tenants.find(t => t.settings.home)?.id;
@@ -123,7 +124,7 @@ export class PrismaMirrorStore implements MirrorStore {
 
       const now = new Date();
       const prev = await tx.mirrorState.findUnique({ where: { id: STATE_ID } });
-      const cursor = Math.max(prev?.cursor ?? 0, mark.cursor);
+      const cursor = mark.restore ? mark.cursor : Math.max(prev?.cursor ?? 0, mark.cursor);
       const note = skipped.length ? `Left out: ${skipped.join('; ')}`.slice(0, 2000) : null;
       const fields = { cursor, registerSeqs: json(fresh.seqs), ...(mark.event ? { lastEventAt: now } : {}), ...(mark.fullSyncAt ? { lastFullSyncAt: mark.fullSyncAt } : {}), lastError: note };
       await tx.mirrorState.upsert({ where: { id: STATE_ID }, update: fields, create: { id: STATE_ID, ...fields } });
