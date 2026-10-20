@@ -141,6 +141,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/messaging(\/|$)/,
   // Provisioning a new municipality (/admin/onboarding).
   /^\/api\/municipalities\/?$/,
+  // The register types of the organisations register (which authority keeps which register).
+  /^\/api\/organisations\/types$/,
 ];
 /**
  * The nation's Update Center work that any official who is not an auditor may
@@ -543,6 +545,19 @@ export function canReadCivil(s: Scope, authority: string | undefined, purpose?: 
   if (authority && s.institution === authority && roleOf(s) !== 'auditor') return null;
   if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read the civil register';
   return 'The civil register is read by the civil registration authority';
+}
+
+/**
+ * An organisation's full record (representatives, every version and step):
+ * officials of an institution that keeps a register it is in, officials of
+ * the whole government, auditors with a purpose. Everyone else sees its
+ * public view (name, number, kind, standings).
+ */
+export function canReadOrganisation(s: Scope, keepers: string[], purpose?: string): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return purpose?.trim() ? null : 'Say why you need to read this organisation\'s full record';
+  if (!s.institution) return null;
+  return keepers.includes(s.institution) ? null : 'The full record is read by the authorities that keep its registers';
 }
 
 /** Choosing which source stands where two disagree (lib/twin/conflicts.ts): those who can sign at the statistics authority; whole-government administrators while none is named. */

@@ -110,6 +110,9 @@
       "name": "org"
     },
     {
+      "name": "organisations"
+    },
+    {
       "name": "parcels"
     },
     {
@@ -126,6 +129,9 @@
     },
     {
       "name": "public-sites"
+    },
+    {
+      "name": "registers"
     },
     {
       "name": "releases"
@@ -25468,6 +25474,421 @@
         "x-source": "src/app/api/org/ministries/route.ts"
       }
     },
+    "/api/organisations/{id}": {
+      "get": {
+        "tags": [
+          "organisations"
+        ],
+        "operationId": "get_organisations_id",
+        "summary": "GET /api/organisations/{id}",
+        "description": "GET /api/organisations/{id or number} — one organisation. Its full record (representatives, every version, every step of each standing with the case and decision behind it) for those canReadOrganisation() allows, with the read written to the access log; its public view for every other official.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "organisation": {
+                          "$ref": "#/components/schemas/Organisation"
+                        },
+                        "full": {
+                          "type": "boolean",
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "organisation",
+                        "full"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "organisation": {
+                          "$ref": "#/components/schemas/PublicOrganisation"
+                        },
+                        "full": {
+                          "type": "boolean",
+                          "const": false
+                        },
+                        "why": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "organisation",
+                        "full",
+                        "why"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "organisation": {
+                        "id": "ID-0001",
+                        "number": "string",
+                        "versions": [
+                          {
+                            "n": 1,
+                            "name": "Example",
+                            "kind": "association",
+                            "representatives": [],
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official",
+                            "reason": "Text"
+                          }
+                        ],
+                        "facilities": [
+                          "string"
+                        ],
+                        "standings": [
+                          {
+                            "register": "string",
+                            "state": "applied",
+                            "since": "2026-01-15T09:30:00.000Z",
+                            "conditions": [],
+                            "history": []
+                          }
+                        ],
+                        "createdAt": "2026-01-15T09:30:00.000Z"
+                      },
+                      "full": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/organisations/[id]/route.ts"
+      }
+    },
+    "/api/organisations": {
+      "get": {
+        "tags": [
+          "organisations"
+        ],
+        "operationId": "get_organisations",
+        "summary": "GET /api/organisations",
+        "description": "GET /api/organisations — the organisations register (lib/organisations/register.ts) for officials: each organisation's public view (number, name, kind, region, standings), filtered by ?register=&state=&kind=&q=, and the register types. Representatives and history are on /api/organisations/{id} under its rule. Changes happen only through decided licensing and accreditation cases (/api/cases).",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "register",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "organisations": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublicOrganisation"
+                      }
+                    },
+                    "types": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RegisterType"
+                      }
+                    }
+                  },
+                  "required": [
+                    "organisations",
+                    "types"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "organisations": [
+                        {
+                          "number": "string",
+                          "name": "Example",
+                          "kind": "association",
+                          "standings": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "types": [
+                        {
+                          "key": "string",
+                          "title": "Example",
+                          "kind": "accreditation",
+                          "authority": "string",
+                          "orgKinds": [
+                            "association"
+                          ],
+                          "publicCheck": true,
+                          "reference": true,
+                          "createdBy": "A. Official",
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/organisations/route.ts"
+      }
+    },
+    "/api/organisations/types": {
+      "get": {
+        "tags": [
+          "organisations"
+        ],
+        "operationId": "get_organisations_types",
+        "summary": "GET /api/organisations/types",
+        "description": "/api/organisations/types — the register types of the organisations register (lib/organisations/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, kind, authority, orgKinds, validityMonths?, publicCheck? } configures one (administrators, audited).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "types": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RegisterType"
+                      }
+                    }
+                  },
+                  "required": [
+                    "types"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "types": [
+                        {
+                          "key": "string",
+                          "title": "Example",
+                          "kind": "accreditation",
+                          "authority": "string",
+                          "orgKinds": [
+                            "association"
+                          ],
+                          "publicCheck": true,
+                          "reference": true,
+                          "createdBy": "A. Official",
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/organisations/types/route.ts"
+      },
+      "post": {
+        "tags": [
+          "organisations"
+        ],
+        "operationId": "post_organisations_types",
+        "summary": "POST /api/organisations/types",
+        "description": "/api/organisations/types — the register types of the organisations register (lib/organisations/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, kind, authority, orgKinds, validityMonths?, publicCheck? } configures one (administrators, audited).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "$ref": "#/components/schemas/RegisterType"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "type": {
+                        "key": "string",
+                        "title": "Example",
+                        "kind": "accreditation",
+                        "authority": "string",
+                        "orgKinds": [
+                          "association"
+                        ],
+                        "validityMonths": 1,
+                        "publicCheck": true,
+                        "reference": true,
+                        "createdBy": "A. Official",
+                        "createdAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/organisations/types/route.ts"
+      }
+    },
     "/api/parcels/{pid}": {
       "get": {
         "tags": [
@@ -31535,7 +31956,7 @@
                         "items": [
                           {
                             "id": "ID-0001",
-                            "kind": "directive",
+                            "kind": "case",
                             "key": "string",
                             "queuedAt": "2026-01-15T09:30:00.000Z",
                             "rev": 1,
@@ -35214,6 +35635,167 @@
           }
         ],
         "x-source": "src/app/api/public/telemetry/route.ts"
+      }
+    },
+    "/api/registers/check": {
+      "get": {
+        "tags": [
+          "registers"
+        ],
+        "operationId": "get_registers_check",
+        "summary": "GET /api/registers/check",
+        "description": "GET /api/registers/check?register=&q= — anyone's check: is this organisation in this public register, and in what standing? Name (three letters or more) or register number; at most 20 answers, without representatives or history (lib/organisations/register.ts checkStanding()).",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "register",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublicOrganisation"
+                      }
+                    }
+                  },
+                  "required": [
+                    "results"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "results": [
+                        {
+                          "number": "string",
+                          "name": "Example",
+                          "kind": "association",
+                          "standings": [
+                            {}
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/registers/check/route.ts"
+      }
+    },
+    "/api/registers": {
+      "get": {
+        "tags": [
+          "registers"
+        ],
+        "operationId": "get_registers",
+        "summary": "GET /api/registers",
+        "description": "GET /api/registers — the public registers anyone can check (/registers): the register types of the organisations register marked for public checking.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "registers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "accreditation",
+                              "licence",
+                              "registration"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "title",
+                          "kind"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "registers"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "registers": [
+                        {
+                          "key": "string",
+                          "title": "Example",
+                          "kind": "accreditation"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/registers/route.ts"
       }
     },
     "/api/releases/{id}/decision": {
@@ -66209,11 +66791,12 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "`directive:<ref>` or `institutions`."
+            "description": "`directive:<ref>`, `case:<id>` or `institutions`."
           },
           "kind": {
             "type": "string",
             "enum": [
+              "case",
               "directive",
               "institutions"
             ]
@@ -68017,6 +68600,110 @@
           "kind",
           "tone",
           "title"
+        ]
+      },
+      "OrgVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "association",
+              "clinic",
+              "college",
+              "company",
+              "cooperative",
+              "hospital",
+              "ngo",
+              "other",
+              "partnership",
+              "pharmacy",
+              "professional-practice",
+              "school",
+              "university"
+            ]
+          },
+          "region": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "representatives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Representative"
+            }
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "name",
+          "kind",
+          "representatives",
+          "at",
+          "by",
+          "reason"
+        ]
+      },
+      "Organisation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "description": "The register number, given once (e.g. ORG-2026-000014)."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrgVersion"
+            }
+          },
+          "facilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Registered sites it operates (campuses, branches, premises)."
+          },
+          "standings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Standing"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "versions",
+          "facilities",
+          "standings",
+          "createdAt"
         ]
       },
       "OutputRow": {
@@ -70125,6 +70812,92 @@
           "secondStepOn"
         ]
       },
+      "PublicOrganisation": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "association",
+              "clinic",
+              "college",
+              "company",
+              "cooperative",
+              "hospital",
+              "ngo",
+              "other",
+              "partnership",
+              "pharmacy",
+              "professional-practice",
+              "school",
+              "university"
+            ]
+          },
+          "region": {
+            "type": "string"
+          },
+          "standings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "register": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "applied",
+                    "expired",
+                    "granted",
+                    "refused",
+                    "revoked",
+                    "struck-off",
+                    "suspended"
+                  ]
+                },
+                "since": {
+                  "type": "string"
+                },
+                "validUntil": {
+                  "type": "string"
+                },
+                "conditions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "certificate": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "register",
+                "title",
+                "state",
+                "since",
+                "conditions"
+              ]
+            }
+          }
+        },
+        "required": [
+          "number",
+          "name",
+          "kind",
+          "standings"
+        ]
+      },
       "PublicParcel": {
         "description": "The public shape of a parcel: what tiles, the OGC collection, lists and exports carry (INSPIRE Cadastral Parcels: reference, geometry, area, administrative unit; plus land use and survey). It has no rights field, so no caller can leak a holder through it.",
         "type": "object",
@@ -71182,6 +71955,80 @@
           "copies"
         ]
       },
+      "RegisterType": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "accreditation",
+              "licence",
+              "registration"
+            ]
+          },
+          "authority": {
+            "type": "string",
+            "description": "Who keeps it: a deployment-profile authority or an institution id."
+          },
+          "orgKinds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "association",
+                "clinic",
+                "college",
+                "company",
+                "cooperative",
+                "hospital",
+                "ngo",
+                "other",
+                "partnership",
+                "pharmacy",
+                "professional-practice",
+                "school",
+                "university"
+              ]
+            },
+            "description": "Which kinds of organisation it may hold."
+          },
+          "validityMonths": {
+            "type": "number",
+            "description": "Months a grant is valid for (none: until revoked or struck off)."
+          },
+          "publicCheck": {
+            "type": "boolean",
+            "description": "Anyone may check an organisation's standing in it (/registers)."
+          },
+          "reference": {
+            "type": "boolean",
+            "description": "Shipped with the platform, or configured by an administrator."
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "kind",
+          "authority",
+          "orgKinds",
+          "publicCheck",
+          "reference",
+          "createdBy",
+          "createdAt"
+        ]
+      },
       "RegistrationJSON": {
         "type": "object",
         "properties": {
@@ -71457,6 +72304,25 @@
           "title",
           "url",
           "language"
+        ]
+      },
+      "Representative": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "since": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "role",
+          "since"
         ]
       },
       "ResilienceSettings": {
@@ -76985,6 +77851,95 @@
           "startedAt",
           "endsAt",
           "startedBy"
+        ]
+      },
+      "Standing": {
+        "type": "object",
+        "properties": {
+          "register": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "expired",
+              "granted",
+              "refused",
+              "revoked",
+              "struck-off",
+              "suspended"
+            ]
+          },
+          "since": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "certificate": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StandingStep"
+            }
+          }
+        },
+        "required": [
+          "register",
+          "state",
+          "since",
+          "conditions",
+          "history"
+        ]
+      },
+      "StandingStep": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "expired",
+              "granted",
+              "refused",
+              "revoked",
+              "struck-off",
+              "suspended"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "at",
+          "by",
+          "reason"
         ]
       },
       "StatusComponent": {
