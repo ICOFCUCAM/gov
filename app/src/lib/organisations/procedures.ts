@@ -370,7 +370,12 @@ function standingProcedures(family: 'licence' | 'accreditation', owner: string, 
  * effects are the same; the register type and its permit authority mapping
  * decide who may change a standing.
  */
-export interface SectorFamily { prefix: string; owner: string; register: string; word: string; refPrefix: string; documents?: { class: string; label: string; required: boolean }[] }
+export interface SectorFamily {
+  prefix: string; owner: string; register: string; word: string; refPrefix: string;
+  documents?: { class: string; label: string; required: boolean }[];
+  /** Name the premises as registered sites when sending for inspection (health facilities, pharmacies). */
+  linkSites?: boolean;
+}
 const SECTOR_REGISTERS = new Map<string, string>();
 
 export function sectorProcedures(f: SectorFamily): Ref[] {
@@ -378,6 +383,10 @@ export function sectorProcedures(f: SectorFamily): Ref[] {
   const rename = (p: Ref, key: string, title: string, refPrefix: string): Ref => ({ ...p, key, title, refPrefix, owner: f.owner, fields: p.fields.map(x => x.key === 'register' ? registerField(f.register) : x) });
   const licence = rename(REFERENCE_LICENCE, f.prefix, `${f.word[0]!.toUpperCase()}${f.word.slice(1)} application`, f.refPrefix);
   if (f.documents) licence.documents = [...licence.documents, ...f.documents];
+  if (f.linkSites) {
+    licence.fields = [...licence.fields, { key: 'campuses', label: 'Premises (registered site ids)', type: 'text' }];
+    licence.actions = licence.actions.map(a => a.key === 'inspect' ? { ...a, effects: [...(a.effects ?? []), 'org.linkCampuses'] } : a);
+  }
   const [renewal, suspension, revocation] = standingProcedures('licence', f.owner, f.register, f.refPrefix);
   return [
     licence,
