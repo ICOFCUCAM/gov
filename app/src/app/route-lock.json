@@ -69,6 +69,7 @@
   "/gov/intake/request/[ref]",
   "/gov/items/[ref]",
   "/gov/law",
+  "/gov/law/permit-authorities",
   "/gov/law/procedures",
   "/gov/ledger",
   "/gov/live",
