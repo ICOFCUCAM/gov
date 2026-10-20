@@ -27,6 +27,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   on any agency, register, case, identity or exchange feature. Findings it
   rests on: `docs/GOVERNMENT_OPERATING_REVIEW.md`; external review in full:
   `docs/reviews/2026-10-external-architecture-review.md`.
+- What the installation is: `CIVICOS_MODE` (production, training, demo), decided
+  only in `lib/ops/mode.ts` (`installationMode()`, `samplesAllowed()`). A
+  production installation creates no sample record (a seed that makes one asks
+  `samplesAllowed()` first; `seed-mode.test.ts`), has no demo citizen, and
+  agency apps show the Simulation notice; training and demo show a banner on
+  every page. Unset in a production build it runs as production and warns.
 - Progress is measured by legally valid services working end to end, not by
   screens. Each register and record type has one named owner; the twin
   derives from records and never creates authoritative facts.

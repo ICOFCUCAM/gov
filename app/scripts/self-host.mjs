@@ -119,7 +119,7 @@ function loadSettings(dataDir) {
 
 async function start(o, dataDir) {
   ensureDataDirs(dataDir);
-  const r = ensureEnvFile({ dataDir, url: o.url ?? `http://localhost:${o.port}` });
+  const r = ensureEnvFile({ dataDir, url: o.url ?? `http://localhost:${o.port}`, mode: o.mode });
   if (r.created) {
     say(tag(`Created the settings file ${r.file}${process.platform === 'win32' ? '' : ' (readable by this account only)'}.`));
     say(tag('It holds the data key CIVICOS_DATA_KEK. Keep a safe copy of that file (or at least that key) away'));
@@ -134,7 +134,10 @@ async function start(o, dataDir) {
     warn(tag(`Warning: ${r.file} can be read by other accounts; it should be mode 600.`));
   }
   // Only an explicit --url is a request; the default (from --port) just fills a missing setting.
-  for (const c of o.url ? r.conflicts : []) warn(tag(`${c.key} stays ${c.kept} (from ${ENV_FILE}); --url only applies on the first run. Edit the file to change it.`));
+  for (const c of r.conflicts) {
+    if (c.key === 'CIVICOS_PUBLIC_URL' && o.url) warn(tag(`${c.key} stays ${c.kept} (from ${ENV_FILE}); --url only applies on the first run. Edit the file to change it.`));
+    if (c.key === 'CIVICOS_MODE') warn(tag(`${c.key} stays ${c.kept} (from ${ENV_FILE}); --demo only applies on the first run. Edit the file to change it.`));
+  }
 
   const prev = readJson(path.join(dataDir, RUN_FILE));
   if (prev && alive(prev.pid) && prev.pid !== process.pid) fail(`CivicOS is already running for ${dataDir} (process ${prev.pid}, ${prev.internal}). Stop it first.`);
@@ -328,6 +331,7 @@ async function status(o, dataDir) {
   say(`Data folder:   ${dataDir}`);
   say(`Settings:      ${settings.file}${process.platform !== 'win32' ? (ownerOnly(settings.file) ? ' (owner only)' : '  WARNING: readable by other accounts (should be mode 600)') : ''}`);
   say(`State:         ${env.CIVICOS_STATE ?? 'memory'}${env.CIVICOS_STATE === 'file' ? ` in ${env.CIVICOS_STATE_DIR}` : ''}`);
+  say(`Installation:  ${env.CIVICOS_MODE ?? 'not set (runs as production)'}`);
   say(`Sign-in:       ${env.CIVICOS_AUTH === 'enforce' ? 'required' : env.CIVICOS_AUTH ?? 'production default (required)'}`);
   const run = await running(dataDir);
   let code = 0;

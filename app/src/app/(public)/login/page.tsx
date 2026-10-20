@@ -1,10 +1,27 @@
 import { Card } from '@/components/ui/Card';
 import { Plain } from '@/components/ui/Plain';
 import { SignInButton } from './SignInButton';
+import { samplesAllowed } from '@/lib/ops/mode';
 export const metadata = { title: 'Sign in' };
 
 
 export default function LoginPage() {
+  // A production installation has no demo citizen (lib/ops/mode.ts); citizens sign in through the
+  // nation's identity provider once it is connected (docs/GOVERNMENT_OPERATING_MODEL.md §10.1).
+  if (!samplesAllowed()) {
+    return (
+      <main className="max-w-md mx-auto px-6 py-12 space-y-6">
+        <h1 className="text-3xl font-semibold">Sign in to Civic Wallet</h1>
+        <Card tight>
+          <h2 className="font-semibold">Online sign-in is not open yet</h2>
+          <p className="text-sm text-ink-muted mt-1">
+            Citizens will sign in here through the national identity service once it is connected.
+            Until then, any government office can help you with your application in person.
+          </p>
+        </Card>
+      </main>
+    );
+  }
   return (
     <main className="max-w-md mx-auto px-6 py-12 space-y-6">
       <div>

@@ -1,4 +1,5 @@
 import { authEnforced } from '@/lib/auth/mode';
+import { samplesAllowed } from '@/lib/ops/mode';
 import { PUBLIC_SITES } from '@/lib/auth/public-paths';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -334,7 +335,8 @@ function gate(req: NextRequest, res: NextResponse): NextResponse | Promise<NextR
   if (req.method === 'POST' && SIGN_IN.some(re => re.test(pathname))) return res;
   if (pathname.startsWith('/api/') && MUTATING.has(req.method)) return officialGate(req, res);
   // The citizen demo session opens the Civic Wallet pages only (no API, no console page).
-  if (CITIZEN_DEMO.test(pathname) && req.cookies.get('civicos_session')?.value) return res;
+  // Never in a production installation, which has no demo citizen (lib/ops/mode.ts).
+  if (CITIZEN_DEMO.test(pathname) && samplesAllowed() && req.cookies.get('civicos_session')?.value) return res;
   return readGate(req, res);
 }
 

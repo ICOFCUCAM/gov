@@ -4,10 +4,13 @@ import type { ArchetypeKey, MinistryIncident, QueueItem, QueuePriority } from '@
 import { profileFor } from '@/lib/archetype-profiles';
 import { db } from './state';
 import { seededInt, REGIONS } from './shared';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 const PRIORITIES: QueuePriority[] = ['routine', 'elevated', 'urgent'];
 
 export function seedQueue(id: string): QueueItem[] {
+  // A production installation's queues hold only real cases (lib/ops/mode.ts, directions 10.3).
+  if (!samplesAllowed()) return [];
   const m = db.ministries.find(x => x.id === id);
   const count = 9;
   const items: QueueItem[] = [];
@@ -53,7 +56,8 @@ export function seedIncidents(id: string, archetype: ArchetypeKey): MinistryInci
       label: t.label,
       severity: t.severity,
       detail: t.detail,
-      active: roll < t.likelihood,
+      // Whether an incident of this type is active is simulated: never in a production installation.
+      active: samplesAllowed() && roll < t.likelihood,
       tierIndex: 0,
     };
   });

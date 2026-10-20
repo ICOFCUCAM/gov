@@ -91,8 +91,11 @@ start).
 - **training**: like demo, with a permanent banner "Training installation:
   nothing here is real" on every console and public page.
 - **demo**: today's behaviour, with a permanent banner.
-- Unset: `demo` in development, refused at start in a production build until
-  set (so no government runs in demo mode by accident). The self-host script
+- Unset: `demo` in development; in a production build it fails closed: it runs
+  as production, warns at every start, shows a banner on every page and
+  reports it in `/api/health` until set (so no government runs in demo mode by
+  accident). Built so instead of refusing to start, which would take an
+  already-running deployment offline the moment it is upgraded. The self-host script
   writes `CIVICOS_MODE=production` into a new `civicos.env`, never changing an
   existing value.
 
@@ -518,8 +521,10 @@ records it.
 
 9.1 `SignalKind` gains `record` (authoritative administrative record) and
 `simulated`; `modelled` stays for estimates and model outputs (D 11.4). The
-`SignalTag` shows "Record", "Reported", "Estimate", "Simulation", "Sample",
-"Not connected" in plain words (glossary entries).
+`SignalTag` shows "Simulation", "Sample", "Modelled" and "Not connected" in
+plain words (glossary entries); records, observations and official statements
+carry no warning marker, and their class ("Record", "Observed", "Reported")
+shows where a figure's lineage is opened. (Built in step 1.)
 
 9.2 `Observation` gains optional fields, defaulted for old snapshots
 (`withDefaults()`): `method` ('direct' | 'administrative-count' | 'estimate' |

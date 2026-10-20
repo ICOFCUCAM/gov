@@ -103,6 +103,9 @@ spec:
             # Access gate (app/src/middleware.ts): enforce requires a verified official for every non-public page, read and change.
             - name: CIVICOS_AUTH
               value: {{ .Values.app.auth | quote }}
+            # What the installation is (lib/ops/mode.ts): production (no sample records), training or demo.
+            - name: CIVICOS_MODE
+              value: {{ .Values.app.mode | default "production" | quote }}
             # Proxies in front that append to X-Forwarded-For (the ingress): per-address limits count them from the right.
             - name: CIVICOS_TRUSTED_PROXIES
               value: {{ .Values.app.trustedProxies | default 0 | quote }}

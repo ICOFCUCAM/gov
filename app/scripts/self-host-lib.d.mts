@@ -3,7 +3,7 @@
 export interface CronJob { name: string; schedule: string; method: 'GET' | 'POST'; substrate: boolean }
 export interface SelfHostArgs {
   command: 'start' | 'backup' | 'status'; data: string; port: number; host: string; url?: string;
-  printEnv: boolean; showSecrets: boolean; build: boolean; help: boolean; portSet: boolean; hostSet: boolean;
+  printEnv: boolean; showSecrets: boolean; build: boolean; help: boolean; portSet: boolean; hostSet: boolean; mode?: 'demo';
 }
 export interface Setting { key: string; make: () => string; note?: string }
 export interface KeyPairLike { privateKey: { export(o: { type: 'pkcs8'; format: 'pem' }): string | Buffer } }
@@ -25,11 +25,11 @@ export function exposed(host: string): boolean;
 export function internalUrl(host: string, port: number): string;
 export function parseEnvText(text: string): Map<string, string>;
 export function setupToken(rand?: (n: number) => Buffer): string;
-export function settingsFor(o: { dataDir: string; url: string; rand?: (n: number) => Buffer; keyPair?: () => KeyPairLike }): Setting[];
+export function settingsFor(o: { dataDir: string; url: string; mode?: string; rand?: (n: number) => Buffer; keyPair?: () => KeyPairLike }): Setting[];
 export function restrict(p: string, mode: number, platform?: string): boolean;
 export function ownerOnly(p: string, platform?: string): boolean;
 export function ensureDataDirs(dataDir: string, platform?: string): string;
-export function ensureEnvFile(o: { dataDir: string; url?: string; rand?: (n: number) => Buffer; keyPair?: () => KeyPairLike; platform?: string; now?: Date }): {
+export function ensureEnvFile(o: { dataDir: string; url?: string; mode?: string; rand?: (n: number) => Buffer; keyPair?: () => KeyPairLike; platform?: string; now?: Date }): {
   file: string; created: boolean; added: string[]; conflicts: { key: string; kept?: string; requested: string }[]; env: Record<string, string>;
 };
 export function printableEnv(env: Record<string, string>, showSecrets?: boolean): string;

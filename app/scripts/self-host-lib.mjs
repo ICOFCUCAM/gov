@@ -42,6 +42,8 @@ Options
   --host <address>  the address to answer on (default 127.0.0.1, this computer only;
                     0.0.0.0 answers the whole network: put a TLS reverse proxy in front)
   --url <address>   the address people type to reach it, first run only (default http://localhost:<port>)
+  --demo            first run only: a demonstration installation (sample records and a
+                    banner on every page) instead of a production one (no samples)
   --no-build        do not build when no build exists; stop instead
   --show-secrets    with --print-env, show the secret values too
   -h, --help        this text
@@ -50,7 +52,7 @@ Guide: docs/SELF_HOSTING.md`;
 
 /** Read the command line. Returns the options, or { error } for something it cannot use. */
 export function parseArgs(argv) {
-  const o = { command: 'start', data: 'civicos-data', port: DEFAULT_PORT, host: DEFAULT_HOST, url: undefined, printEnv: false, showSecrets: false, build: true, help: false };
+  const o = { command: 'start', data: 'civicos-data', port: DEFAULT_PORT, host: DEFAULT_HOST, url: undefined, printEnv: false, showSecrets: false, build: true, help: false, mode: undefined };
   const set = { port: false, host: false };
   const rest = [...argv];
   const value = (name, inline) => {
@@ -86,6 +88,7 @@ export function parseArgs(argv) {
         case '--print-env': o.printEnv = true; break;
         case '--show-secrets': o.showSecrets = true; break;
         case '--no-build': o.build = false; break;
+        case '--demo': o.mode = 'demo'; break;
         case '-h': case '--help': case 'help': o.help = true; break;
         default: throw new Error(`Unknown argument ${a} (see --help)`);
       }
@@ -141,10 +144,11 @@ export function setupToken(rand = randomBytes) {
  * value is made only when asked for (`make`), so an existing value is never
  * regenerated.
  */
-export function settingsFor({ dataDir, url, rand = randomBytes, keyPair = () => generateKeyPairSync('ed25519') }) {
+export function settingsFor({ dataDir, url, mode = 'production', rand = randomBytes, keyPair = () => generateKeyPairSync('ed25519') }) {
   const d = path.resolve(dataDir);
   const signing = () => pemOneLine(keyPair().privateKey.export({ type: 'pkcs8', format: 'pem' }).toString());
   return [
+    { key: 'CIVICOS_MODE', make: () => mode, note: 'What this installation is (lib/ops/mode.ts): production (a real government, no sample records), training or demo.' },
     { key: 'CIVICOS_AUTH', make: () => 'enforce', note: 'Sign-in is required for everything but the public pages (lib/auth/mode.ts).' },
     { key: 'CIVICOS_SESSION_SECRET', make: () => rand(48).toString('base64url'), note: 'Signs officials\' sessions. Changing it signs everyone out.' },
     { key: 'CIVICOS_DATA_KEK', make: () => rand(32).toString('base64'), note: 'THE DATA KEY. Encrypts backups and sealed secrets. Keep a safe copy away from this computer:\n# without it the backups and encrypted data cannot be read by anyone. (A whole base64 key is always read as the key, never as a file path.)' },
@@ -193,14 +197,14 @@ export function ensureDataDirs(dataDir, platform = process.platform) {
  * Returns the file, which keys were added, the settings now in force, and the
  * ones where a requested value differs from the file's (`conflicts`).
  */
-export function ensureEnvFile({ dataDir, url, rand, keyPair, platform = process.platform, now = new Date() }) {
+export function ensureEnvFile({ dataDir, url, mode, rand, keyPair, platform = process.platform, now = new Date() }) {
   const d = path.resolve(dataDir);
   const file = path.join(d, ENV_FILE);
   const existed = existsSync(file);
   const current = existed ? parseEnvText(readFileSync(file, 'utf8')) : new Map();
   const added = [];
   let text = '';
-  for (const s of settingsFor({ dataDir: d, url, rand, keyPair })) {
+  for (const s of settingsFor({ dataDir: d, url, mode, rand, keyPair })) {
     if (current.has(s.key) && current.get(s.key) !== '') continue;
     const v = s.make();
     current.set(s.key, v);
@@ -209,6 +213,7 @@ export function ensureEnvFile({ dataDir, url, rand, keyPair, platform = process.
   }
   const conflicts = [];
   if (url && current.get('CIVICOS_PUBLIC_URL') !== url && !added.includes('CIVICOS_PUBLIC_URL')) conflicts.push({ key: 'CIVICOS_PUBLIC_URL', kept: current.get('CIVICOS_PUBLIC_URL'), requested: url });
+  if (mode && current.get('CIVICOS_MODE') !== mode && !added.includes('CIVICOS_MODE')) conflicts.push({ key: 'CIVICOS_MODE', kept: current.get('CIVICOS_MODE'), requested: mode });
   if (!existed) {
     const head = `# CivicOS self-host settings, made by scripts/self-host.mjs on ${now.toISOString()}.\n`
       + `# Private: only the account that runs CivicOS may read this file.\n`

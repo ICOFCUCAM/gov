@@ -82,6 +82,9 @@ services:
       # shows a banner. For anything shared, set a real CIVICOS_SESSION_SECRET
       # of 32+ characters and sign in with the setup code below.
       CIVICOS_AUTH: ${CIVICOS_AUTH:-}
+      # What the installation is (lib/ops/mode.ts): demo here by default, with
+      # sample records and a banner on every page; production for a real one.
+      CIVICOS_MODE: ${CIVICOS_MODE:-demo}
       # Proxies in front that append to X-Forwarded-For (review L-1): 0 when
       # browsers reach port 3000 directly; 1 behind the edge profile (nginx
       # below), and then do not publish port 3000.

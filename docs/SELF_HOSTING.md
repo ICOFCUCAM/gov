@@ -126,7 +126,9 @@ script (edit the file yourself if you must change one):
 | `CIVICOS_SETUP_TOKEN` | The one-time code for the first administrator. |
 | `CIVICOS_AUDIT_KEY`, `CIVICOS_EXCHANGE_KEY`, `CIVICOS_TOKEN_KEY` | Ed25519 keys that sign the audit chain, records exchanged with other installations, and access tokens. |
 
-It also sets `CIVICOS_AUTH=enforce` (sign-in required), `CIVICOS_STATE=file`
+It also sets `CIVICOS_MODE=production` (a real installation: no sample
+records, no demo citizen; start the first run with `--demo` for a
+demonstration with samples and a banner on every page), `CIVICOS_AUTH=enforce` (sign-in required), `CIVICOS_STATE=file`
 with `CIVICOS_STATE_DIR`, `CIVICOS_BACKUP_TARGET=dir` with
 `CIVICOS_BACKUP_DIR`, `CIVICOS_TILES_DIR`, `CIVICOS_AUDIT_ANCHOR_FILE` and
 `CIVICOS_PUBLIC_URL`. A variable set in the shell when you start wins over

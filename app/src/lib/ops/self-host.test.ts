@@ -89,7 +89,7 @@ describe('the settings file', () => {
     const env = Object.fromEntries(parseEnvText(readFileSync(r.file, 'utf8')));
     expect(env).toEqual(r.env);
     expect(env).toMatchObject({
-      CIVICOS_AUTH: 'enforce', CIVICOS_STATE: 'file', CIVICOS_BACKUP_TARGET: 'dir', CIVICOS_PUBLIC_URL: 'http://localhost:3000',
+      CIVICOS_MODE: 'production', CIVICOS_AUTH: 'enforce', CIVICOS_STATE: 'file', CIVICOS_BACKUP_TARGET: 'dir', CIVICOS_PUBLIC_URL: 'http://localhost:3000',
       CIVICOS_STATE_DIR: path.join(dir, 'data', 'state'), CIVICOS_BACKUP_DIR: path.join(dir, 'data', 'backups'),
       CIVICOS_TILES_DIR: path.join(dir, 'data', 'tiles'), CIVICOS_AUDIT_ANCHOR_FILE: path.join(dir, 'data', 'anchors', 'platform-audit-heads.jsonl'),
     });
@@ -142,6 +142,19 @@ describe('the settings file', () => {
     expect(third.added).toEqual(['CIVICOS_TILES_DIR']);
     expect(third.env).toMatchObject({ CIVICOS_PUBLIC_URL: 'https://civicos.example.gov', CIVICOS_LOG_LEVEL: 'warn', CIVICOS_DATA_KEK: first.env.CIVICOS_DATA_KEK, CIVICOS_SESSION_SECRET: first.env.CIVICOS_SESSION_SECRET });
     expect(Object.fromEntries(parseEnvText(readFileSync(first.file, 'utf8')))).toEqual(third.env);
+  });
+
+  it('makes a production installation unless --demo asks for a demonstration, and never changes it later', () => {
+    expect(parseArgs([])).toMatchObject({ mode: undefined });
+    expect(parseArgs(['--demo'])).toMatchObject({ mode: 'demo' });
+    const demo = ensureEnvFile({ dataDir: ensureDataDirs(path.join(dir, 'demo')), url: 'http://localhost:3000', mode: 'demo' });
+    expect(demo.env.CIVICOS_MODE).toBe('demo');
+    const prod = make();
+    expect(prod.env.CIVICOS_MODE).toBe('production');
+    // A later --demo keeps the installation as it is and says so.
+    const again = ensureEnvFile({ dataDir: path.join(dir, 'data'), mode: 'demo' });
+    expect(again.env.CIVICOS_MODE).toBe('production');
+    expect(again.conflicts).toContainEqual({ key: 'CIVICOS_MODE', kept: 'production', requested: 'demo' });
   });
 
   it('tightens the file to owner-only again', () => {

@@ -8,6 +8,8 @@ import { RenderNowProvider } from '@/lib/clock/render-now';
 import { StackTables } from '@/components/ui/StackTables';
 import { OpenModeBanner } from '@/components/ui/OpenModeBanner';
 import { openInProduction } from '@/lib/auth/mode';
+import { InstallationBanner } from '@/components/ui/InstallationBanner';
+import { installationMode, modeUnset } from '@/lib/ops/mode';
 import { getMessages, MESSAGES_GLOBAL } from '@/lib/i18n';
 import { locales as LOCALES } from '@/lib/i18n/config';
 import type { Locale } from '@/lib/types';
@@ -58,6 +60,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <NationRegistry facts={facts} />
         {/* A production server left open on purpose says so on every console page (lib/auth/mode.ts, review L-2). */}
         {openInProduction() ? <OpenModeBanner /> : null}
+        {/* A training or demonstration installation, or a production build without CIVICOS_MODE, says so on every page (lib/ops/mode.ts). */}
+        <InstallationBanner mode={installationMode()} unset={modeUnset()} />
         <StackTables />
         <RenderNowProvider value={Date.now()}>{children}</RenderNowProvider>
       </body>

@@ -54,6 +54,10 @@ app:
   # start and a banner on every console page) leaves it open, for
   # demonstrations (go-live review L-2).
   auth: enforce
+  # What the installation is (CIVICOS_MODE, lib/ops/mode.ts): production (a real
+  # government: no sample records, no demo citizen), training or demo (samples
+  # and simulations with a banner on every page).
+  mode: production
   # Proxies in front of the app that append to X-Forwarded-For
   # (CIVICOS_TRUSTED_PROXIES, go-live review L-1): 1 for the ingress-nginx
   # controller; 2 when a cloud load balancer that appends sits in front of it.

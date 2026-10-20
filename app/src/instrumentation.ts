@@ -26,6 +26,10 @@ export async function register() {
       const problem = sessionSecretProblem();
       if (problem) { console.error(`\nCIVICOS SIGN-IN: ${problem}\n`); log('error', 'auth.session_key', { message: problem }); }
     }
+    // What this installation is (lib/ops/mode.ts): a production build without CIVICOS_MODE runs as production and says so.
+    const { modeUnset, modeDecision, MODE_UNSET_WARNING } = await import('./lib/ops/mode');
+    if (modeUnset()) { console.error(`\n${MODE_UNSET_WARNING}\n`); log('error', 'installation.mode_unset', { message: MODE_UNSET_WARNING }); }
+    else log('info', 'installation.mode', { mode: modeDecision().mode, why: modeDecision().why });
     const { startTracingFromEnv }= await import('./lib/ops/otel');
     const tracing = startTracingFromEnv();
     if (tracing.enabled || tracing.error) log(tracing.error ? 'error' : 'info', 'tracing.start', { ...tracing });

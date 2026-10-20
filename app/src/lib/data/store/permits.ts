@@ -16,10 +16,14 @@ import { db } from './state';
 import { uid, hash, citizen } from './shared';
 import { recordAudit } from './audit';
 import { institutionsKeeping } from './ministries';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 // ── Session ───────────────────────────────────────────────────────────
+// The demo citizen exists only in training and demonstration installations
+// (lib/ops/mode.ts, directions 8.10); a production installation has no
+// citizen session until the nation's identity provider is connected.
 export function getSession(): Session {
-  return { authenticated: true, citizen, method: 'demo' };
+  return samplesAllowed() ? { authenticated: true, citizen, method: 'demo' } : { authenticated: false };
 }
 
 // ── Permits ───────────────────────────────────────────────────────────
