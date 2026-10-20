@@ -536,6 +536,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   first, and the audit chain gets one entry naming both and the replaced
   state's hash. A new store holding the backup system's or the running
   software's own records joins `KEPT_ON_RESTORE` (`lib/backup/state.ts`).
+- Scheduled jobs (register 18.39): every `/api/cron/*` route exports its
+  handler through `cronRoute()` (`lib/ops/cron-runs.ts`: run record, run key,
+  overlap guard, retries, alert); a new job joins `scripts/cron-jobs.json`,
+  `RETRY_POLICY` (`lib/ops/cron-jobs.ts`), the Helm values, `schedule.sql`
+  and the pg_cron migration (`cron-jobs.test.ts`). On Vercel pg_cron drives
+  them; a serverless server backs up only to S3.
 
 ## Who acted
 

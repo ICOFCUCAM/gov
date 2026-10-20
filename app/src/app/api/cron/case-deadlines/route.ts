@@ -9,6 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
+import { cronRoute } from '@/lib/ops/cron-runs';
 import { lapseDeadlines, lapseProposals } from '@/lib/casework/engine';
 import { expireStandings } from '@/lib/organisations/register';
 import { expireGrants } from '@/lib/immigration/register';
@@ -22,7 +23,7 @@ import { listReceipts } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+async function runJob(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const lapsed = lapseDeadlines();
   const expired = expireStandings();
@@ -38,4 +39,6 @@ export async function GET(req: Request) {
   return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length, proposalsLapsed: proposals.length });
 }
 
+// Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).
+export const GET = cronRoute('case-deadlines', runJob);
 export const POST = GET;

@@ -5,6 +5,8 @@ import { canSeeOnboarding } from '@/lib/auth/roles';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { REFERENCE_PROFESSIONS } from '@/lib/professions/register';
+import { beginRun, finishRun, resetCronRuns } from '@/lib/ops/cron-runs';
+import { CRON_JOBS, intervalMinutes } from '@/lib/ops/cron-jobs';
 
 const env = (mode: string) => ({ NODE_ENV: 'test', CIVICOS_MODE: mode } as unknown as NodeJS.ProcessEnv);
 const locked = new Set<string>(routeLock as string[]);
@@ -53,9 +55,28 @@ describe('where setup stands', () => {
     expect(reg.checks.find(c => c.label.startsWith('Register types'))!.done).toBe(false);
   });
 
-  it('never claims scheduled jobs run while no run history is kept', () => {
-    const ops = onboardingStatus({ ...env('demo'), CIVICOS_DATA_KEK: 'x' } as NodeJS.ProcessEnv).tracks.find(t => t.key === 'operations')!;
-    expect(ops.checks.find(c => c.href === '/gov/crons')!.done).toBe(false);
+  it('shows scheduled jobs as running only when every job has a successful recorded run within twice its interval', () => {
+    resetCronRuns();
+    const e = { ...env('demo'), CIVICOS_DATA_KEK: 'x' } as NodeJS.ProcessEnv;
+    const check = () => onboardingStatus(e).tracks.find(t => t.key === 'operations')!.checks.find(c => c.href === '/gov/crons')!;
+    expect(check().done).toBe(false);
+    // Without the substrate the substrate-only jobs are not this installation's.
+    const local = CRON_JOBS.filter(j => !j.substrate);
+    const now = Date.now();
+    const runOk = (name: string, at: number) => { const b = beginRun(name, `test:${name}:${at}`, { trigger: 'manual', now: at }); if (b.kind === 'run') finishRun(name, b.run.id, { outcome: 'ok', status: 200 }, at); };
+    for (const j of local.slice(1)) runOk(j.name, now);
+    expect(check().done).toBe(false);
+    expect(check().detail).toContain(local[0]!.name);
+    // A run older than twice the job's interval does not count.
+    runOk(local[0]!.name, now - 3 * intervalMinutes(local[0]!) * 60_000);
+    expect(check().done).toBe(false);
+    runOk(local[0]!.name, now);
+    expect(check().done).toBe(true);
+    // A failed run does not make a job recorded running.
+    resetCronRuns();
+    for (const j of local) { const b = beginRun(j.name, `f:${j.name}`, { trigger: 'manual', now }); if (b.kind === 'run') finishRun(j.name, b.run.id, { outcome: 'failed', status: 500, error: 'x' }, now); }
+    expect(check().done).toBe(false);
+    resetCronRuns();
   });
 
   it('says which tracks may be done only because of samples', () => {

@@ -17,6 +17,7 @@
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
+import { cronRoute } from '@/lib/ops/cron-runs';
 import { serverClient } from '@/lib/db/client';
 import { signer } from '@/lib/keys/custody';
 import { canonicalWitnessMaterial } from '@/lib/db/signatures';
@@ -29,7 +30,7 @@ const WITNESS_LABEL = 'substrate-self-witness';
 /** The cron secret, compared in constant time (lib/platform-auth.ts). */
 const authorized = (req: Request): boolean => cronAuthorized(req);
 
-export async function GET(req: Request) {
+async function runJob(req: Request) {
   if (!authorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const sb = serverClient();
   if (!sb) return NextResponse.json({ error: 'substrate not configured' }, { status: 503 });
@@ -88,4 +89,6 @@ export async function GET(req: Request) {
   });
 }
 
+// Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).
+export const GET = cronRoute('witness-sweep', runJob);
 export const POST = GET;

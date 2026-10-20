@@ -94,11 +94,11 @@ describe('deployment-agent credential', () => {
 });
 
 describe('scheduled watchdog (/api/cron/update-watchdog)', () => {
-  it('requires the cron secret', () => {
+  it('requires the cron secret', async () => {
     process.env.CIVICOS_CRON_SECRET = 'cron-test-secret';
-    expect(watchdogGET(new Request('http://x/api/cron/update-watchdog')).status).toBe(401);
-    expect(watchdogGET(new Request('http://x/api/cron/update-watchdog', { headers: { authorization: 'Bearer wrong' } })).status).toBe(401);
-    expect(watchdogGET(new Request('http://x/api/cron/update-watchdog', { headers: { authorization: 'Bearer cron-test-secret' } })).status).toBe(200);
+    expect((await watchdogGET(new Request('http://x/api/cron/update-watchdog'))).status).toBe(401);
+    expect((await watchdogGET(new Request('http://x/api/cron/update-watchdog', { headers: { authorization: 'Bearer wrong' } }))).status).toBe(401);
+    expect((await watchdogGET(new Request('http://x/api/cron/update-watchdog', { headers: { authorization: 'Bearer cron-test-secret' } }))).status).toBe(200);
   });
 
   it('records missing reports and falls back to last known good with no one reading the chamber', async () => {
@@ -110,7 +110,7 @@ describe('scheduled watchdog (/api/cron/update-watchdog)', () => {
       vi.setSystemTime(start + minutes * MIN);
       const res = watchdogGET(new Request('http://x/api/cron/update-watchdog', { headers: { authorization: 'Bearer cron-test-secret' } }));
       vi.useRealTimers();
-      return (await res.json()).summary;
+      return (await (await res).json()).summary;
     };
     const first = await tick(4); // one silent interval: degraded, still watching
     expect(first.missingReports).toBe(1);
@@ -132,7 +132,7 @@ describe('scheduled watchdog (/api/cron/update-watchdog)', () => {
     vi.setSystemTime(end + MIN);
     const res = watchdogGET(new Request('http://x/api/cron/update-watchdog', { headers: { authorization: 'Bearer cron-test-secret' } }));
     vi.useRealTimers();
-    expect((await res.json()).summary.passed).toEqual([{ nationId: HOME_NATION, version: '1.4.1' }]);
+    expect((await (await res).json()).summary.passed).toEqual([{ nationId: HOME_NATION, version: '1.4.1' }]);
     expect(nationRecord(HOME_NATION)!.lkg!.version).toBe('1.4.1');
   });
 
@@ -148,7 +148,7 @@ describe('scheduled watchdog (/api/cron/update-watchdog)', () => {
     const t0 = Date.now();
     for (let i = 1; i <= 400; i++) {
       vi.setSystemTime(t0 + i * 22 * 60 * MIN); // ~1 year in 400 runs
-      const res = watchdogGET(new Request('http://x/api/cron/update-watchdog', { headers: { authorization: 'Bearer cron-test-secret' } }));
+      const res = await watchdogGET(new Request('http://x/api/cron/update-watchdog', { headers: { authorization: 'Bearer cron-test-secret' } }));
       expect(res.status).toBe(200);
     }
     vi.useRealTimers();
@@ -165,7 +165,7 @@ describe('scheduled watchdog (/api/cron/update-watchdog)', () => {
     const t0 = Date.now();
     for (let i = 1; i <= 60; i++) {
       vi.setSystemTime(t0 + i * MIN);
-      watchdogGET(new Request('http://x/api/cron/update-watchdog', { headers: { authorization: 'Bearer cron-test-secret' } }));
+      await watchdogGET(new Request('http://x/api/cron/update-watchdog', { headers: { authorization: 'Bearer cron-test-secret' } }));
       expect(['1.4.1', lkg]).toContain(nationRecord(HOME_NATION)!.installedVersion);
     }
     vi.useRealTimers();

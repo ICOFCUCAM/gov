@@ -28,6 +28,7 @@
 import { NextResponse } from 'next/server';
 import { serverClient } from '@/lib/db/client';
 import { cronAuthorized } from '@/lib/platform-auth';
+import { cronRoute } from '@/lib/ops/cron-runs';
 import { anchorPlatformHead } from '@/lib/audit/anchor';
 import { markAnchored } from '@/lib/audit/sign';
 
@@ -40,7 +41,7 @@ interface AnchorResult {
   anchored: boolean;
 }
 
-export async function GET(req: Request) {
+async function runJob(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const platformAnchor = await anchorPlatformHead();
   const h = platformAnchor.head;
@@ -118,4 +119,6 @@ export async function GET(req: Request) {
   });
 }
 
+// Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).
+export const GET = cronRoute('audit-anchor', runJob);
 export const POST = GET;

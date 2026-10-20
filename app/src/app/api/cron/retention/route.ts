@@ -11,12 +11,13 @@
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
+import { cronRoute } from '@/lib/ops/cron-runs';
 import { runRetention } from '@/lib/data/retention';
 import { reverifyAuditChain } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+async function runJob(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const run = runRetention();
   // The full audit-chain check, off any public request path (go-live review M-8); chunked, it yields to requests.
@@ -24,4 +25,6 @@ export async function GET(req: Request) {
   return NextResponse.json({ ok: true, run });
 }
 
+// Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).
+export const GET = cronRoute('retention', runJob);
 export const POST = GET;

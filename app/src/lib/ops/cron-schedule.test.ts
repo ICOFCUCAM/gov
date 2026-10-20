@@ -8,12 +8,15 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const app = join(__dirname, '..', '..', '..');
-const sql = readFileSync(join(app, 'supabase', 'cron', 'schedule.sql'), 'utf8');
-const code = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+for (const file of [join('supabase', 'cron', 'schedule.sql'), join('supabase', 'migrations', '20261027010000_civicos_cron_schedule.sql')]) {
+const sql = readFileSync(join(app, file), 'utf8');
+// The migration also redefines cron_call (which calls pg_net); only its schedule block is a job list.
+const scheduled = file.includes('migrations') ? sql.slice(sql.indexOf('do $schedule$')) : sql;
+const code = scheduled.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
 const jobs = [...code.matchAll(/cron\.schedule\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*\$\$(.*?)\$\$\s*\)/g)]
   .map(m => ({ name: m[1]!, schedule: m[2]!, body: m[3]! }));
 
-describe('supabase/cron/schedule.sql', () => {
+describe(file, () => {
   it('schedules every job', () => {
     expect(jobs.length).toBeGreaterThanOrEqual(15);
     expect(code.match(/cron\.schedule\(/g)!.length).toBe(jobs.length);
@@ -36,3 +39,4 @@ describe('supabase/cron/schedule.sql', () => {
     }
   });
 });
+}

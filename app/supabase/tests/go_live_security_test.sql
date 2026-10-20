@@ -250,6 +250,10 @@ begin
   if (select url from net._calls) <> 'https://gov.nation.test.invalid/api/cron/witness-sweep' then
     raise exception 'FAIL: wrong URL %', (select url from net._calls); end if;
   if (select headers->>'Authorization' from net._calls) <> 'Bearer the-nations-secret' then raise exception 'FAIL: secret not sent as bearer'; end if;
+  -- the scheduled slot as the run key, so a doubled call changes nothing twice (20261027010000)
+  if (select headers->>'X-CivicOS-Scheduler' from net._calls) is distinct from 'pg_cron'
+     or (select headers->>'X-CivicOS-Run-Key' from net._calls) !~ '^slot:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}Z$' then
+    raise exception 'FAIL: scheduler and run key headers not sent: %', (select headers from net._calls); end if;
   if exists (select 1 from civicos.cron_skips where job = 't-job') then raise exception 'FAIL: skip row not cleared after a run'; end if;
 
   -- 5. POST jobs

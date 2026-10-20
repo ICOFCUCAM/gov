@@ -28,6 +28,7 @@ import { targetFromEnv } from '@/lib/backup/target';
 import { installationMode, modeUnset, samplesAllowed } from '@/lib/ops/mode';
 import { listCases } from '@/lib/casework/engine';
 import { HOME_NATION, nationRecord } from '@/lib/data/updates';
+import { scheduledJobsHealthy } from '@/lib/ops/cron-runs';
 
 export type TrackState = 'done' | 'in-progress' | 'not-started' | 'blocked';
 export interface Check { label: string; done: boolean; href: string; detail?: string }
@@ -206,12 +207,16 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       try { target = targetFromEnv(env).kind; } catch (e) { return { checks: [{ label: 'Backup target configured', done: false, href: '/platform', detail: (e as Error).message }], blockedBy: 'The backup target in the environment is incomplete' }; }
       const kek = !!env.CIVICOS_DATA_KEK?.trim();
       const serverless = !!env.VERCEL;
+      // Read from the run history (lib/ops/cron-runs.ts): done when every job this installation runs succeeded within twice its interval.
+      const jobs = scheduledJobsHealthy(env);
+      const jobsDetail = jobs.done
+        ? `${n(jobs.total, 'job')} recorded running on time`
+        : `${jobs.missing.length} of ${jobs.total} without a successful run within twice their interval: ${jobs.missing.slice(0, 6).join(', ')}${jobs.missing.length > 6 ? ', …' : ''}${serverless ? '; hosted on Vercel they need the database scheduler (pg_cron)' : ''}`;
       return {
         checks: [
           { label: 'Backup key set (CIVICOS_DATA_KEK)', done: kek, href: '/platform' },
           { label: 'Backups go off the server (S3)', done: target === 's3', href: '/platform', detail: `Target: ${target}` },
-          // No run history is kept for scheduled jobs yet, so the platform cannot say they run: never shown as done until it can.
-          { label: 'Scheduled jobs recorded running', done: false, href: '/gov/crons', detail: `Not yet checkable: the platform keeps no run history for its scheduled jobs${serverless ? '; hosted on Vercel they also need the database scheduler (pg_cron)' : ''}` },
+          { label: 'Scheduled jobs recorded running', done: jobs.done, href: '/gov/crons', detail: jobsDetail },
         ],
         ...(!kek ? { blockedBy: 'CIVICOS_DATA_KEK is not set in the environment, so no backup can be encrypted' } : {}),
       };
