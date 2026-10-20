@@ -98,9 +98,9 @@ export default function LaboratoryServicesPage() {
           </nav>
           <div className="flex items-center gap-4">
             <Link href="/search?site=health" aria-label={t.search} className="grid h-8 w-8 place-items-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"><span aria-hidden>⌕</span></Link>
-            <button className="flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white" style={{ background: '#d62b34' }}>
+            <Link href="/emergency" className="flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white no-underline" style={{ background: '#d62b34' }}>
               <span aria-hidden>☎</span> Emergency
-            </button>
+            </Link>
           </div>
         </div>
       </header>
@@ -121,7 +121,7 @@ export default function LaboratoryServicesPage() {
             <div className="mt-4 rounded-xl border bg-white p-4 shadow-md lg:absolute lg:-right-2 lg:top-2 lg:mt-0 lg:w-[230px]" style={{ borderColor: LINE }}>
               <div className="text-[15px] font-semibold" style={{ color: NAVY }}>Need help?</div>
               <p className="mt-1 text-[12px] text-slate-600">Talk to our support team for lab-related queries.</p>
-              <button className="mt-3 w-full rounded-md border px-3 py-2 text-[12px] font-semibold" style={{ borderColor: BLUE, color: BLUE }}>◔ Contact Support</button>
+              <Link href="/health#contact" className="mt-3 block w-full rounded-md border px-3 py-2 text-center text-[12px] font-semibold no-underline" style={{ borderColor: BLUE, color: BLUE }}>◔ Contact Support</Link>
             </div>
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function LaboratoryServicesPage() {
                       <p className="mt-1 text-[10px] text-slate-600">{tst.d}</p>
                       <div className="mt-2 flex items-center justify-between">
                         <span className="text-[14px] font-bold" style={{ color: NAVY }}>{formatMoney(Number(tst.p), { digits: 2 })}</span>
-                        <button className="rounded-md border px-2.5 py-1 text-[10px] font-semibold" style={{ borderColor: BLUE, color: BLUE }}>Book Now</button>
+                        <button type="button" disabled title={t.notAvailable} className="cursor-not-allowed rounded-md border px-2.5 py-1 text-[10px] font-semibold opacity-70" style={{ borderColor: BLUE, color: BLUE }}>Book Now<span className="sr-only"> ({t.notAvailable})</span></button>
                       </div>
                     </div>
                   </div>

@@ -9,6 +9,8 @@
 // activity feed). Pure & deterministic — engine + telemetry only.
 
 import * as React from 'react';
+import { NotYetButton } from '@/components/ui/NotYetButton';
+import Link from 'next/link';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { policeOps, emergencyOps, immigrationOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
@@ -218,6 +220,12 @@ function outerUnits(units: NationUnit[], n: number): NationUnit[] {
   }
   return [...best.values()].map(b => b.u);
 }
+
+/** Quick actions with an existing screen: the escalation floor and the directive board. */
+const QUICK_ROUTE: Record<string, string> = {
+  'Activate Emergency Protocol': '/gov/escalations',
+  'Alert All Agencies': '/gov/directives',
+};
 
 export function InteriorCommand({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
@@ -543,11 +551,19 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
           <div className="rounded-[4px] border" style={{ borderColor: LINE, background: PANEL }}>
             <div className="border-b px-3 py-2" style={{ borderColor: LINE }}><span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: INK }}>Quick Actions</span></div>
             <div className="space-y-1 p-2">
-              {quick.map(q => (
-                <button key={q} className="focus-ring flex w-full items-center gap-2 rounded-[3px] border px-2 py-1.5 text-left text-[9px]" style={{ borderColor: LINE, color: SOFT }}>
-                  <span style={{ color: RED }} aria-hidden>▸</span>{q}
-                </button>
-              ))}
+              {quick.map(q => {
+                const cls = 'focus-ring flex w-full items-center gap-2 rounded-[3px] border px-2 py-1.5 text-left text-[9px] no-underline';
+                const href = QUICK_ROUTE[q];
+                return href ? (
+                  <Link key={q} href={href} className={cls} style={{ borderColor: LINE, color: SOFT }}>
+                    <span style={{ color: RED }} aria-hidden>▸</span>{q}
+                  </Link>
+                ) : (
+                  <NotYetButton key={q} reason="the platform holds no operational command powers (deployments, lockdowns, air support, cyber defence); they are ordered through the security services' own systems" className={cls} style={{ borderColor: LINE, color: SOFT }}>
+                    <span style={{ color: RED }} aria-hidden>▸</span>{q}
+                  </NotYetButton>
+                );
+              })}
             </div>
           </div>
           <div className="rounded-[4px] border" style={{ borderColor: LINE, background: PANEL }}>

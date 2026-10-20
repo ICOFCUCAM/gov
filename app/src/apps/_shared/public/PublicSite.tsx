@@ -106,7 +106,9 @@ function Btn({ c, href, primary, icon, label }: { c: Ctx; href?: string; primary
     ? { background: c.th.primary, color: '#fff', borderRadius: c.d.radius }
     : { background: '#fff', color: c.th.ink, border: `1px solid ${c.rule}`, borderRadius: c.d.radius };
   const body = <><span aria-hidden>{icon}</span> {label}</>;
-  return href ? <Link href={href} className={cls} style={style}>{body}</Link> : <button className={cls} style={style}>{body}</button>;
+  // Without a destination the action is not built yet: disabled, and it says so.
+  return href ? <Link href={href} className={cls} style={style}>{body}</Link>
+    : <button type="button" disabled title={c.t.notAvailable} className={`${cls} cursor-not-allowed opacity-70`} style={style}>{body}<span className="sr-only"> ({c.t.notAvailable})</span></button>;
 }
 
 const sampleNote = (c: Ctx) => fill(c.t.sampleNote, { name: c.s.institution.name });

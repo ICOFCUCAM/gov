@@ -371,6 +371,7 @@ export const sw: Messages = {
     contact: 'Mawasiliano',
     contactText: 'Ofisi ya mahusiano ya umma, siku za kazi saa 3 asubuhi hadi saa 11 jioni. Tembelea tawi lililo karibu nawe au tumia lango la wananchi.',
     contactUs: 'Wasiliana Nasi →',
+    notAvailable: 'Bado haipatikani',
     enterEmail: 'Weka barua pepe yako',
     email: 'Barua pepe',
     subscribe: 'Jiandikishe',

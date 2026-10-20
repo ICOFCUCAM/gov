@@ -5,6 +5,7 @@
 // Built to the benchmark. Distinct from every other domain.
 
 import * as React from 'react';
+import { NotYetButton } from '@/components/ui/NotYetButton';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { emergencyCommandView } from '@/lib/gov/health-operations';
@@ -174,7 +175,7 @@ export function EmergencySystem({ id, now, role, withheld }: {
                 <span className="font-mono text-[8px] text-ink-muted">{ch.count}</span>
               </div>
             ))}
-            <button className="focus-ring mt-1 w-full rounded-[3px] border py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: ACC, color: ACC }}>Open radio console</button>
+            <NotYetButton reason="no radio system is connected to the platform" className="focus-ring mt-1 w-full rounded-[3px] border py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: ACC, color: ACC }}>Open radio console</NotYetButton>
           </div>
         </CommandPanel>
       </div>

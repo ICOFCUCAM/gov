@@ -241,7 +241,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
                 </div>
               ))}
             </div>
-            <button className="mt-3 w-full rounded-md border py-1.5 text-[11px] font-semibold" style={{ borderColor: BLUE, color: BLUE }}>{t.allPrograms}</button>
+            <button type="button" disabled title={t.notAvailable} className="mt-3 w-full cursor-not-allowed rounded-md border py-1.5 text-[11px] font-semibold opacity-70" style={{ borderColor: BLUE, color: BLUE }}>{t.allPrograms}<span className="sr-only"> ({t.notAvailable})</span></button>
           </div>
           <div id="contact" className="scroll-mt-24 rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
             <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>{locator?.title ?? t.contact}</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewMap}</span></div>

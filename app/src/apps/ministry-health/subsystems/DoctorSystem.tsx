@@ -7,6 +7,7 @@
 // alerts and a clinical action bar. Distinct clinician-blue rhythm.
 
 import * as React from 'react';
+import { NotYetButton } from '@/components/ui/NotYetButton';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { clinicianWorkstation } from '@/lib/gov/health-operations';
 import { CommandHeader, CommandPanel, RingGauge, TrendChart, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
@@ -269,7 +270,7 @@ export function DoctorSystem({ id, now, role, withheld }: {
             <div className="text-[9px]" style={{ color: C(rb) }}>{p.ai.riskAssessment}</div>
             <div className="mt-1 text-[8px] font-bold uppercase tracking-wider text-ink-muted">Recommended</div>
             <ul className="space-y-0.5">{p.ai.recommended.map((r, i) => <li key={i} className="flex items-center gap-1 text-[9px] text-ink-soft"><span style={{ color: C('ok') }}>✓</span>{r}</li>)}</ul>
-            <button className="focus-ring mt-1.5 w-full rounded-[3px] border py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors" style={{ borderColor: ACC, color: ACC }}>Run full analysis</button>
+            <NotYetButton reason="the platform keeps no patient or clinical record, so there is nothing to analyse; this panel is a simulation" className="focus-ring mt-1.5 w-full rounded-[3px] border py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors" style={{ borderColor: ACC, color: ACC }}>Run full analysis</NotYetButton>
           </CommandPanel>
           <CommandPanel title="Active alerts" meta={`${p.alerts.length}`} accent={ACC} live>
             <div className="space-y-1">

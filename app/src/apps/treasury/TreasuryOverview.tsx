@@ -426,7 +426,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
                 {[['Fiscal Trigger', 'Neutral'], ['Cash Buffer', usd(br.tsaBalanceBn * 2)], ['Contingency Line', usd(12.3)]].map(([a, b]) => (
                   <div key={a} className="mt-1 flex justify-between text-[8px]"><span style={{ color: MUT }}>{a}</span><span style={{ color: INK }}>{b}</span></div>
                 ))}
-                <button className="mt-1.5 w-full rounded-[2px] border py-0.5 text-[7.5px] font-bold uppercase tracking-wider" style={{ borderColor: GOLD, color: GOLD }}>View Controls</button>
+                <Link href="/gov/treasury" className="mt-1.5 block w-full rounded-[2px] border py-0.5 text-center text-[7.5px] font-bold uppercase tracking-wider no-underline" style={{ borderColor: GOLD, color: GOLD }}>View Controls</Link>
               </div>
             </div>
           </Mod>

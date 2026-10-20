@@ -134,6 +134,8 @@ export interface Messages {
     contact: string;
     contactText: string;
     contactUs: string;
+    /** A control whose action is not built yet (disabled, with this as its explanation). */
+    notAvailable: string;
     enterEmail: string;
     email: string;
     subscribe: string;
@@ -844,6 +846,7 @@ export const en: Messages = {
     contact: 'Contact',
     contactText: 'Public-affairs office, weekdays 9am-5pm. Visit your nearest branch or use the citizen portal.',
     contactUs: 'Contact Us →',
+    notAvailable: 'Not available yet',
     enterEmail: 'Enter your email',
     email: 'Email',
     subscribe: 'Subscribe',

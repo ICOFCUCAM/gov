@@ -370,6 +370,7 @@ export const ar: Messages = {
     contact: 'اتصل بنا',
     contactText: 'مكتب الشؤون العامة، أيام العمل من 9 صباحًا إلى 5 مساءً. زر أقرب فرع أو استخدم بوابة المواطن.',
     contactUs: 'تواصل معنا ←',
+    notAvailable: 'غير متاح بعد',
     enterEmail: 'أدخل بريدك الإلكتروني',
     email: 'البريد الإلكتروني',
     subscribe: 'اشترك',

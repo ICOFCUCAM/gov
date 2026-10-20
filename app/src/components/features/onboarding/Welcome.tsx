@@ -8,6 +8,7 @@ import { resolveIdentity } from '@/lib/sovereign-identity';
 import { locales } from '@/lib/i18n/config';
 import { OnboardingFrame, Eyebrow, SealTile, Rule, Corners, hair, CHAMPAGNE, CHAMPAGNE_HI, GOLD } from './Chrome';
 import type { SovereignProfile, Ministry, PlatformSetup } from '@/lib/api/types';
+import { useSignIn, refreshSignIn } from '@/lib/official';
 
 const FORM_LABEL: Record<string, string> = {
   republic: 'Presidential republic', parliamentary: 'Parliamentary republic', federation: 'Federation',
@@ -24,6 +25,16 @@ function greeting(h: number) {
  */
 export function Welcome() {
   const router = useRouter();
+  // Signed in or not is what the server says (/api/auth/official), never assumed.
+  const signedIn = useSignIn()?.official ?? null;
+  // Sign out ends the official's session (as the header menu does), then returns to the cover.
+  const signOut = async () => {
+    const r = await fetch('/api/auth/official', { method: 'DELETE' }).catch(() => null);
+    const out = (await r?.json().catch(() => null)) as { logoutUrl?: string } | null;
+    await refreshSignIn();
+    if (out?.logoutUrl) { window.location.assign(out.logoutUrl); return; }
+    router.push('/');
+  };
   const params = useSearchParams();
   const institutionPath = params.get('path') === 'institution';
 
@@ -83,8 +94,15 @@ export function Welcome() {
   return (
     <OnboardingFrame right={
       <>
-        <span className="hidden items-center gap-2 sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-[#9be7c4] shadow-[0_0_8px_#9be7c4]" />SIGNED IN</span>
-        <Link href="/" className="transition-colors hover:text-[#f4e4bd]">SIGN OUT</Link>
+        {signedIn ? (
+          <>
+            <span className="hidden items-center gap-2 sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-[#9be7c4] shadow-[0_0_8px_#9be7c4]" />SIGNED IN</span>
+            <button type="button" onClick={() => void signOut()} className="transition-colors hover:text-[#f4e4bd]">SIGN OUT</button>
+          </>
+        ) : (
+          <Link href="/sign-in" className="transition-colors hover:text-[#f4e4bd]">SIGN IN</Link>
+        )}
+
       </>
     }>
       <div dir={id.dir} className="flex-1 py-10 lg:py-16">
