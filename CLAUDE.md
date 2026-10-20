@@ -56,6 +56,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   decisions cite a law version from it. Decision records are signed with the
   `decision` key, certificates are checked at `/verify`; reference procedures
   are drafts until a nation approves them. Status: register §18.
+- Organisations (`lib/organisations/register.ts`) change only through the
+  effects in `lib/organisations/procedures.ts`; a standing in a register is
+  changed only by the authority that keeps that register type. Lists, the
+  public check (`/registers`) and the twin carry `publicOrganisation()`;
+  representatives only on the full record under `canReadOrganisation()`.
+  Referrals between institutions are cases (`lib/casework/referral.ts`).
 
 ## Entry flow
 

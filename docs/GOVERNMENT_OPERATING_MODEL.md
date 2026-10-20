@@ -628,6 +628,11 @@ than into the citizen runtime's `work_items`, which keep one owner). What each
 step built and what connecting it for real takes: `docs/INTEGRATION_REGISTER.md`
 §18 (and 1.5, 6.5).
 
+Gate 4 status: built (register §18.11–18.13): the organisations register
+with register types per authority, licensing and accreditation procedures,
+the public check, twin entities and counts, referrals as cases. Open: loading
+existing registers, permits onto cases.
+
 Then Gate 4 (organisations, business registration or licensing,
 accreditation with the facility link and the twin's organisation entities,
 permits onto cases), Gate 5 and Gate 6 as in the directions (§17).
