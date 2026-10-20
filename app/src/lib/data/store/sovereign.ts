@@ -177,8 +177,13 @@ export function applySovereignPreset(
   const preset = SOVEREIGN_PRESETS.find(p => p.key === key);
   if (!preset) return { error: 'Unknown preset' };
   // A constitutional template never overwrites the nation's own facts.
-  const { iso3, regions, constitution, paymentRail, timeZone, emergency, foreignAffairs, map } = db.sovereign;
-  db.sovereign = { ...preset.profile, iso3, regions, constitution, paymentRail, timeZone, emergency, foreignAffairs, map };
+  // Who is responsible for each register (the deployment profile), the further languages and the
+  // assistant choice are the nation's own decisions too: a preset changing them would silently lift
+  // court isolation and the data-protection oversight step.
+  const { iso3, regions, constitution, paymentRail, timeZone, emergency, foreignAffairs, map, deployment, languages, aiAssistant, aiAssistantModel } = db.sovereign;
+  db.sovereign = { ...preset.profile, iso3, regions, constitution, paymentRail, timeZone, emergency, foreignAffairs, map,
+    ...(deployment !== undefined ? { deployment } : {}), ...(languages !== undefined ? { languages } : {}),
+    ...(aiAssistant !== undefined ? { aiAssistant } : {}), ...(aiAssistantModel !== undefined ? { aiAssistantModel } : {}) };
   applyNation({ ...db.sovereign, configured: !!db.setup });
   localizeSeed();
   recordAudit(by, 'sovereign.preset', `Sovereign:${key}`, 'ok', preset.label);

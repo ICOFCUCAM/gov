@@ -82,7 +82,7 @@ describe('durableRoute (./settle.ts)', () => {
 
   it('only calls the handler when no hook is installed (memory and file modes, tests)', async () => {
     const res = new Response('ok');
-    const post = durableRoute('POST', () => res);
+    const post = durableRoute('POST', (_req: Request) => res);
     expect(settleHook()).toBeUndefined();
     expect(await post(new Request('http://x/'))).toBe(res);
   });
