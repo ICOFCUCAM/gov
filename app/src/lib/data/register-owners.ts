@@ -195,6 +195,8 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each release, nation, feature request, order, ticket, advisory, deposit, mirror, shipment, alert, contract and change-control record; record numbers from blocks reserved in civicos.record_counter') },
   { id: 'law', name: 'Laws register: legal instruments, their versions and provisions, and their relations', legal: { kind: 'authority', key: 'lawRegister' }, owner: { where: 'platform', keys: ['__civicosLaw'] }, api: '/api/law', copies: [],
     storage: RECORD_DOCS('each instrument with its versions') },
+  { id: 'documents', name: 'Documents of cases and register records: versions, sealed content, legal holds, disposals', legal: { kind: 'institution', note: 'The institution of the case or record the document belongs to' }, owner: { where: 'platform', keys: ['__civicosDocuments'] }, api: 'lib/records/documents.ts (through the case and register routes)', copies: [],
+    storage: RECORD_DOCS('each document with its versions (content sealed under the data key)') },
   { id: 'access-log', name: 'Access log: reads of restricted and secret records, searches, exports, refusals and permission changes', legal: { kind: 'authority', key: 'dataProtection' }, owner: { where: 'platform', keys: ['__civicosAccessLog'] }, api: 'recordAccess() (lib/records/access-log.ts), read at /api/access-log', copies: [],
     storage: RECORD_DOCS('each entry, hash-chained') },
   { id: 'backups', name: 'Backups: retention policy, RPO/RTO targets, restore proposals and restores (the catalogue itself is the backup target)', owner: { where: 'platform', keys: ['__civicosBackups'] }, api: '/api/platform/backups', copies: [],
