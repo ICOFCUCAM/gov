@@ -53,6 +53,14 @@ const PAGES = [
   { path: '/ops', skip: true },
   { path: '/wallet', skip: false },
   { path: '/ministries/min-health/operations', skip: false },
+  // Government operating model: laws, procedures, registers, cases.
+  { path: '/gov/work', skip: true },
+  { path: '/gov/law', skip: true },
+  { path: '/gov/law/procedures', skip: true },
+  { path: '/gov/civil', skip: true },
+  { path: '/gov/organisations', skip: true },
+  { path: '/gov/immigration', skip: true },
+  { path: '/wallet/applications', skip: false },
   // Onboarding.
   { path: '/welcome', skip: true },
   { path: '/setup', skip: true },
