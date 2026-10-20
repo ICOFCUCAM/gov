@@ -8334,7 +8334,10 @@
                       "credentialType": "string",
                       "issuedAt": "2026-01-15T09:30:00.000Z",
                       "revoked": true,
-                      "reason": "Text"
+                      "reason": "Text",
+                      "status": "revoked",
+                      "sealOk": true,
+                      "sample": true
                     }
                   }
                 }
@@ -43884,7 +43887,12 @@
                         "signerName": "Example",
                         "signedAt": "2026-01-15T09:30:00.000Z",
                         "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                        "nonRepudiation": true
+                        "nonRepudiation": true,
+                        "seal": {
+                          "keyId": "ID-0001",
+                          "publicKeyPem": "string",
+                          "signature": "string"
+                        }
                       }
                     }
                   }
@@ -69004,11 +69012,32 @@
             "type": "string"
           },
           "hash": {
-            "type": "string"
+            "type": "string",
+            "description": "SHA-256 of the canonical record signed (earlier sample signatures: a short content hash)."
           },
           "nonRepudiation": {
             "type": "boolean",
             "const": true
+          },
+          "seal": {
+            "type": "object",
+            "properties": {
+              "keyId": {
+                "type": "string"
+              },
+              "publicKeyPem": {
+                "type": "string"
+              },
+              "signature": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "keyId",
+              "publicKeyPem",
+              "signature"
+            ],
+            "description": "The installation's seal over the record (Ed25519, key custody `decision`): key id, public key and signature."
           }
         },
         "required": [
@@ -74226,6 +74255,22 @@
           },
           "reason": {
             "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "revoked",
+              "superseded",
+              "valid"
+            ],
+            "description": "A certificate of the platform's register (lib/records/certificates.ts): its standing and whether its seal verifies."
+          },
+          "sealOk": {
+            "type": "boolean"
+          },
+          "sample": {
+            "type": "boolean",
+            "description": "Sample credentials (VC-…, REV-…) exist only in demonstration and training installations."
           }
         },
         "required": [

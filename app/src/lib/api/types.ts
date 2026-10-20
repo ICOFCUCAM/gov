@@ -233,6 +233,11 @@ export interface VerifyResult {
   issuedAt?: ISODate;
   revoked?: boolean;
   reason?: string;           // when invalid
+  /** A certificate of the platform's register (lib/records/certificates.ts): its standing and whether its seal verifies. */
+  status?: 'valid' | 'superseded' | 'revoked';
+  sealOk?: boolean;
+  /** Sample credentials (VC-…, REV-…) exist only in demonstration and training installations. */
+  sample?: boolean;
 }
 
 // ── Digital signatures ────────────────────────────────────────────────
@@ -247,8 +252,11 @@ export interface SignatureResult {
   documentId: string;
   signerName: string;
   signedAt: ISODate;
+  /** SHA-256 of the canonical record signed (earlier sample signatures: a short content hash). */
   hash: string;
   nonRepudiation: true;
+  /** The installation's seal over the record (Ed25519, key custody `decision`): key id, public key and signature. */
+  seal?: { keyId: string; publicKeyPem: string; signature: string };
 }
 
 // ── Municipal onboarding ──────────────────────────────────────────────
