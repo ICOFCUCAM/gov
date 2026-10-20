@@ -124,7 +124,7 @@ script (edit the file yourself if you must change one):
 | `CIVICOS_SESSION_SECRET` | Signs officials' sign-in sessions. Changing it signs everyone out. |
 | `CIVICOS_CRON_SECRET` | Lets the scheduler call the scheduled jobs (`/api/cron/*`) and nothing else. |
 | `CIVICOS_SETUP_TOKEN` | The one-time code for the first administrator. |
-| `CIVICOS_AUDIT_KEY`, `CIVICOS_EXCHANGE_KEY`, `CIVICOS_TOKEN_KEY` | Ed25519 keys that sign the audit chain, records exchanged with other installations, and access tokens. |
+| `CIVICOS_AUDIT_KEY`, `CIVICOS_EXCHANGE_KEY`, `CIVICOS_TOKEN_KEY`, `CIVICOS_DECISION_KEY` | Ed25519 keys that sign the audit chain, records exchanged with other installations, access tokens, and legal decisions and certificates (keep a safe copy of the decision key: certificates are checked against it). |
 
 It also sets `CIVICOS_MODE=production` (a real installation: no sample
 records, no demo citizen; start the first run with `--demo` for a

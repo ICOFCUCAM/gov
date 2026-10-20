@@ -111,11 +111,11 @@ describe('the settings file', () => {
     expect(SETUP_TOKEN_LENGTH).toBeGreaterThanOrEqual(MIN_SETUP_TOKEN);
     expect(env.CIVICOS_SETUP_TOKEN).toMatch(/^[A-HJ-NP-Z2-9]+$/);
     // Signing keys: Ed25519 PEM on one line (\n), as lib/crypto/signing-key.ts reads them.
-    for (const k of ['CIVICOS_AUDIT_KEY', 'CIVICOS_EXCHANGE_KEY', 'CIVICOS_TOKEN_KEY']) {
+    for (const k of ['CIVICOS_AUDIT_KEY', 'CIVICOS_EXCHANGE_KEY', 'CIVICOS_TOKEN_KEY', 'CIVICOS_DECISION_KEY']) {
       expect(env[k]).toMatch(/^-----BEGIN PRIVATE KEY-----\\n.+\\n-----END PRIVATE KEY-----$/);
       expect(createPrivateKey(env[k]!.replace(/\\n/g, '\n')).asymmetricKeyType).toBe('ed25519');
     }
-    expect(new Set([env.CIVICOS_AUDIT_KEY, env.CIVICOS_EXCHANGE_KEY, env.CIVICOS_TOKEN_KEY]).size).toBe(3);
+    expect(new Set([env.CIVICOS_AUDIT_KEY, env.CIVICOS_EXCHANGE_KEY, env.CIVICOS_TOKEN_KEY, env.CIVICOS_DECISION_KEY]).size).toBe(4);
   });
 
   it('a data key that starts with "/" is still read as the key', () => {

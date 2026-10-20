@@ -157,6 +157,7 @@ export function settingsFor({ dataDir, url, mode = 'production', rand = randomBy
     { key: 'CIVICOS_AUDIT_KEY', make: signing, note: 'Signs the audit chain\'s heads (Ed25519).' },
     { key: 'CIVICOS_EXCHANGE_KEY', make: signing, note: 'Signs records exchanged with other installations (Ed25519).' },
     { key: 'CIVICOS_TOKEN_KEY', make: signing, note: 'Signs access tokens for connected systems (Ed25519).' },
+    { key: 'CIVICOS_DECISION_KEY', make: signing, note: 'Seals legal decisions and certificates (Ed25519); keep a safe copy: certificates are checked against it.' },
     { key: 'CIVICOS_STATE', make: () => 'file', note: 'Where the platform keeps its state: files in CIVICOS_STATE_DIR.' },
     { key: 'CIVICOS_STATE_DIR', make: () => path.join(d, 'state') },
     { key: 'CIVICOS_BACKUP_TARGET', make: () => 'dir', note: 'Backups (encrypted with the data key) go to this folder. Copy it somewhere else regularly.' },
