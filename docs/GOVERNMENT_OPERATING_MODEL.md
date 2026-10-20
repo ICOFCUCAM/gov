@@ -639,6 +639,12 @@ intake and referral, court cases with hearings and the public cause list.
 Open by design: asylum, border crossings, investigations and evidence,
 judgment publication, each with its own safeguards and legal review.
 
+Cross-cutting status: oversight of access (the access watch, reads of the
+log logged, shortening it needs the data-protection authority; register
+§18.17), retention of cases under procedures (anonymise only, register 1.44),
+case work counted in the twin per institution and month (§18.18), exchange
+services for person, organisation and immigration status (§18.8).
+
 Then Gate 4 (organisations, business registration or licensing,
 accreditation with the facility link and the twin's organisation entities,
 permits onto cases), Gate 5 and Gate 6 as in the directions (§17).
