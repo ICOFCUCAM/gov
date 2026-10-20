@@ -15,6 +15,11 @@
 // platform answers. This module is the only app code that writes those
 // tables (register-owners.test.ts checks); it runs on the server only.
 //
+// Cases under procedures (lib/casework/) are mirrored the same way, one row
+// per case in civicos.case_mirror, carrying progress only (procedure, owner,
+// stage, priority, next deadline, approval waiting): no fields, parties,
+// documents or decisions leave the platform.
+//
 // When the platform first meets a substrate that already holds directives
 // (an installation from before this change, when the substrate owned them),
 // `adoptSubstrateDirectives()` copies the ones the platform lacks into the
@@ -26,10 +31,11 @@ import { logger } from '@/lib/ops/log';
 import type { DirectiveRow } from '@/lib/db/types';
 import { allDirectiveRefs, directive, adoptDirectives } from '@/lib/data/directives';
 import { institutionRows } from '@/lib/institution/charter-register';
+import { getCase, listCases } from '@/lib/casework/engine';
 
-export type MirrorKind = 'directive' | 'institutions';
+export type MirrorKind = 'directive' | 'institutions' | 'case';
 export interface MirrorItem {
-  /** `directive:<ref>` or `institutions`. */
+  /** `directive:<ref>`, `case:<id>` or `institutions`. */
   id: string;
   kind: MirrorKind;
   key: string;
@@ -67,7 +73,7 @@ export function mirrorConfigured(): boolean { return client() !== null; }
  */
 export function queueMirror(kind: MirrorKind, key: string = kind): void {
   if (!mirrorConfigured()) return;
-  const id = kind === 'directive' ? `directive:${key}` : kind;
+  const id = kind === 'institutions' ? kind : `${kind}:${key}`;
   const d = db();
   const had = d.items.find(i => i.id === id);
   if (had) had.rev = (had.rev ?? 0) + 1;
@@ -109,11 +115,12 @@ export function flushMirror(): Promise<void> {
   return run;
 }
 
-/** Queue every directive and the institutions, then write them: the full re-copy the hourly cron runs. */
+/** Queue every directive, the institutions and every open case, then write them: the full re-copy the hourly cron runs. */
 export async function reconcileMirror(): Promise<MirrorStatus> {
   if (mirrorConfigured()) {
     for (const ref of allDirectiveRefs()) queueMirror('directive', ref);
     queueMirror('institutions');
+    for (const c of listCases({ open: true })) queueMirror('case', c.id);
     await flushMirror();
   }
   return mirrorStatus();
@@ -172,6 +179,12 @@ async function write(sb: Client, item: MirrorItem): Promise<string | null> {
     const { error } = await sb.rpc('civicos_mirror_directive', { p_row: row });
     return error ? error.message : null;
   }
+  if (item.kind === 'case') {
+    const row = caseMirrorRow(item.key);
+    if (!row) return null;
+    const { error } = await sb.rpc('civicos_mirror_case', { p_row: row });
+    return error ? error.message : null;
+  }
   for (const row of institutionRows()) {
     const { error } = await sb.rpc('civicos_mirror_institution', {
       p_charter_id: row.charterId, p_label: row.label, p_kind: row.kind, p_domain: row.domain,
@@ -180,6 +193,18 @@ async function write(sb: Client, item: MirrorItem): Promise<string | null> {
     if (error) return `${row.charterId}: ${error.message}`;
   }
   return null;
+}
+
+/** What the substrate keeps of a case: its progress, never its content. */
+export function caseMirrorRow(id: string): Record<string, string | number | boolean | null> | null {
+  const c = getCase(id);
+  if (!c) return null;
+  const next = c.deadlines.filter(d => !d.met && !d.lapsed).sort((a, b) => a.due.localeCompare(b.due))[0];
+  return {
+    id: c.id, ref: c.ref, procedure_key: c.package.key, procedure_version: c.package.version, owner_institution: c.owner,
+    stage: c.stage, priority: c.priority, sensitivity: c.sensitivity, pending_approval: Boolean(c.pending),
+    next_due: next?.due ?? null, source: c.source, opened_at: c.openedAt, closed_at: c.closedAt ?? null,
+  };
 }
 
 // The charter rows the mirror copies are the platform's register

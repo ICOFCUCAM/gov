@@ -24,6 +24,7 @@ import { getDocument } from '@/lib/records/documents';
 import { activePackage, getPackage, ownerInstitution } from './packages';
 import { addDays, lapsed } from './calendar';
 import type { Case, CasePackage, ActionSpec, FieldSpec, Party, Step } from './types';
+import { queueMirror } from '@/lib/db/mirror';
 
 interface CaseDb { cases: Case[]; seq: number }
 const g = globalThis as unknown as { __civicosCases?: CaseDb };
@@ -90,6 +91,8 @@ const facts = (c: Case, a?: ActionSpec) => ({
 
 function audit(actor: Actor, action: string, c: Case, detail: string) {
   recordAudit(actor.name, action, `Case:${c.ref}`, 'ok', `${c.package.key}@${c.package.version} · ${detail}`);
+  // The substrate's copy of the case's progress (lib/db/mirror.ts), after the change.
+  queueMirror('case', c.id);
 }
 
 // ── Opening ───────────────────────────────────────────────────────────────────
