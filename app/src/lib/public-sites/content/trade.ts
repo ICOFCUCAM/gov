@@ -76,6 +76,13 @@ export const trade: SiteContent = {
       to: '/wallet/permits/new',
     },
     { title: 'Trade Statistics', subtitle: 'Public data', color: '#e08a2b', icon: '✦', to: 'statistics' },
+    {
+      title: 'Check a business',
+      subtitle: 'Registered or licensed?',
+      color: '#2f6f8f',
+      icon: '✓',
+      to: '/registers',
+    },
   ],
   featured: [
     {

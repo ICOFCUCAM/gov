@@ -70,6 +70,13 @@ export const judiciary: SiteContent = {
       icon: '✚',
       to: '/wallet/services',
     },
+    {
+      title: 'Cause list',
+      subtitle: 'Hearings this week',
+      color: '#2f6f8f',
+      icon: '☰',
+      to: '/courts/cause-list',
+    },
   ],
   featured: [
     {
