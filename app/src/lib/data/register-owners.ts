@@ -209,6 +209,8 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each case with its history') },
   { id: 'civil', name: 'Civil register: persons and their births, deaths and marriages', legal: { kind: 'authority', key: 'civilRegistration' }, owner: { where: 'platform', keys: ['__civicosCivil'] }, api: 'lib/civil/register.ts (through civil registration cases, /api/cases; read at /api/civil)', copies: [],
     storage: RECORD_DOCS('each person with its versions, each vital event') },
+  { id: 'organisations', name: 'Organisations register: companies, NGOs, universities and other regulated bodies, their standing in each register type (registered, licensed, accredited), versions and linked sites', legal: { kind: 'authority', key: 'businessRegister' }, owner: { where: 'platform', keys: ['__civicosOrganisations'] }, api: 'lib/organisations/register.ts (through licensing and accreditation cases, /api/cases; read at /api/organisations, checked publicly at /registers)', copies: [],
+    storage: RECORD_DOCS('each organisation with its versions and standings, each register type') },
   { id: 'delegations', name: 'Delegations: who may act for whom, in which procedures, until when', legal: { kind: 'authority', key: 'businessRegister' }, owner: { where: 'platform', keys: ['__civicosDelegations'] }, api: 'lib/records/delegations.ts', copies: [],
     storage: RECORD_DOCS('each delegation') },
   { id: 'access-log', name: 'Access log: reads of restricted and secret records, searches, exports, refusals and permission changes', legal: { kind: 'authority', key: 'dataProtection' }, owner: { where: 'platform', keys: ['__civicosAccessLog'] }, api: 'recordAccess() (lib/records/access-log.ts), read at /api/access-log', copies: [],
