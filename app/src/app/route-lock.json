@@ -47,6 +47,7 @@
   "/gov/constitutional",
   "/gov/coordination",
   "/gov/crons",
+  "/gov/customs",
   "/gov/directives",
   "/gov/directives/[ref]",
   "/gov/directory",
