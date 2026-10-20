@@ -35,3 +35,16 @@ describe('directives kept by the platform', () => {
     expect(listDirectives({ status: 'drafting' }).map(d => d.ref)).toEqual(['X-1']);
   });
 });
+
+describe('legal basis', () => {
+  it('cites the provisions a directive rests on, as in force on the day, and refuses unknown ones', async () => {
+    const { recordVersion, confirmVersion, resetLaw } = await import('@/lib/law/register');
+    resetLaw();
+    const r = recordVersion({ instrument: { title: 'Public Service Act', type: 'act', jurisdiction: 'X', year: 2001, number: '3', issuingAuthority: 'Parliament' }, dates: { inForce: '2001-01-01' }, provisions: [{ eId: 'sec_4', num: '4', text: 'The minister may issue instructions.' }] }, 'A', 'a');
+    if ('error' in r) throw new Error(r.error);
+    confirmVersion(r.instrument.id, r.version.id, 'B', 'b');
+    const d = draftDirective({ ref: 'DIR-LB-1', title: 'Instruction', by: 'Officer', legalBasis: [{ instrument: r.instrument.id, eId: 'sec_4' }] });
+    expect(d).toMatchObject({ payload: { legalBasis: [{ instrument: r.instrument.id, eId: 'sec_4', version: r.version.id, digest: r.version.digest, num: '4' }] } });
+    expect(draftDirective({ ref: 'DIR-LB-2', title: 'Instruction', by: 'Officer', legalBasis: [{ instrument: r.instrument.id, eId: 'sec_9' }] })).toHaveProperty('error');
+  });
+});

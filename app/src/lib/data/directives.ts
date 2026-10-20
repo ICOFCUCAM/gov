@@ -7,6 +7,7 @@
 // each change (lib/db/mirror.ts); same record shape, so the substrate's own
 // aggregates and realtime feeds keep working.
 
+import { cite, type Citation } from '@/lib/law/register';
 import { randomUUID } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
 import type { DirectiveRow } from '@/lib/db/types';
@@ -36,7 +37,7 @@ export function directive(ref: string): DirectiveRow | undefined {
   return r ? { ...r, targets: [...r.targets] } : undefined;
 }
 
-export function draftDirective(input: { ref?: string; kind?: string; issuedByCharterId?: string; title?: string; citation?: string | null; targets?: string[]; payload?: Record<string, unknown>; by?: string }): DirectiveRow | { error: string } {
+export function draftDirective(input: { ref?: string; kind?: string; issuedByCharterId?: string; title?: string; citation?: string | null; legalBasis?: { instrument?: string; eId?: string }[]; targets?: string[]; payload?: Record<string, unknown>; by?: string }): DirectiveRow | { error: string } {
   const by = input.by?.trim();
   if (!by) return { error: 'Name the official drafting the directive' };
   const ref = (input.ref ?? '').trim();
@@ -46,11 +47,19 @@ export function draftDirective(input: { ref?: string; kind?: string; issuedByCha
   if (!title) return { error: 'Give the directive a title' };
   const kind = KINDS.includes(input.kind ?? '') ? input.kind! : 'instruction';
   const now = new Date().toISOString();
+  // The legal basis (directions 7.1): each provision resolved to the version in force today, kept as it was.
+  const legalBasis: Citation[] = [];
+  for (const l of (input.legalBasis ?? []).slice(0, 20)) {
+    const c = cite(String(l?.instrument ?? ''), String(l?.eId ?? ''), now.slice(0, 10));
+    if ('error' in c) return { error: `Legal basis: ${c.error}` };
+    legalBasis.push(c);
+  }
   const row: DirectiveRow = {
     id: randomUUID(), ref, kind, issued_by_charter_id: (input.issuedByCharterId ?? 'platform').trim() || 'platform',
     issued_by_name: by, title: title.slice(0, 300), citation: input.citation?.trim() || null, status: 'drafting',
     targets: (input.targets ?? []).map(t => String(t).trim()).filter(Boolean).slice(0, 50),
-    payload: input.payload && typeof input.payload === 'object' ? input.payload : {},
+    // The legal basis travels in the payload (the substrate mirror's columns stay as they are).
+    payload: { ...(input.payload && typeof input.payload === 'object' ? input.payload : {}), ...(legalBasis.length ? { legalBasis } : {}) },
     signed_at: null, signed_by_id: null, effective_at: null, rescinded_at: null, created_at: now, updated_at: now,
   };
   db().rows.push(row);
