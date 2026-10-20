@@ -253,7 +253,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   connected case system (`…/queue/feed`, its own `ccf_` key, stored as a hash;
   it updates only the cases it sent). Example cases carry
   `source: 'sample'` and show the Sample marker; never remove them except at
-  an official's request.
+  an official's request. Agreed direction (`docs/GOVERNMENT_OPERATING_DIRECTIONS.md`
+  10.3, 20.5): a production installation will start with no sample records,
+  while demo and training installations keep them, labelled; until that is
+  built, the rule above stands.
 - The national facility register (`lib/data/facilities.ts`, `/gov/sites`,
   `docs/FACILITY_REGISTER_REVIEW.md`) is the only place physical sites enter:
   recorded by the owning institution with longitude/latitude and how they

@@ -21,7 +21,7 @@ Status words used below:
 - **Adopted**: recommended by the review, checked against the code and the
   rules, and taken on; the owner may still overrule it.
 - **Qualified**: taken on with a stated change (§19 gives the reasons).
-- **Open**: needs the owner's decision (§20).
+- **Open**: needs the owner's decision (none at present; §20 records the last ones, all agreed).
 - **Exists**: already built; the direction is to keep and extend it.
 
 ---
@@ -135,8 +135,7 @@ DHIS2...) is shown with that system as its source.
 items (`civicos.work_items`, Supabase only) and the browser-only
 `RuntimeQueue` (`lib/gov/runtime-store.ts`). They are brought onto one
 platform-owned workflow foundation (§5) with the substrate as a mirror; each
-existing screen stays and becomes a view of it. **Open (§20.1)** for the
-owner's final approval.
+existing screen stays and becomes a view of it. **Agreed (§20.1).**
 
 ## 4. Shared core versus domain modules
 
@@ -325,7 +324,7 @@ the backend: identity (who), authority (what they may do, legally and
 organisationally), record (which data they may read or change), execution
 (which validated operation, producing what evidence).
 
-8.2 **Adopted, changes current behaviour.** An administrator does not
+8.2 **Agreed (§20.6), changes current behaviour.** An administrator does not
 automatically gain the authority to issue a visa, alter a judgment or view
 every police file. Today `roles.ts` says an administrator "can do everything
 an official can". Domain decisions will require the domain authority (the
@@ -421,10 +420,10 @@ marked as simulation.
 environment label visible on every screen.
 
 10.3 **Adopted.** Synthetic seed data cannot enter a production installation's
-records. **Open (§20.5)**: this changes the current rule in `CLAUDE.md` that
-example cases are kept "except at an official's request"; proposed: a
-production installation starts with no sample records at all, demo and
-training installations keep them, marked.
+records. **Agreed (§20.5)**: a production installation starts with no sample
+records at all; demo and training installations keep them, marked. This
+changes the earlier `CLAUDE.md` rule that example cases are kept "except at
+an official's request" (updated there).
 
 10.4 **Adopted.** A simulation never generates an official case, certificate
 or government decision.
@@ -803,7 +802,7 @@ recovery; dashboards and the twin switched from simulation to records.
 business registration or licensing, (3) university accreditation, (4)
 immigration visa with constrained scope. Police: a limited incident intake and
 referral demonstration early, not a full investigation system in the first
-production milestone. **Open (§20.2)** for the owner's confirmation; this
+production milestone. **Agreed (§20.2).** This
 replaces the earlier proposal that put police incident-to-case in the first
 four.
 
@@ -910,7 +909,7 @@ consider only if a nation needs policy interchange.
 CivicOS keeps its own module behind the same interface because many target
 installations (single computer, small nations, air-gapped) cannot depend on a
 separate system, and the preservation doctrine keeps the existing civil
-registry screens. OpenCRVS is evaluated first as a connector. **Open (§20.3)**.
+registry screens. OpenCRVS is evaluated first as a connector. **Agreed (§20.3)**.
 
 19.4 *Platform-owned workflow foundation.* The reviewer did not know about the
 Supabase substrate; the owner's decision (2.2) that the platform owns and the
@@ -928,7 +927,10 @@ and Tiles, SensorThings, SDMX, CloudEvents and AsyncAPI, OpenAPI, OIDC,
 WebAuthn passkeys, PROV, provenance and escrow, backups and DR, key custody,
 self-hosting, federation grants).
 
-## 20. Open decisions for the owner
+## 20. Decisions put to the owner (all agreed)
+
+All seven were agreed by the owner on 20 October 2026 ("yes to all"). They are
+binding in the same way as §2.
 
 20.1 Approve the platform as the one owner of casework, with the substrate as
 a mirror, bringing permits, ministry task lists, substrate work items and the
