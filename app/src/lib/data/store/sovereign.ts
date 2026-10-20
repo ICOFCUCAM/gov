@@ -1,5 +1,6 @@
 // The sovereign profile, cabinet overview, seed localisation, first-run setup and presets.
 import { locales } from '@/lib/i18n/config';
+import { checkDeployment, authorityIn, type AuthorityKey } from '@/lib/nation/deployment';
 import { isWorldview } from '@/lib/map/disputed';
 import { applyNation, nationPaymentRail } from '@/lib/nation/registry';
 import type {
@@ -13,6 +14,9 @@ import { citizen, REGIONS } from './shared';
 import { recordAudit, verifyAuditChain } from './audit';
 
 // ── Sovereign profile + cabinet (global-state neutrality) ────────────
+/** The institution the nation named as legally responsible for a register (deployment profile), if any. */
+export const authorityFor = (key: AuthorityKey): string | undefined => authorityIn(db.sovereign.deployment, key);
+
 export function getSovereign(): SovereignProfile {
   return db.sovereign;
 }
@@ -62,6 +66,12 @@ export function setSovereign(
   }
   if (patch.languages !== undefined && (!Array.isArray(patch.languages) || patch.languages.length > 10 || patch.languages.some(l => typeof l !== 'string' || !locales.some(x => x.code === l)))) {
     return { error: 'Further languages must be language codes the platform has' };
+  }
+  if (patch.deployment !== undefined) {
+    const d = checkDeployment(patch.deployment, db.ministries.filter(m => m.status !== 'merged').map(m => m.id));
+    if ('error' in d) return d;
+    // Each part sent replaces that part; parts not sent stay as they were.
+    patch = { ...patch, deployment: { ...(db.sovereign.deployment ?? {}), ...d } };
   }
   db.sovereign = { ...db.sovereign, ...patch };
   applyNation({ ...db.sovereign, configured: !!db.setup });

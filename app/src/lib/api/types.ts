@@ -1,6 +1,7 @@
 // CivicOS — Phase 1 API contract types.
 // These types are the contract between UI and backend. The backend
 // implementation is swappable (mock adapter now; sovereign datastore later).
+import type { DeploymentProfile } from '@/lib/nation/deployment';
 
 export type ISODate = string;
 
@@ -683,6 +684,7 @@ export interface SovereignProfile {
   constitution?: NationalConstitution; // the nation's own constitutional facts, over the form-of-state template
   map?: NationMapSettings;  // how the nation's maps are drawn (capital, projection); defaults from the map data
   domain?: string;          // the nation's own web domain (e.g. data.gov.ke); persistent identifiers of the twin are minted under it
+  deployment?: DeploymentProfile; // who is responsible for each register, which modules run, identity and signatures (lib/nation/deployment.ts)
 }
 
 /** The nation's own map settings. Anything left out falls back to the map data
