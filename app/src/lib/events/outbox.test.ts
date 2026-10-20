@@ -115,5 +115,7 @@ describe('organisation events', () => {
     expect(EVENT_ACTIONS.test('tax.assess')).toBe(false);
     expect(EVENT_ACTIONS.test('profession.suspended')).toBe(true);
     expect(EVENT_ACTIONS.test('health.capacity.record')).toBe(false);
+    expect(EVENT_ACTIONS.test('customs.release')).toBe(true);
+    expect(EVENT_ACTIONS.test('customs.assess')).toBe(false);
   });
 });

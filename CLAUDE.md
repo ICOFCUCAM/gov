@@ -94,6 +94,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   are on the professions register, each profession kept by its regulator.
   Public, administrative and clinical data stay apart: no patient or clinical
   field anywhere, no national patient record; returns are aggregates.
+- Customs (`lib/customs/`): duty only from the approved `customs.tariff` rule
+  or entered with reasons; the control channel is an officer's choice with
+  reasons, never a score; no seizure, penalty or detention powers. Others
+  learn only whether goods were released (`customs.release`).
 - Audit administration stays apart from operations: administrators do not
   read the access log, reading it is itself logged, and shortening it needs
   the data-protection authority after two administrators
