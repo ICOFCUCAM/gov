@@ -98,7 +98,9 @@ registerEffect('customs.assess', ({ case: c, actor, now }: EffectContext) => {
   if ('error' in lines) return lines;
   const r = recordDuty(d.number, lines, c.id, actor.name, now);
   if ('error' in r) return r;
-  return { facts: { assessment: r.assessment!.reference, dutyMinor: r.assessment!.totalMinor }, after: (dec?: { id: string }) => { if (dec) attachDutyDecision(r.number, dec.id); } };
+  // Every tariff version the lines were assessed with, once each, kept on the sealed decision.
+  const rules = [...new Map(lines.flatMap(l => l.method.kind === 'rule' ? [[`${l.method.rule}@${l.method.version}`, { key: l.method.rule, version: l.method.version, digest: l.method.digest }] as const] : [])).values()];
+  return { facts: { assessment: r.assessment!.reference, dutyMinor: r.assessment!.totalMinor }, ...(rules.length ? { rules } : {}), after: (dec?: { id: string }) => { if (dec) attachDutyDecision(r.number, dec.id); } };
 });
 
 registerEffect('customs.issueNotice', ({ case: c, actor }: EffectContext) => {

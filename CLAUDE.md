@@ -98,6 +98,26 @@ What has been built is locked. Work only upgrades it toward the vision in
   or entered with reasons; the control channel is an officer's choice with
   reasons, never a score; no seizure, penalty or detention powers. Others
   learn only whether goods were released (`customs.release`).
+- Every decision step is classified in `lib/permits/decisions.ts` (permit
+  mapping, deployment-profile domain, or refused in production when
+  unclassified); the case engine checks it when a decision is proposed and
+  when it is made, and the sealed decision records the mapping and rule
+  versions (`authority`, `rules`). A new procedure family joins the
+  classification or names `authority.permitType` on its package.
+- An approved mapping can be suspended in an emergency
+  (`suspendMapping()`): no new decision under it; confirmed, reviewed and
+  lifted by a different official; periods from the country's policy.
+- Two officials are needed for the platform minimum in
+  `lib/casework/dual-control-policy.ts` whatever a procedure says; the
+  country adds steps, never removes them. Dual control compares people
+  (`personOf()`, identity-provider link) and records `independence`; a
+  waiting proposal lapses and is kept (`lapsedProposals`).
+- The public professional check takes one person by full name (the number
+  only narrows it), shows the profession's `publicFields`, is rate-limited
+  and watched for harvesting; bulk checks go through `professional.standing`.
+- A data restore keeps the event outbox and cursors, voids events after the
+  restored point and raises `restoreepoch`; consumers re-read on
+  `backup.restore` (docs/DISASTER_RECOVERY.md).
 - Audit administration stays apart from operations: administrators do not
   read the access log, reading it is itself logged, and shortening it needs
   the data-protection authority after two administrators

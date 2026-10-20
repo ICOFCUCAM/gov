@@ -8,6 +8,12 @@ const nextConfig = {
   poweredByHeader: false,
   // No next/image is used; the image optimizer stays off.
   images: { unoptimized: true },
+  // Compile in a separate worker that exits before type checking and linting
+  // start. Next.js turns the worker off whenever a custom webpack() hook is
+  // present (the i18n replacement below), which kept the compiler's ~5 GB
+  // alive beside the type checker: 7.9 GB peak, at the edge of Vercel's 8 GB
+  // build machine. With the worker the peak is ~5.9 GB; the output is identical.
+  experimental: { webpackBuildWorker: true },
   // Read by Node at run time, not bundled: sql.js (GeoPackage boundary
   // files, lib/geo/boundary-files.ts) carries its WebAssembly inline; mqtt (the
   // twin's stream subscribers, lib/twin/mqtt.ts) is a Node client with its own

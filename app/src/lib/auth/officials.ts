@@ -7,6 +7,7 @@
 // substrate connected, officials sign in there instead and this store is
 // only the fallback. Held in platform state (lib/data/persist.ts).
 
+import { registerPersonResolver } from '@/lib/data/dual-control';
 import { authEnforced } from './mode';
 import { randomBytes, scrypt, timingSafeEqual, randomUUID, createHash, type ScryptOptions } from 'node:crypto';
 import { matchStep, newSecret, otpauthUri } from './totp';
@@ -701,6 +702,14 @@ export function signInWithPasskey(input: { challengeId?: string; response?: Asse
 // signs in as (lib/auth/oidc.ts). Accounts are never made with powers by a
 // sign-in: an administrator links an identity to an account, or makes the
 // account with a role from lib/auth/roles.ts.
+
+// The natural person behind a session subject, for dual control (lib/data/dual-control.ts):
+// a platform account linked to the government's identity provider is that identity.
+registerPersonResolver(sub => {
+  const m = /^local:(.+)$/.exec(sub);
+  const a = m ? db().accounts.find(x => x.id === m[1]) : undefined;
+  return a?.identity ? { key: `idp:${a.identity.issuer}|${a.identity.claim}|${a.identity.value}`, bound: true } : undefined;
+});
 
 export function accountByIdentity(issuer: string, claim: string, value: string): PublicAccount | undefined {
   const a = db().accounts.find(x => x.identity && x.identity.issuer === issuer && x.identity.claim === claim && x.identity.value === value);

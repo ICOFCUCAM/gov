@@ -97,7 +97,8 @@ export const SERVICES: ServiceDef[] = [
       const e = getProfessional(str(input.number));
       if (!e) return { status: 200, result: 'not registered', data: { registered: 'no' } };
       const p = publicProfessional(e);
-      return { status: 200, result: p.state, data: { registered: p.state === 'registered' ? 'yes' : 'no', profession: p.professionTitle, state: p.state, ...(p.validUntil ? { validUntil: p.validUntil } : {}), conditions: p.conditions } };
+      // An approved caller with a legal basis (the authorised bulk path): the conditions on practice too, never the person reference or qualifications.
+      return { status: 200, result: p.state, data: { registered: p.state === 'registered' ? 'yes' : 'no', profession: p.professionTitle, state: p.state, ...(e.validUntil ? { validUntil: e.validUntil } : {}), conditions: [...e.conditions] } };
     },
   },
   {

@@ -204,3 +204,22 @@ second official's with `--cookie2`.
 
 Record each drill (date, output, RTO measured, problems) with the platform
 operations team; a drill that fails is an incident.
+
+## Events and consumers across a restore (acceptance hardening)
+
+A restore puts the platform's records back to the backup's moment, but systems that already received events (the civic-api mirror, subscribed webhooks, partner systems) do not go back with it. What the platform guarantees:
+
+- **Delivery state is kept.** The event outbox and each consumer's cursor are kept through a restore (`KEPT_ON_RESTORE`), like the access log: they record what the outside world was already told.
+- **Events about removed state are never delivered.** Events written after the restored point are marked `voided` (with the backup id) and skipped by delivery. An event committed before the backup but not yet delivered is still delivered, because the backup holds the state it describes.
+- **Cursors go back to the restored point.** Audit sequences start again there, so a consumer whose cursor was past it is moved back, and later events reach it.
+- **A restore epoch on every event.** CloudEvents carry `restoreepoch`, the number of restores so far. The restore's own event (`backup.restore`) carries the new epoch. Consumers de-duplicate by event `id` and order by (`restoreepoch`, `auditseq`); when the epoch grows they re-read the registers they hold.
+- **The mirror re-reads on a restore.** civic-api's follower, on `backup.restore`, reads every register again and resets its cursor and read sequences (`restore: true`), so later events with restarted sequences apply (`services/civic-api/test/follower.spec.ts`).
+- **Numbers are never given twice.** Record counters keep their highest value through a restore. Numbers given after the backup point (taxpayer, qualification, declaration, …) are not given again.
+- **Tested scenarios** (`app/src/lib/events/restore-delivery.test.ts`): an event undelivered at backup time; an event delivered with its acknowledgement lost; restart of delivery after the restore; the same event retried; out-of-order arrival across epochs; a consumer that processed an event about a record the restore removed.
+
+Limitations still open:
+
+- **Removed records may linger in the mirror.** A full re-read upserts every record the platform holds, but the mirror does not yet delete rows the platform no longer has (records created after the backup point). They stay in the mirror until removed by hand or by a later change to the same register. Deleting them needs a reviewed change to the Prisma store.
+- **Partner systems must follow the contract themselves.** They must honour `restoreepoch` and de-duplicate by `id`; the platform cannot reach into them.
+- **Lost work has to be repeated.** A decision, payment posting or certificate made after the backup point is gone from the platform. Its case must be worked again, and a bank transfer re-reported by the bank feed is recorded again (`recordTransfer` is idempotent per rail reference only within the surviving state).
+- **Postgres mode is not covered by these tests.** It records `state.restore` in `civicos.outbox`. Its runtime outbox table is not restored, and the in-memory delivery state follows the rules above; it has not been exercised against a real Postgres restore with live consumers.

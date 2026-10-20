@@ -45,6 +45,11 @@ const POWER: Partial<Record<StandingState, 'issue' | 'renew' | 'suspend' | 'revo
  * each power (lib/permits/authority.ts); a production installation needs that
  * approved mapping before any standing changes (owner's Cycle 3 directive).
  */
+/** The register type an organisation case acts on (the register field, or the procedure's default). */
+export function registerOfCase(c: Case): string | undefined {
+  return str(c.fields.register) || defaultRegister(c);
+}
+
 function registerFor(c: Case, state?: StandingState, as?: 'renew' | 'suspend'): { key: string; title: string } | { error: string } {
   const key = str(c.fields.register) || defaultRegister(c);
   if (!key) return { error: 'Name the register this case is about (the register field)' };

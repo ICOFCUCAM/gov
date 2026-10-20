@@ -29,6 +29,12 @@ import { remoteDataKeys, providerKind } from '@/lib/keys/custody';
 const PREFIX = 'enc:v1:';
 const b64u = (b: Buffer) => b.toString('base64url');
 
+// A short base64 key can start with "/" too: say what a key must be, not only that no such file exists.
+function readKeyFile(path: string): string {
+  try { return readFileSync(path, 'utf8').trim(); }
+  catch (e) { throw new Error(`CIVICOS_DATA_KEK must be 32 bytes (base64 or hex), or the path of a file holding one (${(e as NodeJS.ErrnoException).code ?? 'unreadable'})`); }
+}
+
 /** Parse a 32-byte key given as base64, base64url, hex, or the path of a file holding one. */
 export function parseKek(raw: string | undefined): Buffer | null {
   const v = raw?.trim();
@@ -36,7 +42,7 @@ export function parseKek(raw: string | undefined): Buffer | null {
   // A 32-byte key in base64 is itself a path-like string one time in 64 (it starts with "/"), so a
   // value that is a whole base64 key is the key; anything else starting "/" or "./" is a file.
   const isKey = /^[A-Za-z0-9+/]{43}=$/.test(v) || /^[A-Za-z0-9_-]{43}$/.test(v);
-  const text = !isKey && (v.startsWith('/') || v.startsWith('./')) ? readFileSync(v, 'utf8').trim() : v;
+  const text = !isKey && (v.startsWith('/') || v.startsWith('./')) ? readKeyFile(v) : v;
   const asHex = /^[0-9a-fA-F]{64}$/.test(text) ? Buffer.from(text, 'hex') : null;
   const k = asHex ?? Buffer.from(text, 'base64');
   if (k.length !== 32) throw new Error('CIVICOS_DATA_KEK must be 32 bytes (base64 or hex)');

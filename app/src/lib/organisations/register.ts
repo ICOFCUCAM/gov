@@ -139,10 +139,13 @@ export function defineRegisterType(input: Partial<RegisterType>, by: string, now
   if (!kinds.length) return { error: `Say which kinds of organisation it holds: ${ORG_KINDS.join(', ')}` };
   const months = input.validityMonths === undefined || input.validityMonths === null ? undefined : Number(input.validityMonths);
   if (months !== undefined && (!Number.isInteger(months) || months < 1 || months > 240)) return { error: 'Validity is a whole number of months from 1 to 240' };
+  // A standing in a register is a licensing decision: the permit type names the authority mapping that governs it (lib/permits/decisions.ts).
+  const permitType = str(input.permitType, 61);
+  if (!KEY.test(permitType)) return { error: 'Name the permit type whose authority mapping governs this register (e.g. pharmacy-licence); its decisions are refused in production until that mapping is approved' };
   const t: RegisterType = {
     key, title, kind: input.kind as RegisterKind, authority, orgKinds: kinds,
     ...(months ? { validityMonths: months } : {}), publicCheck: input.publicCheck !== false, reference: false,
-    ...(KEY.test(str(input.permitType, 61)) ? { permitType: str(input.permitType, 61) } : {}), createdBy: by, createdAt: now.toISOString(),
+    permitType, createdBy: by, createdAt: now.toISOString(),
   };
   const d = db();
   d.types = [...d.types.filter(x => x.key !== key), t];

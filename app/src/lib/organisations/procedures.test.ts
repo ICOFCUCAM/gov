@@ -106,7 +106,7 @@ describe('organisation procedures', () => {
     const a = openCase({ procedure: 'org.accreditation', fields: { organisation: number } }, edu('clerk')) as { id: string };
     await step(a.id, 'check', edu('clerk'));
     expect(getOrganisation(number)!.standings.find(s => s.register === 'higher-education')?.state).toBe('applied');
-    expect(defineRegisterType({ key: 'licensed-pharmacies', title: 'Licensed pharmacies', kind: 'licence', authority: EDU, orgKinds: ['pharmacy'] }, 'Administrator')).not.toHaveProperty('error');
+    expect(defineRegisterType({ key: 'licensed-pharmacies', title: 'Licensed pharmacies', kind: 'licence', authority: EDU, orgKinds: ['pharmacy'], permitType: 'pharmacy-licence' }, 'Administrator')).not.toHaveProperty('error');
   });
 });
 

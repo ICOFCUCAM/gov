@@ -34,6 +34,8 @@ describe('authenticator secrets at rest (AES-256-GCM under CIVICOS_DATA_KEK)', (
   it('accepts hex keys and refuses keys of the wrong length', async () => {
     expect(parseKek(randomBytes(32).toString('hex'))).toHaveLength(32);
     expect(() => parseKek(randomBytes(16).toString('base64'))).toThrow(/32 bytes/);
+    // One short base64 key in 64 starts with "/" (once an intermittent failure here): still the length error.
+    expect(() => parseKek('/' + randomBytes(15).toString('base64').slice(1))).toThrow(/32 bytes/);
   });
 
   it('keeps the secret sealed in the state through setup and sign-in', async () => {

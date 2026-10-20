@@ -106,11 +106,20 @@ export interface MirrorBatch {
 }
 
 export interface MirrorState { cursor: number; lastEventAt: string | null; lastFullSyncAt: string | null; lastError: string | null }
+/** The platform's event for a data restore (lib/data/backups.ts on the platform). */
+export const RESTORE_EVENT = /(^|\.)backup\.restore$/;
+
 export interface MirrorMark {
   /** The audit sequence the mirror is current to after this write (never lowered). */
   cursor: number;
   /** The audit sequence of the platform read the batch's registers come from. */
   dataSeq?: number;
+  /**
+   * The platform restored a backup: its audit sequence started again from the
+   * restored point, so this write sets the cursor and the registers' read
+   * sequences to the new read instead of keeping the higher ones.
+   */
+  restore?: boolean;
   event?: { id: string; auditSeq: number; type: string };
   fullSyncAt?: Date;
 }
@@ -256,6 +265,13 @@ export class MirrorFollower {
 
   private async applyNow(ev: CloudEvent): Promise<{ eventId: string; applied: boolean; reason?: string; registers: RegisterName[] }> {
     if (await this.store.hasApplied(ev.id)) return { eventId: ev.id, applied: false, reason: 'already applied', registers: [] };
+    // The platform restored a backup: everything is read again and the cursor goes back to the restored point
+    // (its audit sequence starts again there, so later events would otherwise look already covered).
+    if (RESTORE_EVENT.test(ev.type)) {
+      const snap = await this.read([...REGISTERS]);
+      await this.store.write(toBatch(snap), { cursor: snap.auditSeq, dataSeq: snap.auditSeq, fullSyncAt: new Date(), restore: true, event: { id: ev.id, auditSeq: ev.auditseq, type: ev.type } });
+      return { eventId: ev.id, applied: true, reason: 'the platform restored a backup: every register read again, cursor reset', registers: [...REGISTERS] };
+    }
     const st = await this.store.state();
     const mark: MirrorMark = { cursor: ev.auditseq, event: { id: ev.id, auditSeq: ev.auditseq, type: ev.type } };
     if (ev.auditseq <= st.cursor) {

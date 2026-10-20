@@ -144,6 +144,7 @@ const ADMIN_ONLY: RegExp[] = [
   // The register types of the organisations register (which authority keeps which register).
   /^\/api\/organisations\/types$/,
   /^\/api\/professions\/types$/,
+  /^\/api\/dual-control$/,
   // Which authority the law designates for each permit and licence type (four-eyes in the route).
   /^\/api\/permit-authorities$/,
 ];

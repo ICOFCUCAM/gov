@@ -33,6 +33,12 @@ export interface DecisionContent {
   officials: { role: 'decided' | 'confirmed'; name: string; id?: string }[];
   /** Facts the decision fixes (registration number, validity, conditions), as the procedure names them. */
   facts?: Record<string, string | number | boolean>;
+  /** Where the authority came from when it was made: the exact approved authority-mapping version, or the deployment profile (lib/permits/decisions.ts). */
+  authority?: import('@/lib/casework/engine').DecisionAuthority;
+  /** The exact operational rule versions it calculated with (lib/law/rules.ts). */
+  rules?: import('@/lib/casework/engine').RuleRef[];
+  /** For a two-official decision: whether the two are known to be different people at the identity provider, or only different accounts. */
+  independence?: 'identity-provider' | 'accounts-only' | 'unverified';
   at: string;
   supersedes?: string;
 }

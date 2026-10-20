@@ -15,7 +15,8 @@ import { recordAudit } from '@/lib/data/store/audit';
 import { authorityFor, getSovereign, getMinistry } from '@/lib/data/store';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
-import { dualControlRefusal } from '@/lib/data/dual-control';
+import { dualControlRefusal, independenceOf } from '@/lib/data/dual-control';
+import { samplesAllowed } from '@/lib/ops/mode';
 import { caseActRefusal, type CaseScope } from '@/lib/auth/roles';
 import { calendarOf } from '@/lib/nation/deployment';
 import { cite, type Citation } from '@/lib/law/register';
@@ -37,7 +38,62 @@ export interface Actor { id?: string; name: string; scope: (CaseScope & { id?: s
 // ── Effects: domain logic the owning module registers ────────────────────────
 export interface EffectContext { case: Case; package: CasePackage; action: ActionSpec; actor: Actor; now: Date }
 /** What an effect returns: facts the decision fixes, and work to do once the decision is sealed. */
-export interface EffectResult { facts?: Record<string, string | number | boolean>; after?: (decision: SignedDecision | undefined, c: Case) => Promise<void> | void; error?: string }
+export interface EffectResult {
+  facts?: Record<string, string | number | boolean>;
+  /** The operational rule versions the effect calculated with (lib/law/rules.ts), kept on the sealed decision. */
+  rules?: RuleRef[];
+  after?: (decision: SignedDecision | undefined, c: Case) => Promise<void> | void;
+  error?: string;
+}
+/** A rule version a decision calculated with. */
+export interface RuleRef { key: string; version: number; digest: string }
+/** Where the authority for a decision came from, as checked when it was made (kept on the sealed decision). */
+export type DecisionAuthority =
+  | { basis: 'mapping'; permitType: string; power: string; version: number; lead: string; approvedAt?: string }
+  | { basis: 'deployment'; authority: string }
+  | { basis: 'unmapped'; permitType?: string; note: string };
+/**
+ * A check every decision step passes, when proposed and again when it is made
+ * (lib/permits/decisions.ts registers the platform's): an error refuses it;
+ * otherwise it says where the authority came from.
+ */
+export type DecisionGuard = (c: Case, a: ActionSpec, pkg: CasePackage, now: Date) => { error: string } | { authority?: DecisionAuthority };
+const gg = globalThis as unknown as { __caseDecisionGuards?: Map<string, DecisionGuard> };
+/** The dual-control rules (lib/casework/dual-control-policy.ts registers them): who needs two officials, how long a proposal waits. */
+export interface DualControlRules { twoOfficials: (c: Case, a: ActionSpec, pkg: CasePackage) => boolean; pendingHours: () => number; requireIdentityBinding: () => boolean }
+const gd = globalThis as unknown as { __caseDualControl?: DualControlRules };
+export function registerDualControlRules(r: DualControlRules): void { gd.__caseDualControl = r; }
+const twoOfficials = (c: Case, a: ActionSpec, pkg: CasePackage) => !!a.needs.fourEyes || !!gd.__caseDualControl?.twoOfficials(c, a, pkg);
+const pendingHours = () => gd.__caseDualControl?.pendingHours() ?? 24;
+
+/** A proposal past its waiting period lapses: kept on the case, no longer confirmable. Returns whether it did. */
+function lapsePending(c: Case, now: Date): boolean {
+  const p = c.pending;
+  if (!p?.expiresAt || now.toISOString() <= p.expiresAt) return false;
+  (c.lapsedProposals ??= []).push({ ...p, lapsedAt: now.toISOString() });
+  delete c.pending;
+  c.version += 1;
+  recordAudit('System (dual control)', 'case.propose.lapse', `Case:${c.ref}`, 'ok', `${p.action} proposed by ${p.by.name} on ${p.at.slice(0, 10)} was not confirmed by ${p.expiresAt.slice(0, 16)}: propose again`);
+  return true;
+}
+
+/** Lapse every proposal past its waiting period (the case-deadlines job). */
+export function lapseProposals(now = new Date()): string[] {
+  const out: string[] = [];
+  for (const c of db().cases) if (lapsePending(c, now)) out.push(c.ref);
+  return out;
+}
+
+export function registerDecisionGuard(name: string, fn: DecisionGuard): void { (gg.__caseDecisionGuards ??= new Map()).set(name, fn); }
+function guardDecision(c: Case, a: ActionSpec, pkg: CasePackage, now: Date): { error: string } | { authority?: DecisionAuthority } {
+  let authority: DecisionAuthority | undefined;
+  for (const g of gg.__caseDecisionGuards?.values() ?? []) {
+    const r = g(c, a, pkg, now);
+    if ('error' in r) return r;
+    authority ??= r.authority;
+  }
+  return authority ? { authority } : {};
+}
 export type Effect = (ctx: EffectContext) => Promise<EffectResult | void> | EffectResult | void;
 const ge = globalThis as unknown as { __caseEffects?: Map<string, Effect> };
 const effectsMap = () => (ge.__caseEffects ??= new Map());
@@ -175,6 +231,10 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
     const why = caseActRefusal(actor.scope, facts(c, a), now.getTime());
     if (why) return { error: why };
   }
+  // A proposal past its waiting period lapses before anything else; a repeat of it is not a new proposal.
+  const lapsedNow = c.pending?.action === a.key ? c.pending : undefined;
+  if (lapsePending(c, now) && lapsedNow) return { error: `The proposal to ${a.label.toLowerCase()} made by ${lapsedNow.by.name} lapsed unconfirmed at ${lapsedNow.expiresAt!.slice(0, 16)}: it is kept on the case; propose again as a new request` };
+  if (input.idempotencyKey && c.lapsedProposals?.some(p => p.idempotencyKey === input.idempotencyKey)) return { error: 'That proposal lapsed unconfirmed: propose again as a new request' };
   // A repeated request (same key, same action) returns the case as it now stands instead of acting again.
   if (input.idempotencyKey && ((c.pending?.action === a.key && c.pending.idempotencyKey === input.idempotencyKey) || c.history.some(s => s.action === a.key && (s.idempotencyKey === input.idempotencyKey || s.confirmIdempotencyKey === input.idempotencyKey)))) return { case: clone(c), ...(c.pending ? { pending: true } : {}) };
   if (input.expectedVersion !== undefined && input.expectedVersion !== c.version) return { error: 'This case changed since you opened it: reload it and check before acting' };
@@ -209,16 +269,26 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   }
   if (a.requires?.citations && !citations.length) return { error: 'Cite the provisions of law this rests on' };
 
+  // A decision is checked against the authority it rests on when proposed and again when made.
+  const guarded = a.decision ? guardDecision(c, a, pkg, now) : {};
+  if ('error' in guarded) return guarded;
+
   // Four-eyes: the first official proposes; a different one confirms.
-  if (a.needs.fourEyes && !pending) {
-    c.pending = { action: a.key, by: by(actor), at: now.toISOString(), ...(reason ? { reason } : {}), citations, fields, ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}) };
+  const fourEyes = twoOfficials(c, a, pkg);
+  if (fourEyes && !pending) {
+    c.pending = { action: a.key, by: by(actor), at: now.toISOString(), expiresAt: new Date(now.getTime() + pendingHours() * 3_600_000).toISOString(), ...(reason ? { reason } : {}), citations, fields, ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}) };
     c.version += 1;
     audit(actor, 'case.propose', c, `${a.key} proposed; a second official confirms`);
     return { case: clone(c), pending: true };
   }
+  let independence: Step['independence'];
   if (pending) {
     const same = dualControlRefusal({ by: pending.by.name, byId: pending.by.id }, { by: actor.name, byId: actor.id });
     if (same) return { error: same };
+    // In production both are signed-in officials, each in their own request.
+    if (!samplesAllowed() && (!pending.by.id || !actor.id)) return { error: 'A two-official decision is proposed and confirmed by two signed-in officials' };
+    independence = independenceOf(pending.by.id, actor.id);
+    if (gd.__caseDualControl?.requireIdentityBinding() && independence !== 'identity-provider') return { error: 'The nation requires both officials to be linked to the national identity provider before a two-official decision (Officials → link identity)' };
   }
   const decidedBy = pending ? pending.by : by(actor);
   const confirmedBy = pending ? by(actor) : undefined;
@@ -242,6 +312,9 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
       decision: a.decision, reasons: reason ?? '', citations,
       officials: [{ role: 'decided', name: decidedBy.name, ...(decidedBy.id ? { id: decidedBy.id } : {}) }, ...(confirmedBy ? [{ role: 'confirmed' as const, name: confirmedBy.name, ...(confirmedBy.id ? { id: confirmedBy.id } : {}) }] : [])],
       ...(results.some(r => r.facts) ? { facts: Object.assign({}, ...results.map(r => r.facts ?? {})) } : {}),
+      ...(guarded.authority ? { authority: guarded.authority } : {}),
+      ...(independence ? { independence } : {}),
+      ...(results.some(r => r.rules?.length) ? { rules: results.flatMap(r => r.rules ?? []) } : {}),
       at: now.toISOString(),
     });
     if ('error' in sealed) return sealed;
@@ -252,7 +325,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   const from = c.stage;
   c.fields = merged;
   c.stage = a.to;
-  const step: Step = { seq: c.history.length + 1, action: a.key, from, to: a.to, by: decidedBy, ...(confirmedBy ? { confirmedBy } : {}), at, ...(reason ? { reason } : {}), ...(citations.length ? { citations } : {}), ...(decision ? { decision: decision.id } : {}), ...((pending?.idempotencyKey ?? input.idempotencyKey) ? { idempotencyKey: pending?.idempotencyKey ?? input.idempotencyKey } : {}), ...(pending?.idempotencyKey && input.idempotencyKey && input.idempotencyKey !== pending.idempotencyKey ? { confirmIdempotencyKey: input.idempotencyKey } : {}) };
+  const step: Step = { seq: c.history.length + 1, action: a.key, from, to: a.to, by: decidedBy, ...(confirmedBy ? { confirmedBy } : {}), at, ...(reason ? { reason } : {}), ...(citations.length ? { citations } : {}), ...(decision ? { decision: decision.id } : {}), ...((pending?.idempotencyKey ?? input.idempotencyKey) ? { idempotencyKey: pending?.idempotencyKey ?? input.idempotencyKey } : {}), ...(pending?.idempotencyKey && input.idempotencyKey && input.idempotencyKey !== pending.idempotencyKey ? { confirmIdempotencyKey: input.idempotencyKey } : {}), ...(independence ? { independence } : {}) };
   c.history.push(step);
   delete c.pending;
   for (const d of c.deadlines) if (!d.met && !d.lapsed && pkg.deadlines.find(x => x.key === d.key)?.from === from) d.met = at;

@@ -13,6 +13,10 @@ import '@/lib/education/procedures';
 import '@/lib/professions/procedures';
 import '@/lib/health/procedures';
 import '@/lib/customs/procedures';
+// The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
+import '@/lib/permits/decisions';
+// Dual control: the platform's two-official minimum, the country's rules, proposals that lapse.
+import './dual-control-policy';
 import { installReferenceProcedures as installCivil } from '@/lib/civil/procedures';
 import { installOrganisationProcedures } from '@/lib/organisations/procedures';
 import { installImmigrationProcedures } from '@/lib/immigration/procedures';

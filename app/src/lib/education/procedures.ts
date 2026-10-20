@@ -118,7 +118,7 @@ export const REFERENCE_QUALIFICATION: Ref = {
   actions: [
     { key: 'check', label: 'Check the evidence', from: ['submitted'], to: 'verification', needs: { role: 'officer' }, requires: { documents: ['award-evidence'], fields: ['holderRef', 'holderName', 'title', 'awardingBody', 'awardedOn'] } },
     { key: 'verify', label: 'Awarding body accredited: propose', from: ['verification'], to: 'pending-approval', needs: { role: 'officer' }, effects: ['edu.checkAward'] },
-    { key: 'record', label: 'Record the qualification', from: ['pending-approval'], to: 'recorded', decision: 'record', needs: { role: 'signatory' }, requires: { reasons: true }, effects: ['edu.award'] },
+    { key: 'record', label: 'Record the qualification', from: ['pending-approval'], to: 'recorded', decision: 'record', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['edu.award'] },
     { key: 'decline', label: 'Do not record, with reasons', from: ['verification', 'pending-approval'], to: 'not-recorded', decision: 'decline', needs: { role: 'signatory' }, requires: { reasons: true } },
     { key: 'issue', label: 'Issue the certificate', from: ['recorded'], to: 'certificate-issued', needs: { role: 'officer' }, effects: ['edu.issueAwardCertificate'] },
   ],

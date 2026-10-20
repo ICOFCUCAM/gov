@@ -52,6 +52,7 @@ registerEffect('tax.assess', ({ case: c, actor, now }: EffectContext) => {
   if ('error' in a) return a;
   return {
     facts: { assessment: a.reference, amountMinor: a.amountMinor, method: a.method.kind },
+    ...(a.method.kind === 'rule' ? { rules: [{ key: a.method.rule, version: a.method.version, digest: a.method.digest }] } : {}),
     after: (d?: { id: string }) => { if (d) attachAssessmentDecision(a.id, d.id); },
   };
 });
