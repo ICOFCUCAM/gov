@@ -29,6 +29,7 @@ import { deviceOf } from '@/lib/auth/activity';
 import { stateWritable, CHANGE_PATH_HEADER } from '@/lib/data/persist';
 import { roleOf } from '@/lib/auth/roles';
 import { limit } from '@/lib/ops/rate-limit';
+import { localAccountsAllowed } from '@/lib/auth/setup-token';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,9 @@ export async function GET() {
     official,
     // oidc: the name of the government's identity provider when one is set up (lib/auth/oidc.ts);
     // passkey: whether passkeys can be used here (the platform's address is known, CIVICOS_PUBLIC_URL).
-    methods: { local: true, substrate: !!serverClient(), oidc: providerPublic(), passkey: !('error' in relyingParty()) },
+    // local: platform accounts sign in here — they exist, or the first one may be made (not while the
+    // substrate is the sign-in method, unless CIVICOS_LOCAL_ACCOUNTS=allow; lib/auth/setup-token.ts).
+    methods: { local: hasAccounts() || localAccountsAllowed(), substrate: !!serverClient(), oidc: providerPublic(), passkey: !('error' in relyingParty()) },
     accounts: hasAccounts(),
     enforced: enforced(),
     // A production server left open on purpose (CIVICOS_AUTH=open; lib/auth/mode.ts, review L-2).

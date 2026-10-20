@@ -41,7 +41,9 @@ export function OfficialSignIn() {
   const [notice, setNotice] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const first = s ? !s.accounts && !s.methods.substrate : false;
+  // No account yet and the first may be made here (methods.local: not while the substrate is the
+  // sign-in method, unless the operator allows platform accounts, CIVICOS_LOCAL_ACCOUNTS=allow).
+  const first = s ? !s.accounts && s.methods.local : false;
 
   async function post(url: string, body: unknown) {
     const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
@@ -116,7 +118,7 @@ export function OfficialSignIn() {
       </Card>
     );
   }
-  if (s.methods.substrate && !s.accounts) return null;
+  if (!s.accounts && !s.methods.local) return null;
   if (resetting) {
     return (
       <Card>

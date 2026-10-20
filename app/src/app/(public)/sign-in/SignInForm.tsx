@@ -12,6 +12,7 @@ import { ensureCitizenLinkage, refreshIdentity } from '@/services/identity';
 import { substrateAvailable } from '@/lib/db/client';
 import { linkOfficerByEmail, registerSigningKeyRow } from '@/lib/db/repos/identity';
 import { publicSigningJwk } from '@/lib/db/webcrypto';
+import { useSignIn } from '@/lib/official';
 
 type Mode = 'sign-in' | 'sign-up';
 
@@ -29,6 +30,7 @@ export function SignInForm() {
   const [info, setInfo] = React.useState<string | null>(null);
 
   const available = substrateAvailable();
+  const official = useSignIn();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -79,14 +81,28 @@ export function SignInForm() {
   React.useEffect(() => { void alreadySignedIn().then(setSignedIn); }, []);
 
   if (!available) {
+    // The server signs officials in through the substrate only (no platform account exists or may be
+    // made, /api/auth/official methods.local), so no platform-account form is shown above this card.
+    const substrateOnly = !!official && !official.accounts && !official.methods.local;
     return (
       <Card>
         <h2 className="font-semibold mb-1">Citizen and substrate sign-in not configured</h2>
-        <p className="text-sm text-ink-muted">
-          Officials sign in with a platform account above. Citizen accounts and
-          substrate sign-in need NEXT_PUBLIC_SUPABASE_URL and
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.
-        </p>
+        {substrateOnly ? (
+          <p className="text-sm text-ink-muted">
+            Officials on this installation sign in through the substrate, but this
+            page was built without NEXT_PUBLIC_SUPABASE_URL and
+            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. An operator sets both and builds
+            the platform again (on Vercel, a redeploy). To create the first
+            official as a platform account instead, the operator sets
+            CIVICOS_LOCAL_ACCOUNTS=allow.
+          </p>
+        ) : (
+          <p className="text-sm text-ink-muted">
+            Officials sign in with a platform account above. Citizen accounts and
+            substrate sign-in need NEXT_PUBLIC_SUPABASE_URL and
+            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.
+          </p>
+        )}
       </Card>
     );
   }
