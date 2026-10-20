@@ -92,6 +92,10 @@ export const REFERENCE_TYPES: Omit<RegisterType, 'createdBy' | 'createdAt'>[] = 
   { key: 'companies', title: 'Registered companies and organisations', kind: 'registration', authority: 'businessRegister', orgKinds: [...ORG_KINDS], publicCheck: true, reference: true, permitType: 'business-registration' },
   { key: 'business-licences', title: 'Business licences', kind: 'licence', authority: 'businessRegister', orgKinds: [...ORG_KINDS], validityMonths: 12, publicCheck: true, reference: true, permitType: 'trading-licence' },
   { key: 'higher-education', title: 'Accredited universities and colleges', kind: 'accreditation', authority: 'higherEducationAccreditation', orgKinds: ['university', 'college'], validityMonths: 60, publicCheck: true, reference: true, permitType: 'university-accreditation' },
+  // Cycle 3 sectors: kept by the authorities the deployment profile names; no validity period is assumed (the nation's law sets it).
+  { key: 'schools', title: 'Registered schools', kind: 'registration', authority: 'education', orgKinds: ['school', 'college'], publicCheck: true, reference: true, permitType: 'school-registration' },
+  { key: 'health-facilities', title: 'Licensed health facilities', kind: 'licence', authority: 'healthRegulation', orgKinds: ['hospital', 'clinic'], publicCheck: true, reference: true, permitType: 'health-facility-licence' },
+  { key: 'pharmacies', title: 'Licensed pharmacies', kind: 'licence', authority: 'healthRegulation', orgKinds: ['pharmacy'], publicCheck: true, reference: true, permitType: 'pharmacy-licence' },
 ];
 
 export interface OrgLoad { id: string; register: string; by: string; at: string; sha256: string; rows: number; loaded: number; refused: { row: number; reason: string }[]; withdrawn?: { by: string; at: string; removed: number } }

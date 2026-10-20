@@ -29,6 +29,7 @@ const list = (v: unknown) => str(v).split(/[;\n]/).map(x => x.trim()).filter(Boo
 /** The register a reference procedure acts on when the case names none; a nation's own procedures name it in the register field. */
 function defaultRegister(c: Case): string | undefined {
   const k = c.package.key;
+  for (const [prefix, register] of SECTOR_REGISTERS) if (k === prefix || k.startsWith(`${prefix}-`)) return register;
   if (k === 'org.registration') return 'companies';
   if (k.startsWith('org.accreditation')) return 'higher-education';
   if (k.startsWith('org.licence')) return 'business-licences';
@@ -359,6 +360,30 @@ function standingProcedures(family: 'licence' | 'accreditation', owner: string, 
       appeal: { days: 30, body: `the ${word} appeals authority`, suspensive: true },
       tests: [{ name: 'revoked', steps: [{ action: 'notify', fields: { organisation: 'ORG-1' }, documents: ['grounds'], expect: 'hearing' }, { action: 'propose', expect: 'pending-approval' }, { action: 'revoke', expect: 'revoked' }] }],
     },
+  ];
+}
+
+/**
+ * A sector's licensing family (schools, health facilities, pharmacies...):
+ * the shared licence, renewal, suspension and revocation procedures under
+ * the sector authority's own keys, acting on its register by default. The
+ * effects are the same; the register type and its permit authority mapping
+ * decide who may change a standing.
+ */
+export interface SectorFamily { prefix: string; owner: string; register: string; word: string; refPrefix: string; documents?: { class: string; label: string; required: boolean }[] }
+const SECTOR_REGISTERS = new Map<string, string>();
+
+export function sectorProcedures(f: SectorFamily): Ref[] {
+  SECTOR_REGISTERS.set(f.prefix, f.register);
+  const rename = (p: Ref, key: string, title: string, refPrefix: string): Ref => ({ ...p, key, title, refPrefix, owner: f.owner, fields: p.fields.map(x => x.key === 'register' ? registerField(f.register) : x) });
+  const licence = rename(REFERENCE_LICENCE, f.prefix, `${f.word[0]!.toUpperCase()}${f.word.slice(1)} application`, f.refPrefix);
+  if (f.documents) licence.documents = [...licence.documents, ...f.documents];
+  const [renewal, suspension, revocation] = standingProcedures('licence', f.owner, f.register, f.refPrefix);
+  return [
+    licence,
+    rename(renewal!, `${f.prefix}-renewal`, `Renewal of a ${f.word}`, `${f.refPrefix}R`),
+    rename(suspension!, `${f.prefix}-suspension`, `Suspension of a ${f.word}`, `${f.refPrefix}S`),
+    rename(revocation!, `${f.prefix}-revocation`, `Revocation of a ${f.word}`, `${f.refPrefix}V`),
   ];
 }
 
