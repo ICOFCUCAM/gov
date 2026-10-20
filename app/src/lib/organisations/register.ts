@@ -79,6 +79,10 @@ export interface Organisation {
   facilities: string[];
   standings: Standing[];
   createdAt: string;
+  /** The number it had in the register it was loaded from, kept as an identifier. */
+  previousNumber?: string;
+  /** The checked load that brought it in (lib/organisations/import.ts), until it is acted on. */
+  load?: string;
 }
 
 /** Register types CivicOS ships; a nation adds its own (licensed pharmacies, licensed doctors...). */
@@ -88,14 +92,18 @@ export const REFERENCE_TYPES: Omit<RegisterType, 'createdBy' | 'createdAt'>[] = 
   { key: 'higher-education', title: 'Accredited universities and colleges', kind: 'accreditation', authority: 'higherEducationAccreditation', orgKinds: ['university', 'college'], validityMonths: 60, publicCheck: true, reference: true },
 ];
 
-interface Db { orgs: Organisation[]; types: RegisterType[]; seq: Record<string, number> }
+export interface OrgLoad { id: string; register: string; by: string; at: string; sha256: string; rows: number; loaded: number; refused: { row: number; reason: string }[]; withdrawn?: { by: string; at: string; removed: number } }
+interface Db { orgs: Organisation[]; types: RegisterType[]; seq: Record<string, number>; loads: OrgLoad[] }
 const g = globalThis as unknown as { __civicosOrganisations?: Db };
 const db = (): Db => {
-  const d = touch('__civicosOrganisations', g.__civicosOrganisations ??= { orgs: [], types: [], seq: {} });
-  d.orgs ??= []; d.types ??= []; d.seq ??= {};
+  const d = touch('__civicosOrganisations', g.__civicosOrganisations ??= { orgs: [], types: [], seq: {}, loads: [] });
+  d.orgs ??= []; d.types ??= []; d.seq ??= {}; d.loads ??= [];
   return d;
 };
 export function resetOrganisations(): void { g.__civicosOrganisations = undefined; }
+/** The store itself, for the checked load (lib/organisations/import.ts) only. */
+export const organisationsDb = db;
+export { nextNumber as nextOrganisationNumber };
 
 const clone = <T,>(x: T): T => structuredClone(x);
 const KEY = /^[a-z][a-z0-9-]{1,40}$/;

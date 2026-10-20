@@ -25657,7 +25657,9 @@
                             "history": []
                           }
                         ],
-                        "createdAt": "2026-01-15T09:30:00.000Z"
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "previousNumber": "string",
+                        "load": "string"
                       },
                       "full": true
                     }
@@ -25683,6 +25685,264 @@
           }
         ],
         "x-source": "src/app/api/organisations/[id]/route.ts"
+      }
+    },
+    "/api/organisations/loads": {
+      "get": {
+        "tags": [
+          "organisations"
+        ],
+        "operationId": "get_organisations_loads",
+        "summary": "GET /api/organisations/loads",
+        "description": "/api/organisations/loads — loading an existing register into the organisations register (lib/organisations/import.ts). GET: the loads, with their refused rows. POST { op: 'load', register, csv } checks and loads a file; { op: 'withdraw', id } withdraws a load. Officials of the institution that keeps the register type (deployment profile or the type's own institution), or administrators; who loaded comes from the sign-in.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "loads": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OrgLoad"
+                      }
+                    },
+                    "columns": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "required": {
+                            "type": "boolean"
+                          },
+                          "means": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "required",
+                          "means"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "loads",
+                    "columns"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "loads": [
+                        {
+                          "id": "ID-0001",
+                          "register": "string",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "rows": 1,
+                          "loaded": 1,
+                          "refused": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "columns": [
+                        {
+                          "name": "Example",
+                          "required": true,
+                          "means": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/organisations/loads/route.ts"
+      },
+      "post": {
+        "tags": [
+          "organisations"
+        ],
+        "operationId": "post_organisations_loads",
+        "summary": "POST /api/organisations/loads",
+        "description": "/api/organisations/loads — loading an existing register into the organisations register (lib/organisations/import.ts). GET: the loads, with their refused rows. POST { op: 'load', register, csv } checks and loads a file; { op: 'withdraw', id } withdraws a load. Officials of the institution that keeps the register type (deployment profile or the type's own institution), or administrators; who loaded comes from the sign-in.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "register": {
+                    "type": "string"
+                  },
+                  "csv": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "register": "string",
+                    "csv": "string",
+                    "id": "ID-0001",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "load": {
+                      "$ref": "#/components/schemas/OrgLoad"
+                    }
+                  },
+                  "required": [
+                    "load"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "load": {
+                        "id": "ID-0001",
+                        "register": "string",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "rows": 1,
+                        "loaded": 1,
+                        "refused": [
+                          {
+                            "row": 1,
+                            "reason": "Text"
+                          }
+                        ],
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "removed": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "load": {
+                      "$ref": "#/components/schemas/OrgLoad"
+                    }
+                  },
+                  "required": [
+                    "load"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "load": {
+                        "id": "ID-0001",
+                        "register": "string",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "rows": 1,
+                        "loaded": 1,
+                        "refused": [
+                          {
+                            "row": 1,
+                            "reason": "Text"
+                          }
+                        ],
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "removed": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/organisations/loads/route.ts"
       }
     },
     "/api/organisations": {
@@ -68684,6 +68944,79 @@
           "title"
         ]
       },
+      "OrgLoad": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "register": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "number"
+          },
+          "loaded": {
+            "type": "number"
+          },
+          "refused": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "row": {
+                  "type": "number"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "row",
+                "reason"
+              ]
+            }
+          },
+          "withdrawn": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "removed": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "removed"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "register",
+          "by",
+          "at",
+          "sha256",
+          "rows",
+          "loaded",
+          "refused"
+        ]
+      },
       "OrgVersion": {
         "type": "object",
         "properties": {
@@ -68777,6 +69110,14 @@
           },
           "createdAt": {
             "type": "string"
+          },
+          "previousNumber": {
+            "type": "string",
+            "description": "The number it had in the register it was loaded from, kept as an identifier."
+          },
+          "load": {
+            "type": "string",
+            "description": "The checked load that brought it in (lib/organisations/import.ts), until it is acted on."
           }
         },
         "required": [
