@@ -92,6 +92,7 @@ channels:
       immigration: { $ref: '#/components/messages/immigration' }
       courtHearing: { $ref: '#/components/messages/courtHearing' }
       accessUnusual: { $ref: '#/components/messages/accessUnusual' }
+      cycle3: { $ref: '#/components/messages/cycle3' }
   registers:
     address: /
     description: Changes to the registers services/civic-api mirrors (review D8) - institutions, payments, integrations, webhooks, grants proposed, releases, deployments, backups, configuration and the tenant's lifecycle. Its follower subscribes to `*` and reads the changed register from GET /api/platform/mirror.
@@ -299,6 +300,11 @@ components:
     accessUnusual:
       name: org.civicos.access.unusual
       title: An unusual pattern of reads of restricted records (many records, repeated refusals, outside working hours), raised once per official, reason and day for the oversight bodies; a prompt to look, never a finding
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    cycle3:
+      name: org.civicos.<tax.taxpayer.register | permit-authority.approve | rule.approve>
+      summary: tax.taxpayer.register (a taxpayer registered; the subject is the TIN; nothing under tax secrecy), permit-authority.approve (an authority mapping for a permit type now governs from its date), rule.approve (a rate table or tariff now applies from its date). Assessments, returns and payments are never events (tax secrecy).
       traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
       payload: { $ref: '#/components/schemas/CloudEvent' }
     registerChange:

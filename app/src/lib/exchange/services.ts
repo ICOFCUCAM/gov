@@ -14,6 +14,7 @@ import { logExchange, type ExchangeReceipt } from './log';
 import { getPerson, current, fold } from '@/lib/civil/register';
 import { statusOn } from '@/lib/immigration/register';
 import { getOrganisation, publicOrganisation } from '@/lib/organisations/register';
+import { getTaxpayer, findTaxpayers } from '@/lib/tax/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
 export interface Caller { kind: 'module' | 'integration'; id: string; name: string; institution?: string }
@@ -59,6 +60,16 @@ export const SERVICES: ServiceDef[] = [
       if (!o) return { status: 200, result: 'no such organisation', data: { standing: 'none' } };
       const s = publicOrganisation(o).standings.find(x => x.register === str(input.register));
       return { status: 200, result: s ? s.state : 'not in that register', data: { name: publicOrganisation(o).name, standing: s?.state ?? 'none', ...(s?.validUntil ? { validUntil: s.validUntil } : {}) } };
+    },
+  },
+  {
+    id: 'taxpayer.status', version: 1, kind: 'query', title: 'Is this person or organisation registered with the tax authority, and for which taxes?', owner: 'tax', scope: 'service:taxpayer.status',
+    returns: { registered: 'yes or no', active: 'yes or no', taxTypes: 'the tax types registered for' }, dataClass: 'personal',
+    legalBasis: 'The tax law\'s provisions on disclosure (named by the tax authority when it approves the service for a caller)',
+    handle: input => {
+      // Never returns, assessments, balances or anything else under tax secrecy.
+      const t = str(input.tin) ? getTaxpayer(str(input.tin)) : findTaxpayers({ party: str(input.party) })[0];
+      return t ? { status: 200, result: t.state, data: { registered: 'yes', active: t.state === 'active' ? 'yes' : 'no', taxTypes: t.taxTypes } } : { status: 200, result: 'not registered', data: { registered: 'no', active: 'no' } };
     },
   },
   {

@@ -21,7 +21,7 @@ describe('exchange services', () => {
   });
 
   it('lists every service with its owner, scope and the fields it returns', () => {
-    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['organisation.standing', 'query', 'service:organisation.standing'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
+    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['organisation.standing', 'query', 'service:organisation.standing'], ['taxpayer.status', 'query', 'service:taxpayer.status'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
   });
 });
 
@@ -48,5 +48,16 @@ describe('organisation.standing', () => {
     const r = await callService({ kind: 'integration', id: 'health', name: 'Health insurer' }, 'organisation.standing', { number: o.number, register: 'business-licences' }, 'Paying a claim');
     expect(r.data).toEqual({ name: 'Riverside Pharmacy', standing: 'granted', validUntil: '2027-01-01' });
     expect(JSON.stringify(r)).not.toContain('Private Owner');
+  });
+});
+
+describe('taxpayer.status', () => {
+  it('says whether a party is registered and for which taxes, nothing more', async () => {
+    const { resetTax, registerTaxpayer } = await import('@/lib/tax/register');
+    resetTax();
+    registerTaxpayer({ party: { kind: 'organisation', id: 'ORG-1', name: 'Hill Traders' }, taxTypes: ['income'] }, 'c', 'Officer');
+    const r = await callService({ kind: 'integration', id: 'procurement', name: 'Public procurement' }, 'taxpayer.status', { party: 'ORG-1' }, 'Tender eligibility');
+    expect(r.data).toEqual({ registered: 'yes', active: 'yes', taxTypes: ['income'] });
+    expect((await callService({ kind: 'integration', id: 'p', name: 'P' }, 'taxpayer.status', { party: 'ORG-9' }, 'Check')).data).toEqual({ registered: 'no', active: 'no' });
   });
 });
