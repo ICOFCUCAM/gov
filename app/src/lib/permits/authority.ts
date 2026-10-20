@@ -20,6 +20,7 @@
 
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
+import { dualControlRefusal } from '@/lib/data/dual-control';
 import { uuid7 } from '@/lib/data/uuid7';
 import { cite, type Citation } from '@/lib/law/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
@@ -179,7 +180,7 @@ export function setSuspensionPolicy(input: { confirmWithinHours?: unknown; revie
   return suspensionPolicy();
 }
 
-const sameOfficial = (a: { by: string; byId?: string }, b: { by: string; byId?: string }) => (a.byId && b.byId ? a.byId === b.byId : a.by.trim().toLowerCase() === b.by.trim().toLowerCase());
+const sameOfficial = (a: { by: string; byId?: string }, b: { by: string; byId?: string }) => !!dualControlRefusal(a, b);
 const addDays = (iso: string, days: number) => new Date(Date.parse(iso) + days * 86_400_000).toISOString().slice(0, 10);
 
 /** Suspend an approved mapping in an emergency: no new decision rests on it from now. */
@@ -270,7 +271,8 @@ export function approveMapping(permitType: string, version: number, by: string, 
   const m = db().mappings.find(x => x.permitType === permitType && x.version === version);
   if (!m) return { error: 'No such mapping version' };
   if (m.state !== 'draft') return { error: `This version is ${m.state}` };
-  if ((byId && m.draftedById && byId === m.draftedById) || by === m.draftedBy) return { error: 'A different official approves the mapping (four-eyes)' };
+  // The same rule as every two-official step: a different signed-in official, and a different person at the identity provider.
+  if (dualControlRefusal({ by: m.draftedBy, byId: m.draftedById }, { by, byId })) return { error: 'A different official approves the mapping (four-eyes)' };
   if (m.lead === TO_BE_DESIGNATED) return { error: 'Name the lead authority the law designates before approving' };
   if (!m.legalBasis.length) return { error: 'A mapping governs decisions only with its legal basis cited from the laws register' };
   // The version before it, suspended or not (a suspended lead still hands over).

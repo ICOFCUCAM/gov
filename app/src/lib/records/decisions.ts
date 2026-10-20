@@ -37,6 +37,8 @@ export interface DecisionContent {
   authority?: import('@/lib/casework/engine').DecisionAuthority;
   /** The exact operational rule versions it calculated with (lib/law/rules.ts). */
   rules?: import('@/lib/casework/engine').RuleRef[];
+  /** For a two-official decision: whether the two are known to be different people at the identity provider, or only different accounts. */
+  independence?: 'identity-provider' | 'accounts-only' | 'unverified';
   at: string;
   supersedes?: string;
 }

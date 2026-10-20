@@ -9,7 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
-import { lapseDeadlines } from '@/lib/casework/engine';
+import { lapseDeadlines, lapseProposals } from '@/lib/casework/engine';
 import { expireStandings } from '@/lib/organisations/register';
 import { expireGrants } from '@/lib/immigration/register';
 import { watchAccess } from '@/lib/records/access-watch';
@@ -31,7 +31,8 @@ export async function GET(req: Request) {
   const professionals = lapseRegistrations();
   const customs = reconcileCustomsPayments(listReceipts());
   const suspensions = raiseSuspensionAlerts();
-  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length });
+  const proposals = lapseProposals();
+  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length, proposalsLapsed: proposals.length });
 }
 
 export const POST = GET;

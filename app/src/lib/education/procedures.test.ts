@@ -67,7 +67,9 @@ describe('education procedures', () => {
     const q = openCase({ procedure: 'edu.qualification', fields: { holderRef: 'BR-2008-000123', holderName: 'Amara Okafor', title: 'Secondary School Certificate', awardingBody: number, awardedOn: '2026-07-15' } }, edu('clerk')) as { id: string };
     doc(q.id, EDU, 'award-evidence', edu('clerk'));
     await step(q.id, 'check', edu('clerk')); await step(q.id, 'verify', edu('clerk'));
-    await step(q.id, 'record', edu('s1', 'signatory'), { reason: 'Results list confirmed' });
+    // Recording a qualification needs two officials (the platform's minimum for credentials).
+    expect(await step(q.id, 'record', edu('s1', 'signatory'), { reason: 'Results list confirmed' })).toMatchObject({ pending: true });
+    await step(q.id, 'record', edu('s2', 'signatory'));
     const award = awardOfCase(q.id);
     expect(award).toMatchObject({ state: 'valid', accreditation: { register: 'schools' } });
     const issued = await step(q.id, 'issue', edu('clerk'));
@@ -106,6 +108,7 @@ describe('education procedures', () => {
     const q = openCase({ procedure: 'edu.qualification', fields: { holderRef: 'P-1', holderName: 'A', title: 'Degree', awardingBody: number, awardedOn: '2026-01-01' } }, edu('clerk')) as { id: string };
     doc(q.id, EDU, 'award-evidence', edu('clerk'));
     await step(q.id, 'check', edu('clerk')); await step(q.id, 'verify', edu('clerk'));
-    expect(await act(q.id, { action: 'record', reason: 'x' }, edu('s1', 'signatory'))).toMatchObject({ error: expect.stringMatching(/not accredited or registered/) });
+    await step(q.id, 'record', edu('s1', 'signatory'), { reason: 'x' });
+    expect(await act(q.id, { action: 'record' }, edu('s2', 'signatory'))).toMatchObject({ error: expect.stringMatching(/not accredited or registered/) });
   });
 });

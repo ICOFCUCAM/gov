@@ -106,6 +106,8 @@ export interface Step {
   idempotencyKey?: string;
   /** The confirming official's own key on a four-eyes step, so a repeated confirmation is recognised too. */
   confirmIdempotencyKey?: string;
+  /** How independent the two officials of a two-official step are known to be (lib/data/dual-control.ts independenceOf). */
+  independence?: 'identity-provider' | 'accounts-only' | 'unverified';
 }
 
 export interface Proposal {
@@ -116,6 +118,8 @@ export interface Proposal {
   citations?: Citation[];
   fields?: Record<string, unknown>;
   idempotencyKey?: string;
+  /** When it lapses unconfirmed (the dual-control policy's waiting period). */
+  expiresAt?: string;
 }
 
 export interface Case {
@@ -140,6 +144,8 @@ export interface Case {
   legalHold?: { by: string; at: string; reason: string };
   history: Step[];
   pending?: Proposal;
+  /** Proposals that lapsed unconfirmed, kept as they were (a new proposal starts again). */
+  lapsedProposals?: (Proposal & { lapsedAt: string })[];
   source: 'entered' | 'citizen' | 'imported' | 'feed' | 'exchange' | 'sample';
   version: number;
   openedAt: string;

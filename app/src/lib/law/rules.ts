@@ -12,6 +12,7 @@
 // Amounts are integers in minor units (cents); rates are percentages with at
 // most four decimals; results are rounded half up to the minor unit.
 
+import { dualControlRefusal } from '@/lib/data/dual-control';
 import { createHash } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
@@ -158,7 +159,7 @@ export function approveRule(key: string, version: number, by: string, byId?: str
   const r = db().rules.find(x => x.key === key && x.version === version);
   if (!r) return { error: 'No such rule version' };
   if (r.state !== 'draft') return { error: `This version is ${r.state}` };
-  if (by === r.draftedBy || (byId && byId === r.draftedById)) return { error: 'A different official approves the rule (four-eyes)' };
+  if (dualControlRefusal({ by: r.draftedBy, byId: r.draftedById }, { by, byId })) return { error: 'A different official approves the rule (four-eyes)' };
   if (!r.citations.length) return { error: 'A rule applies only with the provisions of law it implements cited' };
   for (const x of db().rules) if (x.key === key && x.state === 'approved' && x.version < version && (!x.effectiveTo || x.effectiveTo > r.effectiveFrom)) x.effectiveTo = r.effectiveFrom;
   Object.assign(r, { state: 'approved', approvedBy: by, ...(byId ? { approvedById: byId } : {}), approvedAt: now.toISOString() });

@@ -46,6 +46,7 @@ describe('cycle 3 audit evidence', () => {
     doc(q.id, EDU, 'award-evidence', edu('clerk'));
     await step(q.id, 'check', edu('clerk')); await step(q.id, 'verify', edu('clerk'));
     await step(q.id, 'record', edu('s1', 'signatory'), { reason: 'Results confirmed' });
+    await step(q.id, 'record', edu('s2', 'signatory'));
     await step(q.id, 'issue', edu('clerk'));
     const r = openCase({ procedure: 'prof.registration', fields: { profession: 'nurse', personRef: 'BR-2007-000999', name: 'Chinedu Eze' } }, pro('clerk')) as { id: string };
     doc(r.id, PRO, 'qualification-evidence', pro('clerk')); doc(r.id, PRO, 'identity-evidence', pro('clerk'));

@@ -65,6 +65,9 @@
       "name": "documents"
     },
     {
+      "name": "dual-control"
+    },
+    {
       "name": "education"
     },
     {
@@ -6233,6 +6236,14 @@
                           },
                           "at": "2026-01-15T09:30:00.000Z"
                         },
+                        "lapsedProposals": [
+                          {
+                            "action": "string",
+                            "by": {},
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "lapsedAt": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
                         "source": "citizen",
                         "version": 1,
                         "openedAt": "2026-01-15T09:30:00.000Z",
@@ -6414,6 +6425,14 @@
                           },
                           "at": "2026-01-15T09:30:00.000Z"
                         },
+                        "lapsedProposals": [
+                          {
+                            "action": "string",
+                            "by": {},
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "lapsedAt": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
                         "source": "citizen",
                         "version": 1,
                         "openedAt": "2026-01-15T09:30:00.000Z",
@@ -6922,6 +6941,14 @@
                           },
                           "at": "2026-01-15T09:30:00.000Z"
                         },
+                        "lapsedProposals": [
+                          {
+                            "action": "string",
+                            "by": {},
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "lapsedAt": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
                         "source": "citizen",
                         "version": 1,
                         "openedAt": "2026-01-15T09:30:00.000Z",
@@ -8287,6 +8314,9 @@
                     },
                     "suspensionAlerts": {
                       "type": "number"
+                    },
+                    "proposalsLapsed": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -8301,7 +8331,8 @@
                     "professionalsLapsed",
                     "customsPaymentsPosted",
                     "customsPaymentsUnmatched",
-                    "suspensionAlerts"
+                    "suspensionAlerts",
+                    "proposalsLapsed"
                   ]
                 },
                 "examples": {
@@ -8330,7 +8361,8 @@
                       "professionalsLapsed": 1,
                       "customsPaymentsPosted": 1,
                       "customsPaymentsUnmatched": 1,
-                      "suspensionAlerts": 1
+                      "suspensionAlerts": 1,
+                      "proposalsLapsed": 1
                     }
                   }
                 }
@@ -11533,6 +11565,162 @@
         ],
         "x-permission-rule": "official",
         "x-source": "src/app/api/documents/verify/route.ts"
+      }
+    },
+    "/api/dual-control": {
+      "get": {
+        "tags": [
+          "dual-control"
+        ],
+        "operationId": "get_dual_control",
+        "summary": "GET /api/dual-control",
+        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code) and the country's rules. POST { extra, requireIdentityBinding, pendingHours, basis } records the country's rules (administrators, audited): further steps its law requires two officials for, whether both must be linked to the national identity provider, and how long a proposal waits. The minimum cannot be lowered here.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "minimum": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "policy": {
+                      "$ref": "#/components/schemas/DualControlPolicy"
+                    }
+                  },
+                  "required": [
+                    "minimum",
+                    "policy"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "minimum": [
+                        "string"
+                      ],
+                      "policy": {
+                        "extra": [
+                          "string"
+                        ],
+                        "requireIdentityBinding": true,
+                        "pendingHours": 1,
+                        "adopted": true,
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "basis": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/dual-control/route.ts"
+      },
+      "post": {
+        "tags": [
+          "dual-control"
+        ],
+        "operationId": "post_dual_control",
+        "summary": "POST /api/dual-control",
+        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code) and the country's rules. POST { extra, requireIdentityBinding, pendingHours, basis } records the country's rules (administrators, audited): further steps its law requires two officials for, whether both must be linked to the national identity provider, and how long a proposal waits. The minimum cannot be lowered here.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "policy": {
+                      "$ref": "#/components/schemas/DualControlPolicy"
+                    }
+                  },
+                  "required": [
+                    "policy"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "policy": {
+                        "extra": [
+                          "string"
+                        ],
+                        "requireIdentityBinding": true,
+                        "pendingHours": 1,
+                        "adopted": true,
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "basis": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/dual-control/route.ts"
       }
     },
     "/api/education": {
@@ -62574,6 +62762,67 @@
           "pending": {
             "$ref": "#/components/schemas/Proposal"
           },
+          "lapsedProposals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "institution": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                },
+                "at": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Citation"
+                  }
+                },
+                "fields": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "idempotencyKey": {
+                  "type": "string"
+                },
+                "expiresAt": {
+                  "type": "string",
+                  "description": "When it lapses unconfirmed (the dual-control policy's waiting period)."
+                },
+                "lapsedAt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "action",
+                "by",
+                "at",
+                "lapsedAt"
+              ]
+            },
+            "description": "Proposals that lapsed unconfirmed, kept as they were (a new proposal starts again)."
+          },
           "source": {
             "type": "string",
             "enum": [
@@ -64971,6 +65220,15 @@
             },
             "description": "The exact operational rule versions it calculated with (lib/law/rules.ts)."
           },
+          "independence": {
+            "type": "string",
+            "enum": [
+              "accounts-only",
+              "identity-provider",
+              "unverified"
+            ],
+            "description": "For a two-official decision: whether the two are known to be different people at the identity provider, or only different accounts."
+          },
           "at": {
             "type": "string"
           },
@@ -66866,6 +67124,45 @@
             "type": "string"
           }
         }
+      },
+      "DualControlPolicy": {
+        "type": "object",
+        "properties": {
+          "extra": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Further steps the country's law requires two officials for: `packageKey:actionKey`."
+          },
+          "requireIdentityBinding": {
+            "type": "boolean",
+            "description": "Refuse a two-official decision unless both accounts are linked to the national identity provider."
+          },
+          "pendingHours": {
+            "type": "number",
+            "description": "How long a proposal waits for its second official before it lapses."
+          },
+          "adopted": {
+            "type": "boolean",
+            "description": "False while these are the platform's defaults, not the country's adopted rules."
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "extra",
+          "requireIdentityBinding",
+          "pendingHours",
+          "adopted"
+        ]
       },
       "EscrowAgreement": {
         "type": "object",
@@ -75348,6 +75645,10 @@
           },
           "idempotencyKey": {
             "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When it lapses unconfirmed (the dual-control policy's waiting period)."
           }
         },
         "required": [
@@ -83605,6 +83906,15 @@
           "confirmIdempotencyKey": {
             "type": "string",
             "description": "The confirming official's own key on a four-eyes step, so a repeated confirmation is recognised too."
+          },
+          "independence": {
+            "type": "string",
+            "enum": [
+              "accounts-only",
+              "identity-provider",
+              "unverified"
+            ],
+            "description": "How independent the two officials of a two-official step are known to be (lib/data/dual-control.ts independenceOf)."
           }
         },
         "required": [
