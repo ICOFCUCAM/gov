@@ -68,6 +68,8 @@ select cron.schedule('civicos-update-watchdog', '* * * * *', $$select civicos.cr
 -- Backups (lib/data/backups.ts): hourly check; takes an encrypted backup when the newest is older than the
 -- policy's interval (default daily), verifies it by a dry-run restore, applies retention. Never restores.
 select cron.schedule('civicos-backup', '41 * * * *', $$select civicos.cron_call('civicos-backup', '/api/cron/backup')$$);
+-- Legal deadlines of cases (lib/casework/engine.ts): lapses passed deadlines, escalating where the procedure says.
+select cron.schedule('civicos-case-deadlines', '*/15 * * * *', $$select civicos.cron_call('civicos-case-deadlines', '/api/cron/case-deadlines')$$);
 -- Retention sweep (go-live review M-13): expired email-update requests, sign-in
 -- lockout counters, audit summaries, the nation's rules for permits and cases.
 select cron.schedule('civicos-retention', '23 * * * *', $$select civicos.cron_call('civicos-retention', '/api/cron/retention')$$);

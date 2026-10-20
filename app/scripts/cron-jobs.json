@@ -16,6 +16,7 @@
     { "name": "deliver-cloudevents", "schedule": "*/2 * * * *",  "method": "GET",  "substrate": false },
     { "name": "deliver-messages",    "schedule": "* * * * *",    "method": "GET",  "substrate": false },
     { "name": "backup",              "schedule": "41 * * * *",   "method": "GET",  "substrate": false },
+    { "name": "case-deadlines",      "schedule": "*/15 * * * *", "method": "GET",  "substrate": false },
     { "name": "sla",                 "schedule": "0 * * * *",    "method": "POST", "substrate": true },
     { "name": "telemetry-stale",     "schedule": "0 * * * *",    "method": "POST", "substrate": true },
     { "name": "promote-directives",  "schedule": "0 * * * *",    "method": "POST", "substrate": false }

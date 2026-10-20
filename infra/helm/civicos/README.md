@@ -182,7 +182,7 @@ so nothing else is pulled.
 | `deliver-cloudevents` | every 2 minutes | GET |
 | `deliver-events` | every 5 minutes | GET |
 | `substrate-metrics`, `audit-anchor` | every 10 minutes | GET |
-| `witness-sweep`, `witness-divergence` | every 15 minutes | GET |
+| `witness-sweep`, `witness-divergence`, `case-deadlines` | every 15 minutes | GET |
 | `posture-digest`, `site-feeds` | every 30 minutes | GET |
 | `expire-consents`, `audit-self` | hourly | GET |
 | `twin-ingest` | hourly at :07 | GET |

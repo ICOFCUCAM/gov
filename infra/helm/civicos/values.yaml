@@ -349,6 +349,7 @@ cron:
     deliver-cloudevents: { schedule: "*/2 * * * *",  method: GET }
     deliver-messages:    { schedule: "* * * * *",    method: GET }
     backup:              { schedule: "41 * * * *",   method: GET }
+    case-deadlines:      { schedule: "*/15 * * * *", method: GET }
     sla:                 { schedule: "0 * * * *",    method: POST, substrate: true }
     telemetry-stale:     { schedule: "0 * * * *",    method: POST, substrate: true }
     promote-directives:  { schedule: "0 * * * *",    method: POST }

@@ -5576,6 +5576,145 @@
         "x-source": "src/app/api/cron/backup/route.ts"
       }
     },
+    "/api/cron/case-deadlines": {
+      "get": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "get_cron_case_deadlines",
+        "summary": "GET /api/cron/case-deadlines",
+        "description": "Case deadlines cron — every 15 minutes (supabase/cron/schedule.sql). Marks legal deadlines of cases that have passed (lib/casework/engine.ts lapseDeadlines()): escalates where the procedure says so, writes one audit entry per lapsed deadline (case reference, deadline, effect; never personal fields) and alerts the responsible institution's subscribed officials. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …`, like every /api/cron/* worker.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "lapsed": {
+                      "type": "number"
+                    },
+                    "cases": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ref": {
+                            "type": "string"
+                          },
+                          "deadline": {
+                            "type": "string"
+                          },
+                          "onLapse": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "ref",
+                          "deadline",
+                          "onLapse"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "lapsed",
+                    "cases"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "ok": true,
+                      "lapsed": 1,
+                      "cases": [
+                        {
+                          "ref": "string",
+                          "deadline": "string",
+                          "onLapse": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "automation": []
+          }
+        ],
+        "x-source": "src/app/api/cron/case-deadlines/route.ts"
+      },
+      "post": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "post_cron_case_deadlines",
+        "summary": "POST /api/cron/case-deadlines",
+        "description": "Case deadlines cron — every 15 minutes (supabase/cron/schedule.sql). Marks legal deadlines of cases that have passed (lib/casework/engine.ts lapseDeadlines()): escalates where the procedure says so, writes one audit entry per lapsed deadline (case reference, deadline, effect; never personal fields) and alerts the responsible institution's subscribed officials. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …`, like every /api/cron/* worker.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "automation": []
+          }
+        ],
+        "x-permission-rule": "self-authenticated",
+        "x-source": "src/app/api/cron/case-deadlines/route.ts"
+      }
+    },
     "/api/cron/deliver-cloudevents": {
       "get": {
         "tags": [
@@ -6653,6 +6792,13 @@
                         "cases": {
                           "anonymised": 1,
                           "deleted": 1
+                        },
+                        "documents": {
+                          "disposed": 1,
+                          "held": 1
+                        },
+                        "accessLog": {
+                          "removed": 1
                         },
                         "subscriptions": {
                           "expired": 1
@@ -29172,7 +29318,7 @@
                     "value": {
                       "change": {
                         "id": "ID-0001",
-                        "category": "cases",
+                        "category": "access-log",
                         "rule": {
                           "action": "anonymise"
                         },
@@ -29229,7 +29375,13 @@
                     "rules": {
                       "type": "object",
                       "properties": {
+                        "access-log": {
+                          "$ref": "#/components/schemas/RetentionRule"
+                        },
                         "cases": {
+                          "$ref": "#/components/schemas/RetentionRule"
+                        },
+                        "documents": {
                           "$ref": "#/components/schemas/RetentionRule"
                         },
                         "permits": {
@@ -29237,7 +29389,9 @@
                         }
                       },
                       "required": [
+                        "access-log",
                         "cases",
+                        "documents",
                         "permits"
                       ]
                     },
@@ -29249,7 +29403,9 @@
                           "id": {
                             "type": "string",
                             "enum": [
+                              "access-log",
                               "cases",
+                              "documents",
                               "permits"
                             ]
                           },
@@ -29300,7 +29456,13 @@
                     "summary": "Generated from the schema",
                     "value": {
                       "rules": {
+                        "access-log": {
+                          "action": "anonymise"
+                        },
                         "cases": {
+                          "action": "anonymise"
+                        },
+                        "documents": {
                           "action": "anonymise"
                         },
                         "permits": {
@@ -29309,7 +29471,7 @@
                       },
                       "categories": [
                         {
-                          "id": "cases",
+                          "id": "access-log",
                           "label": "Example",
                           "applies": "string"
                         }
@@ -29317,7 +29479,7 @@
                       "changes": [
                         {
                           "id": "ID-0001",
-                          "category": "cases",
+                          "category": "access-log",
                           "rule": {
                             "action": "anonymise"
                           },
@@ -29436,7 +29598,7 @@
                     "value": {
                       "change": {
                         "id": "ID-0001",
-                        "category": "cases",
+                        "category": "access-log",
                         "rule": {
                           "action": "anonymise"
                         },
@@ -67301,7 +67463,9 @@
           "category": {
             "type": "string",
             "enum": [
+              "access-log",
               "cases",
+              "documents",
               "permits"
             ]
           },
@@ -67410,6 +67574,33 @@
             "required": [
               "anonymised",
               "deleted"
+            ]
+          },
+          "documents": {
+            "type": "object",
+            "properties": {
+              "disposed": {
+                "type": "number"
+              },
+              "held": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "disposed",
+              "held"
+            ],
+            "description": "Documents whose content was destroyed, and those held back by a legal hold (absent on runs before documents)."
+          },
+          "accessLog": {
+            "type": "object",
+            "properties": {
+              "removed": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "removed"
             ]
           },
           "subscriptions": {
