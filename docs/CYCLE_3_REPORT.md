@@ -38,7 +38,7 @@ Changes to the engine:
 
 ## Modified files
 
-98 files changed between `9119716` and the end of the cycle: 63 added and 35 modified.
+96 files changed between `9119716` and the end of the cycle: 61 added and 35 modified.
 
 New modules:
 
