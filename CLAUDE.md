@@ -495,6 +495,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   accessor passes its object through `touch()` (`lib/data/repo/track.ts`;
   `tracked()` for a store held at module level), so its changes are written
   with the audit entry they belong to; a new store does the same.
+- A request finishes its own durable writes (register 18.37): every route
+  handler is wrapped at build by `scripts/durable-route-loader.cjs` with
+  `durableRoute()` (`lib/data/repo/settle.ts`), so a changing request commits
+  before its response and a stale instance pulls before it answers. Export
+  route methods only as `export (async) function METHOD` or `export const
+  METHOD` (`durable-route.test.ts` checks); a serverless host never relies on
+  a timer between requests.
 
 ## Backups and disaster recovery
 

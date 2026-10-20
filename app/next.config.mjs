@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { embedHeaders, pageHeaders } from './security-headers.mjs';
 
 /** @type {import('next').NextConfig} */
@@ -28,7 +29,17 @@ const nextConfig = {
   // src/lib/i18n/bundled.ts (every language, for the server) is replaced by
   // bundled.client.ts there. The root layout writes the nation's own
   // languages into the page; lib/i18n loads any other as its own chunk.
-  webpack(config, { isServer, webpack }) {
+  webpack(config, { isServer, nextRuntime, webpack }) {
+    // Every route handler finishes its durable writes before its response
+    // (scripts/durable-route-loader.cjs, src/lib/data/repo/settle.ts): on a
+    // serverless host nothing runs after it, and the middleware cannot wait for it.
+    if (isServer && nextRuntime === 'nodejs') {
+      config.module.rules.push({
+        test: /[\\/]src[\\/]app[\\/](?:.+[\\/])?route\.ts$/,
+        enforce: 'pre',
+        loader: fileURLToPath(new URL('./scripts/durable-route-loader.cjs', import.meta.url)),
+      });
+    }
     if (!isServer) {
       config.plugins.push(new webpack.NormalModuleReplacementPlugin(/[\\/]lib[\\/]i18n[\\/]bundled$|^\.\/bundled$/, resource => {
         if (/[\\/]lib[\\/]i18n$/.test(resource.context) || /[\\/]lib[\\/]i18n[\\/]bundled$/.test(resource.request)) {
