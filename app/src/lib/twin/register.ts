@@ -18,6 +18,7 @@
 // figure through signalFor() and keep their sample when nothing is observed.
 // Kept as a server store (persisted by lib/data/persist.ts).
 
+import { chosenSource, findConflicts, type Conflict } from './conflicts';
 import { createHash } from 'node:crypto';
 import { recordAudit, listMinistries, getSovereign, listIntegrations } from '@/lib/data/store';
 import { nationIso3, nationRegions, nationLanguages } from '@/lib/nation/registry';
@@ -855,6 +856,12 @@ export function stateAsOf({ asOf, knownAt, metric, entityId }: { asOf?: string; 
     const cur = best.get(k);
     // Observations arrive here in recording order (archive, then the live
     // register), so of two recorded in the same millisecond the later import wins.
+    // Two sources disagreeing on the same date: the source an official chose stands (lib/twin/conflicts.ts).
+    if (cur && o.validFrom === cur.validFrom && o.sourceId !== cur.sourceId) {
+      const chosen = chosenSource(o.entityId, o.metric, o.validFrom);
+      if (chosen === cur.sourceId) return;
+      if (chosen === o.sourceId) { best.set(k, o); return; }
+    }
     if (!cur || o.validFrom > cur.validFrom || (o.validFrom === cur.validFrom && o.recordedAt >= cur.recordedAt)) best.set(k, o);
   };
   // The history archive first (older), then the live register.
@@ -862,6 +869,9 @@ export function stateAsOf({ asOf, knownAt, metric, entityId }: { asOf?: string; 
   db().observations.forEach(consider);
   return [...best.values()];
 }
+
+/** Values two sources disagree on (standing observations, live register); see lib/twin/conflicts.ts. */
+export const twinConflicts = (filter: { metric?: string; entityId?: string } = {}): Conflict[] => findConflicts(db().observations, filter);
 
 const sourceName = (id: string) => db().sources.find(s => s.id === id)?.name ?? id;
 

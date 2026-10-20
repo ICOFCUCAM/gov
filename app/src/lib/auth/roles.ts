@@ -191,7 +191,7 @@ const OFFICIAL_WORK: RegExp[] = [
   // only officials of the site's own institution or of the whole government (canActForSite() in the route).
   /^\/api\/public-sites\/[a-z-]+(\/|$)/,
   // The Update Center's ordinary work is UPDATE_CENTER_WORK; the rest of /api/releases is INSTALLATION.
-  /^\/api\/twin\/(keys|metrics|runs|scenarios|sources)(\/|$)/, // registering metrics and withdrawing imports are audited with the official
+  /^\/api\/twin\/(keys|metrics|runs|scenarios|sources|conflicts)(\/|$)/, // registering metrics and withdrawing imports are audited with the official
   /^\/api\/twin\/tasking\/tasks(\/|$)/,       // a signed-in official allowed by canTaskSensor() (checked in the route)
 ];
 
@@ -541,4 +541,12 @@ export function canReadCivil(s: Scope, authority: string | undefined, purpose?: 
   if (authority && s.institution === authority && roleOf(s) !== 'auditor') return null;
   if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read the civil register';
   return 'The civil register is read by the civil registration authority';
+}
+
+/** Choosing which source stands where two disagree (lib/twin/conflicts.ts): those who can sign at the statistics authority; whole-government administrators while none is named. */
+export function canResolveTwinConflict(s: Scope, statistics: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (statistics) return s.institution === statistics && role === 'signatory' ? null : 'Only an official who can sign at the statistics authority decides which figure stands';
+  return wholeGovernment(s) && role === 'administrator' ? null : 'Name the statistics authority under Who is responsible first';
 }

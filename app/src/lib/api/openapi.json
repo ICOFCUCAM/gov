@@ -9338,7 +9338,7 @@
         ],
         "operationId": "get_cron_twin_ingest",
         "summary": "GET /api/cron/twin-ingest",
-        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due: files at an address, and telemetry streams (their complete days since the last run, as daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never fetched here. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
+        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due: files at an address, and telemetry streams (their complete days since the last run, as daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never fetched here. Then the platform's own registers' counts (the civil register's births, deaths and marriages, lib/civil/twin.ts), when they changed. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
         "parameters": [],
         "responses": {
           "200": {
@@ -9400,11 +9400,35 @@
                           }
                         ]
                       }
+                    },
+                    "civil": {
+                      "type": "object",
+                      "properties": {
+                        "published": {
+                          "type": "boolean"
+                        },
+                        "run": {
+                          "type": "string"
+                        },
+                        "accepted": {
+                          "type": "number"
+                        },
+                        "rejected": {
+                          "type": "number"
+                        },
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "published"
+                      ]
                     }
                   },
                   "required": [
                     "ok",
-                    "runs"
+                    "runs",
+                    "civil"
                   ]
                 },
                 "examples": {
@@ -9416,7 +9440,14 @@
                         {
                           "source": "string"
                         }
-                      ]
+                      ],
+                      "civil": {
+                        "published": true,
+                        "run": "string",
+                        "accepted": 1,
+                        "rejected": 1,
+                        "error": "Text"
+                      }
                     }
                   }
                 }
@@ -9447,7 +9478,7 @@
         ],
         "operationId": "post_cron_twin_ingest",
         "summary": "POST /api/cron/twin-ingest",
-        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due: files at an address, and telemetry streams (their complete days since the last run, as daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never fetched here. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
+        "description": "Twin ingest cron — hourly (supabase/cron/schedule.sql). Imports every registered source whose schedule (daily, weekly) says it is due: files at an address, and telemetry streams (their complete days since the last run, as daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never fetched here. Then the platform's own registers' counts (the civil register's births, deaths and marriages, lib/civil/twin.ts), when they changed. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -46847,6 +46878,195 @@
         "x-source": "src/app/api/twin/catalog/route.ts"
       }
     },
+    "/api/twin/conflicts": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_conflicts",
+        "summary": "GET /api/twin/conflicts",
+        "description": "/api/twin/conflicts — values two sources disagree on (lib/twin/conflicts.ts, design §9.4). GET lists them (?metric=&entity=) with any decision taken. POST { entityId, metric, validFrom, chosenSource, reason } records which source stands: those who can sign at the statistics authority (canResolveTwinConflict()), named and audited.",
+        "parameters": [
+          {
+            "name": "entity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "metric",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conflicts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Conflict"
+                      }
+                    }
+                  },
+                  "required": [
+                    "conflicts"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "conflicts": [
+                        {
+                          "entityId": "ID-0001",
+                          "metric": "string",
+                          "validFrom": "2026-01-15",
+                          "values": [
+                            {}
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/twin/conflicts/route.ts"
+      },
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_conflicts",
+        "summary": "POST /api/twin/conflicts",
+        "description": "/api/twin/conflicts — values two sources disagree on (lib/twin/conflicts.ts, design §9.4). GET lists them (?metric=&entity=) with any decision taken. POST { entityId, metric, validFrom, chosenSource, reason } records which source stands: those who can sign at the statistics authority (canResolveTwinConflict()), named and audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entityId": {
+                    "type": "string"
+                  },
+                  "metric": {
+                    "type": "string"
+                  },
+                  "validFrom": {
+                    "type": "string"
+                  },
+                  "chosenSource": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "entityId": "ID-0001",
+                    "metric": "string",
+                    "validFrom": "2026-01-15",
+                    "chosenSource": "string",
+                    "reason": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "resolution": {
+                      "$ref": "#/components/schemas/Resolution"
+                    }
+                  },
+                  "required": [
+                    "resolution"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "resolution": {
+                        "entityId": "ID-0001",
+                        "metric": "string",
+                        "validFrom": "2026-01-15",
+                        "chosenSource": "string",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "reason": "Text"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/twin/conflicts/route.ts"
+      }
+    },
     "/api/twin/entities/{id}": {
       "get": {
         "tags": [
@@ -58360,6 +58580,55 @@
           "reason"
         ]
       },
+      "Conflict": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceId": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "unit": {
+                  "type": "string"
+                },
+                "runId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "sourceId",
+                "value",
+                "unit",
+                "runId"
+              ]
+            }
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/Resolution"
+          }
+        },
+        "required": [
+          "entityId",
+          "metric",
+          "validFrom",
+          "values"
+        ]
+      },
       "ConsentFootprintStat": {
         "type": "object",
         "properties": {
@@ -66256,6 +66525,41 @@
           "supersededAt": {
             "type": "string",
             "description": "When the platform stopped relying on it (its run was withdrawn); as-of queries known before then still see it."
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "administrative-count",
+              "direct",
+              "estimate",
+              "model",
+              "simulation"
+            ],
+            "description": "How the value was obtained (design §9.2, directions 11.3): a direct observation, an administrative count of the platform's own records, a statistical estimate, a model output or a simulation. Absent: as the source states it (observations before the field)."
+          },
+          "sourceRecordedAt": {
+            "type": "string",
+            "description": "When the source system recorded it, where it says (recordedAt is when CivicOS received it)."
+          },
+          "records": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string"
+              },
+              "count": {
+                "type": "number"
+              },
+              "sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "query",
+              "count",
+              "sha256"
+            ],
+            "description": "An administrative count's lineage: the register and query counted, how many records, and the SHA-256 of their ids, so an auditor can reconcile it."
           }
         },
         "required": [
@@ -70485,6 +70789,41 @@
           "ring",
           "definitionsPolicy",
           "stagingRequired"
+        ]
+      },
+      "Resolution": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string"
+          },
+          "chosenSource": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entityId",
+          "metric",
+          "validFrom",
+          "chosenSource",
+          "by",
+          "at",
+          "reason"
         ]
       },
       "RestorePoint": {
