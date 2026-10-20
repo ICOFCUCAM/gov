@@ -109,7 +109,6 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       for (const i of all) for (const v of i.versions) if (v.state === 'recorded') wait({ what: `Law: ${i.title ?? i.id} (${v.language}, in force ${v.dates.inForce})`, proposedBy: v.recordedBy, at: v.at, href: '/gov/law' });
       return { checks: [
         { label: 'At least one law recorded and confirmed', done: confirmed.length > 0, href: '/gov/law', detail: n(confirmed.length, 'confirmed law') },
-        { label: 'No law version waiting for confirmation', done: !all.some(i => i.versions.some(v => v.state === 'recorded')), href: '/gov/law' },
       ] };
     }),
 
@@ -193,7 +192,7 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       for (const c of facilityPolicyChanges()) if (c.state === 'pending') wait({ what: 'Facility register policy', proposedBy: (c as { by?: string }).by ?? 'an official', href: '/gov/sites' });
       for (const c of parcelPolicyChanges()) if (c.state === 'pending') wait({ what: 'Land parcel policy', proposedBy: (c as { by?: string }).by ?? 'an official', href: '/gov/sites/parcels' });
       return { checks: [
-        { label: 'Boundaries published (or the bundled map accepted)', done: bv.some(b => b.inForce), href: '/gov/sites/boundaries', detail: bv.length ? n(bv.length, 'version') : 'Using the bundled map' },
+        { label: 'The nation\'s own boundaries published', done: bv.some(b => b.inForce), href: '/gov/sites/boundaries', detail: bv.length ? n(bv.length, 'version') : 'Until then maps use the bundled boundaries' },
         { label: 'Cadastre authority named for land parcels', done: cadastreAuthority() !== null, href: '/gov/sites/parcels' },
       ] };
     }),

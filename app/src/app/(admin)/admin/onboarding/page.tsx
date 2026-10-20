@@ -9,12 +9,9 @@ export default function OnboardingPage() {
   return (
     <CommandShell active="cfg">
       <div className="mx-auto max-w-4xl space-y-8 px-3 py-6">
-        <header>
-          <h1 className="text-3xl font-semibold">Onboarding</h1>
-          <p className="mt-2 text-ink-muted">
-            Everything it takes to run the government on the platform, track by track, read from the live records.
-          </p>
-        </header>
+        <p className="text-ink-muted">
+          Everything it takes to run the government on the platform, track by track, read from the live records.
+        </p>
         <OnboardingHub />
         <section id="municipalities" className="scroll-mt-24 space-y-4">
           <header>
