@@ -173,6 +173,12 @@ export const STANDARD_METRICS: readonly Omit<MetricDef, 'origin'>[] = [
   { id: 'education.enrolment.male', label: 'Enrolment, male (reported)', unit: '{pupils}', aggregation: 'sum', period: 'instant' },
   { id: 'education.staff.teaching', label: 'Teaching staff (reported)', unit: '{persons}', aggregation: 'sum', period: 'instant' },
   { id: 'education.staff.total', label: 'Staff (reported)', unit: '{persons}', aggregation: 'sum', period: 'instant' },
+  // Summed from the capacity returns licensed health facilities reported (lib/health/twin.ts): aggregates only, never patients.
+  { id: 'health.beds.total', label: 'Hospital beds (reported)', unit: '{beds}', aggregation: 'sum', period: 'instant' },
+  { id: 'health.beds.intensive-care', label: 'Intensive-care beds (reported)', unit: '{beds}', aggregation: 'sum', period: 'instant' },
+  { id: 'health.staff.clinical', label: 'Clinical staff (reported)', unit: '{persons}', aggregation: 'sum', period: 'instant' },
+  { id: 'health.staff.total', label: 'Health facility staff (reported)', unit: '{persons}', aggregation: 'sum', period: 'instant' },
+  { id: 'health.outpatient.attendances', label: 'Outpatient attendances (reported)', unit: '{attendances}', aggregation: 'sum', period: 'instant' },
 ];
 
 // ── Registry ──────────────────────────────────────────────────────────────
