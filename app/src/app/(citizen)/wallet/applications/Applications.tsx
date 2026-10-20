@@ -22,6 +22,14 @@ export function Applications() {
     setMsg(r.ok ? `Sent. Your reference is ${j.application.ref}. The civil registry will ask for the birth notification from the health facility if it has not received it.` : j.error);
     if (r.ok) load();
   };
+  const [inc, setInc] = React.useState({ occurredOn: '', place: '', account: '', contact: '' });
+  const report = async () => {
+    setMsg(null);
+    const r = await fetch('/api/citizen/applications', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ procedure: 'police.incident', fields: { ...inc, reportingParty: 'The signed-in person' }, idempotencyKey: `incident-${inc.occurredOn}-${inc.place.slice(0, 30)}` }) });
+    const j = await r.json();
+    setMsg(r.ok ? `Reported. Your reference is ${j.application.ref}. The police will triage it and contact you if they need more.` : j.error);
+    if (r.ok) { load(); setInc({ occurredOn: '', place: '', account: '', contact: '' }); }
+  };
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF(x => ({ ...x, [k]: e.target.value }));
   return (
     <div className="space-y-3">
@@ -48,6 +56,17 @@ export function Applications() {
           <label className="text-sm">Father&apos;s family name (if declared)<input className={field} value={f.fatherFamily} onChange={set('fatherFamily')} /></label>
         </div>
         <Button className="mt-3" variant="primary" disabled={!f.childGiven || !f.childFamily || !f.birthDate || !f.motherFamily} onClick={submit}>Send to the civil registry</Button>
+      </Card>
+      <Card tight>
+        <h2 className="font-semibold">Report an incident to the police</h2>
+        <p className="mt-1 text-sm"><strong>If someone is in danger now, call the emergency number.</strong> This form is for things that have already happened and need recording. Your report is read only by the police officers handling it.</p>
+        <div className="mt-2 grid gap-2">
+          <label className="text-sm">When it happened<input type="date" className={field} value={inc.occurredOn} onChange={e => setInc(x => ({ ...x, occurredOn: e.target.value }))} /></label>
+          <label className="text-sm">Where it happened<input className={field} value={inc.place} onChange={e => setInc(x => ({ ...x, place: e.target.value }))} /></label>
+          <label className="text-sm">What happened<textarea className={field} rows={4} value={inc.account} onChange={e => setInc(x => ({ ...x, account: e.target.value }))} /></label>
+          <label className="text-sm">How the police can reach you<input className={field} value={inc.contact} onChange={e => setInc(x => ({ ...x, contact: e.target.value }))} /></label>
+        </div>
+        <Button className="mt-3" variant="primary" disabled={!inc.occurredOn || !inc.place || !inc.account} onClick={report}>Send to the police</Button>
       </Card>
     </div>
   );
