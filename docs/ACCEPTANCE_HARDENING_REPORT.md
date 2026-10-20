@@ -95,6 +95,8 @@ The principle tested throughout: the platform must be unable to make an unauthor
 
 ### Depends on country approval (the platform enforces; it does not decide)
 
+Officials work through these decisions with the [country decision pack](COUNTRY_DECISION_PACK.md).
+
 - **Authority mappings for each permit type.** The country decides:
   - the designated authority, legal basis and effective dates for every mapping (16 proposed drafts plus tax-assessment, customs-clearance and qualification-record);
   - procedures a nation adds must name their permit type.
