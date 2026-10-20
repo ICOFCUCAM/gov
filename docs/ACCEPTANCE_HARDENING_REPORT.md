@@ -130,6 +130,18 @@ Four of the open items above, done without new agency features:
 | Restore drill on Postgres | `3f12e1c` | A live consumer across a four-eyes restore in postgres mode, checked in the database as a restarted server loads it. | `lib/data/repo/restore-events-postgres.integration.test.ts`; new CI job *postgres backend* also runs the app's other Postgres suites, which CI had skipped. |
 | Shared rate limits and harvest watch | `1fd3233` | Route limits and the register watch counted once across all instances in postgres mode. | `lib/data/repo/shared-limits-postgres.integration.test.ts`: two pools as two instances, exactly the burst under concurrent requests, a spread harvest flagged once. |
 
+**Second round, from the decision pack's gaps:**
+
+| Item | Commit | What it does | Evidence |
+|---|---|---|---|
+| Country rule sets by two officials, citing the law | `3f49f48` | Dual-control rules and suspension rules are proposed by one administrator with the basis cited from the laws register (in force), confirmed by a different official; values left out kept; every version kept; lapsed in the daily job. | `casework/dual-control.test.ts`, `permits/suspension.test.ts` |
+| Who may suspend | `3f49f48` | A country setting: any administrator, or government-wide administrators only, checked by the route. | `permits/suspension.test.ts` |
+| Screens | `3f49f48` | The country's rules on Permit authorities; what the public professional check shows on Health regulation. | Build, typecheck |
+| Data-sharing purposes per caller | `2f76a38` | An outside caller is refused a purpose not approved for it and that service; approving or changing an outside caller takes two officials, lapses and is kept. Older approvals have no purposes: refused in production. | `data/integration-approval.test.ts`, `exchange/services.test.ts`, the approve route test |
+| Sign-in on a hosted deployment | `2a749b3` | The Supabase public values reach the browser; the first-account form appears when the server allows platform accounts. | `auth/sign-in-methods.test.ts`, `db/client.test.ts` |
+
+Still open from the pack: approving an outside caller needs any two administrators, not one from the authority that keeps the register, and its basis is a note, not a citation; a profession's disclosure list is changed by one administrator; mappings for the older permit types and moving immigration onto mappings are the country's decisions.
+
 The country decision pack (`docs/COUNTRY_DECISION_PACK.md`, `4e5c672`) lists every decision in "Depends on country approval" as forms officials can fill in. It also lists gaps it found: some settings exist only as an API, suspension periods and dual-control rules are set by one administrator with a free-text basis, and exchange-service purposes are not checked per caller.
 
 ## Test reliability

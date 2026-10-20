@@ -202,10 +202,11 @@ force and is flagged.
 - Default: confirm within **72 hours**, review within **30 days**. Both are
   marked **not adopted** (`DEFAULT_SUSPENSION_POLICY` in `authority.ts`).
   These are platform safety defaults. They are not taken from any law.
-- Who may suspend: **any administrator**. The route is limited to
-  administrators (`ADMIN_ONLY` in `app/src/lib/auth/roles.ts`). There is no
-  setting to narrow this to named officials. If the law names a narrower
-  group, record it on the form below and raise it with the publisher.
+- Who may suspend: **any administrator** by default. The country can narrow
+  this to **government-wide administrators only** (not an institution's own
+  administrators), as part of the same rules. If the law names a still
+  narrower group, record it on the form below and raise it with the
+  publisher.
 - Production: works with the defaults. The policy shows as not adopted until
   the country sets it.
 
@@ -217,15 +218,18 @@ regulation or a cabinet decision.
 
 ### Where it is entered
 
-- No screen yet. The Permit authorities screen has suspend, confirm, review
-  and lift buttons, but no form for the periods.
-- API: `POST /api/permit-authorities` with
-  `{ op: 'suspension-policy', confirmWithinHours, reviewWithinDays, basis }`
-  (`setSuspensionPolicy()`). Hours: 1 to 720. Days: 1 to 365. `basis` is
-  free text naming the instrument; it is not checked against the Laws
-  register.
-- Officials: **one administrator**, recorded in the audit chain. No second
-  official is needed to change the periods.
+- Screen: Permit authorities → "The country's rules for decisions" →
+  Emergency suspension (confirmation hours, review days, who may suspend,
+  and the law cited).
+- API: `POST /api/permit-authorities` with `{ op: 'suspension-policy',
+  confirmWithinHours?, reviewWithinDays?, suspendBy?, legalBasis: [{
+  instrument, eId }] }` (`proposeSuspensionPolicy()`), then `{ op:
+  'confirm-suspension-policy' }` or `{ op: 'withdraw-suspension-policy' }`.
+  Hours: 1 to 720. Days: 1 to 365. `suspendBy` is `administrator` or
+  `government-administrator`. Values left out keep their current setting.
+- The legal basis is cited from the Laws register and checked to be in force.
+- Officials: **proposed by one administrator, confirmed by a different one**
+  within the waiting period; every version is kept.
 - Using the power: `op: 'suspend'` (`suspendMapping()`), then a different
   official does `confirm-suspension`, `review-suspension` or
   `lift-suspension`.
@@ -297,19 +301,21 @@ linking is mandatory.
 
 ### Where it is entered
 
-- No screen yet.
-- API: `GET /api/dual-control` shows the minimum and the current rules.
-  `POST /api/dual-control` with
-  `{ extra, requireIdentityBinding, pendingHours, basis }`
-  (`setDualControlPolicy()`).
+- Screen: Permit authorities → "The country's rules for decisions" → Two
+  officials (the platform minimum, further steps, waiting period, identity
+  link, and the law cited).
+- API: `GET /api/dual-control` shows the minimum, the current rules, a
+  waiting proposal and earlier versions. `POST /api/dual-control` with
+  `{ op: 'propose', extra?, requireIdentityBinding?, pendingHours?,
+  legalBasis: [{ instrument, eId }] }` (`proposeDualControlPolicy()`), then
+  `{ op: 'confirm' }` or `{ op: 'withdraw' }`.
   - `extra` lists steps as `packageKey:actionKey`. For customs release this
     is `customs.declaration:release`.
   - `pendingHours` is 1 to 720.
-  - `basis` is free text naming the instrument.
-- Each submission **replaces the whole policy**. Send all three answers every
-  time. A list left out clears the further steps. Linking is off unless sent
-  as `true`.
-- Officials: **one administrator**, recorded in the audit chain.
+- Values left out keep their current setting.
+- The legal basis is cited from the Laws register and checked to be in force.
+- Officials: **proposed by one administrator, confirmed by a different one**
+  within the waiting period; every version is kept.
 - If linking becomes mandatory, each official's account must be linked first
   (administrators, `POST /api/auth/officials/identity-provider`, action
   `decide`; screen `/admin/officials`).
@@ -375,8 +381,9 @@ showing conditions.
 
 ### Where it is entered
 
-- No screen for the disclosure list yet. The public check itself is at
-  `/registers`.
+- Screen: Health regulation → "What the public check shows" (a tick per
+  field and profession; name and standing always show). The public check
+  itself is at `/registers`.
 - API: `POST /api/professions/types` with `{ key, title, authority,
   permitType, publicCheck, publicFields }` (`defineProfession()`).
   - `publicFields` is chosen from `name`, `number`, `profession`, `state`,
@@ -804,12 +811,15 @@ they have passed the second step.
 These are facts about the platform today, noted so officials are not
 surprised:
 
-- Suspension periods, dual-control rules, profession disclosure lists and
-  two-step policy have **no screen**. They are entered through the API.
-- The suspension periods and dual-control rules are changed by **one**
-  administrator. Their `basis` is free text, not a citation checked against
-  the Laws register.
-- "Who may suspend" is not a setting. Any administrator may.
+- The two-step sign-in policy has **no screen**; it is entered through the
+  API. (Suspension rules, dual-control rules and the profession disclosure
+  lists now have screens.)
+- A profession's disclosure list is changed by **one** administrator. The
+  suspension and dual-control rules now take two officials and cite the
+  Laws register.
+- "Who may suspend" can be narrowed only to government-wide administrators;
+  a narrower group the law names (for example a regulator's own officials)
+  is not yet a setting.
 - Data services check an outside caller's purpose against the purposes
   approved for that caller and service, and approving a caller takes two
   officials. But the two officials are any two administrators: the platform

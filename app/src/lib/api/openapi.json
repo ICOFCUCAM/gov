@@ -1808,8 +1808,7 @@
                       "type": "object",
                       "properties": {
                         "local": {
-                          "type": "boolean",
-                          "const": true
+                          "type": "boolean"
                         },
                         "substrate": {
                           "type": "boolean"

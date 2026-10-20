@@ -3,7 +3,8 @@
 // one confirms; an unconfirmed proposal lapses and is kept.
 import { describe, it, expect, afterEach } from 'vitest';
 import { registerIntegration, setIntegrationStatus, proposeIntegrationApproval, confirmIntegrationApproval, withdrawIntegrationApproval, listIntegrations, integrationPurposes, listAudit } from './store';
-import { setDualControlPolicy, resetDualControl } from '@/lib/casework/dual-control-policy';
+import { proposeDualControlPolicy, confirmDualControlPolicy, resetDualControl } from '@/lib/casework/dual-control-policy';
+import { recordVersion, confirmVersion } from '@/lib/law/register';
 import type { IntegrationClient } from '@/lib/api/types';
 
 let n = 0;
@@ -71,7 +72,11 @@ describe('approving an integration', () => {
   });
 
   it('lapses after the dual-control waiting period and is kept in history', () => {
-    ok(setDualControlPolicy({ pendingHours: 2, basis: 'Test instrument' }, 'Admin'));
+    // The country's waiting period (2 h), adopted by two officials citing a confirmed law.
+    const law = ok(recordVersion({ instrument: { title: 'Data Exchange Regulations', type: 'regulation', jurisdiction: 'X', year: 2026, number: `${++n}`, issuingAuthority: 'Minister' }, dates: { inForce: '2026-01-01' }, provisions: [{ eId: 'reg_2', num: '2', text: 'Waiting period.' }] }, 'L1', 'l1'));
+    confirmVersion(law.instrument.id, law.version.id, 'L2', 'l2');
+    ok(proposeDualControlPolicy({ pendingHours: 2, legalBasis: [{ instrument: law.instrument.id, eId: 'reg_2' }] }, 'Admin P', 'adm-p'));
+    ok(confirmDualControlPolicy('Admin Q', 'adm-q'));
     const id = client();
     const at = new Date('2026-10-01T08:00:00Z');
     ok(proposeIntegrationApproval(id, { purposes: { 'person.verify': ['enrolment'] } }, 'Admin A', undefined, at));

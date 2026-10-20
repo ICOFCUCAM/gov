@@ -39,10 +39,16 @@ export function citeBasis(input: unknown, on: string, context: string): Citation
   return out;
 }
 
+/** A waiting proposal without its deadline, as history keeps it. */
+function settled<T>(p: PolicyVersion<T> & { expiresAt: string }): PolicyVersion<T> {
+  const copy: Partial<PolicyVersion<T> & { expiresAt: string }> = { ...p };
+  delete copy.expiresAt;
+  return copy as PolicyVersion<T>;
+}
+
 const lapse = <T,>(h: PolicyChanges<T>, now: Date, audit: string, by: string): void => {
   if (h.pending && Date.parse(h.pending.expiresAt) < now.getTime()) {
-    const { expiresAt: _e, ...p } = h.pending;
-    (h.history ??= []).push({ ...p, outcome: 'lapsed' });
+    (h.history ??= []).push({ ...settled(h.pending), outcome: 'lapsed' });
     h.pending = undefined;
     recordAudit(by, `${audit}.lapse`, audit, 'ok', 'Not confirmed within the waiting period');
   }
@@ -72,8 +78,7 @@ export function confirmPolicy<T extends object>(h: PolicyChanges<T>, opts: { by:
   if (why) return { error: why };
   const independence = independenceOf(p.byId, opts.byId);
   if (opts.requireIdentityBinding && independence !== 'identity-provider') return { error: 'The nation requires both officials to be linked to the national identity provider (Officials → link identity)' };
-  const { expiresAt: _e, ...rest } = p;
-  const version: PolicyVersion<T> = { ...rest, confirmed: { by: opts.by, ...(opts.byId ? { byId: opts.byId } : {}), at: opts.now.toISOString(), independence } };
+  const version: PolicyVersion<T> = { ...settled(p), confirmed: { by: opts.by, ...(opts.byId ? { byId: opts.byId } : {}), at: opts.now.toISOString(), independence } };
   (h.history ??= []).push({ ...version, outcome: 'adopted' });
   h.pending = undefined;
   opts.adopt(version);
@@ -85,8 +90,7 @@ export function confirmPolicy<T extends object>(h: PolicyChanges<T>, opts: { by:
 export function withdrawPolicy<T>(h: PolicyChanges<T>, opts: { by: string; reason?: string; audit: string }): { ok: true } | { error: string } {
   const p = h.pending;
   if (!p) return { error: 'No change is waiting' };
-  const { expiresAt: _e, ...rest } = p;
-  (h.history ??= []).push({ ...rest, outcome: 'withdrawn' });
+  (h.history ??= []).push({ ...settled(p), outcome: 'withdrawn' });
   h.pending = undefined;
   recordAudit(opts.by, `${opts.audit}.withdraw`, opts.audit, 'ok', (opts.reason ?? '').slice(0, 200) || 'Withdrawn');
   return { ok: true };

@@ -118,7 +118,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   sign, within the waiting period, under the approved mapping in production.
 - An approved mapping can be suspended in an emergency
   (`suspendMapping()`): no new decision under it; confirmed, reviewed and
-  lifted by a different official; periods from the country's policy.
+  lifted by a different official; periods and who may suspend from the
+  country's policy.
+- The country's own rule sets (dual-control rules, suspension rules) change
+  only through `lib/law/policy-change.ts`: proposed by one administrator
+  citing the laws register, confirmed by a different official, values left
+  out kept, every version kept. A new country rule set uses it too.
 - Two officials are needed for the platform minimum in
   `lib/casework/dual-control-policy.ts` whatever a procedure says; the
   country adds steps, never removes them. Dual control compares people
