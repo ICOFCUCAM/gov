@@ -148,6 +148,8 @@
   "/updates/settings",
   "/updates/status",
   "/updates/support",
+  "/verify",
+  "/verify/[code]",
   "/wall",
   "/wallet",
   "/wallet/assistant",

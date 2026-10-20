@@ -162,6 +162,18 @@ export interface Messages {
     lawsNone: string;
     lawsInForceFrom: string;
     lawsCeased: string;
+    verifyTitle: string;
+    verifyIntro: string;
+    verifyCode: string;
+    verifyCheck: string;
+    verifyValid: string;
+    verifySuperseded: string;
+    verifyRevoked: string;
+    verifyNotFound: string;
+    verifySealOk: string;
+    verifySealBad: string;
+    verifyIssuedBy: string;
+    verifyIssuedOn: string;
     kindService: string;
     kindNews: string;
     kindProgramme: string;
@@ -837,6 +849,18 @@ export const en: Messages = {
     lawsNone: 'No laws have been published here yet.',
     lawsInForceFrom: 'In force from {date}',
     lawsCeased: 'Ceased {date}',
+    verifyTitle: 'Check a certificate',
+    verifyIntro: 'Type the code printed on a certificate to see whether it is genuine and still valid.',
+    verifyCode: 'Certificate code',
+    verifyCheck: 'Check',
+    verifyValid: 'Valid',
+    verifySuperseded: 'Replaced by a newer certificate',
+    verifyRevoked: 'Revoked',
+    verifyNotFound: 'No certificate has this code. Check the code and try again.',
+    verifySealOk: 'The issuing authority\'s seal is genuine.',
+    verifySealBad: 'The seal does not verify: do not rely on this certificate.',
+    verifyIssuedBy: 'Issued by {name}',
+    verifyIssuedOn: 'Issued on {date}',
     kindService: 'Service',
     kindNews: 'News',
     kindProgramme: 'Programme',
