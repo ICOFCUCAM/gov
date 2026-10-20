@@ -20,6 +20,7 @@ import { createHash } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
+import { nextNumber, legacyMax } from '@/lib/data/numbering';
 import { getOrganisation, registerTypes, current } from '@/lib/organisations/register';
 
 export type InspectionOutcome = 'no-action' | 'improvement-required' | 'referred-for-suspension';
@@ -65,18 +66,19 @@ export interface InstitutionReturn {
   versions: { n: number; counts: Partial<Record<ReturnMetric, number>>; at: string; by: string; note?: string }[];
 }
 
-interface Db { inspections: Inspection[]; awards: Award[]; returns: InstitutionReturn[]; seq: Record<string, number> }
+interface Db { inspections: Inspection[]; awards: Award[]; returns: InstitutionReturn[]; seq: Record<string, number>; quaSeq: number }
 const g = globalThis as unknown as { __civicosEducation?: Db };
 const db = (): Db => {
-  const d = touch('__civicosEducation', g.__civicosEducation ??= { inspections: [], awards: [], returns: [], seq: {} });
+  const d = touch('__civicosEducation', g.__civicosEducation ??= { inspections: [], awards: [], returns: [], seq: {}, quaSeq: 0 });
   d.inspections ??= []; d.awards ??= []; d.returns ??= []; d.seq ??= {};
+  d.quaSeq ??= legacyMax(d.seq, 'QUA');
   return d;
 };
 export function resetEducation(): void { g.__civicosEducation = undefined; }
 const clone = <T,>(x: T): T => structuredClone(x);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const PERIOD = /^\d{4}(-(0[1-9]|1[0-2])|-T[1-4]|\/\d{4})?$/;
-const next = (k: string, now: Date) => { const d = db(); const y = String(now.getUTCFullYear()); d.seq[`${k}${y}`] = (d.seq[`${k}${y}`] ?? 0) + 1; return `${k}-${y}-${String(d.seq[`${k}${y}`]).padStart(6, '0')}`; };
+const next = (k: 'QUA', now: Date) => nextNumber(db() as unknown as Record<string, unknown>, 'quaSeq', k, now);
 /** Names compared without case, accents or extra spaces. */
 export const sameName = (a: string, b: string) => {
   const n = (s: string) => s.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();

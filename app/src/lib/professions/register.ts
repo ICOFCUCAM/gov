@@ -21,6 +21,7 @@
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
+import { nextNumber, legacyMax } from '@/lib/data/numbering';
 import { getAward, sameName } from '@/lib/education/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
@@ -65,18 +66,19 @@ export const REFERENCE_PROFESSIONS: Omit<Profession, 'createdBy' | 'createdAt'>[
   { key: 'pharmacist', title: 'Pharmacists', authority: 'professionalRegulation', permitType: 'health-professional-licence', publicCheck: true, reference: true },
 ];
 
-interface Db { people: Professional[]; professions: Profession[]; seq: Record<string, number> }
+interface Db { people: Professional[]; professions: Profession[]; seq: Record<string, number>; prnSeq: number }
 const g = globalThis as unknown as { __civicosProfessions?: Db };
 const db = (): Db => {
-  const d = touch('__civicosProfessions', g.__civicosProfessions ??= { people: [], professions: [], seq: {} });
+  const d = touch('__civicosProfessions', g.__civicosProfessions ??= { people: [], professions: [], seq: {}, prnSeq: 0 });
   d.people ??= []; d.professions ??= []; d.seq ??= {};
+  d.prnSeq ??= legacyMax(d.seq);
   return d;
 };
 export function resetProfessions(): void { g.__civicosProfessions = undefined; }
 const clone = <T,>(x: T): T => structuredClone(x);
 const KEY = /^[a-z][a-z0-9-]{1,40}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const next = (now: Date) => { const d = db(); const y = String(now.getUTCFullYear()); d.seq[y] = (d.seq[y] ?? 0) + 1; return `PRN-${y}-${String(d.seq[y]).padStart(6, '0')}`; };
+const next = (now: Date) => nextNumber(db() as unknown as Record<string, unknown>, 'prnSeq', 'PRN', now);
 
 // ── Professions ───────────────────────────────────────────────────────────────
 

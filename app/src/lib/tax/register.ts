@@ -19,6 +19,7 @@ import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
 import { samplesAllowed } from '@/lib/ops/mode';
+import { nextNumber, legacyMax } from '@/lib/data/numbering';
 import type { Citation } from '@/lib/law/register';
 
 export interface TaxpayerRef { kind: 'person' | 'organisation'; id: string; name: string }
@@ -78,11 +79,12 @@ export interface Assessment {
   by: string;
 }
 
-interface Db { taxpayers: Taxpayer[]; ledger: Record<string, LedgerEntry[]>; returns: TaxReturn[]; assessments: Assessment[]; posted: string[]; seq: Record<string, number> }
+interface Db { taxpayers: Taxpayer[]; ledger: Record<string, LedgerEntry[]>; returns: TaxReturn[]; assessments: Assessment[]; posted: string[]; seq: Record<string, number>; tinSeq: number; asmSeq: number }
 const g = globalThis as unknown as { __civicosTax?: Db };
 const db = (): Db => {
-  const d = touch('__civicosTax', g.__civicosTax ??= { taxpayers: [], ledger: {}, returns: [], assessments: [], posted: [], seq: {} });
+  const d = touch('__civicosTax', g.__civicosTax ??= { taxpayers: [], ledger: {}, returns: [], assessments: [], posted: [], seq: {}, tinSeq: 0, asmSeq: 0 });
   d.taxpayers ??= []; d.ledger ??= {}; d.returns ??= []; d.assessments ??= []; d.posted ??= []; d.seq ??= {};
+  d.tinSeq ??= legacyMax(d.seq, 'TIN'); d.asmSeq ??= legacyMax(d.seq, 'ASM');
   return d;
 };
 export function resetTax(): void { g.__civicosTax = undefined; }
@@ -90,7 +92,7 @@ const clone = <T,>(x: T): T => structuredClone(x);
 const TAX_TYPE = /^[a-z][a-z0-9-]{1,40}$/;
 const PERIOD = /^\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$/;
 
-const next = (k: string, now: Date) => { const d = db(); const y = String(now.getUTCFullYear()); d.seq[`${k}${y}`] = (d.seq[`${k}${y}`] ?? 0) + 1; return `${k}-${y}-${String(d.seq[`${k}${y}`]).padStart(6, '0')}`; };
+const next = (k: 'TIN' | 'ASM', now: Date) => nextNumber(db() as unknown as Record<string, unknown>, k === 'TIN' ? 'tinSeq' : 'asmSeq', k, now);
 
 // ── Taxpayers ─────────────────────────────────────────────────────────────────
 

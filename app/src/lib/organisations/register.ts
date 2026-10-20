@@ -20,6 +20,7 @@
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
+import { nextNumber as nextRecordNumber, legacyMax } from '@/lib/data/numbering';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
 export const ORG_KINDS = ['company', 'partnership', 'cooperative', 'ngo', 'association', 'university', 'college', 'school', 'hospital', 'clinic', 'pharmacy', 'professional-practice', 'other'] as const;
@@ -99,11 +100,12 @@ export const REFERENCE_TYPES: Omit<RegisterType, 'createdBy' | 'createdAt'>[] = 
 ];
 
 export interface OrgLoad { id: string; register: string; by: string; at: string; sha256: string; rows: number; loaded: number; refused: { row: number; reason: string }[]; withdrawn?: { by: string; at: string; removed: number } }
-interface Db { orgs: Organisation[]; types: RegisterType[]; seq: Record<string, number>; loads: OrgLoad[] }
+interface Db { orgs: Organisation[]; types: RegisterType[]; seq: Record<string, number>; orgSeq: number; loads: OrgLoad[] }
 const g = globalThis as unknown as { __civicosOrganisations?: Db };
 const db = (): Db => {
-  const d = touch('__civicosOrganisations', g.__civicosOrganisations ??= { orgs: [], types: [], seq: {}, loads: [] });
+  const d = touch('__civicosOrganisations', g.__civicosOrganisations ??= { orgs: [], types: [], seq: {}, orgSeq: 0, loads: [] });
   d.orgs ??= []; d.types ??= []; d.seq ??= {}; d.loads ??= [];
+  d.orgSeq ??= legacyMax(d.seq);
   return d;
 };
 export function resetOrganisations(): void { g.__civicosOrganisations = undefined; }
@@ -167,10 +169,7 @@ export function listOrganisations(filter: { register?: string; state?: StandingS
 }
 
 function nextNumber(now: Date): string {
-  const d = db();
-  const y = String(now.getUTCFullYear());
-  d.seq[y] = (d.seq[y] ?? 0) + 1;
-  return `ORG-${y}-${String(d.seq[y]).padStart(6, '0')}`;
+  return nextRecordNumber(db() as unknown as Record<string, unknown>, 'orgSeq', 'ORG', now);
 }
 
 export interface NewOrganisation { name: unknown; kind: unknown; region?: unknown; address?: unknown; representative?: { name?: unknown; role?: unknown } }

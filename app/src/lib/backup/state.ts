@@ -35,7 +35,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { encode, decode } from '@/lib/data/encode';
 import { liveKeys, recordsBackend, persistenceStatus, saveNow, forgetStore, reloadRecords, SNAPSHOT_FORMAT, markChanged } from '@/lib/data/persist';
-import { replaceInPlace } from '@/lib/data/repo/documents';
+import { replaceInPlace, counterFields } from '@/lib/data/repo/documents';
 import { followed } from '@/lib/data/repo/track';
 import { verifyChainEntries } from '@/lib/data/store/audit';
 import type { AuditEntry } from '@/lib/api/types';
@@ -266,6 +266,8 @@ export async function applySnapshot(opened: OpenedArchive): Promise<Applied> {
   const incoming = new Map<string, unknown>();
   for (const p of m.parts) incoming.set(p.name.replace(/^store\//, ''), decode(parts.get(p.name)!.toString('utf8')));
   const replaced: string[] = [], removed: string[] = [];
+  /** Counters kept higher than the backup's, with the backup's values (for the comparison below). */
+  const restoredCounters = new Map<string, Record<string, number>>();
   // Stores created after the backup was taken go.
   for (const key of liveKeys()) {
     if (kept.has(key) || incoming.has(key) || EXCLUDED_STORES.has(key)) continue;
@@ -277,18 +279,41 @@ export async function applySnapshot(opened: OpenedArchive): Promise<Applied> {
     if (kept.has(key)) continue;
     let v = value;
     if (key === '__civicosKeyring') v = mergeKeyring(g[key] as Keyring | undefined, value as Keyring);
+    // Record counters never go back: a number given after the backup is not given again.
+    const counters = keepCounters(key, v);
     g[key] = g[key] === undefined ? v : replaceInPlace(g[key], v);
+    const raised = counters();
+    if (raised) restoredCounters.set(key, raised);
     replaced.push(key);
   }
   delete g.__facilityGrid; delete g.__parcelIndex;
   const differing = m.parts.filter(p => {
     const key = p.name.replace(/^store\//, '');
-    return !kept.has(key) && key !== '__civicosKeyring' && sha256(encode(g[key])) !== p.sha256;
+    const back = restoredCounters.get(key);
+    const asRestored = back ? { ...(g[key] as Record<string, unknown>), ...back } : g[key];
+    return !kept.has(key) && key !== '__civicosKeyring' && sha256(encode(asRestored)) !== p.sha256;
   }).map(p => p.name);
   for (const key of replaced) followed(key);
   markChanged();
   await saveNow();
   return { replaced, removed, kept: [...kept], check: { compared: replaced.length, differing } };
+}
+
+/**
+ * Keep each record counter (`seq`, `…Seq`) of a store at the higher of its
+ * live and restored value. Call the result after replacing: it returns the
+ * backup's values of the counters it kept higher, or null.
+ */
+function keepCounters(key: string, restored: unknown): () => Record<string, number> | null {
+  const live = g[key];
+  if (!live || typeof live !== 'object' || !restored || typeof restored !== 'object') return () => null;
+  const fields = counterFields(live).map(f => ({ f, live: Number((live as Record<string, unknown>)[f]) || 0, back: Number((restored as Record<string, unknown>)[f]) || 0 })).filter(x => x.live > x.back);
+  return () => {
+    const now = g[key] as Record<string, unknown> | undefined;
+    if (!now || !fields.length) return null;
+    for (const x of fields) now[x.f] = x.live;
+    return Object.fromEntries(fields.map(x => [x.f, x.back]));
+  };
 }
 
 function mergeKeyring(live: Keyring | undefined, restored: Keyring): Keyring {

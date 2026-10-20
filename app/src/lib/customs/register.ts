@@ -20,6 +20,7 @@ import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
 import { samplesAllowed } from '@/lib/ops/mode';
+import { nextNumber, legacyMax } from '@/lib/data/numbering';
 import type { Citation } from '@/lib/law/register';
 
 export type Direction = 'import' | 'export' | 'transit';
@@ -51,16 +52,17 @@ export interface Declaration {
   case: string;
 }
 
-interface Db { declarations: Declaration[]; posted: string[]; seq: Record<string, number> }
+interface Db { declarations: Declaration[]; posted: string[]; seq: Record<string, number>; cusSeq: number; cdaSeq: number }
 const g = globalThis as unknown as { __civicosCustoms?: Db };
 const db = (): Db => {
-  const d = touch('__civicosCustoms', g.__civicosCustoms ??= { declarations: [], posted: [], seq: {} });
+  const d = touch('__civicosCustoms', g.__civicosCustoms ??= { declarations: [], posted: [], seq: {}, cusSeq: 0, cdaSeq: 0 });
   d.declarations ??= []; d.posted ??= []; d.seq ??= {};
+  d.cusSeq ??= legacyMax(d.seq, 'CUS'); d.cdaSeq ??= legacyMax(d.seq, 'CDA');
   return d;
 };
 export function resetCustoms(): void { g.__civicosCustoms = undefined; }
 const clone = <T,>(x: T): T => structuredClone(x);
-const next = (k: string, now: Date) => { const d = db(); const y = String(now.getUTCFullYear()); d.seq[`${k}${y}`] = (d.seq[`${k}${y}`] ?? 0) + 1; return `${k}-${y}-${String(d.seq[`${k}${y}`]).padStart(6, '0')}`; };
+const next = (k: 'CUS' | 'CDA', now: Date) => nextNumber(db() as unknown as Record<string, unknown>, k === 'CUS' ? 'cusSeq' : 'cdaSeq', k, now);
 const CODE = /^\d{4,12}$/;
 const COUNTRY = /^[A-Z]{2}$/;
 
