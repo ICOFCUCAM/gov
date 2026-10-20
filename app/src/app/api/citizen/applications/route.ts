@@ -2,10 +2,10 @@
 // §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in
 // through the nation's identity service, or the demo citizen in training and
 // demonstration installations. GET: the cases they applied for, with stage
-// and decisions only. POST: notify a birth (the procedures citizens may
-// start: civil.birth, civil.late-birth), opened as a citizen case under the
-// procedure in force; officials of the civil registration authority take it
-// from there.
+// and decisions only. POST: notify a birth or report an incident to the
+// police (the procedures citizens may start: civil.birth, civil.late-birth,
+// police.incident), opened as a citizen case under the procedure in force;
+// officials of the responsible authority take it from there.
 import { NextRequest, NextResponse } from 'next/server';
 import { currentCitizen } from '@/lib/auth/citizen';
 import { openCase, listCases } from '@/lib/casework/engine';
@@ -15,7 +15,7 @@ import '@/lib/casework/modules';
 
 export const dynamic = 'force-dynamic';
 
-const CITIZEN_PROCEDURES = ['civil.birth', 'civil.late-birth'];
+const CITIZEN_PROCEDURES = ['civil.birth', 'civil.late-birth', 'police.incident'];
 
 export async function GET() {
   const c = await currentCitizen();
