@@ -16,6 +16,7 @@ interface Answer {
   documents: { id: string; class: string; title: string; versions: { n: number; sha256: string; at: string; by: string }[] }[];
   decisions: { id: string; sha256: string; seal: { keyId: string }; content: { decision: string; reasons: string; citations: Citation[]; officials: { role: string; name: string }[]; facts?: Record<string, unknown>; at: string } }[];
   certificates: { id: string; code: string; title: string; status: string }[];
+  hearings?: { id: string; kind: string; at: string; room?: string; state: string; history: { state: string; at: string; by: string; reason?: string }[] }[];
 }
 
 async function call<T>(url: string, body?: unknown): Promise<T> {
@@ -93,6 +94,12 @@ export function CaseFile({ id }: { id: string }) {
           </div>
         ) : null}
       </Section>
+
+      {a.hearings?.length ? (
+        <Section title="Hearings" meta={`${a.hearings.length}`}>
+          <ul className="space-y-1 text-sm">{a.hearings.map(h => <li key={h.id}>{h.at.replace('T', ' ')} · {h.kind}{h.room ? ` · ${h.room}` : ''} · {h.state}{h.history.at(-1)?.reason ? ` (${h.history.at(-1)!.reason})` : ''}</li>)}</ul>
+        </Section>
+      ) : null}
 
       {a.decisions.length ? (
         <Section title="Decisions" meta="sealed">

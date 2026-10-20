@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { caseReadRefusal } from '@/lib/auth/roles';
 import { caseScope } from '@/lib/auth/official';
 import { getCase, act, assign, attach, hold, release, refer, cancelPending, caseFacts } from '@/lib/casework/engine';
+import { hearingsOf } from '@/lib/courts/hearings';
 import { getPackage } from '@/lib/casework/packages';
 import { routeActor } from '@/lib/casework/actor';
 import { recordAccess } from '@/lib/records/access-log';
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     documents: c.documents.map(getDocument).filter(Boolean),
     decisions: c.decisions.map(getDecision).filter(Boolean),
     certificates: certificatesFor(c.decisions),
+    hearings: hearingsOf(c.id),
   });
 }
 
