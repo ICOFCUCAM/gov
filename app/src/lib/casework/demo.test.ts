@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setSovereign, listMinistries } from '@/lib/data/store';
 import { resetLaw, listInstruments } from '@/lib/law/register';
 import { resetPackages, activePackage } from './packages';
-import { loadDemonstration, DEMO_ACT_TITLE } from './demo';
+import { loadDemonstration, DEMO_ACT_TITLE, DEMO_ORG_ACT_TITLE } from './demo';
 
 describe('demonstration set', () => {
   beforeEach(() => {
@@ -20,6 +20,16 @@ describe('demonstration set', () => {
     expect(activePackage('civil.birth')).toMatchObject({ citations: [expect.objectContaining({ instrument: act.id, eId: 'sec_12' })] });
     // A second load changes nothing.
     expect(loadDemonstration('Administrator')).toMatchObject({ approved: [], present: expect.arrayContaining(['civil.birth']) });
+  });
+
+  it('adds the organisation procedures under a second sample act once their authorities are named', () => {
+    const [a, b] = listMinistries().slice(0, 2).map(m => m.id);
+    setSovereign({ deployment: { authorities: { civilRegistration: a!, businessRegister: a!, higherEducationAccreditation: b! } } }, 'Administrator');
+    const r = loadDemonstration('Administrator');
+    if ('error' in r) throw new Error(r.error);
+    expect(r.approved).toEqual(expect.arrayContaining(['civil.birth', 'org.registration', 'org.licence', 'org.accreditation', 'org.licence-revocation']));
+    expect(listInstruments({ state: 'any' }).map(i => i.title)).toContain(DEMO_ORG_ACT_TITLE);
+    expect(activePackage('org.accreditation')).toMatchObject({ citations: [expect.objectContaining({ eId: 'sec_40' })] });
   });
 
   it('is refused in a production installation', () => {
