@@ -50,6 +50,9 @@
       "name": "civil"
     },
     {
+      "name": "courts"
+    },
+    {
       "name": "cron"
     },
     {
@@ -6753,7 +6756,7 @@
         ],
         "operationId": "get_citizen_applications",
         "summary": "GET /api/citizen/applications",
-        "description": "/api/citizen/applications — a citizen's own applications (design §8.4, §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations. GET: the cases they applied for, with stage and decisions only. POST: notify a birth (the procedures citizens may start: civil.birth, civil.late-birth), opened as a citizen case under the procedure in force; officials of the civil registration authority take it from there.",
+        "description": "/api/citizen/applications — a citizen's own applications (design §8.4, §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations. GET: the cases they applied for, with stage and decisions only. POST: notify a birth or report an incident to the police (the procedures citizens may start: civil.birth, civil.late-birth, police.incident), opened as a citizen case under the procedure in force; officials of the responsible authority take it from there.",
         "parameters": [],
         "responses": {
           "200": {
@@ -6894,7 +6897,7 @@
         ],
         "operationId": "post_citizen_applications",
         "summary": "POST /api/citizen/applications",
-        "description": "/api/citizen/applications — a citizen's own applications (design §8.4, §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations. GET: the cases they applied for, with stage and decisions only. POST: notify a birth (the procedures citizens may start: civil.birth, civil.late-birth), opened as a citizen case under the procedure in force; officials of the civil registration authority take it from there.",
+        "description": "/api/citizen/applications — a citizen's own applications (design §8.4, §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations. GET: the cases they applied for, with stage and decisions only. POST: notify a birth or report an incident to the police (the procedures citizens may start: civil.birth, civil.late-birth, police.incident), opened as a citizen case under the procedure in force; officials of the responsible authority take it from there.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -7200,6 +7203,94 @@
           }
         ],
         "x-source": "src/app/api/civil/route.ts"
+      }
+    },
+    "/api/courts/cause-list": {
+      "get": {
+        "tags": [
+          "courts"
+        ],
+        "operationId": "get_courts_cause_list",
+        "summary": "GET /api/courts/cause-list",
+        "description": "GET /api/courts/cause-list?from=YYYY-MM-DD&days=7 — the public cause list (lib/courts/hearings.ts): scheduled hearings by case number, court, kind, time and room; never parties or the subject of a case.",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "days": {
+                      "type": "number"
+                    },
+                    "hearings": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CauseListEntry"
+                      }
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "days",
+                    "hearings"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "from": "string",
+                      "days": 1,
+                      "hearings": [
+                        {
+                          "caseRef": "string",
+                          "court": "string",
+                          "kind": "string",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/courts/cause-list/route.ts"
       }
     },
     "/api/cron/audit-anchor": {
@@ -7967,13 +8058,17 @@
                           "register"
                         ]
                       }
+                    },
+                    "immigrationExpired": {
+                      "type": "number"
                     }
                   },
                   "required": [
                     "ok",
                     "lapsed",
                     "cases",
-                    "expired"
+                    "expired",
+                    "immigrationExpired"
                   ]
                 },
                 "examples": {
@@ -7994,7 +8089,8 @@
                           "organisation": "string",
                           "register": "string"
                         }
-                      ]
+                      ],
+                      "immigrationExpired": 1
                     }
                   }
                 }
@@ -18045,10 +18141,10 @@
                           "enabled": true,
                           "updatedAt": "2026-01-15T09:30:00.000Z",
                           "updatedBy": "A. Official",
+                          "from": "string",
                           "kind": "http-email",
                           "nationId": "ID-0001",
                           "channel": "email",
-                          "from": "string",
                           "perMinute": 1,
                           "hasSecret": true
                         }
@@ -18252,10 +18348,10 @@
                             "enabled": true,
                             "updatedAt": "2026-01-15T09:30:00.000Z",
                             "updatedBy": "A. Official",
+                            "from": "string",
                             "kind": "http-email",
                             "nationId": "ID-0001",
                             "channel": "email",
-                            "from": "string",
                             "perMinute": 1,
                             "hasSecret": true
                           }
@@ -59755,6 +59851,32 @@
           "smartDataModel"
         ]
       },
+      "CauseListEntry": {
+        "type": "object",
+        "properties": {
+          "caseRef": {
+            "type": "string"
+          },
+          "court": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "room": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "caseRef",
+          "court",
+          "kind",
+          "at"
+        ]
+      },
       "CertBinding": {
         "type": "object",
         "properties": {
@@ -71341,6 +71463,10 @@
               "PUT"
             ]
           },
+          "from": {
+            "type": "string",
+            "description": "Sender: an email address, or the SMS sender name or number."
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -71361,10 +71487,6 @@
               "email",
               "sms"
             ]
-          },
-          "from": {
-            "type": "string",
-            "description": "Sender: an email address, or the SMS sender name or number."
           },
           "replyTo": {
             "type": "string"
@@ -71444,10 +71566,10 @@
           "enabled",
           "updatedAt",
           "updatedBy",
+          "from",
           "kind",
           "nationId",
           "channel",
-          "from",
           "perMinute",
           "hasSecret"
         ]

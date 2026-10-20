@@ -160,6 +160,14 @@ export interface Messages {
     lawsTitle: string;
     lawsIntro: string;
     lawsNone: string;
+    causeListTitle: string;
+    causeListIntro: string;
+    causeListNone: string;
+    causeListWhen: string;
+    causeListCase: string;
+    causeListCourt: string;
+    causeListKind: string;
+    causeListRoom: string;
     registersTitle: string;
     registersIntro: string;
     registersNone: string;
@@ -857,6 +865,14 @@ export const en: Messages = {
     lawsTitle: 'Laws in force',
     lawsIntro: "The nation's laws and regulations as officially recorded, each with the dates its versions apply.",
     lawsNone: 'No laws have been published here yet.',
+    causeListTitle: "Court cause list",
+    causeListIntro: "Hearings scheduled in the coming week, by case number. Parties and the subject of a case are not shown here.",
+    causeListNone: "No hearings are scheduled in this period.",
+    causeListWhen: "When",
+    causeListCase: "Case",
+    causeListCourt: "Court",
+    causeListKind: "Hearing",
+    causeListRoom: "Room",
     registersTitle: "Public registers",
     registersIntro: "Check whether a company, licence holder, university or other organisation is in a register the government keeps, and in what standing. Only decided standings appear here.",
     registersNone: "No register is open for public checking yet.",

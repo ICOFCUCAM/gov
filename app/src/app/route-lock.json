@@ -13,6 +13,7 @@
   "/communications",
   "/console",
   "/control",
+  "/courts/cause-list",
   "/cover",
   "/cover/atlas",
   "/cover/boot",
