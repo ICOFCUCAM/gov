@@ -241,6 +241,13 @@ export function setStanding(id: string, ch: StandingChange, by: string, now = ne
   return clone(s);
 }
 
+/** Record the sealed decision on the latest step of a standing (after the decision is sealed). */
+export function attachStandingDecision(id: string, register: string, decision: string): void {
+  const s = db().orgs.find(x => x.id === id || x.number === id)?.standings.find(x => x.register === register);
+  const last = s?.history[s.history.length - 1];
+  if (last && !last.decision) last.decision = decision;
+}
+
 /** Record the certificate issued for a standing. */
 export function attachCertificate(id: string, register: string, code: string): void {
   const s = db().orgs.find(x => x.id === id || x.number === id)?.standings.find(x => x.register === register);
