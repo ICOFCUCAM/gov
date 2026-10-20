@@ -72,6 +72,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   the law, no field records a suspect or a finding. Courts (`lib/courts/`)
   are worked only by the judiciary; the public cause list
   (`causeList()`) never carries parties or the subject of a case.
+- Audit administration stays apart from operations: administrators do not
+  read the access log, reading it is itself logged, and shortening it needs
+  the data-protection authority after two administrators
+  (`confirmByOversight()`). Unusual access is raised by
+  `lib/records/access-watch.ts`; a finding is a prompt, never a conclusion.
 
 ## Entry flow
 
