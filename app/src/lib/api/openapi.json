@@ -35562,7 +35562,7 @@
         ],
         "operationId": "get_professions_types",
         "summary": "GET /api/professions/types",
-        "description": "/api/professions/types — the regulated professions (lib/professions/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, authority, permitType?, publicCheck? } configures one, naming the regulator that keeps its register (administrators, audited).",
+        "description": "/api/professions/types — the regulated professions (lib/professions/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, authority, permitType?, publicCheck? } configures one, naming the regulator that keeps its register (administrators, audited). What its public check shows changes by two officials citing the law: { op: 'propose-disclosure', key, publicFields, legalBasis: [{ instrument, eId }] }, then { op: 'confirm-disclosure', key } by a different official, or { op: 'withdraw-disclosure', key }. GET lists each profession with its waiting proposal and earlier versions.",
         "parameters": [],
         "responses": {
           "200": {
@@ -35575,7 +35575,197 @@
                     "professions": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Profession"
+                        "type": "object",
+                        "properties": {
+                          "disclosureChanges": {
+                            "type": "object",
+                            "properties": {
+                              "pending": {
+                                "type": "object",
+                                "properties": {
+                                  "values": {
+                                    "$ref": "#/components/schemas/Disclosure"
+                                  },
+                                  "basis": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/Citation"
+                                    }
+                                  },
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "confirmed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "by": {
+                                        "type": "string"
+                                      },
+                                      "byId": {
+                                        "type": "string"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "independence": {
+                                        "type": "string",
+                                        "enum": [
+                                          "accounts-only",
+                                          "identity-provider",
+                                          "unverified"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "by",
+                                      "at",
+                                      "independence"
+                                    ]
+                                  },
+                                  "expiresAt": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "values",
+                                  "basis",
+                                  "by",
+                                  "at",
+                                  "expiresAt"
+                                ],
+                                "description": "A proposal waiting for its second official."
+                              },
+                              "history": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "values": {
+                                      "$ref": "#/components/schemas/Disclosure"
+                                    },
+                                    "basis": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "#/components/schemas/Citation"
+                                      }
+                                    },
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "confirmed": {
+                                      "type": "object",
+                                      "properties": {
+                                        "by": {
+                                          "type": "string"
+                                        },
+                                        "byId": {
+                                          "type": "string"
+                                        },
+                                        "at": {
+                                          "type": "string"
+                                        },
+                                        "independence": {
+                                          "type": "string",
+                                          "enum": [
+                                            "accounts-only",
+                                            "identity-provider",
+                                            "unverified"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "by",
+                                        "at",
+                                        "independence"
+                                      ]
+                                    },
+                                    "outcome": {
+                                      "type": "string",
+                                      "enum": [
+                                        "adopted",
+                                        "lapsed",
+                                        "withdrawn"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "values",
+                                    "basis",
+                                    "by",
+                                    "at",
+                                    "outcome"
+                                  ]
+                                },
+                                "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                              }
+                            }
+                          },
+                          "key": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "authority": {
+                            "type": "string",
+                            "description": "Who keeps its register: a deployment-profile authority or an institution id."
+                          },
+                          "permitType": {
+                            "type": "string",
+                            "description": "The permit type whose approved authority mapping governs it."
+                          },
+                          "publicCheck": {
+                            "type": "boolean",
+                            "description": "Anyone may check a professional's standing in it."
+                          },
+                          "publicFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "conditions",
+                                "name",
+                                "number",
+                                "profession",
+                                "state",
+                                "validUntil"
+                              ]
+                            },
+                            "description": "What the public check shows (the country's disclosure profile). By default name, number, profession, standing and validity; conditions (which can reveal a disciplinary history) only when the country's law makes them public. The person reference and qualifications never."
+                          },
+                          "reference": {
+                            "type": "boolean"
+                          },
+                          "createdBy": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "disclosureChanges",
+                          "key",
+                          "title",
+                          "authority",
+                          "permitType",
+                          "publicCheck",
+                          "reference",
+                          "createdBy",
+                          "createdAt"
+                        ]
                       }
                     }
                   },
@@ -35589,6 +35779,7 @@
                     "value": {
                       "professions": [
                         {
+                          "disclosureChanges": {},
                           "key": "string",
                           "title": "Example",
                           "authority": "string",
@@ -35629,7 +35820,7 @@
         ],
         "operationId": "post_professions_types",
         "summary": "POST /api/professions/types",
-        "description": "/api/professions/types — the regulated professions (lib/professions/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, authority, permitType?, publicCheck? } configures one, naming the regulator that keeps its register (administrators, audited).",
+        "description": "/api/professions/types — the regulated professions (lib/professions/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, authority, permitType?, publicCheck? } configures one, naming the regulator that keeps its register (administrators, audited). What its public check shows changes by two officials citing the law: { op: 'propose-disclosure', key, publicFields, legalBasis: [{ instrument, eId }] }, then { op: 'confirm-disclosure', key } by a different official, or { op: 'withdraw-disclosure', key }. GET lists each profession with its waiting proposal and earlier versions.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -35649,6 +35840,261 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ok": {
+                              "type": "boolean",
+                              "const": true
+                            }
+                          },
+                          "required": [
+                            "ok"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Disclosure"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at"
+                          ]
+                        }
+                      ]
+                    },
+                    "disclosureChanges": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Disclosure"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/Disclosure"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "disclosureChanges"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {
+                        "ok": true
+                      },
+                      "disclosureChanges": {
+                        "pending": {
+                          "values": {
+                            "publicFields": []
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "201": {
             "description": "Created",
             "content": {
@@ -66777,6 +67223,28 @@
           "signed",
           "effective",
           "medianSignToEffectiveDays"
+        ]
+      },
+      "Disclosure": {
+        "type": "object",
+        "properties": {
+          "publicFields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "conditions",
+                "name",
+                "number",
+                "profession",
+                "state",
+                "validUntil"
+              ]
+            }
+          }
+        },
+        "required": [
+          "publicFields"
         ]
       },
       "DistributionRelease": {

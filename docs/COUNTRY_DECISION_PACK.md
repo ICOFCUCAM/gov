@@ -390,7 +390,10 @@ showing conditions.
     `validUntil`, `conditions`, and must include `name` and `state`.
   - To change a reference profession, send its own key (for example
     `medical-practitioner`). The country's version then replaces it.
-- Officials: **one administrator**, recorded in the audit chain.
+- Officials: **proposed by one administrator citing the law** (`op:
+  'propose-disclosure'`), **confirmed by a different official** (`op:
+  'confirm-disclosure'`); every version is kept. Redefining a profession
+  cannot change its fields.
 
 ### Legal evidence to attach
 
@@ -481,8 +484,10 @@ restricted services.
     (`confirmIntegrationApproval()`). `op: "withdraw"` withdraws a waiting
     proposal.
   - The key is shown once.
-- Officials: **one administrator** registers and proposes; **a different
-  administrator** confirms (compared by sign-in, and as a person where
+- Officials: **one administrator** registers and proposes, citing the law
+  that permits the sharing (Laws register; required in production); **an
+  official of each institution that owns a service it opens** confirms
+  (in production; a different person each) (compared by sign-in, and as a person where
   accounts are linked to the identity provider). A proposal not confirmed
   within the two-official waiting period (section 3) lapses. Every
   proposal, confirmation, lapse and withdrawal is kept on the integration
@@ -814,19 +819,16 @@ surprised:
 - The two-step sign-in policy has **no screen**; it is entered through the
   API. (Suspension rules, dual-control rules and the profession disclosure
   lists now have screens.)
-- A profession's disclosure list is changed by **one** administrator. The
-  suspension and dual-control rules now take two officials and cite the
-  Laws register.
+- A profession's disclosure list, the suspension rules and the dual-control
+  rules all take two officials and cite the Laws register.
 - "Who may suspend" can be narrowed only to government-wide administrators;
   a narrower group the law names (for example a regulator's own officials)
   is not yet a setting.
 - Data services check an outside caller's purpose against the purposes
-  approved for that caller and service, and approving a caller takes two
-  officials. But the two officials are any two administrators: the platform
-  does not require one of them to belong to the authority that keeps the
-  register. The legal basis for each caller is a free-text note, not a
-  citation from the Laws register. Internal modules still only state a
-  purpose.
+  approved for that caller and service. Approving a caller cites the law
+  from the Laws register and, in production, an official of every
+  institution that owns a service it opens confirms it. Internal modules
+  still only state a purpose.
 - The `visa-residence`, `work-permit`, `land-title`, `environmental-permit`,
   `customs-authorisation` and `transport-operator-licence` mappings are not
   yet consulted by any decision. Immigration decisions rest on the

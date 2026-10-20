@@ -140,7 +140,9 @@ Four of the open items above, done without new agency features:
 | Data-sharing purposes per caller | `2f76a38` | An outside caller is refused a purpose not approved for it and that service; approving or changing an outside caller takes two officials, lapses and is kept. Older approvals have no purposes: refused in production. | `data/integration-approval.test.ts`, `exchange/services.test.ts`, the approve route test |
 | Sign-in on a hosted deployment | `2a749b3` | The Supabase public values reach the browser; the first-account form appears when the server allows platform accounts. | `auth/sign-in-methods.test.ts`, `db/client.test.ts` |
 
-Still open from the pack: approving an outside caller needs any two administrators, not one from the authority that keeps the register, and its basis is a note, not a citation; a profession's disclosure list is changed by one administrator; mappings for the older permit types and moving immigration onto mappings are the country's decisions.
+Still open from the pack after the second round: mappings for the older permit types and moving immigration onto mappings are the country's decisions.
+
+**Third round:** approving an outside caller cites the law and, in production, is confirmed by an official of every institution that owns a service it opens (`002dd34`); what a profession's public check shows changes by two officials citing the law, and redefining a profession cannot change it (this round); the two-step sign-in policy has a panel on Sign-in accounts. Still set by one administrator: the two-step sign-in policy (a security setting, not a legal one; the panel says so).
 
 The country decision pack (`docs/COUNTRY_DECISION_PACK.md`, `4e5c672`) lists every decision in "Depends on country approval" as forms officials can fill in. It also lists gaps it found: some settings exist only as an API, suspension periods and dual-control rules are set by one administrator with a free-text basis, and exchange-service purposes are not checked per caller.
 
