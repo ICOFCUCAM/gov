@@ -2,7 +2,9 @@
 // design §6.3). GET: every version with its state. POST { op: 'draft',
 // package } writes a draft (officials of the responsible institution);
 // { op: 'approve', key, version, activeFrom? } approves it (an official who
-// can sign there, different from its author, once its tests pass).
+// can sign there, different from its author, once its tests pass);
+// { op: 'install-references' } drafts the reference procedures CivicOS ships
+// that the installation does not have yet (administrators; drafts only).
 import { NextRequest, NextResponse } from 'next/server';
 import { caseActRefusal } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
@@ -10,7 +12,8 @@ import { listPackages, draftPackage, approvePackage, getPackage, ownerInstitutio
 import { registeredEffects } from '@/lib/casework/engine';
 import { routeActor } from '@/lib/casework/actor';
 import type { CasePackage } from '@/lib/casework/types';
-import '@/lib/casework/modules';
+import { installReferenceProcedures } from '@/lib/casework/modules';
+import { adminOnly } from '@/lib/auth/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,5 +52,12 @@ export async function POST(req: NextRequest) {
     const r = approvePackage(p.key, p.version, actor.name, actor.id, b.activeFrom, registeredEffects());
     return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json({ package: r });
   }
-  return NextResponse.json({ error: 'op must be draft or approve' }, { status: 422 });
+  if (b.op === 'install-references') {
+    if (actor.scope) {
+      const why = adminOnly(actor.scope);
+      if (why) return NextResponse.json({ error: why }, { status: 403 });
+    }
+    return NextResponse.json(installReferenceProcedures(actor.name));
+  }
+  return NextResponse.json({ error: 'op must be draft, approve or install-references' }, { status: 422 });
 }

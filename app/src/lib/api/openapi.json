@@ -4887,7 +4887,7 @@
         ],
         "operationId": "get_case_packages",
         "summary": "GET /api/case-packages",
-        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass).",
+        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only).",
         "parameters": [
           {
             "name": "key",
@@ -5216,7 +5216,7 @@
         ],
         "operationId": "post_case_packages",
         "summary": "POST /api/case-packages",
-        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass).",
+        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -5355,14 +5355,39 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "package": {
-                      "$ref": "#/components/schemas/CasePackage"
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "package": {
+                          "$ref": "#/components/schemas/CasePackage"
+                        }
+                      },
+                      "required": [
+                        "package"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "drafted": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "present": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "drafted",
+                        "present"
+                      ]
                     }
-                  },
-                  "required": [
-                    "package"
                   ]
                 },
                 "examples": {

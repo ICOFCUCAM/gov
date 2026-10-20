@@ -133,6 +133,8 @@ export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case
     package: { key: pkg.key, version: pkg.version }, owner, stage,
     subject: (input.subject ?? []).slice(0, 20), ...(input.applicant ? { applicant: input.applicant } : {}), ...(input.onBehalfOf ? { onBehalfOf: input.onBehalfOf } : {}), ...(input.delegation ? { delegation: input.delegation } : {}),
     fields, documents: [], priority: input.priority ?? 'routine',
+    // The official of the responsible institution who opens a case is assigned to it (restricted cases need an assignee).
+    ...(actor.scope?.id && actor.scope.institution === owner ? { assignee: { id: actor.scope.id, name: actor.name } } : {}),
     deadlines: [...deadlinesFrom(pkg, 'opened', at), ...deadlinesFrom(pkg, stage, at)],
     decisions: [], links: input.referral ? [{ kind: 'referred-from', case: input.referral.from }] : [], sensitivity: pkg.sensitivity,
     history: [{ seq: 1, action: 'open', from: '', to: stage, by: by(actor), at, ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}) }],

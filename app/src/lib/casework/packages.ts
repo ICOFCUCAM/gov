@@ -22,6 +22,8 @@ export function resetPackages(): void { g.__civicosCasePackages = undefined; }
 
 const KEY = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+/** Field keys are names a form and its data use: camelCase. */
+const FIELD_KEY = /^[a-z][A-Za-z0-9]{0,40}$/;
 const FIELD_TYPES = ['text', 'longtext', 'date', 'number', 'choice', 'boolean', 'person', 'organisation', 'place'];
 
 /** Check a procedure's structure: every stage, action, field, document and deadline must fit together. */
@@ -38,7 +40,7 @@ export function checkPackage(p: Partial<CasePackage>, effects: string[] = []): s
   if (!stages.some(s => s.terminal)) return 'At least one stage ends the case';
   const fk = new Set<string>();
   for (const f of p.fields ?? []) {
-    if (!KEY.test(f.key) || fk.has(f.key)) return `Field ${f.key}: keys must be distinct lowercase words`;
+    if (!FIELD_KEY.test(f.key) || fk.has(f.key)) return `Field ${f.key}: keys must be distinct names in camelCase`;
     if (!FIELD_TYPES.includes(f.type)) return `Field ${f.key}: unknown type ${f.type}`;
     if (f.type === 'choice' && !f.options?.length) return `Field ${f.key}: a choice needs its options`;
     fk.add(f.key);
