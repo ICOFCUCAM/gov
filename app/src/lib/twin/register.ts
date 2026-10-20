@@ -18,6 +18,7 @@
 // figure through signalFor() and keep their sample when nothing is observed.
 // Kept as a server store (persisted by lib/data/persist.ts).
 
+import { chosenSource, findConflicts, type Conflict } from './conflicts';
 import { createHash } from 'node:crypto';
 import { recordAudit, listMinistries, getSovereign, listIntegrations } from '@/lib/data/store';
 import { nationIso3, nationRegions, nationLanguages } from '@/lib/nation/registry';
@@ -36,7 +37,7 @@ import { derivedMetric, formulaOf } from './derived';
 import { checkStreamSpec, checkIngestSpec, streamRows, STREAM_ROW, STA_WRITE_SCOPE, type StreamSpec, type StreamLineage, type TelemetryReader, type StreamIngest } from './stream';
 import { declarePushedStream, undeclarePushedStream, holdBrokerPassword, hasBrokerPassword } from './readings';
 
-export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
+export type EntityKind = 'nation' | 'place' | 'institution' | 'facility' | 'organisation';
 
 export interface TwinEntity {
   id: string;
@@ -139,7 +140,22 @@ export interface Observation {
   runId: string;
   /** When the platform stopped relying on it (its run was withdrawn); as-of queries known before then still see it. */
   supersededAt?: string;
+  /**
+   * How the value was obtained (design §9.2, directions 11.3): a direct
+   * observation, an administrative count of the platform's own records, a
+   * statistical estimate, a model output or a simulation. Absent: as the
+   * source states it (observations before the field).
+   */
+  method?: 'direct' | 'administrative-count' | 'estimate' | 'model' | 'simulation';
+  /** When the source system recorded it, where it says (recordedAt is when CivicOS received it). */
+  sourceRecordedAt?: string;
+  /** An administrative count's lineage: the register and query counted, how many records, and the SHA-256 of their ids, so an auditor can reconcile it. */
+  records?: { query: string; count: number; sha256: string };
 }
+
+/** The signal kind of an observation: a count of the platform's own records is a Record; the rest are observed. */
+export const kindOf = (o: Pick<Observation, 'method'>): 'record' | 'observed' | 'modelled' | 'simulated' =>
+  o.method === 'administrative-count' ? 'record' : o.method === 'estimate' || o.method === 'model' ? 'modelled' : o.method === 'simulation' ? 'simulated' : 'observed';
 
 const db = twinDb;
 /** Changes go through the persistence port (lib/data/repo): memory, or written through to Postgres. */
@@ -254,6 +270,22 @@ export function upsertFacilityEntity(f: { id: string; name: string; location: { 
   const uri = d.entities[id]?.uri;
   repo().putEntity({ id, kind: 'facility', name: f.name, code: f.id, ...(uri ? { uri } : {}), location: { lat: f.location.lat, lng: f.location.lng }, ...(f.regionCode ? { parent: `place:${f.regionCode}` } : {}) });
   for (const [system, key] of Object.entries(f.ids)) repo().addKey({ entityId: id, system, key });
+  ensureUris();
+}
+
+/**
+ * A registered organisation (lib/organisations/register.ts) as a twin entity,
+ * `organisation:<register number>`, inside its region when it names one of
+ * the nation's regions. Its sites stay their own entities. Entities are
+ * updated, never removed.
+ */
+export function upsertOrganisationEntity(o: { number: string; name: string; region?: string }): void {
+  const d = db();
+  const id = `organisation:${o.number}`;
+  const uri = d.entities[id]?.uri;
+  const region = o.region ? Object.values(d.entities).find(e => e.kind === 'place' && e.region && fold(e.name) === fold(o.region!)) : undefined;
+  const nation = Object.values(d.entities).find(e => e.kind === 'nation');
+  repo().putEntity({ id, kind: 'organisation', name: o.name, code: o.number, ...(uri ? { uri } : {}), ...(region ? { parent: region.id } : nation ? { parent: nation.id } : {}) });
   ensureUris();
 }
 
@@ -590,7 +622,13 @@ export interface RunDeps { fetch?: typeof fetch; resolve?: (host: string) => Pro
  * accepted as observations of this run. Rows that cannot be placed or read are
  * refused with a reason; nothing is guessed.
  */
-export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: string; csv?: string; deps?: RunDeps }): Promise<TwinRun | { error: string }> {
+export interface RunLineage {
+  method: NonNullable<Observation['method']>;
+  /** For administrative counts: the register query; each row's records_count and records_sha256 columns give the lineage. */
+  query?: string;
+}
+
+export async function runSource(sourceId: string, { by, csv, deps = {}, lineage }: { by: string; csv?: string; deps?: RunDeps; lineage?: RunLineage }): Promise<TwinRun | { error: string }> {
   const d = db();
   const s = d.sources.find(x => x.id === sourceId);
   if (!s) return { error: 'No such source' };
@@ -659,7 +697,10 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
       if (validTo && validTo <= validFrom) return reject(`It stops being true (${validTo}) before it starts (${validFrom})`);
       const q = readQuality(row, mapping.quality);
       if (typeof q === 'string') return reject(q);
-      fresh.push({ entityId: entity.id, metric, value, unit, validFrom, ...(validTo ? { validTo } : {}), recordedAt: run.at, ...(q ? { quality: q } : {}), sourceId, runId: run.id });
+      const sha = row.records_sha256?.trim();
+      const records = lineage?.method === 'administrative-count' && sha && /^[0-9a-f]{64}$/.test(sha) ? { query: lineage.query ?? '', count: Number(row.records_count) || value, sha256: sha } : undefined;
+      if (lineage?.method === 'administrative-count' && !records) return reject('An administrative count needs the SHA-256 of the records it counts');
+      fresh.push({ entityId: entity.id, metric, value, unit, validFrom, ...(validTo ? { validTo } : {}), recordedAt: run.at, ...(q ? { quality: q } : {}), sourceId, runId: run.id, ...(lineage ? { method: lineage.method } : {}), ...(records ? { records } : {}) });
     });
     run.accepted = fresh.length;
     const refused = run.rows - run.accepted;
@@ -831,6 +872,12 @@ export function stateAsOf({ asOf, knownAt, metric, entityId }: { asOf?: string; 
     const cur = best.get(k);
     // Observations arrive here in recording order (archive, then the live
     // register), so of two recorded in the same millisecond the later import wins.
+    // Two sources disagreeing on the same date: the source an official chose stands (lib/twin/conflicts.ts).
+    if (cur && o.validFrom === cur.validFrom && o.sourceId !== cur.sourceId) {
+      const chosen = chosenSource(o.entityId, o.metric, o.validFrom);
+      if (chosen === cur.sourceId) return;
+      if (chosen === o.sourceId) { best.set(k, o); return; }
+    }
     if (!cur || o.validFrom > cur.validFrom || (o.validFrom === cur.validFrom && o.recordedAt >= cur.recordedAt)) best.set(k, o);
   };
   // The history archive first (older), then the live register.
@@ -839,12 +886,15 @@ export function stateAsOf({ asOf, knownAt, metric, entityId }: { asOf?: string; 
   return [...best.values()];
 }
 
+/** Values two sources disagree on (standing observations, live register); see lib/twin/conflicts.ts. */
+export const twinConflicts = (filter: { metric?: string; entityId?: string } = {}): Conflict[] => findConflicts(db().observations, filter);
+
 const sourceName = (id: string) => db().sources.find(s => s.id === id)?.name ?? id;
 
 /** One entity's metric as a signal: observed with its source and date, or null when nothing is known. */
 export function signalFor(entityId: string, metric: string, asOf?: string): Signal<number> | null {
   const o = stateAsOf({ asOf, metric, entityId })[0];
-  return o ? { value: o.value, unit: o.unit, kind: 'observed', source: sourceName(o.sourceId), asOf: o.validFrom } : null;
+  return o ? { value: o.value, unit: o.unit, kind: kindOf(o), source: sourceName(o.sourceId), asOf: o.validFrom } : null;
 }
 
 export interface NationalFigure extends Signal<number> {
@@ -872,7 +922,7 @@ export function nationalTotal(metric: string, asOf?: string): NationalFigure | n
   if (!obs.length) return null;
   const national = obs.find(o => db().entities[o.entityId]?.kind === 'nation');
   if (national) {
-    return { value: national.value, unit: national.unit, kind: 'observed', source: sourceName(national.sourceId), asOf: national.validFrom,
+    return { value: national.value, unit: national.unit, kind: kindOf(national), source: sourceName(national.sourceId), asOf: national.validFrom,
       coverage: { have: regions.length, of: regions.length }, vintage: { oldest: national.validFrom, newest: national.validFrom }, aggregation: 'national' };
   }
   const def = getMetric(metric);
@@ -901,7 +951,8 @@ export function nationalTotal(metric: string, asOf?: string): NationalFigure | n
   }
   const dates = byRegion.map(o => o.validFrom).sort();
   return {
-    value, unit, kind: 'observed',
+    // A sum of record counts is a record count; anything mixed is observed.
+    value, unit, kind: byRegion.every(o => o.method === 'administrative-count') ? 'record' : 'observed',
     source: [...new Set(byRegion.map(o => sourceName(o.sourceId)))].join(', '), asOf: dates[0],
     coverage, vintage: { oldest: dates[0]!, newest: dates.at(-1)! }, aggregation: def.aggregation,
   };

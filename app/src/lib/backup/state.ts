@@ -35,7 +35,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { encode, decode } from '@/lib/data/encode';
 import { liveKeys, recordsBackend, persistenceStatus, saveNow, forgetStore, reloadRecords, SNAPSHOT_FORMAT, markChanged } from '@/lib/data/persist';
-import { replaceInPlace } from '@/lib/data/repo/documents';
+import { replaceInPlace, counterFields } from '@/lib/data/repo/documents';
 import { followed } from '@/lib/data/repo/track';
 import { verifyChainEntries } from '@/lib/data/store/audit';
 import type { AuditEntry } from '@/lib/api/types';
@@ -45,10 +45,12 @@ import { sha256, type Manifest, type ManifestPart, type OpenedArchive, type Plai
 /** Not captured: the backup system's own catalogue, policy and restore proposals. */
 export const EXCLUDED_STORES = new Set(['__civicosBackups']);
 /** Left as they are by a restore: the backup system's records and the Update Center's install records (the software that runs). */
-export const KEPT_ON_RESTORE = ['__civicosBackups', '__civicosUpdates'];
+// The access log is oversight evidence of who read what: a data restore never takes it back.
+export const KEPT_ON_RESTORE = ['__civicosBackups', '__civicosUpdates', '__civicosAccessLog'];
 export const EXCLUDED_NOTES: Manifest['excluded'] = [
   { what: 'Vector tile archives (facilities, parcels, boundaries)', why: 'Derived from the published records; rebuilt after a restore' },
   { what: 'The backup catalogue, retention policy and restore proposals (__civicosBackups)', why: 'The backup system\'s own records; kept in the target and in the running server' },
+  { what: 'The access log (__civicosAccessLog)', why: 'Evidence of who read restricted records; a data restore keeps it as it stands in the running server' },
   { what: 'civicos.outbox and civicos.platform_state_lease (postgres)', why: 'Runtime coordination between instances, not state' },
   { what: 'Container images and release artifacts', why: 'Held by the Update Center\'s registry and mirror (and the restore kit); not part of the data' },
   { what: 'Keys (CIVICOS_DATA_KEK, the key provider\'s keys)', why: 'Held in key custody; recovered separately (docs/DISASTER_RECOVERY.md)' },
@@ -264,6 +266,8 @@ export async function applySnapshot(opened: OpenedArchive): Promise<Applied> {
   const incoming = new Map<string, unknown>();
   for (const p of m.parts) incoming.set(p.name.replace(/^store\//, ''), decode(parts.get(p.name)!.toString('utf8')));
   const replaced: string[] = [], removed: string[] = [];
+  /** Counters kept higher than the backup's, with the backup's values (for the comparison below). */
+  const restoredCounters = new Map<string, Record<string, number>>();
   // Stores created after the backup was taken go.
   for (const key of liveKeys()) {
     if (kept.has(key) || incoming.has(key) || EXCLUDED_STORES.has(key)) continue;
@@ -275,18 +279,41 @@ export async function applySnapshot(opened: OpenedArchive): Promise<Applied> {
     if (kept.has(key)) continue;
     let v = value;
     if (key === '__civicosKeyring') v = mergeKeyring(g[key] as Keyring | undefined, value as Keyring);
+    // Record counters never go back: a number given after the backup is not given again.
+    const counters = keepCounters(key, v);
     g[key] = g[key] === undefined ? v : replaceInPlace(g[key], v);
+    const raised = counters();
+    if (raised) restoredCounters.set(key, raised);
     replaced.push(key);
   }
   delete g.__facilityGrid; delete g.__parcelIndex;
   const differing = m.parts.filter(p => {
     const key = p.name.replace(/^store\//, '');
-    return !kept.has(key) && key !== '__civicosKeyring' && sha256(encode(g[key])) !== p.sha256;
+    const back = restoredCounters.get(key);
+    const asRestored = back ? { ...(g[key] as Record<string, unknown>), ...back } : g[key];
+    return !kept.has(key) && key !== '__civicosKeyring' && sha256(encode(asRestored)) !== p.sha256;
   }).map(p => p.name);
   for (const key of replaced) followed(key);
   markChanged();
   await saveNow();
   return { replaced, removed, kept: [...kept], check: { compared: replaced.length, differing } };
+}
+
+/**
+ * Keep each record counter (`seq`, `…Seq`) of a store at the higher of its
+ * live and restored value. Call the result after replacing: it returns the
+ * backup's values of the counters it kept higher, or null.
+ */
+function keepCounters(key: string, restored: unknown): () => Record<string, number> | null {
+  const live = g[key];
+  if (!live || typeof live !== 'object' || !restored || typeof restored !== 'object') return () => null;
+  const fields = counterFields(live).map(f => ({ f, live: Number((live as Record<string, unknown>)[f]) || 0, back: Number((restored as Record<string, unknown>)[f]) || 0 })).filter(x => x.live > x.back);
+  return () => {
+    const now = g[key] as Record<string, unknown> | undefined;
+    if (!now || !fields.length) return null;
+    for (const x of fields) now[x.f] = x.live;
+    return Object.fromEntries(fields.map(x => [x.f, x.back]));
+  };
 }
 
 function mergeKeyring(live: Keyring | undefined, restored: Keyring): Keyring {

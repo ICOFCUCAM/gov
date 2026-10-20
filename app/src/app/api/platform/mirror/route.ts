@@ -12,8 +12,8 @@
 // configs, lifecycle, integrations, grants, webhooks.
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  auditHead, getLifecycle, getSovereign, listBackups, listBills, listConfigs, listDeployments, listGrants, listIncidents,
-  listIntegrations, listMinistries, listPermits, listReceipts, listReleases, listWebhooks, verifyIntegrationKey,
+  auditHead, getLifecycle, getSovereign, listBackups, billsFor, receiptsVisibleTo, listConfigs, listDeployments, listGrants, listIncidents,
+  listIntegrations, listMinistries, listPermits, listReleases, listWebhooks, verifyIntegrationKey,
 } from '@/lib/data/store';
 import { nationIso3 } from '@/lib/nation/registry';
 
@@ -25,7 +25,8 @@ const MIRROR_READ_SCOPE = 'mirror:read';
 const REGISTERS = {
   institutions: () => listMinistries(),
   permits: () => listPermits(),
-  payments: () => ({ bills: listBills(), receipts: listReceipts() }),
+  // Tax and customs bills stay with their issuer (confidential): the mirror carries only general bills.
+  payments: () => ({ bills: billsFor(null), receipts: receiptsVisibleTo(null) }),
   incidents: () => listIncidents(),
   releases: () => listReleases(),
   deployments: () => listDeployments(),

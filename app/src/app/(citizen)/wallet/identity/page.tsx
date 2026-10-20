@@ -7,11 +7,14 @@ import { getSession } from '@/lib/data/store';
 import { nationMessages } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 import * as React from 'react';
+import { redirect } from 'next/navigation';
 export default function IdentityPage() {
   const m = nationMessages();
   const r = m.records;
   const session = getSession();
-  const c = session.citizen!;
+  // No citizen session (a production installation before citizen sign-in is connected): sign in first.
+  if (!session.citizen) redirect('/login');
+  const c = session.citizen;
 
   return (
     <div className="bg-bg min-h-screen">

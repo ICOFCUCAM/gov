@@ -38,8 +38,8 @@ import { KmsHttp } from './kms-http';
 import { touch } from '@/lib/data/repo/track';
 
 export type ProviderKind = 'env' | 'vault' | 'kms-http';
-export type SigningPurpose = 'audit' | 'exchange' | 'token';
-export const SIGNING_ENV: Record<SigningPurpose, string> = { audit: 'CIVICOS_AUDIT_KEY', exchange: 'CIVICOS_EXCHANGE_KEY', token: 'CIVICOS_TOKEN_KEY' };
+export type SigningPurpose = 'audit' | 'exchange' | 'token' | 'decision';
+export const SIGNING_ENV: Record<SigningPurpose, string> = { audit: 'CIVICOS_AUDIT_KEY', exchange: 'CIVICOS_EXCHANGE_KEY', token: 'CIVICOS_TOKEN_KEY', decision: 'CIVICOS_DECISION_KEY' };
 
 export interface PublicHalf { keyId: string; publicKeyPem: string }
 export interface Signature extends PublicHalf { signature: string }
@@ -73,6 +73,7 @@ export function remoteKeyNames(env: NodeJS.ProcessEnv = process.env): Record<Sig
     audit: env[`${p}_AUDIT_KEY`]?.trim() || 'civicos-audit',
     exchange: env[`${p}_EXCHANGE_KEY`]?.trim() || 'civicos-exchange',
     token: env[`${p}_TOKEN_KEY`]?.trim() || 'civicos-token',
+    decision: env[`${p}_DECISION_KEY`]?.trim() || 'civicos-decision',
     data: env[`${p}_DATA_KEY`]?.trim() || 'civicos-data',
   };
 }
@@ -271,7 +272,7 @@ export function keyCustodyStatus(): KeyCustodyStatus {
     provider,
     ...(provider !== 'env' && l.service ? { endpoint: l.service.endpoint } : {}),
     ready: provider === 'env' ? true : l.ready,
-    signing: { audit: signingOf('audit'), exchange: signingOf('exchange'), token: signingOf('token') },
+    signing: { audit: signingOf('audit'), exchange: signingOf('exchange'), token: signingOf('token'), decision: signingOf('decision') },
     data: remote
       ? { enabled: !!remote.current, ...(ring.current ? { kid: ring.current } : {}), keys: ring.dataKeys.length, unreadable: ring.dataKeys.filter(w => !l.dataKeys.has(w.kid)).length }
       : { enabled: !!process.env.CIVICOS_DATA_KEK?.trim(), keys: [process.env.CIVICOS_DATA_KEK, process.env.CIVICOS_DATA_KEK_PREVIOUS].filter(v => v?.trim()).length, unreadable: 0 },

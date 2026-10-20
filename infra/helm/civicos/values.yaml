@@ -54,6 +54,10 @@ app:
   # start and a banner on every console page) leaves it open, for
   # demonstrations (go-live review L-2).
   auth: enforce
+  # What the installation is (CIVICOS_MODE, lib/ops/mode.ts): production (a real
+  # government: no sample records, no demo citizen), training or demo (samples
+  # and simulations with a banner on every page).
+  mode: production
   # Proxies in front of the app that append to X-Forwarded-For
   # (CIVICOS_TRUSTED_PROXIES, go-live review L-1): 1 for the ingress-nginx
   # controller; 2 when a cloud load balancer that appends sits in front of it.
@@ -87,8 +91,8 @@ app:
     provider: env
     # provider env: a Secret with CIVICOS_DATA_KEK (32 bytes, base64 or hex;
     # e.g. `openssl rand -base64 32`), CIVICOS_AUDIT_KEY, CIVICOS_EXCHANGE_KEY
-    # and CIVICOS_TOKEN_KEY (Ed25519 private keys, PEM; `openssl genpkey
-    # -algorithm ed25519`), optionally CIVICOS_DATA_KEK_PREVIOUS during a
+    # CIVICOS_TOKEN_KEY and CIVICOS_DECISION_KEY (Ed25519 private keys, PEM;
+    # `openssl genpkey -algorithm ed25519`), optionally CIVICOS_DATA_KEK_PREVIOUS during a
     # rotation. With a remote provider the same Secret may still hold
     # CIVICOS_DATA_KEK / _PREVIOUS so values sealed before the move open.
     existingSecret: civicos-app-keys
@@ -327,6 +331,8 @@ cron:
   # `substrate: true` answer 503 "substrate not configured" there, so they are
   # not created (they would only fail every run).
   withoutSubstrate: false
+  # The same jobs as app/scripts/cron-jobs.json (the self-host scheduler's list)
+  # and app/supabase/cron/schedule.sql; app/src/lib/ops/cron-jobs.test.ts keeps them equal.
   jobs:
     deliver-events:      { schedule: "*/5 * * * *",  method: GET, substrate: true }
     substrate-metrics:   { schedule: "*/10 * * * *", method: GET, substrate: true }
@@ -343,6 +349,7 @@ cron:
     deliver-cloudevents: { schedule: "*/2 * * * *",  method: GET }
     deliver-messages:    { schedule: "* * * * *",    method: GET }
     backup:              { schedule: "41 * * * *",   method: GET }
+    case-deadlines:      { schedule: "*/15 * * * *", method: GET }
     sla:                 { schedule: "0 * * * *",    method: POST, substrate: true }
     telemetry-stale:     { schedule: "0 * * * *",    method: POST, substrate: true }
     promote-directives:  { schedule: "0 * * * *",    method: POST }

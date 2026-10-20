@@ -155,6 +155,30 @@ export const STANDARD_METRICS: readonly Omit<MetricDef, 'origin'>[] = [
   { id: 'population', label: 'Population', unit: '{persons}', aggregation: 'sum', period: 'instant', sdmxConcept: 'POP' },
   { id: 'households', label: 'Households', unit: '{households}', aggregation: 'sum', period: 'instant' },
   { id: 'area', label: 'Area', unit: 'km2', aggregation: 'sum', period: 'instant' },
+  // Counted from the civil register (lib/civil/twin.ts): registrations made in the month, not estimates of events.
+  { id: 'births.registered', label: 'Births registered', unit: '{births}', aggregation: 'sum', period: 'month' },
+  { id: 'deaths.registered', label: 'Deaths registered', unit: '{deaths}', aggregation: 'sum', period: 'month' },
+  { id: 'marriages.registered', label: 'Marriages registered', unit: '{marriages}', aggregation: 'sum', period: 'month' },
+  // Counted from the cases under approved procedures (lib/casework/twin.ts), per institution and month.
+  { id: 'cases.opened', label: 'Cases opened', unit: '{cases}', aggregation: 'sum', period: 'month' },
+  { id: 'cases.decided', label: 'Cases decided', unit: '{cases}', aggregation: 'sum', period: 'month' },
+  { id: 'cases.late', label: 'Cases past a legal deadline', unit: '{cases}', aggregation: 'sum', period: 'month' },
+  // Counted from the organisations register (lib/organisations/twin.ts): organisations in good standing on the day.
+  { id: 'registrations.granted', label: 'Organisations registered', unit: '{organisations}', aggregation: 'sum', period: 'instant' },
+  { id: 'licences.granted', label: 'Organisations licensed', unit: '{organisations}', aggregation: 'sum', period: 'instant' },
+  { id: 'accreditations.granted', label: 'Organisations accredited', unit: '{organisations}', aggregation: 'sum', period: 'instant' },
+  // Summed from the returns education institutions reported (lib/education/twin.ts): aggregates only.
+  { id: 'education.enrolment.total', label: 'Enrolment (reported)', unit: '{pupils}', aggregation: 'sum', period: 'instant' },
+  { id: 'education.enrolment.female', label: 'Enrolment, female (reported)', unit: '{pupils}', aggregation: 'sum', period: 'instant' },
+  { id: 'education.enrolment.male', label: 'Enrolment, male (reported)', unit: '{pupils}', aggregation: 'sum', period: 'instant' },
+  { id: 'education.staff.teaching', label: 'Teaching staff (reported)', unit: '{persons}', aggregation: 'sum', period: 'instant' },
+  { id: 'education.staff.total', label: 'Staff (reported)', unit: '{persons}', aggregation: 'sum', period: 'instant' },
+  // Summed from the capacity returns licensed health facilities reported (lib/health/twin.ts): aggregates only, never patients.
+  { id: 'health.beds.total', label: 'Hospital beds (reported)', unit: '{beds}', aggregation: 'sum', period: 'instant' },
+  { id: 'health.beds.intensive-care', label: 'Intensive-care beds (reported)', unit: '{beds}', aggregation: 'sum', period: 'instant' },
+  { id: 'health.staff.clinical', label: 'Clinical staff (reported)', unit: '{persons}', aggregation: 'sum', period: 'instant' },
+  { id: 'health.staff.total', label: 'Health facility staff (reported)', unit: '{persons}', aggregation: 'sum', period: 'instant' },
+  { id: 'health.outpatient.attendances', label: 'Outpatient attendances (reported)', unit: '{attendances}', aggregation: 'sum', period: 'instant' },
 ];
 
 // ── Registry ──────────────────────────────────────────────────────────────

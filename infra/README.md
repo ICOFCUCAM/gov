@@ -2,6 +2,22 @@
 
 Sovereign-portable deployment. No vendor lock-in (Companion 139).
 
+## One computer (no cloud, no Docker)
+
+```bash
+cd app && pnpm install --frozen-lockfile && npm run self-host
+```
+
+`app/scripts/self-host.mjs` makes a data folder with its own secrets
+(`civicos-data/civicos.env`: session secret, data key, cron secret, one-time
+setup code, signing keys), file state, local encrypted backups and sign-in
+enforced; starts the app on 127.0.0.1; and runs the scheduled jobs itself from
+`app/scripts/cron-jobs.json`, the same list as `cron.jobs` below and
+`app/supabase/cron/schedule.sql` (`src/lib/ops/cron-jobs.test.ts` keeps the
+three equal). `self-host backup` and `self-host status` take a verified
+backup and report. Plain-language guide, reverse proxy (Caddy) and service
+examples (systemd, launchd, NSSM / Task Scheduler): `docs/SELF_HOSTING.md`.
+
 ## Layout
 
 ```
@@ -40,12 +56,13 @@ kubectl -n civicos create secret generic civicos-app \
   --from-literal=NEXT_PUBLIC_SUPABASE_URL='https://…' \
   --from-literal=NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='…' \
   --from-literal=SUPABASE_SERVICE_ROLE_KEY='…'          # the nation's substrate
-openssl genpkey -algorithm ed25519 -out audit.pem      # likewise exchange.pem, token.pem
+openssl genpkey -algorithm ed25519 -out audit.pem      # likewise exchange.pem, token.pem, decision.pem
 kubectl -n civicos create secret generic civicos-app-keys \
   --from-literal=CIVICOS_DATA_KEK="$(openssl rand -base64 32)" \
   --from-file=CIVICOS_AUDIT_KEY=audit.pem \
   --from-file=CIVICOS_EXCHANGE_KEY=exchange.pem \
-  --from-file=CIVICOS_TOKEN_KEY=token.pem              # or app.keys.provider vault / kms-http
+  --from-file=CIVICOS_TOKEN_KEY=token.pem \
+  --from-file=CIVICOS_DECISION_KEY=decision.pem        # or app.keys.provider vault / kms-http
 helm -n civicos upgrade --install civicos infra/helm/civicos \
   -f infra/helm/profiles/mid-city.yaml
 ```
@@ -81,8 +98,8 @@ What the chart sets up for the Next.js app (`templates/app.yaml`):
   volumes), no service-account token, uid/gid 10001; in file mode the audit
   anchor file gets its own volume (`app.anchors`).
 - Scheduled jobs: pg_cron in the substrate by default
-  (`app/supabase/cron/schedule.sql`); `cron.enabled: true` runs the same 15
-  jobs as Kubernetes CronJobs (Bearer `CIVICOS_CRON_SECRET`) where pg_cron is
+  (`app/supabase/cron/schedule.sql`); `cron.enabled: true` runs the same 18
+  jobs (`app/scripts/cron-jobs.json`) as Kubernetes CronJobs (Bearer `CIVICOS_CRON_SECRET`) where pg_cron is
   not used. Run one scheduler, not both.
 - Network policy egress is set per destination (`security.egress`: DNS to the
   cluster DNS only, Postgres, NATS, HTTPS); narrow each to the nation's own

@@ -32,6 +32,7 @@ import type {
 import { recordAudit } from '@/lib/data/store/audit';
 import { nationPaymentRail } from '@/lib/nation/registry';
 import { touch } from '@/lib/data/repo/track';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 export const REFERENCE_CURRENCY = 'USD';
 const DAY = 86_400_000;
@@ -147,6 +148,8 @@ const product = (id: string) => CATALOGUE.find(p => p.id === id);
 
 function seedSecurity(): SecurityDb {
   const now = Date.now();
+  // Sample history: demo and training installations only (lib/ops/mode.ts).
+  if (!samplesAllowed()) return { orders: [], byo: [], software: [], defs: { home: { installedCycle: cycleAt(now), installedAt: new Date(now).toISOString() } }, seq: 3000 };
   const at = (d: number) => new Date(now + d * DAY).toISOString();
   const order = (o: Omit<SecurityOrder, 'history' | 'currency' | 'quotedAt' | 'validUntil'> & { paidDaysAgo: number }): SecurityOrder => {
     const { paidDaysAgo, ...rest } = o;

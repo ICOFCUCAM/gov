@@ -82,6 +82,21 @@ describe('backup and restore (memory mode)', () => {
     expect(readdirSync(dir)).toEqual([]);
   });
 
+  it('never gives a record number again after a restore (counters keep their highest value)', async () => {
+    const { resetTax, registerTaxpayer } = await import('@/lib/tax/register');
+    resetTax();
+    const first = ok(registerTaxpayer({ party: { kind: 'person', id: 'BR-A', name: 'A' }, taxTypes: ['income'] }, 'c1', 'Officer'));
+    const b = ok(await createBackup({ by: 'Admin Ada' }));
+    const afterBackup = ok(registerTaxpayer({ party: { kind: 'person', id: 'BR-B', name: 'B' }, taxTypes: ['income'] }, 'c2', 'Officer'));
+    ok(await requestRestore(b.id, { by: 'Admin Ada', acknowledgeLoss: true, reason: 'Test' }));
+    const done = ok(await requestRestore(b.id, { by: 'Officer Ben', acknowledgeLoss: true }));
+    if (done.pending) throw new Error('expected the restore');
+    expect(done.restore.check.differing).toEqual([]);
+    const next = ok(registerTaxpayer({ party: { kind: 'person', id: 'BR-C', name: 'C' }, taxTypes: ['income'] }, 'c3', 'Officer'));
+    expect([first.tin, afterBackup.tin]).not.toContain(next.tin);
+    expect(Number(next.tin.slice(-6))).toBeGreaterThan(Number(afterBackup.tin.slice(-6)));
+  });
+
   it('restores four-eyes: a loss warning, a second official, the state of the backup, the replaced state kept and named', async () => {
     ok(setSovereign({ motto: 'Before the backup' }, 'Registrar'));
     const b = ok(await createBackup({ by: 'Admin Ada' }));
@@ -189,6 +204,13 @@ describe('retention and schedule', () => {
     const second = await runScheduled();
     expect(second.took).toBeUndefined();
     expect(second.skipped).toMatch(/younger than/);
+    // The operator's `self-host backup` (/api/cron/backup?now) takes one now, verified, as an on-demand run.
+    const third = await runScheduled(new Date(), { now: true });
+    expect(third.took).toBeTruthy();
+    expect(third.took).not.toBe(first.took);
+    expect(third.verified).toBe(true);
+    const entry = (await listBackups()).find(b => b.id === third.took)!;
+    expect(entry).toMatchObject({ reason: 'manual', createdBy: 'system (backup on demand, operator)' });
   });
 
   it('the cron route needs CIVICOS_CRON_SECRET', async () => {

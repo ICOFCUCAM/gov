@@ -31,6 +31,7 @@ import type {
 import { recordAudit } from '@/lib/data/store/audit';
 import { PUBLISHER_KEY, allReleases, nationRecord, releaseFor, visibleTo } from './updates';
 import { touch } from '@/lib/data/repo/track';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 const DAY = 86_400_000;
 const sha = (v: string) => createHash('sha256').update(v).digest('hex');
@@ -158,6 +159,8 @@ function makeDeposit(r: DistributionRelease, at: number, by: string): EscrowDepo
   };
 }
 function seed(db: ScDb) {
+  // Sample history: demo and training installations only (lib/ops/mode.ts).
+  if (!samplesAllowed()) return;
   const now = Date.now();
   for (const r of allReleases()) {
     const age = (now - ms(r.releasedAt)) / DAY;

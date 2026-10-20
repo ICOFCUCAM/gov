@@ -27,15 +27,22 @@ import type {
   PlatformSetup,
 } from '@/lib/api/types';
 import { hash, citizen } from './shared';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 // Module-level singletons (process-lifetime).
 const g = globalThis as unknown as { __civicos?: ReturnType<typeof seed> };
 
 export function seed() {
   const now = Date.now();
+  // A production installation starts with none of the sample records below (lib/ops/mode.ts,
+  // directions 10.3): no example permits, bills, receipts, notifications, incidents, integrations,
+  // grants, webhooks, releases or configuration bundles. The institutions and the neutral nation
+  // profile are structure, not samples, and are kept in every mode.
+  const samples = samplesAllowed();
+  const only = <T,>(xs: T[]): T[] => (samples ? xs : []);
   const days = (n: number) => new Date(now + n * 86400000).toISOString();
 
-  const permits: Permit[] = [
+  const permits: Permit[] = only([
     {
       id: 'PM-4F21',
       type: 'business',
@@ -55,27 +62,27 @@ export function seed() {
       ],
       contestable: true,
     },
-  ];
+  ]);
 
-  const bills: Bill[] = [
+  const bills: Bill[] = only([
     { id: 'BL-9001', kind: 'water', description: 'Water — April 2026', amountMinor: 84000, currency: 'USD', dueDate: days(6), status: 'due' },
     { id: 'BL-9002', kind: 'waste', description: 'Solid waste — Q2 2026', amountMinor: 30000, currency: 'USD', dueDate: days(12), status: 'due' },
     { id: 'BL-9003', kind: 'property-tax', description: 'Property tax — 2025 (paid)', amountMinor: 540000, currency: 'USD', dueDate: days(-40), status: 'paid' },
-  ];
+  ]);
 
-  const receipts: PaymentReceipt[] = [
+  const receipts: PaymentReceipt[] = only([
     { id: 'PR-3001', billId: 'BL-9003', amountMinor: 540000, currency: 'USD', rail: 'Mobile Money', paidAt: days(-40), hash: hash('BL-9003') },
-  ];
+  ]);
 
-  const notifications: Notification[] = [
+  const notifications: Notification[] = only([
     { id: 'NT-7001', from: 'Ministry of Education', subject: 'School transfer approved', body: 'The transfer of Aisha to Northern Primary is confirmed.', at: days(-1), read: false, channel: 'wallet' },
     { id: 'NT-7002', from: 'Tax authority', subject: 'Your 2026 tax draft is ready', body: 'A pre-filled draft is ready for your review. No signature is needed yet.', at: days(-3), read: false, channel: 'wallet', aiClass: 'C' },
     { id: 'NT-7003', from: 'Civic Assistant', subject: 'Pension eligibility', body: 'Here is the information you asked for about pension eligibility.', at: days(-7), read: true, channel: 'wallet', aiClass: 'A' },
-  ];
+  ]);
 
   const audit: AuditEntry[] = [];
 
-  const incidents: Incident[] = [
+  const incidents: Incident[] = only([
     {
       id: 'INC-2041',
       severity: 'sev3',
@@ -90,16 +97,16 @@ export function seed() {
         { at: days(0), by: 'W. Tanaka', action: 'acknowledged', note: 'Investigating link to regional POP.' },
       ],
     },
-  ];
+  ]);
 
   // Minutes since last successful edge sync, per municipality.
-  const tenantSync: Record<string, number> = {
+  const tenantSync: Record<string, number> = samples ? {
     'Capital District': 4,
     Eastern: 137,
     Northern: 22,
-  };
+  } : {};
 
-  const integrations: IntegrationClient[] = [
+  const integrations: IntegrationClient[] = only([
     {
       id: 'IC-7001',
       kind: 'integration',
@@ -111,8 +118,8 @@ export function seed() {
       createdAt: days(-20),
       approvedBy: 'L. Petrov',
     },
-  ];
-  const grants: FederationGrant[] = [
+  ]);
+  const grants: FederationGrant[] = only([
     {
       id: 'FG-3001',
       fromTenant: 'home',
@@ -124,8 +131,8 @@ export function seed() {
       approvedBy: 'STO',
       policy: { purposes: ['oversight'], retentionDays: 365, onwardSharing: false },
     },
-  ];
-  const webhooks: WebhookSubscription[] = [
+  ]);
+  const webhooks: WebhookSubscription[] = only([
     {
       id: 'WH-9001',
       topic: 'civicos.permit.decided',
@@ -134,25 +141,25 @@ export function seed() {
       failures: 0,
       createdAt: days(-10),
     },
-  ];
+  ]);
 
-  const releases: Release[] = [
+  const releases: Release[] = only([
     { id: 'REL-140', version: '1.4.0', channel: 'stable', notes: 'Permits SLA + audit chain', createdAt: days(-30), approvedBy: 'L. Petrov' },
     { id: 'REL-150', version: '1.5.0', channel: 'staging', notes: 'Operations centre + interop', createdAt: days(-7) },
-  ];
+  ]);
   const deployments: Deployment[] = [];
   const lifecycle: TenantLifecycle = {
     tenant: 'home',
     state: 'active',
-    events: [
+    events: only([
       { at: days(-60), from: 'provisioning', to: 'active', reason: 'Go-live after inclusion-floor check', actor: 'L. Petrov' },
-    ],
+    ]),
   };
   // The catalogue of real backups (lib/data/backups.ts keeps it in step with the backup target); none until one is taken.
   const backups: BackupRecord[] = [];
-  const configs: ConfigBundle[] = [
+  const configs: ConfigBundle[] = only([
     { id: 'CFG-1', scope: 'global', version: 1, contentHash: hash('cfg-v1'), signedBy: 'STO', state: 'applied', createdAt: days(-20) },
-  ];
+  ]);
 
   // The sovereign federation always exists — instantiated from the
   // canonical institution set so every institutional route resolves to a

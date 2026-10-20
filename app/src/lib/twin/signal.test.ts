@@ -10,7 +10,9 @@ describe('figures say where they come from', () => {
   it('mark everything that is not observed or an official record', () => {
     expect(needsMarker('observed')).toBe(false);
     expect(needsMarker('reported')).toBe(false);
-    for (const k of ['modelled', 'sample', 'unavailable'] as const) expect(needsMarker(k)).toBe(true);
+    expect(needsMarker('record')).toBe(false);
+    for (const k of ['modelled', 'sample', 'simulated', 'unavailable'] as const) expect(needsMarker(k)).toBe(true);
+    expect(SIGNAL_LABEL.simulated).toBe('Simulation');
     expect(sample(42, '%')).toMatchObject({ value: 42, unit: '%', kind: 'sample' });
     const html = renderToStaticMarkup(React.createElement(MetricStat, { label: 'Fiscal execution index', value: '97', kind: 'sample', source: 'Reference model' }));
     expect(html).toContain('Sample');

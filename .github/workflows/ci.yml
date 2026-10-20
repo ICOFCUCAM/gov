@@ -121,6 +121,7 @@ jobs:
         # checks read the console as the demo session, so this server is started open on purpose.
         env:
           CIVICOS_AUTH: open
+          CIVICOS_MODE: demo
         run: |
           pnpm start -p 3000 > /tmp/next.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://localhost:3000/api/setup > /dev/null && exit 0; sleep 2; done
@@ -159,6 +160,7 @@ jobs:
         # checks read the console as the demo session, so this server is started open on purpose.
         env:
           CIVICOS_AUTH: open
+          CIVICOS_MODE: demo
         run: |
           pnpm start -p 3000 > /tmp/next.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://localhost:3000/api/setup > /dev/null && exit 0; sleep 2; done
@@ -197,6 +199,7 @@ jobs:
         # checks read the console as the demo session, so this server is started open on purpose.
         env:
           CIVICOS_AUTH: open
+          CIVICOS_MODE: demo
         run: |
           pnpm start -p 3000 > /tmp/next.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://localhost:3000/api/setup > /dev/null && exit 0; sleep 2; done

@@ -1,15 +1,16 @@
 import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
 import { PaymentsClient } from './PaymentsClient';
-import { listBills, listReceipts } from '@/lib/data/store';
+import { billsFor, receiptsVisibleTo } from '@/lib/data/store';
 import { nationMessages } from '@/lib/nation/registry';
 export const dynamic = 'force-dynamic';
 
 export default function PaymentsPage() {
   const m = nationMessages();
   const x = m.pages;
-  const bills = listBills();
-  const receipts = listReceipts();
+  // Only general bills: a tax or customs bill is never shown in the wallet until citizens' identity is linked to payers.
+  const bills = billsFor(null);
+  const receipts = receiptsVisibleTo(null);
 
   return (
     <div className="bg-bg min-h-screen">

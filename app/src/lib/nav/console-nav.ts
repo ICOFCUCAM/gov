@@ -23,11 +23,11 @@ const tab = (label: string, href: string, was?: string): NavTab => ({ label, hre
 
 export const CONSOLE_NAV: NavSection[] = [
   { label: 'My desk', items: [
-    { key: 'work', icon: '☑', label: 'My work', href: '/gov/work', match: /^\/gov\/items\//,
+    { key: 'work', icon: '☑', label: 'My work', href: '/gov/work', match: /^\/gov\/(items|cases)\//,
       purpose: 'Everything waiting on you and your colleagues: decisions, cases, requests and incidents.',
       tabs: [tab('Waiting on officials', '/gov/work', 'My work'), tab('Today', '/gov/home', 'Officer Home'), tab('Directives to me', '/gov/inbox', 'Directive inbox'),
         tab('Case work', '/gov/workbench', 'Officer Workbench'), tab('Citizen requests', '/gov/intake', 'Citizen Intake'), tab('Permits', '/console', 'Officer Console'),
-        tab('Notifications', '/gov/alerts'), tab('Following', '/gov/watchlist', 'Watchlist'), tab('Load cases', '/gov/work/cases')] },
+        tab('Notifications', '/gov/alerts'), tab('Following', '/gov/watchlist', 'Watchlist'), tab('Load cases', '/gov/work/cases'), tab('Cases', '/gov/work/cases/open')] },
     { key: 'me', icon: '◉', label: 'My account', href: '/gov/me', purpose: 'Your profile, your signing key and your session.', tabs: [tab('Profile', '/gov/me')] },
   ]},
   { label: 'Decisions', items: [
@@ -38,6 +38,12 @@ export const CONSOLE_NAV: NavSection[] = [
       purpose: 'Orders and instructions: draft, sign, send and follow them through.',
       tabs: [tab('Directives', '/gov/directives', 'Directive Board'), tab('Dispatches', '/gov/dispatches', 'Dispatch Board'),
         tab('Escalations', '/gov/escalations', 'Escalation Floor'), tab('Constitutional review', '/gov/constitutional', 'Constitutional desk')] },
+    { key: 'civil', icon: '❦', label: 'Registers', href: '/gov/civil',
+      purpose: 'The people registered and their births, deaths and marriages, the organisations registered, licensed or accredited, the visas and permits granted, schools\' inspections, qualifications and returns, and regulated health professionals and facilities\' capacity, all recorded through decided cases.',
+      tabs: [tab('Civil registry', '/gov/civil'), tab('Organisations', '/gov/organisations'), tab('Visas and permits', '/gov/immigration'), tab('Education', '/gov/education'), tab('Health regulation', '/gov/health-regulation')] },
+    { key: 'law', icon: '¶', label: 'Laws', href: '/gov/law',
+      purpose: 'The nation\'s laws as versioned texts that decisions cite, and the procedures that apply them.',
+      tabs: [tab('Laws', '/gov/law'), tab('Procedures', '/gov/law/procedures'), tab('Permit authorities', '/gov/law/permit-authorities'), tab('Rates and tariffs', '/gov/law/rules')] },
     { key: 'branches', icon: '⚖', label: 'Branches of government', href: '/gov/branches', match: /^\/gov\/branch\//,
       purpose: 'The branches the constitution sets up, their mandates and how they check each other.',
       tabs: [tab('All branches', '/gov/branches', 'Branches of Government')] },
@@ -49,7 +55,7 @@ export const CONSOLE_NAV: NavSection[] = [
         tab('Knock-on effects', '/gov/coordination', 'National Coordination'), tab('Live events', '/gov/live', 'Live Wall'),
         tab('Emergency screen', '/wall', 'NCCC Wall'), tab('Status history', '/gov/posture', 'Posture Board')] },
     { key: 'reg', icon: '◉', label: 'Regions', href: '/gov/regional', purpose: 'How each region is doing, side by side.', tabs: [tab('Regions', '/gov/regional', 'Regional Command')] },
-    { key: 'fin', icon: '§', label: 'Public finances', href: '/gov/treasury', purpose: 'Revenue, spending, reserves and fiscal pressure.', tabs: [tab('Public finances', '/gov/treasury', 'Treasury Command')] },
+    { key: 'fin', icon: '§', label: 'Public finances', href: '/gov/treasury', purpose: 'Revenue, spending, reserves and fiscal pressure.', tabs: [tab('Public finances', '/gov/treasury', 'Treasury Command'), tab('Tax', '/gov/tax'), tab('Customs', '/gov/customs')] },
     { key: 'sec', icon: '◈', label: 'Security & public order', href: '/gov/security', purpose: 'Threats, incidents and the readiness of security services.', tabs: [tab('Security & public order', '/gov/security', 'Security & Interior')] },
     { key: 'geo', icon: '◷', label: 'Foreign relations', href: '/gov/geopolitical', purpose: 'Pressure from outside the borders: partners, markets and frontiers.', tabs: [tab('Foreign relations', '/gov/geopolitical', 'Geopolitical Monitor')] },
     { key: 'sim', icon: '⟁', label: 'What-if scenarios', href: '/gov/simulation', purpose: 'Try a scenario and see its likely effect before deciding. Results are modelled, never facts.', tabs: [tab('What-if scenarios', '/gov/simulation', 'National Simulation')] },
@@ -83,7 +89,7 @@ export const CONSOLE_NAV: NavSection[] = [
       purpose: 'The tamper-evident record of every action, and the means to check it.',
       tabs: [tab('Audit record', '/audit', 'Oversight'), tab('Search the record', '/gov/audit', 'Audit Explorer'), tab('Activity', '/gov/activity', 'Activity Log'),
         tab('Signatures', '/gov/signatures', 'Signature Audit'), tab('Independent confirmations', '/gov/witnesses', 'Audit Witnesses'),
-        tab('Check an exported record', '/gov/audit-replay', 'Audit Replay')] },
+        tab('Check an exported record', '/gov/audit-replay', 'Audit Replay'), tab('Who read what', '/gov/access-log')] },
   ]},
   { label: 'People', items: [
     { key: 'staff', icon: '⚿', label: 'Staff', href: '/gov/officers', purpose: 'Officials, their roles and their accounts.',

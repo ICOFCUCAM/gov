@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { REGISTER_OWNERS, CIVIC_API_FOLLOWER, SUBSTRATE_INSPECTION } from './register-owners';
+import { REGISTER_OWNERS, CIVIC_API_FOLLOWER, SUBSTRATE_INSPECTION, legalOwners } from './register-owners';
+import { isAuthorityKey } from '@/lib/nation/deployment';
 
 const SRC = join(__dirname, '..', '..');
 const ROOT = join(SRC, '..', '..');
@@ -15,6 +16,14 @@ function files(dir: string, out: string[] = []): string[] {
 }
 
 describe('one owner per register', () => {
+  it('every register names who is legally responsible, and says when the nation has not named the authority', () => {
+    for (const r of REGISTER_OWNERS) if (r.legal?.kind === 'authority') expect(isAuthorityKey(r.legal.key), r.id).toBe(true);
+    const none = legalOwners(undefined);
+    expect(none.find(r => r.id === 'identity')).toMatchObject({ named: false });
+    expect(none.find(r => r.id === 'nation')).toMatchObject({ named: true, legal: { kind: 'installation' } });
+    expect(legalOwners({ identity: 'min-interior' }).find(r => r.id === 'identity')).toMatchObject({ named: true, institution: 'min-interior' });
+  });
+
   it('every store the platform keeps belongs to exactly one register', () => {
     const keys = new Set<string>();
     for (const f of files(join(SRC, 'lib'))) for (const m of readFileSync(f, 'utf8').replace(/\/\/.*$/gm, '').matchAll(/\b(__civicos[A-Z][A-Za-z]*|__civicos)\b(?=\s*\?\?=|\s*\?:|\s*:)/g)) keys.add(m[1]!);

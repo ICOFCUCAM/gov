@@ -61,6 +61,7 @@ checksum database) and kubeconform (release binary, SHA-256 checked).
 |---|---|---|
 | `app.replicas` | `1` | more than 1 only with `app.state.mode: postgres` (or `app.allowMultipleWriters`, standbys only) |
 | `app.allowMultipleWriters` | `false` | |
+| `app.mode` | `production` | `CIVICOS_MODE`: `production` (no sample records, no demo citizen), `training` or `demo` (samples, with a banner on every page); `lib/ops/mode.ts` |
 | `app.auth` | `enforce` | `CIVICOS_AUTH`; the production image stays enforced for any other value except `open` (demonstrations only: a warning at start and a banner on every console page; go-live review L-2) |
 | `app.trustedProxies` | `1` | `CIVICOS_TRUSTED_PROXIES`: proxies in front that append to `X-Forwarded-For` (the ingress-nginx controller is one; add one for an appending cloud load balancer). Per-address rate limits count this many hops from the right (review L-1) |
 | `app.existingSecret` | `civicos-app` | keys `CIVICOS_SESSION_SECRET`, `CIVICOS_CRON_SECRET` (required); `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (optional, the substrate) |
@@ -91,7 +92,7 @@ optional: the pod does not start until the Secret holds them.
 | Value | Default | |
 |---|---|---|
 | `app.keys.provider` | `env` | `env`, `vault` (Vault / OpenBao Transit) or `kms-http` (KMS shim); sets `CIVICOS_KEY_PROVIDER` |
-| `app.keys.existingSecret` | `civicos-app-keys` | `env`: required, keys `CIVICOS_DATA_KEK` (32 bytes, base64 or hex), `CIVICOS_AUDIT_KEY`, `CIVICOS_EXCHANGE_KEY`, `CIVICOS_TOKEN_KEY` (Ed25519 PEM), optional `CIVICOS_DATA_KEK_PREVIOUS` during a rotation. Remote providers: optional, only `CIVICOS_DATA_KEK` / `_PREVIOUS` so values sealed before the move still open |
+| `app.keys.existingSecret` | `civicos-app-keys` | `env`: required, keys `CIVICOS_DATA_KEK` (32 bytes, base64 or hex), `CIVICOS_AUDIT_KEY`, `CIVICOS_EXCHANGE_KEY`, `CIVICOS_TOKEN_KEY` (Ed25519 PEM), `CIVICOS_DECISION_KEY` (Ed25519 PEM; optional for Secrets made before it, but certificates verify across pods only with it), optional `CIVICOS_DATA_KEK_PREVIOUS` during a rotation. Remote providers: optional, only `CIVICOS_DATA_KEK` / `_PREVIOUS` so values sealed before the move still open |
 | `app.keys.allowDevelopmentKeys` | `false` | with an empty `existingSecret`; refused under `enforce` |
 | `app.keys.vault.addr` | `""` | required for `vault` (`CIVICOS_VAULT_ADDR`, https) |
 | `app.keys.vault.auth` | `token` | `token` (`CIVICOS_VAULT_TOKEN`) or `approle` (`CIVICOS_VAULT_ROLE_ID`, `CIVICOS_VAULT_SECRET_ID`) |
@@ -110,12 +111,13 @@ Other secrets, all from `app.existingSecret`: `CIVICOS_SESSION_SECRET` and
 `security.egress.extra` when egress is narrowed.
 
 ```bash
-openssl genpkey -algorithm ed25519 -out audit.pem   # likewise exchange.pem, token.pem
+openssl genpkey -algorithm ed25519 -out audit.pem   # likewise exchange.pem, token.pem, decision.pem
 kubectl -n civicos create secret generic civicos-app-keys \
   --from-literal=CIVICOS_DATA_KEK="$(openssl rand -base64 32)" \
   --from-file=CIVICOS_AUDIT_KEY=audit.pem \
   --from-file=CIVICOS_EXCHANGE_KEY=exchange.pem \
-  --from-file=CIVICOS_TOKEN_KEY=token.pem
+  --from-file=CIVICOS_TOKEN_KEY=token.pem \
+  --from-file=CIVICOS_DECISION_KEY=decision.pem
 ```
 
 ### civic-api
@@ -181,7 +183,7 @@ so nothing else is pulled.
 | `deliver-cloudevents` | every 2 minutes | GET |
 | `deliver-events` | every 5 minutes | GET |
 | `substrate-metrics`, `audit-anchor` | every 10 minutes | GET |
-| `witness-sweep`, `witness-divergence` | every 15 minutes | GET |
+| `witness-sweep`, `witness-divergence`, `case-deadlines` | every 15 minutes | GET |
 | `posture-digest`, `site-feeds` | every 30 minutes | GET |
 | `expire-consents`, `audit-self` | hourly | GET |
 | `twin-ingest` | hourly at :07 | GET |

@@ -51,7 +51,7 @@ function hostsOf(issuer: string, extra: string[]): Set<string> {
   return new Set([new URL(issuer).host, ...extra]);
 }
 
-async function providerFetch(url: string, p: Pick<ProviderConfig, 'issuer' | 'extraHosts' | 'internalNetwork'>, deps: FetchDeps, init: { method?: string; body?: string; headers?: Record<string, string>; accept?: string } = {}): Promise<Fetched> {
+export async function providerFetch(url: string, p: Pick<ProviderConfig, 'issuer' | 'extraHosts' | 'internalNetwork'>, deps: FetchDeps, init: { method?: string; body?: string; headers?: Record<string, string>; accept?: string } = {}): Promise<Fetched> {
   const hosts = hostsOf(p.issuer, p.extraHosts);
   const r = await safeFetchText(url, {
     allow: u => hosts.has(u.host) && httpAllowed(u),
@@ -228,7 +228,7 @@ const jwksCache = new Map<string, { jwks: Jwks; at: number }>();
 const JWKS_TTL = 60 * 60_000;
 const JWKS_MIN_REFRESH = 60_000;
 
-async function providerKeys(p: ProviderConfig, deps: FetchDeps, fresh: boolean, now: number): Promise<Jwks> {
+export async function providerKeys(p: Pick<ProviderConfig, 'issuer' | 'extraHosts' | 'internalNetwork' | 'metadata'>, deps: FetchDeps, fresh: boolean, now: number): Promise<Jwks> {
   const c = jwksCache.get(p.metadata.jwks_uri);
   if (c && now - c.at < (fresh ? JWKS_MIN_REFRESH : JWKS_TTL)) return c.jwks;
   const j = parseJson((await providerFetch(p.metadata.jwks_uri, p, deps, { accept: 'application/jwk-set+json, application/json' })).text, 'key set');

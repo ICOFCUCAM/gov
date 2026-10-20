@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const decideMock = vi.fn();
+const permitMock = vi.fn();
 vi.mock('@/lib/data/store', () => ({
   decidePermit: (id: string, input: unknown) => decideMock(id, input),
+  getPermit: (id: string) => permitMock(id),
+  authorityFor: () => undefined,
+  permitHolders: () => [],
 }));
 
 import { POST } from './route';
@@ -11,6 +15,8 @@ const params = Promise.resolve({ id: 'p-1' });
 
 beforeEach(() => {
   decideMock.mockReset();
+  permitMock.mockReset();
+  vi.unstubAllEnvs();
 });
 
 describe('POST /api/permits/[id]/decide', () => {
@@ -69,5 +75,17 @@ describe('POST /api/permits/[id]/decide', () => {
     expect(decideMock).toHaveBeenCalledWith('p-1', expect.objectContaining({
       decision: 'approve', officerName: 'Amina',
     }));
+  });
+
+  it('refuses an approval in production while no authority mapping is approved for the permit type', async () => {
+    vi.stubEnv('CIVICOS_MODE', 'production');
+    permitMock.mockReturnValue({ id: 'p-1', type: 'building', status: 'in-review' });
+    const res = await POST(new Request('http://x', {
+      method: 'POST', body: JSON.stringify({ decision: 'approve', officerName: 'Amina' }),
+      headers: { 'content-type': 'application/json' },
+    }) as never, { params });
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toMatch(/No approved authority mapping governs building-permit/);
+    expect(decideMock).not.toHaveBeenCalled();
   });
 });

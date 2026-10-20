@@ -157,6 +157,45 @@ export interface Messages {
     searchResults: string;
     searchOneResult: string;
     searchNone: string;
+    lawsTitle: string;
+    lawsIntro: string;
+    lawsNone: string;
+    causeListTitle: string;
+    causeListIntro: string;
+    causeListNone: string;
+    causeListWhen: string;
+    causeListCase: string;
+    causeListCourt: string;
+    causeListKind: string;
+    causeListRoom: string;
+    registersTitle: string;
+    registersIntro: string;
+    registersNone: string;
+    registersRegister: string;
+    registersQuery: string;
+    registersCheck: string;
+    registersNoMatch: string;
+    registersValidUntil: string;
+    registersConditions: string;
+    registersStates: Record<string, string>;
+    professionalsTitle: string;
+    professionalsIntro: string;
+    professionalsQuery: string;
+    professionalsNoMatch: string;
+    lawsInForceFrom: string;
+    lawsCeased: string;
+    verifyTitle: string;
+    verifyIntro: string;
+    verifyCode: string;
+    verifyCheck: string;
+    verifyValid: string;
+    verifySuperseded: string;
+    verifyRevoked: string;
+    verifyNotFound: string;
+    verifySealOk: string;
+    verifySealBad: string;
+    verifyIssuedBy: string;
+    verifyIssuedOn: string;
     kindService: string;
     kindNews: string;
     kindProgramme: string;
@@ -827,6 +866,45 @@ export const en: Messages = {
     searchResults: '{count} results for “{q}”',
     searchOneResult: '1 result for “{q}”',
     searchNone: 'Nothing matches “{q}”. Try fewer or other words.',
+    lawsTitle: 'Laws in force',
+    lawsIntro: "The nation's laws and regulations as officially recorded, each with the dates its versions apply.",
+    lawsNone: 'No laws have been published here yet.',
+    causeListTitle: "Court cause list",
+    causeListIntro: "Hearings scheduled in the coming week, by case number. Parties and the subject of a case are not shown here.",
+    causeListNone: "No hearings are scheduled in this period.",
+    causeListWhen: "When",
+    causeListCase: "Case",
+    causeListCourt: "Court",
+    causeListKind: "Hearing",
+    causeListRoom: "Room",
+    registersTitle: "Public registers",
+    registersIntro: "Check whether a company, licence holder, university or other organisation is in a register the government keeps, and in what standing. Only decided standings appear here.",
+    registersNone: "No register is open for public checking yet.",
+    registersRegister: "Register",
+    registersQuery: "Name or register number",
+    registersCheck: "Check",
+    registersNoMatch: "No organisation in this register matches.",
+    registersValidUntil: "valid until {date}",
+    registersConditions: "Conditions",
+    registersStates: { 'registered': "Registered", 'lapsed': "Lapsed", 'granted': "In good standing", 'suspended': "Suspended", 'revoked': "Revoked", 'expired': "Expired", 'struck-off': "Struck off" },
+    professionalsTitle: 'Registered health professionals',
+    professionalsIntro: 'Check whether a doctor, nurse, midwife, pharmacist or other regulated professional is registered, and in what standing.',
+    professionalsQuery: 'Full name or registration number',
+    professionalsNoMatch: 'Nobody on these registers matches.',
+    lawsInForceFrom: 'In force from {date}',
+    lawsCeased: 'Ceased {date}',
+    verifyTitle: 'Check a certificate',
+    verifyIntro: 'Type the code printed on a certificate to see whether it is genuine and still valid.',
+    verifyCode: 'Certificate code',
+    verifyCheck: 'Check',
+    verifyValid: 'Valid',
+    verifySuperseded: 'Replaced by a newer certificate',
+    verifyRevoked: 'Revoked',
+    verifyNotFound: 'No certificate has this code. Check the code and try again.',
+    verifySealOk: 'The issuing authority\'s seal is genuine.',
+    verifySealBad: 'The seal does not verify: do not rely on this certificate.',
+    verifyIssuedBy: 'Issued by {name}',
+    verifyIssuedOn: 'Issued on {date}',
     kindService: 'Service',
     kindNews: 'News',
     kindProgramme: 'Programme',

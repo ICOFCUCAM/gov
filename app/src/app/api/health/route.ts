@@ -11,7 +11,8 @@
 // failed restore), so no traffic reaches it (readiness). Without either, the
 // answer is always 200, as before.
 //
-// Also (counts only, nothing personal): the platform audit chain (entries,
+// Also: what the installation is (production, training or demo, lib/ops/mode.ts).
+// And (counts only, nothing personal): the platform audit chain (entries,
 // intact), twin sources overdue against their schedule, warnings and errors
 // logged in the last hour, whether traces go to the nation's collector, and an overall status: ok, degraded (something
 // needs attention but changes are safe) or down (changes are not safe).
@@ -31,6 +32,7 @@ import { auditVerification } from '@/lib/data/store';
 import { problemsLastHour, twinFreshness } from '@/lib/ops/metrics';
 import { tracingStatus } from '@/lib/ops/otel';
 import { keyCustodyStatus } from '@/lib/keys/custody';
+import { modeDecision } from '@/lib/ops/mode';
 
 export const dynamic = 'force-dynamic';
 
@@ -113,6 +115,8 @@ export async function GET(req: Request) {
     tracing: { enabled: tracingStatus().enabled },
     // Where the signing and data keys are held, and whether the provider is ready (no key ids, no address).
     keys: { provider: keys.provider, ready: keys.ready },
+    // What this installation is (lib/ops/mode.ts): production, training or demo, and whether CIVICOS_MODE set it.
+    installation: modeDecision(),
   };
   if (q.has('ready')) {
     const ready = serving && !(p.error ?? '').startsWith('restore failed');

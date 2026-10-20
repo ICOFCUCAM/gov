@@ -15,5 +15,7 @@ tsconfig.tsbuildinfo
 public-sites-audit.json
 .civicos-state/
 .civicos-backups/
+# Self-host data folder (scripts/self-host.mjs): state, backups and the keys in civicos.env
+civicos-data/
 dependency-audit.json
 /map-check/

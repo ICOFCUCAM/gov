@@ -1,72 +1,64 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const listBills = vi.fn();
-const listReceipts = vi.fn();
-const payBill = vi.fn();
-vi.mock('@/lib/data/store', () => ({
-  listBills: () => listBills(),
-  listReceipts: () => listReceipts(),
-  payBill: (id: string, rail: string) => payBill(id, rail),
-}));
+let scope: { id: string; name: string; label: string; role: string; institution?: string } | null = null;
+vi.mock('@/lib/auth/official', () => ({ caseScope: async () => scope }));
+vi.mock('@/lib/casework/actor', () => ({ routeActor: async (by?: string) => ({ id: scope?.id ?? 'x', name: scope?.label ?? by ?? 'Official' }) }));
 
-import { GET, POST } from './route';
+const { GET, POST } = await import('./route');
+const { issueBill, listBills, payBill } = await import('@/lib/data/store/payments');
+const { listAudit } = await import('@/lib/data/store/audit');
 
-beforeEach(() => {
-  listBills.mockReset();
-  listReceipts.mockReset();
-  payBill.mockReset();
-});
+const post = (body: unknown) => POST(new Request('http://x', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body), headers: { 'content-type': 'application/json' } }) as never);
+let n = 0;
+const taxBill = (issuer: string) => issueBill({ kind: 'tax', description: 'income 2025', amountMinor: 5000, currency: 'KES', dueDate: '2026-12-31', reference: `tax:TEST-${++n}`, payer: { kind: 'person', id: `BR-${n}`, name: `Secret Taxpayer ${n}` }, issuer }, 'Tax official') as { id: string };
+
+beforeEach(() => { scope = null; });
+afterEach(() => vi.unstubAllEnvs());
 
 describe('GET /api/payments', () => {
-  it('returns bills and receipts', async () => {
-    listBills.mockReturnValue([{ id: 'b-1' }]);
-    listReceipts.mockReturnValue([{ id: 'r-1' }]);
-    const res = GET();
-    const json = await res.json();
-    expect(json.bills).toHaveLength(1);
-    expect(json.receipts).toHaveLength(1);
+  it('returns general bills and receipts to everyone, and a tax bill only to the institution that issued it', async () => {
+    const b = taxBill('ministry-of-finance');
+    let json = await (await GET()).json();
+    expect(json.bills.length).toBeGreaterThan(0);
+    expect(Array.isArray(json.receipts)).toBe(true);
+    expect(json.bills.some((x: { id: string }) => x.id === b.id)).toBe(false);
+    expect(JSON.stringify(json)).not.toContain('Secret Taxpayer');
+    scope = { id: 'o', name: 'O', label: 'Other ministry', role: 'signatory', institution: 'ministry-of-health' };
+    json = await (await GET()).json();
+    expect(json.bills.some((x: { id: string }) => x.id === b.id)).toBe(false);
+    scope = { id: 't', name: 'T', label: 'Tax official', role: 'officer', institution: 'ministry-of-finance' };
+    json = await (await GET()).json();
+    expect(json.bills.some((x: { id: string }) => x.id === b.id)).toBe(true);
   });
 });
 
-describe('POST /api/payments', () => {
-  it('rejects invalid JSON', async () => {
-    const res = await POST(new Request('http://x', { method: 'POST', body: 'no' }) as never);
-    expect(res.status).toBe(400);
+describe('POST /api/payments (the stand-in payment)', () => {
+  it('rejects invalid JSON and a missing billId', async () => {
+    expect((await post('no')).status).toBe(400);
+    expect((await post({})).status).toBe(422);
   });
 
-  it('rejects missing billId', async () => {
-    const res = await POST(new Request('http://x', {
-      method: 'POST', body: JSON.stringify({}),
-      headers: { 'content-type': 'application/json' },
-    }) as never);
-    expect(res.status).toBe(422);
-  });
-
-  it('returns 409 when the payment errors', async () => {
-    payBill.mockReturnValue({ error: 'already paid' });
-    const res = await POST(new Request('http://x', {
-      method: 'POST', body: JSON.stringify({ billId: 'b-1' }),
-      headers: { 'content-type': 'application/json' },
-    }) as never);
-    expect(res.status).toBe(409);
-  });
-
-  it('returns 201 with the receipt and defaults rail to the nation payment rail', async () => {
-    payBill.mockReturnValue({ id: 'r-new', billId: 'b-1' });
-    const res = await POST(new Request('http://x', {
-      method: 'POST', body: JSON.stringify({ billId: 'b-1' }),
-      headers: { 'content-type': 'application/json' },
-    }) as never);
+  it('pays a general bill in a demonstration installation, simulated and attributed to who acted, once', async () => {
+    const general = listBills().find(b => !b.payer && b.status !== 'paid')!;
+    scope = { id: 's', name: 'S', label: 'Signed-in official', role: 'officer', institution: 'x' };
+    const res = await post({ billId: general.id, rail: 'bank-transfer' });
     expect(res.status).toBe(201);
-    expect(payBill).toHaveBeenCalledWith('b-1', 'Mobile Money');
+    expect((await res.json()).receipt).toMatchObject({ billId: general.id, rail: 'bank-transfer', simulated: true });
+    expect(listAudit().find(e => e.action === 'payment.execute' && e.resource === `Bill:${general.id}`)?.actor).toBe('Signed-in official');
+    expect((await post({ billId: general.id })).status).toBe(409);
   });
 
-  it('honours an explicit rail', async () => {
-    payBill.mockReturnValue({ id: 'r-new' });
-    await POST(new Request('http://x', {
-      method: 'POST', body: JSON.stringify({ billId: 'b-1', rail: 'bank-transfer' }),
-      headers: { 'content-type': 'application/json' },
-    }) as never);
-    expect(payBill).toHaveBeenCalledWith('b-1', 'bank-transfer');
+  it('never marks a tax or customs bill paid, and is refused entirely in production', async () => {
+    const b = taxBill('ministry-of-finance');
+    expect((await post({ billId: b.id })).status).toBe(409);
+    expect(listBills().find(x => x.id === b.id)?.status).not.toBe('paid');
+    vi.stubEnv('CIVICOS_MODE', 'production');
+    const general = listBills().find(x => !x.payer && x.status !== 'paid');
+    if (general) expect((await post({ billId: general.id })).status).toBe(409);
+  });
+
+  it('keeps payBill usable by the store (demonstration flows) with the simulated mark', () => {
+    const b = taxBill('ministry-of-finance');
+    expect(payBill(b.id, 'Test rail')).toMatchObject({ simulated: true, reference: expect.stringMatching(/^tax:/) });
   });
 });

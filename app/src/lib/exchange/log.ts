@@ -30,7 +30,7 @@ export const EXCHANGE_KEY_ENV = 'CIVICOS_EXCHANGE_KEY';
 export const MAX_ENTRIES = 20_000;
 export const RECEIPT_HEADER = 'CivicOS-Receipt';
 
-export type ExchangeChannel = 'case-feed' | 'site-feed' | 'federation';
+export type ExchangeChannel = 'case-feed' | 'site-feed' | 'federation' | 'service';
 export type SignatureState = 'verified' | 'absent' | 'refused';
 
 export interface ExchangeEntry {

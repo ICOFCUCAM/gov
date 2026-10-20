@@ -1,7 +1,9 @@
 -- supabase/cron/schedule.sql
 --
--- In-database scheduler for the 15 /api/cron/* worker jobs, using
--- pg_cron + pg_net. This is the free (no Vercel Pro) path: Postgres itself
+-- In-database scheduler for the /api/cron/* worker jobs, using
+-- pg_cron + pg_net. The jobs and schedules are the ones in
+-- scripts/cron-jobs.json (also the Helm chart's cron.jobs and the self-host
+-- scheduler); src/lib/ops/cron-jobs.test.ts keeps them equal. This is the free (no Vercel Pro) path: Postgres itself
 -- calls the deployed Next.js cron routes on a timer.
 --
 -- Re-runnable: cron.schedule(name, …) upserts by job name, so applying this
@@ -66,6 +68,8 @@ select cron.schedule('civicos-update-watchdog', '* * * * *', $$select civicos.cr
 -- Backups (lib/data/backups.ts): hourly check; takes an encrypted backup when the newest is older than the
 -- policy's interval (default daily), verifies it by a dry-run restore, applies retention. Never restores.
 select cron.schedule('civicos-backup', '41 * * * *', $$select civicos.cron_call('civicos-backup', '/api/cron/backup')$$);
+-- Legal deadlines of cases (lib/casework/engine.ts): lapses passed deadlines, escalating where the procedure says.
+select cron.schedule('civicos-case-deadlines', '*/15 * * * *', $$select civicos.cron_call('civicos-case-deadlines', '/api/cron/case-deadlines')$$);
 -- Retention sweep (go-live review M-13): expired email-update requests, sign-in
 -- lockout counters, audit summaries, the nation's rules for permits and cases.
 select cron.schedule('civicos-retention', '23 * * * *', $$select civicos.cron_call('civicos-retention', '/api/cron/retention')$$);

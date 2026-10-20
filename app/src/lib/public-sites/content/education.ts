@@ -76,6 +76,13 @@ export const education: SiteContent = {
       icon: '⌬',
       to: '/wallet/permits/new',
     },
+    {
+      title: 'Check an accreditation',
+      subtitle: 'Is this university accredited?',
+      color: '#2f6f8f',
+      icon: '✓',
+      to: '/registers',
+    },
   ],
   featured: [
     {

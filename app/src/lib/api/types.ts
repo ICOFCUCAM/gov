@@ -1,6 +1,7 @@
 // CivicOS — Phase 1 API contract types.
 // These types are the contract between UI and backend. The backend
 // implementation is swappable (mock adapter now; sovereign datastore later).
+import type { DeploymentProfile } from '@/lib/nation/deployment';
 
 export type ISODate = string;
 
@@ -189,7 +190,7 @@ export interface OpsOverview {
 }
 
 // ── Payments ──────────────────────────────────────────────────────────
-export type BillKind = 'water' | 'waste' | 'property-tax' | 'permit-fee' | 'transit';
+export type BillKind = 'water' | 'waste' | 'property-tax' | 'permit-fee' | 'transit' | 'tax' | 'customs-duty' | 'licence-fee';
 
 export interface Bill {
   id: string;
@@ -199,6 +200,12 @@ export interface Bill {
   currency: string;
   dueDate: ISODate;
   status: 'due' | 'paid' | 'overdue';
+  /** The liability it settles (e.g. a tax assessment or a customs declaration), for reconciliation. */
+  reference?: string;
+  /** Who owes it (a person or organisation reference); never shown to anyone else. */
+  payer?: { kind: 'person' | 'organisation'; id: string; name: string };
+  /** The institution that issued it. */
+  issuer?: string;
 }
 
 export interface PaymentReceipt {
@@ -209,6 +216,14 @@ export interface PaymentReceipt {
   rail: string;              // e.g., M-Pesa, ISO 20022 credit transfer
   paidAt: ISODate;
   hash: string;
+  /** The liability reference, copied from the bill or given with a recorded transfer. */
+  reference?: string;
+  /** The rail's own reference (bank transfer id), for payments recorded by an official. */
+  railReference?: string;
+  /** The official who recorded a payment that arrived outside the platform. */
+  recordedBy?: string;
+  /** Made by the platform's stand-in payment (no money moved; integration register 1.8): never counted as a payment in production. */
+  simulated?: boolean;
 }
 
 // ── Notifications ─────────────────────────────────────────────────────
@@ -232,6 +247,11 @@ export interface VerifyResult {
   issuedAt?: ISODate;
   revoked?: boolean;
   reason?: string;           // when invalid
+  /** A certificate of the platform's register (lib/records/certificates.ts): its standing and whether its seal verifies. */
+  status?: 'valid' | 'superseded' | 'revoked';
+  sealOk?: boolean;
+  /** Sample credentials (VC-…, REV-…) exist only in demonstration and training installations. */
+  sample?: boolean;
 }
 
 // ── Digital signatures ────────────────────────────────────────────────
@@ -246,8 +266,11 @@ export interface SignatureResult {
   documentId: string;
   signerName: string;
   signedAt: ISODate;
+  /** SHA-256 of the canonical record signed (earlier sample signatures: a short content hash). */
   hash: string;
   nonRepudiation: true;
+  /** The installation's seal over the record (Ed25519, key custody `decision`): key id, public key and signature. */
+  seal?: { keyId: string; publicKeyPem: string; signature: string };
 }
 
 // ── Municipal onboarding ──────────────────────────────────────────────
@@ -683,6 +706,7 @@ export interface SovereignProfile {
   constitution?: NationalConstitution; // the nation's own constitutional facts, over the form-of-state template
   map?: NationMapSettings;  // how the nation's maps are drawn (capital, projection); defaults from the map data
   domain?: string;          // the nation's own web domain (e.g. data.gov.ke); persistent identifiers of the twin are minted under it
+  deployment?: DeploymentProfile; // who is responsible for each register, which modules run, identity and signatures (lib/nation/deployment.ts)
 }
 
 /** The nation's own map settings. Anything left out falls back to the map data
@@ -1922,6 +1946,8 @@ export interface DataTransmission {
 // ── My work (/api/work) ───────────────────────────────────────────────
 export interface WorkQueueItem extends QueueItem { ministryId: string; ministry: string; queueTitle: string; slaHours: number; overdue: boolean }
 export interface WorkMinistryIncident extends MinistryIncident { ministryId: string; ministry: string; authority: string | null; canEscalate: boolean }
+/** An open case under an approved procedure (lib/casework/), without personal fields. */
+export interface WorkCase { id: string; ref: string; procedure: string; ministryId: string; ministry: string; stage: string; priority: 'routine' | 'priority' | 'urgent'; assignee?: string; pendingApproval: boolean; nextDeadline?: { label: string; due: ISODate }; overdue: boolean; source: string; openedAt: ISODate }
 export interface WorkOverview {
   generatedAt: ISODate;
   counts: { decisions: number; overdue: number; incidents: number };
@@ -1929,4 +1955,5 @@ export interface WorkOverview {
   ministryIncidents: WorkMinistryIncident[];
   permits: Permit[];
   incidents: Incident[];
+  cases: WorkCase[];
 }

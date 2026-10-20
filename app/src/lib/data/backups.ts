@@ -85,7 +85,7 @@ export interface RestoreRecord {
   id: string; backupId: string; backupAt: string; proposedBy: string; confirmedBy: string; at: string;
   safetyBackupId: string; replacedDigest: string; auditSeq: number; check: Applied['check']; removed: string[];
 }
-interface Run { at: string; kind: 'scheduled' | 'retention'; ok: boolean; backupId?: string; pruned?: string[]; skipped?: string; error?: string }
+interface Run { at: string; kind: 'scheduled' | 'on-demand' | 'retention'; ok: boolean; backupId?: string; pruned?: string[]; skipped?: string; error?: string }
 interface BackupsDb { policy: BackupPolicy; proposals: RestoreProposal[]; restores: RestoreRecord[]; runs: Run[] }
 
 const g = globalThis as unknown as { __civicosBackups?: BackupsDb; __backupLock?: Promise<unknown> };
@@ -461,25 +461,33 @@ export function applyRetention(input: { by?: string }): Promise<Result<{ kept: s
   });
 }
 
-/** The schedule (/api/cron/backup): a backup when the newest is older than the interval, verified, then retention. */
-export async function runScheduled(now = new Date()): Promise<{ took?: string; verified?: boolean; skipped?: string; pruned: string[]; rpo: RpoStatus; error?: string }> {
+/** Who takes a backup the operator asks for now through the cron secret (`self-host backup`, /api/cron/backup?now). */
+export const ON_DEMAND_ACTOR = 'system (backup on demand, operator)';
+
+/**
+ * The schedule (/api/cron/backup): a backup when the newest is older than the interval, verified, then retention.
+ * `now: true` (the operator's `self-host backup`) takes one whatever the newest's age, the same way.
+ */
+export async function runScheduled(now = new Date(), opts: { now?: boolean } = {}): Promise<{ took?: string; verified?: boolean; skipped?: string; pruned: string[]; rpo: RpoStatus; error?: string }> {
   const t = target();
   const policy = db().policy;
+  const kind: Run['kind'] = opts.now ? 'on-demand' : 'scheduled';
+  const by = opts.now ? ON_DEMAND_ACTOR : SCHEDULE_ACTOR;
   let entries: BackupEntry[];
   try { entries = await listBackups(t); } catch (e) { return { error: `The backup target cannot be read: ${(e as Error).message}`, pruned: [], rpo: rpoOf([], policy, now) }; }
   const newest = entries.find(e => e.reason !== 'pre-restore');
-  if (newest && now.getTime() - Date.parse(newest.createdAt) < policy.intervalMinutes * 60_000) {
+  if (!opts.now && newest && now.getTime() - Date.parse(newest.createdAt) < policy.intervalMinutes * 60_000) {
     const r = await applyRetention({ by: SCHEDULE_ACTOR });
     return { skipped: `the newest backup (${newest.id}) is younger than ${policy.intervalMinutes} min`, pruned: 'error' in r ? [] : r.pruned, rpo: rpoOf(entries, policy, now) };
   }
-  const b = await createBackup({ by: SCHEDULE_ACTOR, reason: 'scheduled' });
+  const b = await createBackup({ by, reason: opts.now ? 'manual' : 'scheduled' });
   if ('error' in b) {
-    db().runs.push({ at: now.toISOString(), kind: 'scheduled', ok: false, error: b.error });
+    db().runs.push({ at: now.toISOString(), kind, ok: false, error: b.error });
     return { error: b.error, pruned: [], rpo: rpoOf(entries, policy, now) };
   }
-  const v = await verifyBackup(b.id, { by: SCHEDULE_ACTOR });
+  const v = await verifyBackup(b.id, { by });
   const verified = !('error' in v) && !!v.verification?.ok;
-  db().runs.push({ at: now.toISOString(), kind: 'scheduled', ok: verified, backupId: b.id, ...(verified ? {} : { error: 'error' in v ? v.error : v.verification?.problem }) });
+  db().runs.push({ at: now.toISOString(), kind, ok: verified, backupId: b.id, ...(verified ? {} : { error: 'error' in v ? v.error : v.verification?.problem }) });
   const r = await applyRetention({ by: SCHEDULE_ACTOR });
   return { took: b.id, verified, pruned: 'error' in r ? [] : r.pruned, rpo: rpoOf(await listBackups(t).catch(() => entries), policy, new Date()) };
 }

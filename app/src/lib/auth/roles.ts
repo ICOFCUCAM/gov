@@ -8,7 +8,7 @@
 export type OfficialRole = 'administrator' | 'signatory' | 'officer' | 'auditor';
 
 export const ROLES: { id: OfficialRole; label: string; means: string }[] = [
-  { id: 'administrator', label: 'Administrator', means: 'Manages official accounts, setup and the structure of government, and can do everything an official can.' },
+  { id: 'administrator', label: 'Administrator', means: 'Manages official accounts, setup and the structure of government, and does the day-to-day work of an official. Does not decide cases: that needs an account of the institution responsible, with the role Can sign.' },
   { id: 'signatory', label: 'Can sign', means: 'Does the work of an officer, and signs or withdraws directives.' },
   { id: 'officer', label: 'Officer', means: 'Works cases and incidents and drafts directives.' },
   { id: 'auditor', label: 'Auditor (read only)', means: 'Reads every record and changes nothing.' },
@@ -67,6 +67,8 @@ export const PUBLIC_WRITE: RegExp[] = [/^\/api\/public-sites\/[a-z-]+\/subscribe
 export const SELF_AUTHENTICATED: RegExp[] = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/feed$/,
   /^\/api\/federation\/exchange$/,  // an institution's integration key (verifyIntegrationKey), logged with a signed receipt
   /^\/api\/oauth\/token$/,          // OAuth2 client credentials: the integration's id and key (lib/auth/client-credentials.ts)
+  /^\/api\/exchange\/services\/[a-z0-9.-]+$/, // another system's call to a service: its integration key of scope service:<id> (verifyIntegrationKey in the route)
+  /^\/api\/citizen\/applications$/, // a citizen's own applications: the route checks the citizen's session (lib/auth/citizen.ts)
   /^\/api\/audit\/witnesses$/];     // a witness attestation: signed by a key an administrator registered (verifyWitnessStatement in the route)
 /**
  * Routes that verify an `Authorization` bearer themselves (the automation
@@ -139,6 +141,11 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/messaging(\/|$)/,
   // Provisioning a new municipality (/admin/onboarding).
   /^\/api\/municipalities\/?$/,
+  // The register types of the organisations register (which authority keeps which register).
+  /^\/api\/organisations\/types$/,
+  /^\/api\/professions\/types$/,
+  // Which authority the law designates for each permit and licence type (four-eyes in the route).
+  /^\/api\/permit-authorities$/,
 ];
 /**
  * The nation's Update Center work that any official who is not an auditor may
@@ -175,6 +182,14 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/audit\/proof$/,                    // builds a proof of the audit chain (no change)
   /^\/api\/boundaries(\/|$)/,                 // canManageBoundaries() in the route
   /^\/api\/directives(\/|$)/,                 // canDraftDirective() / canSignDirective() in the route
+  /^\/api\/law(\/|$)/,                        // the laws register: canRecordLaw() / canConfirmLaw() in the route
+  /^\/api\/cases(\/|$)/,                      // cases: caseActRefusal() in the workflow engine (lib/casework/engine.ts)
+  /^\/api\/organisations\/loads$/,           // loading an existing register: the authority that keeps it (the route checks)
+  /^\/api\/education$/,                      // institutional returns: canRecordEducationReturn() in the route
+  /^\/api\/health-regulation$/,              // capacity returns: canRecordHealthReturn() in the route
+  /^\/api\/rules$/,                          // operational rules: canManageRule() in the route
+  /^\/api\/access-log\/retention$/,          // oversight confirmation of shortening the access log: canConfirmAccessLogRetention() in the route
+  /^\/api\/case-packages(\/|$)/,              // procedures: drafted by the responsible institution, approved by one who can sign there (route)
   /^\/api\/documents\/verify$/,               // checks a document code (no change)
   /^\/api\/facilities\/(check|candidates)(\/|$)/, // checks and candidate review (rules in the route)
   /^\/api\/facilities\/[^/]+$/,               // one site (canSignForSite() etc. in the route)
@@ -188,7 +203,7 @@ const OFFICIAL_WORK: RegExp[] = [
   // only officials of the site's own institution or of the whole government (canActForSite() in the route).
   /^\/api\/public-sites\/[a-z-]+(\/|$)/,
   // The Update Center's ordinary work is UPDATE_CENTER_WORK; the rest of /api/releases is INSTALLATION.
-  /^\/api\/twin\/(keys|metrics|runs|scenarios|sources)(\/|$)/, // registering metrics and withdrawing imports are audited with the official
+  /^\/api\/twin\/(keys|metrics|runs|scenarios|sources|conflicts)(\/|$)/, // registering metrics and withdrawing imports are audited with the official
   /^\/api\/twin\/tasking\/tasks(\/|$)/,       // a signed-in official allowed by canTaskSensor() (checked in the route)
 ];
 
@@ -425,4 +440,202 @@ export function roleFromSubstrate(role: string): OfficialRole {
   if (role === 'auditor') return 'auditor';
   if (['president', 'minister', 'cabinet-secretary', 'cabinet-officer', 'permanent-secretary'].includes(role)) return 'signatory';
   return 'officer';
+}
+
+// ── Cases and registers: record-level rules (docs/GOVERNMENT_OPERATING_MODEL.md §4) ──
+// A case is worked by officials of the institution that owns its procedure;
+// a legal decision needs "Can sign" there. Administrators get no automatic
+// domain authority (directions 8.2, 20.6): an administrator, or anyone
+// serving the whole government, acts on a case only through an account of the
+// owning institution with the needed role. Courts' cases are closed to every
+// other institution, administrators included (directions 4.6).
+
+export type Sensitivity = 'normal' | 'restricted' | 'secret';
+
+/** What the rules need to know about a case (or a register record) and the action. */
+export interface CaseFacts {
+  /** The institution that owns the procedure (resolved from the deployment profile). */
+  owner: string;
+  sensitivity: Sensitivity;
+  /** The owner is a court: nobody outside it reads or acts. */
+  judicial?: boolean;
+  /** Official ids assigned to the case, and named supervisors (secret cases). */
+  assigned?: string[];
+  supervisors?: string[];
+  /** The action is a legal decision (grant, refuse, register, revoke…). */
+  decision?: boolean;
+  /** The action needs a recent second sign-in step. */
+  stepUp?: boolean;
+}
+
+/** The part of a session the case rules read, besides the role and institution. */
+export interface CaseScope extends Scope {
+  /** The official's id (session subject). */
+  id?: string;
+  /** When this session last passed the second sign-in step (ms since 1970). */
+  twoStepAt?: number;
+}
+
+/** How recent the second sign-in step must be for an action that asks for it. */
+export const STEP_UP_MINUTES = 15;
+
+const assignedTo = (s: CaseScope, c: CaseFacts) => !!s.id && (c.assigned ?? []).includes(s.id);
+const supervises = (s: CaseScope, c: CaseFacts) => !!s.id && (c.supervisors ?? []).includes(s.id);
+
+/** May this official take this action on this case? null when yes, otherwise the reason. */
+export function caseActRefusal(s: CaseScope, c: CaseFacts, now = Date.now()): string | null {
+  const missing = secondStepMissing(s);
+  if (missing) return missing;
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (s.institution !== c.owner) {
+    return c.judicial
+      ? 'A court\'s cases are worked only by the court\'s own officials'
+      : 'Cases are worked only by officials of the institution responsible for them; serving the whole government or administering the installation does not give that authority';
+  }
+  if (c.decision && role !== 'signatory') return 'A decision needs an official who can sign for the institution';
+  if (c.sensitivity === 'restricted' && !assignedTo(s, c) && role !== 'signatory') return 'This case is restricted to the officials assigned to it and those who can sign';
+  if (c.sensitivity === 'secret' && !assignedTo(s, c) && !supervises(s, c)) return 'This case is open only to the officials assigned to it and its named supervisors';
+  if (c.stepUp && !(s.twoStepAt && now - s.twoStepAt <= STEP_UP_MINUTES * 60_000)) return `This step needs the second sign-in step within the last ${STEP_UP_MINUTES} minutes: sign in again`;
+  return null;
+}
+
+/**
+ * May this official read this case? null when yes. Restricted and secret
+ * reads by auditors need a stated purpose; every such read is written to the
+ * access log by the caller (lib/records/access-log.ts).
+ */
+export function caseReadRefusal(s: CaseScope, c: CaseFacts, purpose?: string): string | null {
+  const role = roleOf(s);
+  const own = s.institution === c.owner;
+  if (c.judicial && !own) return 'A court\'s cases are read only by the court\'s own officials';
+  const auditorWithPurpose = role === 'auditor' && (own || wholeGovernment(s)) && !!purpose?.trim();
+  if (c.sensitivity === 'normal') return own || wholeGovernment(s) ? null : 'Cases are read by officials of the responsible institution and of the whole government';
+  if (c.sensitivity === 'restricted') {
+    if (own && (assignedTo(s, c) || role === 'signatory')) return null;
+    if (auditorWithPurpose) return null;
+    return role === 'auditor' ? 'Say why you need to read this restricted case' : 'This case is restricted to the officials assigned to it and those who can sign';
+  }
+  if (own && (assignedTo(s, c) || supervises(s, c))) return null;
+  if (auditorWithPurpose) return null;
+  return role === 'auditor' ? 'Say why you need to read this case' : 'This case is open only to the officials assigned to it and its named supervisors';
+}
+
+/** The access log (lib/records/access-log.ts): auditors, and officials of the nation's data-protection authority. Administrators do not read it by their role. */
+export function canReadAccessLog(s: Scope, dataProtection: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return null;
+  if (dataProtection && s.institution === dataProtection) return null;
+  return 'The access log is read by auditors and by the data-protection authority';
+}
+
+/** Operational rules (lib/law/rules.ts): drafted by officials of the authority that owns the rule; approved by one who can sign there. Administrators have no say in rates. */
+export function canManageRule(s: Scope, owner: string | undefined, approve: boolean): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors can read rules but not change them';
+  if (!owner || s.institution !== owner) return 'Rules are drafted and approved by the authority that owns them (named under Who is responsible)';
+  if (approve && roleOf(s) !== 'signatory') return 'Approving a rule needs an official who can sign for the authority';
+  return null;
+}
+
+/** Confirming that the access log may be shortened: the data-protection authority's officials who can sign; auditors while none is named. Never an administrator (directions 15.3). */
+export function canConfirmAccessLogRetention(s: Scope, dataProtection: string | undefined): string | null {
+  const role = roleOf(s);
+  if (dataProtection) return s.institution === dataProtection && role === 'signatory' ? null : 'The data-protection authority confirms this (an official who can sign there)';
+  return role === 'auditor' ? null : 'An auditor confirms this while no data-protection authority is named';
+}
+
+/** Recording a version of a law (lib/law/register.ts): officials of the nation's law-register authority; whole-government administrators only while none is named. */
+export function canRecordLaw(s: Scope, authority: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (authority) return s.institution === authority ? null : 'Only the law-register authority records laws';
+  return wholeGovernment(s) && role === 'administrator' ? null : 'Name the law-register authority under Who is responsible first';
+}
+
+/** Confirming (four-eyes) or withdrawing a version of a law: those who can sign at the law-register authority; whole-government administrators only while none is named. */
+export function canConfirmLaw(s: Scope, authority: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (authority) return s.institution === authority && role === 'signatory' ? null : 'Only an official who can sign at the law-register authority confirms or withdraws a law';
+  return wholeGovernment(s) && role === 'administrator' ? null : 'Name the law-register authority under Who is responsible first';
+}
+
+/**
+ * Reading the civil register (people, births, deaths, marriages; personal
+ * data): officials of the civil registration authority, and auditors with a
+ * stated purpose. Every search and read is written to the access log.
+ */
+export function canReadCivil(s: Scope, authority: string | undefined, purpose?: string): string | null {
+  if (authority && s.institution === authority && roleOf(s) !== 'auditor') return null;
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read the civil register';
+  return 'The civil register is read by the civil registration authority';
+}
+
+/** Tax records (lib/tax/register.ts; tax secrecy): the tax authority's officials; auditors with a purpose. */
+export function canReadTax(s: Scope, authority: string | undefined, purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read tax records';
+  if (authority && s.institution === authority) return null;
+  return 'Tax records are read by the tax authority; other institutions check registration through the exchange (taxpayer.status)';
+}
+
+/** Education records (lib/education/register.ts): the education authority's officials; auditors with a purpose. Holders' names are personal data. */
+export function canReadEducation(s: Scope, authority: string | undefined, purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read education records';
+  if (authority && s.institution === authority) return null;
+  return 'Education records are read by the education authority; others check a qualification through the exchange (qualification.verify)';
+}
+
+/** Recording an institution's return (aggregate counts it reported): the education authority's officials, never auditors. */
+export function canRecordEducationReturn(s: Scope, authority: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors read returns but do not record them';
+  if (authority && s.institution === authority) return null;
+  return 'Returns are recorded by the education authority (named under Who is responsible)';
+}
+
+/** Recording a licensed facility's capacity return: the health regulator's officials, never auditors. */
+export function canRecordHealthReturn(s: Scope, authority: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors read returns but do not record them';
+  if (authority && s.institution === authority) return null;
+  return 'Capacity returns are recorded by the health regulator (named under Who is responsible)';
+}
+
+/** Full records of regulated professionals: officials of a regulator that keeps a profession (they see only those); auditors with a purpose. */
+export function canReadProfessionals(s: Scope, keptHere: string[], purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read professionals\' records';
+  if (keptHere.length) return null;
+  return 'Professionals\' records are read by the regulator that keeps the profession; anyone can check standing on the public registers';
+}
+
+/** Customs declarations (lib/customs/register.ts; commercially confidential): the customs authority's officials; auditors with a purpose. */
+export function canReadCustoms(s: Scope, authority: string | undefined, purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read customs declarations';
+  if (authority && s.institution === authority) return null;
+  return 'Customs declarations are read by the customs authority; other institutions check release through the exchange (customs.release)';
+}
+
+/** Visas and residence permits (lib/immigration/register.ts): the immigration authority's officials; auditors with a purpose. Never the whole government by default (directions 15.1). */
+export function canReadImmigration(s: Scope, authority: string | undefined, purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read immigration records';
+  if (authority && s.institution === authority) return null;
+  return 'Immigration records are read by the immigration authority; other institutions check status through the exchange (immigration.status)';
+}
+
+/**
+ * An organisation's full record (representatives, every version and step):
+ * officials of an institution that keeps a register it is in, officials of
+ * the whole government, auditors with a purpose. Everyone else sees its
+ * public view (name, number, kind, standings).
+ */
+export function canReadOrganisation(s: Scope, keepers: string[], purpose?: string): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return purpose?.trim() ? null : 'Say why you need to read this organisation\'s full record';
+  if (!s.institution) return null;
+  return keepers.includes(s.institution) ? null : 'The full record is read by the authorities that keep its registers';
+}
+
+/** Choosing which source stands where two disagree (lib/twin/conflicts.ts): those who can sign at the statistics authority; whole-government administrators while none is named. */
+export function canResolveTwinConflict(s: Scope, statistics: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (statistics) return s.institution === statistics && role === 'signatory' ? null : 'Only an official who can sign at the statistics authority decides which figure stands';
+  return wholeGovernment(s) && role === 'administrator' ? null : 'Name the statistics authority under Who is responsible first';
 }

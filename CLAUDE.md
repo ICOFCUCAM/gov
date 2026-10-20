@@ -19,6 +19,91 @@ What has been built is locked. Work only upgrades it toward the vision in
   `/admin/onboarding`) and use or extend it. New backends only for genuinely
   missing capability.
 
+## Government operating model
+
+- Agreed directions for running a whole government (registers, casework,
+  laws, identity, exchange, records, the twin's provenance, sequence and open
+  decisions): `docs/GOVERNMENT_OPERATING_DIRECTIONS.md`. Read it before work
+  on any agency, register, case, identity or exchange feature. Findings it
+  rests on: `docs/GOVERNMENT_OPERATING_REVIEW.md`; external review in full:
+  `docs/reviews/2026-10-external-architecture-review.md`.
+- What the installation is: `CIVICOS_MODE` (production, training, demo), decided
+  only in `lib/ops/mode.ts` (`installationMode()`, `samplesAllowed()`). A
+  production installation creates no sample record (a seed that makes one asks
+  `samplesAllowed()` first; `seed-mode.test.ts`), has no demo citizen, and
+  agency apps show the Simulation notice; training and demo show a banner on
+  every page. Unset in a production build it runs as production and warns.
+- Progress is measured by legally valid services working end to end, not by
+  screens. Each register and record type has one named owner; the twin
+  derives from records and never creates authoritative facts.
+- Every decision cites the law version that applied; a status change is an
+  authorised action with evidence, time and reason. AI never makes a legally
+  material decision.
+- Who is legally responsible for a register or power comes from the deployment
+  profile (`lib/nation/deployment.ts`, `authorityFor()`); never assume a
+  ministry by name. A new register joins `lib/data/register-owners.ts` with its
+  owner, its one changing API and its `legal` authority.
+- Cases change only through `lib/casework/engine.ts` (`openCase`, `act`)
+  under an approved procedure package (`packages.ts`: drafted by one official,
+  tested, approved by another). Case permissions are `caseActRefusal()` /
+  `caseReadRefusal()` in `roles.ts`: administrators have no domain authority,
+  the judiciary is isolated, restricted cases go to their assignee and
+  supervisors. Every read of personal data in a case, the civil register or a
+  document goes to the access log (`lib/records/access-log.ts`).
+- Registers such as the civil register change only through procedure effects
+  (`lib/civil/procedures.ts`), never through a direct write route. Laws enter
+  through `lib/law/register.ts` (recorded and confirmed by two officials);
+  decisions cite a law version from it. Decision records are signed with the
+  `decision` key, certificates are checked at `/verify`; reference procedures
+  are drafts until a nation approves them. Status: register §18.
+- Organisations (`lib/organisations/register.ts`) change only through the
+  effects in `lib/organisations/procedures.ts`; a standing in a register is
+  changed only by the authority that keeps that register type. Lists, the
+  public check (`/registers`) and the twin carry `publicOrganisation()`;
+  representatives only on the full record under `canReadOrganisation()`.
+  Referrals between institutions are cases (`lib/casework/referral.ts`).
+- Immigration (`lib/immigration/`) holds visas and residence permits only;
+  read by the immigration authority (`canReadImmigration()`, every read in
+  the access log). Other institutions learn status only through the
+  `immigration.status` exchange service, never the file. Do not add asylum,
+  border enforcement or any risk score without the safeguards of directions
+  §15 and an independent legal review.
+- Police (`lib/police/`) is intake and referral only: classification cites
+  the law, no field records a suspect or a finding. Courts (`lib/courts/`)
+  are worked only by the judiciary; the public cause list
+  (`causeList()`) never carries parties or the subject of a case.
+- Who holds a power over a permit or licence type comes from the permit
+  authority registry (`lib/permits/authority.ts`, `powerRefusal()`): drafted
+  by one administrator, approved by another, citing the law. Proposed
+  mappings ship as unapproved drafts; a production installation refuses a
+  power no approved mapping covers. Never hardcode a ministry for a permit.
+- Rates, bands and tariffs come only from `lib/law/rules.ts` (approved,
+  cited, tested versions; `calculate()` refuses without one). Never type a
+  statutory rate, penalty or deadline into code or seed data.
+- Tax (`lib/tax/`) is read by the tax authority only (`canReadTax()`, every
+  read in the access log); others use the `taxpayer.status` exchange service.
+  Liabilities are bills with a domain reference (`issueBill()`), reconciled
+  from receipts once each.
+- Education (`lib/education/`): schools are organisations (a standing in the
+  `schools` register), never a second identity. Qualifications are recorded,
+  corrected and revoked only through education cases; anyone else checks one
+  through `qualification.verify` (number and holder's name). Returns carry
+  aggregate counts only; there is no student record system.
+- Health (`lib/health/`, `lib/professions/`): facilities and pharmacies are
+  organisations licensed in the health regulator's registers; professionals
+  are on the professions register, each profession kept by its regulator.
+  Public, administrative and clinical data stay apart: no patient or clinical
+  field anywhere, no national patient record; returns are aggregates.
+- Customs (`lib/customs/`): duty only from the approved `customs.tariff` rule
+  or entered with reasons; the control channel is an officer's choice with
+  reasons, never a score; no seizure, penalty or detention powers. Others
+  learn only whether goods were released (`customs.release`).
+- Audit administration stays apart from operations: administrators do not
+  read the access log, reading it is itself logged, and shortening it needs
+  the data-protection authority after two administrators
+  (`confirmByOversight()`). Unusual access is raised by
+  `lib/records/access-watch.ts`; a finding is a prompt, never a conclusion.
+
 ## Entry flow
 
 - `/` is the cover page, Plaza (`app/src/components/features/cover/CoverPlaza.tsx`):
@@ -44,6 +129,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   for that nation from its feature requests, `/updates/requests`);
   `/admin/releases` is the publisher console. Store: `lib/data/updates.ts`,
   API: `/api/releases`.
+- Its sample history (releases, the sandbox tenant, advisories, tickets,
+  orders, officials, escrow reviews) exists only in demo and training
+  installations; a production installation starts with its own nation on the
+  version it runs (`runningVersion()`) and nothing else.
 - Updates are never automatic: only `decide()` changes a nation's install
   state, each step names a person and is written to the audit chain.
   Security releases are highlighted, never forced.
@@ -238,7 +327,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   connected case system (`…/queue/feed`, its own `ccf_` key, stored as a hash;
   it updates only the cases it sent). Example cases carry
   `source: 'sample'` and show the Sample marker; never remove them except at
-  an official's request.
+  an official's request. Agreed direction (`docs/GOVERNMENT_OPERATING_DIRECTIONS.md`
+  10.3, 20.5): a production installation will start with no sample records,
+  while demo and training installations keep them, labelled; until that is
+  built, the rule above stands.
 - The national facility register (`lib/data/facilities.ts`, `/gov/sites`,
   `docs/FACILITY_REGISTER_REVIEW.md`) is the only place physical sites enter:
   recorded by the owning institution with longitude/latitude and how they
@@ -396,6 +488,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   the record to decide checks again with `refusal()` (`lib/auth/official.ts`).
   A new route that changes accounts, setup or the structure of government
   belongs in `ADMIN_ONLY`; never add a second place that decides permissions.
+- Cases and registers are decided by the institution responsible for them:
+  `caseActRefusal()` / `caseReadRefusal()` in `roles.ts` (a decision needs
+  "Can sign" there; administrators and whole-government officials get no
+  domain authority; courts' cases are closed to every other institution;
+  restricted and secret cases to the assigned; step-up where the procedure asks).
 - Every mutating API route must match a rule in `roles.ts` (`mutationRule()`;
   unmatched changes are refused, `api-permission-coverage.test.ts` checks), and
   an `Authorization` header skips the session gate only on routes listed in
