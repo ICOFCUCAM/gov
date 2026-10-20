@@ -139,7 +139,22 @@ export interface Observation {
   runId: string;
   /** When the platform stopped relying on it (its run was withdrawn); as-of queries known before then still see it. */
   supersededAt?: string;
+  /**
+   * How the value was obtained (design §9.2, directions 11.3): a direct
+   * observation, an administrative count of the platform's own records, a
+   * statistical estimate, a model output or a simulation. Absent: as the
+   * source states it (observations before the field).
+   */
+  method?: 'direct' | 'administrative-count' | 'estimate' | 'model' | 'simulation';
+  /** When the source system recorded it, where it says (recordedAt is when CivicOS received it). */
+  sourceRecordedAt?: string;
+  /** An administrative count's lineage: the register and query counted, how many records, and the SHA-256 of their ids, so an auditor can reconcile it. */
+  records?: { query: string; count: number; sha256: string };
 }
+
+/** The signal kind of an observation: a count of the platform's own records is a Record; the rest are observed. */
+export const kindOf = (o: Pick<Observation, 'method'>): 'record' | 'observed' | 'modelled' | 'simulated' =>
+  o.method === 'administrative-count' ? 'record' : o.method === 'estimate' || o.method === 'model' ? 'modelled' : o.method === 'simulation' ? 'simulated' : 'observed';
 
 const db = twinDb;
 /** Changes go through the persistence port (lib/data/repo): memory, or written through to Postgres. */
@@ -590,7 +605,13 @@ export interface RunDeps { fetch?: typeof fetch; resolve?: (host: string) => Pro
  * accepted as observations of this run. Rows that cannot be placed or read are
  * refused with a reason; nothing is guessed.
  */
-export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: string; csv?: string; deps?: RunDeps }): Promise<TwinRun | { error: string }> {
+export interface RunLineage {
+  method: NonNullable<Observation['method']>;
+  /** For administrative counts: the register query; each row's records_count and records_sha256 columns give the lineage. */
+  query?: string;
+}
+
+export async function runSource(sourceId: string, { by, csv, deps = {}, lineage }: { by: string; csv?: string; deps?: RunDeps; lineage?: RunLineage }): Promise<TwinRun | { error: string }> {
   const d = db();
   const s = d.sources.find(x => x.id === sourceId);
   if (!s) return { error: 'No such source' };
@@ -659,7 +680,10 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
       if (validTo && validTo <= validFrom) return reject(`It stops being true (${validTo}) before it starts (${validFrom})`);
       const q = readQuality(row, mapping.quality);
       if (typeof q === 'string') return reject(q);
-      fresh.push({ entityId: entity.id, metric, value, unit, validFrom, ...(validTo ? { validTo } : {}), recordedAt: run.at, ...(q ? { quality: q } : {}), sourceId, runId: run.id });
+      const sha = row.records_sha256?.trim();
+      const records = lineage?.method === 'administrative-count' && sha && /^[0-9a-f]{64}$/.test(sha) ? { query: lineage.query ?? '', count: Number(row.records_count) || value, sha256: sha } : undefined;
+      if (lineage?.method === 'administrative-count' && !records) return reject('An administrative count needs the SHA-256 of the records it counts');
+      fresh.push({ entityId: entity.id, metric, value, unit, validFrom, ...(validTo ? { validTo } : {}), recordedAt: run.at, ...(q ? { quality: q } : {}), sourceId, runId: run.id, ...(lineage ? { method: lineage.method } : {}), ...(records ? { records } : {}) });
     });
     run.accepted = fresh.length;
     const refused = run.rows - run.accepted;
@@ -844,7 +868,7 @@ const sourceName = (id: string) => db().sources.find(s => s.id === id)?.name ?? 
 /** One entity's metric as a signal: observed with its source and date, or null when nothing is known. */
 export function signalFor(entityId: string, metric: string, asOf?: string): Signal<number> | null {
   const o = stateAsOf({ asOf, metric, entityId })[0];
-  return o ? { value: o.value, unit: o.unit, kind: 'observed', source: sourceName(o.sourceId), asOf: o.validFrom } : null;
+  return o ? { value: o.value, unit: o.unit, kind: kindOf(o), source: sourceName(o.sourceId), asOf: o.validFrom } : null;
 }
 
 export interface NationalFigure extends Signal<number> {
@@ -872,7 +896,7 @@ export function nationalTotal(metric: string, asOf?: string): NationalFigure | n
   if (!obs.length) return null;
   const national = obs.find(o => db().entities[o.entityId]?.kind === 'nation');
   if (national) {
-    return { value: national.value, unit: national.unit, kind: 'observed', source: sourceName(national.sourceId), asOf: national.validFrom,
+    return { value: national.value, unit: national.unit, kind: kindOf(national), source: sourceName(national.sourceId), asOf: national.validFrom,
       coverage: { have: regions.length, of: regions.length }, vintage: { oldest: national.validFrom, newest: national.validFrom }, aggregation: 'national' };
   }
   const def = getMetric(metric);
@@ -901,7 +925,8 @@ export function nationalTotal(metric: string, asOf?: string): NationalFigure | n
   }
   const dates = byRegion.map(o => o.validFrom).sort();
   return {
-    value, unit, kind: 'observed',
+    // A sum of record counts is a record count; anything mixed is observed.
+    value, unit, kind: byRegion.every(o => o.method === 'administrative-count') ? 'record' : 'observed',
     source: [...new Set(byRegion.map(o => sourceName(o.sourceId)))].join(', '), asOf: dates[0],
     coverage, vintage: { oldest: dates[0]!, newest: dates.at(-1)! }, aggregation: def.aggregation,
   };

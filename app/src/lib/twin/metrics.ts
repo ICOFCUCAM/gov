@@ -155,6 +155,10 @@ export const STANDARD_METRICS: readonly Omit<MetricDef, 'origin'>[] = [
   { id: 'population', label: 'Population', unit: '{persons}', aggregation: 'sum', period: 'instant', sdmxConcept: 'POP' },
   { id: 'households', label: 'Households', unit: '{households}', aggregation: 'sum', period: 'instant' },
   { id: 'area', label: 'Area', unit: 'km2', aggregation: 'sum', period: 'instant' },
+  // Counted from the civil register (lib/civil/twin.ts): registrations made in the month, not estimates of events.
+  { id: 'births.registered', label: 'Births registered', unit: '{births}', aggregation: 'sum', period: 'month' },
+  { id: 'deaths.registered', label: 'Deaths registered', unit: '{deaths}', aggregation: 'sum', period: 'month' },
+  { id: 'marriages.registered', label: 'Marriages registered', unit: '{marriages}', aggregation: 'sum', period: 'month' },
 ];
 
 // ── Registry ──────────────────────────────────────────────────────────────
