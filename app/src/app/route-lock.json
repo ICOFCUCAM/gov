@@ -41,6 +41,7 @@
   "/gov/charter",
   "/gov/charter-registry",
   "/gov/charter/[id]",
+  "/gov/civil",
   "/gov/configuration",
   "/gov/constitutional",
   "/gov/coordination",

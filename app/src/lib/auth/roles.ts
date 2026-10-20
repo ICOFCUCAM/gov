@@ -531,3 +531,14 @@ export function canConfirmLaw(s: Scope, authority: string | undefined): string |
   if (authority) return s.institution === authority && role === 'signatory' ? null : 'Only an official who can sign at the law-register authority confirms or withdraws a law';
   return wholeGovernment(s) && role === 'administrator' ? null : 'Name the law-register authority under Who is responsible first';
 }
+
+/**
+ * Reading the civil register (people, births, deaths, marriages; personal
+ * data): officials of the civil registration authority, and auditors with a
+ * stated purpose. Every search and read is written to the access log.
+ */
+export function canReadCivil(s: Scope, authority: string | undefined, purpose?: string): string | null {
+  if (authority && s.institution === authority && roleOf(s) !== 'auditor') return null;
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read the civil register';
+  return 'The civil register is read by the civil registration authority';
+}

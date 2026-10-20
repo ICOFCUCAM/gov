@@ -44,6 +44,9 @@
       "name": "cases"
     },
     {
+      "name": "civil"
+    },
+    {
       "name": "cron"
     },
     {
@@ -6574,6 +6577,218 @@
         ],
         "x-permission-rule": "official",
         "x-source": "src/app/api/cases/route.ts"
+      }
+    },
+    "/api/civil": {
+      "get": {
+        "tags": [
+          "civil"
+        ],
+        "operationId": "get_civil",
+        "summary": "GET /api/civil",
+        "description": "GET /api/civil — the civil register (lib/civil/register.ts): search persons (?family=&given=&birthDate=&registration=) or open one event (?event=<registration number>), for the civil registration authority's officials and auditors with a purpose (canReadCivil()). Every search and read, allowed or refused, is written to the access log. Changes happen only through decided civil registration cases (/api/cases).",
+        "parameters": [
+          {
+            "name": "birthDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "event",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "family",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "given",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "registration",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "event": {
+                          "$ref": "#/components/schemas/VitalEvent"
+                        }
+                      },
+                      "required": [
+                        "event"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "size": {
+                          "type": "object",
+                          "properties": {
+                            "persons": {
+                              "type": "number"
+                            },
+                            "births": {
+                              "type": "number"
+                            },
+                            "deaths": {
+                              "type": "number"
+                            },
+                            "marriages": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "persons",
+                            "births",
+                            "deaths",
+                            "marriages"
+                          ]
+                        },
+                        "persons": {
+                          "type": "array",
+                          "items": {
+                            "not": {}
+                          }
+                        }
+                      },
+                      "required": [
+                        "size",
+                        "persons"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "size": {
+                          "type": "object",
+                          "properties": {
+                            "persons": {
+                              "type": "number"
+                            },
+                            "births": {
+                              "type": "number"
+                            },
+                            "deaths": {
+                              "type": "number"
+                            },
+                            "marriages": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "persons",
+                            "births",
+                            "deaths",
+                            "marriages"
+                          ]
+                        },
+                        "persons": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Person"
+                          }
+                        }
+                      },
+                      "required": [
+                        "size",
+                        "persons"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "event": {
+                        "id": "ID-0001",
+                        "kind": "birth",
+                        "registrationNumber": "string",
+                        "date": "2026-01-15",
+                        "place": {},
+                        "persons": [
+                          {
+                            "role": "child",
+                            "person": "string"
+                          }
+                        ],
+                        "parents": {},
+                        "informant": {
+                          "name": "Example"
+                        },
+                        "case": "string",
+                        "decision": "string",
+                        "registeredAt": "2026-01-15T09:30:00.000Z",
+                        "late": true,
+                        "amendments": [
+                          {
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "case": "string",
+                            "changed": []
+                          }
+                        ],
+                        "form": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/civil/route.ts"
       }
     },
     "/api/cron/audit-anchor": {
@@ -67629,6 +67844,203 @@
           "at"
         ]
       },
+      "Person": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "identifiers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Identifiers by scheme: the birth registration number, and a national ID only when the identity authority issued one."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PersonVersion"
+            }
+          },
+          "matching": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "other": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                },
+                "decided": {
+                  "type": "string",
+                  "enum": [
+                    "different",
+                    "same"
+                  ]
+                },
+                "by": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "case": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "other",
+                "score",
+                "at"
+              ]
+            },
+            "description": "Possible duplicates found and how they were decided (never merged without adjudication)."
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "identifiers",
+          "versions",
+          "matching",
+          "createdAt"
+        ]
+      },
+      "PersonRef": {
+        "type": "object",
+        "properties": {
+          "person": {
+            "type": "string"
+          },
+          "given": {
+            "type": "string"
+          },
+          "family": {
+            "type": "string"
+          }
+        }
+      },
+      "PersonVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "names": {
+            "type": "object",
+            "properties": {
+              "given": {
+                "type": "string"
+              },
+              "family": {
+                "type": "string"
+              },
+              "other": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "given",
+              "family"
+            ]
+          },
+          "sex": {
+            "type": "string",
+            "enum": [
+              "female",
+              "male",
+              "other",
+              "unknown"
+            ]
+          },
+          "birth": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "place": {
+                "$ref": "#/components/schemas/Place"
+              }
+            },
+            "required": [
+              "date",
+              "place"
+            ]
+          },
+          "parents": {
+            "type": "object",
+            "properties": {
+              "mother": {
+                "$ref": "#/components/schemas/PersonRef"
+              },
+              "father": {
+                "$ref": "#/components/schemas/PersonRef"
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "alive",
+              "deceased"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "event": {
+                "type": "string"
+              },
+              "case": {
+                "type": "string"
+              }
+            },
+            "description": "The registration (vital event) or correction case this version comes from."
+          }
+        },
+        "required": [
+          "n",
+          "names",
+          "sex",
+          "status",
+          "at",
+          "by",
+          "reason",
+          "source"
+        ]
+      },
+      "Place": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "facility": {
+            "type": "string"
+          }
+        }
+      },
       "PlatformSetup": {
         "description": "First-run platform setup. Null until a nation or ministry has completed onboarding; once set, sign-in goes straight to the welcome page.",
         "type": "object",
@@ -77428,6 +77840,137 @@
         },
         "required": [
           "valid"
+        ]
+      },
+      "VitalEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "birth",
+              "death",
+              "marriage"
+            ]
+          },
+          "registrationNumber": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
+          "persons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "child",
+                    "deceased",
+                    "spouse"
+                  ]
+                },
+                "person": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "role",
+                "person"
+              ]
+            },
+            "description": "The people it concerns: the child or the deceased, the spouses."
+          },
+          "parents": {
+            "type": "object",
+            "properties": {
+              "mother": {
+                "$ref": "#/components/schemas/PersonRef"
+              },
+              "father": {
+                "$ref": "#/components/schemas/PersonRef"
+              }
+            },
+            "description": "Parents of a birth, informant of any event."
+          },
+          "informant": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "relation": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "registeredAt": {
+            "type": "string"
+          },
+          "late": {
+            "type": "boolean"
+          },
+          "amendments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "case": {
+                  "type": "string"
+                },
+                "decision": {
+                  "type": "string"
+                },
+                "changed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "at",
+                "case",
+                "changed"
+              ]
+            }
+          },
+          "form": {
+            "type": "string",
+            "description": "Marriages: the form the law recognises (civil, customary, religious…)."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "registrationNumber",
+          "date",
+          "place",
+          "persons",
+          "case",
+          "registeredAt",
+          "late",
+          "amendments"
         ]
       },
       "WatchdogSummary": {
