@@ -201,6 +201,8 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each sealed decision') },
   { id: 'certificates', name: 'Certificates issued from sealed decisions, with their verification codes and standing', legal: { kind: 'institution', note: 'The institution that issued it' }, owner: { where: 'platform', keys: ['__civicosCertificates'] }, api: 'lib/records/certificates.ts; checked publicly at /verify', copies: [],
     storage: RECORD_DOCS('each certificate') },
+  { id: 'procedures', name: 'Procedures (case packages): versions, approval, the date each applies from', legal: { kind: 'institution', note: 'The authority each procedure names, which approves it' }, owner: { where: 'platform', keys: ['__civicosCasePackages'] }, api: '/api/case-packages', copies: [],
+    storage: RECORD_DOCS('each procedure version') },
   { id: 'access-log', name: 'Access log: reads of restricted and secret records, searches, exports, refusals and permission changes', legal: { kind: 'authority', key: 'dataProtection' }, owner: { where: 'platform', keys: ['__civicosAccessLog'] }, api: 'recordAccess() (lib/records/access-log.ts), read at /api/access-log', copies: [],
     storage: RECORD_DOCS('each entry, hash-chained') },
   { id: 'backups', name: 'Backups: retention policy, RPO/RTO targets, restore proposals and restores (the catalogue itself is the backup target)', owner: { where: 'platform', keys: ['__civicosBackups'] }, api: '/api/platform/backups', copies: [],
