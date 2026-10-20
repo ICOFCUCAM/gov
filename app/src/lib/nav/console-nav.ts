@@ -83,7 +83,7 @@ export const CONSOLE_NAV: NavSection[] = [
       purpose: 'The tamper-evident record of every action, and the means to check it.',
       tabs: [tab('Audit record', '/audit', 'Oversight'), tab('Search the record', '/gov/audit', 'Audit Explorer'), tab('Activity', '/gov/activity', 'Activity Log'),
         tab('Signatures', '/gov/signatures', 'Signature Audit'), tab('Independent confirmations', '/gov/witnesses', 'Audit Witnesses'),
-        tab('Check an exported record', '/gov/audit-replay', 'Audit Replay')] },
+        tab('Check an exported record', '/gov/audit-replay', 'Audit Replay'), tab('Who read what', '/gov/access-log')] },
   ]},
   { label: 'People', items: [
     { key: 'staff', icon: '⚿', label: 'Staff', href: '/gov/officers', purpose: 'Officials, their roles and their accounts.',

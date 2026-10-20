@@ -505,3 +505,10 @@ export function caseReadRefusal(s: CaseScope, c: CaseFacts, purpose?: string): s
   if (auditorWithPurpose) return null;
   return role === 'auditor' ? 'Say why you need to read this case' : 'This case is open only to the officials assigned to it and its named supervisors';
 }
+
+/** The access log (lib/records/access-log.ts): auditors, and officials of the nation's data-protection authority. Administrators do not read it by their role. */
+export function canReadAccessLog(s: Scope, dataProtection: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return null;
+  if (dataProtection && s.institution === dataProtection) return null;
+  return 'The access log is read by auditors and by the data-protection authority';
+}

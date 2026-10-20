@@ -17,6 +17,9 @@
   ],
   "tags": [
     {
+      "name": "access-log"
+    },
+    {
       "name": "admin"
     },
     {
@@ -141,6 +144,196 @@
     }
   ],
   "paths": {
+    "/api/access-log": {
+      "get": {
+        "tags": [
+          "access-log"
+        ],
+        "operationId": "get_access_log",
+        "summary": "GET /api/access-log",
+        "description": "/api/access-log — who read which restricted or secret record, searched, exported or was refused (lib/records/access-log.ts). Read by auditors and the data-protection authority's officials (canReadAccessLog()); nobody changes it through the API. With the chain's check and, for the data-protection authority, the unusual patterns of the last day.",
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "institution",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "record",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "register",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AccessEntry"
+                      }
+                    },
+                    "chain": {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "entries": {
+                          "type": "number"
+                        },
+                        "brokenAt": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "entries"
+                      ]
+                    },
+                    "unusual": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "official": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "reason": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "official",
+                          "name",
+                          "reason",
+                          "count"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "entries",
+                    "chain",
+                    "unusual"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "entries": [
+                        {
+                          "id": "ID-0001",
+                          "seq": 1,
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": {
+                            "name": "Example"
+                          },
+                          "record": {
+                            "register": "string"
+                          },
+                          "action": "export",
+                          "result": "allowed",
+                          "prev": "string",
+                          "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                        }
+                      ],
+                      "chain": {
+                        "ok": true,
+                        "entries": 1,
+                        "brokenAt": 1
+                      },
+                      "unusual": [
+                        {
+                          "official": "A. Official",
+                          "name": "Example",
+                          "reason": "Text",
+                          "count": 1
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/access-log/route.ts"
+      }
+    },
     "/api/admin/officers/bulk": {
       "post": {
         "tags": [
@@ -1282,6 +1475,10 @@
                               "type": "boolean",
                               "description": "This session passed the second sign-in step (authenticator code)."
                             },
+                            "twoStepAt": {
+                              "type": "number",
+                              "description": "When this session passed the second step (ms since 1970), if later than sign-in (step-up); otherwise sign-in time."
+                            },
                             "twoStepRequired": {
                               "type": "boolean",
                               "description": "The installation's policy requires the second step for this official."
@@ -1409,6 +1606,7 @@
                         "role": "administrator",
                         "institution": "string",
                         "twoStep": true,
+                        "twoStepAt": 1,
                         "twoStepRequired": true,
                         "via": "oidc",
                         "sid": "string",
@@ -1564,6 +1762,7 @@
                         "role": "administrator",
                         "institution": "string",
                         "twoStep": true,
+                        "twoStepAt": 1,
                         "twoStepRequired": true,
                         "via": "oidc",
                         "sid": "string",
@@ -4626,7 +4825,8 @@
                         ],
                         "constitution": {},
                         "map": {},
-                        "domain": "string"
+                        "domain": "string",
+                        "deployment": {}
                       },
                       "generatedAt": "2026-01-15T09:30:00.000Z",
                       "institutions": [
@@ -14521,7 +14721,8 @@
                         ],
                         "constitution": {},
                         "map": {},
-                        "domain": "string"
+                        "domain": "string",
+                        "deployment": {}
                       },
                       "generatedAt": "2026-01-15T09:30:00.000Z",
                       "tick": 1,
@@ -14671,7 +14872,8 @@
                         ],
                         "constitution": {},
                         "map": {},
-                        "domain": "string"
+                        "domain": "string",
+                        "deployment": {}
                       },
                       "generatedAt": "2026-01-15T09:30:00.000Z",
                       "classification": "string",
@@ -27563,7 +27765,7 @@
         ],
         "operationId": "get_platform_owners",
         "summary": "GET /api/platform/owners",
-        "description": "Which store owns each register (lib/data/register-owners.ts): the owner, the one API that changes it, and every other copy with its role; and how the substrate mirrors stand (lib/db/mirror.ts: records waiting to be copied, with their last error).",
+        "description": "Which store owns each register (lib/data/register-owners.ts): the owner, the one API that changes it, and every other copy with its role; and how the substrate mirrors stand (lib/db/mirror.ts: records waiting to be copied, with their last error); and who is legally responsible for each register (`legal`: the authority the nation named in its deployment profile, or \"no legal owner named\").",
         "parameters": [],
         "responses": {
           "200": {
@@ -27579,12 +27781,99 @@
                         "$ref": "#/components/schemas/RegisterOwner"
                       }
                     },
+                    "legal": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "legal": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "authority"
+                                  },
+                                  "key": {
+                                    "type": "string",
+                                    "enum": [
+                                      "businessRegister",
+                                      "civilRegistration",
+                                      "dataProtection",
+                                      "higherEducationAccreditation",
+                                      "identity",
+                                      "immigration",
+                                      "judiciary",
+                                      "lawRegister",
+                                      "police",
+                                      "statistics"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "key"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "installation"
+                                  }
+                                },
+                                "required": [
+                                  "kind"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "const": "institution"
+                                  },
+                                  "note": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "note"
+                                ]
+                              }
+                            ]
+                          },
+                          "institution": {
+                            "type": "string"
+                          },
+                          "named": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "legal",
+                          "named"
+                        ]
+                      }
+                    },
                     "substrateMirror": {
                       "$ref": "#/components/schemas/MirrorStatus"
                     }
                   },
                   "required": [
                     "registers",
+                    "legal",
                     "substrateMirror"
                   ]
                 },
@@ -27604,6 +27893,17 @@
                           "copies": [
                             {}
                           ]
+                        }
+                      ],
+                      "legal": [
+                        {
+                          "id": "ID-0001",
+                          "name": "Example",
+                          "legal": {
+                            "kind": "authority",
+                            "key": "businessRegister"
+                          },
+                          "named": true
                         }
                       ],
                       "substrateMirror": {
@@ -42774,7 +43074,8 @@
                         ],
                         "constitution": {},
                         "map": {},
-                        "domain": "string"
+                        "domain": "string",
+                        "deployment": {}
                       }
                     }
                   }
@@ -42929,7 +43230,8 @@
                         ],
                         "constitution": {},
                         "map": {},
-                        "domain": "string"
+                        "domain": "string",
+                        "deployment": {}
                       }
                     }
                   }
@@ -43023,7 +43325,8 @@
                         ],
                         "constitution": {},
                         "map": {},
-                        "domain": "string"
+                        "domain": "string",
+                        "deployment": {}
                       }
                     }
                   }
@@ -51129,6 +51432,101 @@
           "error"
         ]
       },
+      "AccessEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "seq": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "institution": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "description": "The official (session subject), their name and institution."
+          },
+          "record": {
+            "type": "object",
+            "properties": {
+              "register": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "query": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "register"
+            ],
+            "description": "The register and record, e.g. { register: 'cases', id: 'CIV-2026-000012' }; a search names its query instead."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "export",
+              "permission",
+              "refused",
+              "search",
+              "view"
+            ]
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "allowed",
+              "refused"
+            ]
+          },
+          "rule": {
+            "type": "string",
+            "description": "Why it was refused, or the rule that allowed it."
+          },
+          "correlation": {
+            "type": "string",
+            "description": "Links the entry to an exchange transaction or a request."
+          },
+          "prev": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "at",
+          "by",
+          "record",
+          "action",
+          "result",
+          "prev",
+          "hash"
+        ]
+      },
       "ActiveBoundary": {
         "type": "object",
         "properties": {
@@ -55463,6 +55861,328 @@
           "gates",
           "startedAt"
         ]
+      },
+      "DeploymentProfile": {
+        "type": "object",
+        "properties": {
+          "jurisdiction": {
+            "type": "object",
+            "properties": {
+              "legalSystem": {
+                "type": "string",
+                "enum": [
+                  "civil",
+                  "common",
+                  "customary",
+                  "mixed",
+                  "other",
+                  "religious"
+                ]
+              }
+            }
+          },
+          "calendar": {
+            "type": "object",
+            "properties": {
+              "workingDays": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "holidays": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "date",
+                    "name"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "workingDays",
+              "holidays"
+            ],
+            "description": "Working days (0 Sunday … 6 Saturday) and public holidays, for deadlines counted in working days."
+          },
+          "authorities": {
+            "type": "object",
+            "properties": {
+              "businessRegister": {
+                "type": "string"
+              },
+              "civilRegistration": {
+                "type": "string"
+              },
+              "dataProtection": {
+                "type": "string"
+              },
+              "higherEducationAccreditation": {
+                "type": "string"
+              },
+              "identity": {
+                "type": "string"
+              },
+              "immigration": {
+                "type": "string"
+              },
+              "judiciary": {
+                "type": "string"
+              },
+              "lawRegister": {
+                "type": "string"
+              },
+              "police": {
+                "type": "string"
+              },
+              "statistics": {
+                "type": "string"
+              }
+            },
+            "description": "The institution (id from the ministry registry, /api/org) legally responsible for each register."
+          },
+          "modules": {
+            "type": "object",
+            "properties": {
+              "accreditation": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "civil": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "courts": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "immigration": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "law": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "licensing": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "organisations": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "police": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              }
+            },
+            "description": "Which modules run, and whether CivicOS or an external system holds their records."
+          },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "citizens": {
+                "type": "object",
+                "properties": {
+                  "issuer": {
+                    "type": "string"
+                  },
+                  "clientId": {
+                    "type": "string"
+                  },
+                  "assurance": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "issuer",
+                  "clientId"
+                ]
+              },
+              "assisted": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "assisted"
+            ],
+            "description": "Citizens' sign-in through the nation's identity provider (OpenID Connect); assisted registration at offices."
+          },
+          "signature": {
+            "type": "object",
+            "properties": {
+              "framework": {
+                "type": "string",
+                "enum": [
+                  "national",
+                  "platform"
+                ]
+              },
+              "trustList": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "framework"
+            ],
+            "description": "Decisions and certificates: signed by the platform (institution seals) or by the nation's qualified service."
+          }
+        }
       },
       "DerivedInputUsed": {
         "type": "object",
@@ -61432,6 +62152,10 @@
             "type": "boolean",
             "description": "This session passed the second sign-in step (authenticator code)."
           },
+          "twoStepAt": {
+            "type": "number",
+            "description": "When this session passed the second step (ms since 1970), if later than sign-in (step-up); otherwise sign-in time."
+          },
           "twoStepRequired": {
             "type": "boolean",
             "description": "The installation's policy requires the second step for this official."
@@ -64744,6 +65468,67 @@
           "storage": {
             "type": "string",
             "description": "How the owner's records are kept durably when it is not the store's JSON snapshot alone: with CIVICOS_STATE=postgres the persistence port (lib/data/repo) writes them through to per-record tables. The tables are the same register, not a copy."
+          },
+          "legal": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "authority"
+                  },
+                  "key": {
+                    "type": "string",
+                    "enum": [
+                      "businessRegister",
+                      "civilRegistration",
+                      "dataProtection",
+                      "higherEducationAccreditation",
+                      "identity",
+                      "immigration",
+                      "judiciary",
+                      "lawRegister",
+                      "police",
+                      "statistics"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "key"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "installation"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "institution"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "note"
+                ]
+              }
+            ],
+            "description": "Who is legally responsible for the register (design §2.1, directions §3): an authority the nation names in its deployment profile (lib/nation/deployment.ts), each record's own institution, or the installation's national administrators. Storage and legal responsibility are separate questions; this names the second. Unset: the installation."
           }
         },
         "required": [
@@ -70288,6 +71073,9 @@
           },
           "domain": {
             "type": "string"
+          },
+          "deployment": {
+            "$ref": "#/components/schemas/DeploymentProfile"
           }
         },
         "required": [
