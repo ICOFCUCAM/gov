@@ -32,6 +32,15 @@ export function ProceduresBoard() {
       <h1 className="text-xl font-semibold">Procedures</h1>
       <p className="max-w-3xl text-sm text-ink-muted">How each kind of case is handled: its steps, who may take them, its deadlines and the laws it rests on. A procedure runs only after the responsible institution approves it.</p>
       {msg ? <p role="status" className="text-sm">{msg}</p> : null}
+      <Section title="Reference procedures" meta="shipped with the platform, as drafts">
+        <p className="text-sm text-ink-muted">Birth, late birth, death, marriage and correction of civil records. They arrive as drafts: the responsible authority adapts them to its law (a new version citing it) and approves them before any case runs.</p>
+        <Button className="mt-2" variant="secondary" onClick={async () => {
+          const r = await fetch('/api/case-packages', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'install-references' }) });
+          const j = await r.json();
+          setMsg(r.ok ? (j.drafted.length ? `Drafted: ${j.drafted.join(', ')}.` : 'All reference procedures are already here.') : j.error);
+          load();
+        }}>Add the reference procedures as drafts</Button>
+      </Section>
       <Section title="Versions" meta={`${list.length}`}>
         {list.length ? (
           <ul className="divide-y divide-line">
