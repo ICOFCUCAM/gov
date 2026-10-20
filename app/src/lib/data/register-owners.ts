@@ -205,6 +205,8 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each procedure version') },
   { id: 'cases', name: 'Cases under the procedures: stage, fields, documents, decisions, deadlines, links and history', legal: { kind: 'institution', note: 'The institution responsible for each case\'s procedure' }, owner: { where: 'platform', keys: ['__civicosCases'] }, api: '/api/cases', copies: [],
     storage: RECORD_DOCS('each case with its history') },
+  { id: 'civil', name: 'Civil register: persons and their births, deaths and marriages', legal: { kind: 'authority', key: 'civilRegistration' }, owner: { where: 'platform', keys: ['__civicosCivil'] }, api: 'lib/civil/register.ts (through civil registration cases, /api/cases; read at /api/civil)', copies: [],
+    storage: RECORD_DOCS('each person with its versions, each vital event') },
   { id: 'access-log', name: 'Access log: reads of restricted and secret records, searches, exports, refusals and permission changes', legal: { kind: 'authority', key: 'dataProtection' }, owner: { where: 'platform', keys: ['__civicosAccessLog'] }, api: 'recordAccess() (lib/records/access-log.ts), read at /api/access-log', copies: [],
     storage: RECORD_DOCS('each entry, hash-chained') },
   { id: 'backups', name: 'Backups: retention policy, RPO/RTO targets, restore proposals and restores (the catalogue itself is the backup target)', owner: { where: 'platform', keys: ['__civicosBackups'] }, api: '/api/platform/backups', copies: [],
