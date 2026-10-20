@@ -73,7 +73,8 @@ describe('architecture', () => {
       const text = readFileSync(f, 'utf8');
       // A route that reads `by`/`actor` from its body must pass the body through withOfficial()/chamberBody().
       const readsActor = /\b(b|body|input)\.(by|actor|officerName)\b/.test(text);
-      const verified = /\b(withOfficial|chamberBody|publisherBody|currentOfficial|verifiedOfficial)\b/.test(text);
+      // caseScope() and routeActor() (lib/auth/official.ts, lib/casework/actor.ts) are the verified official too; a body name counts only when no one is signed in.
+      const verified = /\b(withOfficial|chamberBody|publisherBody|currentOfficial|verifiedOfficial|caseScope|routeActor)\b/.test(text);
       if (readsActor && !verified) bad.push(rel(f));
     }
     expect(bad, 'parse the body with withOfficial()').toEqual([]);

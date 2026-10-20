@@ -66,6 +66,7 @@
   "/gov/intake/request/[ref]",
   "/gov/items/[ref]",
   "/gov/law",
+  "/gov/law/procedures",
   "/gov/ledger",
   "/gov/live",
   "/gov/map",
