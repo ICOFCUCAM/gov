@@ -11093,6 +11093,223 @@
         "x-source": "src/app/api/exchange/log/route.ts"
       }
     },
+    "/api/exchange/services/{service}": {
+      "post": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "post_exchange_services_service",
+        "summary": "POST /api/exchange/services/{service}",
+        "description": "POST /api/exchange/services/<id> — call a query service from another system (lib/exchange/services.ts): the integration key of scope service:<id> in Authorization, and { purpose, input } in the body. The answer carries only the service's fields and the signed receipt (header CivicOS-Receipt); refusals are logged too.",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "purpose": {
+                    "type": "string"
+                  },
+                  "input": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "purpose": "string",
+                    "input": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          }
+        ],
+        "x-permission-rule": "self-authenticated",
+        "x-source": "src/app/api/exchange/services/[service]/route.ts"
+      }
+    },
+    "/api/exchange/services": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_services",
+        "summary": "GET /api/exchange/services",
+        "description": "GET /api/exchange/services — the directory of services this installation offers (lib/exchange/services.ts): id, version, owner, kind, the scope a caller needs, the fields it returns, its data class and legal basis.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "services": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "number"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "event",
+                              "query"
+                            ]
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "owner": {
+                            "type": "string",
+                            "enum": [
+                              "businessRegister",
+                              "civilRegistration",
+                              "dataProtection",
+                              "higherEducationAccreditation",
+                              "identity",
+                              "immigration",
+                              "judiciary",
+                              "lawRegister",
+                              "police",
+                              "statistics"
+                            ]
+                          },
+                          "scope": {
+                            "type": "string",
+                            "description": "The integration scope a caller from outside needs."
+                          },
+                          "returns": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "What it returns, by field (the only fields it ever returns)."
+                          },
+                          "dataClass": {
+                            "type": "string",
+                            "enum": [
+                              "personal",
+                              "public",
+                              "restricted"
+                            ]
+                          },
+                          "legalBasis": {
+                            "type": "string"
+                          },
+                          "eventType": {
+                            "type": "string",
+                            "description": "For events: the CloudEvents type subscribers receive."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version",
+                          "kind",
+                          "title",
+                          "owner",
+                          "scope",
+                          "returns",
+                          "dataClass"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "services"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "services": [
+                        {
+                          "id": "ID-0001",
+                          "version": 1,
+                          "kind": "event",
+                          "title": "Example",
+                          "owner": "businessRegister",
+                          "scope": "string",
+                          "returns": {
+                            "key": "string"
+                          },
+                          "dataClass": "personal"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/exchange/services/route.ts"
+      }
+    },
     "/api/facilities/{fid}": {
       "get": {
         "tags": [
@@ -17503,8 +17720,8 @@
                           "enabled": true,
                           "updatedAt": "2026-01-15T09:30:00.000Z",
                           "updatedBy": "A. Official",
-                          "nationId": "ID-0001",
                           "kind": "http-email",
+                          "nationId": "ID-0001",
                           "channel": "email",
                           "from": "string",
                           "perMinute": 1,
@@ -17710,8 +17927,8 @@
                             "enabled": true,
                             "updatedAt": "2026-01-15T09:30:00.000Z",
                             "updatedBy": "A. Official",
-                            "nationId": "ID-0001",
                             "kind": "http-email",
+                            "nationId": "ID-0001",
                             "channel": "email",
                             "from": "string",
                             "perMinute": 1,
@@ -61742,6 +61959,7 @@
             "enum": [
               "case-feed",
               "federation",
+              "service",
               "site-feed"
             ]
           },
@@ -69512,12 +69730,6 @@
               "PUT"
             ]
           },
-          "url": {
-            "type": "string"
-          },
-          "nationId": {
-            "type": "string"
-          },
           "kind": {
             "type": "string",
             "enum": [
@@ -69525,6 +69737,12 @@
               "http-sms",
               "smtp"
             ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "nationId": {
+            "type": "string"
           },
           "channel": {
             "type": "string",
@@ -69615,8 +69833,8 @@
           "enabled",
           "updatedAt",
           "updatedBy",
-          "nationId",
           "kind",
+          "nationId",
           "channel",
           "from",
           "perMinute",
@@ -78294,6 +78512,7 @@
             "enum": [
               "case-feed",
               "federation",
+              "service",
               "site-feed"
             ]
           },
