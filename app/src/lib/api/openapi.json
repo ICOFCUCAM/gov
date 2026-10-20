@@ -119,6 +119,9 @@
       "name": "oauth"
     },
     {
+      "name": "onboarding"
+    },
+    {
       "name": "openapi"
     },
     {
@@ -20607,6 +20610,73 @@
         ],
         "x-permission-rule": "self-authenticated",
         "x-source": "src/app/api/oauth/token/route.ts"
+      }
+    },
+    "/api/onboarding/status": {
+      "get": {
+        "tags": [
+          "onboarding"
+        ],
+        "operationId": "get_onboarding_status",
+        "summary": "GET /api/onboarding/status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatus"
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "mode": "string",
+                      "tracks": [
+                        {
+                          "key": "string",
+                          "title": "Example",
+                          "why": "string",
+                          "href": "https://example.gov/",
+                          "state": "blocked",
+                          "checks": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "done": 1,
+                      "total": 1,
+                      "waiting": [
+                        {
+                          "what": "string",
+                          "proposedBy": "A. Official",
+                          "href": "https://example.gov/"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/onboarding/status/route.ts"
       }
     },
     "/api/openapi": {
@@ -64532,6 +64602,28 @@
           "fourEyes"
         ]
       },
+      "Check": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "href": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "done",
+          "href"
+        ]
+      },
       "ChronologyEvent": {
         "type": "object",
         "properties": {
@@ -74898,6 +74990,39 @@
           "versions",
           "rightsCount",
           "rightsHidden"
+        ]
+      },
+      "OnboardingStatus": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "tracks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Track"
+            }
+          },
+          "done": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "waiting": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Waiting"
+            }
+          }
+        },
+        "required": [
+          "mode",
+          "tracks",
+          "done",
+          "total",
+          "waiting"
         ]
       },
       "OpenSource": {
@@ -86772,6 +86897,55 @@
           "detail"
         ]
       },
+      "Track": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string",
+            "description": "What the track is for, in one plain sentence."
+          },
+          "href": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "blocked",
+              "done",
+              "in-progress",
+              "not-started"
+            ]
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Check"
+            }
+          },
+          "blockedBy": {
+            "type": "string",
+            "description": "What outside the platform stops it (the environment, another track)."
+          },
+          "samplesOnly": {
+            "type": "boolean",
+            "description": "Only in demo and training installations."
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "why",
+          "href",
+          "state",
+          "checks"
+        ]
+      },
       "TranslationEntries": {
         "type": "object",
         "additionalProperties": {
@@ -87545,6 +87719,28 @@
           "registeredAt",
           "late",
           "amendments"
+        ]
+      },
+      "Waiting": {
+        "type": "object",
+        "properties": {
+          "what": {
+            "type": "string"
+          },
+          "proposedBy": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "what",
+          "proposedBy",
+          "href"
         ]
       },
       "WatchdogSummary": {

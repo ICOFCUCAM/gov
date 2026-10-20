@@ -170,7 +170,7 @@ export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case
   const pkg = activePackage(input.procedure, today(now));
   if (!pkg) return { error: `No approved version of the procedure ${input.procedure} applies today` };
   const owner = ownerInstitution(pkg.owner, authorityFor);
-  if (!owner) return { error: `No institution is named as responsible for ${pkg.title} (Configuration, Who is responsible)` };
+  if (!owner) return { error: `No institution is named as responsible for ${pkg.title} (Configuration → Who is responsible)` };
   const source = input.source ?? 'entered';
   if (actor.scope && source !== 'citizen' && !input.referral) {
     const why = caseActRefusal(actor.scope, { owner, sensitivity: pkg.sensitivity, assigned: [actor.scope.id ?? ''] }, now.getTime());

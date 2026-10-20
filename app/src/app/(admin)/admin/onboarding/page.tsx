@@ -1,19 +1,29 @@
+import { CommandShell } from '@/components/ui/CommandShell';
+import { OnboardingHub } from './OnboardingHub';
 import { OnboardingWizard } from './OnboardingWizard';
-export const metadata = { title: 'Municipal Onboarding' };
 
+export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Onboarding' };
 
-export default function MunicipalOnboardingPage() {
+export default function OnboardingPage() {
   return (
-    <main className="max-w-2xl mx-auto px-6 py-10 space-y-6">
-      <header>
-        <h1 className="text-3xl font-semibold">Municipal onboarding</h1>
-        <p className="text-ink-muted mt-2">
-          Stand up a municipality on CivicOS. The wizard checks the inclusion
-          floor, language coverage, and constitutional officer signoff before
-          provisioning. A municipality cannot go live without them.
-        </p>
-      </header>
-      <OnboardingWizard />
-    </main>
+    <CommandShell active="cfg">
+      <div className="mx-auto max-w-4xl space-y-8 px-3 py-6">
+        <header>
+          <h1 className="text-3xl font-semibold">Onboarding</h1>
+          <p className="mt-2 text-ink-muted">
+            Everything it takes to run the government on the platform, track by track, read from the live records.
+          </p>
+        </header>
+        <OnboardingHub />
+        <section id="municipalities" className="scroll-mt-24 space-y-4">
+          <header>
+            <h2 className="text-xl font-semibold">Municipalities</h2>
+            <p className="mt-1 text-sm text-ink-muted">Stand up a municipality on CivicOS.</p>
+          </header>
+          <OnboardingWizard />
+        </section>
+      </div>
+    </CommandShell>
   );
 }

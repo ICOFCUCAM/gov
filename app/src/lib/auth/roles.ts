@@ -646,3 +646,9 @@ export function canResolveTwinConflict(s: Scope, statistics: string | undefined)
   if (statistics) return s.institution === statistics && role === 'signatory' ? null : 'Only an official who can sign at the statistics authority decides which figure stands';
   return wholeGovernment(s) && role === 'administrator' ? null : 'Name the statistics authority under Who is responsible first';
 }
+
+/** Reading where setup stands (/admin/onboarding): administrators, and auditors who read every record. */
+export function canSeeOnboarding(s: Scope): string | null {
+  const role = roleOf(s);
+  return role === 'administrator' || role === 'auditor' ? null : 'Only administrators and auditors can see where setup stands';
+}

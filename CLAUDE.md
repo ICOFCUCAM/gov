@@ -160,6 +160,15 @@ What has been built is locked. Work only upgrades it toward the vision in
   records completion; every later sign-in lands on `/welcome` directly.
   `/setup` stays reachable afterwards to review and edit the live configuration.
 - `/command` is the Sovereign Command Center (formerly `/`), unchanged.
+- `/admin/onboarding` is the setup hub: `lib/onboarding/status.ts` reads each
+  track (nation, who is responsible, officials, laws, mappings, country rules,
+  procedures, rates, registers, data sharing, sites, maps, operations,
+  updates; the demo track only where `samplesAllowed()`) from the systems that
+  hold it, never a copy, and lists changes waiting for a second official
+  (`GET /api/onboarding/status`, `canSeeOnboarding()`). A new register, rule
+  set or two-official store adds its check or waiting item there. Refusals
+  naming "Who is responsible" link to `/gov/configuration#who-is-responsible`
+  through `RefusalText`.
 - Sign-in surfaces: `/sign-in` (substrate email + password) and `/login`
   (citizen verification). The cover hands off to them; it does not replace them.
 

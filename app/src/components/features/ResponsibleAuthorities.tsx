@@ -41,6 +41,7 @@ export function ResponsibleAuthorities() {
   };
 
   return (
+    <div id="who-is-responsible" className="scroll-mt-24">
     <Section title="Who is responsible" meta="the institution legally responsible for each register">
       <p className="mb-3 text-xs text-ink-muted">
         The platform never names an authority itself. Until one is named, the register says so and its procedures cannot start.
@@ -63,5 +64,6 @@ export function ResponsibleAuthorities() {
         {msg ? <span role="status" className="text-xs text-ink-muted">{msg}</span> : null}
       </div>
     </Section>
+    </div>
   );
 }

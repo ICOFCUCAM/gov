@@ -31,6 +31,12 @@ export function Welcome() {
   const [error, setError] = React.useState<string | null>(null);
   const [hour, setHour] = React.useState<number | null>(null);
 
+  // Where setup stands (administrators and auditors; others simply see the link).
+  const [progress, setProgress] = React.useState<{ done: number; total: number } | null>(null);
+  React.useEffect(() => {
+    fetch('/api/onboarding/status', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null))
+      .then(j => { if (j) setProgress({ done: j.done, total: j.total }); }).catch(() => undefined);
+  }, []);
   React.useEffect(() => {
     setHour(new Date().getHours());
     Promise.all([api.setup.get(), api.sovereign.get(), api.org.ministries()])
@@ -151,7 +157,7 @@ export function Welcome() {
           {[
             { href: institutionPath ? '/setup?path=institution' : '/setup', l: 'Review setup' },
             { href: '/gov/configuration', l: 'Sovereign configuration' },
-            { href: '/admin/onboarding', l: 'Municipal onboarding' },
+            { href: '/admin/onboarding', l: progress ? `Continue setting up (${progress.done} of ${progress.total} tracks done)` : 'Onboarding and municipalities' },
             { href: '/updates', l: 'Update Center' },
           ].map(x => (
             <Link key={x.href} href={x.href} className="underline decoration-[#d9c398]/35 underline-offset-4 transition-colors hover:text-[#f4e4bd] hover:decoration-[#f4e4bd]" style={{ color: CHAMPAGNE }}>{x.l}</Link>

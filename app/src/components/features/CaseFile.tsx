@@ -8,6 +8,7 @@
 import * as React from 'react';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
+import { RefusalText } from '@/components/ui/RefusalText';
 
 interface Citation { instrument: string; eId: string; version: string; digest: string; title?: string; num?: string }
 interface Answer {
@@ -55,7 +56,7 @@ export function CaseFile({ id }: { id: string }) {
     <div className="space-y-4 p-4">
       <h1 className="text-xl font-semibold">{c.ref} · {p?.title ?? 'Case'}</h1>
       <p className="text-sm text-ink-muted">Stage: <strong>{stageLabel(c.stage)}</strong> · priority {c.priority} · {c.sensitivity !== 'normal' ? `${c.sensitivity} · ` : ''}procedure version {p?.version}{c.assignee ? ` · assigned to ${c.assignee.name}` : ''}{c.legalHold ? ` · held: ${c.legalHold.reason}` : ''}</p>
-      {msg ? <p role="status" className="text-sm">{msg}</p> : null}
+      {msg ? <p role="status" className="text-sm"><RefusalText text={msg} /></p> : null}
 
       {c.pending ? (
         <Section title="Waiting for a second official" meta="four-eyes">
