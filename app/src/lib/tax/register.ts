@@ -137,6 +137,7 @@ export function fileReturn(input: { tin: string; taxType: string; period: string
 
 export const getReturn = (id: string): TaxReturn | undefined => { const r = db().returns.find(x => x.id === id); return r ? clone(r) : undefined; };
 export const returnsOf = (taxpayerId: string): TaxReturn[] => db().returns.filter(r => r.taxpayer === taxpayerId).map(clone);
+export const returnFor = (taxpayerId: string, taxType: string, period: string): TaxReturn | undefined => { const r = db().returns.find(x => x.taxpayer === taxpayerId && x.taxType === taxType && x.period === period); return r ? clone(r) : undefined; };
 
 // ── Assessments and the ledger ────────────────────────────────────────────────
 
@@ -180,6 +181,8 @@ export function varyAssessment(id: string, newAmountMinor: number, reasons: stri
 
 export const getAssessment = (idOrRef: string): Assessment | undefined => { const a = db().assessments.find(x => x.id === idOrRef || x.reference === idOrRef); return a ? clone(a) : undefined; };
 export const assessmentsOf = (taxpayerId: string): Assessment[] => db().assessments.filter(a => a.taxpayer === taxpayerId).map(clone);
+/** The assessment a case made (its latest). */
+export const assessmentOfCase = (caseId: string): Assessment | undefined => { const a = [...db().assessments].reverse().find(x => x.case === caseId); return a ? clone(a) : undefined; };
 
 /** A tax account: its entries and balance (positive: owed). */
 export function account(taxpayerId: string, taxType: string): { entries: LedgerEntry[]; balanceMinor: number } {
