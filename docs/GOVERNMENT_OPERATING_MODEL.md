@@ -633,6 +633,12 @@ with register types per authority, licensing and accreditation procedures,
 the public check, twin entities and counts, referrals as cases. Open: loading
 existing registers, permits onto cases.
 
+Gate 5 status: first slices built (register §18.14–18.16): visas and
+residence permits with a status-check exchange service, police incident
+intake and referral, court cases with hearings and the public cause list.
+Open by design: asylum, border crossings, investigations and evidence,
+judgment publication, each with its own safeguards and legal review.
+
 Then Gate 4 (organisations, business registration or licensing,
 accreditation with the facility link and the twin's organisation entities,
 permits onto cases), Gate 5 and Gate 6 as in the directions (§17).

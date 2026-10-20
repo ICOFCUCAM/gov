@@ -68,6 +68,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   `immigration.status` exchange service, never the file. Do not add asylum,
   border enforcement or any risk score without the safeguards of directions
   §15 and an independent legal review.
+- Police (`lib/police/`) is intake and referral only: classification cites
+  the law, no field records a suspect or a finding. Courts (`lib/courts/`)
+  are worked only by the judiciary; the public cause list
+  (`causeList()`) never carries parties or the subject of a case.
 
 ## Entry flow
 
