@@ -5,12 +5,16 @@
 // population overview, age distribution, ID document status, registration
 // services & trend, top offices, digital-ID usage, ID document types,
 // data-integrity checks and recent activity. Calmer civil palette
-// (blue / green). Pure & deterministic — engine + telemetry only.
+// (blue / green). Pure & deterministic — engine + telemetry only, except
+// the strip at the top: the civil register's own counts (lib/civil/register.ts,
+// read from /api/civil), marked Record, linking to the register itself. The
+// panels below stay simulations until they read the register too.
 
 import * as React from 'react';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { wave, waveSeries } from '@/lib/telemetry';
 import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { SignalTag } from '@/components/ui/SignalTag';
 
 const BG = '#060b12';
 const PANEL = '#0a1119';
@@ -126,6 +130,26 @@ function Panel({ title, action, children, className }: {
   );
 }
 
+/** The civil register's own counts (Record): what the registry has actually registered. */
+function RegisterCounts() {
+  const [size, setSize] = React.useState<{ persons: number; births: number; deaths: number; marriages: number } | null>(null);
+  const [note, setNote] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    fetch('/api/civil', { cache: 'no-store' }).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error); setSize(j.size); }).catch(e => setNote((e as Error).message || 'Not readable here'));
+  }, []);
+  return (
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-[4px] border px-4 py-2 text-[11px]" style={{ borderColor: LINE, background: PANEL, color: INK }}>
+      <span className="uppercase tracking-[0.18em]" style={{ color: BLUE }}>Civil register</span>
+      {size ? <>
+        <span>{size.persons} persons</span><span>{size.births} births</span><span>{size.deaths} deaths</span><span>{size.marriages} marriages</span>
+        <span style={{ color: SOFT }}>Record: counted from the register</span>
+      </> : <span style={{ color: SOFT }}>{note ?? 'Reading the register…'}</span>}
+      <a href="/gov/civil" className="ml-auto underline" style={{ color: BLUE_BR }}>Open the register</a>
+      <span className="w-full text-[9px]" style={{ color: MUT }}>The panels below are a simulation <SignalTag kind="simulated" source="Interior simulation engine" /> until they read the register.</span>
+    </div>
+  );
+}
+
 export function CivilRegistryCommand({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const io = interiorOps(id, ts);
@@ -176,6 +200,7 @@ export function CivilRegistryCommand({ id, now }: { id: string; now: number }) {
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: BG, boxShadow: 'inset 0 0 140px rgba(0,0,0,0.65)' }}>
+      <RegisterCounts />
       {/* ── Header ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-[4px] border px-4 py-3"
         style={{ borderColor: LINE, background: 'linear-gradient(100deg,#0a1119,#0e1620)' }}>
