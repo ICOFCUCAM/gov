@@ -42,7 +42,9 @@ describe('organisations register', () => {
     const now = getOrganisation(o.id)!;
     expect(now.versions.map(v => v.name)).toEqual(['Old Name Ltd', 'New Name Ltd']);
     expect(now.facilities).toEqual(['fac-1', 'fac-2']);
-    expect(defineRegisterType({ key: 'licensed-pharmacies', title: 'Licensed pharmacies', kind: 'licence', authority: 'ministry-health', orgKinds: ['pharmacy'], validityMonths: 24 }, 'Administrator')).toMatchObject({ key: 'licensed-pharmacies', reference: false });
+    expect(defineRegisterType({ key: 'licensed-pharmacies', title: 'Licensed pharmacies', kind: 'licence', authority: 'ministry-health', orgKinds: ['pharmacy'], validityMonths: 24, permitType: 'pharmacy-licence' }, 'Administrator')).toMatchObject({ key: 'licensed-pharmacies', reference: false, permitType: 'pharmacy-licence' });
+    // A register without the permit type that governs it is refused.
+    expect(defineRegisterType({ key: 'licensed-opticians', title: 'Licensed opticians', kind: 'licence', authority: 'ministry-health', orgKinds: ['other'] }, 'Administrator')).toMatchObject({ error: expect.stringMatching(/permit type/) });
     expect(registerTypes().map(t => t.key)).toContain('licensed-pharmacies');
     expect(defineRegisterType({ key: 'Bad Key', title: 'x', kind: 'licence', authority: 'a', orgKinds: ['pharmacy'] }, 'A')).toHaveProperty('error');
   });

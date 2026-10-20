@@ -13,6 +13,8 @@ import '@/lib/education/procedures';
 import '@/lib/professions/procedures';
 import '@/lib/health/procedures';
 import '@/lib/customs/procedures';
+// The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
+import '@/lib/permits/decisions';
 import { installReferenceProcedures as installCivil } from '@/lib/civil/procedures';
 import { installOrganisationProcedures } from '@/lib/organisations/procedures';
 import { installImmigrationProcedures } from '@/lib/immigration/procedures';

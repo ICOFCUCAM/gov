@@ -30,7 +30,7 @@ export function OrganisationsRegister() {
   const [msg, setMsg] = React.useState<string | null>(null);
   const [loads, setLoads] = React.useState<{ id: string; register: string; by: string; at: string; sha256: string; rows: number; loaded: number; refused: { row: number; reason: string }[]; withdrawn?: { removed: number } }[]>([]);
   const [loadRegister, setLoadRegister] = React.useState('');
-  const [nt, setNt] = React.useState({ key: '', title: '', kind: 'licence', authority: '', orgKinds: 'pharmacy', validityMonths: '' });
+  const [nt, setNt] = React.useState({ key: '', title: '', kind: 'licence', authority: '', orgKinds: 'pharmacy', validityMonths: '', permitType: '' });
 
   const load = React.useCallback(() => {
     const qs = new URLSearchParams(Object.entries(f).filter(([, v]) => v));
@@ -160,6 +160,7 @@ export function OrganisationsRegister() {
             <label className="text-sm">Kept by (responsible authority or institution id)<input className={field} value={nt.authority} onChange={e => setNt(x => ({ ...x, authority: e.target.value }))} /></label>
             <label className="text-sm">Kinds of organisation<input className={field} value={nt.orgKinds} onChange={e => setNt(x => ({ ...x, orgKinds: e.target.value }))} /></label>
             <label className="text-sm">Valid for (months)<input className={field} inputMode="numeric" value={nt.validityMonths} onChange={e => setNt(x => ({ ...x, validityMonths: e.target.value }))} /></label>
+            <label className="text-sm">Permit type governing it (its mapping on Laws → Permit authorities)<input className={field} value={nt.permitType} onChange={e => setNt(x => ({ ...x, permitType: e.target.value }))} placeholder="e.g. pharmacy-licence" /></label>
           </div>
           <Button className="mt-2" variant="secondary" onClick={() => void define()}>Save the register</Button>
         </details>

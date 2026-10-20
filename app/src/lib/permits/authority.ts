@@ -160,7 +160,9 @@ export const listMappings = (permitType?: string): AuthorityMapping[] => db().ma
  * own rule (the register type's authority); `required` makes a missing
  * mapping a refusal (production decisions need one).
  */
-export function powerRefusal(permitType: string, power: 'issue' | 'renew' | 'suspend' | 'revoke', institution: string, resolve: (authority: string) => string | undefined, opts: { on?: string; required?: boolean } = {}): string | null {
+export type Power = 'issue' | 'renew' | 'suspend' | 'revoke';
+
+export function powerRefusal(permitType: string, power: Power, institution: string, resolve: (authority: string) => string | undefined, opts: { on?: string; required?: boolean } = {}): string | null {
   const m = mappingInForce(permitType, opts.on);
   if (!m) return opts.required ? `No approved authority mapping governs ${permitType}: the nation approves one first (Permit authorities)` : null;
   const holder = power === 'issue' ? m.lead : m.powers[power];
@@ -191,6 +193,10 @@ export const PROPOSED_DEFAULTS: { permitType: string; title: string; lead: strin
   { permitType: 'vehicle-registration', title: 'Vehicle registration', lead: '', note: 'Vehicle registration authority; separate registration from driving licences and roadworthiness.' },
   { permitType: 'transport-operator-licence', title: 'Transport operator licence', lead: '', note: 'Transport regulator or designated ministry; local and national routes may differ.' },
   { permitType: 'tax-registration', title: 'Tax registration', lead: 'tax', note: 'A tax account does not itself authorise a business to operate.' },
+  // Liabilities and records whose decisions the platform classifies (lib/permits/decisions.ts).
+  { permitType: 'tax-assessment', title: 'Tax assessment and its variation', lead: 'tax', note: 'Assessments and decisions on objections; the law may give some taxes to another body (local rates, social contributions).' },
+  { permitType: 'customs-clearance', title: 'Customs duty assessment and release of goods', lead: 'customs', note: 'Duty assessment, release and refusal of release; other regulators\' import conditions are referred, not decided here.' },
+  { permitType: 'qualification-record', title: 'Record of qualifications', lead: 'education', note: 'An examinations council or qualifications authority may keep this record instead of the education ministry.' },
 ];
 
 /** Draft the proposed defaults the installation does not have yet (none governs anything until a nation approves its own version). */

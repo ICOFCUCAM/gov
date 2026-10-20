@@ -37,7 +37,37 @@ export interface Actor { id?: string; name: string; scope: (CaseScope & { id?: s
 // ── Effects: domain logic the owning module registers ────────────────────────
 export interface EffectContext { case: Case; package: CasePackage; action: ActionSpec; actor: Actor; now: Date }
 /** What an effect returns: facts the decision fixes, and work to do once the decision is sealed. */
-export interface EffectResult { facts?: Record<string, string | number | boolean>; after?: (decision: SignedDecision | undefined, c: Case) => Promise<void> | void; error?: string }
+export interface EffectResult {
+  facts?: Record<string, string | number | boolean>;
+  /** The operational rule versions the effect calculated with (lib/law/rules.ts), kept on the sealed decision. */
+  rules?: RuleRef[];
+  after?: (decision: SignedDecision | undefined, c: Case) => Promise<void> | void;
+  error?: string;
+}
+/** A rule version a decision calculated with. */
+export interface RuleRef { key: string; version: number; digest: string }
+/** Where the authority for a decision came from, as checked when it was made (kept on the sealed decision). */
+export type DecisionAuthority =
+  | { basis: 'mapping'; permitType: string; power: string; version: number; lead: string; approvedAt?: string }
+  | { basis: 'deployment'; authority: string }
+  | { basis: 'unmapped'; permitType?: string; note: string };
+/**
+ * A check every decision step passes, when proposed and again when it is made
+ * (lib/permits/decisions.ts registers the platform's): an error refuses it;
+ * otherwise it says where the authority came from.
+ */
+export type DecisionGuard = (c: Case, a: ActionSpec, pkg: CasePackage, now: Date) => { error: string } | { authority?: DecisionAuthority };
+const gg = globalThis as unknown as { __caseDecisionGuards?: Map<string, DecisionGuard> };
+export function registerDecisionGuard(name: string, fn: DecisionGuard): void { (gg.__caseDecisionGuards ??= new Map()).set(name, fn); }
+function guardDecision(c: Case, a: ActionSpec, pkg: CasePackage, now: Date): { error: string } | { authority?: DecisionAuthority } {
+  let authority: DecisionAuthority | undefined;
+  for (const g of gg.__caseDecisionGuards?.values() ?? []) {
+    const r = g(c, a, pkg, now);
+    if ('error' in r) return r;
+    authority ??= r.authority;
+  }
+  return authority ? { authority } : {};
+}
 export type Effect = (ctx: EffectContext) => Promise<EffectResult | void> | EffectResult | void;
 const ge = globalThis as unknown as { __caseEffects?: Map<string, Effect> };
 const effectsMap = () => (ge.__caseEffects ??= new Map());
@@ -209,6 +239,10 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   }
   if (a.requires?.citations && !citations.length) return { error: 'Cite the provisions of law this rests on' };
 
+  // A decision is checked against the authority it rests on when proposed and again when made.
+  const guarded = a.decision ? guardDecision(c, a, pkg, now) : {};
+  if ('error' in guarded) return guarded;
+
   // Four-eyes: the first official proposes; a different one confirms.
   if (a.needs.fourEyes && !pending) {
     c.pending = { action: a.key, by: by(actor), at: now.toISOString(), ...(reason ? { reason } : {}), citations, fields, ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}) };
@@ -242,6 +276,8 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
       decision: a.decision, reasons: reason ?? '', citations,
       officials: [{ role: 'decided', name: decidedBy.name, ...(decidedBy.id ? { id: decidedBy.id } : {}) }, ...(confirmedBy ? [{ role: 'confirmed' as const, name: confirmedBy.name, ...(confirmedBy.id ? { id: confirmedBy.id } : {}) }] : [])],
       ...(results.some(r => r.facts) ? { facts: Object.assign({}, ...results.map(r => r.facts ?? {})) } : {}),
+      ...(guarded.authority ? { authority: guarded.authority } : {}),
+      ...(results.some(r => r.rules?.length) ? { rules: results.flatMap(r => r.rules ?? []) } : {}),
       at: now.toISOString(),
     });
     if ('error' in sealed) return sealed;

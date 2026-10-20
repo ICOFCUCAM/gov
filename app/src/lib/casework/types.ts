@@ -59,6 +59,12 @@ export interface CasePackage {
   title: string;
   refPrefix: string;
   citations: Citation[];
+  /**
+   * The permit type whose approved authority mapping governs this procedure's
+   * decisions, for a procedure the platform does not already classify
+   * (lib/permits/decisions.ts). Approved with the procedure by two officials.
+   */
+  authority?: { permitType: string };
   fields: FieldSpec[];
   documents: DocumentSpec[];
   stages: { key: string; label: string; terminal?: boolean }[];
