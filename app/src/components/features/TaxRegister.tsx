@@ -10,7 +10,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
-import { formatMoney } from '@/lib/nation/registry';
+import { formatMoney, nationCurrency } from '@/lib/nation/registry';
 
 interface Account { entries: { at: string; kind: string; amountMinor: number; currency: string; reference: string; reason: string; by: string }[]; balanceMinor: number }
 interface Taxpayer { tin: string; party: { kind: string; id: string; name: string }; taxTypes: string[]; state: string; registeredAt: string; case: string;
@@ -52,7 +52,7 @@ export function TaxRegister() {
         <Section key={t.tin} title={`${t.tin} · ${t.party.name}`} meta={`${t.party.kind} · ${t.state} · ${t.taxTypes.join(', ')}`}>
           {t.taxTypes.map(type => (
             <div key={type} className="mb-3 text-sm">
-              <p><strong>{type}</strong>: balance {money(t.accounts[type]?.balanceMinor ?? 0, t.assessments[0]?.currency ?? 'USD')} (positive is owed)</p>
+              <p><strong>{type}</strong>: balance {money(t.accounts[type]?.balanceMinor ?? 0, t.assessments[0]?.currency ?? nationCurrency())} (positive is owed)</p>
               <ul className="text-xs text-ink-muted">{(t.accounts[type]?.entries ?? []).map((e, i) => <li key={i}>{e.at.slice(0, 10)} · {e.kind} · {money(e.amountMinor, e.currency)} · {e.reference} · {e.reason}</li>)}</ul>
             </div>
           ))}

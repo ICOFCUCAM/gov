@@ -52,6 +52,7 @@
   "/gov/directory",
   "/gov/dispatches",
   "/gov/dispatches/[ref]",
+  "/gov/education",
   "/gov/escalations",
   "/gov/escalations/[id]",
   "/gov/fabric",
