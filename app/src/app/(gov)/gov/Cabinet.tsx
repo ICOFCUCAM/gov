@@ -12,6 +12,7 @@ import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import { identityFor } from '@/lib/archetype-profiles';
 import { NationalBureaucracyPulse } from '@/apps/_shared/InstitutionChain';
+import { ResponsibleAuthorities } from '@/components/features/ResponsibleAuthorities';
 import type {
   CabinetOverview,
   NationalCoordination,
@@ -319,6 +320,8 @@ export function Cabinet() {
           identically.
         </p>
       </Section>
+
+      <ResponsibleAuthorities />
 
       <Section title="Sovereign identity & order of precedence" meta={`${ident.locale} · ${ident.dir.toUpperCase()}`}>
         <div className="grid gap-4 lg:grid-cols-[auto,1fr]">
