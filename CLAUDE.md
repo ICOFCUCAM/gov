@@ -104,6 +104,14 @@ What has been built is locked. Work only upgrades it toward the vision in
   when it is made, and the sealed decision records the mapping and rule
   versions (`authority`, `rules`). A new procedure family joins the
   classification or names `authority.permitType` on its package.
+- Case-governed registers (civil, organisations, professions, tax,
+  education, immigration, customs, health, court hearings) change only in
+  their procedure module's effects; `lib/casework/register-writes.test.ts`
+  fails on any other file importing a changing function (listed exceptions
+  carry their reason) or touching a register's store. Loading an existing
+  organisations register (`lib/organisations/import.ts`) is proposed by one
+  official of the keeping authority and confirmed by a different one who can
+  sign, within the waiting period, under the approved mapping in production.
 - An approved mapping can be suspended in an emergency
   (`suspendMapping()`): no new decision under it; confirmed, reviewed and
   lifted by a different official; periods from the country's policy.

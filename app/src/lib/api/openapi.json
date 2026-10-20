@@ -27218,7 +27218,7 @@
         ],
         "operationId": "get_organisations_loads",
         "summary": "GET /api/organisations/loads",
-        "description": "/api/organisations/loads — loading an existing register into the organisations register (lib/organisations/import.ts). GET: the loads, with their refused rows. POST { op: 'load', register, csv } checks and loads a file; { op: 'withdraw', id } withdraws a load. Officials of the institution that keeps the register type (deployment profile or the type's own institution), or administrators; who loaded comes from the sign-in.",
+        "description": "/api/organisations/loads — loading an existing register into the organisations register (lib/organisations/import.ts). GET: the loads, with their refused rows. POST { op: 'load', register, csv } checks a file and proposes it; { op: 'confirm', id } is a different official confirming it, when its rows enter the register; { op: 'withdraw', id } withdraws a load. Only officials of the institution that keeps the register type (deployment profile or the type's own institution); administrators have no domain authority here (acceptance hardening). Confirming needs \"Can sign\". Who acted comes from the sign-in.",
         "parameters": [],
         "responses": {
           "200": {
@@ -27317,7 +27317,7 @@
         ],
         "operationId": "post_organisations_loads",
         "summary": "POST /api/organisations/loads",
-        "description": "/api/organisations/loads — loading an existing register into the organisations register (lib/organisations/import.ts). GET: the loads, with their refused rows. POST { op: 'load', register, csv } checks and loads a file; { op: 'withdraw', id } withdraws a load. Officials of the institution that keeps the register type (deployment profile or the type's own institution), or administrators; who loaded comes from the sign-in.",
+        "description": "/api/organisations/loads — loading an existing register into the organisations register (lib/organisations/import.ts). GET: the loads, with their refused rows. POST { op: 'load', register, csv } checks a file and proposes it; { op: 'confirm', id } is a different official confirming it, when its rows enter the register; { op: 'withdraw', id } withdraws a load. Only officials of the institution that keeps the register type (deployment profile or the type's own institution); administrators have no domain authority here (acceptance hardening). Confirming needs \"Can sign\". Who acted comes from the sign-in.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -27382,6 +27382,7 @@
                         "id": "ID-0001",
                         "register": "string",
                         "by": "A. Official",
+                        "byId": "ID-0001",
                         "at": "2026-01-15T09:30:00.000Z",
                         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                         "rows": 1,
@@ -27396,6 +27397,23 @@
                           "by": "A. Official",
                           "at": "2026-01-15T09:30:00.000Z",
                           "removed": 1
+                        },
+                        "state": "confirmed",
+                        "expiresAt": "2026-01-15T09:30:00.000Z",
+                        "staged": [
+                          {
+                            "row": 1,
+                            "name": "Example",
+                            "kind": "association",
+                            "state": "applied",
+                            "conditions": []
+                          }
+                        ],
+                        "proposed": 1,
+                        "confirmed": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "independence": "accounts-only"
                         }
                       }
                     }
@@ -27427,6 +27445,7 @@
                         "id": "ID-0001",
                         "register": "string",
                         "by": "A. Official",
+                        "byId": "ID-0001",
                         "at": "2026-01-15T09:30:00.000Z",
                         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                         "rows": 1,
@@ -27441,6 +27460,23 @@
                           "by": "A. Official",
                           "at": "2026-01-15T09:30:00.000Z",
                           "removed": 1
+                        },
+                        "state": "confirmed",
+                        "expiresAt": "2026-01-15T09:30:00.000Z",
+                        "staged": [
+                          {
+                            "row": 1,
+                            "name": "Example",
+                            "kind": "association",
+                            "state": "applied",
+                            "conditions": []
+                          }
+                        ],
+                        "proposed": 1,
+                        "confirmed": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "independence": "accounts-only"
                         }
                       }
                     }
@@ -63912,6 +63948,14 @@
             "type": "number",
             "description": "Extension: the audit chain entry this event was written with."
           },
+          "restoreepoch": {
+            "type": "number",
+            "description": "Extension: how many data restores the platform has had when the event was written. Audit sequences start again from the restored point after a restore, so consumers order and de-duplicate by (restoreepoch, auditseq) and by id, and re-read everything when it grows (docs/DISASTER_RECOVERY.md)."
+          },
+          "voided": {
+            "type": "string",
+            "description": "Set when a restore took away the state this event described: never delivered."
+          },
           "data": {
             "type": "object",
             "properties": {
@@ -73827,6 +73871,9 @@
           "by": {
             "type": "string"
           },
+          "byId": {
+            "type": "string"
+          },
           "at": {
             "type": "string"
           },
@@ -73875,6 +73922,56 @@
               "at",
               "removed"
             ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "lapsed",
+              "proposed",
+              "withdrawn"
+            ],
+            "description": "Absent on loads made before two-official loading: those entered at once (confirmed)."
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "staged": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrgLoadRow"
+            }
+          },
+          "proposed": {
+            "type": "number",
+            "description": "Rows held, as lists show a proposed load."
+          },
+          "confirmed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "independence": {
+                "type": "string",
+                "enum": [
+                  "accounts-only",
+                  "identity-provider",
+                  "unverified"
+                ]
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "independence"
+            ]
           }
         },
         "required": [
@@ -73886,6 +73983,76 @@
           "rows",
           "loaded",
           "refused"
+        ]
+      },
+      "OrgLoadRow": {
+        "description": "A checked row held on a proposed load until a second official confirms it.",
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "association",
+              "clinic",
+              "college",
+              "company",
+              "cooperative",
+              "hospital",
+              "ngo",
+              "other",
+              "partnership",
+              "pharmacy",
+              "professional-practice",
+              "school",
+              "university"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "expired",
+              "granted",
+              "refused",
+              "revoked",
+              "struck-off",
+              "suspended"
+            ]
+          },
+          "region": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "previousNumber": {
+            "type": "string"
+          },
+          "since": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "row",
+          "name",
+          "kind",
+          "state",
+          "conditions"
         ]
       },
       "OrgVersion": {
