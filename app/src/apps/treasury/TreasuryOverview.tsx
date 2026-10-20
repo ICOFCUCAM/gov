@@ -15,7 +15,7 @@ import {
   bankingRails, citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
-import { nationTime, nationTimeZoneLabel, aiLabel } from '@/lib/nation/registry';
+import { nationTime, nationTimeZoneLabel, aiLabel, formatMoney } from '@/lib/nation/registry';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { RegionMap, mapClock, perUnit, skewed, useNationUnits, type MapValue, type RegionGlow } from '@/apps/ministry-interior/domains/RegionMaps';
 
@@ -35,7 +35,8 @@ const MUT = '#5d6f67';
 const SERIF = 'Georgia, "Times New Roman", ui-serif, serif';
 
 const f1 = (n: number) => n.toFixed(1);
-const usd = (bn: number) => `$${bn.toFixed(1)}B`;
+// Billions in the nation's currency (formatMoney), never a hard-coded symbol.
+const usd = (bn: number) => formatMoney(bn * 1e9, { digits: 1 });
 const tc = (t: string) => (t === 'ok' ? EMER : t === 'warn' ? GOLD : RED);
 
 function Spark({ pts, color = EMER, w = 70, h = 20 }: { pts: number[]; color?: string; w?: number; h?: number }) {
@@ -285,14 +286,14 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
     ['10Y Yield', `${f1(wave(`tro:yl:${id}`, ts, 5.8, 7.6))}%`, -0.11],
     ['Stock Index', `${Math.round(wave(`tro:si:${id}`, ts, 3800, 4600))}`, 0.64],
     ['Oil (Brent)', `${f1(wave(`tro:br:${id}`, ts, 70, 95))}`, 1.21],
-    ['Gold', `$${Math.round(wave(`tro:gd:${id}`, ts, 2200, 2600))}`, 0.71],
+    ['Gold (per oz)', `${Math.round(wave(`tro:gd:${id}`, ts, 2200, 2600)).toLocaleString('en')}`, 0.71],
     ['USD / Local', `${(Math.round(wave(`tro:fx:${id}`, ts, 0.97, 1.04) * 100) / 100).toFixed(2)}`, 0.12],
   ] as [string, string, number][];
   const feed = [
     ['11:38', `Treasury received ${usd(taxToday * 0.7)} tax revenue`],
     ['11:37', 'Payroll disbursement completed'],
-    ['11:36', `Customs seizure at North Border ${usd(2.4)}`.replace('B', 'M')],
-    ['11:35', `New procurement approved ${usd(8.7)}`.replace('B', 'M')],
+    ['11:36', `Customs seizure at a border post ${usd(0.0024)}`],
+    ['11:35', `New procurement approved ${usd(0.0087)}`],
     ['11:33', 'Foreign exchange intervention executed'],
   ];
 
@@ -618,7 +619,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
               </div>
             </div>
             <div className="mt-2 grid grid-cols-4 gap-2 border-t pt-2 text-[8px]" style={{ borderColor: LINE }}>
-              {[['Procurement Fraud', `${pc.flaggedContracts} · ${usd(8.7)}`.replace('B', 'M')], ['Public Fund Misuse', `31 · ${usd(3.1)}`.replace('B', 'M')], ['Audit Workspace', `${fa.openFindings} open`], ['Compliance Engine', `${fa.chainIntactPct}%`]].map(([l, v]) => (
+              {[['Procurement Fraud', `${pc.flaggedContracts} · ${usd(0.0087)}`], ['Public Fund Misuse', `31 · ${usd(0.0031)}`], ['Audit Workspace', `${fa.openFindings} open`], ['Compliance Engine', `${fa.chainIntactPct}%`]].map(([l, v]) => (
                 <div key={l} className="rounded-[2px] border px-1.5 py-1" style={{ borderColor: LINE }}>
                   <div className="text-[7px] uppercase tracking-wider" style={{ color: MUT }}>{l}</div>
                   <div className="font-mono text-[10px]" style={{ color: INK }}>{v}</div>

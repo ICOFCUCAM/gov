@@ -28,7 +28,7 @@ const ALERTS = [
   { t: 'ICU capacity critical', sub: regionName(1, 'Northern Region'), lvl: 4 },
   { t: 'Medicine stockout imminent', sub: regionName(5, 'Highland Region'), lvl: 3 },
   { t: 'Flood impact — health facilities', sub: regionName(4, 'Coastal Region'), lvl: 3 },
-  { t: 'Surge in respiratory cases', sub: 'Western Corridor', lvl: 2 },
+  { t: 'Surge in respiratory cases', sub: regionName(3, 'Western Region'), lvl: 2 },
 ];
 
 export function NationalSituationRoom({ id, now, role, withheld }: {

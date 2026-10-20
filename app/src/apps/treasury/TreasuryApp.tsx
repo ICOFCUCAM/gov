@@ -29,6 +29,7 @@ const TREASURY_SHELL_SURFACES: Set<string> = new Set(TREASURY_DOMAINS.map(d => d
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { formatMoney } from '@/lib/nation/registry';
 
 const ACC = '#54d08f';
 const WF: Record<string, WorkKind> = {
@@ -85,9 +86,9 @@ export function TreasuryApp({ instanceId, domain, now, role, withheld }: {
       { l: 'Liquidity Runway', v: `${fc.liquidityDays}d`, t: fc.liquidityDays >= 30 ? 'ok' : fc.liquidityDays >= 14 ? 'warn' : 'alert' },
       { l: 'Debt / GDP', v: `${fc.debtToGdp}%`, t: fc.debtToGdp >= 65 ? 'alert' : fc.debtToGdp >= 50 ? 'warn' : 'ok' },
       { l: 'Primary Balance', v: `${fc.primaryBalancePct}%`, t: fc.primaryBalancePct < 0 ? 'warn' : 'ok' },
-      { l: 'FX Reserves', v: `$${fc.fxReservesBn}B`, t: fc.fxReservesBn >= 30 ? 'ok' : 'warn' },
+      { l: 'FX Reserves', v: formatMoney(fc.fxReservesBn * 1e9, { digits: 1 }), t: fc.fxReservesBn >= 30 ? 'ok' : 'warn' },
       { l: 'Macro Stability', v: `${fc.macroStability}`, t: fc.tone },
-      { l: 'TSA Balance', v: `$${br.tsaBalanceBn}B`, t: br.tsaBalanceBn >= 12 ? 'ok' : 'warn' },
+      { l: 'TSA Balance', v: formatMoney(br.tsaBalanceBn * 1e9, { digits: 1 }), t: br.tsaBalanceBn >= 12 ? 'ok' : 'warn' },
     ];
     bars = { title: 'National liquidity posture', meta: 'emergent → national resilience', rows: [
       { label: 'Macro stability', pct: fc.macroStability, tone: fc.tone, tail: `${fc.macroStability}` },
@@ -101,7 +102,7 @@ export function TreasuryApp({ instanceId, domain, now, role, withheld }: {
       { l: 'Collection Rate', v: `${rv.collectionRatePct}%`, t: rv.collectionRatePct >= 85 ? 'ok' : rv.collectionRatePct >= 72 ? 'warn' : 'alert' },
       { l: 'Customs Throughput', v: `${rv.customsThroughputPct}%`, t: rv.customsThroughputPct >= 80 ? 'ok' : 'warn' },
       { l: 'Taxpayers', v: `${rv.taxpayersM}M`, t: 'ok' },
-      { l: 'Arrears', v: `$${rv.arrearsBn}B`, t: rv.arrearsBn >= 24 ? 'alert' : 'warn' },
+      { l: 'Arrears', v: formatMoney(rv.arrearsBn * 1e9, { digits: 1 }), t: rv.arrearsBn >= 24 ? 'alert' : 'warn' },
       { l: 'Streams', v: `${rv.byStream.length}`, t: 'ok' },
       { l: 'Posture', v: rv.collectionRatePct >= 85 ? 'STRONG' : 'STRAINED', t: rv.collectionRatePct >= 85 ? 'ok' : 'warn' },
     ];

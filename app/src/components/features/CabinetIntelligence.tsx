@@ -24,7 +24,9 @@ import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
 } from '@/lib/api/types';
 
-import { aiLabel } from '@/lib/nation/registry';
+import { aiLabel, formatMoney } from '@/lib/nation/registry';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { CONSOLE_NAV, locate } from '@/lib/nav/console-nav';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
@@ -124,7 +126,7 @@ export function CabinetIntelligence() {
     { l: 'National stability index', v: `${stability}`, sub: `${stability < 50 ? 'Critical' : stability < 70 ? 'Elevated risk' : 'Stable'} / 100`, t: toneFor(100 - stability), spark: 'stab' },
     { l: 'Institutional pressure', v: posture?.label ?? 'STABLE', sub: `+${Math.round(seed(`ip:${epoch}`) * 22)}% vs yesterday`, t: posture?.level ?? 'ok', spark: 'ip' },
     { l: 'Economic resilience', v: `${55 + Math.round(seed(`er:${epoch}`) * 22)}%`, sub: 'Moderate', t: 'warn', spark: 'er' },
-    { l: 'Treasury liquidity', v: `$${(18 + seed(`tl:${epoch}`) * 14).toFixed(1)}B`, sub: `Adequate · ${20 + Math.round(seed(`td:${epoch}`) * 14)}d`, t: 'ok', spark: 'tl' },
+    { l: 'Treasury liquidity', v: formatMoney((18 + seed(`tl:${epoch}`) * 14) * 1e9, { digits: 1 }), sub: `Adequate · ${20 + Math.round(seed(`td:${epoch}`) * 14)}d`, t: 'ok', spark: 'tl' },
     { l: 'Energy stability', v: `${Math.max(1, 100 - pressOf('ENERGY'))}%`, sub: pressOf('ENERGY') >= 60 ? 'Stressed' : 'Stable', t: toneFor(pressOf('ENERGY')), spark: 'en' },
     { l: 'Healthcare capacity', v: `${Math.max(1, 100 - pressOf('HEALTH'))}%`, sub: pressOf('HEALTH') >= 55 ? 'Stressed' : 'Stable', t: toneFor(pressOf('HEALTH')), spark: 'hc' },
     { l: 'Civil stability', v: `${Math.max(1, 100 - Math.round(nationalRisk * 0.9))}%`, sub: 'Stable', t: toneFor(nationalRisk), spark: 'cs' },
@@ -180,14 +182,14 @@ export function CabinetIntelligence() {
     { l: 'Public satisfaction', v: 72, d: -2, tgt: 70 },
   ];
   const fiscal = [
-    { l: 'Revenue', v: `$${(100 + seed(`fr:${epoch}`) * 22).toFixed(1)}B`, d: '+4.2%', t: 'ok' },
-    { l: 'Expenditure', v: `$${(100 + seed(`fe:${epoch}`) * 16).toFixed(1)}B`, d: '+3.1%', t: 'warn' },
-    { l: 'Deficit', v: `-$${(1 + seed(`fd:${epoch}`) * 5).toFixed(1)}B`, d: '-12.4%', t: 'alert' },
+    { l: 'Revenue', v: formatMoney((100 + seed(`fr:${epoch}`) * 22) * 1e9, { digits: 1 }), d: '+4.2%', t: 'ok' },
+    { l: 'Expenditure', v: formatMoney((100 + seed(`fe:${epoch}`) * 16) * 1e9, { digits: 1 }), d: '+3.1%', t: 'warn' },
+    { l: 'Deficit', v: formatMoney(-(1 + seed(`fd:${epoch}`) * 5) * 1e9, { digits: 1 }), d: '-12.4%', t: 'alert' },
     { l: 'Debt to GDP', v: `${(38 + seed(`fg:${epoch}`) * 12).toFixed(1)}%`, d: '-0.6%', t: 'neutral' },
     { l: 'Primary balance', v: `${(seed(`fp:${epoch}`) * 2 - 1).toFixed(1)}%`, d: '+0.3%', t: 'warn' },
     { l: 'Reserve runway', v: `${24 + Math.round(seed(`fv:${epoch}`) * 16)}d`, d: '−2d', t: 'warn' },
-    { l: 'Debt service', v: `$${(2 + seed(`fs:${epoch}`) * 3).toFixed(1)}B`, d: '+1.1%', t: 'warn' },
-    { l: 'FX reserves', v: `$${(30 + seed(`fx:${epoch}`) * 18).toFixed(1)}B`, d: '+0.4%', t: 'ok' },
+    { l: 'Debt service', v: formatMoney((2 + seed(`fs:${epoch}`) * 3) * 1e9, { digits: 1 }), d: '+1.1%', t: 'warn' },
+    { l: 'FX reserves', v: formatMoney((30 + seed(`fx:${epoch}`) * 18) * 1e9, { digits: 1 }), d: '+0.4%', t: 'ok' },
   ];
   const geo = [
     { l: 'Border tension — North', s: 'Medium', t: 'warn', idx: 52 + Math.round(seed(`g1:${epoch}`) * 20), inst: 'Interior', rec: 'Sustain frontier patrols' },
@@ -373,7 +375,7 @@ export function CabinetIntelligence() {
             {instr.map(t => (
               <div key={t.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5"
                 style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</div>
+                <div className="flex items-center justify-between gap-1"><span className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</span><SignalTag kind="sample" source={REFERENCE_MODEL} /></div>
                 <div className="font-mono text-[15px] leading-tight tabular-nums" style={{ color: t.t ? TONE[t.t] : 'rgb(var(--c-ink))' }}><LiveValue raw={t.v} /></div>
                 <div className="mt-1 opacity-80"><Spark pts={sparkPts(t.spark)} tone={t.t ?? 'ok'} /></div>
                 <div className="truncate text-[8px] text-ink-muted">{t.sub}</div>

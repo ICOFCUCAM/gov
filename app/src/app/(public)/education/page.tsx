@@ -3,7 +3,10 @@
 
 import Link from 'next/link';
 import { PublicSite } from '@/apps/_shared/public/PublicSite';
-import { siteRequest } from '@/apps/_shared/public/site-props';
+import { siteProps, siteRequest } from '@/apps/_shared/public/site-props';
+import { SampleChip } from '@/apps/_shared/public/PublicSiteShell';
+import { siteMessages } from '@/lib/nation/registry';
+import { t as fill } from '@/lib/i18n';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 import { accessibleTheme } from '@/apps/_shared/public/design/contrast';
 import { educationPublicInstitutions } from '@/lib/gov/education-public-institutions';
@@ -17,24 +20,33 @@ const THEME = accessibleTheme({
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 });
 
+const ART = <HeroIllustration kind="lecture" primary={THEME.primary} accent={THEME.accent} aria="Lecture hall" />;
+
 export default async function PublicEducationPage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
   const searchParams = await props.searchParams;
   const institutions = educationPublicInstitutions();
   const totalSites = institutions.reduce((s, b) => s + b.publicSites, 0);
+  // The branch and site counts come from the reference generator, not from
+  // the ministry's records: they carry the Sample marker, as /health and
+  // /treasury mark theirs.
+  const request = await siteRequest();
+  const msg = siteMessages(request.locale);
+  const sampleNote = fill(msg.sampleNote, { name: siteProps('education', { theme: THEME, illustration: ART, request, preview: searchParams?.preview }).institution.name });
 
   return (
-    <PublicSite id="education" request={await siteRequest()} theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
+    <PublicSite id="education" request={request} theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       live={{ totalSites: totalSites.toLocaleString('en-US') }}
-      illustration={<HeroIllustration kind="lecture" primary={THEME.primary} accent={THEME.accent} aria="Lecture hall" />}
+      illustration={ART}
       extra={<>
       {/* Education sub-branch public-website index — a unique feature of the Education portal. */}
       <section className="border-t" style={{ background: THEME.surface, borderColor: THEME.line }}>
         <div className="mx-auto max-w-[1280px] px-6 py-12">
           <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="text-[24px] font-bold" style={{ color: THEME.ink, fontFamily: 'Georgia, ui-serif, serif' }}>Public Websites by Branch</h2>
-            <div className="text-[13px] text-slate-600">
-              <span className="font-bold tabular-nums" style={{ color: THEME.primary }}>{institutions.length}</span> branches ·{' '}
-              <span className="font-bold tabular-nums" style={{ color: THEME.primary }}>{totalSites.toLocaleString()}</span> independent public sites
+            <div className="flex flex-wrap items-center gap-2 text-[13px] text-slate-600">
+              <SampleChip label={msg.sampleFigures} note={sampleNote} />
+              <span><span className="font-bold tabular-nums" style={{ color: THEME.primary }}>{institutions.length}</span> branches ·</span>
+              <span><span className="font-bold tabular-nums" style={{ color: THEME.primary }}>{totalSites.toLocaleString()}</span> independent public sites</span>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
