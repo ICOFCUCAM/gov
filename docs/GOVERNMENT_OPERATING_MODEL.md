@@ -621,8 +621,10 @@ and OpenAPI updates:
 11. The nine-step proof (§12).
 12. Substrate mirror of cases; browser queue reading cases (§2.2).
 
-Status (2026-10-20): steps 1 to 11 are built and tested (the proof is
-`app/src/lib/proof/birth-registration.test.ts`); step 12 is open. What each
+Status (2026-10-20): steps 1 to 12 are built and tested (the proof is
+`app/src/lib/proof/birth-registration.test.ts`; step 12 put cases in My work
+and mirrors their progress to the substrate, `civicos.case_mirror`, rather
+than into the citizen runtime's `work_items`, which keep one owner). What each
 step built and what connecting it for real takes: `docs/INTEGRATION_REGISTER.md`
 §18 (and 1.5, 6.5).
 
