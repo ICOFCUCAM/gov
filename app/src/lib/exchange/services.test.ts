@@ -21,7 +21,7 @@ describe('exchange services', () => {
   });
 
   it('lists every service with its owner, scope and the fields it returns', () => {
-    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['organisation.standing', 'query', 'service:organisation.standing'], ['taxpayer.status', 'query', 'service:taxpayer.status'], ['qualification.verify', 'query', 'service:qualification.verify'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
+    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['organisation.standing', 'query', 'service:organisation.standing'], ['taxpayer.status', 'query', 'service:taxpayer.status'], ['qualification.verify', 'query', 'service:qualification.verify'], ['professional.standing', 'query', 'service:professional.standing'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
   });
 });
 
@@ -76,5 +76,16 @@ describe('qualification.verify', () => {
     expect(JSON.stringify(r)).not.toContain('BR-2001');
     expect((await callService(who, 'qualification.verify', { number: a.number, holderName: 'Someone Else' }, 'Check')).data).toEqual({ valid: 'no' });
     expect((await callService(who, 'qualification.verify', { number: 'QUA-0000-000000', holderName: 'Kofi Mensah' }, 'Check')).data).toEqual({ valid: 'no' });
+  });
+});
+
+describe('professional.standing', () => {
+  it('answers from the public register only', async () => {
+    const { resetProfessions, registerProfessional } = await import('@/lib/professions/register');
+    resetProfessions();
+    const e = registerProfessional({ profession: 'pharmacist', personRef: 'BR-1985-000002', name: 'Ama Owusu' }, 'c', 'Registrar') as { number: string };
+    const r = await callService({ kind: 'integration', id: 'hospital-hr', name: 'Teaching hospital' }, 'professional.standing', { number: e.number }, 'Employment check');
+    expect(r.data).toEqual({ registered: 'yes', profession: 'Pharmacists', state: 'registered', conditions: [] });
+    expect(JSON.stringify(r)).not.toContain('BR-1985');
   });
 });

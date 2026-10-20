@@ -16,6 +16,7 @@ import { statusOn } from '@/lib/immigration/register';
 import { getOrganisation, publicOrganisation } from '@/lib/organisations/register';
 import { getTaxpayer, findTaxpayers } from '@/lib/tax/register';
 import { verifyAward } from '@/lib/education/register';
+import { getProfessional, publicProfessional } from '@/lib/professions/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
 export interface Caller { kind: 'module' | 'integration'; id: string; name: string; institution?: string }
@@ -85,6 +86,17 @@ export const SERVICES: ServiceDef[] = [
       if (!v.valid) return { status: 200, result: 'not valid', data: { valid: 'no' } };
       const { valid: _valid, ...rest } = v;
       return { status: 200, result: 'valid', data: { valid: 'yes', ...rest } };
+    },
+  },
+  {
+    id: 'professional.standing', version: 1, kind: 'query', title: 'Is this person registered in a regulated profession, and in what standing?', owner: 'professionalRegulation', scope: 'service:professional.standing',
+    returns: { registered: 'yes or no', profession: 'the profession', state: 'registered, suspended, revoked or lapsed', validUntil: 'YYYY-MM-DD', conditions: 'conditions on practice' }, dataClass: 'public',
+    legalBasis: 'The public register of the profession (the regulator names the law when it approves the service for a caller)',
+    handle: input => {
+      const e = getProfessional(str(input.number));
+      if (!e) return { status: 200, result: 'not registered', data: { registered: 'no' } };
+      const p = publicProfessional(e);
+      return { status: 200, result: p.state, data: { registered: p.state === 'registered' ? 'yes' : 'no', profession: p.professionTitle, state: p.state, ...(p.validUntil ? { validUntil: p.validUntil } : {}), conditions: p.conditions } };
     },
   },
   {
