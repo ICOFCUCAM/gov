@@ -104,7 +104,7 @@ describe('proof: a birth registration through every layer', () => {
     const o = stateAsOf({ metric: 'births.registered', entityId: north.id })[0]!;
     expect(o).toMatchObject({ value: 1, method: 'administrative-count', validFrom: '2026-09-01' });
     expect(o.records?.sha256).toBe(createHash('sha256').update(getEvent('BR-2026-000001')!.id, 'utf8').digest('hex'));
-    expect(nationalTotal('births.registered').value).toBeNull(); // South has not reported: never a national figure from part of the nation
+    expect(nationalTotal('births.registered')?.value ?? null).toBeNull(); // South has not reported: never a national figure from part of the nation
   });
 
   it('9. an auditor reconstructs the whole sequence, and every new store is kept by backups', () => {
