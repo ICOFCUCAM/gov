@@ -35427,6 +35427,9 @@
                         "authority": "string",
                         "permitType": "string",
                         "publicCheck": true,
+                        "publicFields": [
+                          "conditions"
+                        ],
                         "reference": true,
                         "createdBy": "A. Official",
                         "createdAt": "2026-01-15T09:30:00.000Z"
@@ -38391,8 +38394,24 @@
         ],
         "operationId": "get_registers_professionals",
         "summary": "GET /api/registers/professionals",
-        "description": "GET /api/registers/professionals?q= — anyone's check: is this person on a public register of a regulated profession, and in what standing? Full name (five letters or more) or registration number; at most 20 answers with name, profession, number, standing, validity and conditions only, never the person reference, qualifications or history (lib/professions/register.ts).",
+        "description": "GET /api/registers/professionals?name=&number= — anyone's check of one person: is this person on a public register of a regulated profession, and in what standing? The full name (five letters or more) is required; the registration number only narrows it, so the register cannot be read number by number. At most 20 answers, with the fields the profession's disclosure profile makes public (lib/professions/register.ts). Rate-limited per caller, and harvesting patterns are flagged (lib/professions/watch.ts). Bulk verification is the authorised exchange service professional.standing.",
         "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "q",
             "in": "query",
@@ -38410,6 +38429,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "note": {
+                      "type": "string"
+                    },
                     "professions": {
                       "type": "array",
                       "items": {
@@ -38444,6 +38466,7 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "note": "Text",
                       "professions": [
                         {
                           "key": "string",
@@ -38452,14 +38475,10 @@
                       ],
                       "results": [
                         {
-                          "number": "string",
                           "name": "Example",
                           "profession": "string",
                           "professionTitle": "string",
-                          "state": "lapsed",
-                          "conditions": [
-                            "string"
-                          ]
+                          "state": "lapsed"
                         }
                       ]
                     }
@@ -75472,6 +75491,21 @@
             "type": "boolean",
             "description": "Anyone may check a professional's standing in it."
           },
+          "publicFields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "conditions",
+                "name",
+                "number",
+                "profession",
+                "state",
+                "validUntil"
+              ]
+            },
+            "description": "What the public check shows (the country's disclosure profile). By default name, number, profession, standing and validity; conditions (which can reveal a disciplinary history) only when the country's law makes them public. The person reference and qualifications never."
+          },
           "reference": {
             "type": "boolean"
           },
@@ -76505,12 +76539,10 @@
           }
         },
         "required": [
-          "number",
           "name",
           "profession",
           "professionTitle",
-          "state",
-          "conditions"
+          "state"
         ]
       },
       "PublisherKey": {

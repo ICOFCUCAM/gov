@@ -182,6 +182,7 @@ export interface Messages {
     professionalsIntro: string;
     professionalsQuery: string;
     professionalsNoMatch: string;
+    professionalsNumber: string;
     lawsInForceFrom: string;
     lawsCeased: string;
     verifyTitle: string;
@@ -889,7 +890,8 @@ export const en: Messages = {
     registersStates: { 'registered': "Registered", 'lapsed': "Lapsed", 'granted': "In good standing", 'suspended': "Suspended", 'revoked': "Revoked", 'expired': "Expired", 'struck-off': "Struck off" },
     professionalsTitle: 'Registered health professionals',
     professionalsIntro: 'Check whether a doctor, nurse, midwife, pharmacist or other regulated professional is registered, and in what standing.',
-    professionalsQuery: 'Full name or registration number',
+    professionalsQuery: 'Full name',
+    professionalsNumber: 'Registration number (optional)',
     professionalsNoMatch: 'Nobody on these registers matches.',
     lawsInForceFrom: 'In force from {date}',
     lawsCeased: 'Ceased {date}',

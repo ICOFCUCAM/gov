@@ -17,7 +17,7 @@ import { POLICIES, take, tooMany, clientAddress, type Scope } from './rate-limit
 export { POLICIES, take, resetRateLimits, type Policy, type Scope } from './rate-limit-core';
 
 /** The caller: the signed-in official's account, else the client address. */
-async function callerOf(req: NextRequest): Promise<string> {
+export async function callerOf(req: NextRequest): Promise<string> {
   const o = await currentOfficial().catch(() => null);
   if (o) return `o:${(o as { sub?: string; id?: string; name?: string }).sub ?? (o as { id?: string }).id ?? (o as { name?: string }).name}`;
   return `a:${clientAddress(req.headers)}`;

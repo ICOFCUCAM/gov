@@ -22,6 +22,8 @@ export const POLICIES = {
   publicRead: { perMinute: 120, burst: 40 },
   /** Connected systems and federation partners, per address before the key is known and per key after (review M-4). */
   feed: { perMinute: 120, burst: 60 },
+  /** Public checks of a person on a register (regulated professionals): one person at a time, never a harvest. */
+  registerCheck: { perMinute: 20, burst: 10 },
   /** Sign-in and reset-code attempts per address (review M-9); the lockout per account stays in lib/auth/officials.ts. */
   signin: { perMinute: 10, burst: 10 },
 } satisfies Record<string, Policy>;

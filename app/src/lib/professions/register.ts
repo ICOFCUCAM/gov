@@ -34,10 +34,21 @@ export interface Profession {
   permitType: string;
   /** Anyone may check a professional's standing in it. */
   publicCheck: boolean;
+  /**
+   * What the public check shows (the country's disclosure profile). By
+   * default name, number, profession, standing and validity; conditions
+   * (which can reveal a disciplinary history) only when the country's law
+   * makes them public. The person reference and qualifications never.
+   */
+  publicFields?: PublicField[];
   reference: boolean;
   createdBy: string;
   createdAt: string;
 }
+
+export const PUBLIC_FIELDS = ['name', 'number', 'profession', 'state', 'validUntil', 'conditions'] as const;
+export type PublicField = typeof PUBLIC_FIELDS[number];
+export const DEFAULT_PUBLIC_FIELDS: PublicField[] = ['name', 'number', 'profession', 'state', 'validUntil'];
 
 export type ProfessionalState = 'registered' | 'suspended' | 'revoked' | 'lapsed';
 
@@ -97,7 +108,9 @@ export function defineProfession(input: Partial<Profession>, by: string, now = n
   const authority = String(input.authority ?? '').trim().slice(0, 80);
   if (!authority) return { error: 'Name the authority that keeps its register' };
   const permitType = KEY.test(String(input.permitType ?? '')) ? String(input.permitType) : 'health-professional-licence';
-  const p: Profession = { key, title, authority, permitType, publicCheck: input.publicCheck !== false, reference: false, createdBy: by, createdAt: now.toISOString() };
+  const fields = Array.isArray(input.publicFields) ? input.publicFields.filter((f): f is PublicField => (PUBLIC_FIELDS as readonly string[]).includes(f)) : DEFAULT_PUBLIC_FIELDS;
+  if (!fields.includes('name') || !fields.includes('state')) return { error: 'The public check shows at least the name and the standing' };
+  const p: Profession = { key, title, authority, permitType, publicCheck: input.publicCheck !== false, publicFields: [...new Set(fields)], reference: false, createdBy: by, createdAt: now.toISOString() };
   const d = db();
   d.professions = [...d.professions.filter(x => x.key !== key), p];
   recordAudit(by, 'profession.define', `Profession:${key}`, 'ok', `${title} · kept by ${authority}`);
@@ -187,20 +200,31 @@ export function listProfessionals(f: { profession?: string; state?: Professional
   return db().people.filter(e => (!f.profession || e.profession === f.profession) && (!f.state || e.state === f.state) && (!f.personRef || e.personRef === f.personRef)).slice(-(f.limit ?? 200)).map(clone);
 }
 
-export interface PublicProfessional { number: string; name: string; profession: string; professionTitle: string; state: ProfessionalState; validUntil?: string; conditions: string[] }
-/** What anyone may see: never the person reference, the qualifications or the history. */
+export interface PublicProfessional { number?: string; name: string; profession: string; professionTitle: string; state: ProfessionalState; validUntil?: string; conditions?: string[] }
+/** What anyone may see, as the profession's disclosure profile says: never the person reference, the qualifications or the history. */
 export function publicProfessional(e: Professional): PublicProfessional {
-  return { number: e.number, name: e.name, profession: e.profession, professionTitle: profession(e.profession)?.title ?? e.profession, state: e.state, ...(e.validUntil ? { validUntil: e.validUntil } : {}), conditions: [...e.conditions] };
+  const p = profession(e.profession);
+  const show = new Set(p?.publicFields ?? DEFAULT_PUBLIC_FIELDS);
+  return {
+    name: e.name, profession: e.profession, professionTitle: p?.title ?? e.profession, state: e.state,
+    ...(show.has('number') ? { number: e.number } : {}),
+    ...(show.has('validUntil') && e.validUntil ? { validUntil: e.validUntil } : {}),
+    ...(show.has('conditions') ? { conditions: [...e.conditions] } : {}),
+  };
 }
 
-/** The public check: by registration number, or by full name (at least 5 letters), in professions open to checking. */
-export function checkProfessional(q: string): PublicProfessional[] {
-  const s = q.trim();
-  if (!s) return [];
+/**
+ * The public check of one person: by full name (five letters or more),
+ * optionally narrowed by the registration number. A number alone answers
+ * nothing, so the register cannot be read number by number; at most 20
+ * answers, in professions open to checking.
+ */
+export function checkProfessional(input: { name?: string; number?: string } | string): PublicProfessional[] {
+  const q = typeof input === 'string' ? { name: input } : input;
+  const name = (q.name ?? '').trim(), number = (q.number ?? '').trim();
+  if (name.replace(/\s/g, '').length < 5) return [];
   const open = new Set(professions().filter(p => p.publicCheck).map(p => p.key));
-  const byNumber = db().people.filter(e => e.number === s);
-  const found = byNumber.length ? byNumber : s.replace(/\s/g, '').length >= 5 ? db().people.filter(e => sameName(e.name, s)) : [];
-  return found.filter(e => open.has(e.profession)).slice(0, 20).map(publicProfessional);
+  return db().people.filter(e => open.has(e.profession) && sameName(e.name, name) && (!number || e.number === number)).slice(0, 20).map(publicProfessional);
 }
 
 export function professionCounts(): Record<string, Record<ProfessionalState, number>> {
