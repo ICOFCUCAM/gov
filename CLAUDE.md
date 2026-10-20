@@ -144,6 +144,20 @@ What has been built is locked. Work only upgrades it toward the vision in
   (`confirmByOversight()`). Unusual access is raised by
   `lib/records/access-watch.ts`; a finding is a prompt, never a conclusion.
 
+## Constitutional architecture
+
+- Branches, institutions, offices, powers and the relationships between them
+  follow `docs/CONSTITUTIONAL_ARCHITECTURE.md` (external guidance kept verbatim;
+  binding). How it applies to the code, phase by phase:
+  `docs/CONSTITUTIONAL_ARCHITECTURE_PLAN.md`; the code as audited:
+  `docs/reviews/2026-10-separation-of-powers-audit.md`. CivicOS enforces the
+  nation's configuration and never invents, transfers or assumes authority:
+  no institution is a child of a universal executive administrator, a seniority
+  or a role never grants a power its institution lacks, independence is
+  recorded per dimension (decisions, appointment, dismissal, funding,
+  instructions), and constitution-dependent powers ship as slots or unapproved
+  drafts until the nation's legal process approves them.
+
 ## Entry flow
 
 - `/` is the cover page, Plaza (`app/src/components/features/cover/CoverPlaza.tsx`):
