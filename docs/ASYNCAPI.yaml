@@ -78,6 +78,16 @@ channels:
       siteContent: { $ref: '#/components/messages/siteContent' }
       federation: { $ref: '#/components/messages/federation' }
       update: { $ref: '#/components/messages/update' }
+  government:
+    address: /
+    description: The government's own work (docs/GOVERNMENT_OPERATING_MODEL.md) - cases under approved procedures (app/src/lib/casework/), the civil register (app/src/lib/civil/), approved procedures, confirmed or withdrawn law versions (app/src/lib/law/), certificates issued or revoked and sealed decision records (app/src/lib/records/). Events carry the audit entry only; personal data stays in the register and is read through its API under its own rules.
+    messages:
+      caseChange: { $ref: '#/components/messages/caseChange' }
+      civilRegistration: { $ref: '#/components/messages/civilRegistration' }
+      procedureApprove: { $ref: '#/components/messages/procedureApprove' }
+      lawVersion: { $ref: '#/components/messages/lawVersion' }
+      certificate: { $ref: '#/components/messages/certificate' }
+      decisionSeal: { $ref: '#/components/messages/decisionSeal' }
   registers:
     address: /
     description: Changes to the registers services/civic-api mirrors (review D8) - institutions, payments, integrations, webhooks, grants proposed, releases, deployments, backups, configuration and the tenant's lifecycle. Its follower subscribes to `*` and reads the changed register from GET /api/platform/mirror.
@@ -100,6 +110,9 @@ operations:
   receiveOperations:
     action: receive
     channel: { $ref: '#/channels/operations' }
+  receiveGovernment:
+    action: receive
+    channel: { $ref: '#/channels/government' }
   receiveRegisters:
     action: receive
     channel: { $ref: '#/channels/registers' }
@@ -232,6 +245,36 @@ components:
     update:
       name: org.civicos.update.*
       summary: update.publish, update.fallback, update.probation.pass, update.probation.fail, update.staging.install (Update Center).
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    caseChange:
+      name: org.civicos.case.*
+      summary: case.open, case.stage, case.decide, case.refer, case.deadline.lapse (cases under approved procedures). The subject is the case number; the case itself is read through /api/cases/{id} under the case rules.
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    civilRegistration:
+      name: org.civicos.civil.*.register
+      summary: civil.birth.register, civil.death.register, civil.marriage.register (entries in the civil register). No names or identifiers are carried.
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    procedureApprove:
+      name: org.civicos.procedure.approve
+      title: A procedure package was approved by a second official and is in force
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    lawVersion:
+      name: org.civicos.law.version.*
+      summary: law.version.confirm, law.version.withdraw (the laws register).
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    certificate:
+      name: org.civicos.certificate.*
+      summary: certificate.issue, certificate.revoke (checkable at /verify/{code}).
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    decisionSeal:
+      name: org.civicos.decision.seal
+      title: A decision record was sealed with the decision key
       traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
       payload: { $ref: '#/components/schemas/CloudEvent' }
     registerChange:
