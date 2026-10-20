@@ -92,7 +92,7 @@ optional: the pod does not start until the Secret holds them.
 | Value | Default | |
 |---|---|---|
 | `app.keys.provider` | `env` | `env`, `vault` (Vault / OpenBao Transit) or `kms-http` (KMS shim); sets `CIVICOS_KEY_PROVIDER` |
-| `app.keys.existingSecret` | `civicos-app-keys` | `env`: required, keys `CIVICOS_DATA_KEK` (32 bytes, base64 or hex), `CIVICOS_AUDIT_KEY`, `CIVICOS_EXCHANGE_KEY`, `CIVICOS_TOKEN_KEY` (Ed25519 PEM), optional `CIVICOS_DATA_KEK_PREVIOUS` during a rotation. Remote providers: optional, only `CIVICOS_DATA_KEK` / `_PREVIOUS` so values sealed before the move still open |
+| `app.keys.existingSecret` | `civicos-app-keys` | `env`: required, keys `CIVICOS_DATA_KEK` (32 bytes, base64 or hex), `CIVICOS_AUDIT_KEY`, `CIVICOS_EXCHANGE_KEY`, `CIVICOS_TOKEN_KEY` (Ed25519 PEM), `CIVICOS_DECISION_KEY` (Ed25519 PEM; optional for Secrets made before it, but certificates verify across pods only with it), optional `CIVICOS_DATA_KEK_PREVIOUS` during a rotation. Remote providers: optional, only `CIVICOS_DATA_KEK` / `_PREVIOUS` so values sealed before the move still open |
 | `app.keys.allowDevelopmentKeys` | `false` | with an empty `existingSecret`; refused under `enforce` |
 | `app.keys.vault.addr` | `""` | required for `vault` (`CIVICOS_VAULT_ADDR`, https) |
 | `app.keys.vault.auth` | `token` | `token` (`CIVICOS_VAULT_TOKEN`) or `approle` (`CIVICOS_VAULT_ROLE_ID`, `CIVICOS_VAULT_SECRET_ID`) |
@@ -111,12 +111,13 @@ Other secrets, all from `app.existingSecret`: `CIVICOS_SESSION_SECRET` and
 `security.egress.extra` when egress is narrowed.
 
 ```bash
-openssl genpkey -algorithm ed25519 -out audit.pem   # likewise exchange.pem, token.pem
+openssl genpkey -algorithm ed25519 -out audit.pem   # likewise exchange.pem, token.pem, decision.pem
 kubectl -n civicos create secret generic civicos-app-keys \
   --from-literal=CIVICOS_DATA_KEK="$(openssl rand -base64 32)" \
   --from-file=CIVICOS_AUDIT_KEY=audit.pem \
   --from-file=CIVICOS_EXCHANGE_KEY=exchange.pem \
-  --from-file=CIVICOS_TOKEN_KEY=token.pem
+  --from-file=CIVICOS_TOKEN_KEY=token.pem \
+  --from-file=CIVICOS_DECISION_KEY=decision.pem
 ```
 
 ### civic-api

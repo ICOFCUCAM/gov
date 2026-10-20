@@ -56,12 +56,13 @@ kubectl -n civicos create secret generic civicos-app \
   --from-literal=NEXT_PUBLIC_SUPABASE_URL='https://…' \
   --from-literal=NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='…' \
   --from-literal=SUPABASE_SERVICE_ROLE_KEY='…'          # the nation's substrate
-openssl genpkey -algorithm ed25519 -out audit.pem      # likewise exchange.pem, token.pem
+openssl genpkey -algorithm ed25519 -out audit.pem      # likewise exchange.pem, token.pem, decision.pem
 kubectl -n civicos create secret generic civicos-app-keys \
   --from-literal=CIVICOS_DATA_KEK="$(openssl rand -base64 32)" \
   --from-file=CIVICOS_AUDIT_KEY=audit.pem \
   --from-file=CIVICOS_EXCHANGE_KEY=exchange.pem \
-  --from-file=CIVICOS_TOKEN_KEY=token.pem              # or app.keys.provider vault / kms-http
+  --from-file=CIVICOS_TOKEN_KEY=token.pem \
+  --from-file=CIVICOS_DECISION_KEY=decision.pem        # or app.keys.provider vault / kms-http
 helm -n civicos upgrade --install civicos infra/helm/civicos \
   -f infra/helm/profiles/mid-city.yaml
 ```

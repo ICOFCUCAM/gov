@@ -164,7 +164,7 @@ spec:
             - name: SUPABASE_SERVICE_ROLE_KEY
               valueFrom:
                 secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: SUPABASE_SERVICE_ROLE_KEY, optional: true }
-            {{- range list "CIVICOS_METRICS_TOKEN" "CIVICOS_OTEL_HEADERS" "CIVICOS_TSA_AUTH" "CIVICOS_AI_API_KEY" }}
+            {{- range list "CIVICOS_METRICS_TOKEN" "CIVICOS_OTEL_HEADERS" "CIVICOS_TSA_AUTH" "CIVICOS_AI_API_KEY" "CIVICOS_CITIZEN_OIDC_SECRET" }}
             - name: {{ . }}
               valueFrom:
                 secretKeyRef: { name: {{ $.Values.app.existingSecret }}, key: {{ . }}, optional: true }
@@ -182,6 +182,12 @@ spec:
                 secretKeyRef: { name: {{ $keys.existingSecret }}, key: {{ . }}{{ if not $need }}, optional: true{{ end }} }
             {{- end }}
             {{- end }}
+            # Seals decision records and certificates (lib/records/decisions.ts);
+            # optional so a Secret made before it still starts, but without it
+            # each pod makes its own and certificates do not verify across pods.
+            - name: CIVICOS_DECISION_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ $keys.existingSecret }}, key: CIVICOS_DECISION_KEY, optional: true }
             - name: CIVICOS_DATA_KEK_PREVIOUS
               valueFrom:
                 secretKeyRef: { name: {{ $keys.existingSecret }}, key: CIVICOS_DATA_KEK_PREVIOUS, optional: true }

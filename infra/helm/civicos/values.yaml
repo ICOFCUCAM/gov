@@ -91,8 +91,8 @@ app:
     provider: env
     # provider env: a Secret with CIVICOS_DATA_KEK (32 bytes, base64 or hex;
     # e.g. `openssl rand -base64 32`), CIVICOS_AUDIT_KEY, CIVICOS_EXCHANGE_KEY
-    # and CIVICOS_TOKEN_KEY (Ed25519 private keys, PEM; `openssl genpkey
-    # -algorithm ed25519`), optionally CIVICOS_DATA_KEK_PREVIOUS during a
+    # CIVICOS_TOKEN_KEY and CIVICOS_DECISION_KEY (Ed25519 private keys, PEM;
+    # `openssl genpkey -algorithm ed25519`), optionally CIVICOS_DATA_KEK_PREVIOUS during a
     # rotation. With a remote provider the same Secret may still hold
     # CIVICOS_DATA_KEK / _PREVIOUS so values sealed before the move open.
     existingSecret: civicos-app-keys
