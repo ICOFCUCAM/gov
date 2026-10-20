@@ -167,6 +167,12 @@ export function powerRefusal(permitType: string, power: 'issue' | 'renew' | 'sus
   return resolve(holder) === institution ? null : `${m.title}: ${power === 'issue' ? 'issuing' : `the power to ${power}`} belongs to ${holder} under the approved mapping (version ${m.version})`;
 }
 
+/** The permit types of the earlier permit workflow (lib/data/store/permits.ts) and the mapping key each is governed by. */
+export const LEGACY_PERMIT_TYPES: Record<string, string> = {
+  building: 'building-permit', business: 'trading-licence', 'market-stall': 'market-stall-permit',
+  event: 'event-permit', vehicle: 'vehicle-registration', 'food-handling': 'food-handling-permit',
+};
+
 /** Defaults CivicOS proposes (owner's Cycle 3 directive): drafts, no legal basis, never in force until the nation approves its own version. */
 export const PROPOSED_DEFAULTS: { permitType: string; title: string; lead: string; note: string; consulted?: { authority: string; role: string; mandatory: boolean }[] }[] = [
   { permitType: 'business-registration', title: 'Business registration', lead: 'businessRegister', note: 'Separate company incorporation from sector-specific operating licences.' },
