@@ -621,6 +621,11 @@ and OpenAPI updates:
 11. The nine-step proof (§12).
 12. Substrate mirror of cases; browser queue reading cases (§2.2).
 
+Status (2026-10-20): steps 1 to 11 are built and tested (the proof is
+`app/src/lib/proof/birth-registration.test.ts`); step 12 is open. What each
+step built and what connecting it for real takes: `docs/INTEGRATION_REGISTER.md`
+§18 (and 1.5, 6.5).
+
 Then Gate 4 (organisations, business registration or licensing,
 accreditation with the facility link and the twin's organisation entities,
 permits onto cases), Gate 5 and Gate 6 as in the directions (§17).
