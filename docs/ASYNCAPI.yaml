@@ -303,8 +303,8 @@ components:
       traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
       payload: { $ref: '#/components/schemas/CloudEvent' }
     cycle3:
-      name: org.civicos.<tax.taxpayer.register | education.inspection.record | education.award.record | education.award.revoke | permit-authority.approve | rule.approve>
-      summary: tax.taxpayer.register (a taxpayer registered; the subject is the TIN; nothing under tax secrecy), permit-authority.approve (an authority mapping for a permit type now governs from its date), rule.approve (a rate table or tariff now applies from its date). Assessments, returns and payments are never events (tax secrecy). education.inspection.record (an institution inspected; outcome only), education.award.record and education.award.revoke (the subject is the qualification number; never the holder).
+      name: org.civicos.<tax.taxpayer.register | education.inspection.record | education.award.record | education.award.revoke | profession.register | profession.renew | profession.suspended | profession.revoked | profession.lapsed | permit-authority.approve | rule.approve>
+      summary: tax.taxpayer.register (a taxpayer registered; the subject is the TIN; nothing under tax secrecy), permit-authority.approve (an authority mapping for a permit type now governs from its date), rule.approve (a rate table or tariff now applies from its date). Assessments, returns and payments are never events (tax secrecy). education.inspection.record (an institution inspected; outcome only), education.award.record and education.award.revoke (the subject is the qualification number; never the holder). profession.* (a change of a regulated professional's standing on a public register; the subject is the registration number, never the person reference).
       traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
       payload: { $ref: '#/components/schemas/CloudEvent' }
     registerChange:

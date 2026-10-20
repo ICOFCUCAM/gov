@@ -113,5 +113,7 @@ describe('organisation events', () => {
     expect(EVENT_ACTIONS.test('education.award.record')).toBe(true);
     expect(EVENT_ACTIONS.test('education.award.correct')).toBe(false);
     expect(EVENT_ACTIONS.test('tax.assess')).toBe(false);
+    expect(EVENT_ACTIONS.test('profession.suspended')).toBe(true);
+    expect(EVENT_ACTIONS.test('health.capacity.record')).toBe(false);
   });
 });
