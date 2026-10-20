@@ -39,6 +39,23 @@ What has been built is locked. Work only upgrades it toward the vision in
 - Every decision cites the law version that applied; a status change is an
   authorised action with evidence, time and reason. AI never makes a legally
   material decision.
+- Who is legally responsible for a register or power comes from the deployment
+  profile (`lib/nation/deployment.ts`, `authorityFor()`); never assume a
+  ministry by name. A new register joins `lib/data/register-owners.ts` with its
+  owner, its one changing API and its `legal` authority.
+- Cases change only through `lib/casework/engine.ts` (`openCase`, `act`)
+  under an approved procedure package (`packages.ts`: drafted by one official,
+  tested, approved by another). Case permissions are `caseActRefusal()` /
+  `caseReadRefusal()` in `roles.ts`: administrators have no domain authority,
+  the judiciary is isolated, restricted cases go to their assignee and
+  supervisors. Every read of personal data in a case, the civil register or a
+  document goes to the access log (`lib/records/access-log.ts`).
+- Registers such as the civil register change only through procedure effects
+  (`lib/civil/procedures.ts`), never through a direct write route. Laws enter
+  through `lib/law/register.ts` (recorded and confirmed by two officials);
+  decisions cite a law version from it. Decision records are signed with the
+  `decision` key, certificates are checked at `/verify`; reference procedures
+  are drafts until a nation approves them. Status: register §18.
 
 ## Entry flow
 
