@@ -143,6 +143,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/municipalities\/?$/,
   // The register types of the organisations register (which authority keeps which register).
   /^\/api\/organisations\/types$/,
+  // Which authority the law designates for each permit and licence type (four-eyes in the route).
+  /^\/api\/permit-authorities$/,
 ];
 /**
  * The nation's Update Center work that any official who is not an auditor may

@@ -125,6 +125,9 @@
       "name": "payments"
     },
     {
+      "name": "permit-authorities"
+    },
+    {
       "name": "permits"
     },
     {
@@ -11620,14 +11623,19 @@
                             "enum": [
                               "businessRegister",
                               "civilRegistration",
+                              "customs",
                               "dataProtection",
+                              "education",
+                              "healthRegulation",
                               "higherEducationAccreditation",
                               "identity",
                               "immigration",
                               "judiciary",
                               "lawRegister",
                               "police",
-                              "statistics"
+                              "professionalRegulation",
+                              "statistics",
+                              "tax"
                             ]
                           },
                           "scope": {
@@ -29911,6 +29919,398 @@
         "x-source": "src/app/api/payments/route.ts"
       }
     },
+    "/api/permit-authorities": {
+      "get": {
+        "tags": [
+          "permit-authorities"
+        ],
+        "operationId": "get_permit_authorities",
+        "summary": "GET /api/permit-authorities",
+        "description": "/api/permit-authorities — which authority the law designates for each permit, licence and register type (lib/permits/authority.ts). GET: every version, with the one in force today. POST (administrators, the structure of government): { op: 'draft', mapping } writes the next version; { op: 'approve', permitType, version } approves a draft (a different official; needs its legal basis); { op: 'withdraw', permitType, version, reason } withdraws a draft; { op: 'install-proposals' } drafts the defaults CivicOS proposes, which govern nothing until approved. Who acted comes from the sign-in, never the request.",
+        "parameters": [
+          {
+            "name": "permitType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mappings": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AuthorityMapping"
+                      }
+                    },
+                    "inForce": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    "proposals": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "mappings",
+                    "inForce",
+                    "proposals"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "mappings": [
+                        {
+                          "id": "ID-0001",
+                          "permitType": "string",
+                          "title": "Example",
+                          "version": 1,
+                          "lead": "string",
+                          "consulted": [
+                            {}
+                          ],
+                          "scope": {
+                            "level": "local"
+                          },
+                          "legalBasis": [
+                            {}
+                          ],
+                          "effectiveFrom": "2026-01-15",
+                          "procedures": [
+                            "string"
+                          ],
+                          "decision": {
+                            "role": "signatory",
+                            "fourEyes": true
+                          },
+                          "powers": {
+                            "renew": "string",
+                            "suspend": "string",
+                            "revoke": "string",
+                            "appealBody": "string"
+                          },
+                          "publicCheck": true,
+                          "state": "approved",
+                          "proposal": true,
+                          "draftedBy": "A. Official",
+                          "draftedAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "inForce": {
+                        "key": 1
+                      },
+                      "proposals": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/permit-authorities/route.ts"
+      },
+      "post": {
+        "tags": [
+          "permit-authorities"
+        ],
+        "operationId": "post_permit_authorities",
+        "summary": "POST /api/permit-authorities",
+        "description": "/api/permit-authorities — which authority the law designates for each permit, licence and register type (lib/permits/authority.ts). GET: every version, with the one in force today. POST (administrators, the structure of government): { op: 'draft', mapping } writes the next version; { op: 'approve', permitType, version } approves a draft (a different official; needs its legal basis); { op: 'withdraw', permitType, version, reason } withdraws a draft; { op: 'install-proposals' } drafts the defaults CivicOS proposes, which govern nothing until approved. Who acted comes from the sign-in, never the request.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "mapping": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  "permitType": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "mapping": {},
+                    "permitType": "string",
+                    "version": 1,
+                    "reason": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "mapping": {
+                          "$ref": "#/components/schemas/AuthorityMapping"
+                        }
+                      },
+                      "required": [
+                        "mapping"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "drafted": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "present": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "drafted",
+                        "present"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "mapping": {
+                        "id": "ID-0001",
+                        "permitType": "string",
+                        "title": "Example",
+                        "version": 1,
+                        "lead": "string",
+                        "consulted": [
+                          {
+                            "authority": "string",
+                            "role": "string",
+                            "mandatory": true
+                          }
+                        ],
+                        "scope": {
+                          "level": "local"
+                        },
+                        "legalBasis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "effectiveTo": "2026-01-15",
+                        "procedures": [
+                          "string"
+                        ],
+                        "decision": {
+                          "role": "signatory",
+                          "fourEyes": true
+                        },
+                        "powers": {
+                          "renew": "string",
+                          "suspend": "string",
+                          "revoke": "string",
+                          "appealBody": "string"
+                        },
+                        "publicCheck": true,
+                        "handover": {
+                          "from": "string",
+                          "plan": "string"
+                        },
+                        "state": "approved",
+                        "proposal": true,
+                        "note": "Text",
+                        "draftedBy": "A. Official",
+                        "draftedById": "ID-0001",
+                        "draftedAt": "2026-01-15T09:30:00.000Z",
+                        "approvedBy": "A. Official",
+                        "approvedById": "ID-0001",
+                        "approvedAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mapping": {
+                      "$ref": "#/components/schemas/AuthorityMapping"
+                    }
+                  },
+                  "required": [
+                    "mapping"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "mapping": {
+                        "id": "ID-0001",
+                        "permitType": "string",
+                        "title": "Example",
+                        "version": 1,
+                        "lead": "string",
+                        "consulted": [
+                          {
+                            "authority": "string",
+                            "role": "string",
+                            "mandatory": true
+                          }
+                        ],
+                        "scope": {
+                          "level": "local"
+                        },
+                        "legalBasis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "effectiveTo": "2026-01-15",
+                        "procedures": [
+                          "string"
+                        ],
+                        "decision": {
+                          "role": "signatory",
+                          "fourEyes": true
+                        },
+                        "powers": {
+                          "renew": "string",
+                          "suspend": "string",
+                          "revoke": "string",
+                          "appealBody": "string"
+                        },
+                        "publicCheck": true,
+                        "handover": {
+                          "from": "string",
+                          "plan": "string"
+                        },
+                        "state": "approved",
+                        "proposal": true,
+                        "note": "Text",
+                        "draftedBy": "A. Official",
+                        "draftedById": "ID-0001",
+                        "draftedAt": "2026-01-15T09:30:00.000Z",
+                        "approvedBy": "A. Official",
+                        "approvedById": "ID-0001",
+                        "approvedAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/permit-authorities/route.ts"
+      }
+    },
     "/api/permits/{id}/decide": {
       "post": {
         "tags": [
@@ -32766,14 +33166,19 @@
                                     "enum": [
                                       "businessRegister",
                                       "civilRegistration",
+                                      "customs",
                                       "dataProtection",
+                                      "education",
+                                      "healthRegulation",
                                       "higherEducationAccreditation",
                                       "identity",
                                       "immigration",
                                       "judiciary",
                                       "lawRegister",
                                       "police",
-                                      "statistics"
+                                      "professionalRegulation",
+                                      "statistics",
+                                      "tax"
                                     ]
                                   }
                                 },
@@ -57965,6 +58370,202 @@
           "checked"
         ]
       },
+      "AuthorityMapping": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "permitType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "lead": {
+            "type": "string",
+            "description": "The legally designated issuing authority: a deployment-profile key or an institution id."
+          },
+          "consulted": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "authority": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "mandatory": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "authority",
+                "role",
+                "mandatory"
+              ]
+            },
+            "description": "Authorities consulted before a decision; they advise or approve their part, never decide the permit."
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "legalBasis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "effectiveFrom": {
+            "type": "string"
+          },
+          "effectiveTo": {
+            "type": "string"
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Procedure keys allowed for this permit type (lib/casework)."
+          },
+          "decision": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "const": "signatory"
+              },
+              "fourEyes": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "role",
+              "fourEyes"
+            ]
+          },
+          "powers": {
+            "type": "object",
+            "properties": {
+              "renew": {
+                "type": "string"
+              },
+              "suspend": {
+                "type": "string"
+              },
+              "revoke": {
+                "type": "string"
+              },
+              "appealBody": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "renew",
+              "suspend",
+              "revoke",
+              "appealBody"
+            ]
+          },
+          "publicCheck": {
+            "type": "boolean"
+          },
+          "handover": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "plan": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "plan"
+            ],
+            "description": "Required when the lead authority differs from the version in force before it."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "draft",
+              "withdrawn"
+            ]
+          },
+          "proposal": {
+            "type": "boolean",
+            "description": "A default CivicOS proposes; never in force until a nation approves its own version."
+          },
+          "note": {
+            "type": "string",
+            "description": "What a nation should consider before approving (proposed defaults)."
+          },
+          "draftedBy": {
+            "type": "string"
+          },
+          "draftedById": {
+            "type": "string"
+          },
+          "draftedAt": {
+            "type": "string"
+          },
+          "approvedBy": {
+            "type": "string"
+          },
+          "approvedById": {
+            "type": "string"
+          },
+          "approvedAt": {
+            "type": "string"
+          },
+          "withdrawn": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "permitType",
+          "title",
+          "version",
+          "lead",
+          "consulted",
+          "scope",
+          "legalBasis",
+          "effectiveFrom",
+          "procedures",
+          "decision",
+          "powers",
+          "publicCheck",
+          "state",
+          "proposal",
+          "draftedBy",
+          "draftedAt"
+        ]
+      },
       "BBox": {
         "type": "array",
         "prefixItems": [
@@ -62237,7 +62838,16 @@
               "civilRegistration": {
                 "type": "string"
               },
+              "customs": {
+                "type": "string"
+              },
               "dataProtection": {
+                "type": "string"
+              },
+              "education": {
+                "type": "string"
+              },
+              "healthRegulation": {
                 "type": "string"
               },
               "higherEducationAccreditation": {
@@ -62258,7 +62868,13 @@
               "police": {
                 "type": "string"
               },
+              "professionalRegulation": {
+                "type": "string"
+              },
               "statistics": {
+                "type": "string"
+              },
+              "tax": {
                 "type": "string"
               }
             },
@@ -62312,6 +62928,72 @@
                 ]
               },
               "courts": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "customs": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "education": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "health": {
                 "type": "object",
                 "properties": {
                   "enabled": {
@@ -62422,6 +63104,50 @@
                 ]
               },
               "police": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "professions": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "civicos",
+                      "external"
+                    ]
+                  },
+                  "system": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "source"
+                ]
+              },
+              "tax": {
                 "type": "object",
                 "properties": {
                   "enabled": {
@@ -73163,14 +73889,19 @@
                     "enum": [
                       "businessRegister",
                       "civilRegistration",
+                      "customs",
                       "dataProtection",
+                      "education",
+                      "healthRegulation",
                       "higherEducationAccreditation",
                       "identity",
                       "immigration",
                       "judiciary",
                       "lawRegister",
                       "police",
-                      "statistics"
+                      "professionalRegulation",
+                      "statistics",
+                      "tax"
                     ]
                   }
                 },
@@ -74403,6 +75134,28 @@
           "results",
           "national",
           "evidenceHash"
+        ]
+      },
+      "Scope": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "local",
+              "national",
+              "regional"
+            ]
+          },
+          "regions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "level"
         ]
       },
       "SdmxOptions": {
