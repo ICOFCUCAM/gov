@@ -8,7 +8,7 @@
 export type OfficialRole = 'administrator' | 'signatory' | 'officer' | 'auditor';
 
 export const ROLES: { id: OfficialRole; label: string; means: string }[] = [
-  { id: 'administrator', label: 'Administrator', means: 'Manages official accounts, setup and the structure of government, and can do everything an official can.' },
+  { id: 'administrator', label: 'Administrator', means: 'Manages official accounts, setup and the structure of government, and does the day-to-day work of an official. Does not decide cases: that needs an account of the institution responsible, with the role Can sign.' },
   { id: 'signatory', label: 'Can sign', means: 'Does the work of an officer, and signs or withdraws directives.' },
   { id: 'officer', label: 'Officer', means: 'Works cases and incidents and drafts directives.' },
   { id: 'auditor', label: 'Auditor (read only)', means: 'Reads every record and changes nothing.' },
@@ -425,4 +425,83 @@ export function roleFromSubstrate(role: string): OfficialRole {
   if (role === 'auditor') return 'auditor';
   if (['president', 'minister', 'cabinet-secretary', 'cabinet-officer', 'permanent-secretary'].includes(role)) return 'signatory';
   return 'officer';
+}
+
+// ── Cases and registers: record-level rules (docs/GOVERNMENT_OPERATING_MODEL.md §4) ──
+// A case is worked by officials of the institution that owns its procedure;
+// a legal decision needs "Can sign" there. Administrators get no automatic
+// domain authority (directions 8.2, 20.6): an administrator, or anyone
+// serving the whole government, acts on a case only through an account of the
+// owning institution with the needed role. Courts' cases are closed to every
+// other institution, administrators included (directions 4.6).
+
+export type Sensitivity = 'normal' | 'restricted' | 'secret';
+
+/** What the rules need to know about a case (or a register record) and the action. */
+export interface CaseFacts {
+  /** The institution that owns the procedure (resolved from the deployment profile). */
+  owner: string;
+  sensitivity: Sensitivity;
+  /** The owner is a court: nobody outside it reads or acts. */
+  judicial?: boolean;
+  /** Official ids assigned to the case, and named supervisors (secret cases). */
+  assigned?: string[];
+  supervisors?: string[];
+  /** The action is a legal decision (grant, refuse, register, revoke…). */
+  decision?: boolean;
+  /** The action needs a recent second sign-in step. */
+  stepUp?: boolean;
+}
+
+/** The part of a session the case rules read, besides the role and institution. */
+export interface CaseScope extends Scope {
+  /** The official's id (session subject). */
+  id?: string;
+  /** When this session last passed the second sign-in step (ms since 1970). */
+  twoStepAt?: number;
+}
+
+/** How recent the second sign-in step must be for an action that asks for it. */
+export const STEP_UP_MINUTES = 15;
+
+const assignedTo = (s: CaseScope, c: CaseFacts) => !!s.id && (c.assigned ?? []).includes(s.id);
+const supervises = (s: CaseScope, c: CaseFacts) => !!s.id && (c.supervisors ?? []).includes(s.id);
+
+/** May this official take this action on this case? null when yes, otherwise the reason. */
+export function caseActRefusal(s: CaseScope, c: CaseFacts, now = Date.now()): string | null {
+  const missing = secondStepMissing(s);
+  if (missing) return missing;
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (s.institution !== c.owner) {
+    return c.judicial
+      ? 'A court\'s cases are worked only by the court\'s own officials'
+      : 'Cases are worked only by officials of the institution responsible for them; serving the whole government or administering the installation does not give that authority';
+  }
+  if (c.decision && role !== 'signatory') return 'A decision needs an official who can sign for the institution';
+  if (c.sensitivity === 'restricted' && !assignedTo(s, c) && role !== 'signatory') return 'This case is restricted to the officials assigned to it and those who can sign';
+  if (c.sensitivity === 'secret' && !assignedTo(s, c) && !supervises(s, c)) return 'This case is open only to the officials assigned to it and its named supervisors';
+  if (c.stepUp && !(s.twoStepAt && now - s.twoStepAt <= STEP_UP_MINUTES * 60_000)) return `This step needs the second sign-in step within the last ${STEP_UP_MINUTES} minutes: sign in again`;
+  return null;
+}
+
+/**
+ * May this official read this case? null when yes. Restricted and secret
+ * reads by auditors need a stated purpose; every such read is written to the
+ * access log by the caller (lib/records/access-log.ts).
+ */
+export function caseReadRefusal(s: CaseScope, c: CaseFacts, purpose?: string): string | null {
+  const role = roleOf(s);
+  const own = s.institution === c.owner;
+  if (c.judicial && !own) return 'A court\'s cases are read only by the court\'s own officials';
+  const auditorWithPurpose = role === 'auditor' && (own || wholeGovernment(s)) && !!purpose?.trim();
+  if (c.sensitivity === 'normal') return own || wholeGovernment(s) ? null : 'Cases are read by officials of the responsible institution and of the whole government';
+  if (c.sensitivity === 'restricted') {
+    if (own && (assignedTo(s, c) || role === 'signatory')) return null;
+    if (auditorWithPurpose) return null;
+    return role === 'auditor' ? 'Say why you need to read this restricted case' : 'This case is restricted to the officials assigned to it and those who can sign';
+  }
+  if (own && (assignedTo(s, c) || supervises(s, c))) return null;
+  if (auditorWithPurpose) return null;
+  return role === 'auditor' ? 'Say why you need to read this case' : 'This case is open only to the officials assigned to it and its named supervisors';
 }

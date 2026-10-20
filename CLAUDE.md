@@ -420,6 +420,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   the record to decide checks again with `refusal()` (`lib/auth/official.ts`).
   A new route that changes accounts, setup or the structure of government
   belongs in `ADMIN_ONLY`; never add a second place that decides permissions.
+- Cases and registers are decided by the institution responsible for them:
+  `caseActRefusal()` / `caseReadRefusal()` in `roles.ts` (a decision needs
+  "Can sign" there; administrators and whole-government officials get no
+  domain authority; courts' cases are closed to every other institution;
+  restricted and secret cases to the assigned; step-up where the procedure asks).
 - Every mutating API route must match a rule in `roles.ts` (`mutationRule()`;
   unmatched changes are refused, `api-permission-coverage.test.ts` checks), and
   an `Authorization` header skips the session gate only on routes listed in
