@@ -5,7 +5,8 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { createHash } from 'node:crypto';
-import { setSovereign, listMinistries, listAudit, verifyAuditChain } from '@/lib/data/store';
+import { setSovereign, listMinistries, listAudit, verifyAuditChain, registerIntegration } from '@/lib/data/store';
+import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import { recordVersion, confirmVersion, resetLaw } from '@/lib/law/register';
 import { installReferenceProcedures, REFERENCE_BIRTH } from '@/lib/civil/procedures';
 import { draftPackage, approvePackage, resetPackages } from '@/lib/casework/packages';
@@ -87,7 +88,12 @@ describe('proof: a birth registration through every layer', () => {
   });
 
   it('6. a permitted identity service receives only what it needs', async () => {
-    const r = await callService({ kind: 'integration', id: 'IC-ID', name: 'National identity authority' }, 'person.verify', { registration: 'BR-2026-000001', family: 'Okafor', birthDate: '2026-09-01' }, 'Enrolment for a national identity card');
+    // Approved by two officials for this service and this purpose only.
+    const reg = registerIntegration({ kind: 'integration', name: `National identity authority ${Date.now()}`, ownerOrg: 'National identity authority', contact: 'ops@example.gov', scopes: ['service:person.verify'] });
+    if ('error' in reg) throw new Error(reg.error);
+    const ok = approveIntegration(reg.id, { purposes: { 'person.verify': ['enrolment-for-a-national-identity-card'] } });
+    if ('error' in ok) throw new Error(ok.error);
+    const r = await callService({ kind: 'integration', id: reg.id, name: 'National identity authority' }, 'person.verify', { registration: 'BR-2026-000001', family: 'Okafor', birthDate: '2026-09-01' }, 'Enrolment for a national identity card');
     expect(r.data).toEqual({ match: 'yes', status: 'alive' });
     expect(verifyReceipt(r.receipt)).toBe(true);
   });

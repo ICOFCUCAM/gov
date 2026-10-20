@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import { generateKeyPairSync } from 'node:crypto';
 import { NextRequest } from 'next/server';
 import { resetExchangeLog, listExchanges, listUnauthenticated, verifyReceipt, exchangePublicKey, RECEIPT_HEADER, type ExchangeReceipt } from './log';
 import { contentDigest, signRequest } from './http-signatures';
 import { registerFeedKey, resetFeedKeys } from './feed-keys';
 import { issueFeed } from '@/lib/data/case-import';
-import { listMinistries, registerIntegration, setIntegrationStatus, proposeGrant, setGrantStatus, listAudit } from '@/lib/data/store';
+import { listMinistries, registerIntegration, proposeGrant, setGrantStatus, listAudit } from '@/lib/data/store';
 import { resetRateLimits } from './rate-limit';
 import { POST as casePost } from '@/app/api/org/ministries/[id]/queue/feed/route';
 import { POST as federationPost } from '@/app/api/federation/exchange/route';
@@ -62,7 +63,7 @@ describe('the exchange log and signed receipts', () => {
   it('decides federation exchanges by grant, logs them and returns a receipt', async () => {
     const reg = registerIntegration({ kind: 'integration', name: `partner-${Date.now()}`, ownerOrg: 'Ministry of Health (partner)', contact: 'x@y', scopes: ['federation:exchange'] });
     if ('error' in reg) throw new Error(reg.error);
-    setIntegrationStatus(reg.id, 'approved', 'Official');
+    approveIntegration(reg.id);
     const tenant = `partner-${Date.now()}`;
     const call = (body: unknown, key = reg.apiKey) => federationPost(new NextRequest('http://localhost/api/federation/exchange', { method: 'POST', headers: { authorization: `Bearer ${key}` }, body: JSON.stringify(body) }));
 

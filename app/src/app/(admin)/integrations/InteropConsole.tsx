@@ -56,6 +56,87 @@ function FederationExchanges() {
   );
 }
 
+/** "person.verify: identity-card-enrolment, benefits" per line → { "person.verify": [...] }. */
+function parsePurposeLines(text: string): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const line of text.split('\n')) {
+    const i = line.indexOf(':');
+    if (i < 0) continue;
+    const service = line.slice(0, i).trim();
+    const list = line.slice(i + 1).split(',').map(s => s.trim()).filter(Boolean);
+    if (service) out[service] = list;
+  }
+  return out;
+}
+const purposeLines = (p?: Record<string, string[]>) => Object.entries(p ?? {}).map(([s, l]) => `${s}: ${l.join(', ')}`).join('\n');
+const termsLine = (t: { scopes: string[]; purposes: Record<string, string[]> }) =>
+  `scopes ${t.scopes.join(', ')}${Object.keys(t.purposes).length ? ` · purposes ${Object.entries(t.purposes).map(([s, l]) => `${s}: ${l.join(', ')}`).join('; ')}` : ''}`;
+
+/**
+ * Approving an integration takes two officials: one proposes its scopes and,
+ * per exchange service, the purposes it may state; a different official
+ * confirms. Changing an approved integration's scopes or purposes is the same.
+ */
+function IntegrationApproval({ i, onChange }: { i: IntegrationClient; onChange: () => Promise<void> }) {
+  const [error, setError] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const act = async (f: () => Promise<unknown>) => {
+    setBusy(true); setError(null);
+    try { await f(); await onChange(); } catch (e) { setError(e instanceof Error ? e.message : String(e)); } finally { setBusy(false); }
+  };
+  async function propose(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    await act(() => api.interop.integrations.approve(i.id, {
+      scopes: String(f.get('scopes')).split(',').map(s => s.trim()).filter(Boolean),
+      purposes: parsePurposeLines(String(f.get('purposes') ?? '')),
+      note: String(f.get('note') ?? ''),
+    }));
+  }
+  if (i.status === 'revoked') return null;
+  const p = i.pendingApproval;
+  return (
+    <div className="mt-2 text-sm">
+      {i.status === 'approved' ? (
+        i.approval
+          ? <div className="text-ink-muted">Approved by {i.approval.by} and {i.approval.confirmedBy} on {i.approval.closedAt.slice(0, 10)}{Object.keys(i.purposes ?? {}).length ? <> · purposes: {Object.entries(i.purposes ?? {}).map(([s, l]) => `${s}: ${l.join(', ')}`).join('; ')}</> : ' · no exchange services'}</div>
+          : <div className="text-ink-muted">Approved before purposes were recorded: its exchange service calls are refused in a production installation until two officials approve its purposes.</div>
+      ) : null}
+      {p ? (
+        <div className="mt-1">
+          <Pill tone="warn">Waiting for a second official</Pill>{' '}
+          Proposed by {p.by} on {p.at.slice(0, 16).replace('T', ' ')}: {termsLine(p)}{p.note ? ` · ${p.note}` : ''}
+          <div className="mt-1 flex gap-2">
+            <Button disabled={busy} onClick={() => act(() => api.interop.integrations.confirmApproval(i.id))}>Confirm approval</Button>
+            <Button variant="secondary" disabled={busy} onClick={() => act(() => api.interop.integrations.withdrawApproval(i.id))}>Withdraw proposal</Button>
+          </div>
+        </div>
+      ) : null}
+      <details className="mt-1">
+        <summary className="cursor-pointer">{i.status === 'approved' ? 'Change scopes or purposes (two officials)' : 'Approve (proposed by one official, confirmed by another)'}</summary>
+        <form onSubmit={propose} className="mt-2">
+          <TextField label="Scopes (comma-separated)" name="scopes" required defaultValue={(p ?? i).scopes.join(', ')} />
+          <label className="mb-3 block text-sm">
+            Purposes per exchange service, one line each (service: purpose, purpose)
+            <textarea name="purposes" rows={3} className="mt-1 block w-full rounded border border-line p-2 font-mono text-xs" defaultValue={purposeLines(p?.purposes ?? i.purposes)} placeholder="person.verify: identity-card-enrolment" />
+          </label>
+          <TextField label="Note (optional)" name="note" />
+          <Button type="submit" disabled={busy}>{i.status === 'pending' ? 'Approve' : 'Propose'}</Button>
+        </form>
+      </details>
+      {i.approvalHistory?.length ? (
+        <details className="mt-1 text-xs text-ink-muted">
+          <summary className="cursor-pointer">Approval history ({i.approvalHistory.length})</summary>
+          <ul className="mt-1 space-y-0.5">
+            {i.approvalHistory.map((h, n) => <li key={n}>{h.closedAt.slice(0, 16).replace('T', ' ')} · {h.outcome} · proposed by {h.by}{h.confirmedBy ? `, confirmed by ${h.confirmedBy}` : ''}{h.withdrawnBy ? `, withdrawn by ${h.withdrawnBy}` : ''} · {termsLine(h)}</li>)}
+          </ul>
+        </details>
+      ) : null}
+      {error ? <p role="alert" className="mt-1 text-sm text-alert">{error}</p> : null}
+    </div>
+  );
+}
+
 export function InteropConsole() {
   const [tab, setTab] = React.useState<'integrations' | 'federation' | 'webhooks'>('integrations');
   const [ints, setInts] = React.useState<IntegrationClient[]>([]);
@@ -237,11 +318,6 @@ export function InteropConsole() {
                   ) : (
                     <Pill tone="alert">{i.status}</Pill>
                   )}
-                  {i.status === 'pending' ? (
-                    <Button onClick={async () => { await api.interop.integrations.approve(i.id); await load(); }}>
-                      Approve
-                    </Button>
-                  ) : null}
                   {i.status === 'approved' ? (
                     <Button variant="secondary" onClick={async () => { await api.interop.integrations.revoke(i.id); await load(); }}>
                       Revoke
@@ -253,6 +329,7 @@ export function InteropConsole() {
                     </Button>
                   ) : null}
                 </div>
+                <IntegrationApproval i={i} onChange={load} />
               </Card>
             ))
           )}

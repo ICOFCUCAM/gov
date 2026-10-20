@@ -4,6 +4,7 @@
 // may read, nothing published by clients, every accepted reading delivered,
 // limits applied, a replaced key disconnected.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import { NextRequest } from 'next/server';
 import mqtt from 'mqtt';
 import { resetTwin, syncRegister, registerSource, type TwinSource } from './register';
@@ -14,7 +15,7 @@ import { staRequest } from './sta';
 import { STA_WRITE_SCOPE } from './stream';
 import { startStaMqtt, topicDatastream, STA_MQTT_LIMITS, type StaMqttServer } from './sta-mqtt';
 import { applyNation } from '@/lib/nation/registry';
-import { registerIntegration, setIntegrationStatus, rotateIntegrationKey } from '@/lib/data/store';
+import { registerIntegration, rotateIntegrationKey } from '@/lib/data/store';
 import { resetRateLimits } from '@/lib/exchange/rate-limit';
 import { POST as tokenEndpoint } from '@/app/api/oauth/token/route';
 
@@ -25,7 +26,7 @@ const TOPIC = `v1.1/Datastreams('${DS}')/Observations`;
 let n = 0;
 function integration(scopes: string[]): { id: string; key: string } {
   const r = ok(registerIntegration({ kind: 'integration', name: `Client ${++n}`, ownerOrg: 'Energy regulator', contact: 'ops@grid.example', scopes }));
-  ok(setIntegrationStatus(r.id, 'approved', 'Admin'));
+  ok(approveIntegration(r.id));
   return { id: r.id, key: r.apiKey };
 }
 const until = async (cond: () => boolean, ms = 5_000) => { const t = Date.now(); while (!cond()) { if (Date.now() - t > ms) throw new Error('timed out'); await new Promise(r => setTimeout(r, 20)); } };

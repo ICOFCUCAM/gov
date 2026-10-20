@@ -84,6 +84,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   read in the access log); others use the `taxpayer.status` exchange service.
   Liabilities are bills with a domain reference (`issueBill()`), reconciled
   from receipts once each.
+- Exchange services (`callService()`) answer an outside caller only for a
+  purpose approved for it and that service; an integration is approved (and
+  its scopes or purposes changed) by two officials
+  (`proposeIntegrationApproval()` / `confirmIntegrationApproval()`).
 - Education (`lib/education/`): schools are organisations (a standing in the
   `schools` register), never a second identity. Qualifications are recorded,
   corrected and revoked only through education cases; anyone else checks one

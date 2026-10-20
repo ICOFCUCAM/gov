@@ -1,13 +1,16 @@
 // Interoperability: integration clients, federation grants and webhooks.
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { take } from '@/lib/exchange/rate-limit';
-import { usageRefusal, obligations, type UsageRequest } from '@/lib/exchange/usage-policy';
+import { usageRefusal, obligations, parsePurposes, type UsageRequest } from '@/lib/exchange/usage-policy';
+import { dualControlRefusal, independenceOf, dualControlPendingHours } from '@/lib/data/dual-control';
 import { advanceCursor } from '@/lib/events/outbox';
 import { seal, open as openSealed } from '@/lib/crypto/envelope';
 import type {
   IntegrationClient,
   IntegrationKind,
   IntegrationRegistered,
+  IntegrationApprovalProposal,
+  IntegrationApprovalRecord,
   FederationGrant,
   WebhookSubscription,
   WebhookCreated,
@@ -20,7 +23,8 @@ import { recordAudit } from './audit';
 // ── Interoperability & federation (mirrors the backend contract) ──────
 const HOME_TENANT = 'home';
 
-export function listIntegrations(): IntegrationClient[] {
+export function listIntegrations(now = Date.now()): IntegrationClient[] {
+  lapseIntegrationApprovals(now);
   return [...db.integrations].sort(
     (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
   );
@@ -132,6 +136,11 @@ export function verifyIntegrationToken(clientId: string, keyPrefix: string, scop
   return admit(client, scope, now);
 }
 
+/**
+ * Suspend or revoke an integration (one administrator: it only takes access
+ * away). Approving one, or changing what it is approved for, takes two
+ * officials: proposeIntegrationApproval() then confirmIntegrationApproval().
+ */
 export function setIntegrationStatus(
   id: string,
   status: 'approved' | 'suspended' | 'revoked',
@@ -139,10 +148,150 @@ export function setIntegrationStatus(
 ): IntegrationClient | { error: string } {
   const c = db.integrations.find(i => i.id === id);
   if (!c) return { error: 'Integration not found' };
+  if (status === 'approved') return { error: 'Approving an integration takes two officials: one proposes its scopes and purposes, a different one confirms' };
   c.status = status;
-  if (status === 'approved') c.approvedBy = by;
+  if (status === 'revoked' && c.pendingApproval) closeProposal(c, 'withdrawn', new Date(), { withdrawnBy: by });
   recordAudit(by, `integration.${status}`, `Integration:${id}`, 'ok');
   return c;
+}
+
+// ── Approving an outside caller: two officials, scopes and purposes ────
+//
+// An integration is approved for its scopes and, for each exchange service
+// it may call (scope service:<id>), the purposes it may state (short slugs,
+// parsed as for grant usage policies). One administrator proposes, a
+// different one confirms (dualControlRefusal(): verified sessions, and a
+// different person at the identity provider); a proposal not confirmed
+// within the country's dual-control waiting period (dualControlPolicy()
+// .pendingHours, read through dualControlPendingHours()) lapses and is kept
+// in the integration's approval history.
+// A change of scopes or purposes on an approved integration is the same
+// two-official step; until it is confirmed the approved terms stay in force.
+//
+// Integrations approved before this change (snapshots) have no `approval`
+// and no `purposes`: they keep their status and scopes, and the exchange
+// services treat their purposes as not yet approved (integrationPurposes()):
+// refused in a production installation, allowed and noted on the receipt in
+// demo and training.
+
+const normalise = (c: IntegrationClient): IntegrationClient => { c.approvalHistory ??= []; return c; };
+
+function closeProposal(c: IntegrationClient, outcome: IntegrationApprovalRecord['outcome'], now: Date, extra: Partial<IntegrationApprovalRecord> = {}): IntegrationApprovalRecord | undefined {
+  const p = c.pendingApproval;
+  if (!p) return undefined;
+  const rec: IntegrationApprovalRecord = { ...p, outcome, closedAt: now.toISOString(), ...extra };
+  normalise(c).approvalHistory!.push(rec);
+  c.pendingApproval = undefined;
+  return rec;
+}
+
+/** Close proposals left unconfirmed past the dual-control waiting period; kept in history, audited. */
+export function lapseIntegrationApprovals(now = Date.now()): number {
+  const hours = dualControlPendingHours();
+  let n = 0;
+  for (const c of db.integrations) {
+    const p = c.pendingApproval;
+    if (!p || now - Date.parse(p.at) <= hours * 3_600_000) continue;
+    closeProposal(c, 'lapsed', new Date(now));
+    recordAudit('System (dual control)', 'integration.approval.lapse', `Integration:${c.id}`, 'ok', `proposed by ${p.by} on ${p.at.slice(0, 16)}; not confirmed within ${hours} h`);
+    n++;
+  }
+  return n;
+}
+
+const SCOPE = /^[A-Za-z][A-Za-z0-9._:*-]{0,80}$/;
+const SERVICE_ID = /^[a-z][a-z0-9.-]{1,60}$/;
+
+/** Check proposed terms: scopes, and purposes for every service scope (and only for those). */
+function parseTerms(input: { scopes?: unknown; purposes?: unknown }, current: IntegrationClient): Pick<IntegrationApprovalProposal, 'scopes' | 'purposes'> | { error: string } {
+  const rawScopes: unknown[] | null = input.scopes === undefined ? current.scopes : Array.isArray(input.scopes) ? input.scopes : typeof input.scopes === 'string' ? input.scopes.split(',') : null;
+  if (!rawScopes) return { error: 'Scopes are a list' };
+  const scopes = Array.from(new Set(rawScopes.filter((x): x is string => typeof x === 'string').map(x => x.trim()).filter(Boolean)));
+  if (!scopes.length) return { error: 'Name at least one scope' };
+  if (scopes.length > 50 || scopes.some(x => !SCOPE.test(x))) return { error: 'Scopes are up to 50 names such as permit:read or service:person.verify' };
+  const raw = input.purposes === undefined ? (current.purposes ?? {}) : input.purposes;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { error: 'Purposes are given per service: { "person.verify": ["identity-card-enrolment"] }' };
+  const purposes: Record<string, string[]> = {};
+  for (const [service, list] of Object.entries(raw as Record<string, unknown>)) {
+    if (!SERVICE_ID.test(service)) return { error: `'${service}' is not a service id` };
+    if (!scopes.includes(`service:${service}`)) return { error: `Purposes for ${service} need the scope service:${service}` };
+    const p = parsePurposes(list);
+    if ('error' in p) return { error: `${service}: ${p.error}` };
+    purposes[service] = p;
+  }
+  const missing = scopes.filter(x => x.startsWith('service:') && !purposes[x.slice('service:'.length)]);
+  if (missing.length) return { error: `Name the purposes approved for ${missing.map(x => x.slice('service:'.length)).join(', ')}` };
+  return { scopes, purposes };
+}
+
+const termsText = (t: { scopes: string[]; purposes: Record<string, string[]> }) =>
+  `scopes ${t.scopes.join(', ')}${Object.keys(t.purposes).length ? ` · purposes ${Object.entries(t.purposes).map(([s, p]) => `${s}: ${p.join('/')}`).join('; ')}` : ''}`;
+
+/**
+ * One administrator proposes approving an integration (or changing what an
+ * approved one may do): its scopes and, per service, its purposes. A waiting
+ * proposal it replaces is kept as superseded. Audited.
+ */
+export function proposeIntegrationApproval(id: string, input: { scopes?: unknown; purposes?: unknown; note?: unknown }, by: string, byId?: string, now = new Date()): IntegrationClient | { error: string } {
+  lapseIntegrationApprovals(now.getTime());
+  const c = db.integrations.find(i => i.id === id);
+  if (!c) return { error: 'Integration not found' };
+  if (c.status === 'revoked') return { error: 'A revoked integration is not approved again; register it anew' };
+  const terms = parseTerms(input, c);
+  if ('error' in terms) return terms;
+  const note = typeof input.note === 'string' ? input.note.trim().slice(0, 300) : '';
+  if (c.pendingApproval) {
+    closeProposal(c, 'superseded', now);
+    recordAudit(by, 'integration.approval.supersede', `Integration:${id}`, 'ok', 'replaced by a new proposal');
+  }
+  c.pendingApproval = { ...terms, by, ...(byId ? { byId } : {}), at: now.toISOString(), ...(note ? { note } : {}) };
+  normalise(c);
+  recordAudit(by, 'integration.approval.propose', `Integration:${id}`, 'ok', `${c.name} · ${termsText(terms)} · waiting for a second official`);
+  return c;
+}
+
+/** A different official confirms the waiting proposal: from then the integration is approved for those terms. */
+export function confirmIntegrationApproval(id: string, by: string, byId?: string, now = new Date()): IntegrationClient | { error: string } {
+  lapseIntegrationApprovals(now.getTime());
+  const c = db.integrations.find(i => i.id === id);
+  if (!c) return { error: 'Integration not found' };
+  const p = c.pendingApproval;
+  if (!p) return { error: 'No proposal waits for confirmation (a proposal lapses when not confirmed in time; propose again)' };
+  if (c.status === 'revoked') return { error: 'This integration is revoked' };
+  const why = dualControlRefusal(p, { by, byId });
+  if (why) return { error: why };
+  const independence = independenceOf(p.byId, byId);
+  const rec = closeProposal(c, 'confirmed', now, { confirmedBy: by, ...(byId ? { confirmedById: byId } : {}), independence })!;
+  c.scopes = [...rec.scopes];
+  c.purposes = structuredClone(rec.purposes);
+  c.status = 'approved';
+  c.approvedBy = by;
+  c.approval = rec;
+  recordAudit(by, 'integration.approved', `Integration:${id}`, 'ok', `${termsText(rec)} · proposed by ${p.by}, confirmed by ${by} (${independence})`);
+  return c;
+}
+
+/** Withdraw a waiting proposal (any administrator); kept in history, audited. */
+export function withdrawIntegrationApproval(id: string, by: string, now = new Date()): IntegrationClient | { error: string } {
+  const c = db.integrations.find(i => i.id === id);
+  if (!c) return { error: 'Integration not found' };
+  if (!closeProposal(c, 'withdrawn', now, { withdrawnBy: by })) return { error: 'No proposal waits for confirmation' };
+  recordAudit(by, 'integration.approval.withdraw', `Integration:${id}`, 'ok');
+  return c;
+}
+
+/**
+ * The purposes an outside caller may state for a service:
+ * - `approved`: the integration's two-official approval names them (possibly none for this service);
+ * - `legacy`: approved before purposes were recorded, so none are approved yet
+ *   (the exchange services refuse in production and allow, noted, in demo and training);
+ * - `unknown`: no such approved integration.
+ */
+export function integrationPurposes(id: string, serviceId: string): { kind: 'approved'; purposes: string[] } | { kind: 'legacy' } | { kind: 'unknown' } {
+  const c = db.integrations.find(i => i.id === id);
+  if (!c || c.status !== 'approved') return { kind: 'unknown' };
+  if (!c.approval) return { kind: 'legacy' };
+  return { kind: 'approved', purposes: [...(c.purposes?.[serviceId] ?? [])] };
 }
 
 export function listGrants(): FederationGrant[] {

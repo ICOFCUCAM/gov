@@ -436,15 +436,22 @@ For each service:
 
 - Default: no outside system holds a key. Modules inside the installation
   call services directly.
-- Production: an outside system is **refused** until an administrator
-  approves its integration with the scope `service:<service id>`. For the
-  birth event the scope is `events:civil`.
-- What the platform checks today: that a purpose is stated, and that the
-  caller holds the scope. It **does not yet check the purpose against an
-  approved list for each caller**. The purpose is recorded on the signed
-  receipt for later audit. Until purpose checking exists, the approved
-  purposes on the form below are enforced by the data owner reviewing the
-  exchange log.
+- Production: an outside system is **refused** until two officials approve
+  its integration with the scope `service:<service id>` and the purposes it
+  may use for that service. For the birth event the scope is
+  `events:civil`.
+- What the platform checks: that the caller holds the scope, and that the
+  purpose it states is one approved **for that caller and that service**.
+  Any other purpose is refused with the approved ones named, and the
+  refusal gets a signed receipt like every other call. Purposes are short
+  words ("identity-card-enrolment"); a stated "Identity card enrolment"
+  matches it.
+- Modules inside the installation still only state a purpose. Their
+  purposes are fixed in the code.
+- An integration approved before purposes were recorded has no approved
+  purposes. In production its service calls are refused until two officials
+  approve them. Demonstration and training installations allow the call and
+  mark the receipt "purposes not yet approved".
 
 ### Who typically decides
 
@@ -457,12 +464,24 @@ restricted services.
 - Service list: `GET /api/exchange/services`. The exchange log is at
   `/api/exchange/log`.
 - Callers: screen `/integrations` (Interoperability). Register the caller
-  with its scopes, then approve it.
+  with its scopes. Then one official proposes the approval with its scopes
+  and the purposes for each service ("person.verify: identity-card-enrolment"),
+  and a different official confirms it.
   - API: `POST /api/integrations` (`registerIntegration()`), then
-    `POST /api/integrations/{id}/approve` (`setIntegrationStatus()`).
+    `POST /api/integrations/{id}/approve` with `op: "propose"`, `scopes`
+    and `purposes` (`proposeIntegrationApproval()`), then the same address
+    with `op: "confirm"` from a different official
+    (`confirmIntegrationApproval()`). `op: "withdraw"` withdraws a waiting
+    proposal.
   - The key is shown once.
-- Officials: **one administrator** registers and approves. No second
-  official is required.
+- Officials: **one administrator** registers and proposes; **a different
+  administrator** confirms (compared by sign-in, and as a person where
+  accounts are linked to the identity provider). A proposal not confirmed
+  within the two-official waiting period (section 3) lapses. Every
+  proposal, confirmation, lapse and withdrawal is kept on the integration
+  and in the audit chain. Changing an approved caller's scopes or purposes
+  takes the same two steps; until then its approved terms stay in force.
+  Suspending or revoking a caller takes one administrator.
 - Event subscribers: `/api/webhooks` (administrators).
 
 ### Legal evidence to attach
@@ -791,9 +810,13 @@ surprised:
   administrator. Their `basis` is free text, not a citation checked against
   the Laws register.
 - "Who may suspend" is not a setting. Any administrator may.
-- Data services check that a purpose is stated, not that it is an approved
-  purpose for that caller. Approving an outside caller needs one
-  administrator.
+- Data services check an outside caller's purpose against the purposes
+  approved for that caller and service, and approving a caller takes two
+  officials. But the two officials are any two administrators: the platform
+  does not require one of them to belong to the authority that keeps the
+  register. The legal basis for each caller is a free-text note, not a
+  citation from the Laws register. Internal modules still only state a
+  purpose.
 - The `visa-residence`, `work-permit`, `land-title`, `environmental-permit`,
   `customs-authorisation` and `transport-operator-licence` mappings are not
   yet consulted by any decision. Immigration decisions rest on the
