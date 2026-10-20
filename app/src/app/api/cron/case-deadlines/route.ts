@@ -13,6 +13,8 @@ import { lapseDeadlines } from '@/lib/casework/engine';
 import { expireStandings } from '@/lib/organisations/register';
 import { expireGrants } from '@/lib/immigration/register';
 import { watchAccess } from '@/lib/records/access-watch';
+import { reconcileTaxPayments } from '@/lib/tax/register';
+import { listReceipts } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +24,8 @@ export async function GET(req: Request) {
   const expired = expireStandings();
   const immigration = expireGrants();
   const access = watchAccess();
-  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised });
+  const tax = reconcileTaxPayments(listReceipts());
+  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length });
 }
 
 export const POST = GET;
