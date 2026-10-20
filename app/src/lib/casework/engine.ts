@@ -371,6 +371,32 @@ export function lapseDeadlines(now = new Date()): { case: string; ref: string; d
 }
 
 // ── Reading ───────────────────────────────────────────────────────────────────
+/**
+ * The nation's retention rule for closed cases under procedures
+ * (lib/data/retention.ts): personal fields and the parties' names of cases
+ * closed before `before` are removed in place; the case, its steps, its
+ * sealed decisions and its documents' records stay (documents follow their
+ * own rule). Never a case under a legal hold, a sample, or a procedure whose
+ * retention class is permanent (`…-permanent`, e.g. the civil register).
+ */
+export function anonymiseClosedCases(before: string, now = new Date()): number {
+  let n = 0;
+  for (const c of db().cases) {
+    if (!c.closedAt || c.closedAt >= before || c.anonymisedAt || c.legalHold || c.source === 'sample') continue;
+    const pkg = getPackage(c.package.key, c.package.version);
+    if (!pkg || /-permanent$/.test(pkg.retention)) continue;
+    const personal = new Set(pkg.fields.filter(f => f.personal).map(f => f.key));
+    for (const k of Object.keys(c.fields)) if (personal.has(k)) c.fields[k] = '';
+    c.subject = c.subject.map(p => ({ kind: p.kind, name: '(removed under the retention rule)' }));
+    if (c.applicant) c.applicant = { kind: c.applicant.kind, name: '(removed under the retention rule)' };
+    if (c.onBehalfOf) c.onBehalfOf = { kind: c.onBehalfOf.kind, name: '(removed under the retention rule)' };
+    c.anonymisedAt = now.toISOString();
+    c.version += 1;
+    n++;
+  }
+  return n;
+}
+
 export const getCase = (id: string): Case | undefined => { const c = db().cases.find(x => x.id === id || x.ref === id); return c ? clone(c) : undefined; };
 export function listCases(filter: { owner?: string; procedure?: string; open?: boolean; stage?: string; limit?: number } = {}): Case[] {
   const limit = Math.min(filter.limit ?? 200, 1000);

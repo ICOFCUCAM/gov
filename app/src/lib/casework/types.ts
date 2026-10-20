@@ -136,4 +136,6 @@ export interface Case {
   version: number;
   openedAt: string;
   closedAt?: string;
+  /** Set when the nation's retention rule removed the personal fields and names (lib/data/retention.ts). */
+  anonymisedAt?: string;
 }

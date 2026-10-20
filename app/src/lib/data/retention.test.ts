@@ -88,7 +88,7 @@ describe('retention of personal data', () => {
   });
 
   it('keeps permits and cases unless two administrators confirm a rule, then anonymises or deletes', () => {
-    expect(retentionRules()).toEqual({ permits: { action: 'keep' }, cases: { action: 'keep' }, documents: { action: 'keep' }, 'access-log': { action: 'keep' } });
+    expect(retentionRules()).toEqual({ permits: { action: 'keep' }, cases: { action: 'keep' }, 'procedure-cases': { action: 'keep' }, documents: { action: 'keep' }, 'access-log': { action: 'keep' } });
     const p = createPermit({ type: 'building', title: 'Extension for Jane Doe', applicantName: 'Jane Doe', municipality: 'X', fields: { phone: '123' } } as never);
     ok(decidePermit(p.id, { decision: 'approve', officerName: 'Officer' }));
     const later = Date.now() + 400 * DAY;
