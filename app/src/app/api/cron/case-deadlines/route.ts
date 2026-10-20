@@ -10,13 +10,15 @@
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
 import { lapseDeadlines } from '@/lib/casework/engine';
+import { expireStandings } from '@/lib/organisations/register';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const lapsed = lapseDeadlines();
-  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })) });
+  const expired = expireStandings();
+  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired });
 }
 
 export const POST = GET;
