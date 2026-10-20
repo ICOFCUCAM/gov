@@ -48,6 +48,10 @@ decisions off until a country approves its rules) is the brief.
 8. Customs: declarations with goods lines and classification codes, duty assessment through the rules registry, payment, inspection referrals (an officer chooses the control channel; no automated risk score), release.
 9. Tests for authorisation, cross-agency isolation, idempotency, audit evidence, corrections and recovery; docs, integration register, demo set, full checks.
 
+## Progress
+
+Steps 1–5 built (integration register 18.19–18.22). Steps 6–9 follow.
+
 ## Kept out of cycle 3 (unchanged decisions)
 
 Asylum, border-crossing enforcement, police investigations and evidence,

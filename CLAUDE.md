@@ -72,6 +72,18 @@ What has been built is locked. Work only upgrades it toward the vision in
   the law, no field records a suspect or a finding. Courts (`lib/courts/`)
   are worked only by the judiciary; the public cause list
   (`causeList()`) never carries parties or the subject of a case.
+- Who holds a power over a permit or licence type comes from the permit
+  authority registry (`lib/permits/authority.ts`, `powerRefusal()`): drafted
+  by one administrator, approved by another, citing the law. Proposed
+  mappings ship as unapproved drafts; a production installation refuses a
+  power no approved mapping covers. Never hardcode a ministry for a permit.
+- Rates, bands and tariffs come only from `lib/law/rules.ts` (approved,
+  cited, tested versions; `calculate()` refuses without one). Never type a
+  statutory rate, penalty or deadline into code or seed data.
+- Tax (`lib/tax/`) is read by the tax authority only (`canReadTax()`, every
+  read in the access log); others use the `taxpayer.status` exchange service.
+  Liabilities are bills with a domain reference (`issueBill()`), reconciled
+  from receipts once each.
 - Audit administration stays apart from operations: administrators do not
   read the access log, reading it is itself logged, and shortening it needs
   the data-protection authority after two administrators
