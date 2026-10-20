@@ -76,6 +76,8 @@ import { issueDueNotices, lifecycleWarning, lineOf, onEolNotice } from './lifecy
 import { alert } from './comms';
 import { transmit } from './sovereignty';
 import { touch } from '@/lib/data/repo/track';
+import { samplesAllowed } from '@/lib/ops/mode';
+import pkg from '../../../package.json';
 import type { RestorePointBackup } from './backups';
 
 /** Backward compatible with the previous release: every migration reversible and expand/contract, never in place. */
@@ -201,7 +203,33 @@ function institution(archetype: string, fallback: string): string {
   try { return listMinistries().find(m => m.archetype === archetype)?.name ?? fallback; } catch { return fallback; }
 }
 
+/** The version this installation runs: CIVICOS_VERSION when it is one, else the app's package version. */
+export function runningVersion(): string {
+  const v = (process.env.CIVICOS_VERSION ?? '').trim();
+  return isVersion(v) ? v : pkg.version;
+}
+
+/**
+ * A production installation (lib/ops/mode.ts) starts with its own nation only,
+ * on the version it runs, and no releases, installs, requests or incidents:
+ * those arrive from the publisher. The sample history below is for demo and
+ * training installations.
+ */
+function productionUpdates(): UpdatesDb {
+  const at = new Date().toISOString();
+  const version = runningVersion();
+  return {
+    nations: [{
+      id: HOME_NATION, name: '', deliveryMode: 'self-hosted', channelKey: channelKey(),
+      installedVersion: version, history: [], enrolledAt: at, home: true,
+      lkg: { version }, settings: { ...DEFAULT_SETTINGS }, estate: { servers: 0, endpoints: 0 },
+    }],
+    releases: [], installs: { [HOME_NATION]: {} }, requests: [], requestSeq: 1000, incidents: [], agentKeys: {},
+  };
+}
+
 function seedUpdates(): UpdatesDb {
+  if (!samplesAllowed()) return productionUpdates();
   const now = Date.now();
   const days = (n: number) => new Date(now + n * 86400000).toISOString();
   const months = (iso: string, n: number) => { const d = new Date(iso); d.setMonth(d.getMonth() + n); return d.toISOString(); };
