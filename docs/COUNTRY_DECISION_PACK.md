@@ -796,10 +796,19 @@ they have passed the second step.
 
 **Where it is entered.**
 
-- Screen: `/admin/officials`. API: `POST /api/auth/two-step` with
+- Screen: Sign-in accounts (`/admin/officials`), panel "Second sign-in
+  step". It shows the rule in force, who last set it and when, how many
+  active platform accounts have set up the second step and who the rule
+  requires that has not; before saving a new rule it lists who it would
+  block from making changes (the administrator saving it included). API:
+  `POST /api/auth/two-step` with
   `{ action: 'policy', policy: 'none' | 'signers' | 'all' }`
-  (`setTwoStepPolicy()`).
-- Officials: **one administrator.**
+  (`setTwoStepPolicy()`); the current rule is read with the account list
+  (`GET /api/auth/officials`, `twoStep`).
+- Officials: **one administrator**, signed in with a platform account. The
+  change takes effect at once and is recorded in the audit chain; no second
+  official confirms it, including turning the requirement off. Substrate
+  administrators see the rule but cannot change it.
 
 **Evidence.** The government's information security policy or directive.
 
@@ -816,9 +825,11 @@ they have passed the second step.
 These are facts about the platform today, noted so officials are not
 surprised:
 
-- The two-step sign-in policy has **no screen**; it is entered through the
-  API. (Suspension rules, dual-control rules and the profession disclosure
-  lists now have screens.)
+- The two-step sign-in policy now has a screen (Sign-in accounts,
+  `/admin/officials`), but it is still set by **one** administrator, who can
+  also turn the requirement off alone; it does not go through the
+  two-official policy change that the suspension and dual-control rules use.
+  Only an administrator with a platform account can change it.
 - A profession's disclosure list, the suspension rules and the dual-control
   rules all take two officials and cite the Laws register.
 - "Who may suspend" can be narrowed only to government-wide administrators;

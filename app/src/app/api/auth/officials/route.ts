@@ -1,13 +1,16 @@
 // Platform accounts for officials (lib/auth/officials.ts). GET lists them
 // (never password hashes): in full for an administrator, as a directory
-// (name, office, institution) for any other signed-in official. POST creates one: the
+// (name, office, institution) for any other signed-in official. An
+// administrator also gets the installation's two-step policy (`twoStep`: who
+// must use the second sign-in step, who last set it), so the Official
+// accounts screen shows it to substrate administrators too. POST creates one: the
 // first account at installation, with the one-time setup code (`setupToken`,
 // lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote
 // to its output at start), every later one by an administrator. While the
 // substrate is the sign-in method no platform account is created (409).
 
 import { NextRequest, NextResponse } from 'next/server';
-import { listAccounts, createAccount, hasAccounts } from '@/lib/auth/officials';
+import { listAccounts, createAccount, hasAccounts, twoStepPolicy, twoStepPolicySet } from '@/lib/auth/officials';
 import { currentOfficial, actorLabel } from '@/lib/auth/official';
 import { roleOf } from '@/lib/auth/roles';
 import { LOCAL_ACCOUNTS_REFUSED } from '@/lib/auth/setup-token';
@@ -20,7 +23,7 @@ export async function GET() {
   if (!o) return NextResponse.json({ error: 'Sign in as an official' }, { status: 401 });
   // Administrators see every account in full. Everyone else sees who is who (name, office,
   // institution), never email, last sign-in or whose second step is off (go-live review L-3).
-  if (roleOf(o) === 'administrator') return NextResponse.json({ accounts: listAccounts(), full: true });
+  if (roleOf(o) === 'administrator') return NextResponse.json({ accounts: listAccounts(), full: true, twoStep: { policy: twoStepPolicy(), set: twoStepPolicySet() } });
   return NextResponse.json({ accounts: listAccounts().map(directoryEntry), full: false });
 }
 

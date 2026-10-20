@@ -2697,7 +2697,7 @@
         ],
         "operationId": "get_auth_officials",
         "summary": "GET /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
         "parameters": [],
         "responses": {
           "200": {
@@ -2718,11 +2718,51 @@
                         "full": {
                           "type": "boolean",
                           "const": true
+                        },
+                        "twoStep": {
+                          "type": "object",
+                          "properties": {
+                            "policy": {
+                              "type": "string",
+                              "enum": [
+                                "all",
+                                "none",
+                                "signers"
+                              ]
+                            },
+                            "set": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "by",
+                                    "at"
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "policy",
+                            "set"
+                          ]
                         }
                       },
                       "required": [
                         "accounts",
-                        "full"
+                        "full",
+                        "twoStep"
                       ]
                     },
                     {
@@ -2784,7 +2824,14 @@
                           "secondStepOn": true
                         }
                       ],
-                      "full": true
+                      "full": true,
+                      "twoStep": {
+                        "policy": "all",
+                        "set": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        }
+                      }
                     }
                   }
                 }
@@ -2815,7 +2862,7 @@
         ],
         "operationId": "post_auth_officials",
         "summary": "POST /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -3959,6 +4006,28 @@
                         "signers"
                       ]
                     },
+                    "policySet": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "by": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "by",
+                            "at"
+                          ]
+                        }
+                      ]
+                    },
                     "passkeys": {
                       "type": "number"
                     }
@@ -3969,6 +4038,7 @@
                     "required",
                     "thisSession",
                     "policy",
+                    "policySet",
                     "passkeys"
                   ]
                 },
@@ -3981,6 +4051,10 @@
                       "required": true,
                       "thisSession": true,
                       "policy": "all",
+                      "policySet": {
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z"
+                      },
                       "passkeys": 1
                     }
                   }

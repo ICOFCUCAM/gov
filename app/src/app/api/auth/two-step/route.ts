@@ -9,7 +9,7 @@
 // Every change is audited. Platform accounts only: substrate officers use the
 // substrate's own sign-in.
 import { NextRequest, NextResponse } from 'next/server';
-import { accountById, confirmTwoStep, removeTwoStep, setTwoStepPolicy, startTwoStep, twoStepPolicy } from '@/lib/auth/officials';
+import { accountById, confirmTwoStep, removeTwoStep, setTwoStepPolicy, startTwoStep, twoStepPolicy, twoStepPolicySet } from '@/lib/auth/officials';
 import { currentOfficial, actorLabel, issueSession } from '@/lib/auth/official';
 import { roleOf } from '@/lib/auth/roles';
 import { getSovereign } from '@/lib/data/store';
@@ -28,7 +28,7 @@ export async function GET() {
   if ('error' in m) return m.error;
   const a = accountById(m.id);
   // passkeys: how many the official has (a passkey is a second step too, /api/auth/passkeys).
-  return NextResponse.json({ on: !!a?.twoStepSince, since: a?.twoStepSince ?? null, required: !!a?.twoStepRequired, thisSession: !!m.o.twoStep, policy: twoStepPolicy(), passkeys: a?.passkeys.length ?? 0 });
+  return NextResponse.json({ on: !!a?.twoStepSince, since: a?.twoStepSince ?? null, required: !!a?.twoStepRequired, thisSession: !!m.o.twoStep, policy: twoStepPolicy(), policySet: twoStepPolicySet(), passkeys: a?.passkeys.length ?? 0 });
 }
 
 export async function POST(req: NextRequest) {

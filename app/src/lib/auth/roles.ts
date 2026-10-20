@@ -30,6 +30,12 @@ export function secondStepMissing(s: Scope): string | null {
   return s.twoStepRequired && !s.twoStep ? 'Set up the second sign-in step under My account, then sign in again, before making changes' : null;
 }
 
+/** Who must use the second sign-in step: nobody (default), officials who can sign (and administrators), or everyone. */
+export type TwoStepPolicy = 'none' | 'signers' | 'all';
+/** Whether a two-step policy covers an official with this role (the one rule; lib/auth/officials.ts and the accounts screen read it). */
+export const twoStepCovers = (policy: TwoStepPolicy, role: OfficialRole): boolean =>
+  policy === 'all' || (policy === 'signers' && (role === 'administrator' || role === 'signatory'));
+
 /** When roles were introduced (seconds since 1970): sessions and accounts dated before it carry no role. */
 export const ROLES_SINCE = Date.parse('2026-10-18T10:37:47Z') / 1000;
 /**

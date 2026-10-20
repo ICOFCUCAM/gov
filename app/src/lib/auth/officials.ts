@@ -13,7 +13,7 @@ import { randomBytes, scrypt, timingSafeEqual, randomUUID, createHash, type Scry
 import { matchStep, newSecret, otpauthUri } from './totp';
 import { seal, open as openSealed } from '@/lib/crypto/envelope';
 import { recordAudit, getMinistry } from '@/lib/data/store';
-import { isRole, roleLabel, roleOf, type OfficialRole } from './roles';
+import { isRole, roleLabel, roleOf, twoStepCovers, type OfficialRole, type TwoStepPolicy } from './roles';
 import { touch } from '@/lib/data/repo/track';
 import { recordAggregated } from '@/lib/audit/aggregate';
 import { checkSetupCode, consumeSetupCode, localAccountsAllowed, LOCAL_ACCOUNTS_REFUSED } from './setup-token';
@@ -72,10 +72,12 @@ const passkeySummary = (p: StoredPasskey): PasskeySummary => ({ id: p.id, name: 
 /** What screens see of an account: never the password hash or the second-step secret. */
 export type PublicAccount = Omit<OfficialAccount, 'passwordHash' | 'twoStep' | 'twoStepPending' | 'reset' | 'passkeys'> & { twoStepSince?: string; twoStepRequired: boolean; resetPendingUntil?: string; passkeys: PasskeySummary[]; secondStepOn: boolean };
 
-/** Who must use the second sign-in step: nobody (default), officials who can sign (and administrators), or everyone. */
-export type TwoStepPolicy = 'none' | 'signers' | 'all';
+/** Who must use the second sign-in step (the type and the rule live in roles.ts). */
+export type { TwoStepPolicy } from './roles';
 interface Db {
   accounts: OfficialAccount[]; failures: Record<string, number[]>; secret?: string; twoStepPolicy?: TwoStepPolicy;
+  /** Who last set the two-step policy and when (absent until it is first set; the audit chain keeps every change). */
+  twoStepPolicySet?: { by: string; at: string };
   /** SHA-256 (hex) of each CIVICOS_SETUP_TOKEN already used for a first account: never accepted again (lib/auth/setup-token.ts). */
   setupTokensUsed?: string[];
   /** What substrate officers may do on the platform, set by an administrator (keyed by officer id; lib/auth/substrate-officials.ts). */
@@ -411,16 +413,17 @@ function useRecovery(a: OfficialAccount, code: string): boolean {
 }
 
 export const twoStepPolicy = (): TwoStepPolicy => db().twoStepPolicy ?? 'none';
+/** Who last set the policy and when; null while it has never been set (the default, nobody required). */
+export const twoStepPolicySet = (): { by: string; at: string } | null => db().twoStepPolicySet ?? null;
 /** Whether the installation's policy requires this account to use the second step. */
 export function twoStepRequiredFor(a: Pick<OfficialAccount, 'role'>): boolean {
-  const p = twoStepPolicy();
-  const r = roleOf(a);
-  return p === 'all' || (p === 'signers' && (r === 'administrator' || r === 'signatory'));
+  return twoStepCovers(twoStepPolicy(), roleOf(a));
 }
 
 export function setTwoStepPolicy(policy: string, by: string): { policy: TwoStepPolicy } | { error: string } {
   if (policy !== 'none' && policy !== 'signers' && policy !== 'all') return { error: 'Policy must be none, signers or all' };
   db().twoStepPolicy = policy;
+  db().twoStepPolicySet = { by, at: new Date().toISOString() };
   recordAudit(by, 'auth.two-step.policy', 'Officials:two-step', 'ok', policy);
   return { policy };
 }
