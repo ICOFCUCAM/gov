@@ -184,6 +184,7 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/law(\/|$)/,                        // the laws register: canRecordLaw() / canConfirmLaw() in the route
   /^\/api\/cases(\/|$)/,                      // cases: caseActRefusal() in the workflow engine (lib/casework/engine.ts)
   /^\/api\/organisations\/loads$/,
+  /^\/api\/education$/,                     // institutional returns: canRecordEducationReturn() in the route
   /^\/api\/rules$/,                         // operational rules: canManageRule() in the route
   /^\/api\/access-log\/retention$/,         // oversight confirmation of shortening the access log: canConfirmAccessLogRetention() in the route           // loading an existing register: the authority that keeps it (the route checks)
   /^\/api\/case-packages(\/|$)/,              // procedures: drafted by the responsible institution, approved by one who can sign there (route)
@@ -572,6 +573,20 @@ export function canReadTax(s: Scope, authority: string | undefined, purpose?: st
   if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read tax records';
   if (authority && s.institution === authority) return null;
   return 'Tax records are read by the tax authority; other institutions check registration through the exchange (taxpayer.status)';
+}
+
+/** Education records (lib/education/register.ts): the education authority's officials; auditors with a purpose. Holders' names are personal data. */
+export function canReadEducation(s: Scope, authority: string | undefined, purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read education records';
+  if (authority && s.institution === authority) return null;
+  return 'Education records are read by the education authority; others check a qualification through the exchange (qualification.verify)';
+}
+
+/** Recording an institution's return (aggregate counts it reported): the education authority's officials, never auditors. */
+export function canRecordEducationReturn(s: Scope, authority: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors read returns but do not record them';
+  if (authority && s.institution === authority) return null;
+  return 'Returns are recorded by the education authority (named under Who is responsible)';
 }
 
 /** Visas and residence permits (lib/immigration/register.ts): the immigration authority's officials; auditors with a purpose. Never the whole government by default (directions 15.1). */

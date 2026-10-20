@@ -62,6 +62,9 @@
       "name": "documents"
     },
     {
+      "name": "education"
+    },
+    {
       "name": "events"
     },
     {
@@ -11233,6 +11236,340 @@
         ],
         "x-permission-rule": "official",
         "x-source": "src/app/api/documents/verify/route.ts"
+      }
+    },
+    "/api/education": {
+      "get": {
+        "tags": [
+          "education"
+        ],
+        "operationId": "get_education",
+        "summary": "GET /api/education",
+        "description": "/api/education — the education register (lib/education/register.ts) for the education authority's officials and auditors with a purpose. GET ?organisation= an institution's inspections and returns; ?qualification= one qualification with every version; ?holder= a holder's qualifications (personal); with none of them, counts only. Every search and read, allowed or refused, is written to the access log. POST { organisation, period, counts, note? } records the counts an institution reported (a new version when the period was reported before). Inspections and qualifications change only through decided cases.",
+        "parameters": [
+          {
+            "name": "holder",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organisation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "qualification",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "inspections": {
+                              "type": "number"
+                            },
+                            "awards": {
+                              "type": "number"
+                            },
+                            "revoked": {
+                              "type": "number"
+                            },
+                            "returns": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "inspections",
+                            "awards",
+                            "revoked",
+                            "returns"
+                          ]
+                        },
+                        "inspections": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Inspection"
+                          }
+                        },
+                        "returns": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/InstitutionReturn"
+                          }
+                        },
+                        "awarded": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "inspections",
+                        "returns",
+                        "awarded"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "inspections": {
+                              "type": "number"
+                            },
+                            "awards": {
+                              "type": "number"
+                            },
+                            "revoked": {
+                              "type": "number"
+                            },
+                            "returns": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "inspections",
+                            "awards",
+                            "revoked",
+                            "returns"
+                          ]
+                        },
+                        "awards": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Award"
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "awards"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "inspections": {
+                              "type": "number"
+                            },
+                            "awards": {
+                              "type": "number"
+                            },
+                            "revoked": {
+                              "type": "number"
+                            },
+                            "returns": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "inspections",
+                            "awards",
+                            "revoked",
+                            "returns"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "counts"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "counts": {
+                        "inspections": 1,
+                        "awards": 1,
+                        "revoked": 1,
+                        "returns": 1
+                      },
+                      "inspections": [
+                        {
+                          "id": "ID-0001",
+                          "organisation": "string",
+                          "register": "string",
+                          "date": "2026-01-15",
+                          "outcome": "improvement-required",
+                          "summary": "Text",
+                          "case": "string",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "returns": [
+                        {
+                          "id": "ID-0001",
+                          "organisation": "string",
+                          "period": "string",
+                          "versions": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "awarded": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/education/route.ts"
+      },
+      "post": {
+        "tags": [
+          "education"
+        ],
+        "operationId": "post_education",
+        "summary": "POST /api/education",
+        "description": "/api/education — the education register (lib/education/register.ts) for the education authority's officials and auditors with a purpose. GET ?organisation= an institution's inspections and returns; ?qualification= one qualification with every version; ?holder= a holder's qualifications (personal); with none of them, counts only. Every search and read, allowed or refused, is written to the access log. POST { organisation, period, counts, note? } records the counts an institution reported (a new version when the period was reported before). Inspections and qualifications change only through decided cases.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "organisation": {
+                    "type": "string"
+                  },
+                  "period": {
+                    "type": "string"
+                  },
+                  "counts": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "organisation": "string",
+                    "period": "string",
+                    "counts": {},
+                    "note": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "return": {
+                      "$ref": "#/components/schemas/InstitutionReturn"
+                    }
+                  },
+                  "required": [
+                    "return"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "return": {
+                        "id": "ID-0001",
+                        "organisation": "string",
+                        "period": "string",
+                        "versions": [
+                          {
+                            "n": 1,
+                            "counts": {},
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/education/route.ts"
       }
     },
     "/api/events": {
@@ -59356,6 +59693,139 @@
           "draftedAt"
         ]
       },
+      "Award": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "description": "The qualification number printed on the award: QUA-YYYY-NNNNNN."
+          },
+          "holderRef": {
+            "type": "string",
+            "description": "The holder: a person reference from the civil register or identity provider. Personal data."
+          },
+          "awardingBody": {
+            "type": "string"
+          },
+          "accreditation": {
+            "type": "object",
+            "properties": {
+              "register": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string",
+                "const": "granted"
+              }
+            },
+            "required": [
+              "register",
+              "title",
+              "state"
+            ],
+            "description": "The standing that made the awarding body competent on the day (register and state then)."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AwardVersion"
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "revoked",
+              "valid"
+            ]
+          },
+          "certificate": {
+            "type": "string"
+          },
+          "revoked": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "case": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "case",
+              "reason"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "holderRef",
+          "awardingBody",
+          "accreditation",
+          "versions",
+          "state"
+        ]
+      },
+      "AwardVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "awardedOn": {
+            "type": "string"
+          },
+          "holderName": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "title",
+          "awardedOn",
+          "holderName",
+          "at",
+          "by",
+          "case",
+          "reason"
+        ]
+      },
       "BBox": {
         "type": "array",
         "prefixItems": [
@@ -67666,6 +68136,54 @@
           "at"
         ]
       },
+      "Inspection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organisation": {
+            "type": "string"
+          },
+          "register": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "improvement-required",
+              "no-action",
+              "referred-for-suspension"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organisation",
+          "register",
+          "date",
+          "outcome",
+          "summary",
+          "case",
+          "by",
+          "at"
+        ]
+      },
       "InstallEvent": {
         "type": "object",
         "properties": {
@@ -67773,6 +68291,72 @@
           "units",
           "credit",
           "installedAt"
+        ]
+      },
+      "InstitutionReturn": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organisation": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "n": {
+                  "type": "number"
+                },
+                "counts": {
+                  "type": "object",
+                  "properties": {
+                    "enrolment.female": {
+                      "type": "number"
+                    },
+                    "enrolment.male": {
+                      "type": "number"
+                    },
+                    "enrolment.total": {
+                      "type": "number"
+                    },
+                    "staff.teaching": {
+                      "type": "number"
+                    },
+                    "staff.total": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "n",
+                "counts",
+                "at",
+                "by"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "organisation",
+          "period",
+          "versions"
         ]
       },
       "IntegrationClient": {
