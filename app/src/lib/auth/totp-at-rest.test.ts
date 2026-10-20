@@ -27,7 +27,12 @@ describe('authenticator secrets at rest (AES-256-GCM under CIVICOS_DATA_KEK)', (
     expect(s).not.toContain('JBSWY3DPEHPK3PXP');
     expect(open(s, 'totp:a')).toEqual({ plain: 'JBSWY3DPEHPK3PXP', reseal: false });
     expect(open(s, 'totp:b')).toEqual({ error: expect.stringMatching(/does not open/) });
-    const tampered = s.slice(0, -2) + (s.endsWith('A') ? 'BB' : 'AA');
+    // Change a byte of the ciphertext itself: editing the last base64url characters can touch only
+    // padding bits (one sealed value in 256 ends "BA"), which decodes to the same bytes.
+    const parts = s.split(':');
+    const ct = Buffer.from(parts[5]!, 'base64url');
+    ct[0] = ct[0]! ^ 1;
+    const tampered = [...parts.slice(0, 5), ct.toString('base64url')].join(':');
     expect(open(tampered, 'totp:a')).toHaveProperty('error');
   });
 

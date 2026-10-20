@@ -131,6 +131,19 @@ The principle tested throughout: the platform must be unable to make an unauthor
 
 - **Fix (`d5f2c60`):** a key value that cannot be read as a file now gets an error saying what a key must be: 32 bytes in base64 or hex, or the path of a file holding one. Operators got the same misleading `ENOENT` for a short key. The test now covers the `/` case deterministically instead of by chance.
 
+**A second intermittent failure, found by CI after the report.**
+
+- **Failing test:** `src/lib/auth/totp-at-rest.test.ts › seals and opens, bound to what it belongs to`. It failed in CI on `0fb4430` and passed on the next run of the same commit:
+
+  ```
+  AssertionError: expected { plain: 'JBSWY3DPEHPK3PXP', …(1) } to have property "error"
+   ❯ src/lib/auth/totp-at-rest.test.ts:31:38
+  ```
+
+- **Root cause:** the test "tampered" with a sealed value by editing its last two base64url characters. The ciphertext is 16 bytes (22 characters), and the last character carries only 2 data bits; the other 4 are padding. When the value ends in `BA` (1 in 256), the edit gives `BB`: the second-to-last character is unchanged, and `A`→`B` alters only padding. The "tampered" value therefore decodes to the same bytes and opens correctly. The encryption was right; the test changed nothing.
+- **Reproduction:** sealing until a value ends in `BA` (482 tries) and applying the old edit fails with the same assertion every time.
+- **Fix:** the test now flips a bit of an actual ciphertext byte. 3000 seals, 9 of them ending in `BA`, were all refused. The one similar test (`integration-keys.test.ts`) is not affected, because keys are compared by a SHA-256 of the whole string.
+
 **Repeated full runs.**
 
 - The full suite ran 8 times in a row in a separate worktree, at the hardening head before the three final fixes.
