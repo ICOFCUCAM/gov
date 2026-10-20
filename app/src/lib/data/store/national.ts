@@ -21,6 +21,9 @@ import { db } from './state';
 import { seededInt } from './shared';
 import { verifyAuditChain } from './audit';
 import { seedQueue, seedIncidents } from './seeds';
+import { installationMode } from '@/lib/ops/mode';
+
+const MODE_WORD = { production: 'Production', training: 'Training', demo: 'Demonstration' } as const;
 
 // ── National executive snapshot (cross-ministry, realistic) ───────────
 function ensureIncidentsSeeded(): void {
@@ -460,7 +463,8 @@ export function nationalSnapshot(): NationalSnapshot {
     sovereign: db.sovereign,
     generatedAt: new Date().toISOString(),
     classification: 'OFFICIAL',
-    environment: 'Production',
+    // The installation's mode (lib/ops/mode.ts), never a fixed word: a demo must not read as production.
+    environment: MODE_WORD[installationMode()],
     indicators,
     crossMinistryIncidents,
     totals: {

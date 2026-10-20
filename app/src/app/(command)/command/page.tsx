@@ -122,7 +122,7 @@ export default function SovereignCommandCenter() {
   const readiness = posture?.level === 'alert' ? 'CRITICAL' : posture?.level === 'warn' ? 'ELEVATED' : 'OPERATIONAL';
 
   const tele = [
-    { l: 'Executive environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true },
+    { l: 'Executive environment', v: nat?.environment ?? '—', t: 'ok', dot: true },
     { l: 'Institutions', v: t ? String(t.institutions) : '—' },
     { l: 'Active incidents', v: String(incidents.length || sev('sev1') + sev('sev2')), t: incidents.length ? 'alert' : 'ok' },
     { l: 'Queues breaching', v: t ? String(t.queuesBreaching) : '—', t: 'warn' },
@@ -235,7 +235,7 @@ export default function SovereignCommandCenter() {
           </Link>
           <div className="border-t border-line px-4 py-2.5 text-[10px] leading-relaxed">
             <div className="flex justify-between"><span className="uppercase tracking-widest text-ink-muted">System</span><span style={{ color: TONE.ok }}>Operational</span></div>
-            <div className="flex justify-between"><span className="uppercase tracking-widest text-ink-muted">Environment</span><span className="text-ink-soft">{nat?.environment ?? 'Production'}</span></div>
+            <div className="flex justify-between"><span className="uppercase tracking-widest text-ink-muted">Environment</span><span className="text-ink-soft">{nat?.environment ?? '—'}</span></div>
             <div className="flex justify-between"><span className="uppercase tracking-widest text-ink-muted">Version</span><span className="text-ink-soft">v2.1.0</span></div>
             <div className="mt-1 text-ink-muted">© 2025 CivicOS</div>
           </div>
