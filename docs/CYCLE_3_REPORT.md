@@ -104,6 +104,35 @@ The cycle adds 24 test files and extends existing ones. Results of the full run 
 | Deployment | The push at commit 25 (`b0e9f29`) deployed as a Vercel preview (Ready), with every CI check green. The final push is covered by the PR's CI. |
 | Accessibility and security | The public sites audit (axe-core WCAG A/AA, links, budgets, no outside requests) and the security scans run as CI jobs on the PR. The one public page changed this cycle (`/registers`) uses the existing frame, one h1 and labelled forms. |
 
+## Acceptance review (after the cycle)
+
+A read-only review against the owner's five acceptance questions found four
+blocking defects that CI did not catch. Each was proven with a test, then
+fixed in its own commit with a regression test.
+
+| # | Defect | Fix |
+|---|---|---|
+| A | A repeated request (same idempotency key) returned the whole case before the case rules ran: an official of another institution could read a tax case, personal fields included, unlogged. Opening keys were shared across institutions. Present since Cycle 2. | The case rules run first; an opening key finds only a case of the same procedure and institution, an action key only its own action (`casework/replay-isolation.test.ts`). |
+| B | Any signed-in official could list every bill (tax and customs payers and amounts) and mark any bill paid through the stand-in payment; reconciliation counted it, clearing tax balances and unblocking customs release. The audit named "citizen". | Bills of a named payer are seen only by the issuing institution (the wallet and the mirror carry general bills only). The stand-in is refused in production and for every tax or customs bill; its receipts are marked `simulated` and never posted in production; the audit names who acted. |
+| C | After a physical inspection found a discrepancy, the channel could be re-chosen as release on documents and the goods released; the earlier choice was overwritten. | Every channel choice is kept; a channel can only be raised once an inspection is recorded; release needs the last inspection to be clean whatever the channel. |
+| D | Record numbers (taxpayer, assessment, qualification, professional, declaration, duty, organisation) came from per-year maps the postgres backend does not reserve, and a restore took them back: a number could be given twice. | Numeric `…Seq` counters reserved by the backend (`lib/data/numbering.ts`), continuing from the old maps; a restore keeps every store's counters at their highest value. |
+
+Still to decide (not fixed; for the owner and each country):
+
+- Gaps in the authority check:
+  - A register type a nation adds without naming its permit type is not checked against the authority registry, even in production.
+  - Tax and customs decisions are not checked against an authority mapping at all.
+- A decision does not record which authority mapping version authorised it.
+- An approved mapping cannot be suspended in an emergency; only a newer approved version replaces it.
+- Two-official approval:
+  - It is a property of each approved procedure, and the platform sets no minimum.
+  - In the reference drafts one official decides tax registration, recording a qualification, customs release and every refusal.
+  - One person holding two accounts with different emails is prevented only when sign-in through the national identity provider is required.
+  - Mapping and rule approvals use a weaker same-person check than cases, which matters only when sign-in is not enforced.
+- A four-eyes proposal on a case never lapses.
+- Professional registration numbers run in sequence, so the public register can be listed number by number.
+- Event delivery after a restore: the default storage settings roll back both the audit trail's numbering and the delivery position. Consumers that track progress by audit number could skip new events; this is not yet tested.
+
 ## Legal decisions still open (for each country)
 
 Nothing below is decided by the platform. Each item is a draft or a blank until the country's officials record it.
