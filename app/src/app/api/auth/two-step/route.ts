@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     const r = confirmTwoStep(m.id, b.code ?? '');
     if ('error' in r) return fail(r);
     // The official has just proved the code: this session counts as having passed the second step.
-    return issueSession(NextResponse.json(r), { ...m.o, twoStep: true, twoStepRequired: !!accountById(m.id)?.twoStepRequired }, req.nextUrl.protocol === 'https:');
+    return issueSession(NextResponse.json(r), { ...m.o, twoStep: true, twoStepAt: Date.now(), twoStepRequired: !!accountById(m.id)?.twoStepRequired }, req.nextUrl.protocol === 'https:');
   }
   if (b.action === 'off') {
     const r = removeTwoStep(m.id, { code: b.code, by: actorLabel(m.o) });

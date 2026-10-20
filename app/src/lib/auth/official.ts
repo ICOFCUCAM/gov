@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server';
 import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, verifyToken, type OfficialClaims } from './session-token';
 import { createHash } from 'node:crypto';
 import { sessionSecret, sessionSecretProblem, accountById, sessionRevoked } from './officials';
-import { apiPermission, secondStepMissing, type Scope } from './roles';
+import { apiPermission, secondStepMissing, type CaseScope, type Scope } from './roles';
 import { officerNow, substrateScope } from './substrate-officials';
 import { logger } from '@/lib/ops/log';
 import { providerMfaAccepted } from './sign-on-store';
@@ -62,6 +62,19 @@ export async function currentOfficial(): Promise<OfficialClaims | null> {
   const secondStep = c.via === 'oidc' ? providerMfaAccepted() : a.secondStepOn;
   return { ...c, name: a.name, office: a.office, role: a.role, institution: a.institution,
     twoStep: !!c.twoStep && secondStep, twoStepRequired: a.twoStepRequired };
+}
+
+/**
+ * The signed-in official as the case and register rules see them
+ * (caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts): role,
+ * institution, id, and when the second sign-in step was last passed (the
+ * sign-in itself when it included the step). Null without a verified official.
+ */
+export async function caseScope(): Promise<(CaseScope & { name: string; label: string }) | null> {
+  const o = await currentOfficial();
+  if (!o) return null;
+  const twoStepAt = o.twoStep ? (o.twoStepAt ?? o.iat * 1000) : undefined;
+  return { id: o.sub, name: o.name, label: actorLabel(o), role: o.role, institution: o.institution, twoStep: o.twoStep, twoStepRequired: o.twoStepRequired, ...(twoStepAt ? { twoStepAt } : {}) };
 }
 
 /** The name an action is recorded under: the verified official's, with their office. */

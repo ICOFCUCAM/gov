@@ -21,6 +21,8 @@ export interface OfficialClaims {
   institution?: string;
   /** This session passed the second sign-in step (authenticator code). */
   twoStep?: boolean;
+  /** When this session passed the second step (ms since 1970), if later than sign-in (step-up); otherwise sign-in time. */
+  twoStepAt?: number;
   /** The installation's policy requires the second step for this official. */
   twoStepRequired?: boolean;
   /** How a platform account signed in: its password (absent on older sessions), a passkey, or the government's identity provider (lib/auth/oidc.ts). */
