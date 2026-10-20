@@ -7,7 +7,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { openCase, act, attach, resetCases, registeredEffects, getCase, lapseProposals, type Actor } from './engine';
 import { draftPackage, approvePackage, resetPackages } from './packages';
 import { TAX_PROCEDURES, CUSTOMS_PROCEDURES } from './modules';
-import { resetDualControl, setDualControlPolicy, platformMinimum } from './dual-control-policy';
+import { resetDualControl, proposeDualControlPolicy, confirmDualControlPolicy, withdrawDualControlPolicy, dualControlPolicy, platformMinimum } from './dual-control-policy';
+import { recordVersion as recordLaw, confirmVersion as confirmLaw, resetLaw } from '@/lib/law/register';
 import { addDocument, resetDocuments } from '@/lib/records/documents';
 import { resetDecisions, getDecision } from '@/lib/records/decisions';
 import { setSovereign, listMinistries } from '@/lib/data/store';
@@ -34,7 +35,7 @@ async function returnAt(tin: string, now: Date) {
 describe('dual control (H) and proposals that lapse (I)', () => {
   let tin = '';
   beforeEach(() => {
-    for (const r of [resetCases, resetPackages, resetDocuments, resetDecisions, resetDualControl, resetTax, resetCustoms]) r();
+    for (const r of [resetCases, resetPackages, resetDocuments, resetDecisions, resetDualControl, resetTax, resetCustoms, resetLaw]) r();
     vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 7).toString('base64'));
     TAX = listMinistries()[0]!.id;
     setSovereign({ deployment: { authorities: { tax: TAX, customs: TAX } } }, 'Administrator');
@@ -59,6 +60,27 @@ describe('dual control (H) and proposals that lapse (I)', () => {
     expect(getDecision(done.decision!.id)!.content.independence).toBe('identity-provider');
   });
 
+  it('keeps values left out of a proposal, lapses an unconfirmed one, and keeps every version', async () => {
+    const law = recordLaw({ instrument: { title: 'Public Finance Act', type: 'act', jurisdiction: 'X', year: 2025, number: '7', issuingAuthority: 'Parliament' }, dates: { inForce: '2025-01-01' }, provisions: [{ eId: 'sec_2', num: '2', text: 'Rules.' }] }, 'L1', 'l1');
+    if ('error' in law) throw new Error(law.error);
+    confirmLaw(law.instrument.id, law.version.id, 'L2', 'l2');
+    const basis = [{ instrument: law.instrument.id, eId: 'sec_2' }];
+    const t0 = new Date('2026-10-20T08:00:00Z');
+    proposeDualControlPolicy({ extra: ['customs.declaration:release'], legalBasis: basis }, 'Admin A', 'adm-a', t0);
+    confirmDualControlPolicy('Admin B', 'adm-b', t0);
+    // Changing only the waiting period keeps the further step.
+    proposeDualControlPolicy({ pendingHours: 36, legalBasis: basis }, 'Admin A', 'adm-a', t0);
+    confirmDualControlPolicy('Admin B', 'adm-b', t0);
+    expect(dualControlPolicy()).toMatchObject({ extra: ['customs.declaration:release'], pendingHours: 36 });
+    // A proposal not confirmed within the waiting period (36 h now) lapses.
+    proposeDualControlPolicy({ pendingHours: 2, legalBasis: basis }, 'Admin A', 'adm-a', t0);
+    expect(confirmDualControlPolicy('Admin B', 'adm-b', new Date('2026-10-22T08:00:00Z'))).toMatchObject({ error: expect.stringMatching(/No change is waiting/) });
+    proposeDualControlPolicy({ pendingHours: 3, legalBasis: basis }, 'Admin A', 'adm-a', new Date('2026-10-22T08:00:00Z'));
+    expect(withdrawDualControlPolicy('Admin A', 'Wrong figure')).toEqual({ ok: true });
+    expect(dualControlPolicy().pendingHours).toBe(36);
+    expect(dualControlPolicy().changes!.history!.map(h => h.outcome)).toEqual(['adopted', 'adopted', 'lapsed', 'withdrawn']);
+  });
+
   it('records when only the accounts differ, and the country can require the identity link and add steps', async () => {
     const id = await returnAt(tin, new Date());
     await act(id, { action: 'assess', reason: 'ok' }, off('p1a', 'signatory'));
@@ -66,8 +88,20 @@ describe('dual control (H) and proposals that lapse (I)', () => {
     if ('error' in done) throw new Error(done.error);
     expect(getDecision(done.decision!.id)!.content.independence).toBe('accounts-only');
 
-    expect(setDualControlPolicy({ requireIdentityBinding: true, pendingHours: 48, extra: ['customs.declaration:release'] }, 'Admin')).toMatchObject({ error: /instrument/ });
-    expect(setDualControlPolicy({ requireIdentityBinding: true, pendingHours: 48, extra: ['customs.declaration:release'], basis: 'Finance Regulations 2026, reg. 4' }, 'Admin')).toMatchObject({ adopted: true });
+    const rules = { requireIdentityBinding: true, pendingHours: 48, extra: ['customs.declaration:release'] };
+    // The basis is cited from the laws register, never typed.
+    expect(proposeDualControlPolicy({ ...rules, legalBasis: [] }, 'Admin A', 'adm-a')).toMatchObject({ error: expect.stringMatching(/laws register/) });
+    expect(proposeDualControlPolicy({ ...rules, legalBasis: [{ instrument: '/eli/x/act/2026/9', eId: 'reg_4' }] }, 'Admin A', 'adm-a')).toMatchObject({ error: expect.stringMatching(/Legal basis/) });
+    const law = recordLaw({ instrument: { title: 'Finance Regulations', type: 'regulation', jurisdiction: 'X', year: 2026, number: '4', issuingAuthority: 'Minister' }, dates: { inForce: '2026-01-01' }, provisions: [{ eId: 'reg_4', num: '4', text: 'Two officials.' }] }, 'L1', 'l1');
+    if ('error' in law) throw new Error(law.error);
+    confirmLaw(law.instrument.id, law.version.id, 'L2', 'l2');
+    expect(proposeDualControlPolicy({ ...rules, legalBasis: [{ instrument: law.instrument.id, eId: 'reg_4' }] }, 'Admin A', 'adm-a')).toHaveProperty('expiresAt');
+    // Nothing applies until a different official confirms; a second proposal waits its turn.
+    expect(dualControlPolicy()).toMatchObject({ adopted: false, requireIdentityBinding: false });
+    expect(proposeDualControlPolicy({ pendingHours: 12, legalBasis: [{ instrument: law.instrument.id, eId: 'reg_4' }] }, 'Admin B', 'adm-b')).toMatchObject({ error: expect.stringMatching(/waiting for a second official/) });
+    expect(confirmDualControlPolicy('Admin A', 'adm-a')).toMatchObject({ error: expect.stringMatching(/second, different official/) });
+    expect(confirmDualControlPolicy('Admin B', 'adm-b')).toMatchObject({ confirmed: { by: 'Admin B', independence: 'accounts-only' } });
+    expect(dualControlPolicy()).toMatchObject({ adopted: true, requireIdentityBinding: true, pendingHours: 48, confirmedBy: 'Admin B', citations: [{ eId: 'reg_4' }] });
     const tin2 = (registerTaxpayer({ party: { kind: 'person', id: 'BR-2', name: 'U' }, taxTypes: ['income'] }, 'c', 'Officer') as { tin: string }).tin;
     const id2 = await returnAt(tin2, new Date());
     await act(id2, { action: 'assess', reason: 'ok' }, off('p1a', 'signatory'));

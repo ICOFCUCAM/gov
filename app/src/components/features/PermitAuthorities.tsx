@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
+import { CountryRules } from './CountryRules';
 
 interface Mapping { permitType: string; title: string; version: number; lead: string; consulted: { authority: string; role: string; mandatory: boolean }[]; scope: { level: string; regions?: string[] }; legalBasis: { title?: string; num?: string; eId: string }[]; effectiveFrom: string; effectiveTo?: string; powers: { renew: string; suspend: string; revoke: string; appealBody: string }; state: string; proposal: boolean; note?: string; draftedBy: string; approvedBy?: string; handover?: { from: string; plan: string }; suspensions?: { at: string; by: string; reason: string; reviewBy: string; confirmed?: { by: string }; lifted?: { by: string; at: string; reason: string }; reviews?: { by: string; at: string; reviewBy: string; reason: string }[] }[] }
 const field = 'mt-1 w-full rounded border border-line bg-surface px-2 py-1 text-sm';
@@ -86,6 +87,7 @@ export function PermitAuthorities() {
         ) : <p className="text-sm text-ink-muted">No permit type has an authority recorded yet.</p>}
         <Button className="mt-3" variant="secondary" onClick={() => void send({ op: 'install-proposals' }, 'Proposed defaults added as drafts. None governs anything until approved with its legal basis.')}>Add the proposed defaults as drafts</Button>
       </Section>
+      <CountryRules />
       <Section title="Record a version" meta="administrators">
         <div className="grid gap-2 md:grid-cols-3">
           <label className="text-sm">Permit type key<input className={field} value={f.permitType} onChange={e => setF(x => ({ ...x, permitType: e.target.value }))} placeholder="pharmacy-licence" /></label>

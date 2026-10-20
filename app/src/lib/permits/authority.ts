@@ -20,9 +20,10 @@
 
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
-import { dualControlRefusal } from '@/lib/data/dual-control';
+import { dualControlRefusal, DUAL_CONTROL_HOURS } from '@/lib/data/dual-control';
 import { uuid7 } from '@/lib/data/uuid7';
 import { cite, type Citation } from '@/lib/law/register';
+import { proposePolicy, confirmPolicy, withdrawPolicy, lapsePolicy, type PolicyChanges, type PolicyVersion } from '@/lib/law/policy-change';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
 export type MappingState = 'draft' | 'approved' | 'withdrawn';
@@ -85,12 +86,22 @@ export interface Suspension {
  * its own periods (who may suspend is the administrators until a country
  * rule says otherwise; the platform does not invent emergency powers).
  */
-export interface SuspensionPolicy { confirmWithinHours: number; reviewWithinDays: number; adopted: boolean; by?: string; at?: string; basis?: string }
-export const DEFAULT_SUSPENSION_POLICY: SuspensionPolicy = { confirmWithinHours: 72, reviewWithinDays: 30, adopted: false };
+export interface SuspensionPolicy {
+  confirmWithinHours: number; reviewWithinDays: number;
+  /** Who may suspend: any administrator (the default), or only the government-wide administrators (not an institution's own). */
+  suspendBy?: 'administrator' | 'government-administrator';
+  adopted: boolean; by?: string; at?: string;
+  /** Periods adopted before citations were required: the instrument as typed. */
+  basis?: string;
+  citations?: Citation[]; confirmedBy?: string;
+  changes?: PolicyChanges<SuspensionValues>;
+}
+export type SuspensionValues = Pick<SuspensionPolicy, 'confirmWithinHours' | 'reviewWithinDays'> & { suspendBy: 'administrator' | 'government-administrator' };
+export const DEFAULT_SUSPENSION_POLICY: SuspensionPolicy = { confirmWithinHours: 72, reviewWithinDays: 30, suspendBy: 'administrator', adopted: false };
 
 interface Db { mappings: AuthorityMapping[]; suspensionPolicy?: SuspensionPolicy }
 const g = globalThis as unknown as { __civicosPermitAuthorities?: Db };
-const db = (): Db => { const d = touch('__civicosPermitAuthorities', g.__civicosPermitAuthorities ??= { mappings: [] }); d.mappings ??= []; d.suspensionPolicy ??= { ...DEFAULT_SUSPENSION_POLICY }; return d; };
+const db = (): Db => { const d = touch('__civicosPermitAuthorities', g.__civicosPermitAuthorities ??= { mappings: [] }); d.mappings ??= []; d.suspensionPolicy ??= { ...DEFAULT_SUSPENSION_POLICY }; d.suspensionPolicy.suspendBy ??= 'administrator'; return d; };
 export function resetPermitAuthorities(): void { g.__civicosPermitAuthorities = undefined; }
 const clone = <T,>(x: T): T => structuredClone(x);
 const KEY = /^[a-z][a-z0-9-]{1,60}$/;
@@ -168,16 +179,49 @@ export function suspensionInForce(permitType: string, on = new Date().toISOStrin
 
 export const suspensionPolicy = (): SuspensionPolicy => clone(db().suspensionPolicy!);
 
-/** The country adopts its own periods (administrators, audited; the basis names the instrument). */
-export function setSuspensionPolicy(input: { confirmWithinHours?: unknown; reviewWithinDays?: unknown; basis?: unknown }, by: string, now = new Date()): SuspensionPolicy | { error: string } {
-  const h = Number(input.confirmWithinHours), d = Number(input.reviewWithinDays);
-  if (!Number.isInteger(h) || h < 1 || h > 720) return { error: 'The confirmation period is a whole number of hours from 1 to 720' };
-  if (!Number.isInteger(d) || d < 1 || d > 365) return { error: 'The review period is a whole number of days from 1 to 365' };
-  const basis = str(input.basis, 300);
-  if (!basis) return { error: 'Name the instrument or decision these periods come from' };
-  db().suspensionPolicy = { confirmWithinHours: h, reviewWithinDays: d, adopted: true, by, at: now.toISOString(), basis };
-  recordAudit(by, 'permit-authority.suspension-policy', 'SuspensionPolicy', 'ok', `confirm within ${h} h · review within ${d} d · ${basis.slice(0, 120)}`);
-  return suspensionPolicy();
+const POLICY_AUDIT = 'permit-authority.suspension-policy';
+const policyValues = (p: SuspensionPolicy): SuspensionValues => ({ confirmWithinHours: p.confirmWithinHours, reviewWithinDays: p.reviewWithinDays, suspendBy: p.suspendBy ?? 'administrator' });
+const describePolicy = (v: SuspensionValues) => `confirm within ${v.confirmWithinHours} h · review within ${v.reviewWithinDays} d · suspended by ${v.suspendBy === 'government-administrator' ? 'government-wide administrators only' : 'any administrator'}`;
+const checkPolicy = (v: SuspensionValues): string | null => {
+  if (!Number.isInteger(v.confirmWithinHours) || v.confirmWithinHours < 1 || v.confirmWithinHours > 720) return 'The confirmation period is a whole number of hours from 1 to 720';
+  if (!Number.isInteger(v.reviewWithinDays) || v.reviewWithinDays < 1 || v.reviewWithinDays > 365) return 'The review period is a whole number of days from 1 to 365';
+  if (v.suspendBy !== 'administrator' && v.suspendBy !== 'government-administrator') return 'Who may suspend is administrator or government-administrator';
+  return null;
+};
+
+/**
+ * The country proposes its own periods and who may suspend, citing the law
+ * (lib/law/policy-change.ts): one administrator proposes, values left out
+ * keep their current setting; a different official confirms
+ * (confirmSuspensionPolicy). `pendingHours` and `requireIdentityBinding` come
+ * from the dual-control rules (passed in: that module depends on this one).
+ */
+export function proposeSuspensionPolicy(input: { confirmWithinHours?: unknown; reviewWithinDays?: unknown; suspendBy?: unknown; legalBasis?: unknown }, by: string, byId?: string, now = new Date(), pendingHours = DUAL_CONTROL_HOURS) {
+  const p = db().suspensionPolicy!;
+  const change: Partial<SuspensionValues> = {
+    ...(input.confirmWithinHours !== undefined ? { confirmWithinHours: Number(input.confirmWithinHours) } : {}),
+    ...(input.reviewWithinDays !== undefined ? { reviewWithinDays: Number(input.reviewWithinDays) } : {}),
+    ...(input.suspendBy !== undefined ? { suspendBy: input.suspendBy as SuspensionValues['suspendBy'] } : {}),
+  };
+  return proposePolicy(p.changes ??= {}, policyValues(p), change, input.legalBasis, { by, ...(byId ? { byId } : {}), now, pendingHours, audit: POLICY_AUDIT, context: 'Emergency suspension of authority mappings', check: checkPolicy, describe: describePolicy });
+}
+
+/** A different official confirms the proposed periods: they apply to suspensions made from now. */
+export function confirmSuspensionPolicy(by: string, byId?: string, now = new Date(), requireIdentityBinding = false) {
+  const p = db().suspensionPolicy!;
+  return confirmPolicy(p.changes ??= {}, {
+    by, ...(byId ? { byId } : {}), now, audit: POLICY_AUDIT, requireIdentityBinding, describe: describePolicy,
+    adopt: (v: PolicyVersion<SuspensionValues>) => Object.assign(p, v.values, { adopted: true, by: v.by, at: v.confirmed!.at, confirmedBy: v.confirmed!.by, citations: v.basis, basis: undefined }),
+  });
+}
+export const lapseSuspensionPolicy = (now = new Date()) => lapsePolicy(db().suspensionPolicy!.changes ??= {}, now, POLICY_AUDIT);
+export const withdrawSuspensionPolicy = (by: string, reason?: string) => withdrawPolicy(db().suspensionPolicy!.changes ??= {}, { by, ...(reason ? { reason } : {}), audit: POLICY_AUDIT });
+
+/** Whether this official may suspend under the country's rule (the route has already checked they are an administrator). */
+export function suspenderRefusal(scope: { institution?: string } | null | undefined): string | null {
+  if ((db().suspensionPolicy!.suspendBy ?? 'administrator') !== 'government-administrator') return null;
+  if (!scope) return 'The country reserves emergency suspension to government-wide administrators: sign in as one';
+  return scope.institution ? 'The country reserves emergency suspension to government-wide administrators, not an institution\'s own' : null;
 }
 
 const sameOfficial = (a: { by: string; byId?: string }, b: { by: string; byId?: string }) => !!dualControlRefusal(a, b);

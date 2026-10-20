@@ -11574,7 +11574,7 @@
         ],
         "operationId": "get_dual_control",
         "summary": "GET /api/dual-control",
-        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code) and the country's rules. POST { extra, requireIdentityBinding, pendingHours, basis } records the country's rules (administrators, audited): further steps its law requires two officials for, whether both must be linked to the national identity provider, and how long a proposal waits. The minimum cannot be lowered here.",
+        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code), the country's rules with their legal basis, a proposal waiting for its second official and every earlier version. POST (administrators): { op: 'propose' (the default), extra?, requireIdentityBinding?, pendingHours?, legalBasis: [{ instrument, eId }] } proposes the country's rules, values left out keeping their current setting, the basis cited from the laws register; { op: 'confirm' } is a different official adopting it; { op: 'withdraw', reason? }. The minimum cannot be lowered here. Who acted comes from the sign-in.",
         "parameters": [],
         "responses": {
           "200": {
@@ -11615,7 +11615,18 @@
                         "adopted": true,
                         "by": "A. Official",
                         "at": "2026-01-15T09:30:00.000Z",
-                        "basis": "string"
+                        "basis": "string",
+                        "citations": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "confirmedBy": "A. Official",
+                        "changes": {}
                       }
                     }
                   }
@@ -11647,7 +11658,7 @@
         ],
         "operationId": "post_dual_control",
         "summary": "POST /api/dual-control",
-        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code) and the country's rules. POST { extra, requireIdentityBinding, pendingHours, basis } records the country's rules (administrators, audited): further steps its law requires two officials for, whether both must be linked to the national identity provider, and how long a proposal waits. The minimum cannot be lowered here.",
+        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code), the country's rules with their legal basis, a proposal waiting for its second official and every earlier version. POST (administrators): { op: 'propose' (the default), extra?, requireIdentityBinding?, pendingHours?, legalBasis: [{ instrument, eId }] } proposes the country's rules, values left out keeping their current setting, the basis cited from the laws register; { op: 'confirm' } is a different official adopting it; { op: 'withdraw', reason? }. The minimum cannot be lowered here. Who acted comes from the sign-in.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -11674,11 +11685,15 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "result": {
+                      "type": "object"
+                    },
                     "policy": {
                       "$ref": "#/components/schemas/DualControlPolicy"
                     }
                   },
                   "required": [
+                    "result",
                     "policy"
                   ]
                 },
@@ -11686,6 +11701,7 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "result": {},
                       "policy": {
                         "extra": [
                           "string"
@@ -11695,7 +11711,18 @@
                         "adopted": true,
                         "by": "A. Official",
                         "at": "2026-01-15T09:30:00.000Z",
-                        "basis": "string"
+                        "basis": "string",
+                        "citations": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "confirmedBy": "A. Official",
+                        "changes": {}
                       }
                     }
                   }
@@ -31002,7 +31029,7 @@
         ],
         "operationId": "get_permit_authorities",
         "summary": "GET /api/permit-authorities",
-        "description": "/api/permit-authorities — which authority the law designates for each permit, licence and register type (lib/permits/authority.ts). GET: every version, with the one in force today. POST (administrators, the structure of government): { op: 'draft', mapping } writes the next version; { op: 'approve', permitType, version } approves a draft (a different official; needs its legal basis); { op: 'withdraw', permitType, version, reason } withdraws a draft; { op: 'install-proposals' } drafts the defaults CivicOS proposes, which govern nothing until approved. Emergency suspension: { op: 'suspend', permitType, version, reason, reviewBy? }, { op: 'confirm-suspension' | 'lift-suspension' | 'review-suspension', … } (each a different official from the one who suspended), { op: 'suspension-policy', confirmWithinHours, reviewWithinDays, basis }. Who acted comes from the sign-in, never the request.",
+        "description": "/api/permit-authorities — which authority the law designates for each permit, licence and register type (lib/permits/authority.ts). GET: every version, with the one in force today. POST (administrators, the structure of government): { op: 'draft', mapping } writes the next version; { op: 'approve', permitType, version } approves a draft (a different official; needs its legal basis); { op: 'withdraw', permitType, version, reason } withdraws a draft; { op: 'install-proposals' } drafts the defaults CivicOS proposes, which govern nothing until approved. Emergency suspension: { op: 'suspend', permitType, version, reason, reviewBy? }, { op: 'confirm-suspension' | 'lift-suspension' | 'review-suspension', … } (each a different official from the one who suspended); who may suspend is the country's rule (any administrator, or government-wide ones only). The suspension rules change by two officials, citing the law: { op: 'suspension-policy', confirmWithinHours?, reviewWithinDays?, suspendBy?, legalBasis: [{ instrument, eId }] } proposes (values left out keep their setting); { op: 'confirm-suspension-policy' } is a different official adopting it; { op: 'withdraw-suspension-policy', reason? }. Who acted comes from the sign-in, never the request.",
         "parameters": [
           {
             "name": "permitType",
@@ -31132,10 +31159,22 @@
                       "suspensionPolicy": {
                         "confirmWithinHours": 1,
                         "reviewWithinDays": 1,
+                        "suspendBy": "administrator",
                         "adopted": true,
                         "by": "A. Official",
                         "at": "2026-01-15T09:30:00.000Z",
-                        "basis": "string"
+                        "basis": "string",
+                        "citations": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "confirmedBy": "A. Official",
+                        "changes": {}
                       },
                       "proposals": 1
                     }
@@ -31168,7 +31207,7 @@
         ],
         "operationId": "post_permit_authorities",
         "summary": "POST /api/permit-authorities",
-        "description": "/api/permit-authorities — which authority the law designates for each permit, licence and register type (lib/permits/authority.ts). GET: every version, with the one in force today. POST (administrators, the structure of government): { op: 'draft', mapping } writes the next version; { op: 'approve', permitType, version } approves a draft (a different official; needs its legal basis); { op: 'withdraw', permitType, version, reason } withdraws a draft; { op: 'install-proposals' } drafts the defaults CivicOS proposes, which govern nothing until approved. Emergency suspension: { op: 'suspend', permitType, version, reason, reviewBy? }, { op: 'confirm-suspension' | 'lift-suspension' | 'review-suspension', … } (each a different official from the one who suspended), { op: 'suspension-policy', confirmWithinHours, reviewWithinDays, basis }. Who acted comes from the sign-in, never the request.",
+        "description": "/api/permit-authorities — which authority the law designates for each permit, licence and register type (lib/permits/authority.ts). GET: every version, with the one in force today. POST (administrators, the structure of government): { op: 'draft', mapping } writes the next version; { op: 'approve', permitType, version } approves a draft (a different official; needs its legal basis); { op: 'withdraw', permitType, version, reason } withdraws a draft; { op: 'install-proposals' } drafts the defaults CivicOS proposes, which govern nothing until approved. Emergency suspension: { op: 'suspend', permitType, version, reason, reviewBy? }, { op: 'confirm-suspension' | 'lift-suspension' | 'review-suspension', … } (each a different official from the one who suspended); who may suspend is the country's rule (any administrator, or government-wide ones only). The suspension rules change by two officials, citing the law: { op: 'suspension-policy', confirmWithinHours?, reviewWithinDays?, suspendBy?, legalBasis: [{ instrument, eId }] } proposes (values left out keep their setting); { op: 'confirm-suspension-policy' } is a different official adopting it; { op: 'withdraw-suspension-policy', reason? }. Who acted comes from the sign-in, never the request.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -31202,9 +31241,10 @@
                   "reviewWithinDays": {
                     "type": "number"
                   },
-                  "basis": {
+                  "suspendBy": {
                     "type": "string"
                   },
+                  "legalBasis": {},
                   "by": {
                     "type": "string"
                   }
@@ -31222,7 +31262,8 @@
                     "reviewBy": "A. Official",
                     "confirmWithinHours": 1,
                     "reviewWithinDays": 1,
-                    "basis": "string",
+                    "suspendBy": "A. Official",
+                    "legalBasis": null,
                     "by": "A. Official"
                   }
                 }
@@ -67217,7 +67258,153 @@
             "type": "string"
           },
           "basis": {
+            "type": "string",
+            "description": "Rules adopted before citations were required: the instrument as typed."
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "description": "The legal basis of the adopted rules, cited from the laws register."
+          },
+          "confirmedBy": {
             "type": "string"
+          },
+          "changes": {
+            "type": "object",
+            "properties": {
+              "pending": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "$ref": "#/components/schemas/DualControlValues"
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    }
+                  },
+                  "by": {
+                    "type": "string"
+                  },
+                  "byId": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  },
+                  "confirmed": {
+                    "type": "object",
+                    "properties": {
+                      "by": {
+                        "type": "string"
+                      },
+                      "byId": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      },
+                      "independence": {
+                        "type": "string",
+                        "enum": [
+                          "accounts-only",
+                          "identity-provider",
+                          "unverified"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "by",
+                      "at",
+                      "independence"
+                    ]
+                  },
+                  "expiresAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "values",
+                  "basis",
+                  "by",
+                  "at",
+                  "expiresAt"
+                ],
+                "description": "A proposal waiting for its second official."
+              },
+              "history": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "values": {
+                      "$ref": "#/components/schemas/DualControlValues"
+                    },
+                    "basis": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Citation"
+                      }
+                    },
+                    "by": {
+                      "type": "string"
+                    },
+                    "byId": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "confirmed": {
+                      "type": "object",
+                      "properties": {
+                        "by": {
+                          "type": "string"
+                        },
+                        "byId": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "string"
+                        },
+                        "independence": {
+                          "type": "string",
+                          "enum": [
+                            "accounts-only",
+                            "identity-provider",
+                            "unverified"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "by",
+                        "at",
+                        "independence"
+                      ]
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "adopted",
+                        "lapsed",
+                        "withdrawn"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "values",
+                    "basis",
+                    "by",
+                    "at",
+                    "outcome"
+                  ]
+                },
+                "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+              }
+            }
           }
         },
         "required": [
@@ -67225,6 +67412,31 @@
           "requireIdentityBinding",
           "pendingHours",
           "adopted"
+        ]
+      },
+      "DualControlValues": {
+        "type": "object",
+        "properties": {
+          "extra": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Further steps the country's law requires two officials for: `packageKey:actionKey`."
+          },
+          "pendingHours": {
+            "type": "number",
+            "description": "How long a proposal waits for its second official before it lapses."
+          },
+          "requireIdentityBinding": {
+            "type": "boolean",
+            "description": "Refuse a two-official decision unless both accounts are linked to the national identity provider."
+          }
+        },
+        "required": [
+          "extra",
+          "pendingHours",
+          "requireIdentityBinding"
         ]
       },
       "EscrowAgreement": {
@@ -84746,6 +84958,14 @@
           "reviewWithinDays": {
             "type": "number"
           },
+          "suspendBy": {
+            "type": "string",
+            "enum": [
+              "administrator",
+              "government-administrator"
+            ],
+            "description": "Who may suspend: any administrator (the default), or only the government-wide administrators (not an institution's own)."
+          },
           "adopted": {
             "type": "boolean"
           },
@@ -84756,13 +84976,181 @@
             "type": "string"
           },
           "basis": {
+            "type": "string",
+            "description": "Periods adopted before citations were required: the instrument as typed."
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "confirmedBy": {
             "type": "string"
+          },
+          "changes": {
+            "type": "object",
+            "properties": {
+              "pending": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "$ref": "#/components/schemas/SuspensionValues"
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    }
+                  },
+                  "by": {
+                    "type": "string"
+                  },
+                  "byId": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  },
+                  "confirmed": {
+                    "type": "object",
+                    "properties": {
+                      "by": {
+                        "type": "string"
+                      },
+                      "byId": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      },
+                      "independence": {
+                        "type": "string",
+                        "enum": [
+                          "accounts-only",
+                          "identity-provider",
+                          "unverified"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "by",
+                      "at",
+                      "independence"
+                    ]
+                  },
+                  "expiresAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "values",
+                  "basis",
+                  "by",
+                  "at",
+                  "expiresAt"
+                ],
+                "description": "A proposal waiting for its second official."
+              },
+              "history": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "values": {
+                      "$ref": "#/components/schemas/SuspensionValues"
+                    },
+                    "basis": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Citation"
+                      }
+                    },
+                    "by": {
+                      "type": "string"
+                    },
+                    "byId": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "confirmed": {
+                      "type": "object",
+                      "properties": {
+                        "by": {
+                          "type": "string"
+                        },
+                        "byId": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "string"
+                        },
+                        "independence": {
+                          "type": "string",
+                          "enum": [
+                            "accounts-only",
+                            "identity-provider",
+                            "unverified"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "by",
+                        "at",
+                        "independence"
+                      ]
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "adopted",
+                        "lapsed",
+                        "withdrawn"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "values",
+                    "basis",
+                    "by",
+                    "at",
+                    "outcome"
+                  ]
+                },
+                "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+              }
+            }
           }
         },
         "required": [
           "confirmWithinHours",
           "reviewWithinDays",
           "adopted"
+        ]
+      },
+      "SuspensionValues": {
+        "type": "object",
+        "properties": {
+          "confirmWithinHours": {
+            "type": "number"
+          },
+          "reviewWithinDays": {
+            "type": "number"
+          },
+          "suspendBy": {
+            "type": "string",
+            "enum": [
+              "administrator",
+              "government-administrator"
+            ]
+          }
+        },
+        "required": [
+          "confirmWithinHours",
+          "reviewWithinDays",
+          "suspendBy"
         ]
       },
       "SyncItem": {

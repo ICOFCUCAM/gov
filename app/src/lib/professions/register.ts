@@ -113,7 +113,7 @@ export function defineProfession(input: Partial<Profession>, by: string, now = n
   const p: Profession = { key, title, authority, permitType, publicCheck: input.publicCheck !== false, publicFields: [...new Set(fields)], reference: false, createdBy: by, createdAt: now.toISOString() };
   const d = db();
   d.professions = [...d.professions.filter(x => x.key !== key), p];
-  recordAudit(by, 'profession.define', `Profession:${key}`, 'ok', `${title} · kept by ${authority}`);
+  recordAudit(by, 'profession.define', `Profession:${key}`, 'ok', `${title} · kept by ${authority} · public check shows ${p.publicCheck ? (p.publicFields ?? []).join(', ') : 'nothing (not on the public check)'}`);
   return clone(p);
 }
 

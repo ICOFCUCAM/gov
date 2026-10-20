@@ -19,6 +19,9 @@ const LABEL: Record<typeof METRICS[number], string> = { 'beds.total': 'Beds', 'b
 interface Pro { number: string; name: string; profession: string; personRef: string; qualifications: string[]; state: string; validUntil?: string; conditions: string[]; history: { state: string; at: string; by: string; reason: string; case: string }[] }
 interface Capacity { id: string; period: string; versions: { n: number; counts: Record<string, number>; at: string; by: string; note?: string }[] }
 const field = 'mt-1 w-full rounded border border-line bg-surface px-2 py-1 text-sm';
+interface ProfessionDef { key: string; title: string; authority: string; permitType: string; publicCheck: boolean; publicFields?: string[] }
+const PUBLIC_FIELDS = ['name', 'number', 'profession', 'state', 'validUntil', 'conditions'] as const;
+const FIELD_LABEL: Record<typeof PUBLIC_FIELDS[number], string> = { name: 'Name', number: 'Registration number', profession: 'Profession', state: 'Standing', validUntil: 'Valid until', conditions: 'Conditions' };
 const qs = (p: Record<string, string>) => new URLSearchParams(Object.fromEntries(Object.entries(p).filter(([, v]) => v))).toString();
 
 export function HealthRegulation() {
@@ -29,6 +32,18 @@ export function HealthRegulation() {
   const [org, setOrg] = React.useState('');
   const [cap, setCap] = React.useState<Capacity[] | null>(null);
   const [ret, setRet] = React.useState<{ period: string; note: string; counts: Record<string, string> }>({ period: '', note: '', counts: {} });
+  const [defs, setDefs] = React.useState<ProfessionDef[]>([]);
+  const loadDefs = React.useCallback(() => { fetch('/api/professions/types', { cache: 'no-store' }).then(r => r.json()).then(j => setDefs(j.professions ?? [])).catch(() => setDefs([])); }, []);
+  React.useEffect(loadDefs, [loadDefs]);
+  // What the public check shows is set per profession under the country's law (administrators; the name and standing always show).
+  const setShown = async (p: ProfessionDef, f: typeof PUBLIC_FIELDS[number], on: boolean) => {
+    const current = p.publicFields ?? ['name', 'number', 'profession', 'state', 'validUntil'];
+    const publicFields = on ? [...new Set([...current, f])] : current.filter(x => x !== f);
+    const r = await fetch('/api/professions/types', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: p.key, title: p.title, authority: p.authority, permitType: p.permitType, publicCheck: p.publicCheck, publicFields }) });
+    const j = await r.json();
+    setMsg(r.ok ? `${p.title}: the public check now shows ${publicFields.map(x => FIELD_LABEL[x as typeof PUBLIC_FIELDS[number]] ?? x).join(', ')}.` : j.error);
+    loadDefs();
+  };
   React.useEffect(() => { fetch('/api/professions', { cache: 'no-store' }).then(r => r.json()).then(j => (j.error ? setMsg(j.error) : setCounts(j.counts))).catch(() => setMsg('Could not read the register')); }, []);
   const find = async () => {
     setMsg(null);
@@ -88,6 +103,24 @@ export function HealthRegulation() {
             </fieldset>
           </div>
         ) : null}
+      </Section>
+
+      <Section title="What the public check shows" meta="per profession, under the country's law; administrators">
+        <p className="text-sm text-ink-muted">Anyone can check one person by full name at the public registers page. Each profession shows only the fields ticked here; the name and the standing always show, and conditions stay hidden until the law says they are public.</p>
+        {defs.length ? (
+          <table className="mt-2 w-full text-sm">
+            <thead><tr><th className="text-start">Profession</th>{PUBLIC_FIELDS.map(f => <th key={f} className="px-2 text-start">{FIELD_LABEL[f]}</th>)}</tr></thead>
+            <tbody>{defs.map(p => (
+              <tr key={p.key} className="border-t border-line">
+                <td className="py-1">{p.title}{p.publicCheck ? '' : ' (not on the public check)'}</td>
+                {PUBLIC_FIELDS.map(f => {
+                  const on = (p.publicFields ?? ['name', 'number', 'profession', 'state', 'validUntil']).includes(f);
+                  return <td key={f} className="px-2"><input type="checkbox" aria-label={`${p.title}: show ${FIELD_LABEL[f]}`} checked={on} disabled={f === 'name' || f === 'state'} onChange={e => void setShown(p, f, e.target.checked)} /></td>;
+                })}
+              </tr>
+            ))}</tbody>
+          </table>
+        ) : <p className="text-sm text-ink-muted">No profession is configured.</p>}
       </Section>
     </div>
   );
