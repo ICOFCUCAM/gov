@@ -13,6 +13,7 @@ import { cronAuthorized } from '@/lib/platform-auth';
 import { dueSources, runSource } from '@/lib/twin/register';
 import { publishCivilCounts } from '@/lib/civil/twin';
 import { publishStandingCounts } from '@/lib/organisations/twin';
+import { publishCaseCounts } from '@/lib/casework/twin';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,8 @@ export async function GET(req: Request) {
   }
   const civil = await publishCivilCounts('scheduler');
   const organisations = await publishStandingCounts('scheduler');
-  return NextResponse.json({ ok: true, runs, civil, organisations });
+  const cases = await publishCaseCounts('scheduler');
+  return NextResponse.json({ ok: true, runs, civil, organisations, cases });
 }
 
 export const POST = GET;

@@ -159,6 +159,10 @@ export const STANDARD_METRICS: readonly Omit<MetricDef, 'origin'>[] = [
   { id: 'births.registered', label: 'Births registered', unit: '{births}', aggregation: 'sum', period: 'month' },
   { id: 'deaths.registered', label: 'Deaths registered', unit: '{deaths}', aggregation: 'sum', period: 'month' },
   { id: 'marriages.registered', label: 'Marriages registered', unit: '{marriages}', aggregation: 'sum', period: 'month' },
+  // Counted from the cases under approved procedures (lib/casework/twin.ts), per institution and month.
+  { id: 'cases.opened', label: 'Cases opened', unit: '{cases}', aggregation: 'sum', period: 'month' },
+  { id: 'cases.decided', label: 'Cases decided', unit: '{cases}', aggregation: 'sum', period: 'month' },
+  { id: 'cases.late', label: 'Cases past a legal deadline', unit: '{cases}', aggregation: 'sum', period: 'month' },
   // Counted from the organisations register (lib/organisations/twin.ts): organisations in good standing on the day.
   { id: 'registrations.granted', label: 'Organisations registered', unit: '{organisations}', aggregation: 'sum', period: 'instant' },
   { id: 'licences.granted', label: 'Organisations licensed', unit: '{organisations}', aggregation: 'sum', period: 'instant' },
