@@ -124,6 +124,9 @@ export function documentBytes(id: string, n?: number): { bytes: Buffer; mediaTyp
   return { bytes, mediaType: v.mediaType, sha256: v.sha256 };
 }
 
+/** Documents added before a time and not yet disposed of (the retention sweep's candidates). */
+export const dueDocuments = (before: string): DocumentRecord[] => db().docs.filter(d => !d.disposed && d.createdAt < before).map(withoutContent);
+
 /** Hold a document against disposal (an investigation, a court case, an appeal). */
 export function holdDocument(id: string, reason: string, by: string, now = new Date()): DocumentRecord | { error: string } {
   const d = db().docs.find(x => x.id === id);

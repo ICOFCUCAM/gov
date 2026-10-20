@@ -28,13 +28,19 @@ import { touch } from '@/lib/data/repo/track';
 import { sweepSubscriptions } from '@/lib/data/site-subscriptions';
 import { sweepSignInFailures } from '@/lib/auth/officials';
 import { flushAggregated } from '@/lib/audit/aggregate';
+import { disposeDocument, dueDocuments } from '@/lib/records/documents';
+import { pruneAccessLog } from '@/lib/records/access-log';
 
-export type RetentionCategory = 'permits' | 'cases';
+export type RetentionCategory = 'permits' | 'cases' | 'documents' | 'access-log';
 export type RetentionAction = 'keep' | 'anonymise' | 'delete';
 export const RETENTION_CATEGORIES: { id: RetentionCategory; label: string; applies: string }[] = [
   { id: 'permits', label: 'Permits', applies: 'Decided permits (approved or declined), counted from the decision.' },
   { id: 'cases', label: 'Cases', applies: 'Closed cases of an institution\'s queue that came from a loaded file, were typed in or came from a connected case system, counted from when they were closed. Example cases are never touched.' },
+  { id: 'documents', label: 'Documents', applies: 'Documents of cases and register records, counted from when they were added. Delete destroys the content and keeps the record and its hashes; a document under a legal hold is never touched.' },
+  { id: 'access-log', label: 'Access log', applies: 'Entries of who read restricted records, counted from when they were written. Delete removes the oldest entries and keeps the hash they chain to.' },
 ];
+/** Categories where only keep or delete applies (nothing to anonymise in place). */
+const DELETE_ONLY: RetentionCategory[] = ['documents', 'access-log'];
 export const MIN_DAYS = 30;
 export const MAX_DAYS = 36_500;
 
@@ -66,6 +72,9 @@ export interface RetentionRun {
   at: string;
   permits: { anonymised: number; deleted: number };
   cases: { anonymised: number; deleted: number };
+  /** Documents whose content was destroyed, and those held back by a legal hold (absent on runs before documents). */
+  documents?: { disposed: number; held: number };
+  accessLog?: { removed: number };
   subscriptions: { expired: number };
   signInFailures: { expired: number };
   auditSummaries: number;
@@ -88,13 +97,13 @@ const DAY = 86_400_000;
 /** The rule in force for each category (keep unless one was confirmed). */
 export function retentionRules(): Record<RetentionCategory, RetentionRule> {
   const r = db().rules;
-  return { permits: r.permits ?? KEEP, cases: r.cases ?? KEEP };
+  return { permits: r.permits ?? KEEP, cases: r.cases ?? KEEP, documents: r.documents ?? KEEP, 'access-log': r['access-log'] ?? KEEP };
 }
 export const retentionChanges = (): RetentionChange[] => [...db().changes].reverse();
 export const retentionRuns = (limit = 20): RetentionRun[] => db().runs.slice(-limit).reverse();
 
 const describe = (r: RetentionRule) => r.action === 'keep' ? 'keep' : `${r.action} after ${r.days} days${r.basis ? ` (${r.basis})` : ''}`;
-const isCategory = (v: unknown): v is RetentionCategory => v === 'permits' || v === 'cases';
+const isCategory = (v: unknown): v is RetentionCategory => RETENTION_CATEGORIES.some(c => c.id === v);
 
 /**
  * Propose a rule for a category. Going back to `keep` applies at once (it
@@ -103,9 +112,10 @@ const isCategory = (v: unknown): v is RetentionCategory => v === 'permits' || v 
  */
 export function proposeRetention(input: { category?: unknown; action?: unknown; days?: unknown; basis?: unknown; reason?: unknown }, by: string, now = Date.now()): RetentionChange | { error: string } {
   if (!by.trim()) return { error: 'Name the administrator proposing the rule' };
-  if (!isCategory(input.category)) return { error: 'category must be permits or cases' };
+  if (!isCategory(input.category)) return { error: `category must be one of ${RETENTION_CATEGORIES.map(c => c.id).join(', ')}` };
   const action = input.action;
   if (action !== 'keep' && action !== 'anonymise' && action !== 'delete') return { error: 'action must be keep, anonymise or delete' };
+  if (action === 'anonymise' && DELETE_ONLY.includes(input.category)) return { error: `${input.category} can be kept or deleted, not anonymised` };
   const reason = typeof input.reason === 'string' ? input.reason.trim().slice(0, 500) : '';
   if (!reason) return { error: 'Give the reason for the change' };
   let rule: RetentionRule = { action };
@@ -210,6 +220,17 @@ function sweepCases(rule: RetentionRule, now: number, at: string): { anonymised:
   return out;
 }
 
+function sweepDocuments(rule: RetentionRule, now: number): { disposed: number; held: number } {
+  const out = { disposed: 0, held: 0 };
+  if (rule.action !== 'delete' || !rule.days) return out;
+  const cutoff = new Date(now - rule.days * DAY).toISOString();
+  for (const d of dueDocuments(cutoff)) {
+    if (d.legalHold) { out.held++; continue; }
+    if (!('error' in disposeDocument(d.id, rule.basis ?? 'retention rule', 'retention schedule', new Date(now)))) out.disposed++;
+  }
+  return out;
+}
+
 /**
  * The retention sweep: the fixed rules (unconfirmed email-update requests,
  * sign-in lockout counters, aggregated audit windows) and the nation's
@@ -223,6 +244,8 @@ export function runRetention(now = Date.now()): RetentionRun {
     at,
     permits: sweepPermits(rules.permits, now, at),
     cases: sweepCases(rules.cases, now, at),
+    documents: sweepDocuments(rules.documents, now),
+    accessLog: rules['access-log'].action === 'delete' && rules['access-log'].days ? pruneAccessLog(new Date(now - rules['access-log'].days * DAY).toISOString()) : { removed: 0 },
     subscriptions: { expired: sweepSubscriptions(now) },
     signInFailures: { expired: sweepSignInFailures(now) },
     auditSummaries: flushAggregated(now),
@@ -230,10 +253,10 @@ export function runRetention(now = Date.now()): RetentionRun {
   const d = db();
   d.runs.push(run);
   if (d.runs.length > 200) d.runs.splice(0, d.runs.length - 200);
-  const n = run.permits.anonymised + run.permits.deleted + run.cases.anonymised + run.cases.deleted + run.subscriptions.expired;
+  const n = run.permits.anonymised + run.permits.deleted + run.cases.anonymised + run.cases.deleted + run.subscriptions.expired + (run.documents?.disposed ?? 0) + (run.accessLog?.removed ?? 0);
   if (n) {
     recordAudit('retention schedule', 'retention.sweep', 'Retention:platform', 'ok',
-      `permits ${run.permits.anonymised} anonymised, ${run.permits.deleted} deleted · cases ${run.cases.anonymised} anonymised, ${run.cases.deleted} deleted · ${run.subscriptions.expired} unconfirmed email-update requests removed`);
+      `permits ${run.permits.anonymised} anonymised, ${run.permits.deleted} deleted · cases ${run.cases.anonymised} anonymised, ${run.cases.deleted} deleted · ${run.subscriptions.expired} unconfirmed email-update requests removed · documents ${run.documents?.disposed ?? 0} disposed (${run.documents?.held ?? 0} held) · access log ${run.accessLog?.removed ?? 0} entries removed`);
   }
   return run;
 }

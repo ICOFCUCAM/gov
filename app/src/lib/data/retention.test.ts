@@ -88,7 +88,7 @@ describe('retention of personal data', () => {
   });
 
   it('keeps permits and cases unless two administrators confirm a rule, then anonymises or deletes', () => {
-    expect(retentionRules()).toEqual({ permits: { action: 'keep' }, cases: { action: 'keep' } });
+    expect(retentionRules()).toEqual({ permits: { action: 'keep' }, cases: { action: 'keep' }, documents: { action: 'keep' }, 'access-log': { action: 'keep' } });
     const p = createPermit({ type: 'building', title: 'Extension for Jane Doe', applicantName: 'Jane Doe', municipality: 'X', fields: { phone: '123' } } as never);
     ok(decidePermit(p.id, { decision: 'approve', officerName: 'Officer' }));
     const later = Date.now() + 400 * DAY;
@@ -129,5 +129,38 @@ describe('retention of personal data', () => {
     ok(proposeRetention({ category: 'cases', action: 'keep', reason: 'Paused' }, 'Admin A'));
     expect(retentionRules().cases.action).toBe('keep');
     recordAudit('x', 'noop', 'X', 'ok');
+  });
+});
+
+describe('retention of documents and the access log', () => {
+  it('disposes of old documents (never held ones) and shortens the access log once a second administrator confirms', async () => {
+    const { vi } = await import('vitest');
+    vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 5).toString('base64'));
+    const { resetRetention, proposeRetention, decideRetention, runRetention } = await import('./retention');
+    const { addDocument, holdDocument, getDocument, resetDocuments } = await import('@/lib/records/documents');
+    const { recordAccess, listAccess, resetAccessLog } = await import('@/lib/records/access-log');
+    resetRetention(); resetDocuments(); resetAccessLog();
+    const pdf = new Uint8Array(Buffer.from('%PDF-1.7\nx\n%%EOF'));
+    const old = addDocument({ class: 'form', title: 'Old', institution: 'i', belongsTo: { kind: 'case', id: 'c' }, bytes: pdf }, 'A', new Date('2015-01-01')) as { id: string };
+    const held = addDocument({ class: 'form', title: 'Held', institution: 'i', belongsTo: { kind: 'case', id: 'c' }, bytes: pdf }, 'A', new Date('2015-01-01')) as { id: string };
+    const fresh = addDocument({ class: 'form', title: 'New', institution: 'i', belongsTo: { kind: 'case', id: 'c' }, bytes: pdf }, 'A') as { id: string };
+    holdDocument(held.id, 'Court case', 'A');
+    recordAccess({ by: { name: 'X' }, record: { register: 'cases', id: '1' }, action: 'view', result: 'allowed' }, new Date('2015-01-01'));
+    recordAccess({ by: { name: 'X' }, record: { register: 'cases', id: '2' }, action: 'view', result: 'allowed' });
+    expect(proposeRetention({ category: 'documents', action: 'anonymise', days: 365, basis: 'Records schedule 4', reason: 'r' }, 'Admin A')).toHaveProperty('error');
+    for (const category of ['documents', 'access-log']) {
+      const p = proposeRetention({ category, action: 'delete', days: 3650, basis: 'Records schedule 4', reason: 'Schedule adopted' }, 'Admin A');
+      if ('error' in p) throw new Error(p.error);
+      expect(decideRetention(p.id, 'confirm', 'Admin A')).toHaveProperty('error');
+      decideRetention(p.id, 'confirm', 'Admin B');
+    }
+    const run = runRetention();
+    expect(run.documents).toEqual({ disposed: 1, held: 1 });
+    expect(run.accessLog).toEqual({ removed: 1 });
+    expect(getDocument(old.id)?.disposed).toBeTruthy();
+    expect(getDocument(held.id)?.disposed).toBeUndefined();
+    expect(getDocument(fresh.id)?.disposed).toBeUndefined();
+    expect(listAccess()).toHaveLength(1);
+    vi.unstubAllEnvs();
   });
 });
