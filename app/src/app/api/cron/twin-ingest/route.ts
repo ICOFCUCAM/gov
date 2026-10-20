@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
 import { dueSources, runSource } from '@/lib/twin/register';
 import { publishCivilCounts } from '@/lib/civil/twin';
+import { publishStandingCounts } from '@/lib/organisations/twin';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,8 @@ export async function GET(req: Request) {
     runs.push('error' in r ? { source: s.id, error: r.error } : { source: s.id, status: r.status, accepted: r.accepted, rows: r.rows });
   }
   const civil = await publishCivilCounts('scheduler');
-  return NextResponse.json({ ok: true, runs, civil });
+  const organisations = await publishStandingCounts('scheduler');
+  return NextResponse.json({ ok: true, runs, civil, organisations });
 }
 
 export const POST = GET;

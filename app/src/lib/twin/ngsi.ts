@@ -30,7 +30,7 @@ export const NGSI_TERMS = {
   ucum: 'http://unitsofmeasure.org/ucum#code',
 } as const;
 
-const TYPE: Record<TwinEntity['kind'], string> = { nation: 'AdministrativeArea', place: 'AdministrativeArea', facility: 'PointOfInterest', institution: 'Organization' };
+const TYPE: Record<TwinEntity['kind'], string> = { nation: 'AdministrativeArea', place: 'AdministrativeArea', facility: 'PointOfInterest', institution: 'Organization', organisation: 'Organization' };
 
 /** UN/CEFACT common codes (NGSI-LD unitCode) for the UCUM units that have one; others carry the UCUM code only. */
 const CEFACT: Record<string, string> = {

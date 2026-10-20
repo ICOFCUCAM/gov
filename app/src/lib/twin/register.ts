@@ -37,7 +37,7 @@ import { derivedMetric, formulaOf } from './derived';
 import { checkStreamSpec, checkIngestSpec, streamRows, STREAM_ROW, STA_WRITE_SCOPE, type StreamSpec, type StreamLineage, type TelemetryReader, type StreamIngest } from './stream';
 import { declarePushedStream, undeclarePushedStream, holdBrokerPassword, hasBrokerPassword } from './readings';
 
-export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
+export type EntityKind = 'nation' | 'place' | 'institution' | 'facility' | 'organisation';
 
 export interface TwinEntity {
   id: string;
@@ -270,6 +270,22 @@ export function upsertFacilityEntity(f: { id: string; name: string; location: { 
   const uri = d.entities[id]?.uri;
   repo().putEntity({ id, kind: 'facility', name: f.name, code: f.id, ...(uri ? { uri } : {}), location: { lat: f.location.lat, lng: f.location.lng }, ...(f.regionCode ? { parent: `place:${f.regionCode}` } : {}) });
   for (const [system, key] of Object.entries(f.ids)) repo().addKey({ entityId: id, system, key });
+  ensureUris();
+}
+
+/**
+ * A registered organisation (lib/organisations/register.ts) as a twin entity,
+ * `organisation:<register number>`, inside its region when it names one of
+ * the nation's regions. Its sites stay their own entities. Entities are
+ * updated, never removed.
+ */
+export function upsertOrganisationEntity(o: { number: string; name: string; region?: string }): void {
+  const d = db();
+  const id = `organisation:${o.number}`;
+  const uri = d.entities[id]?.uri;
+  const region = o.region ? Object.values(d.entities).find(e => e.kind === 'place' && e.region && fold(e.name) === fold(o.region!)) : undefined;
+  const nation = Object.values(d.entities).find(e => e.kind === 'nation');
+  repo().putEntity({ id, kind: 'organisation', name: o.name, code: o.number, ...(uri ? { uri } : {}), ...(region ? { parent: region.id } : nation ? { parent: nation.id } : {}) });
   ensureUris();
 }
 

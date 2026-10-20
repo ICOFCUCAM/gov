@@ -11,18 +11,26 @@
 // Restricted things stay refused: a site whose category is restricted or
 // confidential (lib/data/facilities.ts sensitivity, set by the nation's
 // policy) answers 403 to the public, and a site that is not published 404.
+// A registered organisation resolves while a public register shows it.
 // Officials keep the full answer (/api/twin/entities/<id>, /gov/twin).
 
 import { getEntity, entityIdFor, syncRegister, type EntityKind, type TwinEntity } from './register';
 import { getFacility, categoryOf } from '@/lib/data/facilities';
+import { getOrganisation, publicOrganisation } from '@/lib/organisations/register';
 
-export const ENTITY_KINDS: readonly EntityKind[] = ['nation', 'place', 'institution', 'facility'];
+const organisationPublic = (number: string): boolean => {
+  const o = getOrganisation(number);
+  return !!o && publicOrganisation(o, true).standings.some(s => s.state !== 'applied' && s.state !== 'refused');
+};
+
+export const ENTITY_KINDS: readonly EntityKind[] = ['nation', 'place', 'institution', 'facility', 'organisation'];
 
 const SCHEMA_TYPE: Record<EntityKind, string> = {
   nation: 'schema:Country',
   place: 'schema:AdministrativeArea',
   institution: 'schema:GovernmentOrganization',
   facility: 'schema:Place',
+  organisation: 'schema:Organization',
 };
 
 export interface PublicEntityDoc {
@@ -54,6 +62,8 @@ export async function publicEntity(kind: string, code: string): Promise<PublicEn
   const e = getEntity(entityIdFor(kind, code));
   if (!e) return { ok: false, status: 404, error: 'No such entity' };
   if (e.kind === 'facility') { const r = facilityRefusal(e.code ?? code); if (r) return { ok: false, ...r }; }
+  // An organisation resolves publicly only while a public register shows it (the same answer as /registers).
+  if (e.kind === 'organisation' && !organisationPublic(e.code ?? code)) return { ok: false, status: 404, error: 'No such entity' };
   const parent = e.parent ? getEntity(e.parent) : undefined;
   const f = e.kind === 'facility' ? getFacility(e.code ?? code) : undefined;
   const doc: PublicEntityDoc = {
