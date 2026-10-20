@@ -223,6 +223,8 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each rule version') },
   { id: 'tax', name: 'Tax register: taxpayers, tax accounts (ledgers), returns and their versions, assessments, payments posted', legal: { kind: 'authority', key: 'tax' }, owner: { where: 'platform', keys: ['__civicosTax'] }, api: 'lib/tax/register.ts (through tax cases, /api/cases; read at /api/tax; status through the exchange, taxpayer.status)', copies: [],
     storage: RECORD_DOCS('each taxpayer, return, assessment and tax account') },
+  { id: 'education', name: 'Education register: inspections of institutions, qualifications awarded (with the awarding body\'s accreditation then, every version) and institutional returns (aggregate counts reported)', legal: { kind: 'authority', key: 'education' }, owner: { where: 'platform', keys: ['__civicosEducation'] }, api: 'lib/education/register.ts (through education cases, /api/cases; returns and reads at /api/education; verification through the exchange, qualification.verify)', copies: [],
+    storage: RECORD_DOCS('each inspection, qualification and return') },
   { id: 'delegations', name: 'Delegations: who may act for whom, in which procedures, until when', legal: { kind: 'authority', key: 'businessRegister' }, owner: { where: 'platform', keys: ['__civicosDelegations'] }, api: 'lib/records/delegations.ts', copies: [],
     storage: RECORD_DOCS('each delegation') },
   { id: 'access-log', name: 'Access log: reads of restricted and secret records, searches, exports, refusals and permission changes', legal: { kind: 'authority', key: 'dataProtection' }, owner: { where: 'platform', keys: ['__civicosAccessLog'] }, api: 'recordAccess() (lib/records/access-log.ts), read at /api/access-log', copies: [],
