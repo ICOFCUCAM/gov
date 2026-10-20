@@ -29,6 +29,8 @@ import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import { nationAppLabel, aiLabel } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { RegisterRecords, SimulatedView } from '@/apps/_shared/RegisterRecords';
+import type { InstallationMode } from '@/lib/ops/mode';
 
 // Each institution's app is loaded only when its domain is opened (go-live review M-12): the
 // route used to ship every app (about 1 MB of JavaScript) to show one.
@@ -68,7 +70,7 @@ const BranchWorkspace = dynamic(() => import('@/components/features/BranchWorksp
  * its own routing. The platform core is NOT mounted here — this is a
  * sovereign deployable application surface.
  */
-export function AppHost({ domain, initialKey }: { domain: string; initialKey?: string }) {
+export function AppHost({ domain, initialKey, mode = 'production' }: { domain: string; initialKey?: string; mode?: InstallationMode }) {
   const [mins, setMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
@@ -200,6 +202,9 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
             const vt = verdict.posture === 'breach' ? 'alert' : fiscalGate ? 'alert' : verdict.posture === 'under-review' ? 'warn' : 'ok';
             return (
               <>
+                {/* The institution's records in the platform's real registers, then its simulation screens (marked). */}
+                <RegisterRecords app={app} mode={mode} />
+                <SimulatedView mode={mode}>
                 <div className="mb-2 rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid rgb(var(--c-${vt}))` }}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${vt}))` }}>
@@ -349,6 +354,7 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                   );
                 })()}
                 <AuditPanel scope={auditScope} chainIntact={chain.intact} brokenAt={chain.brokenAt} />
+                </SimulatedView>
               </>
             );
           })()}

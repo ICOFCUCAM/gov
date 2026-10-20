@@ -12,11 +12,12 @@ export async function generateMetadata(props: { params: Promise<{ domain: string
 // Sovereign per-domain routing: /app/<domain> and /app/<domain>/<systemKey>
 export default async function FederatedAppPage(props: { params: Promise<{ domain: string; sub?: string[] }> }) {
   const params = await props.params;
-  // In a production installation every agency application says it runs on simulation until its records exist.
+  // In a production installation every agency application says it runs on simulation until its records exist;
+  // the app shows the records the platform's registers hold for it first (apps/_shared/RegisterRecords.tsx).
   return (
     <>
       {installationMode() === 'production' ? <SimulationNotice /> : null}
-      <AppHost domain={params.domain} initialKey={params.sub?.[0]} />
+      <AppHost domain={params.domain} initialKey={params.sub?.[0]} mode={installationMode()} />
     </>
   );
 }

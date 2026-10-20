@@ -23,6 +23,8 @@ function greeting(h: number) {
  * Welcome — every sign-in after setup lands here. If the platform has not
  * been set up yet, it hands over to /setup first.
  */
+const HEADER_LINK = 'transition-colors hover:text-[#f4e4bd]';
+
 export function Welcome() {
   const router = useRouter();
   // Signed in or not is what the server says (/api/auth/official), never assumed.
@@ -97,10 +99,10 @@ export function Welcome() {
         {signedIn ? (
           <>
             <span className="hidden items-center gap-2 sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-[#9be7c4] shadow-[0_0_8px_#9be7c4]" />SIGNED IN</span>
-            <button type="button" onClick={() => void signOut()} className="transition-colors hover:text-[#f4e4bd]">SIGN OUT</button>
+            <button type="button" onClick={() => void signOut()} className={HEADER_LINK}>SIGN OUT</button>
           </>
         ) : (
-          <Link href="/sign-in" className="transition-colors hover:text-[#f4e4bd]">SIGN IN</Link>
+          <Link href="/sign-in" className={HEADER_LINK}>SIGN IN</Link>
         )}
 
       </>

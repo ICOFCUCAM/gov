@@ -131,7 +131,7 @@ function Action({ href, className, style, children, notAvailable }: { href?: str
     : <button type="button" disabled title={notAvailable} className={`${className} cursor-not-allowed opacity-70`} style={style}>{children}<span className="sr-only"> ({notAvailable})</span></button>;
 }
 
-/** The emergency number in a button label once its placeholders are filled ("Emergency 999" → "999"). */
+/** The emergency number in a button label once its placeholders are filled (the digits of "{emergency.police}"), or null. */
 export function emergencyNumber(label: string): string | null {
   const m = label.match(/\+?\d[\d\s-]*\d|\d/);
   return m ? m[0].replace(/[\s-]/g, '') : null;
