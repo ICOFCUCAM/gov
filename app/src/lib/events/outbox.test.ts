@@ -108,5 +108,7 @@ describe('organisation events', () => {
     expect(EVENT_ACTIONS.test('organisation.standing.struck-off')).toBe(true);
     expect(EVENT_ACTIONS.test('organisation.create')).toBe(true);
     expect(EVENT_ACTIONS.test('organisation.register-type.define')).toBe(false);
+    expect(EVENT_ACTIONS.test('court.hearing.adjourned')).toBe(true);
+    expect(EVENT_ACTIONS.test('immigration.grant')).toBe(true);
   });
 });
