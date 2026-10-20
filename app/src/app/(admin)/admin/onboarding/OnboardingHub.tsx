@@ -30,6 +30,7 @@ function TrackRow({ t, open, toggle }: { t: Track; open: boolean; toggle: () => 
             <span className="font-medium">{t.title}</span>
             <Pill tone={STATE[t.state].tone}>{STATE[t.state].label}</Pill>
             {t.samplesOnly ? <Pill>Demo and training only</Pill> : null}
+            {t.samplesCounted ? <Pill tone="warn" title="This installation is seeded with sample records; a check may be done only because of them">Counts sample records</Pill> : null}
           </span>
           <span className="mt-1 block text-xs text-ink-muted">{t.why}</span>
         </span>

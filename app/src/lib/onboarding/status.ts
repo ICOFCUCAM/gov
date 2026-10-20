@@ -43,6 +43,8 @@ export interface Track {
   blockedBy?: string;
   /** Only in demo and training installations. */
   samplesOnly?: boolean;
+  /** Its checks read records that demo and training installations seed with samples, so "done" may rest on them. */
+  samplesCounted?: boolean;
 }
 export interface Waiting { what: string; proposedBy: string; at?: string; href: string }
 export interface OnboardingStatus {
@@ -57,10 +59,11 @@ const stateOf = (checks: Check[], blockedBy?: string): TrackState =>
   blockedBy ? 'blocked' : checks.every(c => c.done) ? 'done' : checks.some(c => c.done) ? 'in-progress' : 'not-started';
 
 /** One track, read defensively: a store that cannot be read shows as a check not done, never breaks the page. */
-function track(t: Omit<Track, 'state' | 'checks' | 'blockedBy'>, read: () => { checks: Check[]; blockedBy?: string }): Track {
+function track(t: Omit<Track, 'state' | 'checks' | 'blockedBy' | 'samplesCounted'> & { seeded?: boolean }, read: () => { checks: Check[]; blockedBy?: string }): Track {
   let r: { checks: Check[]; blockedBy?: string };
   try { r = read(); } catch (e) { r = { checks: [{ label: 'Could not be read', done: false, href: t.href, detail: (e as Error).message.slice(0, 200) }] }; }
-  return { ...t, ...r, state: stateOf(r.checks, r.blockedBy) };
+  const { seeded, ...rest } = t;
+  return { ...rest, ...r, state: stateOf(r.checks, r.blockedBy), ...(seeded && samplesAllowed() ? { samplesCounted: true } : {}) };
 }
 
 const n = (k: number, one: string, many = `${one}s`) => `${k} ${k === 1 ? one : many}`;
@@ -151,21 +154,22 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       ] };
     }),
 
-    track({ key: 'registers', title: 'Registers', why: 'The registers organisations and professionals stand in, kept by the institutions responsible for them.', href: '/gov/organisations' }, () => {
-      const types = registerTypes();
-      const ps = professions();
-      for (const p of ps) {
+    track({ key: 'registers', title: 'Registers', why: 'The registers organisations and professionals stand in, kept by the institutions responsible for them.', href: '/gov/organisations', seeded: true }, () => {
+      // Reference types and professions ship with the platform as proposals; only the nation's own count.
+      const types = registerTypes().filter(t => !t.reference);
+      const ps = professions().filter(p => !p.reference);
+      for (const p of professions()) {
         const c = disclosureChanges(p.key).pending;
         if (c) wait({ what: `Public check fields: ${p.title}`, proposedBy: c.by, at: c.at, href: '/gov/health-regulation' });
       }
       return { checks: [
-        { label: 'Register types defined', done: types.length > 0, href: '/gov/organisations', detail: n(types.length, 'register type') },
+        { label: 'Register types defined by the nation', done: types.length > 0, href: '/gov/organisations', detail: `${n(types.length, 'register type')} of its own · ${registerTypes().length - types.length} platform references` },
         { label: 'Organisations entered (through cases or a confirmed load)', done: listOrganisations({ limit: 1 }).length > 0, href: '/gov/organisations' },
-        { label: 'Professions defined', done: ps.length > 0, href: '/gov/health-regulation', detail: n(ps.length, 'profession') },
+        { label: 'Professions defined by the nation', done: ps.length > 0, href: '/gov/health-regulation', detail: `${n(ps.length, 'profession')} of its own · ${professions().length - ps.length} platform references` },
       ] };
     }),
 
-    track({ key: 'exchange', title: 'Data sharing', why: 'Other systems and institutions reach records only through approved services, for an approved purpose, agreed by the data\'s owners.', href: '/integrations' }, () => {
+    track({ key: 'exchange', title: 'Data sharing', why: 'Other systems and institutions reach records only through approved services, for an approved purpose, agreed by the data\'s owners.', href: '/integrations', seeded: true }, () => {
       const ints = listIntegrations();
       for (const i of ints) if (i.pendingApproval) wait({ what: `Data sharing: ${i.name}`, proposedBy: i.pendingApproval.by, at: i.pendingApproval.at, href: '/integrations' });
       return { checks: [
@@ -206,7 +210,8 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         checks: [
           { label: 'Backup key set (CIVICOS_DATA_KEK)', done: kek, href: '/platform' },
           { label: 'Backups go off the server (S3)', done: target === 's3', href: '/platform', detail: `Target: ${target}` },
-          { label: 'Scheduled jobs running', done: !serverless || !!env.CIVICOS_CRON_SECRET?.trim(), href: '/gov/crons', detail: serverless ? 'Hosted on Vercel: jobs need the database scheduler (pg_cron) and CIVICOS_CRON_SECRET' : undefined },
+          // No run history is kept for scheduled jobs yet, so the platform cannot say they run: never shown as done until it can.
+          { label: 'Scheduled jobs recorded running', done: false, href: '/gov/crons', detail: `Not yet checkable: the platform keeps no run history for its scheduled jobs${serverless ? '; hosted on Vercel they also need the database scheduler (pg_cron)' : ''}` },
         ],
         ...(!kek ? { blockedBy: 'CIVICOS_DATA_KEK is not set in the environment, so no backup can be encrypted' } : {}),
       };
