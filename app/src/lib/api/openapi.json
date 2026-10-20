@@ -980,11 +980,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/audit/verify/route.ts"
       }
     },
@@ -1652,11 +1648,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/auth/official/route.ts"
       },
       "post": {
@@ -4215,11 +4207,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/boundaries/active/route.ts"
       }
     },
@@ -8532,11 +8520,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/exchange/key/route.ts"
       }
     },
@@ -13821,11 +13805,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/law/cite/route.ts"
       }
     },
@@ -13994,11 +13974,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/law/export/route.ts"
       }
     },
@@ -14228,11 +14204,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/law/route.ts"
       },
       "post": {
@@ -14776,11 +14748,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/map-pack/districts/route.ts"
       }
     },
@@ -22710,11 +22678,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/org/ministries/route.ts"
       },
       "post": {
@@ -29910,11 +29874,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/public-sites/[id]/content/route.ts"
       }
     },
@@ -30334,11 +30294,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/public-sites/[id]/logo/route.ts"
       }
     },
@@ -31409,11 +31365,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/public-sites/language/route.ts"
       }
     },
@@ -31845,11 +31797,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/public/accountability/route.ts"
       }
     },
@@ -31989,11 +31937,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/public/charters/route.ts"
       }
     },
@@ -32178,11 +32122,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/public/directives/route.ts"
       }
     },
@@ -43795,11 +43735,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/setup/route.ts"
       },
       "post": {
@@ -44235,11 +44171,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/sovereign/route.ts"
       },
       "put": {
@@ -51340,11 +51272,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/twin/tiles/facilities.pmtiles/route.ts"
       }
     },
