@@ -44,6 +44,9 @@
       "name": "cases"
     },
     {
+      "name": "citizen"
+    },
+    {
       "name": "civil"
     },
     {
@@ -6681,6 +6684,250 @@
         ],
         "x-permission-rule": "official",
         "x-source": "src/app/api/cases/route.ts"
+      }
+    },
+    "/api/citizen/applications": {
+      "get": {
+        "tags": [
+          "citizen"
+        ],
+        "operationId": "get_citizen_applications",
+        "summary": "GET /api/citizen/applications",
+        "description": "/api/citizen/applications — a citizen's own applications (design §8.4, §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations. GET: the cases they applied for, with stage and decisions only. POST: notify a birth (the procedures citizens may start: civil.birth, civil.late-birth), opened as a citizen case under the procedure in force; officials of the civil registration authority take it from there.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "applications": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "ref": {
+                            "type": "string"
+                          },
+                          "procedure": {
+                            "type": "string"
+                          },
+                          "stage": {
+                            "type": "string"
+                          },
+                          "openedAt": {
+                            "type": "string"
+                          },
+                          "closedAt": {
+                            "anyOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "certificates": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "revoked",
+                                    "superseded",
+                                    "valid"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "title",
+                                "status"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "ref",
+                          "procedure",
+                          "stage",
+                          "openedAt",
+                          "closedAt",
+                          "certificates"
+                        ]
+                      }
+                    },
+                    "procedures": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "applications",
+                    "procedures"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "applications": [
+                        {
+                          "id": "ID-0001",
+                          "ref": "string",
+                          "procedure": "string",
+                          "stage": "string",
+                          "openedAt": "2026-01-15T09:30:00.000Z",
+                          "closedAt": "2026-01-15T09:30:00.000Z",
+                          "certificates": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "procedures": [
+                        "string"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          }
+        ],
+        "x-source": "src/app/api/citizen/applications/route.ts"
+      },
+      "post": {
+        "tags": [
+          "citizen"
+        ],
+        "operationId": "post_citizen_applications",
+        "summary": "POST /api/citizen/applications",
+        "description": "/api/citizen/applications — a citizen's own applications (design §8.4, §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations. GET: the cases they applied for, with stage and decisions only. POST: notify a birth (the procedures citizens may start: civil.birth, civil.late-birth), opened as a citizen case under the procedure in force; officials of the civil registration authority take it from there.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "procedure": {
+                    "type": "string"
+                  },
+                  "fields": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  "idempotencyKey": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "procedure": "string",
+                    "fields": {},
+                    "idempotencyKey": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "application": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "ref": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "ref"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "application"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "application": {
+                        "id": "ID-0001",
+                        "ref": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          }
+        ],
+        "x-permission-rule": "self-authenticated",
+        "x-source": "src/app/api/citizen/applications/route.ts"
       }
     },
     "/api/civil": {

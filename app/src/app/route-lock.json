@@ -156,6 +156,7 @@
   "/verify/[code]",
   "/wall",
   "/wallet",
+  "/wallet/applications",
   "/wallet/assistant",
   "/wallet/consent/[id]",
   "/wallet/contest",
