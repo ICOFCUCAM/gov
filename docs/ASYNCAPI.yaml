@@ -80,7 +80,7 @@ channels:
       update: { $ref: '#/components/messages/update' }
   government:
     address: /
-    description: The government's own work (docs/GOVERNMENT_OPERATING_MODEL.md) - cases under approved procedures (app/src/lib/casework/), the civil register (app/src/lib/civil/), approved procedures, confirmed or withdrawn law versions (app/src/lib/law/), certificates issued or revoked and sealed decision records (app/src/lib/records/). Events carry the audit entry only; personal data stays in the register and is read through its API under its own rules.
+    description: The government's own work (docs/GOVERNMENT_OPERATING_MODEL.md) - cases under approved procedures (app/src/lib/casework/), the civil register (app/src/lib/civil/), approved procedures, confirmed or withdrawn law versions (app/src/lib/law/), certificates issued or revoked, sealed decision records (app/src/lib/records/) and organisations' standings (app/src/lib/organisations/). Events carry the audit entry only; personal data stays in the register and is read through its API under its own rules.
     messages:
       caseChange: { $ref: '#/components/messages/caseChange' }
       civilRegistration: { $ref: '#/components/messages/civilRegistration' }
@@ -88,6 +88,7 @@ channels:
       lawVersion: { $ref: '#/components/messages/lawVersion' }
       certificate: { $ref: '#/components/messages/certificate' }
       decisionSeal: { $ref: '#/components/messages/decisionSeal' }
+      organisation: { $ref: '#/components/messages/organisation' }
   registers:
     address: /
     description: Changes to the registers services/civic-api mirrors (review D8) - institutions, payments, integrations, webhooks, grants proposed, releases, deployments, backups, configuration and the tenant's lifecycle. Its follower subscribes to `*` and reads the changed register from GET /api/platform/mirror.
@@ -275,6 +276,11 @@ components:
     decisionSeal:
       name: org.civicos.decision.seal
       title: A decision record was sealed with the decision key
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    organisation:
+      name: org.civicos.organisation.*
+      summary: organisation.create, organisation.amend, organisation.standing.applied|granted|refused|suspended|revoked|expired|struck-off (the organisations register; the subject is the register number). Representatives are never carried.
       traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
       payload: { $ref: '#/components/schemas/CloudEvent' }
     registerChange:

@@ -100,3 +100,13 @@ describe('the CloudEvents outbox', () => {
     expect(outboxDb().cursors[sub.id]).toBeGreaterThan(0);
   });
 });
+
+describe('organisation events', () => {
+  it('are written for standing changes, not for register-type configuration', async () => {
+    const { EVENT_ACTIONS } = await import('./outbox');
+    expect(EVENT_ACTIONS.test('organisation.standing.granted')).toBe(true);
+    expect(EVENT_ACTIONS.test('organisation.standing.struck-off')).toBe(true);
+    expect(EVENT_ACTIONS.test('organisation.create')).toBe(true);
+    expect(EVENT_ACTIONS.test('organisation.register-type.define')).toBe(false);
+  });
+});
