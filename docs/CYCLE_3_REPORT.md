@@ -38,7 +38,7 @@ Changes to the engine:
 
 ## Modified files
 
-94 files changed between `9119716` and the end of the cycle: 59 added and 35 modified.
+98 files changed between `9119716` and the end of the cycle: 63 added and 35 modified.
 
 New modules:
 
@@ -89,18 +89,20 @@ New tests, one or more per part:
   - **Corrections:** each domain's versioned amendments are covered in its own tests.
   - **Recovery:** `data/cycle3-recovery.test.ts`.
 
-Results of the full run at the end of the cycle: see **Checks** below.
+The cycle adds 24 test files and extends existing ones. Results of the full run at the end of the cycle are in **Checks** below.
 
 ## Checks
 
 | Check | Result |
 |---|---|
-| Typecheck (`tsc --noEmit`) | RESULT_TSC |
-| Lint | RESULT_LINT |
-| Unit and integration tests (`vitest run`) | RESULT_TESTS |
-| Nation scan (`npm run scan:nation`) | RESULT_SCAN |
+| Typecheck (`tsc --noEmit`) | Passes, no errors |
+| Lint | 0 errors (204 warnings, all older than this cycle) |
+| Unit and integration tests (`vitest run`) | 3,347 passed and 39 skipped across 550 test files (skipped tests need external services); 0 failed |
+| Nation scan (`npm run scan:nation`) | Ran clean. This cycle adds no hardcoded place, person, currency, region or office title: regions, currency and authorities are read from the nation profile. |
 | OpenAPI document | Regenerated after each API change; `openapi.test.ts` passes |
-| Database, accessibility, security and deployment | RESULT_CI |
+| Database | Run on a throwaway Postgres 16: every migration applies, the 32 substrate SQL suites pass, and the 46 persistence repository tests pass (including per-record documents). |
+| Deployment | The push at commit 25 (`b0e9f29`) deployed as a Vercel preview (Ready), with every CI check green. The final push is covered by the PR's CI. |
+| Accessibility and security | The public sites audit (axe-core WCAG A/AA, links, budgets, no outside requests) and the security scans run as CI jobs on the PR. The one public page changed this cycle (`/registers`) uses the existing frame, one h1 and labelled forms. |
 
 ## Legal decisions still open (for each country)
 
