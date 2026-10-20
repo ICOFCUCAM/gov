@@ -160,6 +160,16 @@ export interface Messages {
     lawsTitle: string;
     lawsIntro: string;
     lawsNone: string;
+    registersTitle: string;
+    registersIntro: string;
+    registersNone: string;
+    registersRegister: string;
+    registersQuery: string;
+    registersCheck: string;
+    registersNoMatch: string;
+    registersValidUntil: string;
+    registersConditions: string;
+    registersStates: Record<string, string>;
     lawsInForceFrom: string;
     lawsCeased: string;
     verifyTitle: string;
@@ -847,6 +857,16 @@ export const en: Messages = {
     lawsTitle: 'Laws in force',
     lawsIntro: "The nation's laws and regulations as officially recorded, each with the dates its versions apply.",
     lawsNone: 'No laws have been published here yet.',
+    registersTitle: "Public registers",
+    registersIntro: "Check whether a company, licence holder, university or other organisation is in a register the government keeps, and in what standing. Only decided standings appear here.",
+    registersNone: "No register is open for public checking yet.",
+    registersRegister: "Register",
+    registersQuery: "Name or register number",
+    registersCheck: "Check",
+    registersNoMatch: "No organisation in this register matches.",
+    registersValidUntil: "valid until {date}",
+    registersConditions: "Conditions",
+    registersStates: { 'granted': "In good standing", 'suspended': "Suspended", 'revoked': "Revoked", 'expired': "Expired", 'struck-off': "Struck off" },
     lawsInForceFrom: 'In force from {date}',
     lawsCeased: 'Ceased {date}',
     verifyTitle: 'Check a certificate',

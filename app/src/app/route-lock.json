@@ -131,6 +131,7 @@
   "/presidency",
   "/public",
   "/public/charter/[id]",
+  "/registers",
   "/search",
   "/senate",
   "/setup",
