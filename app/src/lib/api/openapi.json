@@ -56,6 +56,9 @@
       "name": "cron"
     },
     {
+      "name": "customs"
+    },
+    {
       "name": "directives"
     },
     {
@@ -8251,6 +8254,12 @@
                     },
                     "professionalsLapsed": {
                       "type": "number"
+                    },
+                    "customsPaymentsPosted": {
+                      "type": "number"
+                    },
+                    "customsPaymentsUnmatched": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -8262,7 +8271,9 @@
                     "unusualAccessRaised",
                     "taxPaymentsPosted",
                     "taxPaymentsUnmatched",
-                    "professionalsLapsed"
+                    "professionalsLapsed",
+                    "customsPaymentsPosted",
+                    "customsPaymentsUnmatched"
                   ]
                 },
                 "examples": {
@@ -8288,7 +8299,9 @@
                       "unusualAccessRaised": 1,
                       "taxPaymentsPosted": 1,
                       "taxPaymentsUnmatched": 1,
-                      "professionalsLapsed": 1
+                      "professionalsLapsed": 1,
+                      "customsPaymentsPosted": 1,
+                      "customsPaymentsUnmatched": 1
                     }
                   }
                 }
@@ -10811,6 +10824,196 @@
         ],
         "x-permission-rule": "self-authenticated",
         "x-source": "src/app/api/cron/witness-sweep/route.ts"
+      }
+    },
+    "/api/customs": {
+      "get": {
+        "tags": [
+          "customs"
+        ],
+        "operationId": "get_customs",
+        "summary": "GET /api/customs",
+        "description": "GET /api/customs — customs declarations (lib/customs/register.ts) for the customs authority's officials and auditors with a purpose (commercial confidentiality): ?number= one declaration with every version of its goods lines, channel, inspections, duty and release; ?declarant= a declarant's declarations; with neither, counts only. Every search and read, allowed or refused, is written to the access log. Changes happen only through decided customs cases (/api/cases).",
+        "parameters": [
+          {
+            "name": "declarant",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "assessed": {
+                              "type": "number"
+                            },
+                            "lodged": {
+                              "type": "number"
+                            },
+                            "release-refused": {
+                              "type": "number"
+                            },
+                            "released": {
+                              "type": "number"
+                            },
+                            "withdrawn": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "assessed",
+                            "lodged",
+                            "release-refused",
+                            "released",
+                            "withdrawn"
+                          ]
+                        },
+                        "declarations": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Declaration"
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "declarations"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "assessed": {
+                              "type": "number"
+                            },
+                            "lodged": {
+                              "type": "number"
+                            },
+                            "release-refused": {
+                              "type": "number"
+                            },
+                            "released": {
+                              "type": "number"
+                            },
+                            "withdrawn": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "assessed",
+                            "lodged",
+                            "release-refused",
+                            "released",
+                            "withdrawn"
+                          ]
+                        },
+                        "declarations": {
+                          "type": "array",
+                          "items": {
+                            "not": {}
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "declarations"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "counts": {
+                        "assessed": 1,
+                        "lodged": 1,
+                        "release-refused": 1,
+                        "released": 1,
+                        "withdrawn": 1
+                      },
+                      "declarations": [
+                        {
+                          "id": "ID-0001",
+                          "number": "string",
+                          "direction": "export",
+                          "declarant": {
+                            "kind": "organisation",
+                            "ref": "string",
+                            "name": "Example"
+                          },
+                          "shipment": {
+                            "mode": "string",
+                            "transportRef": "string",
+                            "from": "string",
+                            "to": "string"
+                          },
+                          "currency": "string",
+                          "versions": [
+                            {}
+                          ],
+                          "inspections": [
+                            {}
+                          ],
+                          "state": "assessed",
+                          "case": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/customs/route.ts"
       }
     },
     "/api/directives/{ref}": {
@@ -64694,6 +64897,270 @@
           "at"
         ]
       },
+      "Declaration": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "description": "The declaration number: CUS-YYYY-NNNNNN."
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "export",
+              "import",
+              "transit"
+            ]
+          },
+          "declarant": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "organisation",
+                  "person"
+                ]
+              },
+              "ref": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "ref",
+              "name"
+            ]
+          },
+          "shipment": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string"
+              },
+              "transportRef": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "arrival": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "mode",
+              "transportRef",
+              "from",
+              "to"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "n": {
+                  "type": "number"
+                },
+                "lines": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GoodsLine"
+                  }
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "case": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "n",
+                "lines",
+                "at",
+                "by",
+                "case",
+                "reason"
+              ]
+            },
+            "description": "Every version of the goods lines: amendments and reclassifications add one."
+          },
+          "channel": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "documentary-check",
+                  "physical-inspection",
+                  "release-on-documents"
+                ]
+              },
+              "reasons": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "reasons",
+              "by",
+              "at"
+            ]
+          },
+          "inspections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "discrepancy",
+                    "no-discrepancy"
+                  ]
+                },
+                "findings": {
+                  "type": "string"
+                },
+                "case": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "at",
+                "by",
+                "outcome",
+                "findings",
+                "case"
+              ]
+            }
+          },
+          "assessment": {
+            "type": "object",
+            "properties": {
+              "reference": {
+                "type": "string"
+              },
+              "totalMinor": {
+                "type": "number"
+              },
+              "lines": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LineDuty"
+                }
+              },
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "case": {
+                "type": "string"
+              },
+              "decision": {
+                "type": "string"
+              },
+              "paidMinor": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "reference",
+              "totalMinor",
+              "lines",
+              "at",
+              "by",
+              "case",
+              "paidMinor"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "assessed",
+              "lodged",
+              "release-refused",
+              "released",
+              "withdrawn"
+            ]
+          },
+          "release": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "case": {
+                "type": "string"
+              },
+              "decision": {
+                "type": "string"
+              },
+              "reasons": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "case",
+              "reasons"
+            ]
+          },
+          "case": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "direction",
+          "declarant",
+          "shipment",
+          "currency",
+          "versions",
+          "inspections",
+          "state",
+          "case"
+        ]
+      },
       "Delivery": {
         "type": "object",
         "properties": {
@@ -67627,6 +68094,41 @@
           "coordinates"
         ]
       },
+      "GoodsLine": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "valueMinor": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "n",
+          "code",
+          "description",
+          "origin",
+          "quantity",
+          "unit",
+          "valueMinor"
+        ]
+      },
       "GrantStep": {
         "type": "object",
         "properties": {
@@ -69794,6 +70296,88 @@
           "endOfLife",
           "daysLeft",
           "level"
+        ]
+      },
+      "LineDuty": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "valueMinor": {
+            "type": "number"
+          },
+          "dutyMinor": {
+            "type": "number"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "entered"
+                  },
+                  "reasons": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reasons"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "rule"
+                  },
+                  "rule": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  },
+                  "digest": {
+                    "type": "string"
+                  },
+                  "citations": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    }
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "rule",
+                  "version",
+                  "digest",
+                  "citations",
+                  "steps"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "n",
+          "code",
+          "valueMinor",
+          "dutyMinor",
+          "method"
         ]
       },
       "LocalMirror": {

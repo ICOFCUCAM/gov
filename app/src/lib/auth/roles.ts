@@ -605,6 +605,13 @@ export function canReadProfessionals(s: Scope, keptHere: string[], purpose?: str
   return 'Professionals\' records are read by the regulator that keeps the profession; anyone can check standing on the public registers';
 }
 
+/** Customs declarations (lib/customs/register.ts; commercially confidential): the customs authority's officials; auditors with a purpose. */
+export function canReadCustoms(s: Scope, authority: string | undefined, purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read customs declarations';
+  if (authority && s.institution === authority) return null;
+  return 'Customs declarations are read by the customs authority; other institutions check release through the exchange (customs.release)';
+}
+
 /** Visas and residence permits (lib/immigration/register.ts): the immigration authority's officials; auditors with a purpose. Never the whole government by default (directions 15.1). */
 export function canReadImmigration(s: Scope, authority: string | undefined, purpose?: string): string | null {
   if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read immigration records';
