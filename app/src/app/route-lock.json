@@ -76,6 +76,7 @@
   "/gov/officers",
   "/gov/officers/[id]",
   "/gov/officers/bulk",
+  "/gov/organisations",
   "/gov/playground",
   "/gov/posture",
   "/gov/regional",
