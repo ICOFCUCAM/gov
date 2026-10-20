@@ -4997,7 +4997,7 @@
         ],
         "operationId": "get_case_packages",
         "summary": "GET /api/case-packages",
-        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only).",
+        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only); { op: 'load-demonstration' } loads the demonstration set (a sample act and the civil procedures approved under it; administrators, demo and training installations only, lib/casework/demo.ts).",
         "parameters": [
           {
             "name": "key",
@@ -5326,7 +5326,7 @@
         ],
         "operationId": "post_case_packages",
         "summary": "POST /api/case-packages",
-        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only).",
+        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only); { op: 'load-demonstration' } loads the demonstration set (a sample act and the civil procedures approved under it; administrators, demo and training installations only, lib/casework/demo.ts).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -5495,6 +5495,31 @@
                       },
                       "required": [
                         "drafted",
+                        "present"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "act": {
+                          "type": "string"
+                        },
+                        "approved": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "present": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "act",
+                        "approved",
                         "present"
                       ]
                     }
@@ -16968,6 +16993,18 @@
                           "kind": {
                             "type": "string",
                             "const": "entered"
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "sample"
                           }
                         },
                         "required": [
@@ -64668,6 +64705,18 @@
                   "kind": {
                     "type": "string",
                     "const": "entered"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "sample"
                   }
                 },
                 "required": [

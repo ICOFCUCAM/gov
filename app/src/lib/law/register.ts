@@ -35,7 +35,7 @@ export interface LegalVersion {
   withdrawn?: { by: string; at: string; reason: string };
   applicability?: { territorial?: string[]; personal?: string; subject?: string; transitional?: string };
   /** How it entered: typed in, or imported from a file (its SHA-256). */
-  source: { kind: 'entered' } | { kind: 'akoma-ntoso' | 'csv'; sha256: string };
+  source: { kind: 'entered' } | { kind: 'sample' } | { kind: 'akoma-ntoso' | 'csv'; sha256: string };
 }
 
 export interface LegalInstrument {

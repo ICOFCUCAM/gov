@@ -4,7 +4,9 @@
 // state, the date it applies from, the authority responsible, its steps and
 // whether its own tests pass. A draft runs only once an official who can
 // sign at the responsible institution, other than its author, approves it.
-// Reference procedures shipped with CivicOS arrive as drafts.
+// Reference procedures shipped with CivicOS arrive as drafts. Demo and
+// training installations can load the demonstration set (a sample act and
+// the civil procedures approved under it, lib/casework/demo.ts).
 
 import * as React from 'react';
 import { Section } from '@/components/ui/DataSystem';
@@ -12,7 +14,7 @@ import { Button } from '@/components/ui/Button';
 
 interface Pkg { key: string; version: number; title: string; owner: string; ownerInstitution: string | null; state: string; activeFrom?: string; author: string; approvedBy?: string; reference?: boolean; stages: { key: string; label: string }[]; actions: { key: string; label: string; from: string[]; to: string; decision?: string; needs: { role: string; fourEyes?: boolean } }[]; testResult: { ok: boolean; failures: string[] } }
 
-export function ProceduresBoard() {
+export function ProceduresBoard({ demonstration = false }: { demonstration?: boolean }) {
   const [list, setList] = React.useState<Pkg[]>([]);
   const [msg, setMsg] = React.useState<string | null>(null);
   const load = React.useCallback(() => {
@@ -40,6 +42,17 @@ export function ProceduresBoard() {
           setMsg(r.ok ? (j.drafted.length ? `Drafted: ${j.drafted.join(', ')}.` : 'All reference procedures are already here.') : j.error);
           load();
         }}>Add the reference procedures as drafts</Button>
+        {demonstration ? (
+          <div className="mt-3 border-t border-line pt-3">
+            <p className="text-sm text-ink-muted">Demonstration installation: load a sample Civil Registration Act and approve these procedures under it, so cases can be run end to end. The act is marked as a sample; a production installation never has it.</p>
+            <Button className="mt-2" variant="secondary" onClick={async () => {
+              const r = await fetch('/api/case-packages', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'load-demonstration' }) });
+              const j = await r.json();
+              setMsg(r.ok ? (j.approved.length ? `Sample act recorded; approved: ${j.approved.join(', ')}.` : 'The demonstration set is already loaded.') : j.error);
+              load();
+            }}>Load the demonstration set</Button>
+          </div>
+        ) : null}
       </Section>
       <Section title="Versions" meta={`${list.length}`}>
         {list.length ? (

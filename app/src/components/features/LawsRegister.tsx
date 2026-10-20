@@ -9,8 +9,9 @@
 import * as React from 'react';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
+import { SignalTag } from '@/components/ui/SignalTag';
 
-interface Version { id: string; language: string; dates: { adopted?: string; published?: string; inForce: string; ceased?: string }; provisions: { eId: string; num: string; heading?: string; text: string }[]; digest: string; state: string; recordedBy: string; confirmedBy?: string; withdrawn?: { reason: string } }
+interface Version { id: string; language: string; dates: { adopted?: string; published?: string; inForce: string; ceased?: string }; provisions: { eId: string; num: string; heading?: string; text: string }[]; digest: string; state: string; recordedBy: string; confirmedBy?: string; withdrawn?: { reason: string }; source?: { kind: string } }
 interface Instrument { id: string; title: string; type: string; jurisdiction: string; issuingAuthority: string; versions: Version[] }
 
 async function call<T>(url: string, body?: unknown): Promise<T> {
@@ -81,6 +82,7 @@ export function LawsRegister() {
               <li key={i.id} className="py-2">
                 <button className="text-left font-medium underline-offset-2 hover:underline" onClick={() => setOpen(o => o === i.id ? null : i.id)} aria-expanded={open === i.id}>{i.title}</button>
                 <span className="ml-2 text-xs text-ink-muted">{i.type} · {i.id}</span>
+                {i.versions.some(v => v.source?.kind === 'sample') ? <SignalTag kind="sample" source="Sample for demonstration, not the nation's law" className="ml-2" /> : null}
                 {open === i.id ? (
                   <ul className="mt-2 space-y-2 text-sm">
                     {i.versions.map(v => (

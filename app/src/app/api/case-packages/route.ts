@@ -4,7 +4,10 @@
 // { op: 'approve', key, version, activeFrom? } approves it (an official who
 // can sign there, different from its author, once its tests pass);
 // { op: 'install-references' } drafts the reference procedures CivicOS ships
-// that the installation does not have yet (administrators; drafts only).
+// that the installation does not have yet (administrators; drafts only);
+// { op: 'load-demonstration' } loads the demonstration set (a sample act and
+// the civil procedures approved under it; administrators, demo and training
+// installations only, lib/casework/demo.ts).
 import { NextRequest, NextResponse } from 'next/server';
 import { caseActRefusal } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
@@ -14,6 +17,7 @@ import { routeActor } from '@/lib/casework/actor';
 import type { CasePackage } from '@/lib/casework/types';
 import { installReferenceProcedures } from '@/lib/casework/modules';
 import { adminOnly } from '@/lib/auth/roles';
+import { loadDemonstration } from '@/lib/casework/demo';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,5 +63,13 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json(installReferenceProcedures(actor.name));
   }
-  return NextResponse.json({ error: 'op must be draft, approve or install-references' }, { status: 422 });
+  if (b.op === 'load-demonstration') {
+    if (actor.scope) {
+      const why = adminOnly(actor.scope);
+      if (why) return NextResponse.json({ error: why }, { status: 403 });
+    }
+    const r = loadDemonstration(actor.name);
+    return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json(r);
+  }
+  return NextResponse.json({ error: 'op must be draft, approve, install-references or load-demonstration' }, { status: 422 });
 }
