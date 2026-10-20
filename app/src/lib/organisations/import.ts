@@ -27,7 +27,7 @@ import { ownerInstitution } from '@/lib/casework/packages';
 import { authorityFor } from '@/lib/data/store';
 import { samplesAllowed } from '@/lib/ops/mode';
 import { powerRefusal } from '@/lib/permits/authority';
-import { organisationsDb, nextOrganisationNumber, registerType, checkNewOrganisation, current, type OrgLoad, type OrgLoadRow, type Organisation, type RegisterType, type StandingState } from './register';
+import { organisationsDb, nextOrganisationNumber, registerType, checkNewOrganisation, current, type OrgLoad, type Organisation, type RegisterType, type StandingState } from './register';
 
 export const ORG_COLUMNS = [
   { name: 'name', required: true, means: 'The registered name.' },

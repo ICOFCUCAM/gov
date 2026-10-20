@@ -113,10 +113,24 @@ Officials work through these decisions with the [country decision pack](COUNTRY_
 ### Requires independent security review
 
 - **Identity independence.** Two-person independence is only as strong as the identity provider. An unlinked account proves only that two accounts differ, and that is recorded as such on the decision. The identity-provider integration (register 1.5) and its account-linking process need review.
-- **Rate limits and harvesting detection.** Both run in memory per server. A deployment behind several instances, or facing a distributed harvest, needs limits at the edge (WAF, reverse proxy) and review.
-- **Restore under Postgres with live consumers.** Not exercised. The mirror does not yet delete rows the platform no longer holds after a restore (documented in `DISASTER_RECOVERY.md`).
-- **Decision guard coverage.** The classification is explicit and fails closed. A reviewer should confirm that no route changes a register outside the case engine, which is what CLAUDE.md requires; this was not re-audited route by route in this pass.
+- **Rate limits and harvesting detection.** In postgres mode, route limits and the harvest watch are now shared by every instance (follow-up below), so more servers no longer mean more tries. A harvest spread over many client addresses is still seen only at the edge (WAF, reverse proxy), and the middleware's edge limits stay per server: these need review.
+- **Restore under Postgres with live consumers.** Now exercised in CI against Postgres, and the civic-api mirror removes what a restore took back (follow-up below). Still for review: payment records the restored platform no longer holds are kept in the mirror and named for reconciliation, which is a manual step for the payments team.
+- **Decision guard coverage.** Now checked by a test over the whole source (follow-up below), which found and closed one path around the engine. The check reads imports; code that reaches a store some other way (an evaluated string, for example) is not seen, so review of new code still matters.
 - **The stand-in payment rail.** It is refused in production, but a production deployment needs the real payment-provider or bank-feed integration (register 1.8) before any tax or customs liability can be settled.
+
+## Follow-up hardening (after PR #5 and #6)
+
+Four of the open items above, done without new agency features:
+
+| Item | Commit | What it does | Evidence |
+|---|---|---|---|
+| Register writes only through the case engine | `c4b57a9` | A test reads the source and fails when any file other than a register's procedure module imports one of its changing functions (listed exceptions carry their reason), touches a register's store, imports a register whole, or registers an effect. | `lib/casework/register-writes.test.ts`; proven to fail on a planted `setStanding` import in a route. |
+| The path it found | `c4b57a9` | Loading an existing organisations register entered standings at once, by one official, administrators of any institution included, with no authority mapping. A load is now proposed by an official of the keeping authority, held, and enters only when a different person who can sign confirms it within the waiting period; production needs the approved mapping, and a suspension blocks it. | `lib/organisations/import.test.ts` (same person, unsigned confirmer, late, repeated, production without mapping, suspended mapping, withdrawn). |
+| civic-api mirror after a restore | `3a534f7` | Removes the platform tenant's rows the restored read no longer holds; payment records stay and are named. | `services/civic-api/test/follower.spec.ts`; against Postgres with civic-api's migrations, `test/prisma-store.integration.spec.ts` (now in CI). The real database showed bills cannot be deleted under append-only receipts, which the in-memory test could not. |
+| Restore drill on Postgres | `3f12e1c` | A live consumer across a four-eyes restore in postgres mode, checked in the database as a restarted server loads it. | `lib/data/repo/restore-events-postgres.integration.test.ts`; new CI job *postgres backend* also runs the app's other Postgres suites, which CI had skipped. |
+| Shared rate limits and harvest watch | `1fd3233` | Route limits and the register watch counted once across all instances in postgres mode. | `lib/data/repo/shared-limits-postgres.integration.test.ts`: two pools as two instances, exactly the burst under concurrent requests, a spread harvest flagged once. |
+
+The country decision pack (`docs/COUNTRY_DECISION_PACK.md`, `4e5c672`) lists every decision in "Depends on country approval" as forms officials can fill in. It also lists gaps it found: some settings exist only as an API, suspension periods and dual-control rules are set by one administrator with a free-text basis, and exchange-service purposes are not checked per caller.
 
 ## Test reliability
 
