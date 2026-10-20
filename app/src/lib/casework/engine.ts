@@ -174,6 +174,8 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   if (actor.scope) {
     const why = caseActRefusal(actor.scope, facts(c, a), now.getTime());
     if (why) return { error: why };
+    // An action the procedure gives to the assigned official only.
+    if (a.needs.assigned && c.assignee?.id !== actor.scope.id) return { error: c.assignee ? `${a.label} is for the official assigned to this case (${c.assignee.name})` : `${a.label} needs an assigned official: assign the case first` };
   }
   const pending = c.pending?.action === a.key ? c.pending : undefined;
   if (c.pending && !pending) return { error: `${pkg.actions.find(x => x.key === c.pending!.action)?.label ?? c.pending.action} is waiting for a second official: confirm or cancel it first` };
