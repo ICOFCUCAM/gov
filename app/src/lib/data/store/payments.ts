@@ -29,8 +29,43 @@ export function payBill(billId: string, rail: string): PaymentReceipt | { error:
     rail,
     paidAt: new Date().toISOString(),
     hash: hash(billId + Date.now()),
+    ...(bill.reference ? { reference: bill.reference } : {}),
   };
   db.receipts.unshift(receipt);
   recordAudit('citizen', 'payment.execute', `Bill:${billId}`, 'ok', `${bill.currency} ${bill.amountMinor / 100}`);
   return receipt;
 }
+
+/**
+ * Issue a bill for a liability (a tax assessment, a customs declaration, a
+ * licence fee): the payer pays it on the nation's rail like any bill, and the
+ * receipt carries the liability reference for reconciliation. Audited, never
+ * with the payer's name.
+ */
+export function issueBill(input: { kind: Bill['kind']; description: string; amountMinor: number; currency: string; dueDate: string; reference: string; payer?: Bill['payer']; issuer?: string }, by: string): Bill | { error: string } {
+  if (!Number.isInteger(input.amountMinor) || input.amountMinor <= 0) return { error: 'A bill is for a positive whole number of minor units' };
+  if (!/^[A-Z]{3}$/.test(input.currency)) return { error: 'The currency is a three-letter code' };
+  if (!input.reference.trim()) return { error: 'A bill names the liability it settles' };
+  if (db.bills.some(b => b.reference === input.reference && b.status !== 'paid')) return { error: `A bill for ${input.reference} is already open` };
+  const bill: Bill = { id: uid('BL'), kind: input.kind, description: input.description.slice(0, 200), amountMinor: input.amountMinor, currency: input.currency, dueDate: input.dueDate, status: 'due', reference: input.reference, ...(input.payer ? { payer: input.payer } : {}), ...(input.issuer ? { issuer: input.issuer } : {}) };
+  db.bills.unshift(bill);
+  recordAudit(by, 'payment.bill.issue', `Bill:${bill.id}`, 'ok', `${input.reference} · ${input.currency} ${input.amountMinor / 100}`);
+  return bill;
+}
+
+/** A payment that arrived outside the platform (a bank transfer), recorded by an official against a liability reference. Idempotent on the rail reference. */
+export function recordTransfer(input: { reference: string; amountMinor: number; currency: string; rail: string; railReference: string; paidAt: string }, by: string): PaymentReceipt | { error: string } {
+  if (!input.reference.trim() || !input.railReference.trim()) return { error: 'Give the liability reference and the transfer reference' };
+  if (!Number.isInteger(input.amountMinor) || input.amountMinor <= 0) return { error: 'The amount is a positive whole number of minor units' };
+  const seen = db.receipts.find(r => r.railReference === input.railReference && r.rail === input.rail);
+  if (seen) return seen;
+  const bill = db.bills.find(b => b.reference === input.reference && b.status !== 'paid');
+  const receipt: PaymentReceipt = { id: uid('PR'), billId: bill?.id ?? '', amountMinor: input.amountMinor, currency: input.currency, rail: input.rail, paidAt: input.paidAt, hash: hash(input.railReference + input.reference), reference: input.reference, railReference: input.railReference, recordedBy: by };
+  if (bill && input.amountMinor >= bill.amountMinor) bill.status = 'paid';
+  db.receipts.unshift(receipt);
+  recordAudit(by, 'payment.transfer.record', `Receipt:${receipt.id}`, 'ok', `${input.reference} · ${input.currency} ${input.amountMinor / 100} · ${input.rail} ${input.railReference}`);
+  return receipt;
+}
+
+/** Everything paid against a liability reference, for reconciliation. */
+export const receiptsFor = (reference: string): PaymentReceipt[] => db.receipts.filter(r => r.reference === reference);

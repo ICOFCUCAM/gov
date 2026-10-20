@@ -190,7 +190,7 @@ export interface OpsOverview {
 }
 
 // ── Payments ──────────────────────────────────────────────────────────
-export type BillKind = 'water' | 'waste' | 'property-tax' | 'permit-fee' | 'transit';
+export type BillKind = 'water' | 'waste' | 'property-tax' | 'permit-fee' | 'transit' | 'tax' | 'customs-duty' | 'licence-fee';
 
 export interface Bill {
   id: string;
@@ -200,6 +200,12 @@ export interface Bill {
   currency: string;
   dueDate: ISODate;
   status: 'due' | 'paid' | 'overdue';
+  /** The liability it settles (e.g. a tax assessment or a customs declaration), for reconciliation. */
+  reference?: string;
+  /** Who owes it (a person or organisation reference); never shown to anyone else. */
+  payer?: { kind: 'person' | 'organisation'; id: string; name: string };
+  /** The institution that issued it. */
+  issuer?: string;
 }
 
 export interface PaymentReceipt {
@@ -210,6 +216,12 @@ export interface PaymentReceipt {
   rail: string;              // e.g., M-Pesa, ISO 20022 credit transfer
   paidAt: ISODate;
   hash: string;
+  /** The liability reference, copied from the bill or given with a recorded transfer. */
+  reference?: string;
+  /** The rail's own reference (bank transfer id), for payments recorded by an official. */
+  railReference?: string;
+  /** The official who recorded a payment that arrived outside the platform. */
+  recordedBy?: string;
 }
 
 // ── Notifications ─────────────────────────────────────────────────────
