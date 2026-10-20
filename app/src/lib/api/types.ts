@@ -349,6 +349,12 @@ export interface IntegrationApprovalProposal extends IntegrationTerms {
   byId?: string;
   at: ISODate;
   note?: string;
+  /** The law that permits the sharing, cited from the laws register (required in production). */
+  basis?: { instrument: string; eId: string; version: string; digest: string; on: string; title?: string; num?: string }[];
+  /** The institutions that own the services the terms open (each must agree, in production). */
+  owners?: string[];
+  /** Each owning institution's confirmation so far. */
+  consents?: { institution: string; by: string; byId?: string; at: ISODate }[];
 }
 
 export interface IntegrationApprovalRecord extends IntegrationApprovalProposal {

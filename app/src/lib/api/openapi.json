@@ -17517,7 +17517,7 @@
         ],
         "operationId": "post_integrations_id_approve",
         "summary": "POST /api/integrations/{id}/approve",
-        "description": "POST /api/integrations/<id>/approve — approving an outside caller takes two officials (lib/data/store/federation.ts). { op: 'propose', scopes?, purposes?, note? } (the default op): one administrator proposes the integration's scopes and, per exchange service it may call (scope service:<id>), the purposes it may state, e.g. { \"person.verify\": [\"identity-card-enrolment\"] }; a change to an approved integration's scopes or purposes is proposed the same way. { op: 'confirm' }: a different official confirms the waiting proposal (dual control on verified sessions); it lapses after the country's dual-control waiting period. { op: 'withdraw' }: withdraws a waiting proposal. Who acted comes from the sign-in, never the request; audited.",
+        "description": "POST /api/integrations/<id>/approve — approving an outside caller takes two officials (lib/data/store/federation.ts). { op: 'propose', scopes?, purposes?, note? } (the default op): one administrator proposes the integration's scopes and, per exchange service it may call (scope service:<id>), the purposes it may state, e.g. { \"person.verify\": [\"identity-card-enrolment\"] }; a change to an approved integration's scopes or purposes is proposed the same way. { op: 'confirm' }: a different official confirms the waiting proposal (dual control on verified sessions); it lapses after the country's dual-control waiting period. { op: 'withdraw' }: withdraws a waiting proposal. Who acted comes from the sign-in, never the request; audited. A proposal cites the law that permits the sharing (legalBasis: [{ instrument, eId }] from the laws register; required in production), and in production an official of every institution that owns a service the terms open confirms it (the owners are worked out here from the directory and the deployment profile, never taken from the request).",
         "parameters": [
           {
             "name": "id",
@@ -17541,6 +17541,7 @@
                   "scopes": {},
                   "purposes": {},
                   "note": {},
+                  "legalBasis": {},
                   "by": {
                     "type": "string"
                   }
@@ -17554,6 +17555,7 @@
                     "scopes": null,
                     "purposes": null,
                     "note": null,
+                    "legalBasis": null,
                     "by": "A. Official"
                   }
                 }
@@ -70495,6 +70497,76 @@
           "note": {
             "type": "string"
           },
+          "basis": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "instrument": {
+                  "type": "string"
+                },
+                "eId": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "digest": {
+                  "type": "string"
+                },
+                "on": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "num": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "instrument",
+                "eId",
+                "version",
+                "digest",
+                "on"
+              ]
+            },
+            "description": "The law that permits the sharing, cited from the laws register (required in production)."
+          },
+          "owners": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The institutions that own the services the terms open (each must agree, in production)."
+          },
+          "consents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "institution": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "byId": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "institution",
+                "by",
+                "at"
+              ]
+            },
+            "description": "Each owning institution's confirmation so far."
+          },
           "scopes": {
             "type": "array",
             "items": {
@@ -70561,6 +70633,76 @@
           },
           "note": {
             "type": "string"
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "instrument": {
+                  "type": "string"
+                },
+                "eId": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "digest": {
+                  "type": "string"
+                },
+                "on": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "num": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "instrument",
+                "eId",
+                "version",
+                "digest",
+                "on"
+              ]
+            },
+            "description": "The law that permits the sharing, cited from the laws register (required in production)."
+          },
+          "owners": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The institutions that own the services the terms open (each must agree, in production)."
+          },
+          "consents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "institution": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "byId": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "institution",
+                "by",
+                "at"
+              ]
+            },
+            "description": "Each owning institution's confirmation so far."
           },
           "scopes": {
             "type": "array",
