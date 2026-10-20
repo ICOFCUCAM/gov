@@ -120,7 +120,8 @@ function IntegrationApproval({ i, onChange }: { i: IntegrationClient; onChange: 
         <form onSubmit={propose} className="mt-2">
           <TextField label="Scopes (comma-separated)" name="scopes" required defaultValue={(p ?? i).scopes.join(', ')} />
           <label className="mb-3 block text-sm">
-            Purposes per exchange service, one line each (service: purpose, purpose)
+            Purposes per exchange service, one line each (service: purpose, purpose; service ids are listed on{' '}
+            <a className="text-link underline underline-offset-2" href="/gov/exchange">Data-sharing services</a>)
             <textarea name="purposes" rows={3} className="mt-1 block w-full rounded border border-line p-2 font-mono text-xs" defaultValue={purposeLines(p?.purposes ?? i.purposes)} placeholder="person.verify: identity-card-enrolment" />
           </label>
           <TextField label="Legal basis: law (id from Laws; required in a production installation)" name="instrument" placeholder="/eli/…" />
@@ -302,7 +303,7 @@ export function InteropConsole() {
             <EmptyState title="No integrations yet" />
           ) : (
             ints.map(i => (
-              <Card tight key={i.id}>
+              <Card tight key={i.id} id={`integration-${i.id}`} className="scroll-mt-16">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <strong>{i.name}</strong>
                   <span className="font-mono text-xs text-ink-muted">{i.id}</span>

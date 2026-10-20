@@ -12609,6 +12609,260 @@
         "x-source": "src/app/api/education/route.ts"
       }
     },
+    "/api/events/outbox": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "get_events_outbox",
+        "summary": "GET /api/events/outbox",
+        "description": "GET /api/events/outbox — the event outbox at a glance (lib/events/overview.ts): per webhook subscription its cursor, events waiting, delivery attempts and last result; the restore epoch and events voided by a data restore (docs/DISASTER_RECOVERY.md). Events by type, time and sequence only (never actor, subject or detail). ?limit= (≤ 200) for the recent lists. Read only: delivery and its retries are the scheduled job's (/api/cron/deliver-cloudevents).",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "epoch": {
+                      "type": "number"
+                    },
+                    "events": {
+                      "type": "object",
+                      "properties": {
+                        "kept": {
+                          "type": "number"
+                        },
+                        "voided": {
+                          "type": "number"
+                        },
+                        "byEpoch": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "epoch": {
+                                "type": "number"
+                              },
+                              "count": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "epoch",
+                              "count"
+                            ]
+                          }
+                        },
+                        "oldestAt": {
+                          "type": "string"
+                        },
+                        "newestAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kept",
+                        "voided",
+                        "byEpoch"
+                      ]
+                    },
+                    "voidedBy": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "backup": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "backup",
+                          "count"
+                        ]
+                      },
+                      "description": "Events voided by each restore (the backup restored from)."
+                    },
+                    "consumers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConsumerOverview"
+                      }
+                    },
+                    "orphanCursors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "cursor": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "cursor"
+                        ]
+                      },
+                      "description": "Cursors kept for subscriptions no longer registered."
+                    },
+                    "recentEvents": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "time": {
+                            "type": "string"
+                          },
+                          "auditseq": {
+                            "type": "number"
+                          },
+                          "restoreepoch": {
+                            "type": "number"
+                          },
+                          "voided": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "type",
+                          "time",
+                          "auditseq",
+                          "restoreepoch"
+                        ]
+                      }
+                    },
+                    "recentDeliveries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Delivery"
+                      }
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "epoch",
+                    "events",
+                    "voidedBy",
+                    "consumers",
+                    "orphanCursors",
+                    "recentEvents",
+                    "recentDeliveries"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "at": "2026-01-15T09:30:00.000Z",
+                      "epoch": 1,
+                      "events": {
+                        "kept": 1,
+                        "voided": 1,
+                        "byEpoch": [
+                          {
+                            "epoch": 1,
+                            "count": 1
+                          }
+                        ],
+                        "oldestAt": "2026-01-15T09:30:00.000Z",
+                        "newestAt": "2026-01-15T09:30:00.000Z"
+                      },
+                      "voidedBy": [
+                        {
+                          "backup": "string",
+                          "count": 1
+                        }
+                      ],
+                      "consumers": [
+                        {
+                          "id": "ID-0001",
+                          "topic": "string",
+                          "host": "string",
+                          "status": "active",
+                          "cursor": 1,
+                          "pending": 1,
+                          "delivered": 1,
+                          "failed": 1,
+                          "failures": 1
+                        }
+                      ],
+                      "orphanCursors": [
+                        {
+                          "id": "ID-0001",
+                          "cursor": 1
+                        }
+                      ],
+                      "recentEvents": [
+                        {
+                          "id": "ID-0001",
+                          "type": "string",
+                          "time": "string",
+                          "auditseq": 1,
+                          "restoreepoch": 1
+                        }
+                      ],
+                      "recentDeliveries": [
+                        {
+                          "webhookId": "ID-0001",
+                          "eventId": "ID-0001",
+                          "type": "string",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "ok": true,
+                          "detail": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/events/outbox/route.ts"
+      }
+    },
     "/api/events": {
       "get": {
         "tags": [
@@ -12891,6 +13145,98 @@
           }
         ],
         "x-source": "src/app/api/exchange/log/route.ts"
+      }
+    },
+    "/api/exchange/overview": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_overview",
+        "summary": "GET /api/exchange/overview",
+        "description": "GET /api/exchange/overview — the data-sharing services at a glance (lib/exchange/overview.ts): every exchange service with the authority responsible for it (deployment profile), the register it answers from, the integrations approved for it and their purposes, and aggregate call counts and refusal reasons from the exchange log. Counts only: never a request's input, purpose text or answer. Read only; approvals are made on /integrations by two officials.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "services": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ServiceOverview"
+                      }
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "services",
+                    "at"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "services": [
+                        {
+                          "id": "ID-0001",
+                          "version": 1,
+                          "kind": "event",
+                          "title": "Example",
+                          "scope": "string",
+                          "returns": {
+                            "key": "string"
+                          },
+                          "dataClass": "personal",
+                          "owner": {
+                            "key": "businessRegister",
+                            "label": "Example",
+                            "named": true
+                          },
+                          "integrations": [
+                            {}
+                          ],
+                          "calls": {
+                            "total": 1,
+                            "answered": 1,
+                            "refused": 1,
+                            "failed": 1,
+                            "reasons": [],
+                            "byCaller": [],
+                            "unauthenticated": 1
+                          }
+                        }
+                      ],
+                      "at": "2026-01-15T09:30:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/exchange/overview/route.ts"
       }
     },
     "/api/exchange/services/{service}": {
@@ -65454,6 +65800,80 @@
           "revoked"
         ]
       },
+      "ConsumerOverview": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string",
+            "description": "The receiving address's host only."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "disabled",
+              "paused"
+            ]
+          },
+          "cursor": {
+            "type": "number",
+            "description": "The audit sequence delivered up to."
+          },
+          "pending": {
+            "type": "number",
+            "description": "Events past the cursor for its topic, not voided."
+          },
+          "oldestPendingAt": {
+            "type": "string"
+          },
+          "delivered": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number"
+          },
+          "lastAttempt": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "ok": {
+                "type": "boolean"
+              },
+              "detail": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "ok",
+              "detail"
+            ]
+          },
+          "failures": {
+            "type": "number",
+            "description": "Consecutive failed runs (resets on success)."
+          }
+        },
+        "required": [
+          "id",
+          "topic",
+          "host",
+          "status",
+          "cursor",
+          "pending",
+          "delivered",
+          "failed",
+          "failures"
+        ]
+      },
       "Contract": {
         "type": "object",
         "properties": {
@@ -81873,6 +82293,98 @@
           "authority"
         ]
       },
+      "ServiceCalls": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "answered": {
+            "type": "number"
+          },
+          "refused": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number",
+            "description": "Not answered for another reason: input missing, no such service."
+          },
+          "firstAt": {
+            "type": "string"
+          },
+          "lastAt": {
+            "type": "string"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "reason",
+                "count"
+              ]
+            },
+            "description": "Refusals and failures by reason, most frequent first (reason text without the caller's purpose)."
+          },
+          "byCaller": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "caller": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "integration",
+                    "module",
+                    "other"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "total": {
+                  "type": "number"
+                },
+                "refused": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "caller",
+                "kind",
+                "name",
+                "total",
+                "refused"
+              ]
+            },
+            "description": "Calls per caller (an integration or a module inside the installation)."
+          },
+          "unauthenticated": {
+            "type": "number",
+            "description": "Calls without a recognised key, or refused by a rate limit (counted, not logged one by one)."
+          }
+        },
+        "required": [
+          "total",
+          "answered",
+          "refused",
+          "failed",
+          "reasons",
+          "byCaller",
+          "unauthenticated"
+        ]
+      },
       "ServiceHealth": {
         "type": "object",
         "properties": {
@@ -82008,6 +82520,227 @@
           "nations",
           "startedAt",
           "updates"
+        ]
+      },
+      "ServiceOverview": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "event",
+              "query"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "returns": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dataClass": {
+            "type": "string",
+            "enum": [
+              "personal",
+              "public",
+              "restricted"
+            ]
+          },
+          "legalBasis": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "businessRegister",
+                  "civilRegistration",
+                  "customs",
+                  "dataProtection",
+                  "education",
+                  "healthRegulation",
+                  "higherEducationAccreditation",
+                  "identity",
+                  "immigration",
+                  "judiciary",
+                  "lawRegister",
+                  "police",
+                  "professionalRegulation",
+                  "statistics",
+                  "tax"
+                ]
+              },
+              "label": {
+                "type": "string"
+              },
+              "institution": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ]
+              },
+              "named": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "key",
+              "label",
+              "named"
+            ]
+          },
+          "register": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "integrations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "ownerOrg": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "approved",
+                    "pending",
+                    "revoked",
+                    "suspended"
+                  ]
+                },
+                "purposes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Purposes approved for this service (two officials)."
+                },
+                "legacy": {
+                  "type": "boolean",
+                  "description": "Approved before purposes were recorded: refused in production until two officials approve them."
+                },
+                "waiting": {
+                  "type": "object",
+                  "properties": {
+                    "purposes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "by": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "purposes",
+                    "at",
+                    "by"
+                  ],
+                  "description": "A proposal waiting for a second official that names this service."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "ownerOrg",
+                "status",
+                "purposes",
+                "legacy"
+              ]
+            }
+          },
+          "webhooks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "topic": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "disabled",
+                    "paused"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "topic",
+                "status"
+              ]
+            },
+            "description": "Event services: the webhook subscriptions whose topic receives it."
+          },
+          "calls": {
+            "$ref": "#/components/schemas/ServiceCalls"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "kind",
+          "title",
+          "scope",
+          "returns",
+          "dataClass",
+          "owner",
+          "integrations",
+          "calls"
         ]
       },
       "ServiceSlaStat": {
