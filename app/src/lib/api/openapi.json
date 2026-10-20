@@ -65,6 +65,9 @@
       "name": "integrations"
     },
     {
+      "name": "law"
+    },
+    {
       "name": "map-pack"
     },
     {
@@ -13703,6 +13706,936 @@
         "x-source": "src/app/api/integrations/verify/route.ts"
       }
     },
+    "/api/law/cite": {
+      "get": {
+        "tags": [
+          "law"
+        ],
+        "operationId": "get_law_cite",
+        "summary": "GET /api/law/cite",
+        "description": "GET /api/law/cite?instrument=&eId=&on=YYYY-MM-DD — the provision as it stood on that date and the citation a decision keeps (exact version and digest; lib/law/register.ts). Never the current version by default.",
+        "parameters": [
+          {
+            "name": "eId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "instrument",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "on",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "citation": {
+                      "$ref": "#/components/schemas/Citation"
+                    },
+                    "provision": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/Provision"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "citation",
+                    "provision"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "citation": {
+                        "instrument": "string",
+                        "eId": "ID-0001",
+                        "version": "string",
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "on": "string",
+                        "title": "Example",
+                        "num": "string",
+                        "context": "string"
+                      },
+                      "provision": {
+                        "eId": "ID-0001",
+                        "num": "string",
+                        "heading": "string",
+                        "text": "string",
+                        "parent": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/law/cite/route.ts"
+      }
+    },
+    "/api/law/confirm": {
+      "post": {
+        "tags": [
+          "law"
+        ],
+        "operationId": "post_law_confirm",
+        "summary": "POST /api/law/confirm",
+        "description": "POST /api/law/confirm — a different official confirms a recorded version of a law (four-eyes, lib/law/register.ts); from then on decisions can cite it. Those who can sign at the law-register authority (canConfirmLaw()).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "instrument": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "instrument": "string",
+                    "version": "string",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "$ref": "#/components/schemas/LegalVersion"
+                    }
+                  },
+                  "required": [
+                    "version"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "version": {
+                        "id": "ID-0001",
+                        "language": "string",
+                        "dates": {
+                          "inForce": "string"
+                        },
+                        "publicationRef": "string",
+                        "provisions": [
+                          {
+                            "eId": "ID-0001",
+                            "num": "string",
+                            "text": "string"
+                          }
+                        ],
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "state": "confirmed",
+                        "recordedBy": "A. Official",
+                        "recordedById": "ID-0001",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "confirmedBy": "A. Official",
+                        "confirmedAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        },
+                        "applicability": {},
+                        "source": {
+                          "kind": "entered"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/law/confirm/route.ts"
+      }
+    },
+    "/api/law/export": {
+      "get": {
+        "tags": [
+          "law"
+        ],
+        "operationId": "get_law_export",
+        "summary": "GET /api/law/export",
+        "description": "GET /api/law/export?instrument=&version= — a confirmed version as an Akoma Ntoso document (lib/law/akoma-ntoso.ts).",
+        "parameters": [
+          {
+            "name": "instrument",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/law/export/route.ts"
+      }
+    },
+    "/api/law/relate": {
+      "post": {
+        "tags": [
+          "law"
+        ],
+        "operationId": "post_law_relate",
+        "summary": "POST /api/law/relate",
+        "description": "POST /api/law/relate — record that one instrument amends, repeals, replaces, implements, cites or depends on another (lib/law/register.ts). Officials of the law-register authority (canRecordLaw()).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "instrument": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "amends",
+                      "cites",
+                      "depends-on",
+                      "implements",
+                      "repeals",
+                      "replaces"
+                    ]
+                  },
+                  "target": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "instrument": "string",
+                    "kind": "amends",
+                    "target": "string",
+                    "at": "2026-01-15T09:30:00.000Z",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "instrument": {
+                      "$ref": "#/components/schemas/LegalInstrument"
+                    }
+                  },
+                  "required": [
+                    "instrument"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "instrument": {
+                        "id": "ID-0001",
+                        "title": "Example",
+                        "type": "act",
+                        "jurisdiction": "string",
+                        "issuingAuthority": "string",
+                        "officialSource": "string",
+                        "versions": [
+                          {
+                            "id": "ID-0001",
+                            "language": "string",
+                            "dates": {},
+                            "provisions": [],
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "state": "confirmed",
+                            "recordedBy": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "source": {}
+                          }
+                        ],
+                        "relations": [
+                          {
+                            "kind": "amends",
+                            "target": "string",
+                            "by": "A. Official"
+                          }
+                        ],
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "sample": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/law/relate/route.ts"
+      }
+    },
+    "/api/law": {
+      "get": {
+        "tags": [
+          "law"
+        ],
+        "operationId": "get_law",
+        "summary": "GET /api/law",
+        "description": "/api/law — the laws register (lib/law/register.ts, design §5). GET: the instruments (signed-in officials see recorded and withdrawn versions too; everyone else only confirmed ones). POST: record a new version (and the instrument, the first time), typed in as provisions or read from an Akoma Ntoso or CSV file; officials of the law-register authority (canRecordLaw()). A different official confirms it (/api/law/confirm).",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "instruments": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LegalInstrument"
+                      }
+                    },
+                    "authority": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "instruments",
+                    "authority"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "instruments": [
+                        {
+                          "id": "ID-0001",
+                          "title": "Example",
+                          "type": "act",
+                          "jurisdiction": "string",
+                          "issuingAuthority": "string",
+                          "versions": [
+                            {}
+                          ],
+                          "relations": [
+                            {}
+                          ],
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "authority": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/law/route.ts"
+      },
+      "post": {
+        "tags": [
+          "law"
+        ],
+        "operationId": "post_law",
+        "summary": "POST /api/law",
+        "description": "/api/law — the laws register (lib/law/register.ts, design §5). GET: the instruments (signed-in officials see recorded and withdrawn versions too; everyone else only confirmed ones). POST: record a new version (and the instrument, the first time), typed in as provisions or read from an Akoma Ntoso or CSV file; officials of the law-register authority (canRecordLaw()). A different official confirms it (/api/law/confirm).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "instrument": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "jurisdiction": {
+                        "type": "string"
+                      },
+                      "year": {
+                        "type": "number"
+                      },
+                      "number": {
+                        "type": "string"
+                      },
+                      "issuingAuthority": {
+                        "type": "string"
+                      },
+                      "officialSource": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "language": {
+                    "type": "string"
+                  },
+                  "dates": {
+                    "type": "object",
+                    "properties": {
+                      "adopted": {
+                        "type": "string"
+                      },
+                      "published": {
+                        "type": "string"
+                      },
+                      "inForce": {
+                        "type": "string"
+                      },
+                      "ceased": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "publicationRef": {
+                    "type": "string"
+                  },
+                  "provisions": {},
+                  "applicability": {
+                    "type": "object",
+                    "properties": {
+                      "territorial": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "personal": {
+                        "type": "string"
+                      },
+                      "subject": {
+                        "type": "string"
+                      },
+                      "transitional": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "source": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "entered"
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "akoma-ntoso",
+                              "csv"
+                            ]
+                          },
+                          "sha256": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "sha256"
+                        ]
+                      }
+                    ]
+                  },
+                  "by": {
+                    "type": "string"
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "akoma-ntoso",
+                      "csv"
+                    ]
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "instrument",
+                  "provisions"
+                ]
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "instrument": {
+                      "id": "ID-0001",
+                      "title": "Example",
+                      "type": "string",
+                      "jurisdiction": "string",
+                      "year": 1,
+                      "number": "string",
+                      "issuingAuthority": "string",
+                      "officialSource": "string"
+                    },
+                    "language": "string",
+                    "dates": {
+                      "adopted": "string",
+                      "published": "string",
+                      "inForce": "string",
+                      "ceased": "string"
+                    },
+                    "publicationRef": "string",
+                    "provisions": null,
+                    "applicability": {
+                      "territorial": [
+                        "string"
+                      ],
+                      "personal": "string",
+                      "subject": "string",
+                      "transitional": "string"
+                    },
+                    "source": {
+                      "kind": "entered"
+                    },
+                    "by": "A. Official",
+                    "format": "akoma-ntoso",
+                    "text": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "instrument": {
+                      "$ref": "#/components/schemas/LegalInstrument"
+                    },
+                    "version": {
+                      "$ref": "#/components/schemas/LegalVersion"
+                    }
+                  },
+                  "required": [
+                    "instrument",
+                    "version"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "instrument": {
+                        "id": "ID-0001",
+                        "title": "Example",
+                        "type": "act",
+                        "jurisdiction": "string",
+                        "issuingAuthority": "string",
+                        "officialSource": "string",
+                        "versions": [
+                          {
+                            "id": "ID-0001",
+                            "language": "string",
+                            "dates": {},
+                            "provisions": [],
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "state": "confirmed",
+                            "recordedBy": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "source": {}
+                          }
+                        ],
+                        "relations": [
+                          {
+                            "kind": "amends",
+                            "target": "string",
+                            "by": "A. Official"
+                          }
+                        ],
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "sample": true
+                      },
+                      "version": {
+                        "id": "ID-0001",
+                        "language": "string",
+                        "dates": {
+                          "inForce": "string"
+                        },
+                        "publicationRef": "string",
+                        "provisions": [
+                          {
+                            "eId": "ID-0001",
+                            "num": "string",
+                            "text": "string"
+                          }
+                        ],
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "state": "confirmed",
+                        "recordedBy": "A. Official",
+                        "recordedById": "ID-0001",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "confirmedBy": "A. Official",
+                        "confirmedAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        },
+                        "applicability": {},
+                        "source": {
+                          "kind": "entered"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/law/route.ts"
+      }
+    },
+    "/api/law/withdraw": {
+      "post": {
+        "tags": [
+          "law"
+        ],
+        "operationId": "post_law_withdraw",
+        "summary": "POST /api/law/withdraw",
+        "description": "POST /api/law/withdraw — withdraw a mistaken version of a law, with the reason; it is kept and marked, never cited again (lib/law/register.ts). Those who can sign at the law-register authority (canConfirmLaw()).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "instrument": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "instrument": "string",
+                    "version": "string",
+                    "reason": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "$ref": "#/components/schemas/LegalVersion"
+                    }
+                  },
+                  "required": [
+                    "version"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "version": {
+                        "id": "ID-0001",
+                        "language": "string",
+                        "dates": {
+                          "inForce": "string"
+                        },
+                        "publicationRef": "string",
+                        "provisions": [
+                          {
+                            "eId": "ID-0001",
+                            "num": "string",
+                            "text": "string"
+                          }
+                        ],
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "state": "confirmed",
+                        "recordedBy": "A. Official",
+                        "recordedById": "ID-0001",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "confirmedBy": "A. Official",
+                        "confirmedAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        },
+                        "applicability": {},
+                        "source": {
+                          "kind": "entered"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/law/withdraw/route.ts"
+      }
+    },
     "/api/map-pack/districts": {
       "get": {
         "tags": [
@@ -21944,9 +22877,9 @@
                             "inside": true,
                             "at": []
                           },
+                          "reason": "Text",
                           "proposedBy": "A. Official",
                           "proposedAt": "2026-01-15T09:30:00.000Z",
-                          "reason": "Text",
                           "geometry": {
                             "type": "MultiPolygon",
                             "coordinates": []
@@ -22244,9 +23177,9 @@
                             "inside": true,
                             "at": []
                           },
+                          "reason": "Text",
                           "proposedBy": "A. Official",
                           "proposedAt": "2026-01-15T09:30:00.000Z",
-                          "reason": "Text",
                           "geometry": {
                             "type": "MultiPolygon",
                             "coordinates": []
@@ -24704,9 +25637,9 @@
                             "inside": true,
                             "at": []
                           },
+                          "reason": "Text",
                           "proposedBy": "A. Official",
                           "proposedAt": "2026-01-15T09:30:00.000Z",
-                          "reason": "Text",
                           "geometry": {
                             "type": "MultiPolygon",
                             "coordinates": []
@@ -54559,6 +55492,43 @@
           "detail"
         ]
       },
+      "Citation": {
+        "description": "A decision's citation: the provision, the exact version and its digest, the date it was applied for.",
+        "type": "object",
+        "properties": {
+          "instrument": {
+            "type": "string"
+          },
+          "eId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "on": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "num": {
+            "type": "string"
+          },
+          "context": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "instrument",
+          "eId",
+          "version",
+          "digest",
+          "on"
+        ]
+      },
       "Citizen": {
         "type": "object",
         "properties": {
@@ -59610,6 +60580,248 @@
           "tone"
         ]
       },
+      "LegalInstrument": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "act",
+              "bylaw",
+              "constitution",
+              "decree",
+              "order",
+              "other",
+              "regulation",
+              "treaty"
+            ]
+          },
+          "jurisdiction": {
+            "type": "string"
+          },
+          "issuingAuthority": {
+            "type": "string"
+          },
+          "officialSource": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegalVersion"
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "amends",
+                    "cites",
+                    "depends-on",
+                    "implements",
+                    "repeals",
+                    "replaces"
+                  ]
+                },
+                "target": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "target",
+                "by"
+              ]
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "description": "Sample instruments exist only in demonstration and training installations."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "type",
+          "jurisdiction",
+          "issuingAuthority",
+          "versions",
+          "relations",
+          "createdAt"
+        ]
+      },
+      "LegalVersion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "dates": {
+            "type": "object",
+            "properties": {
+              "adopted": {
+                "type": "string"
+              },
+              "published": {
+                "type": "string"
+              },
+              "inForce": {
+                "type": "string"
+              },
+              "ceased": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "inForce"
+            ]
+          },
+          "publicationRef": {
+            "type": "string"
+          },
+          "provisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Provision"
+            }
+          },
+          "digest": {
+            "type": "string",
+            "description": "SHA-256 of the canonical text (provisions in order, with their numbers, headings and parents)."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "recorded",
+              "withdrawn"
+            ]
+          },
+          "recordedBy": {
+            "type": "string"
+          },
+          "recordedById": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "confirmedBy": {
+            "type": "string"
+          },
+          "confirmedAt": {
+            "type": "string"
+          },
+          "withdrawn": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason"
+            ]
+          },
+          "applicability": {
+            "type": "object",
+            "properties": {
+              "territorial": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "personal": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              },
+              "transitional": {
+                "type": "string"
+              }
+            }
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "entered"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "akoma-ntoso",
+                      "csv"
+                    ]
+                  },
+                  "sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "sha256"
+                ]
+              }
+            ],
+            "description": "How it entered: typed in, or imported from a file (its SHA-256)."
+          }
+        },
+        "required": [
+          "id",
+          "language",
+          "dates",
+          "provisions",
+          "digest",
+          "state",
+          "recordedBy",
+          "at",
+          "source"
+        ]
+      },
       "LifecycleLine": {
         "type": "object",
         "properties": {
@@ -62433,13 +63645,13 @@
               "place": {
                 "$ref": "#/components/schemas/ParcelPlace"
               },
+              "reason": {
+                "type": "string"
+              },
               "proposedBy": {
                 "type": "string"
               },
               "proposedAt": {
-                "type": "string"
-              },
-              "reason": {
                 "type": "string"
               },
               "geometry": {
@@ -62488,9 +63700,9 @@
             },
             "required": [
               "place",
+              "reason",
               "proposedBy",
               "proposedAt",
-              "reason",
               "geometry",
               "areaM2",
               "bbox",
@@ -64371,6 +65583,31 @@
           "from",
           "perMinute",
           "hasSecret"
+        ]
+      },
+      "Provision": {
+        "type": "object",
+        "properties": {
+          "eId": {
+            "type": "string"
+          },
+          "num": {
+            "type": "string"
+          },
+          "heading": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "parent": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "eId",
+          "num",
+          "text"
         ]
       },
       "PublicAccount": {

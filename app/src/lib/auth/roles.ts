@@ -175,6 +175,7 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/audit\/proof$/,                    // builds a proof of the audit chain (no change)
   /^\/api\/boundaries(\/|$)/,                 // canManageBoundaries() in the route
   /^\/api\/directives(\/|$)/,                 // canDraftDirective() / canSignDirective() in the route
+  /^\/api\/law(\/|$)/,                        // the laws register: canRecordLaw() / canConfirmLaw() in the route
   /^\/api\/documents\/verify$/,               // checks a document code (no change)
   /^\/api\/facilities\/(check|candidates)(\/|$)/, // checks and candidate review (rules in the route)
   /^\/api\/facilities\/[^/]+$/,               // one site (canSignForSite() etc. in the route)
@@ -511,4 +512,20 @@ export function canReadAccessLog(s: Scope, dataProtection: string | undefined): 
   if (roleOf(s) === 'auditor') return null;
   if (dataProtection && s.institution === dataProtection) return null;
   return 'The access log is read by auditors and by the data-protection authority';
+}
+
+/** Recording a version of a law (lib/law/register.ts): officials of the nation's law-register authority; whole-government administrators only while none is named. */
+export function canRecordLaw(s: Scope, authority: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (authority) return s.institution === authority ? null : 'Only the law-register authority records laws';
+  return wholeGovernment(s) && role === 'administrator' ? null : 'Name the law-register authority under Who is responsible first';
+}
+
+/** Confirming (four-eyes) or withdrawing a version of a law: those who can sign at the law-register authority; whole-government administrators only while none is named. */
+export function canConfirmLaw(s: Scope, authority: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (authority) return s.institution === authority && role === 'signatory' ? null : 'Only an official who can sign at the law-register authority confirms or withdraws a law';
+  return wholeGovernment(s) && role === 'administrator' ? null : 'Name the law-register authority under Who is responsible first';
 }
