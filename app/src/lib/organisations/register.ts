@@ -41,6 +41,8 @@ export interface RegisterType {
   publicCheck: boolean;
   /** Shipped with the platform, or configured by an administrator. */
   reference: boolean;
+  /** The permit type whose approved authority mapping governs it (lib/permits/authority.ts). */
+  permitType?: string;
   createdBy: string;
   createdAt: string;
 }
@@ -87,9 +89,9 @@ export interface Organisation {
 
 /** Register types CivicOS ships; a nation adds its own (licensed pharmacies, licensed doctors...). */
 export const REFERENCE_TYPES: Omit<RegisterType, 'createdBy' | 'createdAt'>[] = [
-  { key: 'companies', title: 'Registered companies and organisations', kind: 'registration', authority: 'businessRegister', orgKinds: [...ORG_KINDS], publicCheck: true, reference: true },
-  { key: 'business-licences', title: 'Business licences', kind: 'licence', authority: 'businessRegister', orgKinds: [...ORG_KINDS], validityMonths: 12, publicCheck: true, reference: true },
-  { key: 'higher-education', title: 'Accredited universities and colleges', kind: 'accreditation', authority: 'higherEducationAccreditation', orgKinds: ['university', 'college'], validityMonths: 60, publicCheck: true, reference: true },
+  { key: 'companies', title: 'Registered companies and organisations', kind: 'registration', authority: 'businessRegister', orgKinds: [...ORG_KINDS], publicCheck: true, reference: true, permitType: 'business-registration' },
+  { key: 'business-licences', title: 'Business licences', kind: 'licence', authority: 'businessRegister', orgKinds: [...ORG_KINDS], validityMonths: 12, publicCheck: true, reference: true, permitType: 'trading-licence' },
+  { key: 'higher-education', title: 'Accredited universities and colleges', kind: 'accreditation', authority: 'higherEducationAccreditation', orgKinds: ['university', 'college'], validityMonths: 60, publicCheck: true, reference: true, permitType: 'university-accreditation' },
 ];
 
 export interface OrgLoad { id: string; register: string; by: string; at: string; sha256: string; rows: number; loaded: number; refused: { row: number; reason: string }[]; withdrawn?: { by: string; at: string; removed: number } }
@@ -133,7 +135,8 @@ export function defineRegisterType(input: Partial<RegisterType>, by: string, now
   if (months !== undefined && (!Number.isInteger(months) || months < 1 || months > 240)) return { error: 'Validity is a whole number of months from 1 to 240' };
   const t: RegisterType = {
     key, title, kind: input.kind as RegisterKind, authority, orgKinds: kinds,
-    ...(months ? { validityMonths: months } : {}), publicCheck: input.publicCheck !== false, reference: false, createdBy: by, createdAt: now.toISOString(),
+    ...(months ? { validityMonths: months } : {}), publicCheck: input.publicCheck !== false, reference: false,
+    ...(KEY.test(str(input.permitType, 61)) ? { permitType: str(input.permitType, 61) } : {}), createdBy: by, createdAt: now.toISOString(),
   };
   const d = db();
   d.types = [...d.types.filter(x => x.key !== key), t];

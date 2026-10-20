@@ -19,6 +19,8 @@ import { getFacility } from '@/lib/data/facilities';
 import { issueCertificate } from '@/lib/records/certificates';
 import { createOrganisation, checkNewOrganisation, getOrganisation, setStanding, registerType, attachStandingDecision, attachCertificate, linkFacilities, listOrganisations, current, type StandingState } from './register';
 import type { Case, CasePackage } from '@/lib/casework/types';
+import { powerRefusal, mappingInForce } from '@/lib/permits/authority';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 type Ref = Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'>;
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
@@ -33,13 +35,29 @@ function defaultRegister(c: Case): string | undefined {
   return undefined;
 }
 
-/** The register a case acts on, if its institution keeps it. */
-function registerFor(c: Case): { key: string; title: string } | { error: string } {
+/** Which power of the permit authority mapping a standing change uses. */
+const POWER: Partial<Record<StandingState, 'issue' | 'renew' | 'suspend' | 'revoke'>> = { applied: 'issue', granted: 'issue', refused: 'issue', suspended: 'suspend', revoked: 'revoke' };
+
+/**
+ * The register a case acts on, if its institution keeps it. When the register
+ * type names a permit type, its approved authority mapping decides who holds
+ * each power (lib/permits/authority.ts); a production installation needs that
+ * approved mapping before any standing changes (owner's Cycle 3 directive).
+ */
+function registerFor(c: Case, state?: StandingState, as?: 'renew' | 'suspend'): { key: string; title: string } | { error: string } {
   const key = str(c.fields.register) || defaultRegister(c);
   if (!key) return { error: 'Name the register this case is about (the register field)' };
   const t = registerType(key);
   if (!t) return { error: `No register ${key}` };
-  if (ownerInstitution(t.authority, authorityFor) !== c.owner) return { error: `${t.title} is kept by another authority: this institution cannot change standings in it` };
+  const resolve = (a: string) => ownerInstitution(a, authorityFor);
+  // Renewal uses the renewing power; reinstatement after a suspension the suspending power.
+  const power = as ?? (state ? POWER[state] : 'issue');
+  if (t.permitType && power) {
+    const why = powerRefusal(t.permitType, power, c.owner, resolve, { required: !samplesAllowed() });
+    if (why) return { error: why };
+    if (mappingInForce(t.permitType)) return { key, title: t.title };
+  }
+  if (resolve(t.authority) !== c.owner) return { error: `${t.title} is kept by another authority: this institution cannot change standings in it` };
   return { key, title: t.title };
 }
 
@@ -49,9 +67,9 @@ function orgOf(c: Case) {
 }
 
 /** Change a standing from a case; the sealed decision is attached once it exists. */
-function change(ctx: EffectContext, state: StandingState, opts: { conditions?: boolean } = {}) {
+function change(ctx: EffectContext, state: StandingState, opts: { conditions?: boolean; as?: 'renew' | 'suspend' } = {}) {
   const { case: c, actor, now } = ctx;
-  const r = registerFor(c);
+  const r = registerFor(c, state, opts.as);
   if ('error' in r) return r;
   const o = orgOf(c);
   if (!o) return { error: `No organisation ${str(c.fields.organisation) || '(none given)'} in the register` };
@@ -94,9 +112,9 @@ registerEffect('org.apply', ctx => {
 });
 registerEffect('org.grant', ctx => change(ctx, 'granted', { conditions: true }));
 registerEffect('org.refuse', ctx => change(ctx, 'refused'));
-registerEffect('org.renew', ctx => change(ctx, 'granted', { conditions: true }));
+registerEffect('org.renew', ctx => change(ctx, 'granted', { conditions: true, as: 'renew' }));
 registerEffect('org.suspend', ctx => change(ctx, 'suspended'));
-registerEffect('org.reinstate', ctx => change(ctx, 'granted'));
+registerEffect('org.reinstate', ctx => change(ctx, 'granted', { as: 'suspend' }));
 registerEffect('org.revoke', ctx => change(ctx, 'revoked'));
 
 registerEffect('org.linkCampuses', ({ case: c, actor }: EffectContext) => {

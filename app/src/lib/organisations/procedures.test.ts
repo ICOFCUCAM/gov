@@ -25,8 +25,7 @@ function docs(caseId: string, inst: string, classes: string[]) {
   }
 }
 
-describe('organisation procedures', () => {
-  beforeEach(() => {
+function setup() {
     for (const r of [resetCases, resetPackages, resetDocuments, resetDecisions, resetCertificates, resetOrganisations]) r();
     vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 7).toString('base64'));
     [REG, EDU] = listMinistries().slice(0, 2).map(m => m.id) as [string, string];
@@ -37,7 +36,10 @@ describe('organisation procedures', () => {
       const a = approvePackage(p.key, 1, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
       if ('error' in a) throw new Error(`${p.key}: ${a.error}`);
     }
-  });
+}
+
+describe('organisation procedures', () => {
+  beforeEach(setup);
 
   it('registers a company, licenses it, suspends, reinstates and revokes the licence, each with four eyes', async () => {
     const c = openCase({ procedure: 'org.registration', fields: { orgName: 'Riverside Pharmacy Ltd', orgKind: 'pharmacy', representativeName: 'A. Owner' } }, reg('clerk')) as { id: string };
@@ -112,3 +114,35 @@ describe('organisation procedures', () => {
 function getOrganisationFrom(r: { case: { fields: Record<string, unknown> } }): string {
   return listOrganisations({ q: String(r.case.fields.orgName) })[0]?.number ?? '';
 }
+
+describe('organisation procedures under the permit authority registry', () => {
+  beforeEach(setup);
+  it('follow the approved mapping, and in production refuse until one is approved', async () => {
+    const { draftMapping, approveMapping, resetPermitAuthorities } = await import('@/lib/permits/authority');
+    const { recordVersion, confirmVersion, resetLaw } = await import('@/lib/law/register');
+    resetPermitAuthorities(); resetLaw();
+    const run = async () => {
+      const c = openCase({ procedure: 'org.registration', fields: { orgName: `Firm ${Math.random()}`, orgKind: 'company', representativeName: 'R' } }, reg('clerk')) as { id: string };
+      docs(c.id, REG, ['constitution', 'representative-identity']);
+      await step(c.id, 'check', reg('clerk')); await step(c.id, 'verify', reg('clerk'));
+      await step(c.id, 'register', reg('s1', 'signatory'), { reason: 'ok' });
+      return act(c.id, { action: 'register' }, reg('s2', 'signatory'));
+    };
+    vi.stubEnv('CIVICOS_MODE', 'production');
+    expect(await run()).toMatchObject({ error: expect.stringMatching(/No approved authority mapping governs business-registration/) });
+    // The rest runs as a demonstration installation (production also needs its decision key).
+    vi.stubEnv('CIVICOS_MODE', 'demo');
+    const v = recordVersion({ instrument: { title: 'Companies Act', type: 'act', jurisdiction: 'X', year: 2001, number: '1', issuingAuthority: 'Parliament' }, dates: { inForce: '2001-01-01' }, provisions: [{ eId: 'sec_2', num: '2', text: 'The Registrar registers companies.' }] }, 'L1', 'l1');
+    if ('error' in v) throw new Error(v.error);
+    confirmVersion(v.instrument.id, v.version.id, 'L2', 'l2');
+    draftMapping({ permitType: 'business-registration', title: 'Business registration', lead: 'businessRegister', effectiveFrom: '2020-01-01', legalBasis: [{ instrument: v.instrument.id, eId: 'sec_2' }] }, 'Admin A', 'aa');
+    approveMapping('business-registration', 1, 'Admin B', 'ab');
+    const ok = await run();
+    expect(ok, JSON.stringify(ok).slice(0, 300)).not.toHaveProperty("error");
+    // An approved mapping naming another authority takes the power away from the register type's keeper.
+    draftMapping({ permitType: 'business-registration', title: 'Business registration', lead: EDU, effectiveFrom: '2020-01-02', legalBasis: [{ instrument: v.instrument.id, eId: 'sec_2' }], handoverPlan: 'Test handover' }, 'Admin A', 'aa');
+    approveMapping('business-registration', 2, 'Admin B', 'ab');
+    expect(await run()).toMatchObject({ error: expect.stringMatching(/belongs to/) });
+    vi.unstubAllEnvs();
+  });
+});
