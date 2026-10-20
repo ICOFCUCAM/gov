@@ -89,6 +89,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   corrected and revoked only through education cases; anyone else checks one
   through `qualification.verify` (number and holder's name). Returns carry
   aggregate counts only; there is no student record system.
+- Health (`lib/health/`, `lib/professions/`): facilities and pharmacies are
+  organisations licensed in the health regulator's registers; professionals
+  are on the professions register, each profession kept by its regulator.
+  Public, administrative and clinical data stay apart: no patient or clinical
+  field anywhere, no national patient record; returns are aggregates.
 - Audit administration stays apart from operations: administrators do not
   read the access log, reading it is itself logged, and shortening it needs
   the data-protection authority after two administrators
