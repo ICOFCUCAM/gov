@@ -952,7 +952,7 @@ export function SituationRoom() {
           </button>
           <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 border-t border-line px-3 py-2 text-[9px]">
             <div className="text-ink-muted">System</div><div className="text-right" style={{ color: TONE.ok }}>Operational</div>
-            <div className="text-ink-muted">Environment</div><div className="text-right text-ink-soft">{nat?.environment ?? 'Production'}</div>
+            <div className="text-ink-muted">Environment</div><div className="text-right text-ink-soft">{nat?.environment ?? '—'}</div>
             <div className="text-ink-muted">Version</div><div className="text-right text-ink-soft">v2.1.0</div>
             <div className="text-ink-muted">Channel</div><div className="text-right" style={{ color: TONE.ok }}>Encrypted</div>
             <PoweredBy />

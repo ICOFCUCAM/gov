@@ -155,6 +155,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/permit-authorities$/,
   // Creating or refreshing the demo cast (demo and training installations only; lib/auth/demo-cast.ts).
   /^\/api\/demo\/cast$/,
+  // Loading the demo data pack: cast, sample acts and procedures, sample cases (lib/casework/demo-pack.ts).
+  /^\/api\/demo\/pack$/,
 ];
 /**
  * The nation's Update Center work that any official who is not an auditor may

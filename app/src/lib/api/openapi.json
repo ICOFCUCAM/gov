@@ -11524,6 +11524,84 @@
         "x-source": "src/app/api/demo/cast/route.ts"
       }
     },
+    "/api/demo/pack": {
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "operationId": "post_demo_pack",
+        "summary": "POST /api/demo/pack",
+        "description": "The demo data pack (lib/casework/demo-pack.ts): the demo cast, the sample acts and procedures, and one sample case per approved procedure, in one step. Administrators only, demo and training installations only: a production installation answers 404 (and the middleware refuses /api/demo/* there before this runs).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoPackResult"
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "cast": {
+                        "created": 1,
+                        "updated": 1,
+                        "retired": 1
+                      },
+                      "procedures": [
+                        "string"
+                      ],
+                      "cases": [
+                        {
+                          "ref": "string",
+                          "id": "ID-0001",
+                          "procedure": "string"
+                        }
+                      ],
+                      "skipped": [
+                        {
+                          "procedure": "string",
+                          "why": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/demo/pack/route.ts"
+      }
+    },
     "/api/directives/{ref}": {
       "get": {
         "tags": [
@@ -66901,6 +66979,82 @@
           "detail"
         ]
       },
+      "DemoPackResult": {
+        "type": "object",
+        "properties": {
+          "cast": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "number"
+              },
+              "updated": {
+                "type": "number"
+              },
+              "retired": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "created",
+              "updated",
+              "retired"
+            ]
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "procedure": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref",
+                "id",
+                "procedure"
+              ]
+            }
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "procedure": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "procedure",
+                "why"
+              ]
+            }
+          }
+        },
+        "required": [
+          "cast",
+          "procedures",
+          "cases",
+          "skipped"
+        ]
+      },
       "Department": {
         "type": "object",
         "properties": {
@@ -87347,6 +87501,10 @@
           "samplesOnly": {
             "type": "boolean",
             "description": "Only in demo and training installations."
+          },
+          "samplesCounted": {
+            "type": "boolean",
+            "description": "Its checks read records that demo and training installations seed with samples, so \"done\" may rest on them."
           }
         },
         "required": [

@@ -67,6 +67,15 @@ export function DemoCastMenu({ onDone }: { onDone?: () => void }) {
     await refreshCast();
     setBusy(false);
   };
+  // The demo data pack: cast, sample laws and procedures, one sample case per procedure (lib/casework/demo-pack.ts).
+  const pack = async () => {
+    setBusy(true); setMsg(null);
+    const r = await fetch('/api/demo/pack', { method: 'POST' }).catch(() => null);
+    const j = ((await r?.json().catch(() => ({}))) ?? {}) as { error?: string; cases?: unknown[]; skipped?: unknown[] };
+    setMsg(r?.ok ? `Loaded: ${j.cases?.length ?? 0} sample cases opened${j.skipped?.length ? `, ${j.skipped.length} procedures skipped` : ''}. See My work → Case work.` : j.error ?? 'The demo data pack could not be loaded');
+    await refreshCast();
+    setBusy(false);
+  };
   const go = async (id: string) => {
     setBusy(true); setMsg(null);
     const err = await switchTo(id);
@@ -75,6 +84,12 @@ export function DemoCastMenu({ onDone }: { onDone?: () => void }) {
   return (
     <div className="border-t border-line py-1" data-demo-cast>
       <div className="px-3 pb-0.5 pt-1 text-[10px] uppercase tracking-wide text-ink-muted">Demo cast · sample officials</div>
+      {cast.viewer?.administrator ? (
+        <button type="button" role="menuitem" disabled={busy} onClick={() => void pack()}
+          className="focus-ring flex w-full items-center justify-between px-3 py-1.5 text-left text-[12px] text-link transition-colors hover:bg-surface-2">
+          <span>Load the demo data pack</span><span aria-hidden className="text-[10px]">⇣</span>
+        </button>
+      ) : null}
       {empty ? (
         cast.viewer?.administrator ? (
           <button type="button" role="menuitem" disabled={busy} onClick={() => void create()}
@@ -111,7 +126,7 @@ export function DemoCastMenu({ onDone }: { onDone?: () => void }) {
           ) : null}
         </div>
       )}
-      {msg ? <p role="status" className="px-3 py-1 text-[11px] text-alert">{msg}</p> : null}
+      {msg ? <p role="status" className={`px-3 py-1 text-[11px] ${msg.startsWith('Loaded') ? 'text-ink-soft' : 'text-alert'}`}>{msg}</p> : null}
     </div>
   );
 }

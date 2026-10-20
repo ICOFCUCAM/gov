@@ -10,11 +10,13 @@ import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
 import { RefusalText } from '@/components/ui/RefusalText';
 import { SwitchToSecondOfficial } from '@/components/ui/SwitchToSecondOfficial';
+import { FieldInputs, type FieldSpecView, type FieldValues } from './casework/FieldInputs';
+import { CaseControls } from './casework/CaseControls';
 
 interface Citation { instrument: string; eId: string; version: string; digest: string; title?: string; num?: string }
 interface Answer {
   case: { id: string; ref: string; version: number; stage: string; owner: string; sensitivity: string; priority: string; fields: Record<string, unknown>; deadlines: { key: string; label: string; due: string; met?: string; lapsed?: string }[]; history: { seq: number; action: string; from: string; to: string; by: { name: string }; confirmedBy?: { name: string }; at: string; reason?: string; citations?: Citation[]; decision?: string }[]; pending?: { action: string; by: { id?: string; name: string }; reason?: string; at: string }; links: { kind: string; case: string }[]; legalHold?: { reason: string }; closedAt?: string; assignee?: { name: string } };
-  procedure: { title: string; version: number; stages: { key: string; label: string }[]; actions: { key: string; label: string; from: string[]; decision?: string; needs: { role: string; fourEyes?: boolean }; requires?: { reasons?: boolean; documents?: string[] } }[]; documents: { class: string; label: string; required: boolean }[]; fields: { key: string; label: string; personal?: boolean }[] } | null;
+  procedure: { title: string; version: number; stages: { key: string; label: string }[]; actions: { key: string; label: string; from: string[]; decision?: string; needs: { role: string; fourEyes?: boolean }; requires?: { reasons?: boolean; documents?: string[]; fields?: string[]; citations?: boolean } }[]; documents: { class: string; label: string; required: boolean }[]; fields: FieldSpecView[]; citations?: Citation[] } | null;
   documents: { id: string; class: string; title: string; versions: { n: number; sha256: string; at: string; by: string }[] }[];
   decisions: { id: string; sha256: string; seal: { keyId: string }; content: { decision: string; reasons: string; citations: Citation[]; officials: { role: string; name: string }[]; facts?: Record<string, unknown>; at: string } }[];
   certificates: { id: string; code: string; title: string; status: string }[];
@@ -33,16 +35,26 @@ export function CaseFile({ id }: { id: string }) {
   const [msg, setMsg] = React.useState<string | null>(null);
   const [reason, setReason] = React.useState('');
   const [busy, setBusy] = React.useState(false);
+  // The fields a step carries (only those changed from the case are sent) and the provisions it cites.
+  const [edits, setEdits] = React.useState<FieldValues>({});
+  const [cited, setCited] = React.useState<Record<string, boolean>>({});
   const load = React.useCallback(() => { call<Answer>(`/api/cases/${encodeURIComponent(id)}`).then(setA).catch(e => setMsg((e as Error).message)); }, [id]);
   React.useEffect(load, [load]);
   if (!a) return <div className="p-4 text-sm">{msg ?? 'Loading the case…'}</div>;
   const { case: c, procedure: p } = a;
   const stageLabel = (k: string) => p?.stages.find(s => s.key === k)?.label ?? k;
   const actions = (p?.actions ?? []).filter(x => x.from.includes(c.stage));
+  const values = { ...c.fields, ...edits };
+  const changed = Object.fromEntries(Object.entries(edits).filter(([k, v]) => v !== c.fields[k]));
+  const needed = new Set(actions.flatMap(x => x.requires?.fields ?? []));
+  const lawChoices = p?.citations ?? [];
+  const citeKey = (ci: Citation) => `${ci.instrument}#${ci.eId}`;
+  const citations = lawChoices.filter(ci => cited[citeKey(ci)] !== false).map(ci => ({ instrument: ci.instrument, eId: ci.eId }));
+  const missingFor = (x: (typeof actions)[number]) => (x.requires?.fields ?? []).filter(k => values[k] === undefined || values[k] === '').map(k => p?.fields.find(f => f.key === k)?.label ?? k);
 
   const run = async (body: unknown, done: string) => {
     setBusy(true); setMsg(null);
-    try { await call(`/api/cases/${c.id}`, body); setMsg(done); setReason(''); load(); } catch (e) { setMsg((e as Error).message); } finally { setBusy(false); }
+    try { await call(`/api/cases/${c.id}`, body); setMsg(done); setReason(''); setEdits({}); load(); } catch (e) { setMsg((e as Error).message); } finally { setBusy(false); }
   };
   const uploadDoc = async (cls: string, file: File) => {
     setBusy(true); setMsg(null);
@@ -71,14 +83,41 @@ export function CaseFile({ id }: { id: string }) {
         </Section>
       ) : actions.length && !c.closedAt ? (
         <Section title="Next steps" meta="what the procedure allows now">
+          {p?.fields.length ? (
+            <details className="mb-3" open={needed.size > 0}>
+              <summary className="cursor-pointer text-sm font-medium">Case details for this step{needed.size ? ` (needed: ${[...needed].map(k => p.fields.find(f => f.key === k)?.label ?? k).join(', ')})` : ''}</summary>
+              <div className="mt-2"><FieldInputs fields={p.fields} values={values} onChange={v => setEdits(Object.fromEntries(Object.entries(v).filter(([k, x]) => x !== c.fields[k])))} disabled={busy} /></div>
+            </details>
+          ) : null}
           <label className="block text-sm">Reasons (needed for a decision)
             <textarea className="mt-1 h-20 w-full rounded border border-line bg-surface px-2 py-1 text-sm" value={reason} onChange={e => setReason(e.target.value)} />
           </label>
+          {lawChoices.length ? (
+            <fieldset className="mt-2 text-sm">
+              <legend className="font-medium">Law cited</legend>
+              {lawChoices.map(ci => (
+                <label key={citeKey(ci)} className="me-4 inline-flex items-center gap-1">
+                  <input type="checkbox" checked={cited[citeKey(ci)] !== false} onChange={e => setCited({ ...cited, [citeKey(ci)]: e.target.checked })} />
+                  {ci.title ?? ci.instrument} {ci.num ?? ci.eId}
+                </label>
+              ))}
+            </fieldset>
+          ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
-            {actions.map(x => <Button key={x.key} variant={x.decision ? 'primary' : 'secondary'} disabled={busy} onClick={() => run({ op: 'act', action: x.key, reason: reason || undefined, expectedVersion: c.version }, x.needs.fourEyes ? 'Proposed; a second official confirms it.' : 'Done.')}>{x.label}{x.needs.fourEyes ? ' (two officials)' : ''}</Button>)}
+            {actions.map(x => {
+              const missing = missingFor(x);
+              return (
+                <Button key={x.key} variant={x.decision ? 'primary' : 'secondary'} disabled={busy} title={missing.length ? `Needed first: ${missing.join(', ')}` : undefined}
+                  onClick={() => run({ op: 'act', action: x.key, reason: reason || undefined, expectedVersion: c.version, ...(Object.keys(changed).length ? { fields: changed } : {}), ...(citations.length && (x.decision || x.requires?.citations) ? { citations } : {}) }, x.needs.fourEyes ? 'Proposed; a second official confirms it.' : 'Done.')}>
+                  {x.label}{x.needs.fourEyes ? ' (two officials)' : ''}
+                </Button>
+              );
+            })}
           </div>
         </Section>
       ) : null}
+
+      {!c.closedAt ? <CaseControls caseId={c.id} assignee={c.assignee} held={!!c.legalHold} busy={busy} run={run} /> : null}
 
       <Section title="Details" meta={`${Object.keys(c.fields).length} fields`}>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">

@@ -569,6 +569,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   `SELF_AUTHENTICATED` / `BEARER_ROUTES` that verify it themselves. Under
   `enforce`, reads need the signed `civicos_official` session; the demo
   `civicos_session` cookie opens only `/wallet`.
+- The demo data pack (`lib/casework/demo-pack.ts`, `POST /api/demo/pack`,
+  administrators, demo and training only) runs through the real engine: the
+  cast, the sample acts and procedures, one sample case per procedure opened by
+  that institution's demo officer (`source: 'sample'`); it never decides a step
+  and never names who is responsible.
 - The second sign-in step (authenticator codes, `lib/auth/totp.ts`, `/api/auth/two-step`)
   is part of the same rules: a session records whether it passed it, and an
   official the policy requires it for makes no changes until it has.

@@ -116,7 +116,7 @@ export function CommandShell({
   // Each figure says where it comes from (lib/twin/signal.ts); samples and model outputs are marked.
   // p: priority. As many figures are shown as fit, lowest priority hidden first (fitTelemetry).
   const tele: { p: 1 | 2 | 3; l: string; v: string; t?: string; dot?: boolean; kind: SignalKind; src: string }[] = [
-    { p: 3, l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true, kind: 'reported', src: 'Platform configuration' },
+    { p: 3, l: 'Environment', v: nat?.environment ?? '—', t: 'ok', dot: true, kind: 'reported', src: 'Platform configuration' },
     { p: 2, l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone, kind: 'sample', src: `Resilience model over ${REFERENCE_MODEL.toLowerCase()}` },
     { p: 3, l: 'Practice queue', v: hydrated ? `${liveRt.open} open` : '—', t: 'ok', kind: 'reported', src: 'Practice queue in this browser only; not a government record' },
     { p: 3, l: 'Connected systems', v: hydrated ? `${fedStats.activated} of ${fedStats.registered}` : '—', t: 'ok', kind: 'reported', src: 'Registry of connected systems' },
@@ -271,7 +271,7 @@ export function CommandShell({
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
               <div className="text-ink-muted">Status</div><div className="truncate text-right font-mono" style={{ color: TONE[level] }}>{posture?.label ?? 'STABLE'}</div>
               <div className="text-ink-muted">Incidents</div><div className="text-right font-mono" style={{ color: incidents.length ? TONE.alert : TONE.ok }}>{incidents.length}</div>
-              <div className="text-ink-muted">Environment</div><div className="truncate text-right text-ink-soft">{nat?.environment ?? 'Production'}</div>
+              <div className="text-ink-muted">Environment</div><div className="truncate text-right text-ink-soft">{nat?.environment ?? '—'}</div>
               <div className="text-ink-muted">Connection</div><div className="text-right" style={{ color: secure === false ? TONE.warn : TONE.ok }}>{secure === null ? '—' : secure ? 'Encrypted' : 'Not encrypted'}</div>
               <PoweredBy />
             </div>

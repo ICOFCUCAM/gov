@@ -374,7 +374,7 @@ export function AppShell({
                 ) : null}
               </div>
               <span className="hidden rounded-sm border border-line bg-surface-2 px-2 py-0.5 text-xs text-ink-soft sm:inline">
-                {nat ? nat.environment : 'Production'} · {sov?.currency ?? 'USD'}
+                {nat ? nat.environment : '—'} · {sov?.currency ?? 'USD'}
               </span>
               <NotificationsBell className="hidden md:inline-flex" />
               <ChainSentinel className="hidden md:inline-flex" />
