@@ -227,7 +227,7 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each inspection, qualification and return') },
   { id: 'professions', name: 'Register of regulated professionals: professions and who keeps each, registrations with qualifications, standing, validity, conditions and every step', legal: { kind: 'authority', key: 'professionalRegulation' }, owner: { where: 'platform', keys: ['__civicosProfessions'] }, api: 'lib/professions/register.ts (through professional cases, /api/cases; public check at /api/registers/professionals; standing through the exchange, professional.standing)', copies: [],
     storage: RECORD_DOCS('each professional and each configured profession') },
-  { id: 'health', name: 'Health regulation: capacity returns of licensed facilities (aggregate counts reported; no patient data)', legal: { kind: 'authority', key: 'healthRegulation' }, owner: { where: 'platform', keys: ['__civicosHealth'] }, api: 'lib/health/register.ts (/api/health)', copies: [],
+  { id: 'health', name: 'Health regulation: capacity returns of licensed facilities (aggregate counts reported; no patient data)', legal: { kind: 'authority', key: 'healthRegulation' }, owner: { where: 'platform', keys: ['__civicosHealth'] }, api: 'lib/health/register.ts (/api/health-regulation)', copies: [],
     storage: RECORD_DOCS('each capacity return') },
   { id: 'delegations', name: 'Delegations: who may act for whom, in which procedures, until when', legal: { kind: 'authority', key: 'businessRegister' }, owner: { where: 'platform', keys: ['__civicosDelegations'] }, api: 'lib/records/delegations.ts', copies: [],
     storage: RECORD_DOCS('each delegation') },

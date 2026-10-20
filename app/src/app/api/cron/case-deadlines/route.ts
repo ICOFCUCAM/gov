@@ -14,6 +14,7 @@ import { expireStandings } from '@/lib/organisations/register';
 import { expireGrants } from '@/lib/immigration/register';
 import { watchAccess } from '@/lib/records/access-watch';
 import { reconcileTaxPayments } from '@/lib/tax/register';
+import { lapseRegistrations } from '@/lib/professions/register';
 import { listReceipts } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,8 @@ export async function GET(req: Request) {
   const immigration = expireGrants();
   const access = watchAccess();
   const tax = reconcileTaxPayments(listReceipts());
-  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length });
+  const professionals = lapseRegistrations();
+  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length });
 }
 
 export const POST = GET;

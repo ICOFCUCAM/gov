@@ -80,6 +80,9 @@
       "name": "health"
     },
     {
+      "name": "health-regulation"
+    },
+    {
       "name": "immigration"
     },
     {
@@ -8242,6 +8245,9 @@
                     },
                     "taxPaymentsUnmatched": {
                       "type": "number"
+                    },
+                    "professionalsLapsed": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -8252,7 +8258,8 @@
                     "immigrationExpired",
                     "unusualAccessRaised",
                     "taxPaymentsPosted",
-                    "taxPaymentsUnmatched"
+                    "taxPaymentsUnmatched",
+                    "professionalsLapsed"
                   ]
                 },
                 "examples": {
@@ -8277,7 +8284,8 @@
                       "immigrationExpired": 1,
                       "unusualAccessRaised": 1,
                       "taxPaymentsPosted": 1,
-                      "taxPaymentsUnmatched": 1
+                      "taxPaymentsUnmatched": 1,
+                      "professionalsLapsed": 1
                     }
                   }
                 }
@@ -10188,6 +10196,26 @@
                       "required": [
                         "published"
                       ]
+                    },
+                    "education": {
+                      "type": "object",
+                      "properties": {
+                        "published": {
+                          "type": "boolean"
+                        },
+                        "run": {
+                          "type": "string"
+                        },
+                        "accepted": {
+                          "type": "number"
+                        },
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "published"
+                      ]
                     }
                   },
                   "required": [
@@ -10195,7 +10223,8 @@
                     "runs",
                     "civil",
                     "organisations",
-                    "cases"
+                    "cases",
+                    "education"
                   ]
                 },
                 "examples": {
@@ -10223,6 +10252,12 @@
                         "error": "Text"
                       },
                       "cases": {
+                        "published": true,
+                        "run": "string",
+                        "accepted": 1,
+                        "error": "Text"
+                      },
+                      "education": {
                         "published": true,
                         "run": "string",
                         "accepted": 1,
@@ -15763,6 +15798,193 @@
         ],
         "x-permission-rule": "admin",
         "x-source": "src/app/api/federation/webhooks/test/route.ts"
+      }
+    },
+    "/api/health-regulation": {
+      "get": {
+        "tags": [
+          "health-regulation"
+        ],
+        "operationId": "get_health_regulation",
+        "summary": "GET /api/health-regulation",
+        "description": "/api/health-regulation — capacity returns of licensed health facilities (lib/health/register.ts): aggregate counts only, never patients. GET ?organisation= a facility's returns (any signed-in official: they are institutional figures); with none, counts. POST { organisation, period, counts, note? } records what the facility reported (a new version when the period was reported before): the health regulator's officials only. Licences are decided in cases (/api/cases); who is licensed is public at /api/registers/check.",
+        "parameters": [
+          {
+            "name": "organisation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "returns": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CapacityReturn"
+                      }
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "returns": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "returns"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "counts"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "returns": [
+                        {
+                          "id": "ID-0001",
+                          "organisation": "string",
+                          "period": "string",
+                          "versions": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "counts": {
+                        "returns": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/health-regulation/route.ts"
+      },
+      "post": {
+        "tags": [
+          "health-regulation"
+        ],
+        "operationId": "post_health_regulation",
+        "summary": "POST /api/health-regulation",
+        "description": "/api/health-regulation — capacity returns of licensed health facilities (lib/health/register.ts): aggregate counts only, never patients. GET ?organisation= a facility's returns (any signed-in official: they are institutional figures); with none, counts. POST { organisation, period, counts, note? } records what the facility reported (a new version when the period was reported before): the health regulator's officials only. Licences are decided in cases (/api/cases); who is licensed is public at /api/registers/check.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "organisation": {
+                    "type": "string"
+                  },
+                  "period": {
+                    "type": "string"
+                  },
+                  "counts": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "organisation": "string",
+                    "period": "string",
+                    "counts": {},
+                    "note": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "return": {
+                      "$ref": "#/components/schemas/CapacityReturn"
+                    }
+                  },
+                  "required": [
+                    "return"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "return": {
+                        "id": "ID-0001",
+                        "organisation": "string",
+                        "period": "string",
+                        "versions": [
+                          {
+                            "n": 1,
+                            "counts": {},
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/health-regulation/route.ts"
       }
     },
     "/api/health": {
@@ -37407,6 +37629,105 @@
         },
         "security": [],
         "x-source": "src/app/api/registers/check/route.ts"
+      }
+    },
+    "/api/registers/professionals": {
+      "get": {
+        "tags": [
+          "registers"
+        ],
+        "operationId": "get_registers_professionals",
+        "summary": "GET /api/registers/professionals",
+        "description": "GET /api/registers/professionals?q= — anyone's check: is this person on a public register of a regulated profession, and in what standing? Full name (five letters or more) or registration number; at most 20 answers with name, profession, number, standing, validity and conditions only, never the person reference, qualifications or history (lib/professions/register.ts).",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "professions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "title"
+                        ]
+                      }
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublicProfessional"
+                      }
+                    }
+                  },
+                  "required": [
+                    "professions",
+                    "results"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "professions": [
+                        {
+                          "key": "string",
+                          "title": "Example"
+                        }
+                      ],
+                      "results": [
+                        {
+                          "number": "string",
+                          "name": "Example",
+                          "profession": "string",
+                          "professionTitle": "string",
+                          "state": "lapsed",
+                          "conditions": [
+                            "string"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/registers/professionals/route.ts"
       }
     },
     "/api/registers": {
@@ -61437,6 +61758,72 @@
           "state"
         ]
       },
+      "CapacityReturn": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "organisation": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "n": {
+                  "type": "number"
+                },
+                "counts": {
+                  "type": "object",
+                  "properties": {
+                    "beds.intensive-care": {
+                      "type": "number"
+                    },
+                    "beds.total": {
+                      "type": "number"
+                    },
+                    "outpatient.attendances": {
+                      "type": "number"
+                    },
+                    "staff.clinical": {
+                      "type": "number"
+                    },
+                    "staff.total": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "n",
+                "counts",
+                "at",
+                "by"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "organisation",
+          "period",
+          "versions"
+        ]
+      },
       "Case": {
         "type": "object",
         "properties": {
@@ -74547,6 +74934,49 @@
           "recordedAt",
           "version",
           "overlaps"
+        ]
+      },
+      "PublicProfessional": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "profession": {
+            "type": "string"
+          },
+          "professionTitle": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "lapsed",
+              "registered",
+              "revoked",
+              "suspended"
+            ]
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "number",
+          "name",
+          "profession",
+          "professionTitle",
+          "state",
+          "conditions"
         ]
       },
       "PublisherKey": {

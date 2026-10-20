@@ -183,10 +183,11 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/directives(\/|$)/,                 // canDraftDirective() / canSignDirective() in the route
   /^\/api\/law(\/|$)/,                        // the laws register: canRecordLaw() / canConfirmLaw() in the route
   /^\/api\/cases(\/|$)/,                      // cases: caseActRefusal() in the workflow engine (lib/casework/engine.ts)
-  /^\/api\/organisations\/loads$/,
-  /^\/api\/education$/,                     // institutional returns: canRecordEducationReturn() in the route
-  /^\/api\/rules$/,                         // operational rules: canManageRule() in the route
-  /^\/api\/access-log\/retention$/,         // oversight confirmation of shortening the access log: canConfirmAccessLogRetention() in the route           // loading an existing register: the authority that keeps it (the route checks)
+  /^\/api\/organisations\/loads$/,           // loading an existing register: the authority that keeps it (the route checks)
+  /^\/api\/education$/,                      // institutional returns: canRecordEducationReturn() in the route
+  /^\/api\/health-regulation$/,              // capacity returns: canRecordHealthReturn() in the route
+  /^\/api\/rules$/,                          // operational rules: canManageRule() in the route
+  /^\/api\/access-log\/retention$/,          // oversight confirmation of shortening the access log: canConfirmAccessLogRetention() in the route
   /^\/api\/case-packages(\/|$)/,              // procedures: drafted by the responsible institution, approved by one who can sign there (route)
   /^\/api\/documents\/verify$/,               // checks a document code (no change)
   /^\/api\/facilities\/(check|candidates)(\/|$)/, // checks and candidate review (rules in the route)
@@ -587,6 +588,13 @@ export function canRecordEducationReturn(s: Scope, authority: string | undefined
   if (roleOf(s) === 'auditor') return 'Auditors read returns but do not record them';
   if (authority && s.institution === authority) return null;
   return 'Returns are recorded by the education authority (named under Who is responsible)';
+}
+
+/** Recording a licensed facility's capacity return: the health regulator's officials, never auditors. */
+export function canRecordHealthReturn(s: Scope, authority: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors read returns but do not record them';
+  if (authority && s.institution === authority) return null;
+  return 'Capacity returns are recorded by the health regulator (named under Who is responsible)';
 }
 
 /** Visas and residence permits (lib/immigration/register.ts): the immigration authority's officials; auditors with a purpose. Never the whole government by default (directions 15.1). */
