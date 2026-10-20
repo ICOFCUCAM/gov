@@ -9,10 +9,11 @@ import * as React from 'react';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
 import { RefusalText } from '@/components/ui/RefusalText';
+import { SwitchToSecondOfficial } from '@/components/ui/SwitchToSecondOfficial';
 
 interface Citation { instrument: string; eId: string; version: string; digest: string; title?: string; num?: string }
 interface Answer {
-  case: { id: string; ref: string; version: number; stage: string; owner: string; sensitivity: string; priority: string; fields: Record<string, unknown>; deadlines: { key: string; label: string; due: string; met?: string; lapsed?: string }[]; history: { seq: number; action: string; from: string; to: string; by: { name: string }; confirmedBy?: { name: string }; at: string; reason?: string; citations?: Citation[]; decision?: string }[]; pending?: { action: string; by: { name: string }; reason?: string; at: string }; links: { kind: string; case: string }[]; legalHold?: { reason: string }; closedAt?: string; assignee?: { name: string } };
+  case: { id: string; ref: string; version: number; stage: string; owner: string; sensitivity: string; priority: string; fields: Record<string, unknown>; deadlines: { key: string; label: string; due: string; met?: string; lapsed?: string }[]; history: { seq: number; action: string; from: string; to: string; by: { name: string }; confirmedBy?: { name: string }; at: string; reason?: string; citations?: Citation[]; decision?: string }[]; pending?: { action: string; by: { id?: string; name: string }; reason?: string; at: string }; links: { kind: string; case: string }[]; legalHold?: { reason: string }; closedAt?: string; assignee?: { name: string } };
   procedure: { title: string; version: number; stages: { key: string; label: string }[]; actions: { key: string; label: string; from: string[]; decision?: string; needs: { role: string; fourEyes?: boolean }; requires?: { reasons?: boolean; documents?: string[] } }[]; documents: { class: string; label: string; required: boolean }[]; fields: { key: string; label: string; personal?: boolean }[] } | null;
   documents: { id: string; class: string; title: string; versions: { n: number; sha256: string; at: string; by: string }[] }[];
   decisions: { id: string; sha256: string; seal: { keyId: string }; content: { decision: string; reasons: string; citations: Citation[]; officials: { role: string; name: string }[]; facts?: Record<string, unknown>; at: string } }[];
@@ -64,6 +65,8 @@ export function CaseFile({ id }: { id: string }) {
           <div className="mt-2 flex gap-2">
             <Button variant="primary" disabled={busy} onClick={() => run({ op: 'act', action: c.pending!.action, expectedVersion: c.version }, 'Confirmed.')}>Confirm</Button>
             <Button variant="secondary" disabled={busy} onClick={() => { const r = window.prompt('Why is the proposal withdrawn?'); if (r) void run({ op: 'cancel', reason: r }, 'Withdrawn.'); }}>Withdraw</Button>
+            {/* Demonstration and training installations: become the cast's other signatory of this institution. */}
+            <SwitchToSecondOfficial institution={c.owner} proposedBy={c.pending.by.id} />
           </div>
         </Section>
       ) : actions.length && !c.closedAt ? (

@@ -551,6 +551,10 @@ What has been built is locked. Work only upgrades it toward the vision in
 - The second sign-in step (authenticator codes, `lib/auth/totp.ts`, `/api/auth/two-step`)
   is part of the same rules: a session records whether it passed it, and an
   official the policy requires it for makes no changes until it has.
+- The demo cast (`lib/auth/demo-cast.ts`, `/api/demo/*`) exists only while
+  `samplesAllowed()`: separate `demo` accounts per responsible institution,
+  reached only by switching (`act-as`, audited, admin or cast member), refused
+  at every sign-in path and in `currentOfficial()` in production.
 
 ## API description
 

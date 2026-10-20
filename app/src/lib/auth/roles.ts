@@ -153,6 +153,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/dual-control$/,
   // Which authority the law designates for each permit and licence type (four-eyes in the route).
   /^\/api\/permit-authorities$/,
+  // Creating or refreshing the demo cast (demo and training installations only; lib/auth/demo-cast.ts).
+  /^\/api\/demo\/cast$/,
 ];
 /**
  * The nation's Update Center work that any official who is not an auditor may
@@ -175,8 +177,11 @@ const UPDATE_CENTER_WORK: RegExp[] = [/^\/api\/releases\/(requests|support)(\/|$
  */
 const INSTALLATION: RegExp[] = [/^\/api\/releases(\/|$)/];
 /** Signing in and out, one's own second step (authenticator app or passkeys, and the passkey
- *  sign-in challenge) and one's own password stay open to every role; the health probe is public. */
-const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/passkeys(\/options)?\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/];
+ *  sign-in challenge) and one's own password stay open to every role; the health probe is public.
+ *  Switching to a member of the demo cast is a sign-in too: the route lets only a signed-in
+ *  administrator or cast member (any role, so the cast's auditor can switch back) do it, and
+ *  answers 404 outside demo and training installations (lib/auth/demo-cast.ts actAsRefusal()). */
+const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/passkeys(\/options)?\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/, /^\/api\/demo\/act-as$/];
 /** Inside one ministry's workspace: officials of that ministry, or of the whole government. */
 const MINISTRY = /^\/api\/org\/ministries\/([^/]+)\//;
 /**

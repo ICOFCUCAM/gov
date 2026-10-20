@@ -10,7 +10,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, verifyToken, type OfficialClaims } from './session-token';
 import { createHash } from 'node:crypto';
-import { sessionSecret, sessionSecretProblem, accountById, sessionRevoked } from './officials';
+import { sessionSecret, sessionSecretProblem, accountById, sessionRevoked, demoAccountRefused } from './officials';
 import { apiPermission, secondStepMissing, type CaseScope, type Scope } from './roles';
 import { officerNow, substrateScope } from './substrate-officials';
 import { logger } from '@/lib/ops/log';
@@ -55,6 +55,8 @@ export async function currentOfficial(): Promise<OfficialClaims | null> {
   if (c.method !== 'local') return c;
   const a = accountById(c.sub.slice('local:'.length));
   if (!a || a.disabled) return null;
+  // A demo cast account counts only while the installation may hold samples (lib/auth/demo-cast.ts).
+  if (demoAccountRefused(a)) return null;
   // A session issued before the password last changed no longer counts.
   if (a.passwordChangedAt && c.iat < Math.floor(Date.parse(a.passwordChangedAt) / 1000)) return null;
   // The second step still counts while what proved it is still in place: the account's authenticator app or a

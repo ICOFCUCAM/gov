@@ -59,6 +59,9 @@
       "name": "customs"
     },
     {
+      "name": "demo"
+    },
+    {
       "name": "directives"
     },
     {
@@ -2954,6 +2957,7 @@
                           "linkedBy": "A. Official"
                         },
                         "noPassword": true,
+                        "demo": true,
                         "twoStepSince": "string",
                         "twoStepRequired": true,
                         "resetPendingUntil": "string",
@@ -11151,6 +11155,373 @@
           }
         ],
         "x-source": "src/app/api/customs/route.ts"
+      }
+    },
+    "/api/demo/act-as": {
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "operationId": "post_demo_act_as",
+        "summary": "POST /api/demo/act-as",
+        "description": "Switch to a member of the demo cast (lib/auth/demo-cast.ts): POST { accountId } ends the current session and issues one for the cast account through the ordinary session code (issueSession()), so everything after it is recorded under that account and four-eyes steps still need two different accounts. Only an administrator or a member of the cast, signed in now, may switch; each switch is written to the audit chain as `demo.act-as`, naming the official who switched and the account they now act as. A production installation has no cast: 404 (and the middleware refuses /api/demo/* there before this runs).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accountId": {}
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "accountId": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "official": {
+                      "$ref": "#/components/schemas/OfficialClaims"
+                    }
+                  },
+                  "required": [
+                    "official"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "official": {
+                        "sub": "string",
+                        "name": "Example",
+                        "office": "string",
+                        "method": "local",
+                        "role": "administrator",
+                        "institution": "string",
+                        "twoStep": true,
+                        "twoStepAt": 1,
+                        "twoStepRequired": true,
+                        "via": "oidc",
+                        "sid": "string",
+                        "iat": 1,
+                        "exp": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "any-role",
+        "x-source": "src/app/api/demo/act-as/route.ts"
+      }
+    },
+    "/api/demo/cast": {
+      "get": {
+        "tags": [
+          "demo"
+        ],
+        "operationId": "get_demo_cast",
+        "summary": "GET /api/demo/cast",
+        "description": "The demo cast (lib/auth/demo-cast.ts): officials for showing a demonstration or training installation end to end. GET lists the cast, grouped by institution, for the header menu's \"Switch to…\" list (names, offices and roles only, never addresses), with whether the viewer may switch. POST creates or refreshes the cast from the deployment profile (who is responsible for each register): administrators only, audited. A production installation has no cast: both answer 404 (and the middleware refuses /api/demo/* there before this runs).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "demo",
+                        "production",
+                        "training"
+                      ]
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "institution": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "members": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/CastMember"
+                            }
+                          }
+                        },
+                        "required": [
+                          "institution",
+                          "name",
+                          "members"
+                        ]
+                      }
+                    },
+                    "institutions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      }
+                    },
+                    "viewer": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "sub": {
+                              "type": "string"
+                            },
+                            "cast": {
+                              "type": "boolean"
+                            },
+                            "administrator": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "sub",
+                            "cast",
+                            "administrator"
+                          ]
+                        }
+                      ]
+                    },
+                    "canSwitch": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "groups",
+                    "institutions",
+                    "viewer",
+                    "canSwitch"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "mode": "demo",
+                      "groups": [
+                        {
+                          "institution": "string",
+                          "name": "Example",
+                          "members": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "institutions": [
+                        {
+                          "id": "ID-0001",
+                          "name": "Example"
+                        }
+                      ],
+                      "viewer": {
+                        "sub": "string",
+                        "cast": true,
+                        "administrator": true
+                      },
+                      "canSwitch": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/demo/cast/route.ts"
+      },
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "operationId": "post_demo_cast",
+        "summary": "POST /api/demo/cast",
+        "description": "The demo cast (lib/auth/demo-cast.ts): officials for showing a demonstration or training installation end to end. GET lists the cast, grouped by institution, for the header menu's \"Switch to…\" list (names, offices and roles only, never addresses), with whether the viewer may switch. POST creates or refreshes the cast from the deployment profile (who is responsible for each register): administrators only, audited. A production installation has no cast: both answer 404 (and the middleware refuses /api/demo/* there before this runs).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "institution": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "members": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/CastMember"
+                            }
+                          }
+                        },
+                        "required": [
+                          "institution",
+                          "name",
+                          "members"
+                        ]
+                      }
+                    },
+                    "created": {
+                      "type": "number"
+                    },
+                    "updated": {
+                      "type": "number"
+                    },
+                    "retired": {
+                      "type": "number"
+                    },
+                    "skipped": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "groups",
+                    "created",
+                    "updated",
+                    "retired",
+                    "skipped"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "groups": [
+                        {
+                          "institution": "string",
+                          "name": "Example",
+                          "members": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "created": 1,
+                      "updated": 1,
+                      "retired": 1,
+                      "skipped": [
+                        "string"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/demo/cast/route.ts"
       }
     },
     "/api/directives/{ref}": {
@@ -64086,6 +64457,42 @@
           "reason"
         ]
       },
+      "CastMember": {
+        "description": "What the switch menu shows of a cast account: never its address.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "office": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "administrator",
+              "auditor",
+              "officer",
+              "signatory"
+            ]
+          },
+          "institution": {
+            "type": "string"
+          },
+          "institutionName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "office",
+          "role"
+        ]
+      },
       "CategoryStandards": {
         "type": "object",
         "properties": {
@@ -77773,6 +78180,11 @@
           "noPassword": {
             "type": "boolean",
             "description": "Made for an identity-provider sign-in: no platform password (the hash matches nothing)."
+          },
+          "demo": {
+            "type": "boolean",
+            "const": true,
+            "description": "One of the demo cast (lib/auth/demo-cast.ts): made only in a demo or training installation, reached only by switching to it (/api/demo/act-as), never by a password; refused everywhere once samples are not allowed (a demo snapshot restored into production signs nobody in as the cast). Absent on every other account (and on snapshots saved before the cast existed), which reads as \"not the cast\"."
           },
           "twoStepSince": {
             "type": "string"
