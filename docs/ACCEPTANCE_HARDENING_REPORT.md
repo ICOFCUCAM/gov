@@ -20,6 +20,7 @@ The principle tested throughout: the platform must be unable to make an unauthor
 | H, I: dual-control minimum, natural-person check, proposals that lapse | `9a44561` | `lib/casework/dual-control-policy.ts`, `lib/data/dual-control.ts`, `/api/dual-control` |
 | Public professional register | `a30e95a` | `lib/professions/`, `/api/registers/professionals`, `/registers` |
 | Event delivery across a restore | `a344958` | `lib/events/outbox.ts`, `lib/data/backups.ts`, `services/civic-api` follower |
+| Build memory, loading-screen contrast, key-parsing flake | `5bd24eb`, `c4f3f03`, `d5f2c60` | `next.config.mjs`, `app/loading.tsx`, `lib/crypto/envelope.ts` |
 
 ## Controls: verified, needing country approval, needing independent review
 
@@ -117,11 +118,61 @@ The principle tested throughout: the platform must be unable to make an unauthor
 
 ## Test reliability
 
-Reproduction in progress: the full suite is being run repeatedly in a separate worktree at the hardening head; results are added here when the runs finish.
+**The intermittent failure, reproduced and fixed.**
+
+- **Failing test:** `src/lib/auth/totp-at-rest.test.ts › accepts hex keys and refuses keys of the wrong length`. It failed once in an earlier full run and passed on rerun.
+- **Root cause:** the test passes a random 16-byte key in base64 to `parseKek` and expects the "must be 32 bytes" error. One such key in 64 starts with `/`. `parseKek` treats a value starting with `/` as the path of a key file, so it failed with `ENOENT` instead. That is a failure rate of about 1.6% per run.
+- **Reproduction:** forcing a key that starts with `/` fails every time:
+
+  ```
+  × a 16-byte base64 key that starts with "/"
+  AssertionError: expected [Function] to throw error matching /32 bytes/ but got 'ENOENT: no such file or directory, op…'
+  ```
+
+- **Fix (`d5f2c60`):** a key value that cannot be read as a file now gets an error saying what a key must be: 32 bytes in base64 or hex, or the path of a file holding one. Operators got the same misleading `ENOENT` for a short key. The test now covers the `/` case deterministically instead of by chance.
+
+**Repeated full runs.**
+
+- The full suite ran 8 times in a row in a separate worktree, at the hardening head before the three final fixes.
+- Every run: 3374 passed, 39 skipped, 0 failed.
+- No other intermittent failure appeared.
+
+**Two failures that were not the code.**
+
+- Two earlier runs failed only because files were being edited during the run. That is why the repeated runs moved to a separate worktree.
+- The first accessibility audit failed on four pages. The server was slow under the concurrent test load and served the root loading screen, whose caption was 3.7:1 contrast. That was a real WCAG AA defect, which any visitor on a slow connection would also see. It is fixed in `c4f3f03` (now 9.2:1).
 
 ## Release evidence
 
-To be completed with the exact commit, the full-suite, database, accessibility and deployment results.
+Code tested: commit `d5f2c60` on `claude/festive-meitner-ivhxsn`. The report commit after it changes only this document.
+
+| Check | Result |
+|---|---|
+| Typecheck (`tsc --noEmit`) | 0 errors |
+| Lint (`next lint`) | 0 errors (204 warnings) |
+| Full unit and integration suite (vitest) | 558 files, 3374 passed, 39 skipped, 0 failed |
+| Repeated full runs (flake hunt) | 8 of 8 green |
+| Postgres backend (`postgres.integration.test.ts` against a throwaway Postgres 16) | 9 passed |
+| Repository layer (`src/lib/data/repo`, `src/lib/db`) | 259 passed; the live-Supabase substrate suite is skipped, because it needs a Supabase project |
+| Substrate SQL (`supabase/tests/migrate.sh`, then `run.sh`) | 101 migrations applied; all suites passed |
+| civic-api (typecheck, `node --test`) | 0 errors; 20 of 20 passed |
+| Production build (`next build`) | Succeeds. Peak memory about 5.3 GB above idle, after `5bd24eb` |
+| Public sites audit (WCAG 2.2 A/AA via axe-core, links, budgets, no outside requests) | 101 pages × 2 viewports, 130 linked pages: no failures |
+| OpenAPI document up to date (`openapi.test.ts`) | Passes (in the full suite) |
+
+**Deployment.** The Vercel production build of `48bcb88` was killed for running out of memory on its 8 GB machine.
+
+- **Cause:** the custom `webpack()` hook made Next.js 15.5 turn off its separate build worker. The compiler's memory then stayed alive beside the type checker, peaking at 7.9 GB.
+- **Fix (`5bd24eb`):** `experimental.webpackBuildWorker: true` brings the peak to about 5.9 GB, with identical output.
+- **What remains:** Vercel builds production from the default branch, so production gets the fix only when this work is merged. Not verified on Vercel itself.
+
+**Diff scope.** 60 files against `48bcb88`, all in the areas listed in *What changed*, plus three fixes:
+
+- the build setting;
+- the loading-screen contrast;
+- the key-parsing error.
+
+No agency features were added.
 
 ## Release rule
 
