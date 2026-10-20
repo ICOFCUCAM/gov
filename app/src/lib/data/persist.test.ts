@@ -121,3 +121,16 @@ describe('quiet save ticks (review D2)', () => {
     expect(quietSince(1_010_000, 60_000)).toBe(false);
   });
 });
+
+describe('durable state asked for but unreachable', () => {
+  afterEach(() => { (globalThis as Record<string, unknown>).__persistStatus = undefined; });
+  it('retries the database, then refuses changes instead of keeping them in memory', async () => {
+    const t0 = Date.now();
+    // Port 1 on this machine refuses at once: an unreachable database.
+    const status = await startFromEnv({ CIVICOS_STATE: 'postgres', DATABASE_URL: 'postgres://u:p@127.0.0.1:1/db' } as unknown as NodeJS.ProcessEnv);
+    expect(status).toMatchObject({ adapter: 'memory', role: 'stopped', error: expect.stringMatching(/3 attempts.*refuses changes/) });
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(2900); // waited between the attempts
+    expect(stateWritable('/api/auth/officials')).toBe(false);
+  }, 30_000);
+});
+

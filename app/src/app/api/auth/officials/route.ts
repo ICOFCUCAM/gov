@@ -11,6 +11,7 @@ import { listAccounts, createAccount, hasAccounts } from '@/lib/auth/officials';
 import { currentOfficial, actorLabel } from '@/lib/auth/official';
 import { roleOf } from '@/lib/auth/roles';
 import { LOCAL_ACCOUNTS_REFUSED } from '@/lib/auth/setup-token';
+import { stateWritable, persistenceStatus } from '@/lib/data/persist';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,8 @@ const directoryEntry = (a: ReturnType<typeof listAccounts>[number]) => ({
 });
 
 export async function POST(req: NextRequest) {
+  // A server that cannot keep the account (its database unreachable) creates none: it would be lost.
+  if (!stateWritable(req.nextUrl.pathname)) return NextResponse.json({ error: `This server cannot save changes just now (${persistenceStatus()?.error ?? 'state not writable'}); nothing was created. Try again shortly.` }, { status: 503 });
   const o = await currentOfficial();
   if (hasAccounts() && !o) return NextResponse.json({ error: 'Only a signed-in official can create accounts' }, { status: 401 });
   if (o && roleOf(o) !== 'administrator') return NextResponse.json({ error: 'Only an administrator can create accounts' }, { status: 403 });

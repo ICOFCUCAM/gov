@@ -451,8 +451,16 @@ export async function startFromEnv(env = process.env): Promise<Status> {
   if (mode === 'postgres') {
     if (!env.DATABASE_URL) pgError = 'CIVICOS_STATE=postgres but DATABASE_URL is not set; keeping state in memory';
     else {
-      try { pg = await import('@/lib/data/repo/postgres'); sql = await pg.connect(env.DATABASE_URL, { max: Number(env.CIVICOS_PG_POOL) || 5 }); await pg.ensureSchema(sql); }
-      catch (e) { pgError = `CIVICOS_STATE=postgres: could not connect or apply the schema: ${(e as Error).message}; keeping state in memory`; sql = undefined; }
+      // A database starting up or a pooler at its limit can refuse one connection: try three times.
+      for (let attempt = 1; attempt <= 3 && !sql; attempt++) {
+        try { pg = await import('@/lib/data/repo/postgres'); sql = await pg.connect(env.DATABASE_URL, { max: Number(env.CIVICOS_PG_POOL) || 5 }); await pg.ensureSchema(sql); pgError = undefined; }
+        catch (e) {
+          pgError = `CIVICOS_STATE=postgres: could not connect or apply the schema (${attempt} attempt${attempt > 1 ? 's' : ''}): ${(e as Error).message}; this server refuses changes`;
+          await (sql as { end?: (o: { timeout: number }) => Promise<void> } | undefined)?.end?.({ timeout: 1 }).catch(() => undefined);
+          sql = undefined;
+          if (attempt < 3) await sleep(attempt * 1000);
+        }
+      }
     }
   }
   const adapter = mode === 'file' ? fileAdapter(stateDir)
@@ -464,8 +472,11 @@ export async function startFromEnv(env = process.env): Promise<Status> {
   g.__persistStatus = status;
   g.__persistAdapter = adapter ?? undefined;
   if (!adapter) {
-    if (mode === 'supabase') status.error = 'CIVICOS_STATE=supabase but the substrate is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY); keeping state in memory';
+    if (mode === 'supabase') status.error = 'CIVICOS_STATE=supabase but the substrate is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY); this server refuses changes';
     if (pgError) status.error = pgError;
+    // Durable state was asked for and is not there: take no change that would live only in this
+    // server's memory and be lost (a hosted platform runs many short-lived servers).
+    if (mode === 'postgres' || mode === 'supabase') status.role = 'stopped';
     return status;
   }
   const ttl = Number(env.CIVICOS_STATE_LEASE_TTL_MS) || 30_000;
