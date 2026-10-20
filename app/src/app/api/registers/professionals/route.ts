@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkProfessional, professions } from '@/lib/professions/register';
 import { limit, callerOf } from '@/lib/ops/rate-limit';
-import { noteCheck } from '@/lib/professions/watch';
+import { watchCheck } from '@/lib/professions/watch';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +20,6 @@ export async function GET(req: NextRequest) {
   // `q` is the earlier name of the name parameter.
   const name = (q.get('name') ?? q.get('q') ?? '').slice(0, 120), number = (q.get('number') ?? '').slice(0, 40);
   const results = checkProfessional({ name, number });
-  if (name || number) noteCheck(await callerOf(req), results.length > 0);
+  if (name || number) await watchCheck(await callerOf(req), results.length > 0);
   return NextResponse.json({ professions: professions().filter(p => p.publicCheck).map(p => ({ key: p.key, title: p.title })), results, ...(number && !name ? { note: 'Give the full name; the registration number only narrows the check' } : {}) });
 }

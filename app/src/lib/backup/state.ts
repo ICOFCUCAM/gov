@@ -52,6 +52,7 @@ export const EXCLUDED_NOTES: Manifest['excluded'] = [
   { what: 'The backup catalogue, retention policy and restore proposals (__civicosBackups)', why: 'The backup system\'s own records; kept in the target and in the running server' },
   { what: 'The access log (__civicosAccessLog)', why: 'Evidence of who read restricted records; a data restore keeps it as it stands in the running server' },
   { what: 'civicos.outbox and civicos.platform_state_lease (postgres)', why: 'Runtime coordination between instances, not state' },
+  { what: 'civicos.rate_bucket, register_watch, register_watch_flag and runtime_secret (postgres)', why: 'Shared rate limits and the register watch: protection, not records' },
   { what: 'Container images and release artifacts', why: 'Held by the Update Center\'s registry and mirror (and the restore kit); not part of the data' },
   { what: 'Keys (CIVICOS_DATA_KEK, the key provider\'s keys)', why: 'Held in key custody; recovered separately (docs/DISASTER_RECOVERY.md)' },
 ];
@@ -81,7 +82,7 @@ export function captureSnapshot(root: Root = g): Captured {
 }
 
 /** Tables never backed up (runtime only). */
-const SKIP_TABLES = new Set(['outbox', 'platform_state_lease', 'records_schema']);
+const SKIP_TABLES = new Set(['outbox', 'platform_state_lease', 'records_schema', 'rate_bucket', 'register_watch', 'register_watch_flag', 'runtime_secret']);
 
 interface TableInfo { name: string; columns: string[]; generated: string[]; order: string[]; serials: string[] }
 

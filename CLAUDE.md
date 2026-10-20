@@ -123,6 +123,9 @@ What has been built is locked. Work only upgrades it toward the vision in
 - The public professional check takes one person by full name (the number
   only narrows it), shows the profession's `publicFields`, is rate-limited
   and watched for harvesting; bulk checks go through `professional.standing`.
+  In postgres mode route rate limits and the harvest watch are shared by
+  every instance (`lib/ops/shared-limits.ts`); new runtime tables like them
+  join `SKIP_TABLES` in `lib/backup/state.ts` (never backed up).
 - A data restore keeps the event outbox and cursors, voids events after the
   restored point and raises `restoreepoch`; consumers re-read on
   `backup.restore` (docs/DISASTER_RECOVERY.md).
