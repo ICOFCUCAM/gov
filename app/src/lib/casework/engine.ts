@@ -115,14 +115,16 @@ export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case
   if (!pkg) return { error: `No approved version of the procedure ${input.procedure} applies today` };
   const owner = ownerInstitution(pkg.owner, authorityFor);
   if (!owner) return { error: `No institution is named as responsible for ${pkg.title} (Configuration, Who is responsible)` };
-  if (input.idempotencyKey) {
-    const seen = db().cases.find(c => c.history[0]?.idempotencyKey === input.idempotencyKey);
-    if (seen) return clone(seen);
-  }
   const source = input.source ?? 'entered';
   if (actor.scope && source !== 'citizen' && !input.referral) {
     const why = caseActRefusal(actor.scope, { owner, sensitivity: pkg.sensitivity, assigned: [actor.scope.id ?? ''] }, now.getTime());
     if (why) return { error: why };
+  }
+  // A repeated request returns the case it opened: only after the check above, and only a case of the
+  // same procedure and institution (keys are chosen by callers and are not unique across institutions).
+  if (input.idempotencyKey) {
+    const seen = db().cases.find(c => c.owner === owner && c.package.key === pkg.key && c.history[0]?.idempotencyKey === input.idempotencyKey);
+    if (seen) return clone(seen);
   }
   const checked = checkFields(pkg.fields, input.fields);
   if ('error' in checked) return checked;
@@ -164,19 +166,21 @@ export type ActResult = { case: Case; pending?: boolean; decision?: SignedDecisi
 export async function act(caseId: string, input: ActInput, actor: Actor, now = new Date()): Promise<ActResult> {
   const c = db().cases.find(x => x.id === caseId);
   if (!c) return { error: 'No such case' };
-  if (input.idempotencyKey && (c.pending?.idempotencyKey === input.idempotencyKey || c.history.some(s => s.idempotencyKey === input.idempotencyKey || s.confirmIdempotencyKey === input.idempotencyKey))) return { case: clone(c), ...(c.pending ? { pending: true } : {}) };
-  if (input.expectedVersion !== undefined && input.expectedVersion !== c.version) return { error: 'This case changed since you opened it: reload it and check before acting' };
   const pkg = getPackage(c.package.key, c.package.version);
   if (!pkg) return { error: 'The procedure version this case runs under is missing' };
   const a = pkg.actions.find(x => x.key === input.action);
   if (!a) return { error: `This procedure has no action ${input.action}` };
-  if (!a.from.includes(c.stage)) return { error: `${a.label} is not possible while the case is ${pkg.stages.find(s => s.key === c.stage)?.label ?? c.stage}` };
+  // Who may act is decided before anything about the case is returned, a repeated request included.
   if (actor.scope) {
     const why = caseActRefusal(actor.scope, facts(c, a), now.getTime());
     if (why) return { error: why };
-    // An action the procedure gives to the assigned official only.
-    if (a.needs.assigned && c.assignee?.id !== actor.scope.id) return { error: c.assignee ? `${a.label} is for the official assigned to this case (${c.assignee.name})` : `${a.label} needs an assigned official: assign the case first` };
   }
+  // A repeated request (same key, same action) returns the case as it now stands instead of acting again.
+  if (input.idempotencyKey && ((c.pending?.action === a.key && c.pending.idempotencyKey === input.idempotencyKey) || c.history.some(s => s.action === a.key && (s.idempotencyKey === input.idempotencyKey || s.confirmIdempotencyKey === input.idempotencyKey)))) return { case: clone(c), ...(c.pending ? { pending: true } : {}) };
+  if (input.expectedVersion !== undefined && input.expectedVersion !== c.version) return { error: 'This case changed since you opened it: reload it and check before acting' };
+  if (!a.from.includes(c.stage)) return { error: `${a.label} is not possible while the case is ${pkg.stages.find(s => s.key === c.stage)?.label ?? c.stage}` };
+  // An action the procedure gives to the assigned official only.
+  if (actor.scope && a.needs.assigned && c.assignee?.id !== actor.scope.id) return { error: c.assignee ? `${a.label} is for the official assigned to this case (${c.assignee.name})` : `${a.label} needs an assigned official: assign the case first` };
   const pending = c.pending?.action === a.key ? c.pending : undefined;
   if (c.pending && !pending) return { error: `${pkg.actions.find(x => x.key === c.pending!.action)?.label ?? c.pending.action} is waiting for a second official: confirm or cancel it first` };
 
