@@ -157,6 +157,11 @@ export interface Messages {
     searchResults: string;
     searchOneResult: string;
     searchNone: string;
+    lawsTitle: string;
+    lawsIntro: string;
+    lawsNone: string;
+    lawsInForceFrom: string;
+    lawsCeased: string;
     kindService: string;
     kindNews: string;
     kindProgramme: string;
@@ -827,6 +832,11 @@ export const en: Messages = {
     searchResults: '{count} results for “{q}”',
     searchOneResult: '1 result for “{q}”',
     searchNone: 'Nothing matches “{q}”. Try fewer or other words.',
+    lawsTitle: 'Laws in force',
+    lawsIntro: "The nation's laws and regulations as officially recorded, each with the dates its versions apply.",
+    lawsNone: 'No laws have been published here yet.',
+    lawsInForceFrom: 'In force from {date}',
+    lawsCeased: 'Ceased {date}',
     kindService: 'Service',
     kindNews: 'News',
     kindProgramme: 'Programme',
