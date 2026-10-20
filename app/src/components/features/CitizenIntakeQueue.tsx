@@ -13,7 +13,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { getBoolPref, setPref } from '@/lib/prefs';
 import { ageMinutes } from '@/lib/format';
-import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { SubstrateNotConfigured, OfficerSignInNeeded } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
@@ -70,11 +70,8 @@ export function CitizenIntakeQueue() {
 
   if (!session) {
     return (
-      <Panel title="Citizen Intake Queue" meta="signed out" bodyClass="!p-3">
-        <p className="text-[11px] text-ink-muted">
-          Sign in as an officer to handle citizen-side intake for your charter.
-        </p>
-      </Panel>
+      <OfficerSignInNeeded title="Citizen Intake Queue" from="/gov/intake" what="handles citizen requests for your charter"
+        signedOut="Sign in as an officer to handle citizen-side intake for your charter." />
     );
   }
   if (!actor) {

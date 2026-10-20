@@ -44,6 +44,7 @@
   "/gov/charter/[id]",
   "/gov/civil",
   "/gov/configuration",
+  "/gov/configuration/responsible",
   "/gov/constitutional",
   "/gov/coordination",
   "/gov/crons",

@@ -17,7 +17,7 @@ import { LiveActivityStrip } from '@/components/identity/LiveActivityStrip';
 import { ConstitutionalStrip } from '@/components/identity/ConstitutionalStrip';
 import { myRecentStepsRows, type ActorStepRow } from '@/lib/db/repos/work-items';
 import { ageMinutes } from '@/lib/format';
-import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { SubstrateNotConfigured, OfficerSignInNeeded } from '@/components/ui/SubstrateEmpty';
 import { priorityTone } from '@/lib/tone';
 import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
@@ -91,13 +91,8 @@ export function OfficerHome() {
 
   if (!session) {
     return (
-      <Panel title="Officer Home" meta="signed out" bodyClass="!p-3 space-y-2">
-        <p className="text-[11px] text-ink-muted">Sign in as an officer to see your personalised landing.</p>
-        <a href="/sign-in?from=/gov/home"
-           className="inline-block focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2">
-          Sign in
-        </a>
-      </Panel>
+      <OfficerSignInNeeded title="Officer Home" from="/gov/home" what="shows your day's work items, directives and alerts"
+        signedOut="Sign in as an officer to see your personalised landing." />
     );
   }
   if (!actor || actor.kind !== 'officer') {

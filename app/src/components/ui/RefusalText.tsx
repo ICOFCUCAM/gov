@@ -5,7 +5,7 @@
 import Link from 'next/link';
 
 const PLACES: { phrase: string; href: string }[] = [
-  { phrase: 'Who is responsible', href: '/gov/configuration#who-is-responsible' },
+  { phrase: 'Who is responsible', href: '/gov/configuration/responsible' },
 ];
 
 export function RefusalText({ text }: { text: string }) {

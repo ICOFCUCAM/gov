@@ -8,6 +8,7 @@ import { Plain } from '@/components/ui/Plain';
 import { TextField } from '@/components/ui/Field';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { api } from '@/lib/api/client';
+import { GrantCertificate } from '@/components/features/GrantCertificate';
 import type {
   FederationGrant,
   IntegrationClient,
@@ -406,6 +407,7 @@ export function InteropConsole() {
                   </Button>
                 )}
               </div>
+              {g.status !== 'revoked' ? <GrantCertificate grantId={g.id} /> : null}
             </Card>
           ))}
           <FederationExchanges />

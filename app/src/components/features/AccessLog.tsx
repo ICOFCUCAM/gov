@@ -8,7 +8,7 @@ import * as React from 'react';
 import { Section } from '@/components/ui/DataSystem';
 
 interface Entry { id: string; seq: number; at: string; by: { id?: string; name: string; institution?: string }; record: { register: string; id?: string; query?: string }; action: string; purpose?: string; result: string; rule?: string }
-interface Answer { entries: Entry[]; chain: { ok: boolean; entries: number; brokenAt?: number }; unusual: { official: string; name: string; reason: string; count: number }[]; awaiting?: { id: string; rule: { days?: number; basis?: string }; reason: string; proposedBy: string; confirmedBy?: string }[] }
+interface Answer { entries: Entry[]; chain: { ok: boolean; entries: number; brokenAt?: number }; unusual: { official: string; name: string; reason: string; count: number }[]; raised?: { seq: number; at: string; watch: string; kind: string; subject: string; detail: string }[]; awaiting?: { id: string; rule: { days?: number; basis?: string }; reason: string; proposedBy: string; confirmedBy?: string }[] }
 
 export function AccessLog() {
   const [a, setA] = React.useState<Answer | null>(null);
@@ -35,6 +35,28 @@ export function AccessLog() {
               <ul className="text-sm">{a.unusual.map(u => <li key={`${u.official}-${u.reason}`}>{u.name}: {u.reason} ({u.count})</li>)}</ul>
             </Section>
           ) : null}
+          <Section title="Findings raised" meta="last 30 days · from the audit record">
+            <p className="mb-2 text-xs text-ink-muted">
+              What the watches raised: unusual access to records (checked by the daily scheduled job) and possible harvesting of the public professional check.
+              A finding is a prompt to look, never a conclusion about anyone.
+            </p>
+            {a.raised?.length ? (
+              <table className="w-full text-left text-sm" data-testid="raised-findings">
+                <thead><tr><th scope="col">When</th><th scope="col">Watch</th><th scope="col">About</th><th scope="col">Finding</th><th scope="col">Audit entry</th></tr></thead>
+                <tbody>
+                  {a.raised.map(f => (
+                    <tr key={f.seq} className="border-t border-line">
+                      <td>{new Date(f.at).toLocaleString()}</td>
+                      <td>{f.kind}</td>
+                      <td className="font-mono text-xs">{f.subject}</td>
+                      <td>{f.detail}</td>
+                      <td className="font-mono text-xs">#{f.seq}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : <p className="text-sm text-ink-muted">No findings raised in the last 30 days. Unusual access is checked only when the scheduled job runs (Platform health → Scheduled tasks).</p>}
+          </Section>
           {a.awaiting?.length ? (
             <Section title="Shortening this log" meta="waiting for the data-protection authority">
               <ul className="space-y-2 text-sm">{a.awaiting.map(w => (

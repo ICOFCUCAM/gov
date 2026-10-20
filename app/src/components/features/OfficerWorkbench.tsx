@@ -14,7 +14,7 @@ import { resolvedActor } from '@/services/actor-resolver';
 import { transitionSignature } from '@/lib/db/signatures';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { getBoolPref, setPref } from '@/lib/prefs';
-import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { SubstrateNotConfigured, OfficerSignInNeeded } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { priorityTone } from '@/lib/tone';
 import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
@@ -93,15 +93,8 @@ export function OfficerWorkbench() {
 
   if (!session) {
     return (
-      <Panel title="Officer Workbench" meta="signed out" bodyClass="!p-3 space-y-2">
-        <p className="text-[11px] text-ink-muted">
-          Sign in as an officer to execute on persistent work items.
-        </p>
-        <a href="/sign-in?from=/gov/workbench"
-           className="inline-block focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2">
-          Sign in
-        </a>
-      </Panel>
+      <OfficerSignInNeeded title="Officer Workbench" from="/gov/workbench" what="works on persistent work items"
+        signedOut="Sign in as an officer to execute on persistent work items." />
     );
   }
   if (!actor || actor.kind !== 'officer') {

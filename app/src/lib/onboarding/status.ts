@@ -83,12 +83,12 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       ] };
     }),
 
-    track({ key: 'institutions', title: 'Institutions and who is responsible', why: 'Which institution is legally responsible for each register and power. Cases and registers refuse work until this is named.', href: '/gov/configuration#who-is-responsible' }, () => {
+    track({ key: 'institutions', title: 'Institutions and who is responsible', why: 'Which institution is legally responsible for each register and power. Cases and registers refuse work until this is named.', href: '/gov/configuration/responsible' }, () => {
       const ids = new Set(active().map(m => m.id));
       const named = AUTHORITIES.filter(a => { const id = authorityFor(a.key); return id !== undefined && ids.has(id); });
       return { checks: [
         { label: 'Institutions created', done: ids.size > 0, href: '/gov/configuration', detail: n(ids.size, 'active institution') },
-        { label: 'Every responsibility assigned to an active institution', done: named.length === AUTHORITIES.length, href: '/gov/configuration#who-is-responsible', detail: `${named.length} of ${AUTHORITIES.length}${named.length < AUTHORITIES.length ? ` · missing: ${AUTHORITIES.filter(a => !named.includes(a)).map(a => a.label).join(', ')}` : ''}` },
+        { label: 'Every responsibility assigned to an active institution', done: named.length === AUTHORITIES.length, href: '/gov/configuration/responsible', detail: `${named.length} of ${AUTHORITIES.length}${named.length < AUTHORITIES.length ? ` · missing: ${AUTHORITIES.filter(a => !named.includes(a)).map(a => a.label).join(', ')}` : ''}` },
       ] };
     }),
 
@@ -142,7 +142,7 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       const unowned = approved.filter(p => !ownerInstitution(p.owner, authorityFor));
       return { checks: [
         { label: 'Procedures approved', done: approved.length > 0, href: '/gov/law/procedures', detail: `${approved.length} approved · ${pk.filter(p => p.state === 'draft').length} drafts` },
-        { label: 'Every approved procedure has a responsible institution', done: approved.length > 0 && unowned.length === 0, href: '/gov/configuration#who-is-responsible', detail: unowned.length ? `No institution for: ${unowned.map(p => p.title).join(', ').slice(0, 200)}` : undefined },
+        { label: 'Every approved procedure has a responsible institution', done: approved.length > 0 && unowned.length === 0, href: '/gov/configuration/responsible', detail: unowned.length ? `No institution for: ${unowned.map(p => p.title).join(', ').slice(0, 200)}` : undefined },
       ] };
     }),
 

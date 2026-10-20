@@ -421,6 +421,12 @@
                         ]
                       }
                     },
+                    "raised": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RaisedFinding"
+                      }
+                    },
                     "awaiting": {
                       "type": "array",
                       "items": {
@@ -455,6 +461,7 @@
                     "entries",
                     "chain",
                     "unusual",
+                    "raised",
                     "awaiting"
                   ]
                 },
@@ -490,6 +497,16 @@
                           "name": "Example",
                           "reason": "Text",
                           "count": 1
+                        }
+                      ],
+                      "raised": [
+                        {
+                          "seq": 1,
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "watch": "string",
+                          "kind": "string",
+                          "subject": "string",
+                          "detail": "string"
                         }
                       ],
                       "awaiting": [
@@ -79713,6 +79730,37 @@
           "oldestAgeHours",
           "slaHours",
           "breaching"
+        ]
+      },
+      "RaisedFinding": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string"
+          },
+          "watch": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "at",
+          "watch",
+          "kind",
+          "subject",
+          "detail"
         ]
       },
       "RecordsStatus": {
