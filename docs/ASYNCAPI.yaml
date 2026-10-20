@@ -91,6 +91,7 @@ channels:
       organisation: { $ref: '#/components/messages/organisation' }
       immigration: { $ref: '#/components/messages/immigration' }
       courtHearing: { $ref: '#/components/messages/courtHearing' }
+      accessUnusual: { $ref: '#/components/messages/accessUnusual' }
   registers:
     address: /
     description: Changes to the registers services/civic-api mirrors (review D8) - institutions, payments, integrations, webhooks, grants proposed, releases, deployments, backups, configuration and the tenant's lifecycle. Its follower subscribes to `*` and reads the changed register from GET /api/platform/mirror.
@@ -293,6 +294,11 @@ components:
     courtHearing:
       name: org.civicos.court.hearing.*
       summary: court.hearing.schedule, court.hearing.held, court.hearing.adjourned, court.hearing.vacated (the subject is the case number, as on the public cause list; no parties).
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    accessUnusual:
+      name: org.civicos.access.unusual
+      title: An unusual pattern of reads of restricted records (many records, repeated refusals, outside working hours), raised once per official, reason and day for the oversight bodies; a prompt to look, never a finding
       traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
       payload: { $ref: '#/components/schemas/CloudEvent' }
     registerChange:

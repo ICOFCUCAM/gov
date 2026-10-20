@@ -215,6 +215,8 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each visa or permit with its steps') },
   { id: 'hearings', name: 'Court hearings: scheduled, held, adjourned or vacated, by case', legal: { kind: 'authority', key: 'judiciary' }, owner: { where: 'platform', keys: ['__civicosHearings'] }, api: 'lib/courts/hearings.ts (through court cases, /api/cases; the public cause list at /courts/cause-list)', copies: [],
     storage: RECORD_DOCS('each hearing with its steps') },
+  { id: 'access-watch', name: 'Findings raised from the access log (official, reason, day): each raised once', legal: { kind: 'authority', key: 'dataProtection' }, owner: { where: 'platform', keys: ['__civicosAccessWatch'] }, api: 'lib/records/access-watch.ts (run by /api/cron/case-deadlines)', copies: [],
+    storage: RECORD_DOCS('the findings raised today') },
   { id: 'delegations', name: 'Delegations: who may act for whom, in which procedures, until when', legal: { kind: 'authority', key: 'businessRegister' }, owner: { where: 'platform', keys: ['__civicosDelegations'] }, api: 'lib/records/delegations.ts', copies: [],
     storage: RECORD_DOCS('each delegation') },
   { id: 'access-log', name: 'Access log: reads of restricted and secret records, searches, exports, refusals and permission changes', legal: { kind: 'authority', key: 'dataProtection' }, owner: { where: 'platform', keys: ['__civicosAccessLog'] }, api: 'recordAccess() (lib/records/access-log.ts), read at /api/access-log', copies: [],
