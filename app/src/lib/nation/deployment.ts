@@ -9,9 +9,10 @@
 
 export type AuthorityKey =
   | 'lawRegister' | 'civilRegistration' | 'identity' | 'businessRegister' | 'higherEducationAccreditation'
-  | 'immigration' | 'police' | 'judiciary' | 'statistics' | 'dataProtection';
+  | 'immigration' | 'police' | 'judiciary' | 'statistics' | 'dataProtection'
+  | 'tax' | 'customs' | 'education' | 'healthRegulation' | 'professionalRegulation';
 
-export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts';
+export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts' | 'tax' | 'customs' | 'education' | 'health' | 'professions';
 
 export interface DeploymentProfile {
   jurisdiction?: { legalSystem?: 'civil' | 'common' | 'mixed' | 'religious' | 'customary' | 'other' };
@@ -38,6 +39,11 @@ export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string 
   { key: 'judiciary', label: 'Judiciary', registers: 'Court cases, hearings and judgments' },
   { key: 'statistics', label: 'Official statistics', registers: 'National indicators and estimates' },
   { key: 'dataProtection', label: 'Data protection', registers: 'Oversight of access to personal records (the access log)' },
+  { key: 'tax', label: 'Tax administration', registers: 'Taxpayers, tax accounts, returns, assessments and objections' },
+  { key: 'customs', label: 'Customs', registers: 'Customs declarations, duty assessments, inspections and release' },
+  { key: 'education', label: 'Education', registers: 'Registered schools and education providers, qualifications awarded' },
+  { key: 'healthRegulation', label: 'Health facility regulation', registers: 'Licensed health facilities and pharmacies' },
+  { key: 'professionalRegulation', label: 'Professional regulation', registers: 'Licensed professionals (each profession may have its own council)' },
 ];
 export const isAuthorityKey = (v: unknown): v is AuthorityKey => AUTHORITIES.some(a => a.key === v);
 
@@ -50,6 +56,11 @@ export const MODULES: { key: ModuleKey; label: string; authority: AuthorityKey }
   { key: 'immigration', label: 'Immigration', authority: 'immigration' },
   { key: 'police', label: 'Police', authority: 'police' },
   { key: 'courts', label: 'Courts', authority: 'judiciary' },
+  { key: 'tax', label: 'Tax', authority: 'tax' },
+  { key: 'customs', label: 'Customs', authority: 'customs' },
+  { key: 'education', label: 'Education', authority: 'education' },
+  { key: 'health', label: 'Health facility licensing', authority: 'healthRegulation' },
+  { key: 'professions', label: 'Professional registers', authority: 'professionalRegulation' },
 ];
 export const isModuleKey = (v: unknown): v is ModuleKey => MODULES.some(m => m.key === v);
 
