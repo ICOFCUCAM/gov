@@ -99,7 +99,19 @@ export const REFERENCE_TYPES: Omit<RegisterType, 'createdBy' | 'createdAt'>[] = 
   { key: 'pharmacies', title: 'Licensed pharmacies', kind: 'licence', authority: 'healthRegulation', orgKinds: ['pharmacy'], publicCheck: true, reference: true, permitType: 'pharmacy-licence' },
 ];
 
-export interface OrgLoad { id: string; register: string; by: string; at: string; sha256: string; rows: number; loaded: number; refused: { row: number; reason: string }[]; withdrawn?: { by: string; at: string; removed: number } }
+/** A checked row held on a proposed load until a second official confirms it. */
+export interface OrgLoadRow { row: number; name: string; kind: OrgKind; state: StandingState; region?: string; address?: string; previousNumber?: string; since?: string; validUntil?: string; conditions: string[] }
+export interface OrgLoad {
+  id: string; register: string; by: string; byId?: string; at: string; sha256: string; rows: number; loaded: number; refused: { row: number; reason: string }[];
+  withdrawn?: { by: string; at: string; removed: number };
+  /** Absent on loads made before two-official loading: those entered at once (confirmed). */
+  state?: 'proposed' | 'confirmed' | 'lapsed' | 'withdrawn';
+  expiresAt?: string;
+  staged?: OrgLoadRow[];
+  /** Rows held, as lists show a proposed load. */
+  proposed?: number;
+  confirmed?: { by: string; byId?: string; at: string; independence: 'identity-provider' | 'accounts-only' | 'unverified' };
+}
 interface Db { orgs: Organisation[]; types: RegisterType[]; seq: Record<string, number>; orgSeq: number; loads: OrgLoad[] }
 const g = globalThis as unknown as { __civicosOrganisations?: Db };
 const db = (): Db => {

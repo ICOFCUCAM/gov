@@ -11,9 +11,15 @@
 //    mirror already holds is left out (named in lastError), not forced.
 //  - Rows from before the mirror, in civic-api's own tenants, are left as
 //    they are; mirrored rows live in the platform's tenants (platform:<name>).
+//  - After a platform restore (mark.restore), the platform tenant's rows of
+//    each register in the batch that the restored read no longer holds are
+//    removed (PRUNED_ON_RESTORE): what the restore took back leaves the
+//    mirror too. Payment records stay (receipts are append-only here, and a
+//    bill cannot be removed under them); those the platform no longer holds
+//    are named in lastError for the payments team to reconcile.
 
 import { Prisma, type PrismaClient } from '@prisma/client';
-import { freshRegisters, onlyRegisters, type MirrorBatch, type MirrorMark, type MirrorState, type MirrorStore } from './follower';
+import { freshRegisters, onlyRegisters, PRUNED_ON_RESTORE, type MirrorBatch, type MirrorMark, type MirrorState, type MirrorStore } from './follower';
 
 const STATE_ID = 'platform';
 const KEEP_APPLIED = 5000;
@@ -122,6 +128,8 @@ export class PrismaMirrorStore implements MirrorStore {
         await tx.webhookSubscription.upsert({ where: { id: w.id }, update: data, create: { id: w.id, ...data } });
       }
 
+      if (mark.restore && home) skipped.push(...await this.prune(tx, b, home));
+
       const now = new Date();
       const prev = await tx.mirrorState.findUnique({ where: { id: STATE_ID } });
       const cursor = mark.restore ? mark.cursor : Math.max(prev?.cursor ?? 0, mark.cursor);
@@ -134,6 +142,47 @@ export class PrismaMirrorStore implements MirrorStore {
         if (old[0]) await tx.mirrorAppliedEvent.deleteMany({ where: { auditSeq: { lte: old[0].auditSeq } } });
       }
     }, { timeout: 60_000 });
+  }
+
+  /** After a platform restore: remove the platform tenant's rows the restored read no longer holds. Returns notes for lastError. */
+  private async prune(tx: Tx, b: MirrorBatch, home: string): Promise<string[]> {
+    const notes: string[] = [];
+    const removed: string[] = [];
+    const has = (r: (typeof PRUNED_ON_RESTORE)[number]) => PRUNED_ON_RESTORE.includes(r) && b[r] !== undefined;
+    const ids = (rows: { id: string }[] | undefined) => (rows ?? []).map(x => x.id);
+    const count = (what: string, n: number) => { if (n) removed.push(`${n} ${what}`); };
+    if (has('permits')) {
+      const gone = await tx.permit.findMany({ where: { tenantId: home, id: { notIn: ids(b.permits) } }, select: { id: true } });
+      if (gone.length) {
+        await tx.permitTransition.deleteMany({ where: { permitId: { in: gone.map(x => x.id) } } });
+        count('permits', (await tx.permit.deleteMany({ where: { id: { in: gone.map(x => x.id) } } })).count);
+      }
+    }
+    if (has('payments')) {
+      // Payment records stay: receipts are append-only, and a bill cannot be removed under them
+      // (Receipt_billId_fkey sets null, which the receipt rule forbids). They are named for reconciliation.
+      const receipts = await tx.receipt.findMany({ where: { tenantId: home, id: { notIn: ids(b.payments!.receipts) } }, select: { id: true } });
+      const bills = await tx.bill.findMany({ where: { tenantId: home, id: { notIn: ids(b.payments!.bills) } }, select: { id: true } });
+      if (receipts.length || bills.length) notes.push(`payment records the restored platform no longer holds are kept for reconciliation with the payments team: ${receipts.length} receipt(s)${receipts.length ? ` (${receipts.slice(0, 20).map(x => x.id).join(', ')})` : ''}, ${bills.length} bill(s)${bills.length ? ` (${bills.slice(0, 20).map(x => x.id).join(', ')})` : ''}`);
+    }
+    if (has('incidents')) count('incidents', (await tx.incident.deleteMany({ where: { tenantId: home, id: { notIn: ids(b.incidents) } } })).count);
+    if (has('deployments')) count('deployments', (await tx.deployment.deleteMany({ where: { tenantId: home, id: { notIn: ids(b.deployments) } } })).count);
+    if (has('backups')) count('backups', (await tx.backupRecord.deleteMany({ where: { tenantId: home, id: { notIn: ids(b.backups) } } })).count);
+    if (has('lifecycle')) count('lifecycle events', (await tx.tenantLifecycleEvent.deleteMany({ where: { tenantId: home, id: { notIn: ids(b.lifecycle) } } })).count);
+    if (has('integrations')) count('integrations', (await tx.integrationClient.deleteMany({ where: { tenantId: home, id: { notIn: ids(b.integrations) } } })).count);
+    if (has('grants')) count('grants', (await tx.federationGrant.deleteMany({ where: { OR: [{ fromTenantId: home }, { toTenantId: home }], id: { notIn: ids(b.grants) } } })).count);
+    if (has('webhooks')) count('webhooks', (await tx.webhookSubscription.deleteMany({ where: { tenantId: home, id: { notIn: ids(b.webhooks) } } })).count);
+    if (has('institutions')) {
+      const gone = await tx.ministry.findMany({ where: { tenantId: home, id: { notIn: ids(b.institutions) } }, select: { id: true } });
+      if (gone.length) {
+        const g = gone.map(x => x.id);
+        await tx.department.deleteMany({ where: { ministryId: { in: g } } });
+        await tx.moduleActivation.deleteMany({ where: { ministryId: { in: g } } });
+        count('institutions', (await tx.ministry.deleteMany({ where: { id: { in: g } } })).count);
+      }
+    }
+    if (removed.length) notes.unshift(`restore removed rows the platform no longer holds: ${removed.join(', ')}`);
+    return notes;
   }
 
   private async ministry(tx: Tx, m: NonNullable<MirrorBatch['institutions']>[number]): Promise<void> {

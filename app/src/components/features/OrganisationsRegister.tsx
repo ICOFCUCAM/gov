@@ -28,7 +28,7 @@ export function OrganisationsRegister() {
   const [open, setOpen] = React.useState<{ number: string; full: boolean; org: FullOrg | PublicOrg; why?: string } | null>(null);
   const [purpose, setPurpose] = React.useState('');
   const [msg, setMsg] = React.useState<string | null>(null);
-  const [loads, setLoads] = React.useState<{ id: string; register: string; by: string; at: string; sha256: string; rows: number; loaded: number; refused: { row: number; reason: string }[]; withdrawn?: { removed: number } }[]>([]);
+  const [loads, setLoads] = React.useState<{ id: string; register: string; by: string; at: string; sha256: string; rows: number; loaded: number; refused: { row: number; reason: string }[]; withdrawn?: { removed: number }; state?: 'proposed' | 'confirmed' | 'lapsed' | 'withdrawn'; proposed?: number; expiresAt?: string; confirmed?: { by: string } }[]>([]);
   const [loadRegister, setLoadRegister] = React.useState('');
   const [nt, setNt] = React.useState({ key: '', title: '', kind: 'licence', authority: '', orgKinds: 'pharmacy', validityMonths: '', permitType: '' });
 
@@ -39,7 +39,7 @@ export function OrganisationsRegister() {
   React.useEffect(load, [load]);
   const loadLoads = React.useCallback(() => { fetch('/api/organisations/loads', { cache: 'no-store' }).then(r => r.json()).then(j => setLoads(j.loads ?? [])).catch(() => setLoads([])); }, []);
   React.useEffect(loadLoads, [loadLoads]);
-  const sendLoad = async (body: Record<string, unknown>, done: (j: { load: { loaded: number; refused: unknown[]; withdrawn?: { removed: number } } }) => string) => {
+  const sendLoad = async (body: Record<string, unknown>, done: (j: { load: { loaded: number; refused: unknown[]; withdrawn?: { removed: number }; proposed?: number } }) => string) => {
     const r = await fetch('/api/organisations/loads', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
     const j = await r.json();
     setMsg(r.ok ? done(j) : j.error);
@@ -118,7 +118,7 @@ export function OrganisationsRegister() {
       ) : null}
 
       <Section title="Load an existing register" meta="a CSV from the register you keep today">
-        <p className="text-sm text-ink-muted">Columns: name, kind, standing (granted, suspended, revoked, expired or struck-off), and optionally number (your current number, kept), since, valid_until, conditions (separated by ;), region, address. Every row is checked; a row that cannot be read is refused with its reason. A load can be withdrawn while nobody has acted on what it brought in.</p>
+        <p className="text-sm text-ink-muted">Columns: name, kind, standing (granted, suspended, revoked, expired or struck-off), and optionally number (your current number, kept), since, valid_until, conditions (separated by ;), region, address. Every row is checked; a row that cannot be read is refused with its reason. The checked rows enter the register only when a second official of your institution who can sign confirms the load, within the waiting period. A load can be withdrawn while nobody has acted on what it brought in.</p>
         <div className="mt-2 flex flex-wrap items-end gap-2">
           <label className="text-sm">Register<select className={field} value={loadRegister} onChange={e => setLoadRegister(e.target.value)}><option value="">Choose</option>{types.map(t => <option key={t.key} value={t.key}>{t.title}</option>)}</select></label>
           <label className="text-sm">File<input type="file" accept=".csv,text/csv" className="mt-1 block text-sm" disabled={!loadRegister} onChange={async e => {
@@ -126,7 +126,7 @@ export function OrganisationsRegister() {
             const file = input.files?.[0];
             if (!file) return;
             const csv = await file.text();
-            await sendLoad({ op: 'load', register: loadRegister, csv }, j => `${j.load.loaded} loaded, ${j.load.refused.length} refused.`);
+            await sendLoad({ op: 'load', register: loadRegister, csv }, j => `${j.load.proposed ?? 0} checked and waiting for a second official to confirm, ${j.load.refused.length} refused.`);
             input.value = '';
           }} /></label>
         </div>
@@ -135,10 +135,11 @@ export function OrganisationsRegister() {
             {loads.slice().reverse().map(l => (
               <li key={l.id} className="rounded border border-line p-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span>{title(l.register)} · {new Date(l.at).toLocaleString()} · {l.by} · {l.loaded} of {l.rows} loaded</span>
+                  <span>{title(l.register)} · {new Date(l.at).toLocaleString()} · {l.by} · {l.state === 'proposed' ? `${l.proposed ?? 0} of ${l.rows} checked, waiting for a second official until ${l.expiresAt ? new Date(l.expiresAt).toLocaleString() : '—'}` : l.state === 'lapsed' ? 'lapsed unconfirmed: propose the file again' : `${l.loaded} of ${l.rows} loaded${l.confirmed ? `, confirmed by ${l.confirmed.by}` : ''}`}</span>
                   <span className="font-mono text-xs text-ink-muted">{l.sha256.slice(0, 16)}</span>
                   <span className="flex-1" />
-                  {l.withdrawn ? <span className="text-xs">Withdrawn ({l.withdrawn.removed} removed)</span> : <Button variant="secondary" onClick={() => void sendLoad({ op: 'withdraw', id: l.id }, j => `Withdrawn: ${j.load.withdrawn?.removed ?? 0} removed.`)}>Withdraw</Button>}
+                  {l.state === 'proposed' && !l.withdrawn ? <Button onClick={() => void sendLoad({ op: 'confirm', id: l.id }, j => `Confirmed: ${j.load.loaded} entered the register, ${j.load.refused.length} refused.`)}>Confirm</Button> : null}
+                  {l.state === 'lapsed' ? null : l.withdrawn ? <span className="text-xs">Withdrawn ({l.withdrawn.removed} removed)</span> : <Button variant="secondary" onClick={() => void sendLoad({ op: 'withdraw', id: l.id }, j => `Withdrawn: ${j.load.withdrawn?.removed ?? 0} removed.`)}>Withdraw</Button>}
                 </div>
                 {l.refused.length ? <details className="mt-1"><summary className="cursor-pointer text-xs">{l.refused.length} rows refused</summary><ul className="mt-1 text-xs">{l.refused.slice(0, 200).map(r => <li key={r.row}>Row {r.row}: {r.reason}</li>)}</ul></details> : null}
               </li>

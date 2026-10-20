@@ -59,7 +59,7 @@ import { auditHashV2 } from '@/lib/data/store/audit';
 import { auditCommitted } from '@/lib/data/store/audit-committed';
 import { log } from '@/lib/ops/log';
 import { memoryAudit, memoryBoundaries, memoryFacilities, memoryParcels, memoryTwin } from './memory';
-import { RECORDS_SCHEMA, DOCS_SCHEMA, PARCELS_SCHEMA } from './postgres-schema';
+import { RECORDS_SCHEMA, DOCS_SCHEMA, PARCELS_SCHEMA, LIMITS_SCHEMA } from './postgres-schema';
 import { applyRow, build, counterFields, decompose, diff, isCounterPath, mergeAt, normalise, removeAt, replaceInPlace, rowAt, segsOf, type Change, type DocRow, type Kind, type Known } from './documents';
 import { followed, listenForUse } from './track';
 import type { Backend, BoundaryStore, FacilityStore, ParcelStore } from './types';
@@ -88,14 +88,14 @@ const iso = (col: string) => `to_char(${col} at time zone 'UTC', ${ISO})`;
 /** Apply the records schema (idempotent; one instance at a time). Returns whether PostGIS is in use. */
 export async function ensureSchema(sql: Sql): Promise<{ postgis: boolean }> {
   // Applied once per version of the schema: re-running its DDL while other instances write would take their tables' locks.
-  const version = createHash('sha256').update(RECORDS_SCHEMA).update(DOCS_SCHEMA).update(PARCELS_SCHEMA).digest('hex');
+  const version = createHash('sha256').update(RECORDS_SCHEMA).update(DOCS_SCHEMA).update(PARCELS_SCHEMA).update(LIMITS_SCHEMA).digest('hex');
   const applied = async (s: Sql) => (await q(s, `select to_regclass('civicos.records_schema') is not null as t`))[0]!.t
     && (await q(s, `select 1 from civicos.records_schema where version = $1`, [version])).length > 0;
   if (!(await applied(sql))) {
     await sql.begin(async tx => {
       await q(tx, `select pg_advisory_xact_lock(hashtext('civicos.records.schema'))`);
       if (await applied(tx)) return;
-      for (const schema of [RECORDS_SCHEMA, DOCS_SCHEMA, PARCELS_SCHEMA]) {
+      for (const schema of [RECORDS_SCHEMA, DOCS_SCHEMA, PARCELS_SCHEMA, LIMITS_SCHEMA]) {
         const all = tx.unsafe(schema);
         await (all.simple ? all.simple() : all);
       }

@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import https from 'node:https';
 import type { AddressInfo } from 'node:net';
 import type { TLSSocket } from 'node:tls';
 import { NextRequest } from 'next/server';
-import { registerIntegration, setIntegrationStatus, proposeGrant, setGrantStatus, listAudit } from '@/lib/data/store';
+import { registerIntegration, proposeGrant, setGrantStatus, listAudit } from '@/lib/data/store';
 import { resetRateLimits } from './rate-limit';
 import { resetExchangeLog, listExchanges } from './log';
 import { resetPartnerCerts, fingerprintOf, normaliseFingerprint, checkPartnerCertificate, clientIdentity } from './mtls';
@@ -32,7 +33,7 @@ describe('mutual TLS on the federation exchange', () => {
     resetPartnerCerts(); resetExchangeLog(); resetRateLimits();
     const reg = registerIntegration({ kind: 'integration', name: `mtls-${Date.now()}`, ownerOrg: 'Partner Republic', contact: 'x@y', scopes: ['federation:exchange'] });
     if ('error' in reg) throw new Error(reg.error);
-    setIntegrationStatus(reg.id, 'approved', 'Official');
+    approveIntegration(reg.id);
     apiKey = reg.apiKey;
     tenant = `partner-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const g = proposeGrant({ toTenant: tenant, scopes: ['permit:read'], reason: 'Cross-border permits', policy: { purposes: ['oversight'], retentionDays: 30, onwardSharing: false } });

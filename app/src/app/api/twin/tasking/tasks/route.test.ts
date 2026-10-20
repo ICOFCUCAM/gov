@@ -5,6 +5,7 @@
 // platform never executes anything. Officers, typed-in names, keys and other
 // integrations are refused.
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import { NextRequest } from 'next/server';
 import { resetOfficials, createAccount, sessionSecret } from '@/lib/auth/officials';
 import { signClaims } from '@/lib/auth/session-token';
@@ -15,7 +16,7 @@ import { resetTasking, declareCapability, listTasks, TASKING_SCOPE } from '@/lib
 import { staRequest } from '@/lib/twin/sta';
 import { STA_WRITE_SCOPE } from '@/lib/twin/stream';
 import { applyNation } from '@/lib/nation/registry';
-import { listAudit, registerIntegration, setIntegrationStatus } from '@/lib/data/store';
+import { listAudit, registerIntegration } from '@/lib/data/store';
 import { apiPermission, mutationRule, canTaskSensor } from '@/lib/auth/roles';
 // The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
 const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
@@ -38,7 +39,7 @@ const B = 'http://localhost/api/twin/sta/v1.1';
 let n = 0;
 function integration(scopes: string[]): { id: string; auth: string } {
   const r = ok(registerIntegration({ kind: 'integration', name: `River gateway ${++n}`, ownerOrg: 'Water authority', contact: 'ops@water.example', scopes }));
-  ok(setIntegrationStatus(r.id, 'approved', 'Admin'));
+  ok(approveIntegration(r.id));
   return { id: r.id, auth: `Bearer ${r.apiKey}` };
 }
 async function signInAs(email: string, role: string) {

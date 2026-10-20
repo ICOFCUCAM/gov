@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import { NextRequest } from 'next/server';
 import { registerIntegration, setIntegrationStatus, rotateIntegrationKey } from '@/lib/data/store';
 import { resetRateLimits } from '@/lib/exchange/rate-limit';
@@ -15,7 +16,7 @@ let n = 0;
 function client(scopes: string[], approve = true) {
   const r = registerIntegration({ kind: 'integration', name: `gis-${++n}-${Date.now()}`, ownerOrg: 'Mapping agency', contact: 'gis@agency', scopes });
   if ('error' in r) throw new Error(r.error);
-  if (approve) setIntegrationStatus(r.id, 'approved', 'Administrator');
+  if (approve) approveIntegration(r.id);
   return { id: r.id, key: r.apiKey };
 }
 const key = (scopes: string[], approve = true) => client(scopes, approve).key;
@@ -129,7 +130,7 @@ describe('OAuth2 client credentials for integration keys (RFC 6749 §4.4)', () =
     // Suspension ends it at once; approval again restores it.
     setIntegrationStatus(c.id, 'suspended', 'Administrator');
     expect((await machineReadRefusal(req('/api/twin/ogc', `Bearer ${t1}`)))?.status).toBe(403);
-    setIntegrationStatus(c.id, 'approved', 'Administrator');
+    approveIntegration(c.id);
     expect(await machineReadRefusal(req('/api/twin/ogc', `Bearer ${t1}`))).toBeNull();
     // Rotating the key ends every token issued for the old one.
     const rotated = rotateIntegrationKey(c.id, 'Administrator');

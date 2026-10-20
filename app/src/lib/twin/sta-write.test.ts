@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import { resetTwin, syncRegister, registerSource, runSource, stateAsOf, setStreamIngest, withdrawRun, listRuns, confirmWithdrawal, type TwinSource, type TwinRun } from './register';
 import { setTwinPolicy, resetTwinPolicy } from './policy';
 import { registerMetric } from './metrics';
@@ -7,7 +8,7 @@ import { staRequest } from './sta';
 import { resetReadings, pushedReadingsBetween, readingsStatus } from './readings';
 import { STA_WRITE_SCOPE } from './stream';
 import { applyNation } from '@/lib/nation/registry';
-import { listAudit, registerIntegration, setIntegrationStatus } from '@/lib/data/store';
+import { listAudit, registerIntegration } from '@/lib/data/store';
 
 const B = 'https://gov.example/api/twin/sta/v1.1';
 const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
@@ -15,7 +16,7 @@ let n = 0;
 /** An integration with these scopes, approved; its key as the client sends it. */
 function integration(scopes = [STA_WRITE_SCOPE], approve = true): { id: string; auth: string } {
   const r = ok(registerIntegration({ kind: 'integration', name: `Grid gateway ${++n}`, ownerOrg: 'Energy regulator', contact: 'ops@grid.example', scopes }));
-  if (approve) ok(setIntegrationStatus(r.id, 'approved', 'Admin'));
+  if (approve) ok(approveIntegration(r.id));
   return { id: r.id, auth: `Bearer ${r.apiKey}` };
 }
 const DS = "telemetry:grid.load.mombasa";

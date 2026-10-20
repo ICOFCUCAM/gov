@@ -292,8 +292,13 @@ export const api = {
           method: 'POST',
           body: JSON.stringify(body),
         }),
-      approve: (id: string) =>
-        req<{ integration: IntegrationClient }>(`/api/integrations/${id}/approve`, { method: 'POST', body: '{}' }),
+      /** Propose approving (or changing) an integration's scopes and purposes per service; a different official confirms. */
+      approve: (id: string, terms: { scopes?: string[]; purposes?: Record<string, string[]>; note?: string } = {}) =>
+        req<{ integration: IntegrationClient }>(`/api/integrations/${id}/approve`, { method: 'POST', body: JSON.stringify({ op: 'propose', ...terms }) }),
+      confirmApproval: (id: string) =>
+        req<{ integration: IntegrationClient }>(`/api/integrations/${id}/approve`, { method: 'POST', body: JSON.stringify({ op: 'confirm' }) }),
+      withdrawApproval: (id: string) =>
+        req<{ integration: IntegrationClient }>(`/api/integrations/${id}/approve`, { method: 'POST', body: JSON.stringify({ op: 'withdraw' }) }),
       revoke: (id: string) =>
         req<{ integration: IntegrationClient }>(`/api/integrations/${id}/revoke`, { method: 'POST', body: '{}' }),
       rotate: (id: string) =>

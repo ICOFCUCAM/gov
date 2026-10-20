@@ -20,10 +20,16 @@
 //
 // A proposal waiting for its second official lapses after pendingHours; it
 // is kept on the case, and only a new, explicit proposal starts again.
+//
+// The country's rules themselves change by two officials, citing the law
+// (lib/law/policy-change.ts): proposed by one administrator with the legal
+// basis from the laws register, confirmed by a different one; values left out
+// of a proposal keep their current setting; every version is kept.
 
 import { touch } from '@/lib/data/repo/track';
-import { recordAudit } from '@/lib/data/store/audit';
 import { DUAL_CONTROL_HOURS } from '@/lib/data/dual-control';
+import type { Citation } from '@/lib/law/register';
+import { proposePolicy, confirmPolicy, withdrawPolicy, lapsePolicy, type PolicyChanges, type PolicyVersion } from '@/lib/law/policy-change';
 import { classifyDecision } from '@/lib/permits/decisions';
 import { registerDualControlRules } from './engine';
 import type { ActionSpec, Case, CasePackage } from './types';
@@ -37,8 +43,15 @@ export interface DualControlPolicy {
   pendingHours: number;
   /** False while these are the platform's defaults, not the country's adopted rules. */
   adopted: boolean;
-  by?: string; at?: string; basis?: string;
+  by?: string; at?: string;
+  /** Rules adopted before citations were required: the instrument as typed. */
+  basis?: string;
+  /** The legal basis of the adopted rules, cited from the laws register. */
+  citations?: Citation[];
+  confirmedBy?: string;
+  changes?: PolicyChanges<DualControlValues>;
 }
+export type DualControlValues = Pick<DualControlPolicy, 'extra' | 'requireIdentityBinding' | 'pendingHours'>;
 export const DEFAULT_DUAL_CONTROL: DualControlPolicy = { extra: [], requireIdentityBinding: false, pendingHours: DUAL_CONTROL_HOURS, adopted: false };
 
 const g = globalThis as unknown as { __civicosDualControl?: DualControlPolicy };
@@ -69,18 +82,36 @@ export function needsTwoOfficials(c: Case, a: ActionSpec, pkg: Pick<CasePackage,
   return !!a.needs.fourEyes || !!platformMinimum(c, a, pkg) || db().extra.includes(`${pkg.key}:${a.key}`);
 }
 
-/** The country records its own rules (administrators, audited; the basis names the instrument). */
-export function setDualControlPolicy(input: { extra?: unknown; requireIdentityBinding?: unknown; pendingHours?: unknown; basis?: unknown }, by: string, now = new Date()): DualControlPolicy | { error: string } {
-  const extra = Array.isArray(input.extra) ? input.extra.map(String).map(x => x.trim()).filter(Boolean) : [];
-  if (extra.some(x => !/^[a-z][a-z0-9.-]{1,80}:[a-z][a-z0-9-]{0,40}$/.test(x))) return { error: 'Each further step is packageKey:actionKey (e.g. customs.declaration:release)' };
-  const hours = Number(input.pendingHours);
-  if (!Number.isInteger(hours) || hours < 1 || hours > 720) return { error: 'The waiting period is a whole number of hours from 1 to 720' };
-  const basis = typeof input.basis === 'string' ? input.basis.trim().slice(0, 300) : '';
-  if (!basis) return { error: 'Name the instrument or decision these rules come from' };
+const AUDIT = 'dual-control.policy';
+const values = (d: DualControlPolicy): DualControlValues => ({ extra: [...d.extra], requireIdentityBinding: d.requireIdentityBinding, pendingHours: d.pendingHours });
+const describe = (v: DualControlValues) => `${v.extra.length} further step(s) · identity binding ${v.requireIdentityBinding ? 'required' : 'not required'} · proposals lapse after ${v.pendingHours} h`;
+const check = (v: DualControlValues): string | null => {
+  if (v.extra.some(x => !/^[a-z][a-z0-9.-]{1,80}:[a-z][a-z0-9-]{0,40}$/.test(x))) return 'Each further step is packageKey:actionKey (e.g. customs.declaration:release)';
+  if (!Number.isInteger(v.pendingHours) || v.pendingHours < 1 || v.pendingHours > 720) return 'The waiting period is a whole number of hours from 1 to 720';
+  return null;
+};
+
+/** One administrator proposes the country's rules, citing the law; values left out keep their current setting. */
+export function proposeDualControlPolicy(input: { extra?: unknown; requireIdentityBinding?: unknown; pendingHours?: unknown; legalBasis?: unknown }, by: string, byId?: string, now = new Date()) {
   const d = db();
-  Object.assign(d, { extra: [...new Set(extra)], requireIdentityBinding: input.requireIdentityBinding === true, pendingHours: hours, adopted: true, by, at: now.toISOString(), basis });
-  recordAudit(by, 'dual-control.policy', 'DualControlPolicy', 'ok', `${extra.length} further step(s) · identity binding ${d.requireIdentityBinding ? 'required' : 'not required'} · proposals lapse after ${hours} h · ${basis.slice(0, 120)}`);
-  return dualControlPolicy();
+  const change: Partial<DualControlValues> = {
+    ...(input.extra !== undefined ? { extra: [...new Set((Array.isArray(input.extra) ? input.extra : []).map(String).map(x => x.trim()).filter(Boolean))] } : {}),
+    ...(input.requireIdentityBinding !== undefined ? { requireIdentityBinding: input.requireIdentityBinding === true } : {}),
+    ...(input.pendingHours !== undefined ? { pendingHours: Number(input.pendingHours) } : {}),
+  };
+  return proposePolicy(d.changes ??= {}, values(d), change, input.legalBasis, { by, ...(byId ? { byId } : {}), now, pendingHours: d.pendingHours, audit: AUDIT, context: 'Two-official rules for decisions', check, describe });
 }
+
+/** A different official confirms the proposal: the country's rules take effect. */
+export function confirmDualControlPolicy(by: string, byId?: string, now = new Date()) {
+  const d = db();
+  return confirmPolicy(d.changes ??= {}, {
+    by, ...(byId ? { byId } : {}), now, audit: AUDIT, requireIdentityBinding: d.requireIdentityBinding, describe,
+    adopt: (v: PolicyVersion<DualControlValues>) => Object.assign(d, v.values, { adopted: true, by: v.by, at: v.confirmed!.at, confirmedBy: v.confirmed!.by, citations: v.basis, basis: undefined }),
+  });
+}
+
+export const withdrawDualControlPolicy = (by: string, reason?: string) => withdrawPolicy(db().changes ??= {}, { by, ...(reason ? { reason } : {}), audit: AUDIT });
+export const lapseDualControlPolicy = (now = new Date()) => lapsePolicy(db().changes ??= {}, now, AUDIT);
 
 registerDualControlRules({ twoOfficials: needsTwoOfficials, pendingHours: () => db().pendingHours, requireIdentityBinding: () => db().requireIdentityBinding });

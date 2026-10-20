@@ -84,6 +84,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   read in the access log); others use the `taxpayer.status` exchange service.
   Liabilities are bills with a domain reference (`issueBill()`), reconciled
   from receipts once each.
+- Exchange services (`callService()`) answer an outside caller only for a
+  purpose approved for it and that service; an integration is approved (and
+  its scopes or purposes changed) by two officials
+  (`proposeIntegrationApproval()` / `confirmIntegrationApproval()`).
 - Education (`lib/education/`): schools are organisations (a standing in the
   `schools` register), never a second identity. Qualifications are recorded,
   corrected and revoked only through education cases; anyone else checks one
@@ -104,9 +108,22 @@ What has been built is locked. Work only upgrades it toward the vision in
   when it is made, and the sealed decision records the mapping and rule
   versions (`authority`, `rules`). A new procedure family joins the
   classification or names `authority.permitType` on its package.
+- Case-governed registers (civil, organisations, professions, tax,
+  education, immigration, customs, health, court hearings) change only in
+  their procedure module's effects; `lib/casework/register-writes.test.ts`
+  fails on any other file importing a changing function (listed exceptions
+  carry their reason) or touching a register's store. Loading an existing
+  organisations register (`lib/organisations/import.ts`) is proposed by one
+  official of the keeping authority and confirmed by a different one who can
+  sign, within the waiting period, under the approved mapping in production.
 - An approved mapping can be suspended in an emergency
   (`suspendMapping()`): no new decision under it; confirmed, reviewed and
-  lifted by a different official; periods from the country's policy.
+  lifted by a different official; periods and who may suspend from the
+  country's policy.
+- The country's own rule sets (dual-control rules, suspension rules) change
+  only through `lib/law/policy-change.ts`: proposed by one administrator
+  citing the laws register, confirmed by a different official, values left
+  out kept, every version kept. A new country rule set uses it too.
 - Two officials are needed for the platform minimum in
   `lib/casework/dual-control-policy.ts` whatever a procedure says; the
   country adds steps, never removes them. Dual control compares people
@@ -115,6 +132,9 @@ What has been built is locked. Work only upgrades it toward the vision in
 - The public professional check takes one person by full name (the number
   only narrows it), shows the profession's `publicFields`, is rate-limited
   and watched for harvesting; bulk checks go through `professional.standing`.
+  In postgres mode route rate limits and the harvest watch are shared by
+  every instance (`lib/ops/shared-limits.ts`); new runtime tables like them
+  join `SKIP_TABLES` in `lib/backup/state.ts` (never backed up).
 - A data restore keeps the event outbox and cursors, voids events after the
   restored point and raises `restoreepoch`; consumers re-read on
   `backup.restore` (docs/DISASTER_RECOVERY.md).

@@ -96,6 +96,17 @@ A Vercel deployment is a production build too: give a preview
 `CIVICOS_AUTH=open` (a demonstration) or `CIVICOS_SESSION_SECRET`.
 Leave `CIVICOS_TRUSTED_PROXIES` at 0 there (Vercel sets the caller's address).
 
+Vercel applies environment variables only to new deployments, so redeploy
+after changing any. Set `CIVICOS_MODE` (production, training or demo; unset,
+a production build runs as production and shows a banner). Each invocation
+may start a new server: keep state in a database (`CIVICOS_STATE=postgres`
+with `DATABASE_URL`), set `CIVICOS_SETUP_TOKEN` (a code written to one
+server's output does not reach the others), and point `CIVICOS_STATE_DIR` at
+`/tmp` (the deployment's own files are read-only). The `NEXT_PUBLIC_SUPABASE_*`
+values are written into browser code at build time. With
+`SUPABASE_SERVICE_ROLE_KEY` set, officials sign in through the substrate and
+no platform account is made unless `CIVICOS_LOCAL_ACCOUNTS=allow`.
+
 Sovereign deployment notes:
 
 - The app is designed to run on Node 18+ behind any reverse proxy.

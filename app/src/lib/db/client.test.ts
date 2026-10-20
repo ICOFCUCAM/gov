@@ -65,3 +65,17 @@ describe('__resetClients', () => {
     expect(publicClient()).not.toBeNull();
   });
 });
+
+describe('browser bundle', () => {
+  // Next.js writes NEXT_PUBLIC_ values into browser code only where they are named as literal
+  // process.env.NEXT_PUBLIC_… members; a lookup by a variable name stays undefined there, which
+  // left the substrate unavailable in every browser (the sign-in page's "not configured" card).
+  it('names the public variables literally, so the build writes them into browser code', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const src = readFileSync(fileURLToPath(new URL('./client.ts', import.meta.url)), 'utf8').replace(/^\s*\/\/.*$/gm, '');
+    expect(src).toContain('process.env.NEXT_PUBLIC_SUPABASE_URL');
+    expect(src).toContain('process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY');
+    expect(src).not.toMatch(/process\.env\[/);
+  });
+});

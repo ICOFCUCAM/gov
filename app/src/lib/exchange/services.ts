@@ -6,7 +6,8 @@
 // through /api/exchange/services/<id> with their integration key. The
 // provider applies its own rule and returns only the fields the service
 // defines (never a record); every call, allowed or refused, gets a signed
-// receipt in the exchange log with the declared purpose. Events (a
+// receipt in the exchange log with the declared purpose; an outside caller
+// may declare only a purpose approved for it and that service. Events (a
 // registered birth) reach permitted subscribers through the signed webhooks
 // of the event outbox; the directory lists them too.
 
@@ -19,6 +20,9 @@ import { verifyAward } from '@/lib/education/register';
 import { getProfessional, publicProfessional } from '@/lib/professions/register';
 import { getDeclaration } from '@/lib/customs/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
+import { integrationPurposes } from '@/lib/data/store/federation';
+import { purposeSlug } from './usage-policy';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 export interface Caller { kind: 'module' | 'integration'; id: string; name: string; institution?: string }
 export interface ServiceResult { status: number; result: string; data: Record<string, unknown> }
@@ -139,9 +143,31 @@ export async function callService(caller: Caller, serviceId: string, input: Reco
   const log = (status: number, result: string) => logExchange({ channel: 'service', feedId: `${caller.kind}:${caller.id}`, method: 'POST', path: `service:${serviceId}`, body: JSON.stringify({ purpose, input }), signature: 'absent', status, result: `${result} · purpose: ${purpose.slice(0, 120)}` });
   if (!s || s.kind !== 'query' || !s.handle) { const { receipt } = await log(404, 'no such query service'); return { status: 404, error: 'No such service', receipt }; }
   if (!purpose?.trim()) { const { receipt } = await log(400, 'no purpose stated'); return { status: 400, error: 'State the purpose of the request', receipt }; }
+  // Purposes approved for this caller and service. Outside callers
+  // (integrations) may state only a purpose two officials approved for them
+  // and this service (lib/data/store/federation.ts). An integration approved
+  // before purposes were recorded has none approved yet: refused in a
+  // production installation until two officials approve its purposes;
+  // allowed in demo and training, with the receipt noting "purposes not yet
+  // approved". Modules inside the installation (kind 'module') keep a stated
+  // purpose only: their purposes are fixed in code and reviewed with it.
+  let note = '';
+  if (caller.kind === 'integration') {
+    const allowed = integrationPurposes(caller.id, serviceId);
+    const stated = purposeSlug(purpose);
+    if (allowed.kind === 'unknown') { const { receipt } = await log(403, 'caller is not an approved integration'); return { status: 403, error: 'This caller is not an approved integration', receipt }; }
+    if (allowed.kind === 'legacy') {
+      if (!samplesAllowed()) { const { receipt } = await log(403, 'purposes not yet approved'); return { status: 403, error: `No purposes are approved yet for this integration and ${serviceId}: two officials approve them first`, receipt }; }
+      note = ' · purposes not yet approved';
+    } else if (!allowed.purposes.includes(stated)) {
+      const named = allowed.purposes.length ? allowed.purposes.join(', ') : 'none';
+      const { receipt } = await log(403, `purpose not approved (approved: ${named})`);
+      return { status: 403, error: `Purpose '${stated}' is not approved for this caller and ${serviceId} (approved: ${named})`, receipt };
+    }
+  }
   const r = s.handle(input, caller);
   // Only the fields the service defines.
   const data = Object.fromEntries(Object.entries(r.data).filter(([k]) => k in s.returns));
-  const { receipt } = await log(r.status, r.result);
+  const { receipt } = await log(r.status, r.result + note);
   return { status: r.status, data, receipt };
 }

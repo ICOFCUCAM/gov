@@ -13,7 +13,7 @@ import { setSovereign, listMinistries } from '@/lib/data/store';
 import { listAudit } from '@/lib/data/store/audit';
 import { recordVersion, confirmVersion, resetLaw } from '@/lib/law/register';
 import { resetTax } from '@/lib/tax/register';
-import { resetPermitAuthorities, draftMapping, approveMapping, suspendMapping, confirmSuspension, reviewSuspension, liftSuspension, raiseSuspensionAlerts, setSuspensionPolicy, suspensionPolicy, listMappings, mappingInForce } from './authority';
+import { resetPermitAuthorities, draftMapping, approveMapping, suspendMapping, confirmSuspension, reviewSuspension, liftSuspension, raiseSuspensionAlerts, proposeSuspensionPolicy, confirmSuspensionPolicy, suspenderRefusal, suspensionPolicy, listMappings, mappingInForce } from './authority';
 
 let TAX = '';
 const off = (id: string, role: 'officer' | 'signatory' = 'officer'): Actor => ({ id, name: `Tax ${id}`, scope: { id, role, institution: TAX } });
@@ -83,7 +83,17 @@ describe('emergency suspension of an authority mapping (G)', () => {
     expect(raiseSuspensionAlerts(late)).toEqual([]);
     expect(raiseSuspensionAlerts(new Date('2026-10-26T08:00:00Z'))).toEqual([{ permitType: 'tax-registration', version: 1, flag: 'review-overdue' }]);
     expect(mappingInForce('tax-registration', '2026-10-26')).toBeUndefined();
-    expect(setSuspensionPolicy({ confirmWithinHours: 24, reviewWithinDays: 14 }, 'Admin A')).toMatchObject({ error: /instrument/ });
-    expect(setSuspensionPolicy({ confirmWithinHours: 24, reviewWithinDays: 14, basis: 'Cabinet decision 12/2026' }, 'Admin A')).toMatchObject({ adopted: true, confirmWithinHours: 24 });
+    // The country's periods and who may suspend: proposed citing the law, confirmed by a different official.
+    expect(proposeSuspensionPolicy({ confirmWithinHours: 24, reviewWithinDays: 14 }, 'Admin A', 'aa', late)).toMatchObject({ error: /laws register/ });
+    const basis = [{ instrument: listMappings('tax-registration')[0]!.legalBasis[0]!.instrument, eId: 'sec_8' }];
+    expect(proposeSuspensionPolicy({ confirmWithinHours: 24, reviewWithinDays: 14, suspendBy: 'government-administrator', legalBasis: basis }, 'Admin A', 'aa', late)).toHaveProperty('expiresAt');
+    expect(suspensionPolicy()).toMatchObject({ confirmWithinHours: 72, adopted: false });
+    expect(confirmSuspensionPolicy('Admin A', 'aa', late)).toMatchObject({ error: /second, different official/ });
+    expect(confirmSuspensionPolicy('Admin B', 'ab', late)).toHaveProperty('confirmed');
+    expect(suspensionPolicy()).toMatchObject({ adopted: true, confirmWithinHours: 24, reviewWithinDays: 14, suspendBy: 'government-administrator', confirmedBy: 'Admin B', citations: [{ eId: 'sec_8' }] });
+    // Under that rule an institution's own administrator, or someone not signed in, may not suspend.
+    expect(suspenderRefusal({ institution: 'MIN-1' })).toMatch(/government-wide administrators/);
+    expect(suspenderRefusal(null)).toMatch(/sign in/);
+    expect(suspenderRefusal({})).toBeNull();
   });
 });

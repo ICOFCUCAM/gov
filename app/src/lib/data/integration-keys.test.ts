@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import { NextRequest } from 'next/server';
-import { registerIntegration, setIntegrationStatus, verifyIntegrationKey, rotateIntegrationKey, listIntegrations } from './store';
+import { registerIntegration, verifyIntegrationKey, rotateIntegrationKey, listIntegrations } from './store';
 import { resetRateLimits } from '@/lib/exchange/rate-limit';
 import { GET as verifyRoute } from '@/app/api/integrations/verify/route';
 
@@ -29,7 +30,7 @@ describe('integration API keys', () => {
   it('verifies on use: approved clients only, the right key, the granted scope', () => {
     const r = register(['permit:read']);
     expect(verifyIntegrationKey(bearer(r.apiKey))).toMatchObject({ ok: false, status: 403, error: expect.stringMatching(/pending/) });
-    setIntegrationStatus(r.id, 'approved', 'Official');
+    approveIntegration(r.id);
     expect(verifyIntegrationKey(bearer(r.apiKey))).toMatchObject({ ok: true, client: { id: r.id } });
     expect(verifyIntegrationKey(bearer(r.apiKey), 'payment:write')).toMatchObject({ ok: false, status: 403 });
     const forged = r.apiKey.slice(0, -1) + (r.apiKey.endsWith('A') ? 'B' : 'A');
@@ -39,7 +40,7 @@ describe('integration API keys', () => {
 
   it('enforces rateLimitRpm per key as a token bucket', () => {
     const r = register();
-    setIntegrationStatus(r.id, 'approved', 'Official');
+    approveIntegration(r.id);
     const c = listIntegrations().find(x => x.id === r.id)!;
     c.rateLimitRpm = 3;
     const t = Date.now();
@@ -50,7 +51,7 @@ describe('integration API keys', () => {
 
   it('rotates: the new key works, the old one stops', () => {
     const r = register();
-    setIntegrationStatus(r.id, 'approved', 'Official');
+    approveIntegration(r.id);
     const next = rotateIntegrationKey(r.id, 'Official');
     if ('error' in next) throw new Error(next.error);
     expect(verifyIntegrationKey(bearer(r.apiKey)).ok).toBe(false);
@@ -59,7 +60,7 @@ describe('integration API keys', () => {
 
   it('answers on the verify route with Retry-After when limited', async () => {
     const r = register();
-    setIntegrationStatus(r.id, 'approved', 'Official');
+    approveIntegration(r.id);
     listIntegrations().find(x => x.id === r.id)!.rateLimitRpm = 1;
     const call = () => verifyRoute(new NextRequest('http://localhost/api/integrations/verify', { headers: { authorization: bearer(r.apiKey) } }));
     const first = call();

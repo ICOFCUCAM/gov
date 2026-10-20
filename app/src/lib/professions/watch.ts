@@ -3,10 +3,17 @@
 // register, or asks far more than one person needs, is flagged once a day in
 // the audit chain as a prompt for review (never a conclusion). Callers are
 // kept only as a salted SHA-256 of their address or account, in memory
-// (protection, not records), and the counts are dropped after a day.
+// (protection, not records), and the counts are dropped after a day. On a
+// server running CIVICOS_STATE=postgres the counts are shared by every
+// instance in hourly windows (lib/ops/shared-limits.ts: a harvest spread
+// across servers is still seen, and flagged once a day); if the database
+// cannot answer, this server's own counts apply.
 
 import { createHash } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
+import { recordsBackend } from '@/lib/data/persist';
+import { logger } from '@/lib/ops/log';
+import { sharedWatch } from '@/lib/ops/shared-limits';
 
 const WINDOW_MS = 3_600_000;
 /** Lookups in an hour from one caller that suggest harvesting, and misses among them. */
@@ -31,4 +38,17 @@ export function noteCheck(caller: string, found: boolean, now = Date.now()): boo
   seen.flagged = day;
   recordAudit('System (register watch)', 'register.harvest.suspected', `Caller:${key}`, 'ok', `${seen.at.length} checks and ${seen.misses.length} misses in an hour on the professional register`);
   return true;
+}
+
+/** Note one public check: counted across instances in postgres mode, else on this server. Returns true when the caller has just been flagged. */
+export async function watchCheck(caller: string, found: boolean, now = Date.now()): Promise<boolean> {
+  const sql = recordsBackend()?.sql;
+  if (sql) {
+    try {
+      const flag = await sharedWatch(sql, caller, found, HARVEST, now);
+      if (flag) recordAudit('System (register watch)', 'register.harvest.suspected', `Caller:${flag.key}`, 'ok', `${flag.lookups} checks and ${flag.misses} misses in an hour on the professional register (all instances)`);
+      return !!flag;
+    } catch (e) { logger.warn('register.watch.shared_unavailable', { message: (e as Error).message }); }
+  }
+  return noteCheck(caller, found, now);
 }

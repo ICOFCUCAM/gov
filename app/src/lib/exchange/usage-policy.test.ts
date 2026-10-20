@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import { NextRequest } from 'next/server';
 import { parseUsagePolicy, usageRefusal, grantAsOdrl } from './usage-policy';
-import { registerIntegration, setIntegrationStatus, proposeGrant, setGrantStatus, listAudit, listGrants } from '@/lib/data/store';
+import { registerIntegration, proposeGrant, setGrantStatus, listAudit, listGrants } from '@/lib/data/store';
 import { resetRateLimits } from './rate-limit';
 import { POST as federationPost } from '@/app/api/federation/exchange/route';
 import { POST as proposePost } from '@/app/api/federation/propose/route';
@@ -51,7 +52,7 @@ describe('usage policies enforced at the exchange', () => {
 
     const reg = registerIntegration({ kind: 'integration', name: `p-${tenant}`, ownerOrg: 'Partner', contact: 'x@y', scopes: ['federation:exchange'] });
     if ('error' in reg) throw new Error(reg.error);
-    setIntegrationStatus(reg.id, 'approved', 'Official');
+    approveIntegration(reg.id);
     const call = (body: Record<string, unknown>) => federationPost(new NextRequest('http://localhost/api/federation/exchange', { method: 'POST', headers: { authorization: `Bearer ${reg.apiKey}` }, body: JSON.stringify({ tenant, scope: 'permit:read', ...body }) }));
 
     const off = await call({ purpose: 'marketing' });
@@ -77,7 +78,7 @@ describe('usage policies enforced at the exchange', () => {
     setGrantStatus(g.id, 'approved', 'Official');
     const reg = registerIntegration({ kind: 'integration', name: `l-${tenant}`, ownerOrg: 'Partner', contact: 'x@y', scopes: ['federation:exchange'] });
     if ('error' in reg) throw new Error(reg.error);
-    setIntegrationStatus(reg.id, 'approved', 'Official');
+    approveIntegration(reg.id);
     const res = await federationPost(new NextRequest('http://localhost/api/federation/exchange', { method: 'POST', headers: { authorization: `Bearer ${reg.apiKey}` }, body: JSON.stringify({ tenant, scope: 'permit:read', purpose: 'oversight' }) }));
     expect(res.status).toBe(403);
     expect((await res.json()).reason).toMatch(/no usage policy/);

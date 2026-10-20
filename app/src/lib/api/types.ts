@@ -323,6 +323,41 @@ export interface IntegrationClient {
   keyIssuedAt?: ISODate;
   lastUsedAt?: ISODate;
   calls?: number;
+  /**
+   * Per exchange service (its id, e.g. `person.verify`): the purposes this
+   * integration may state when calling it (short slugs), as approved by two
+   * officials. Absent on an integration approved before purposes were
+   * recorded (see `approval`).
+   */
+  purposes?: Record<string, string[]>;
+  /** The two-official approval in force; absent on an integration approved before approvals needed two officials. */
+  approval?: IntegrationApprovalRecord;
+  /** A proposed approval (or change of scopes and purposes) waiting for a different official. */
+  pendingApproval?: IntegrationApprovalProposal;
+  /** Every proposal, confirmed, lapsed, superseded or withdrawn, oldest first. */
+  approvalHistory?: IntegrationApprovalRecord[];
+}
+
+/** What an integration is approved for: its scopes and, per exchange service, the purposes it may state. */
+export interface IntegrationTerms {
+  scopes: string[];
+  purposes: Record<string, string[]>;
+}
+
+export interface IntegrationApprovalProposal extends IntegrationTerms {
+  by: string;
+  byId?: string;
+  at: ISODate;
+  note?: string;
+}
+
+export interface IntegrationApprovalRecord extends IntegrationApprovalProposal {
+  outcome: 'confirmed' | 'lapsed' | 'superseded' | 'withdrawn';
+  closedAt: ISODate;
+  confirmedBy?: string;
+  confirmedById?: string;
+  independence?: 'identity-provider' | 'accounts-only' | 'unverified';
+  withdrawnBy?: string;
 }
 
 export interface IntegrationRegistered {

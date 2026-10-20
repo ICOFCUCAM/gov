@@ -14,9 +14,15 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const URL_KEY  = 'NEXT_PUBLIC_SUPABASE_URL';
-const ANON_KEY = 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY';
-const SRV_KEY  = 'SUPABASE_SERVICE_ROLE_KEY';
+// Read as literal `process.env.NEXT_PUBLIC_…` member expressions: Next.js
+// writes NEXT_PUBLIC_ values into the browser bundle at build time only where
+// the code names them this way. A lookup by a variable name
+// (process.env[KEY]) is left undefined in the browser, so the substrate was
+// never available there (the sign-in page showed "not configured" with both
+// variables set). client.test.ts keeps it literal. Changing either value
+// therefore needs a new build (on Vercel, a redeploy).
+const publicUrl = () => process.env.NEXT_PUBLIC_SUPABASE_URL;
+const publicKey = () => process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 // We intentionally type these as the un-narrowed SupabaseClient — the
 // schema is set at construction time and types are hand-written in
@@ -28,8 +34,8 @@ let _serverState: { client: DbClient | null } | null = null;
 
 export function publicClient(): DbClient | null {
   if (_publicState) return _publicState.client;
-  const url  = process.env[URL_KEY];
-  const anon = process.env[ANON_KEY];
+  const url  = publicUrl();
+  const anon = publicKey();
   if (!url || !anon) { _publicState = { client: null }; return null; }
   // Persist sessions only in browser contexts — the same client is used
   // by SSR API routes where window is absent, and Supabase's localStorage
@@ -53,8 +59,8 @@ export function serverClient(): DbClient | null {
   if (typeof window !== 'undefined') {
     throw new Error('serverClient() called in browser; service-role key must never reach the client.');
   }
-  const url = process.env[URL_KEY];
-  const srv = process.env[SRV_KEY];
+  const url = publicUrl();
+  const srv = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !srv) { _serverState = { client: null }; return null; }
   const client = createClient(url, srv, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -74,8 +80,8 @@ export function serverClient(): DbClient | null {
  * when the substrate isn't configured.
  */
 export function tokenScopedClient(accessToken: string): DbClient | null {
-  const url  = process.env[URL_KEY];
-  const anon = process.env[ANON_KEY];
+  const url  = publicUrl();
+  const anon = publicKey();
   if (!url || !anon) return null;
   return createClient(url, anon, {
     auth: { persistSession: false, autoRefreshToken: false },

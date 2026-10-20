@@ -1168,6 +1168,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      rate_bucket: {
+        Row: {
+          at_ms: number
+          key: string
+          last_ok: boolean
+          tokens: number
+        };
+        Insert: {
+          at_ms: number
+          key: string
+          last_ok: boolean
+          tokens: number
+        };
+        Update: {
+          at_ms?: number
+          key?: string
+          last_ok?: boolean
+          tokens?: number
+        };
+        Relationships: [];
+      };
       record_counter: {
         Row: {
           name: string
@@ -1213,6 +1234,57 @@ export type Database = {
           store?: string
           updated_at?: string
           version?: number
+        };
+        Relationships: [];
+      };
+      register_watch: {
+        Row: {
+          caller: string
+          lookups: number
+          misses: number
+          window_start: number
+        };
+        Insert: {
+          caller: string
+          lookups?: number
+          misses?: number
+          window_start: number
+        };
+        Update: {
+          caller?: string
+          lookups?: number
+          misses?: number
+          window_start?: number
+        };
+        Relationships: [];
+      };
+      register_watch_flag: {
+        Row: {
+          caller: string
+          day: string
+        };
+        Insert: {
+          caller: string
+          day: string
+        };
+        Update: {
+          caller?: string
+          day?: string
+        };
+        Relationships: [];
+      };
+      runtime_secret: {
+        Row: {
+          name: string
+          value: string
+        };
+        Insert: {
+          name: string
+          value: string
+        };
+        Update: {
+          name?: string
+          value?: string
         };
         Relationships: [];
       };

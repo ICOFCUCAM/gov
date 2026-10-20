@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import { NextRequest } from 'next/server';
-import { registerIntegration, setIntegrationStatus, renameMinistry, listMinistries, auditHead, subscribeWebhook } from '@/lib/data/store';
+import { registerIntegration, renameMinistry, listMinistries, auditHead, subscribeWebhook } from '@/lib/data/store';
 import { GET } from './route';
 
 const get = (q = '', auth?: string) =>
@@ -9,7 +10,7 @@ const get = (q = '', auth?: string) =>
 function key(scopes: string[], approve = true): string {
   const r = registerIntegration({ kind: 'integration', name: `mirror-${Math.random()}`, ownerOrg: 'civic-api', contact: 'ops@example.gov', scopes });
   if ('error' in r) throw new Error(r.error);
-  if (approve) setIntegrationStatus(r.id, 'approved', 'Administrator');
+  if (approve) approveIntegration(r.id);
   return r.apiKey;
 }
 

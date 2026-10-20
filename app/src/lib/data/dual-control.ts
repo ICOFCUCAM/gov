@@ -45,5 +45,17 @@ export function independenceOf(a?: string, b?: string): 'identity-provider' | 'a
   return x.bound && y.bound ? 'identity-provider' : 'accounts-only';
 }
 
+/**
+ * The country's dual-control waiting period in hours (dualControlPolicy()
+ * .pendingHours, kept by lib/casework/dual-control-policy.ts on
+ * `__civicosDualControl`), read here for stores that cannot import the case
+ * engine that module brings with it (integration approvals in
+ * ./store/federation.ts); the platform default until the country sets one.
+ */
+export function dualControlPendingHours(): number {
+  const h = (globalThis as unknown as { __civicosDualControl?: { pendingHours?: number } }).__civicosDualControl?.pendingHours;
+  return typeof h === 'number' && h > 0 ? h : DUAL_CONTROL_HOURS;
+}
+
 /** True when a dual-control proposal made at `at` has lapsed unconfirmed. */
 export const proposalLapsed = (at: string, now = Date.now()): boolean => now - Date.parse(at) > DUAL_CONTROL_HOURS * 3600_000;

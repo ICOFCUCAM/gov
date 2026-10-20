@@ -16,7 +16,8 @@ import { watchAccess } from '@/lib/records/access-watch';
 import { reconcileTaxPayments } from '@/lib/tax/register';
 import { lapseRegistrations } from '@/lib/professions/register';
 import { reconcileCustomsPayments } from '@/lib/customs/register';
-import { raiseSuspensionAlerts } from '@/lib/permits/authority';
+import { raiseSuspensionAlerts, lapseSuspensionPolicy } from '@/lib/permits/authority';
+import { lapseDualControlPolicy } from '@/lib/casework/dual-control-policy';
 import { listReceipts } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
@@ -32,6 +33,8 @@ export async function GET(req: Request) {
   const customs = reconcileCustomsPayments(listReceipts());
   const suspensions = raiseSuspensionAlerts();
   const proposals = lapseProposals();
+  // Proposed changes to the country's two-official and suspension rules that nobody confirmed in time.
+  lapseDualControlPolicy(); lapseSuspensionPolicy();
   return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length, proposalsLapsed: proposals.length });
 }
 

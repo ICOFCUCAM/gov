@@ -10,16 +10,29 @@ import type { FederationGrant, UsagePolicy } from '@/lib/api/types';
 
 export const MAX_RETENTION_DAYS = 3650;
 
-const slug = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '-');
+/** A purpose as it is kept and compared: lower case, spaces as hyphens ("Identity card enrolment" → "identity-card-enrolment"). */
+export const purposeSlug = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '-');
+const slug = purposeSlug;
+
+/**
+ * Check and normalise a list of purposes (an array or a comma-separated
+ * string): up to 10 short slugs, at least one. Used by grant usage policies
+ * and by the purposes approved for an integration per exchange service.
+ */
+export function parsePurposes(raw: unknown): string[] | { error: string } {
+  const list = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(',') : [];
+  const purposes = Array.from(new Set(list.filter((p): p is string => typeof p === 'string').map(slug).filter(Boolean)));
+  if (!purposes.length) return { error: 'Name at least one purpose the data may be used for' };
+  if (purposes.length > 10 || purposes.some(p => !/^[a-z0-9][a-z0-9-]{0,59}$/.test(p))) return { error: 'Purposes are up to 10 short words (letters, digits, hyphens)' };
+  return purposes;
+}
 
 /** Check and normalise a usage policy from a request; an error names what is wrong. */
 export function parseUsagePolicy(raw: unknown): UsagePolicy | { error: string } {
   if (!raw || typeof raw !== 'object') return { error: 'State the usage policy: purposes, retention in days and whether onward sharing is allowed' };
   const r = raw as Record<string, unknown>;
-  const list = Array.isArray(r.purposes) ? r.purposes : typeof r.purposes === 'string' ? r.purposes.split(',') : [];
-  const purposes = Array.from(new Set(list.filter((p): p is string => typeof p === 'string').map(slug).filter(Boolean)));
-  if (!purposes.length) return { error: 'Name at least one purpose the data may be used for' };
-  if (purposes.length > 10 || purposes.some(p => !/^[a-z0-9][a-z0-9-]{0,59}$/.test(p))) return { error: 'Purposes are up to 10 short words (letters, digits, hyphens)' };
+  const purposes = parsePurposes(r.purposes);
+  if ('error' in purposes) return purposes;
   const days = Number(r.retentionDays);
   if (!Number.isInteger(days) || days < 1 || days > MAX_RETENTION_DAYS) return { error: `Retention is a whole number of days from 1 to ${MAX_RETENTION_DAYS}` };
   if (typeof r.onwardSharing !== 'boolean') return { error: 'Say whether the partner may share the data onward (true or false)' };
