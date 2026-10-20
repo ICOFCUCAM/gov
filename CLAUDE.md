@@ -62,6 +62,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   public check (`/registers`) and the twin carry `publicOrganisation()`;
   representatives only on the full record under `canReadOrganisation()`.
   Referrals between institutions are cases (`lib/casework/referral.ts`).
+- Immigration (`lib/immigration/`) holds visas and residence permits only;
+  read by the immigration authority (`canReadImmigration()`, every read in
+  the access log). Other institutions learn status only through the
+  `immigration.status` exchange service, never the file. Do not add asylum,
+  border enforcement or any risk score without the safeguards of directions
+  §15 and an independent legal review.
 
 ## Entry flow
 
