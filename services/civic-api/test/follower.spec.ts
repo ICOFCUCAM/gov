@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { MirrorFollower, freshRegisters, onlyRegisters, registersFor, toBatch, type MirrorBatch, type MirrorMark, type MirrorState, type MirrorStore, type PlatformSnapshot } from '../src/mirror/follower';
+import { PRUNED_ON_RESTORE, MirrorFollower, freshRegisters, onlyRegisters, registersFor, toBatch, type MirrorBatch, type MirrorMark, type MirrorState, type MirrorStore, type PlatformSnapshot } from '../src/mirror/follower';
 
 class MemoryStore implements MirrorStore {
   st: MirrorState = { cursor: 0, lastEventAt: null, lastFullSyncAt: null, lastError: null };
@@ -23,14 +23,29 @@ class MemoryStore implements MirrorStore {
     this.seqs = fresh.seqs;
     const batch = onlyRegisters(all, fresh.write);
     this.writes.push({ batch, mark });
-    for (const [k, v] of Object.entries(batch)) {
-      const list = Array.isArray(v) ? v : v && typeof v === 'object' ? Object.values(v).flat() : [];
-      for (const r of list as { id: string }[]) this.rows.set(`${k}:${r.id}`, r);
+    const lists = (b: MirrorBatch): [string, { id: string }[]][] => Object.entries(b).flatMap(([k, v]) => k === 'payments' && v
+      ? [['bills', (v as { bills: { id: string }[] }).bills], ['receipts', (v as { receipts: { id: string }[] }).receipts]] as [string, { id: string }[]][]
+      : [[k, (Array.isArray(v) ? v : []) as { id: string }[]]]);
+    let notes: string[] = [];
+    if (mark.restore) {
+      // The same rule as the Prisma store: rows of a register the restored read carries but no longer holds leave the mirror; receipts are kept.
+      const removed: string[] = [];
+      for (const [k, list] of lists(batch)) {
+        const reg = k === 'bills' || k === 'receipts' ? 'payments' : k;
+        if (!PRUNED_ON_RESTORE.includes(reg as never)) continue;
+        const keep = new Set(list.map(r => `${k}:${r.id}`));
+        for (const key of [...this.rows.keys()].filter(x => x.startsWith(`${k}:`) && !keep.has(x))) {
+          if (reg === 'payments') { notes.push(`${key} kept for reconciliation`); continue; }
+          this.rows.delete(key); removed.push(key);
+        }
+      }
+      if (removed.length) notes = [`restore removed rows the platform no longer holds: ${removed.join(', ')}`, ...notes];
     }
+    for (const [k, list] of lists(batch)) for (const r of list) this.rows.set(`${k}:${r.id}`, r);
     this.st.cursor = mark.restore ? mark.cursor : Math.max(this.st.cursor, mark.cursor);
     if (mark.event) { this.applied.set(mark.event.id, mark.event.auditSeq); this.st.lastEventAt = 'now'; }
     if (mark.fullSyncAt) this.st.lastFullSyncAt = mark.fullSyncAt.toISOString();
-    this.st.lastError = null;
+    this.st.lastError = notes.length ? notes.join('; ') : null;
   }
 }
 
@@ -237,4 +252,33 @@ test('a platform restore: the restore event re-reads every register and resets t
   assert.equal((store.rows.get('institutions:min-health') as { name: string }).name, 'Name after the restore');
   // The restore event delivered again changes nothing.
   assert.equal((await f.receive(restore.headers, restore.raw)).body.reason, 'already applied');
+});
+
+test('a platform restore removes the mirrored rows the restored platform no longer holds, and keeps payment records for reconciliation', async () => {
+  const store = new MemoryStore();
+  const f = new MirrorFollower(store, { base, key: KEY, secret: SECRET });
+  feedCalls = []; feedStatus = 200;
+  // After the backup the platform recorded a second permit, a bill and a receipt for it.
+  const later = snap(90);
+  later.registers.permits = [...later.registers.permits!, { id: 'PM-2', type: 'food-handling', title: 'Stall', applicantName: 'B', municipality: 'M', status: 'submitted', fields: {}, timeline: [] }];
+  later.registers.payments = { bills: [...later.registers.payments!.bills, { id: 'B-2', kind: 'permit-fee', description: 'Fee', amountMinor: 500, currency: 'KES', dueDate: '2026-11-01T00:00:00.000Z', status: 'paid' }],
+    receipts: [{ id: 'R-2', billId: 'B-2', kind: 'payment', payload: {}, amountMinor: 500, currency: 'KES', rail: 'bank', prevHash: '0', hash: 'h2', createdAt: '2026-10-19T00:00:00.000Z' }] } as never;
+  snapshot = later;
+  await f.fullSync();
+  assert.ok(store.rows.has('permits:PM-2') && store.rows.has('bills:B-2') && store.rows.has('receipts:R-2'));
+
+  // The platform restores the backup taken before them.
+  snapshot = snap(61);
+  const restore = signed({ ...event('evt-restore-2', 'backup.restore', 61), restoreepoch: 1 });
+  assert.equal((await f.receive(restore.headers, restore.raw)).body.applied, true);
+  assert.ok(!store.rows.has('permits:PM-2'), 'a permit the restore took back leaves the mirror');
+  assert.ok(store.rows.has('permits:PM-1') && store.rows.has('bills:B-1'), 'rows the restored platform holds stay');
+  assert.ok(store.rows.has('receipts:R-2') && store.rows.has('bills:B-2'), 'payment records are never deleted');
+  assert.match(String(store.st.lastError), /removed rows the platform no longer holds: permits:PM-2;.*bills:B-2 kept for reconciliation.*receipts:R-2 kept for reconciliation/);
+
+  // An ordinary full read (no restore) removes nothing, even of a register it carries.
+  snapshot = snap(62);
+  store.rows.set('permits:PM-9', { id: 'PM-9' });
+  await f.fullSync();
+  assert.ok(store.rows.has('permits:PM-9'));
 });

@@ -6,6 +6,6 @@
     "incremental": false,
     "sourceMap": false
   },
-  "include": ["src/common/**/*.ts", "src/mirror/follower.ts", "test/**/*.ts"],
+  "include": ["src/common/**/*.ts", "src/mirror/follower.ts", "src/mirror/prisma-store.ts", "test/**/*.ts"],
   "exclude": ["node_modules", "dist", "dist-test"]
 }

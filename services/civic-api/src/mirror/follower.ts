@@ -117,7 +117,9 @@ export interface MirrorMark {
   /**
    * The platform restored a backup: its audit sequence started again from the
    * restored point, so this write sets the cursor and the registers' read
-   * sequences to the new read instead of keeping the higher ones.
+   * sequences to the new read instead of keeping the higher ones, and the
+   * platform tenant's rows of the registers in the batch (PRUNED_ON_RESTORE)
+   * that the restored read no longer holds are removed.
    */
   restore?: boolean;
   event?: { id: string; auditSeq: number; type: string };
@@ -141,6 +143,16 @@ export function freshRegisters(b: MirrorBatch, seqs: Record<string, number>, dat
   for (const r of write) next[r] = dataSeq;
   return { write, stale: regs.filter(r => !write.includes(r)), seqs: next };
 }
+
+/**
+ * Registers whose mirrored rows live in the platform's own tenant, so that
+ * after a platform restore the rows a restored read no longer holds can be
+ * removed. Releases and configuration bundles are catalogue rows without a
+ * tenant (rows from before the mirror share their tables) and are left as
+ * they are; payment records (bills and receipts) are kept and named for
+ * reconciliation, since receipts are append-only in civic-api.
+ */
+export const PRUNED_ON_RESTORE: RegisterName[] = ['institutions', 'permits', 'payments', 'incidents', 'deployments', 'backups', 'lifecycle', 'integrations', 'grants', 'webhooks'];
 
 /** The batch with only the registers named (tenants kept). */
 export function onlyRegisters(b: MirrorBatch, keep: RegisterName[]): MirrorBatch {
