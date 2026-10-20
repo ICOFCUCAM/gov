@@ -65,7 +65,7 @@ describe('buttons and links that do nothing', () => {
   });
 
   it('NotYetButton is disabled and says why, on hover and to screen readers', () => {
-    const html = renderToStaticMarkup(React.createElement(NotYetButton, { reason: 'no radio system is connected', className: 'x', children: 'Open radio console' }));
+    const html = renderToStaticMarkup(React.createElement(NotYetButton, { reason: 'no radio system is connected', className: 'x' }, 'Open radio console'));
     expect(html).toContain('disabled');
     expect(html).toContain(`title="${NOT_YET}: no radio system is connected"`);
     expect(html).toContain('class="sr-only"');

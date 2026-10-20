@@ -93,7 +93,7 @@ export function RegisterRecords({ app, mode }: { app: AppIdentity; mode: Install
  * Sample strip. Production: folded away, said to be not connected, opened only
  * on request (and only then rendered), so no simulated figure reads as the nation's.
  */
-export function SimulatedView({ mode, children }: { mode: InstallationMode; children: React.ReactNode }) {
+export function SimulatedView({ mode, children }: { mode: InstallationMode; children?: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   if (mode !== 'production') {
     return (

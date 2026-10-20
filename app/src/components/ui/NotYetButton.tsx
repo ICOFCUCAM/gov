@@ -13,7 +13,7 @@ export function NotYetButton({ reason, className = '', style, children }: {
   reason: string;
   className?: string;
   style?: React.CSSProperties;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   const id = React.useId();
   return (

@@ -54,14 +54,14 @@ describe('records an institution application reads', () => {
 describe('the simulation screens', () => {
   const child = React.createElement('p', null, 'GENERATED');
   it('production: folded away, said to be not connected, not rendered until opened', () => {
-    const html = renderToStaticMarkup(React.createElement(SimulatedView, { mode: 'production', children: child }));
+    const html = renderToStaticMarkup(React.createElement(SimulatedView, { mode: 'production' }, child));
     expect(html).toContain('<details');
     expect(html).toContain('Not connected');
     expect(html).not.toContain('GENERATED');
   });
   it('demo and training: shown under a Sample marker', () => {
     for (const mode of ['demo', 'training'] as const) {
-      const html = renderToStaticMarkup(React.createElement(SimulatedView, { mode, children: child }));
+      const html = renderToStaticMarkup(React.createElement(SimulatedView, { mode }, child));
       expect(html).toContain('GENERATED');
       expect(html).toContain('Sample');
     }

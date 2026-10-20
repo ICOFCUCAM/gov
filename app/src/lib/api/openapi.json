@@ -19380,7 +19380,9 @@
                         "label": "Example",
                         "nationalRisk": 1,
                         "coordinatingMinistries": 1,
-                        "cascadeRisks": 1
+                        "cascadeRisks": 1,
+                        "basis": "records",
+                        "source": "string"
                       },
                       "nodes": [
                         {
@@ -19526,6 +19528,7 @@
                       "generatedAt": "2026-01-15T09:30:00.000Z",
                       "classification": "string",
                       "environment": "string",
+                      "samples": true,
                       "indicators": [
                         {
                           "label": "Example",
@@ -73559,6 +73562,18 @@
               },
               "cascadeRisks": {
                 "type": "number"
+              },
+              "basis": {
+                "type": "string",
+                "enum": [
+                  "records",
+                  "sample"
+                ],
+                "description": "What the posture rests on: 'records' (recorded incidents and real queue items only; a production installation) or 'sample' (also the generated pressure model; demo and training). Screens mark a 'sample' posture."
+              },
+              "source": {
+                "type": "string",
+                "description": "Where the posture comes from, in words (lib/twin/signal.ts)."
               }
             },
             "required": [
@@ -73761,6 +73776,10 @@
           },
           "environment": {
             "type": "string"
+          },
+          "samples": {
+            "type": "boolean",
+            "description": "Whether this installation may show sample figures (lib/ops/mode.ts samplesAllowed()); false in production."
           },
           "indicators": {
             "type": "array",
