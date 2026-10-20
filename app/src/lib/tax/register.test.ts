@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { registerTaxpayer, fileReturn, recordAssessment, varyAssessment, account, reconcileTaxPayments, getReturn, resetTax, taxCounts } from './register';
 
 describe('tax register', () => {
@@ -25,5 +25,14 @@ describe('tax register', () => {
     varyAssessment(a.id, 70_000, 'Objection upheld in part', 'c6', 'Objections officer');
     expect(account(t.id, 'income').balanceMinor).toBe(30_000);
     expect(taxCounts()).toMatchObject({ taxpayers: { 'organisation:active': 1 }, assessments: { entered: 1 } });
+  });
+
+  it('never posts a stand-in payment in production', () => {
+    const t = registerTaxpayer({ party: { kind: 'person', id: 'BR-77', name: 'P' }, taxTypes: ['income'] }, 'c1', 'Officer') as { id: string; tin: string };
+    const a = recordAssessment({ taxpayer: t.id, taxType: 'income', period: '2025', baseMinor: 1000, amountMinor: 100, currency: 'USD', method: { kind: 'entered', reasons: 'r' }, case: 'c2', by: 'Assessor' }) as { reference: string };
+    vi.stubEnv('CIVICOS_MODE', 'production');
+    expect(reconcileTaxPayments([{ id: 'PR-s', reference: a.reference, amountMinor: 100, currency: 'USD', paidAt: '2026-01-01', rail: 'stand-in', simulated: true }]).posted).toBe(0);
+    expect(account(t.id, 'income').balanceMinor).toBe(100);
+    vi.unstubAllEnvs();
   });
 });

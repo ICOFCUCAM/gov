@@ -18,6 +18,7 @@
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
+import { samplesAllowed } from '@/lib/ops/mode';
 import type { Citation } from '@/lib/law/register';
 
 export interface TaxpayerRef { kind: 'person' | 'organisation'; id: string; name: string }
@@ -195,11 +196,13 @@ export function account(taxpayerId: string, taxType: string): { entries: LedgerE
  * `tax:` reference, from the citizen's bill or a recorded transfer). Each
  * receipt is posted once.
  */
-export function reconcileTaxPayments(receipts: { id: string; reference?: string; amountMinor: number; currency: string; paidAt: string; rail: string }[], by = 'System (reconciliation)'): { posted: number; unmatched: string[] } {
+export function reconcileTaxPayments(receipts: { id: string; reference?: string; amountMinor: number; currency: string; paidAt: string; rail: string; simulated?: boolean }[], by = 'System (reconciliation)'): { posted: number; unmatched: string[] } {
   const d = db();
   let posted = 0; const unmatched: string[] = [];
   for (const r of receipts) {
     if (!r.reference?.startsWith('tax:') || d.posted.includes(r.id)) continue;
+    // A stand-in payment (no money moved) never counts in production.
+    if (r.simulated && !samplesAllowed()) continue;
     const a = d.assessments.find(x => x.reference === r.reference);
     if (!a) { unmatched.push(r.id); continue; }
     post(a.taxpayer, a.taxType, { at: r.paidAt, kind: 'payment', amountMinor: -r.amountMinor, currency: r.currency, reference: a.reference, by, reason: `Payment ${r.id} by ${r.rail}` });

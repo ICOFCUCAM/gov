@@ -19,6 +19,7 @@
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
+import { samplesAllowed } from '@/lib/ops/mode';
 import type { Citation } from '@/lib/law/register';
 
 export type Direction = 'import' | 'export' | 'transit';
@@ -206,11 +207,13 @@ export function attachReleaseDecision(number: string, decision: string): void {
 }
 
 /** Post the payments that arrived for customs duty (receipts with a `customs:` reference), each once. */
-export function reconcileCustomsPayments(receipts: { id: string; reference?: string; amountMinor: number; currency: string }[], by = 'System (reconciliation)'): { posted: number; unmatched: string[] } {
+export function reconcileCustomsPayments(receipts: { id: string; reference?: string; amountMinor: number; currency: string; simulated?: boolean }[], by = 'System (reconciliation)'): { posted: number; unmatched: string[] } {
   const d = db();
   let posted = 0; const unmatched: string[] = [];
   for (const r of receipts) {
     if (!r.reference?.startsWith('customs:') || d.posted.includes(r.id)) continue;
+    // A stand-in payment (no money moved) never counts in production.
+    if (r.simulated && !samplesAllowed()) continue;
     const dec = d.declarations.find(x => x.assessment?.reference === r.reference);
     if (!dec?.assessment || r.currency !== dec.currency) { unmatched.push(r.id); continue; }
     dec.assessment.paidMinor += r.amountMinor;

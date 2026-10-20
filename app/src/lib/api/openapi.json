@@ -30566,6 +30566,7 @@
         ],
         "operationId": "get_payments",
         "summary": "GET /api/payments",
+        "description": "/api/payments — bills and receipts. GET: the bills the signed-in official may see (general bills, and the bills of liabilities their own institution issued: tax and customs bills are confidential to their issuer) with their receipts. POST { billId, rail? }: the platform's stand-in payment (integration register 1.8), which moves no money: only in demonstration and training installations, never for a tax or customs liability; in production payments arrive from the payment provider or bank.",
         "parameters": [],
         "responses": {
           "200": {
@@ -30649,6 +30650,7 @@
         ],
         "operationId": "post_payments",
         "summary": "POST /api/payments",
+        "description": "/api/payments — bills and receipts. GET: the bills the signed-in official may see (general bills, and the bills of liabilities their own institution issued: tax and customs bills are confidential to their issuer) with their receipts. POST { billId, rail? }: the platform's stand-in payment (integration register 1.8), which moves no money: only in demonstration and training installations, never for a tax or customs liability; in production payments arrive from the payment provider or bank.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -30662,6 +30664,9 @@
                   },
                   "rail": {
                     "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
                   }
                 }
               },
@@ -30670,7 +30675,8 @@
                   "summary": "Generated from the schema",
                   "value": {
                     "billId": "ID-0001",
-                    "rail": "string"
+                    "rail": "string",
+                    "by": "A. Official"
                   }
                 }
               }
@@ -30707,7 +30713,8 @@
                         "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                         "reference": "string",
                         "railReference": "string",
-                        "recordedBy": "A. Official"
+                        "recordedBy": "A. Official",
+                        "simulated": true
                       }
                     }
                   }
@@ -74291,6 +74298,10 @@
           "recordedBy": {
             "type": "string",
             "description": "The official who recorded a payment that arrived outside the platform."
+          },
+          "simulated": {
+            "type": "boolean",
+            "description": "Made by the platform's stand-in payment (no money moved; integration register 1.8): never counted as a payment in production."
           }
         },
         "required": [
@@ -83453,6 +83464,10 @@
           },
           "idempotencyKey": {
             "type": "string"
+          },
+          "confirmIdempotencyKey": {
+            "type": "string",
+            "description": "The confirming official's own key on a four-eyes step, so a repeated confirmation is recognised too."
           }
         },
         "required": [

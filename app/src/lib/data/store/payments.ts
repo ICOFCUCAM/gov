@@ -16,7 +16,32 @@ export function listReceipts(): PaymentReceipt[] {
   return db.receipts;
 }
 
-export function payBill(billId: string, rail: string): PaymentReceipt | { error: string } {
+export const getBill = (id: string): Bill | undefined => db.bills.find(b => b.id === id);
+
+/**
+ * The bills a viewer may see. A bill raised for a liability with a named
+ * payer (a tax assessment, customs duty) is confidential to the institution
+ * that issued it (tax secrecy, commercial confidentiality); the general bills
+ * without a payer are shown to everyone who sees payments. The citizen's
+ * wallet shows only those until citizens' identity is linked to payers.
+ */
+export function billsFor(viewer: { institution?: string } | null): Bill[] {
+  return db.bills.filter(b => !b.payer || (!!viewer?.institution && b.issuer === viewer.institution));
+}
+
+/** The receipts of the bills a viewer may see (by bill or by liability reference). */
+export function receiptsVisibleTo(viewer: { institution?: string } | null): PaymentReceipt[] {
+  const bills = billsFor(viewer);
+  const ids = new Set(bills.map(b => b.id)), refs = new Set(bills.map(b => b.reference).filter(Boolean));
+  return db.receipts.filter(r => ids.has(r.billId) || (r.reference && refs.has(r.reference)) || (!r.reference && !r.billId));
+}
+
+/**
+ * The platform's stand-in payment (integration register 1.8): marks a bill
+ * paid without money moving. Its receipts are marked simulated and are never
+ * counted by reconciliation in production; the route refuses it there.
+ */
+export function payBill(billId: string, rail: string, by = 'citizen'): PaymentReceipt | { error: string } {
   const bill = db.bills.find(b => b.id === billId);
   if (!bill) return { error: 'Bill not found' };
   if (bill.status === 'paid') return { error: 'Bill already paid' };
@@ -30,9 +55,10 @@ export function payBill(billId: string, rail: string): PaymentReceipt | { error:
     paidAt: new Date().toISOString(),
     hash: hash(billId + Date.now()),
     ...(bill.reference ? { reference: bill.reference } : {}),
+    simulated: true,
   };
   db.receipts.unshift(receipt);
-  recordAudit('citizen', 'payment.execute', `Bill:${billId}`, 'ok', `${bill.currency} ${bill.amountMinor / 100}`);
+  recordAudit(by, 'payment.execute', `Bill:${billId}`, 'ok', `${bill.currency} ${bill.amountMinor / 100}`);
   return receipt;
 }
 

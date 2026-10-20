@@ -222,6 +222,8 @@ export interface PaymentReceipt {
   railReference?: string;
   /** The official who recorded a payment that arrived outside the platform. */
   recordedBy?: string;
+  /** Made by the platform's stand-in payment (no money moved; integration register 1.8): never counted as a payment in production. */
+  simulated?: boolean;
 }
 
 // ── Notifications ─────────────────────────────────────────────────────
