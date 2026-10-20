@@ -178,6 +178,10 @@ export interface Messages {
     registersValidUntil: string;
     registersConditions: string;
     registersStates: Record<string, string>;
+    professionalsTitle: string;
+    professionalsIntro: string;
+    professionalsQuery: string;
+    professionalsNoMatch: string;
     lawsInForceFrom: string;
     lawsCeased: string;
     verifyTitle: string;
@@ -882,7 +886,11 @@ export const en: Messages = {
     registersNoMatch: "No organisation in this register matches.",
     registersValidUntil: "valid until {date}",
     registersConditions: "Conditions",
-    registersStates: { 'granted': "In good standing", 'suspended': "Suspended", 'revoked': "Revoked", 'expired': "Expired", 'struck-off': "Struck off" },
+    registersStates: { 'registered': "Registered", 'lapsed': "Lapsed", 'granted': "In good standing", 'suspended': "Suspended", 'revoked': "Revoked", 'expired': "Expired", 'struck-off': "Struck off" },
+    professionalsTitle: 'Registered health professionals',
+    professionalsIntro: 'Check whether a doctor, nurse, midwife, pharmacist or other regulated professional is registered, and in what standing.',
+    professionalsQuery: 'Full name or registration number',
+    professionalsNoMatch: 'Nobody on these registers matches.',
     lawsInForceFrom: 'In force from {date}',
     lawsCeased: 'Ceased {date}',
     verifyTitle: 'Check a certificate',
