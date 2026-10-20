@@ -21,7 +21,7 @@ describe('exchange services', () => {
   });
 
   it('lists every service with its owner, scope and the fields it returns', () => {
-    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['organisation.standing', 'query', 'service:organisation.standing'], ['taxpayer.status', 'query', 'service:taxpayer.status'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
+    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['organisation.standing', 'query', 'service:organisation.standing'], ['taxpayer.status', 'query', 'service:taxpayer.status'], ['qualification.verify', 'query', 'service:qualification.verify'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
   });
 });
 
@@ -59,5 +59,22 @@ describe('taxpayer.status', () => {
     const r = await callService({ kind: 'integration', id: 'procurement', name: 'Public procurement' }, 'taxpayer.status', { party: 'ORG-1' }, 'Tender eligibility');
     expect(r.data).toEqual({ registered: 'yes', active: 'yes', taxTypes: ['income'] });
     expect((await callService({ kind: 'integration', id: 'p', name: 'P' }, 'taxpayer.status', { party: 'ORG-9' }, 'Check')).data).toEqual({ registered: 'no', active: 'no' });
+  });
+});
+
+describe('qualification.verify', () => {
+  it('confirms a qualification only with its number and the holder\'s name, and never returns the holder\'s reference', async () => {
+    const { resetEducation, recordAward } = await import('@/lib/education/register');
+    const { resetOrganisations, createOrganisation, setStanding } = await import('@/lib/organisations/register');
+    resetEducation(); resetOrganisations();
+    const o = createOrganisation({ name: 'Northern Polytechnic', kind: 'college' }, 'c1', 'Registrar') as { id: string; number: string };
+    setStanding(o.id, { register: 'schools', state: 'granted', reason: 'Registered', case: 'c2' }, 'Registrar');
+    const a = recordAward({ holderRef: 'BR-2001-000007', holderName: 'Kofi Mensah', title: 'Diploma in Surveying', awardingBody: o.number, awardedOn: '2025-06-30' }, 'c3', 'Officer') as { number: string };
+    const who = { kind: 'integration' as const, id: 'employer-portal', name: 'Public service commission' };
+    const r = await callService(who, 'qualification.verify', { number: a.number, holderName: 'kofi mensah' }, 'Recruitment check');
+    expect(r.data).toMatchObject({ valid: 'yes', title: 'Diploma in Surveying', awardingBody: 'Northern Polytechnic', awardedOn: '2025-06-30' });
+    expect(JSON.stringify(r)).not.toContain('BR-2001');
+    expect((await callService(who, 'qualification.verify', { number: a.number, holderName: 'Someone Else' }, 'Check')).data).toEqual({ valid: 'no' });
+    expect((await callService(who, 'qualification.verify', { number: 'QUA-0000-000000', holderName: 'Kofi Mensah' }, 'Check')).data).toEqual({ valid: 'no' });
   });
 });

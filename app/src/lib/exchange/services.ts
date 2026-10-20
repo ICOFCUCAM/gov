@@ -15,6 +15,7 @@ import { getPerson, current, fold } from '@/lib/civil/register';
 import { statusOn } from '@/lib/immigration/register';
 import { getOrganisation, publicOrganisation } from '@/lib/organisations/register';
 import { getTaxpayer, findTaxpayers } from '@/lib/tax/register';
+import { verifyAward } from '@/lib/education/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
 export interface Caller { kind: 'module' | 'integration'; id: string; name: string; institution?: string }
@@ -70,6 +71,20 @@ export const SERVICES: ServiceDef[] = [
       // Never returns, assessments, balances or anything else under tax secrecy.
       const t = str(input.tin) ? getTaxpayer(str(input.tin)) : findTaxpayers({ party: str(input.party) })[0];
       return t ? { status: 200, result: t.state, data: { registered: 'yes', active: t.state === 'active' ? 'yes' : 'no', taxTypes: t.taxTypes } } : { status: 200, result: 'not registered', data: { registered: 'no', active: 'no' } };
+    },
+  },
+  {
+    id: 'qualification.verify', version: 1, kind: 'query', title: 'Is this qualification, presented by this holder, valid, and what is it?', owner: 'education', scope: 'service:qualification.verify',
+    returns: { valid: 'yes or no', title: 'the qualification', level: 'its level', awardedOn: 'YYYY-MM-DD', awardingBody: 'the awarding body', accreditedUnder: 'the register that made the body competent' }, dataClass: 'personal',
+    legalBasis: 'The education law\'s provisions on verifying qualifications (named by the education authority when it approves the service for a caller)',
+    handle: input => {
+      // The caller must know both the number and the holder's name; a wrong name answers like an unknown number. Never the holder's reference or other awards.
+      const number = str(input.number), holderName = str(input.holderName);
+      if (!number || !holderName) return { status: 422, result: 'number and holderName needed', data: { valid: 'no' } };
+      const v = verifyAward(number, holderName);
+      if (!v.valid) return { status: 200, result: 'not valid', data: { valid: 'no' } };
+      const { valid: _valid, ...rest } = v;
+      return { status: 200, result: 'valid', data: { valid: 'yes', ...rest } };
     },
   },
   {
