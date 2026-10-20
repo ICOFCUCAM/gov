@@ -1,6 +1,7 @@
 // The demonstration set (demo and training installations only, lib/ops/mode.ts):
 // sample acts (civil registration; business registration, licensing and
-// accreditation), recorded and confirmed, and the reference procedures cited
+// accreditation; immigration, police, courts; tax, education, health
+// professions and facilities, customs), recorded and confirmed, and the reference procedures cited
 // to them and approved, so cases can be run end to end
 // without a nation's real law. Everything goes through the same registers and
 // four-eyes rules as real work, under named demonstration officials, and the
@@ -10,7 +11,8 @@ import { samplesAllowed } from '@/lib/ops/mode';
 import { authorityFor, getSovereign } from '@/lib/data/store';
 import { recordAudit } from '@/lib/data/store/audit';
 import { recordVersion, confirmVersion, listInstruments } from '@/lib/law/register';
-import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
+import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
+import type { AuthorityKey } from '@/lib/nation/deployment';
 import { activePackage, approvePackage, draftPackage, listPackages } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
 
@@ -32,7 +34,7 @@ const ORG_PROVISION: Record<string, { eId: string; num: string; text: string }> 
 
 const P = (eId: string, num: string, text: string) => ({ eId, num, text });
 /** Sample acts for immigration, police intake and courts, by the procedure each provision serves. */
-const MORE_ACTS: { title: string; number: string; authority: 'immigration' | 'police' | 'judiciary'; provisions: Record<string, { eId: string; num: string; text: string }>; procedures: typeof REFERENCE_PROCEDURES }[] = [
+const MORE_ACTS: { title: string; number: string; authority: AuthorityKey; provisions: Record<string, { eId: string; num: string; text: string }>; procedures: typeof REFERENCE_PROCEDURES }[] = [
   { title: 'Immigration Act (sample for demonstration)', number: 'sample-3', authority: 'immigration', procedures: IMMIGRATION_PROCEDURES, provisions: {
     'immigration.visa': P('sec_10', '10', 'A visa may be granted for a category, a period and a number of entries, with conditions, and refused with reasons subject to appeal.'),
     'immigration.residence-permit': P('sec_20', '20', 'A residence permit may be granted on a ground the Act names, for a period, with conditions.'),
@@ -44,6 +46,40 @@ const MORE_ACTS: { title: string; number: string; authority: 'immigration' | 'po
   } },
   { title: 'Rules of Court (sample for demonstration)', number: 'sample-5', authority: 'judiciary', procedures: COURT_PROCEDURES, provisions: {
     'court.case': P('rule_3', '3', 'A case is begun by filing, reviewed by the registry, served on the parties, heard and decided by judgment with reasons, subject to appeal.'),
+  } },
+  // Cycle 3 domains. Sample acts name powers only: no rate, tariff, penalty or deadline is sampled (amounts are entered with reasons until a nation approves its own rules), and the permit authority mappings stay drafts.
+  { title: 'Tax Administration Act (sample for demonstration)', number: 'sample-6', authority: 'tax', procedures: TAX_PROCEDURES, provisions: {
+    'tax.registration': P('sec_8', '8', 'The tax authority shall register every person liable to tax and give a taxpayer identification number.'),
+    'tax.return': P('sec_20', '20', 'The tax authority shall assess the tax due on a return, and give notice of the assessment and the date payment is due.'),
+    'tax.objection': P('sec_40', '40', 'A taxpayer may object to an assessment; the tax authority shall decide the objection with reasons and may vary the assessment.'),
+  } },
+  { title: 'Education Act (sample for demonstration)', number: 'sample-7', authority: 'education', procedures: EDUCATION_PROCEDURES, provisions: {
+    'edu.school': P('sec_10', '10', 'No school shall operate unless registered by the education authority, which may attach conditions.'),
+    'edu.school-renewal': P('sec_11', '11', 'A registration may be renewed on evidence that its conditions are still met.'),
+    'edu.school-suspension': P('sec_12', '12', 'After notice and representations, a registration may be suspended and later reinstated.'),
+    'edu.school-revocation': P('sec_13', '13', 'After notice and representations, a registration may be revoked.'),
+    'edu.inspection': P('sec_20', '20', 'The education authority may inspect any registered school and shall record its findings.'),
+    'edu.qualification': P('sec_30', '30', 'The education authority shall keep a record of qualifications awarded by accredited or registered institutions.'),
+    'edu.qualification-correction': P('sec_31', '31', 'An entry in the record of qualifications may be corrected on evidence of the error.'),
+    'edu.qualification-revocation': P('sec_32', '32', 'After notice and representations, a qualification obtained by fraud or malpractice may be revoked.'),
+  } },
+  { title: 'Health Professions Act (sample for demonstration)', number: 'sample-8', authority: 'professionalRegulation', procedures: PROFESSION_PROCEDURES, provisions: {
+    'prof.registration': P('sec_6', '6', 'A person holding a recognised qualification may be registered to practise a regulated profession.'),
+    'prof.renewal': P('sec_9', '9', 'A registration may be renewed on evidence of continuing professional development.'),
+    'prof.fitness': P('sec_15', '15', 'After notice and representations, a registration may be suspended, reinstated with conditions or revoked.'),
+  } },
+  { title: 'Health Facilities and Pharmacy Act (sample for demonstration)', number: 'sample-9', authority: 'healthRegulation', procedures: HEALTH_PROCEDURES, provisions: {
+    'health.facility': P('sec_10', '10', 'No health facility shall operate unless licensed after inspection of its premises.'),
+    'health.facility-renewal': P('sec_11', '11', 'A facility licence may be renewed on evidence that its conditions are still met.'),
+    'health.facility-suspension': P('sec_12', '12', 'After notice and representations, a facility licence may be suspended and later reinstated.'),
+    'health.facility-revocation': P('sec_13', '13', 'After notice and representations, a facility licence may be revoked.'),
+    'health.pharmacy': P('sec_20', '20', 'No pharmacy shall operate unless licensed after inspection of its premises.'),
+    'health.pharmacy-renewal': P('sec_21', '21', 'A pharmacy licence may be renewed on evidence that its conditions are still met.'),
+    'health.pharmacy-suspension': P('sec_22', '22', 'After notice and representations, a pharmacy licence may be suspended and later reinstated.'),
+    'health.pharmacy-revocation': P('sec_23', '23', 'After notice and representations, a pharmacy licence may be revoked.'),
+  } },
+  { title: 'Customs Act (sample for demonstration)', number: 'sample-10', authority: 'customs', procedures: CUSTOMS_PROCEDURES, provisions: {
+    'customs.declaration': P('sec_30', '30', 'Goods shall be declared to customs, may be examined, and are released once the duty assessed on them is paid.'),
   } },
 ];
 

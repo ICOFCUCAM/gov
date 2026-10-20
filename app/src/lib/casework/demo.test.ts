@@ -32,6 +32,19 @@ describe('demonstration set', () => {
     expect(activePackage('org.accreditation')).toMatchObject({ citations: [expect.objectContaining({ eId: 'sec_40' })] });
   });
 
+  it('adds the cycle 3 procedures under their sample acts, with no sample rate and no approved authority mapping', async () => {
+    const [a, b, c] = listMinistries().slice(0, 3).map(m => m.id);
+    setSovereign({ deployment: { authorities: { civilRegistration: a!, tax: a!, education: b!, professionalRegulation: c!, healthRegulation: c!, customs: a! } } }, 'Administrator');
+    const r = loadDemonstration('Administrator');
+    if ('error' in r) throw new Error(r.error);
+    expect(r.approved).toEqual(expect.arrayContaining(['tax.return', 'edu.school', 'edu.qualification', 'prof.registration', 'health.facility', 'health.pharmacy-revocation', 'customs.declaration']));
+    const { listRules } = await import('@/lib/law/rules');
+    const { listMappings } = await import('@/lib/permits/authority');
+    expect(listRules()).toEqual([]);
+    expect(listMappings().filter(m => m.state === 'approved')).toEqual([]);
+    expect(listInstruments({ state: 'any' }).filter(i => i.title.includes('sample for demonstration')).length).toBeGreaterThanOrEqual(6);
+  });
+
   it('is refused in a production installation', () => {
     vi.stubEnv('CIVICOS_MODE', 'production');
     expect(loadDemonstration('Administrator')).toMatchObject({ error: expect.stringMatching(/production/) });
