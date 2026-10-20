@@ -82,6 +82,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   for that nation from its feature requests, `/updates/requests`);
   `/admin/releases` is the publisher console. Store: `lib/data/updates.ts`,
   API: `/api/releases`.
+- Its sample history (releases, the sandbox tenant, advisories, tickets,
+  orders, officials, escrow reviews) exists only in demo and training
+  installations; a production installation starts with its own nation on the
+  version it runs (`runningVersion()`) and nothing else.
 - Updates are never automatic: only `decide()` changes a nation's install
   state, each step names a person and is written to the audit chain.
   Security releases are highlighted, never forced.
