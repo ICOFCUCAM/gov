@@ -228,6 +228,7 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   if (samplesAllowed(env)) {
     tracks.push(track({ key: 'demo', title: 'Demonstration', why: 'Sample officials and records to try every feature. Only in demo and training installations; never in production.', href: '/admin/onboarding#demo', samplesOnly: true }, () => ({
       checks: [
+        { label: 'Demo cast created (switch officials from the menu)', done: listAccounts().some(a => a.demo && !a.disabled), href: '/admin/officials', detail: 'Administrators create it from the account menu: Demo cast' },
         { label: 'Cases to work on', done: listCases({ limit: 1 }).length > 0, href: '/gov/work' },
       ],
     })));
