@@ -1,6 +1,6 @@
 'use client';
 
-import { MinistryCases } from './MinistryCases';
+import { MinistryCases, MinistryRegisters } from './MinistryCases';
 import * as React from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
@@ -359,6 +359,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
               <ActingOfficial name={official} onChange={setOfficial} />
             </div>
             <MinistryCases ministryId={id} />
+            <MinistryRegisters ministryId={id} />
             <div className="flex flex-wrap gap-2">
               {counter('Decisions waiting', waiting.length, 'approvals', 'rgb(var(--c-warn))')}
               {counter('Incidents open', activeAlerts.length, 'incidents', 'rgb(var(--c-alert))')}

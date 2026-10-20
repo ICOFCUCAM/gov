@@ -25,3 +25,27 @@ export function MinistryCases({ ministryId }: { ministryId: string }) {
     </p>
   );
 }
+
+interface TypeRow { key: string; title: string; keeper: string | null }
+interface OrgRow { standings: { register: string; state: string }[] }
+
+/** The registers this institution keeps (organisations register types), with how many organisations stand in each. */
+export function MinistryRegisters({ ministryId }: { ministryId: string }) {
+  const [data, setData] = React.useState<{ types: TypeRow[]; organisations: OrgRow[] } | null>(null);
+  React.useEffect(() => {
+    fetch('/api/organisations?limit=2000', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).then(setData).catch(() => setData(null));
+  }, []);
+  const mine = (data?.types ?? []).filter(t => t.keeper === ministryId);
+  if (!mine.length) return null;
+  return (
+    <p className="text-sm text-ink-soft">
+      Registers kept here:{' '}
+      {mine.map((t, i) => {
+        const granted = (data?.organisations ?? []).filter(o => o.standings.some(s => s.register === t.key && s.state === 'granted')).length;
+        const applied = (data?.organisations ?? []).filter(o => o.standings.some(s => s.register === t.key && s.state === 'applied')).length;
+        return <span key={t.key}>{i ? '; ' : ''}<strong>{t.title}</strong> {granted} in good standing{applied ? `, ${applied} applying` : ''}</span>;
+      })}.{' '}
+      <Link className="underline underline-offset-2" href="/gov/organisations">Open the register</Link>
+    </p>
+  );
+}

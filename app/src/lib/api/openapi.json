@@ -26443,7 +26443,7 @@
         ],
         "operationId": "get_organisations",
         "summary": "GET /api/organisations",
-        "description": "GET /api/organisations — the organisations register (lib/organisations/register.ts) for officials: each organisation's public view (number, name, kind, region, standings), filtered by ?register=&state=&kind=&q=, and the register types. Representatives and history are on /api/organisations/{id} under its rule. Changes happen only through decided licensing and accreditation cases (/api/cases).",
+        "description": "GET /api/organisations — the organisations register (lib/organisations/register.ts) for officials: each organisation's public view (number, name, kind, region, standings), filtered by ?register=&state=&kind=&q=, and the register types with the institution that keeps each (`keeper`, from the deployment profile). Representatives and history are on /api/organisations/{id} under its rule. Changes happen only through decided licensing and accreditation cases (/api/cases).",
         "parameters": [
           {
             "name": "kind",
@@ -26503,7 +26503,89 @@
                     "types": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/RegisterType"
+                        "type": "object",
+                        "properties": {
+                          "keeper": {
+                            "anyOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "key": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "accreditation",
+                              "licence",
+                              "registration"
+                            ]
+                          },
+                          "authority": {
+                            "type": "string",
+                            "description": "Who keeps it: a deployment-profile authority or an institution id."
+                          },
+                          "orgKinds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "association",
+                                "clinic",
+                                "college",
+                                "company",
+                                "cooperative",
+                                "hospital",
+                                "ngo",
+                                "other",
+                                "partnership",
+                                "pharmacy",
+                                "professional-practice",
+                                "school",
+                                "university"
+                              ]
+                            },
+                            "description": "Which kinds of organisation it may hold."
+                          },
+                          "validityMonths": {
+                            "type": "number",
+                            "description": "Months a grant is valid for (none: until revoked or struck off)."
+                          },
+                          "publicCheck": {
+                            "type": "boolean",
+                            "description": "Anyone may check an organisation's standing in it (/registers)."
+                          },
+                          "reference": {
+                            "type": "boolean",
+                            "description": "Shipped with the platform, or configured by an administrator."
+                          },
+                          "createdBy": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "keeper",
+                          "key",
+                          "title",
+                          "kind",
+                          "authority",
+                          "orgKinds",
+                          "publicCheck",
+                          "reference",
+                          "createdBy",
+                          "createdAt"
+                        ]
                       }
                     }
                   },
@@ -26528,6 +26610,7 @@
                       ],
                       "types": [
                         {
+                          "keeper": "string",
                           "key": "string",
                           "title": "Example",
                           "kind": "accreditation",
