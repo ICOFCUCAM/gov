@@ -89,6 +89,7 @@ channels:
       certificate: { $ref: '#/components/messages/certificate' }
       decisionSeal: { $ref: '#/components/messages/decisionSeal' }
       organisation: { $ref: '#/components/messages/organisation' }
+      immigration: { $ref: '#/components/messages/immigration' }
   registers:
     address: /
     description: Changes to the registers services/civic-api mirrors (review D8) - institutions, payments, integrations, webhooks, grants proposed, releases, deployments, backups, configuration and the tenant's lifecycle. Its follower subscribes to `*` and reads the changed register from GET /api/platform/mirror.
@@ -281,6 +282,11 @@ components:
     organisation:
       name: org.civicos.organisation.*
       summary: organisation.create, organisation.amend, organisation.standing.applied|granted|refused|suspended|revoked|expired|struck-off (the organisations register; the subject is the register number). Representatives are never carried.
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    immigration:
+      name: org.civicos.immigration.*
+      summary: immigration.grant, immigration.refuse, immigration.extend, immigration.revoked, immigration.cancelled, immigration.expired (visas and residence permits; the subject is the visa or permit number). The holder is never carried; status is checked through the exchange service immigration.status.
       traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
       payload: { $ref: '#/components/schemas/CloudEvent' }
     registerChange:

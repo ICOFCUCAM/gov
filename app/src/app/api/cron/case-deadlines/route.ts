@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
 import { lapseDeadlines } from '@/lib/casework/engine';
 import { expireStandings } from '@/lib/organisations/register';
+import { expireGrants } from '@/lib/immigration/register';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,8 @@ export async function GET(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const lapsed = lapseDeadlines();
   const expired = expireStandings();
-  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired });
+  const immigration = expireGrants();
+  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length });
 }
 
 export const POST = GET;
