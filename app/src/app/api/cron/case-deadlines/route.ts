@@ -16,6 +16,7 @@ import { watchAccess } from '@/lib/records/access-watch';
 import { reconcileTaxPayments } from '@/lib/tax/register';
 import { lapseRegistrations } from '@/lib/professions/register';
 import { reconcileCustomsPayments } from '@/lib/customs/register';
+import { raiseSuspensionAlerts } from '@/lib/permits/authority';
 import { listReceipts } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +30,8 @@ export async function GET(req: Request) {
   const tax = reconcileTaxPayments(listReceipts());
   const professionals = lapseRegistrations();
   const customs = reconcileCustomsPayments(listReceipts());
-  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length });
+  const suspensions = raiseSuspensionAlerts();
+  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length });
 }
 
 export const POST = GET;

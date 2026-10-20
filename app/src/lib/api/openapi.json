@@ -5246,6 +5246,18 @@
                               "$ref": "#/components/schemas/Citation"
                             }
                           },
+                          "authority": {
+                            "type": "object",
+                            "properties": {
+                              "permitType": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "permitType"
+                            ],
+                            "description": "The permit type whose approved authority mapping governs this procedure's decisions, for a procedure the platform does not already classify (lib/permits/decisions.ts). Approved with the procedure by two officials."
+                          },
                           "fields": {
                             "type": "array",
                             "items": {
@@ -5544,6 +5556,9 @@
                           "on": "string"
                         }
                       ],
+                      "authority": {
+                        "permitType": "string"
+                      },
                       "fields": [
                         {
                           "key": "string",
@@ -5739,6 +5754,9 @@
                             "on": "string"
                           }
                         ],
+                        "authority": {
+                          "permitType": "string"
+                        },
                         "fields": [
                           {
                             "key": "string",
@@ -5853,6 +5871,9 @@
                             "on": "string"
                           }
                         ],
+                        "authority": {
+                          "permitType": "string"
+                        },
                         "fields": [
                           {
                             "key": "string",
@@ -6414,6 +6435,9 @@
                             "on": "string"
                           }
                         ],
+                        "authority": {
+                          "permitType": "string"
+                        },
                         "fields": [
                           {
                             "key": "string",
@@ -8260,6 +8284,9 @@
                     },
                     "customsPaymentsUnmatched": {
                       "type": "number"
+                    },
+                    "suspensionAlerts": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -8273,7 +8300,8 @@
                     "taxPaymentsUnmatched",
                     "professionalsLapsed",
                     "customsPaymentsPosted",
-                    "customsPaymentsUnmatched"
+                    "customsPaymentsUnmatched",
+                    "suspensionAlerts"
                   ]
                 },
                 "examples": {
@@ -8301,7 +8329,8 @@
                       "taxPaymentsUnmatched": 1,
                       "professionalsLapsed": 1,
                       "customsPaymentsPosted": 1,
-                      "customsPaymentsUnmatched": 1
+                      "customsPaymentsUnmatched": 1,
+                      "suspensionAlerts": 1
                     }
                   }
                 }
@@ -30749,7 +30778,7 @@
         ],
         "operationId": "get_permit_authorities",
         "summary": "GET /api/permit-authorities",
-        "description": "/api/permit-authorities — which authority the law designates for each permit, licence and register type (lib/permits/authority.ts). GET: every version, with the one in force today. POST (administrators, the structure of government): { op: 'draft', mapping } writes the next version; { op: 'approve', permitType, version } approves a draft (a different official; needs its legal basis); { op: 'withdraw', permitType, version, reason } withdraws a draft; { op: 'install-proposals' } drafts the defaults CivicOS proposes, which govern nothing until approved. Who acted comes from the sign-in, never the request.",
+        "description": "/api/permit-authorities — which authority the law designates for each permit, licence and register type (lib/permits/authority.ts). GET: every version, with the one in force today. POST (administrators, the structure of government): { op: 'draft', mapping } writes the next version; { op: 'approve', permitType, version } approves a draft (a different official; needs its legal basis); { op: 'withdraw', permitType, version, reason } withdraws a draft; { op: 'install-proposals' } drafts the defaults CivicOS proposes, which govern nothing until approved. Emergency suspension: { op: 'suspend', permitType, version, reason, reviewBy? }, { op: 'confirm-suspension' | 'lift-suspension' | 'review-suspension', … } (each a different official from the one who suspended), { op: 'suspension-policy', confirmWithinHours, reviewWithinDays, basis }. Who acted comes from the sign-in, never the request.",
         "parameters": [
           {
             "name": "permitType",
@@ -30787,6 +30816,27 @@
                         ]
                       }
                     },
+                    "suspended": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number"
+                          },
+                          "suspension": {
+                            "$ref": "#/components/schemas/Suspension"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "suspension"
+                        ]
+                      }
+                    },
+                    "suspensionPolicy": {
+                      "$ref": "#/components/schemas/SuspensionPolicy"
+                    },
                     "proposals": {
                       "type": "number"
                     }
@@ -30794,6 +30844,8 @@
                   "required": [
                     "mappings",
                     "inForce",
+                    "suspended",
+                    "suspensionPolicy",
                     "proposals"
                   ]
                 },
@@ -30841,6 +30893,26 @@
                       "inForce": {
                         "key": 1
                       },
+                      "suspended": {
+                        "key": {
+                          "version": 1,
+                          "suspension": {
+                            "id": "ID-0001",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official",
+                            "reason": "Text",
+                            "reviewBy": "A. Official"
+                          }
+                        }
+                      },
+                      "suspensionPolicy": {
+                        "confirmWithinHours": 1,
+                        "reviewWithinDays": 1,
+                        "adopted": true,
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "basis": "string"
+                      },
                       "proposals": 1
                     }
                   }
@@ -30872,7 +30944,7 @@
         ],
         "operationId": "post_permit_authorities",
         "summary": "POST /api/permit-authorities",
-        "description": "/api/permit-authorities — which authority the law designates for each permit, licence and register type (lib/permits/authority.ts). GET: every version, with the one in force today. POST (administrators, the structure of government): { op: 'draft', mapping } writes the next version; { op: 'approve', permitType, version } approves a draft (a different official; needs its legal basis); { op: 'withdraw', permitType, version, reason } withdraws a draft; { op: 'install-proposals' } drafts the defaults CivicOS proposes, which govern nothing until approved. Who acted comes from the sign-in, never the request.",
+        "description": "/api/permit-authorities — which authority the law designates for each permit, licence and register type (lib/permits/authority.ts). GET: every version, with the one in force today. POST (administrators, the structure of government): { op: 'draft', mapping } writes the next version; { op: 'approve', permitType, version } approves a draft (a different official; needs its legal basis); { op: 'withdraw', permitType, version, reason } withdraws a draft; { op: 'install-proposals' } drafts the defaults CivicOS proposes, which govern nothing until approved. Emergency suspension: { op: 'suspend', permitType, version, reason, reviewBy? }, { op: 'confirm-suspension' | 'lift-suspension' | 'review-suspension', … } (each a different official from the one who suspended), { op: 'suspension-policy', confirmWithinHours, reviewWithinDays, basis }. Who acted comes from the sign-in, never the request.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -30897,6 +30969,18 @@
                   "reason": {
                     "type": "string"
                   },
+                  "reviewBy": {
+                    "type": "string"
+                  },
+                  "confirmWithinHours": {
+                    "type": "number"
+                  },
+                  "reviewWithinDays": {
+                    "type": "number"
+                  },
+                  "basis": {
+                    "type": "string"
+                  },
                   "by": {
                     "type": "string"
                   }
@@ -30911,6 +30995,10 @@
                     "permitType": "string",
                     "version": 1,
                     "reason": "Text",
+                    "reviewBy": "A. Official",
+                    "confirmWithinHours": 1,
+                    "reviewWithinDays": 1,
+                    "basis": "string",
                     "by": "A. Official"
                   }
                 }
@@ -30919,116 +31007,6 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "mapping": {
-                          "$ref": "#/components/schemas/AuthorityMapping"
-                        }
-                      },
-                      "required": [
-                        "mapping"
-                      ]
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "drafted": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "present": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      "required": [
-                        "drafted",
-                        "present"
-                      ]
-                    }
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "mapping": {
-                        "id": "ID-0001",
-                        "permitType": "string",
-                        "title": "Example",
-                        "version": 1,
-                        "lead": "string",
-                        "consulted": [
-                          {
-                            "authority": "string",
-                            "role": "string",
-                            "mandatory": true
-                          }
-                        ],
-                        "scope": {
-                          "level": "local"
-                        },
-                        "legalBasis": [
-                          {
-                            "instrument": "string",
-                            "eId": "ID-0001",
-                            "version": "string",
-                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                            "on": "string"
-                          }
-                        ],
-                        "effectiveFrom": "2026-01-15",
-                        "effectiveTo": "2026-01-15",
-                        "procedures": [
-                          "string"
-                        ],
-                        "decision": {
-                          "role": "signatory",
-                          "fourEyes": true
-                        },
-                        "powers": {
-                          "renew": "string",
-                          "suspend": "string",
-                          "revoke": "string",
-                          "appealBody": "string"
-                        },
-                        "publicCheck": true,
-                        "handover": {
-                          "from": "string",
-                          "plan": "string"
-                        },
-                        "state": "approved",
-                        "proposal": true,
-                        "note": "Text",
-                        "draftedBy": "A. Official",
-                        "draftedById": "ID-0001",
-                        "draftedAt": "2026-01-15T09:30:00.000Z",
-                        "approvedBy": "A. Official",
-                        "approvedById": "ID-0001",
-                        "approvedAt": "2026-01-15T09:30:00.000Z",
-                        "withdrawn": {
-                          "by": "A. Official",
-                          "at": "2026-01-15T09:30:00.000Z",
-                          "reason": "Text"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
           "201": {
             "description": "Created",
             "content": {
@@ -31106,7 +31084,16 @@
                           "by": "A. Official",
                           "at": "2026-01-15T09:30:00.000Z",
                           "reason": "Text"
-                        }
+                        },
+                        "suspensions": [
+                          {
+                            "id": "ID-0001",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official",
+                            "reason": "Text",
+                            "reviewBy": "A. Official"
+                          }
+                        ]
                       }
                     }
                   }
@@ -60570,6 +60557,13 @@
               "at",
               "reason"
             ]
+          },
+          "suspensions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Suspension"
+            },
+            "description": "Emergency suspensions of this approved version, every one kept (newest last)."
           }
         },
         "required": [
@@ -62797,6 +62791,18 @@
               "$ref": "#/components/schemas/Citation"
             }
           },
+          "authority": {
+            "type": "object",
+            "properties": {
+              "permitType": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "permitType"
+            ],
+            "description": "The permit type whose approved authority mapping governs this procedure's decisions, for a procedure the platform does not already classify (lib/permits/decisions.ts). Approved with the procedure by two officials."
+          },
           "fields": {
             "type": "array",
             "items": {
@@ -64887,6 +64893,84 @@
             },
             "description": "Facts the decision fixes (registration number, validity, conditions), as the procedure names them."
           },
+          "authority": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "basis": {
+                    "type": "string",
+                    "const": "deployment"
+                  },
+                  "authority": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "basis",
+                  "authority"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "basis": {
+                    "type": "string",
+                    "const": "mapping"
+                  },
+                  "permitType": {
+                    "type": "string"
+                  },
+                  "power": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  },
+                  "lead": {
+                    "type": "string"
+                  },
+                  "approvedAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "basis",
+                  "permitType",
+                  "power",
+                  "version",
+                  "lead"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "basis": {
+                    "type": "string",
+                    "const": "unmapped"
+                  },
+                  "permitType": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "basis",
+                  "note"
+                ]
+              }
+            ],
+            "description": "Where the authority came from when it was made: the exact approved authority-mapping version, or the deployment profile (lib/permits/decisions.ts)."
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleRef"
+            },
+            "description": "The exact operational rule versions it calculated with (lib/law/rules.ts)."
+          },
           "at": {
             "type": "string"
           },
@@ -65038,7 +65122,40 @@
               "reasons",
               "by",
               "at"
-            ]
+            ],
+            "description": "The channel in force: the latest of `channels`."
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "documentary-check",
+                    "physical-inspection",
+                    "release-on-documents"
+                  ]
+                },
+                "reasons": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "reasons",
+                "by",
+                "at"
+              ]
+            },
+            "description": "Every channel chosen, in order (kept when a later choice raises it)."
           },
           "inspections": {
             "type": "array",
@@ -77930,6 +78047,26 @@
           "met"
         ]
       },
+      "RuleRef": {
+        "description": "A rule version a decision calculated with.",
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "digest": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "version",
+          "digest"
+        ]
+      },
       "RuleTest": {
         "type": "object",
         "properties": {
@@ -83976,6 +84113,147 @@
           "uptimeTarget",
           "targets",
           "creditPct"
+        ]
+      },
+      "Suspension": {
+        "description": "An emergency suspension (acceptance hardening G): from the moment it is made no new decision rests on the mapping; earlier decisions stand. A different official confirms it within the policy period and reviews it by its review date; a different official from the one who made it lifts it. An unconfirmed or unreviewed suspension stays in force and is flagged.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "reviewBy": {
+            "type": "string",
+            "description": "The date by which it must be reviewed (lifted or kept with a new review date)."
+          },
+          "confirmed": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by"
+            ]
+          },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "byId": {
+                  "type": "string"
+                },
+                "reviewBy": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "at",
+                "by",
+                "reviewBy",
+                "reason"
+              ]
+            }
+          },
+          "lifted": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "reason"
+            ]
+          },
+          "raised": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "review-overdue",
+                "unconfirmed"
+              ]
+            },
+            "description": "Overdue flags already raised (once each)."
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "by",
+          "reason",
+          "reviewBy"
+        ]
+      },
+      "SuspensionPolicy": {
+        "description": "The suspension policy: platform safety defaults until the country adopts its own periods (who may suspend is the administrators until a country rule says otherwise; the platform does not invent emergency powers).",
+        "type": "object",
+        "properties": {
+          "confirmWithinHours": {
+            "type": "number"
+          },
+          "reviewWithinDays": {
+            "type": "number"
+          },
+          "adopted": {
+            "type": "boolean"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "confirmWithinHours",
+          "reviewWithinDays",
+          "adopted"
         ]
       },
       "SyncItem": {

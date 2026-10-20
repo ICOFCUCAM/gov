@@ -10,7 +10,7 @@ import * as React from 'react';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
 
-interface Mapping { permitType: string; title: string; version: number; lead: string; consulted: { authority: string; role: string; mandatory: boolean }[]; scope: { level: string; regions?: string[] }; legalBasis: { title?: string; num?: string; eId: string }[]; effectiveFrom: string; effectiveTo?: string; powers: { renew: string; suspend: string; revoke: string; appealBody: string }; state: string; proposal: boolean; note?: string; draftedBy: string; approvedBy?: string; handover?: { from: string; plan: string } }
+interface Mapping { permitType: string; title: string; version: number; lead: string; consulted: { authority: string; role: string; mandatory: boolean }[]; scope: { level: string; regions?: string[] }; legalBasis: { title?: string; num?: string; eId: string }[]; effectiveFrom: string; effectiveTo?: string; powers: { renew: string; suspend: string; revoke: string; appealBody: string }; state: string; proposal: boolean; note?: string; draftedBy: string; approvedBy?: string; handover?: { from: string; plan: string }; suspensions?: { at: string; by: string; reason: string; reviewBy: string; confirmed?: { by: string }; lifted?: { by: string; at: string; reason: string }; reviews?: { by: string; at: string; reviewBy: string; reason: string }[] }[] }
 const field = 'mt-1 w-full rounded border border-line bg-surface px-2 py-1 text-sm';
 
 export function PermitAuthorities() {
@@ -50,6 +50,26 @@ export function PermitAuthorities() {
                         {m.legalBasis.length ? ` · basis ${m.legalBasis.map(l => `${l.title ?? ''} ${l.num ?? l.eId}`).join('; ')}` : ' · no legal basis cited'}
                         {m.note ? <span className="block text-ink-muted">{m.note}</span> : null}
                         {m.handover ? <span className="block">Handover from {m.handover.from}: {m.handover.plan}</span> : null}
+                        {(m.suspensions ?? []).map((x, k) => (
+                          <span key={k} className={`block ${x.lifted ? 'text-ink-muted' : 'text-alert'}`}>
+                            {x.lifted ? 'Was suspended' : 'Suspended (no new decision rests on it)'} since {x.at.slice(0, 10)} by {x.by}: {x.reason} · {x.confirmed ? `confirmed by ${x.confirmed.by}` : 'not yet confirmed'} · review by {x.reviewBy}
+                            {x.lifted ? ` · lifted ${x.lifted.at.slice(0, 10)} by ${x.lifted.by}: ${x.lifted.reason}` : ''}
+                          </span>
+                        ))}
+                        {m.state === 'approved' ? (() => {
+                          const live = (m.suspensions ?? []).find(x => !x.lifted);
+                          return live ? (
+                            <span className="mt-1 flex flex-wrap gap-2">
+                              {!live.confirmed ? <Button onClick={() => void send({ op: 'confirm-suspension', permitType: t, version: m.version }, 'Suspension confirmed.')}>Confirm the suspension (a different official)</Button> : null}
+                              <Button variant="secondary" onClick={() => { const reason = window.prompt('Why does the suspension continue?'); const reviewBy = reason ? window.prompt('Next review date (YYYY-MM-DD)') : null; if (reason && reviewBy) void send({ op: 'review-suspension', permitType: t, version: m.version, reason, reviewBy }, 'Reviewed.'); }}>Review</Button>
+                              <Button variant="secondary" onClick={() => { const reason = window.prompt('Why is the suspension lifted?'); if (reason) void send({ op: 'lift-suspension', permitType: t, version: m.version, reason }, 'Lifted: decisions may rest on this mapping again.'); }}>Lift (a different official)</Button>
+                            </span>
+                          ) : (
+                            <span className="mt-1 flex gap-2">
+                              <Button variant="secondary" onClick={() => { const reason = window.prompt('Emergency suspension: why must no new decision rest on this mapping?'); if (reason) void send({ op: 'suspend', permitType: t, version: m.version, reason }, 'Suspended: a different official confirms it.'); }}>Suspend in an emergency</Button>
+                            </span>
+                          );
+                        })() : null}
                         {m.state === 'draft' ? (
                           <span className="mt-1 flex gap-2">
                             <Button onClick={() => void send({ op: 'approve', permitType: t, version: m.version }, 'Approved.')}>Approve (a different administrator)</Button>
