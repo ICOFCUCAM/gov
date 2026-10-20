@@ -167,6 +167,12 @@ export const STANDARD_METRICS: readonly Omit<MetricDef, 'origin'>[] = [
   { id: 'registrations.granted', label: 'Organisations registered', unit: '{organisations}', aggregation: 'sum', period: 'instant' },
   { id: 'licences.granted', label: 'Organisations licensed', unit: '{organisations}', aggregation: 'sum', period: 'instant' },
   { id: 'accreditations.granted', label: 'Organisations accredited', unit: '{organisations}', aggregation: 'sum', period: 'instant' },
+  // Summed from the returns education institutions reported (lib/education/twin.ts): aggregates only.
+  { id: 'education.enrolment.total', label: 'Enrolment (reported)', unit: '{pupils}', aggregation: 'sum', period: 'instant' },
+  { id: 'education.enrolment.female', label: 'Enrolment, female (reported)', unit: '{pupils}', aggregation: 'sum', period: 'instant' },
+  { id: 'education.enrolment.male', label: 'Enrolment, male (reported)', unit: '{pupils}', aggregation: 'sum', period: 'instant' },
+  { id: 'education.staff.teaching', label: 'Teaching staff (reported)', unit: '{persons}', aggregation: 'sum', period: 'instant' },
+  { id: 'education.staff.total', label: 'Staff (reported)', unit: '{persons}', aggregation: 'sum', period: 'instant' },
 ];
 
 // ── Registry ──────────────────────────────────────────────────────────────

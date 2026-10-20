@@ -14,6 +14,7 @@ import { dueSources, runSource } from '@/lib/twin/register';
 import { publishCivilCounts } from '@/lib/civil/twin';
 import { publishStandingCounts } from '@/lib/organisations/twin';
 import { publishCaseCounts } from '@/lib/casework/twin';
+import { publishEducationReturns } from '@/lib/education/twin';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,8 @@ export async function GET(req: Request) {
   const civil = await publishCivilCounts('scheduler');
   const organisations = await publishStandingCounts('scheduler');
   const cases = await publishCaseCounts('scheduler');
-  return NextResponse.json({ ok: true, runs, civil, organisations, cases });
+  const education = await publishEducationReturns('scheduler');
+  return NextResponse.json({ ok: true, runs, civil, organisations, cases, education });
 }
 
 export const POST = GET;
