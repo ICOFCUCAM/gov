@@ -228,6 +228,42 @@ jobs:
             app/ogc-cite.xml
           if-no-files-found: ignore
 
+  postgres-backend:
+    name: postgres backend (write-through, backups, restore drill)
+    runs-on: ubuntu-latest
+    # The app's *.integration.test.ts suites (CIVICOS_STATE=postgres: records
+    # written through, documents, backups and restore, the restore drill with
+    # a live event consumer) are skipped without TEST_DATABASE_URL; here each
+    # creates and drops its own database on a throwaway Postgres.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Postgres backend suites
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: pnpm exec vitest run src/lib/data/repo src/lib/db
+
   substrate-tests:
     name: substrate SQL suite
     runs-on: ubuntu-latest
