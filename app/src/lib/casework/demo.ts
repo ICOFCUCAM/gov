@@ -10,7 +10,7 @@ import { samplesAllowed } from '@/lib/ops/mode';
 import { authorityFor, getSovereign } from '@/lib/data/store';
 import { recordAudit } from '@/lib/data/store/audit';
 import { recordVersion, confirmVersion, listInstruments } from '@/lib/law/register';
-import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
+import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
 import { activePackage, approvePackage, draftPackage, listPackages } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
 
@@ -29,6 +29,23 @@ const ORG_PROVISION: Record<string, { eId: string; num: string; text: string }> 
   'org.accreditation-suspension': { eId: 'sec_44', num: '44', text: 'After notice and representations, an accreditation may be suspended and later reinstated.' },
   'org.accreditation-revocation': { eId: 'sec_45', num: '45', text: 'After notice and representations, an accreditation may be revoked.' },
 };
+
+const P = (eId: string, num: string, text: string) => ({ eId, num, text });
+/** Sample acts for immigration, police intake and courts, by the procedure each provision serves. */
+const MORE_ACTS: { title: string; number: string; authority: 'immigration' | 'police' | 'judiciary'; provisions: Record<string, { eId: string; num: string; text: string }>; procedures: typeof REFERENCE_PROCEDURES }[] = [
+  { title: 'Immigration Act (sample for demonstration)', number: 'sample-3', authority: 'immigration', procedures: IMMIGRATION_PROCEDURES, provisions: {
+    'immigration.visa': P('sec_10', '10', 'A visa may be granted for a category, a period and a number of entries, with conditions, and refused with reasons subject to appeal.'),
+    'immigration.residence-permit': P('sec_20', '20', 'A residence permit may be granted on a ground the Act names, for a period, with conditions.'),
+    'immigration.extension': P('sec_25', '25', 'A visa or permit may be extended on evidence that its ground continues.'),
+    'immigration.revocation': P('sec_30', '30', 'After notice and representations, a visa or permit may be revoked; an appeal suspends the revocation.'),
+  } },
+  { title: 'Police and Criminal Procedure Act (sample for demonstration)', number: 'sample-4', authority: 'police', procedures: POLICE_PROCEDURES, provisions: {
+    'police.incident': P('sec_5', '5', 'The police shall record every report of an incident, assess it and refer, investigate or close it with reasons.'),
+  } },
+  { title: 'Rules of Court (sample for demonstration)', number: 'sample-5', authority: 'judiciary', procedures: COURT_PROCEDURES, provisions: {
+    'court.case': P('rule_3', '3', 'A case is begun by filing, reviewed by the registry, served on the parties, heard and decided by judgment with reasons, subject to appeal.'),
+  } },
+];
 
 /** The provision of the sample act each reference procedure cites. */
 const PROVISION: Record<string, { eId: string; num: string; text: string }> = {
@@ -57,6 +74,7 @@ export function loadDemonstration(by: string, now = new Date()): DemoResult {
   ];
   // The organisation procedures need their authorities named; without them the civil set loads alone.
   if (authorityFor('businessRegister') && authorityFor('higherEducationAccreditation')) sets.push({ title: DEMO_ORG_ACT_TITLE, number: 'sample-2', provisions: ORG_PROVISION, procedures: ORGANISATION_PROCEDURES });
+  for (const a of MORE_ACTS) if (authorityFor(a.authority)) sets.push(a);
   let first = '';
   for (const set of sets) {
     const act = sampleAct(set.title, set.number, Object.values(set.provisions), now);

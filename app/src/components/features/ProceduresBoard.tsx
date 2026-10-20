@@ -38,7 +38,7 @@ export function ProceduresBoard({ demonstration = false }: { demonstration?: boo
       <p className="max-w-3xl text-sm text-ink-muted">How each kind of case is handled: its steps, who may take them, its deadlines and the laws it rests on. A procedure runs only after the responsible institution approves it.</p>
       {msg ? <p role="status" className="text-sm">{msg}</p> : null}
       <Section title="Reference procedures" meta="shipped with the platform, as drafts">
-        <p className="text-sm text-ink-muted">Civil records (birth, late birth, death, marriage, correction) and organisations (registration, licences and accreditation with their renewal, suspension and revocation). They arrive as drafts: the responsible authority adapts them to its law (a new version citing it) and approves them before any case runs.</p>
+        <p className="text-sm text-ink-muted">Civil records (birth, late birth, death, marriage, correction), organisations (registration, licences and accreditation with their renewal, suspension and revocation), visas and residence permits, police incident reports and court cases. They arrive as drafts: the responsible authority adapts them to its law (a new version citing it) and approves them before any case runs.</p>
         <Button className="mt-2" variant="secondary" onClick={async () => {
           const r = await fetch('/api/case-packages', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'install-references' }) });
           const j = await r.json();
@@ -47,7 +47,7 @@ export function ProceduresBoard({ demonstration = false }: { demonstration?: boo
         }}>Add the reference procedures as drafts</Button>
         {demonstration ? (
           <div className="mt-3 border-t border-line pt-3">
-            <p className="text-sm text-ink-muted">Demonstration installation: load sample acts (civil registration; business registration, licensing and accreditation) and approve these procedures under them, so cases can be run end to end. The acts are marked as samples; a production installation never has them.</p>
+            <p className="text-sm text-ink-muted">Demonstration installation: load sample acts (civil registration; business registration, licensing and accreditation; immigration; police; rules of court, for the authorities named) and approve these procedures under them, so cases can be run end to end. The acts are marked as samples; a production installation never has them.</p>
             <Button className="mt-2" variant="secondary" onClick={async () => {
               const r = await fetch('/api/case-packages', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'load-demonstration' }) });
               const j = await r.json();

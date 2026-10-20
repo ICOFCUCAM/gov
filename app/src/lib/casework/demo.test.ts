@@ -24,10 +24,10 @@ describe('demonstration set', () => {
 
   it('adds the organisation procedures under a second sample act once their authorities are named', () => {
     const [a, b] = listMinistries().slice(0, 2).map(m => m.id);
-    setSovereign({ deployment: { authorities: { civilRegistration: a!, businessRegister: a!, higherEducationAccreditation: b! } } }, 'Administrator');
+    setSovereign({ deployment: { authorities: { civilRegistration: a!, businessRegister: a!, higherEducationAccreditation: b!, immigration: a!, police: b!, judiciary: b! } } }, 'Administrator');
     const r = loadDemonstration('Administrator');
     if ('error' in r) throw new Error(r.error);
-    expect(r.approved).toEqual(expect.arrayContaining(['civil.birth', 'org.registration', 'org.licence', 'org.accreditation', 'org.licence-revocation']));
+    expect(r.approved).toEqual(expect.arrayContaining(['civil.birth', 'org.registration', 'org.licence', 'org.accreditation', 'org.licence-revocation', 'immigration.visa', 'police.incident', 'court.case']));
     expect(listInstruments({ state: 'any' }).map(i => i.title)).toContain(DEMO_ORG_ACT_TITLE);
     expect(activePackage('org.accreditation')).toMatchObject({ citations: [expect.objectContaining({ eId: 'sec_40' })] });
   });
