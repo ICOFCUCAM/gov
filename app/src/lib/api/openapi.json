@@ -167,6 +167,9 @@
       "name": "substrate"
     },
     {
+      "name": "tax"
+    },
+    {
       "name": "twin"
     },
     {
@@ -8230,6 +8233,12 @@
                     },
                     "unusualAccessRaised": {
                       "type": "number"
+                    },
+                    "taxPaymentsPosted": {
+                      "type": "number"
+                    },
+                    "taxPaymentsUnmatched": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -8238,7 +8247,9 @@
                     "cases",
                     "expired",
                     "immigrationExpired",
-                    "unusualAccessRaised"
+                    "unusualAccessRaised",
+                    "taxPaymentsPosted",
+                    "taxPaymentsUnmatched"
                   ]
                 },
                 "examples": {
@@ -8261,7 +8272,9 @@
                         }
                       ],
                       "immigrationExpired": 1,
-                      "unusualAccessRaised": 1
+                      "unusualAccessRaised": 1,
+                      "taxPaymentsPosted": 1,
+                      "taxPaymentsUnmatched": 1
                     }
                   }
                 }
@@ -29795,7 +29808,7 @@
                       "bills": [
                         {
                           "id": "ID-0001",
-                          "kind": "permit-fee",
+                          "kind": "customs-duty",
                           "description": "Text",
                           "amountMinor": 1,
                           "currency": "string",
@@ -29899,7 +29912,10 @@
                         "currency": "string",
                         "rail": "string",
                         "paidAt": "2026-01-15T09:30:00.000Z",
-                        "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                        "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "reference": "string",
+                        "railReference": "string",
+                        "recordedBy": "A. Official"
                       }
                     }
                   }
@@ -49723,6 +49739,280 @@
         "x-source": "src/app/api/substrate/export/route.ts"
       }
     },
+    "/api/tax": {
+      "get": {
+        "tags": [
+          "tax"
+        ],
+        "operationId": "get_tax",
+        "summary": "GET /api/tax",
+        "description": "GET /api/tax — the tax register (lib/tax/register.ts) for the tax authority's officials and auditors with a purpose (tax secrecy): ?tin= opens a taxpayer with returns, assessments and accounts; ?party= finds by register reference; with neither, counts only. Every search and read, allowed or refused, is written to the access log. Changes happen only through decided tax cases (/api/cases).",
+        "parameters": [
+          {
+            "name": "party",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "taxpayers": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "returns": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "assessments": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            }
+                          },
+                          "required": [
+                            "taxpayers",
+                            "returns",
+                            "assessments"
+                          ]
+                        },
+                        "taxpayers": {
+                          "type": "array",
+                          "items": {
+                            "not": {}
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "taxpayers"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "taxpayers": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "returns": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "assessments": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            }
+                          },
+                          "required": [
+                            "taxpayers",
+                            "returns",
+                            "assessments"
+                          ]
+                        },
+                        "taxpayers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "returns": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/TaxReturn"
+                                }
+                              },
+                              "assessments": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Assessment"
+                                }
+                              },
+                              "accounts": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "object",
+                                  "properties": {
+                                    "entries": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "#/components/schemas/LedgerEntry"
+                                      }
+                                    },
+                                    "balanceMinor": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "entries",
+                                    "balanceMinor"
+                                  ]
+                                }
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "tin": {
+                                "type": "string",
+                                "description": "The taxpayer identification number this register gives."
+                              },
+                              "party": {
+                                "$ref": "#/components/schemas/TaxpayerRef"
+                              },
+                              "taxTypes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "active",
+                                  "deregistered"
+                                ]
+                              },
+                              "registeredAt": {
+                                "type": "string"
+                              },
+                              "case": {
+                                "type": "string"
+                              },
+                              "history": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "what": {
+                                      "type": "string"
+                                    },
+                                    "case": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "at",
+                                    "by",
+                                    "what"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "returns",
+                              "assessments",
+                              "accounts",
+                              "id",
+                              "tin",
+                              "party",
+                              "taxTypes",
+                              "state",
+                              "registeredAt",
+                              "case",
+                              "history"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "taxpayers"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "counts": {
+                        "taxpayers": {
+                          "key": 1
+                        },
+                        "returns": {
+                          "key": 1
+                        },
+                        "assessments": {
+                          "key": 1
+                        }
+                      },
+                      "taxpayers": [
+                        null
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/tax/route.ts"
+      }
+    },
     "/api/twin/catalog": {
       "get": {
         "tags": [
@@ -58519,6 +58809,133 @@
           "response"
         ]
       },
+      "Assessment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "description": "The reference bills and receipts carry: tax:<id>."
+          },
+          "taxpayer": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "returnId": {
+            "type": "string"
+          },
+          "baseMinor": {
+            "type": "number"
+          },
+          "amountMinor": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "entered"
+                  },
+                  "reasons": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reasons"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "rule"
+                  },
+                  "rule": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  },
+                  "digest": {
+                    "type": "string"
+                  },
+                  "citations": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    }
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "rule",
+                  "version",
+                  "digest",
+                  "citations",
+                  "steps"
+                ]
+              }
+            ],
+            "description": "How the amount was set: by an approved rule (cited) or entered by an official with reasons."
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "issued",
+              "varied",
+              "withdrawn"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "taxpayer",
+          "taxType",
+          "period",
+          "baseMinor",
+          "amountMinor",
+          "currency",
+          "method",
+          "case",
+          "state",
+          "at",
+          "by"
+        ]
+      },
       "Assumption": {
         "type": "object",
         "properties": {
@@ -59677,8 +60094,11 @@
           "kind": {
             "type": "string",
             "enum": [
+              "customs-duty",
+              "licence-fee",
               "permit-fee",
               "property-tax",
+              "tax",
               "transit",
               "waste",
               "water"
@@ -59703,6 +60123,38 @@
               "overdue",
               "paid"
             ]
+          },
+          "reference": {
+            "type": "string",
+            "description": "The liability it settles (e.g. a tax assessment or a customs declaration), for reconciliation."
+          },
+          "payer": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "organisation",
+                  "person"
+                ]
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "name"
+            ],
+            "description": "Who owes it (a person or organisation reference); never shown to anyone else."
+          },
+          "issuer": {
+            "type": "string",
+            "description": "The institution that issued it."
           }
         },
         "required": [
@@ -67536,6 +67988,55 @@
           "tone"
         ]
       },
+      "LedgerEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "adjustment",
+              "assessment",
+              "payment",
+              "refund"
+            ]
+          },
+          "amountMinor": {
+            "type": "number",
+            "description": "Positive: owed by the taxpayer; negative: credited to them."
+          },
+          "currency": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "kind",
+          "amountMinor",
+          "currency",
+          "reference",
+          "by",
+          "reason"
+        ]
+      },
       "LegalInstrument": {
         "type": "object",
         "properties": {
@@ -71855,6 +72356,18 @@
           },
           "hash": {
             "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "description": "The liability reference, copied from the bill or given with a recorded transfer."
+          },
+          "railReference": {
+            "type": "string",
+            "description": "The rail's own reference (bank transfer id), for payments recorded by an official."
+          },
+          "recordedBy": {
+            "type": "string",
+            "description": "The official who recorded a payment that arrived outside the platform."
           }
         },
         "required": [
@@ -81572,6 +82085,102 @@
           "parameters",
           "declaredBy",
           "declaredAt"
+        ]
+      },
+      "TaxReturn": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "taxpayer": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string",
+            "description": "The period it covers: YYYY, YYYY-MM or YYYY-Qn."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "n": {
+                  "type": "number"
+                },
+                "baseMinor": {
+                  "type": "number"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "filedAt": {
+                  "type": "string"
+                },
+                "filedBy": {
+                  "type": "string"
+                },
+                "case": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "n",
+                "baseMinor",
+                "currency",
+                "filedAt",
+                "filedBy",
+                "case",
+                "reason"
+              ]
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "assessed",
+              "filed",
+              "final",
+              "under-objection"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "taxpayer",
+          "taxType",
+          "period",
+          "versions",
+          "state"
+        ]
+      },
+      "TaxpayerRef": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "organisation",
+              "person"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "name"
         ]
       },
       "TenantHealth": {

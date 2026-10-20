@@ -567,6 +567,13 @@ export function canReadCivil(s: Scope, authority: string | undefined, purpose?: 
   return 'The civil register is read by the civil registration authority';
 }
 
+/** Tax records (lib/tax/register.ts; tax secrecy): the tax authority's officials; auditors with a purpose. */
+export function canReadTax(s: Scope, authority: string | undefined, purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read tax records';
+  if (authority && s.institution === authority) return null;
+  return 'Tax records are read by the tax authority; other institutions check registration through the exchange (taxpayer.status)';
+}
+
 /** Visas and residence permits (lib/immigration/register.ts): the immigration authority's officials; auditors with a purpose. Never the whole government by default (directions 15.1). */
 export function canReadImmigration(s: Scope, authority: string | undefined, purpose?: string): string | null {
   if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read immigration records';
