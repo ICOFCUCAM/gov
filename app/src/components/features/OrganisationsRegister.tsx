@@ -122,11 +122,12 @@ export function OrganisationsRegister() {
         <div className="mt-2 flex flex-wrap items-end gap-2">
           <label className="text-sm">Register<select className={field} value={loadRegister} onChange={e => setLoadRegister(e.target.value)}><option value="">Choose</option>{types.map(t => <option key={t.key} value={t.key}>{t.title}</option>)}</select></label>
           <label className="text-sm">File<input type="file" accept=".csv,text/csv" className="mt-1 block text-sm" disabled={!loadRegister} onChange={async e => {
-            const file = e.currentTarget.files?.[0];
+            const input = e.currentTarget;
+            const file = input.files?.[0];
             if (!file) return;
             const csv = await file.text();
             await sendLoad({ op: 'load', register: loadRegister, csv }, j => `${j.load.loaded} loaded, ${j.load.refused.length} refused.`);
-            e.currentTarget.value = '';
+            input.value = '';
           }} /></label>
         </div>
         {loads.length ? (
