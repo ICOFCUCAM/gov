@@ -1932,6 +1932,8 @@ export interface DataTransmission {
 // ── My work (/api/work) ───────────────────────────────────────────────
 export interface WorkQueueItem extends QueueItem { ministryId: string; ministry: string; queueTitle: string; slaHours: number; overdue: boolean }
 export interface WorkMinistryIncident extends MinistryIncident { ministryId: string; ministry: string; authority: string | null; canEscalate: boolean }
+/** An open case under an approved procedure (lib/casework/), without personal fields. */
+export interface WorkCase { id: string; ref: string; procedure: string; ministryId: string; ministry: string; stage: string; priority: 'routine' | 'priority' | 'urgent'; assignee?: string; pendingApproval: boolean; nextDeadline?: { label: string; due: ISODate }; overdue: boolean; source: string; openedAt: ISODate }
 export interface WorkOverview {
   generatedAt: ISODate;
   counts: { decisions: number; overdue: number; incidents: number };
@@ -1939,4 +1941,5 @@ export interface WorkOverview {
   ministryIncidents: WorkMinistryIncident[];
   permits: Permit[];
   incidents: Incident[];
+  cases: WorkCase[];
 }

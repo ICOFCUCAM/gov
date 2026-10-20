@@ -55069,7 +55069,7 @@
         ],
         "operationId": "get_work",
         "summary": "GET /api/work",
-        "description": "What is waiting on officials across the government, from the records that hold it: every institution's queue (open or escalated items), its active incidents, permits awaiting a decision and open operational incidents. Read-only; the actions stay on their own endpoints (queue act, incident escalate/resolve, permit decide, ops incident ack/resolve), each audited. Cases and permits carry personal data: a signed-in official sees only those they may read (lib/auth/roles.ts canReadInstitution(), canReadPermits(); review M-3); the whole government and auditors see all of them.",
+        "description": "What is waiting on officials across the government, from the records that hold it: every institution's queue (open or escalated items), its active incidents, permits awaiting a decision and open operational incidents. Read-only; the actions stay on their own endpoints (queue act, incident escalate/resolve, permit decide, ops incident ack/resolve), each audited. Cases and permits carry personal data: a signed-in official sees only those they may read (lib/auth/roles.ts canReadInstitution(), canReadPermits(); review M-3); the whole government and auditors see all of them. Open cases under approved procedures (lib/casework/) are listed without personal fields, only those the case rules let the official read (caseReadRefusal()), with the next deadline and whether a second official's approval is waiting.",
         "parameters": [],
         "responses": {
           "200": {
@@ -55120,6 +55120,91 @@
                       "items": {
                         "$ref": "#/components/schemas/Incident"
                       }
+                    },
+                    "cases": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "overdue": {
+                            "type": "boolean"
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "citizen",
+                              "entered",
+                              "exchange",
+                              "feed",
+                              "imported",
+                              "sample"
+                            ]
+                          },
+                          "openedAt": {
+                            "type": "string"
+                          },
+                          "nextDeadline": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string"
+                              },
+                              "due": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "due"
+                            ]
+                          },
+                          "pendingApproval": {
+                            "type": "boolean"
+                          },
+                          "assignee": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "ref": {
+                            "type": "string"
+                          },
+                          "procedure": {
+                            "type": "string"
+                          },
+                          "ministryId": {
+                            "type": "string"
+                          },
+                          "ministry": {
+                            "type": "string"
+                          },
+                          "stage": {
+                            "type": "string"
+                          },
+                          "priority": {
+                            "type": "string",
+                            "enum": [
+                              "priority",
+                              "routine",
+                              "urgent"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "overdue",
+                          "source",
+                          "openedAt",
+                          "pendingApproval",
+                          "id",
+                          "ref",
+                          "procedure",
+                          "ministryId",
+                          "ministry",
+                          "stage",
+                          "priority"
+                        ]
+                      }
                     }
                   },
                   "required": [
@@ -55128,7 +55213,8 @@
                     "queue",
                     "ministryIncidents",
                     "permits",
-                    "incidents"
+                    "incidents",
+                    "cases"
                   ]
                 },
                 "examples": {
@@ -55171,6 +55257,21 @@
                           "events": [
                             {}
                           ]
+                        }
+                      ],
+                      "cases": [
+                        {
+                          "overdue": true,
+                          "source": "citizen",
+                          "openedAt": "2026-01-15T09:30:00.000Z",
+                          "pendingApproval": true,
+                          "id": "ID-0001",
+                          "ref": "string",
+                          "procedure": "string",
+                          "ministryId": "ID-0001",
+                          "ministry": "string",
+                          "stage": "string",
+                          "priority": "priority"
                         }
                       ]
                     }
@@ -79168,6 +79269,81 @@
           "resources"
         ]
       },
+      "WorkCase": {
+        "description": "An open case under an approved procedure (lib/casework/), without personal fields.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "procedure": {
+            "type": "string"
+          },
+          "ministryId": {
+            "type": "string"
+          },
+          "ministry": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "priority",
+              "routine",
+              "urgent"
+            ]
+          },
+          "assignee": {
+            "type": "string"
+          },
+          "pendingApproval": {
+            "type": "boolean"
+          },
+          "nextDeadline": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "due": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "due"
+            ]
+          },
+          "overdue": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string"
+          },
+          "openedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "procedure",
+          "ministryId",
+          "ministry",
+          "stage",
+          "priority",
+          "pendingApproval",
+          "overdue",
+          "source",
+          "openedAt"
+        ]
+      },
       "WorkMinistryIncident": {
         "type": "object",
         "properties": {
@@ -79286,6 +79462,12 @@
             "items": {
               "$ref": "#/components/schemas/Incident"
             }
+          },
+          "cases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkCase"
+            }
           }
         },
         "required": [
@@ -79294,7 +79476,8 @@
           "queue",
           "ministryIncidents",
           "permits",
-          "incidents"
+          "incidents",
+          "cases"
         ]
       },
       "WorkQueueItem": {
