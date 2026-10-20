@@ -67,7 +67,9 @@ export interface RetentionChange {
   reason: string;
   proposedBy: string;
   proposedAt: string;
-  state: 'proposed' | 'confirmed' | 'withdrawn';
+  /** awaiting-oversight: deleting from the access log also needs the data-protection authority (directions 15.3). */
+  state: 'proposed' | 'awaiting-oversight' | 'confirmed' | 'withdrawn';
+  oversightBy?: string;
   decidedBy?: string;
   decidedAt?: string;
 }
@@ -166,9 +168,34 @@ export function decideRetention(id: string, decision: unknown, by: string, now =
   }
   if (decision !== 'confirm') return { error: 'decision must be confirm or withdraw' };
   if (by === c.proposedBy) return { error: 'A different administrator confirms the rule (four-eyes)' };
+  // Audit administration is separate from operational administration: shortening the access log
+  // also needs the oversight side (confirmByOversight()).
+  if (c.category === 'access-log' && c.rule.action === 'delete') {
+    Object.assign(c, { state: 'awaiting-oversight', decidedBy: by, decidedAt: at });
+    recordAudit(by, 'retention.confirm', `Retention:${c.category}`, 'ok', `${describe(c.rule)} · proposed by ${c.proposedBy} · waiting for the data-protection authority`);
+    return c;
+  }
   Object.assign(c, { state: 'confirmed', decidedBy: by, decidedAt: at });
   d.rules[c.category] = { ...c.rule, proposedBy: c.proposedBy, confirmedBy: by, since: at };
   recordAudit(by, 'retention.confirm', `Retention:${c.category}`, 'ok', `${describe(c.rule)} · proposed by ${c.proposedBy}`);
+  return c;
+}
+
+/**
+ * The data-protection authority (or an auditor while none is named) confirms
+ * a rule that deletes from the access log, after the two administrators.
+ * The route checks who may (canConfirmAccessLogRetention()).
+ */
+export function confirmByOversight(id: string, by: string, now = Date.now()): RetentionChange | { error: string } {
+  const d = db();
+  const c = d.changes.find(x => x.id === id);
+  if (!c) return { error: 'No such proposal' };
+  if (c.state !== 'awaiting-oversight') return { error: 'This proposal is not waiting for the data-protection authority' };
+  if (by === c.proposedBy || by === c.decidedBy) return { error: 'The oversight confirmation is by someone other than the administrators who proposed and confirmed it' };
+  const at = new Date(now).toISOString();
+  Object.assign(c, { state: 'confirmed', oversightBy: by });
+  d.rules[c.category] = { ...c.rule, proposedBy: c.proposedBy, confirmedBy: `${c.decidedBy} and ${by} (oversight)`, since: at };
+  recordAudit(by, 'retention.oversight-confirm', `Retention:${c.category}`, 'ok', `${describe(c.rule)} · proposed by ${c.proposedBy}, confirmed by ${c.decidedBy}`);
   return c;
 }
 

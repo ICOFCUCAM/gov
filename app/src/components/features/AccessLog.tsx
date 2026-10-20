@@ -8,7 +8,7 @@ import * as React from 'react';
 import { Section } from '@/components/ui/DataSystem';
 
 interface Entry { id: string; seq: number; at: string; by: { id?: string; name: string; institution?: string }; record: { register: string; id?: string; query?: string }; action: string; purpose?: string; result: string; rule?: string }
-interface Answer { entries: Entry[]; chain: { ok: boolean; entries: number; brokenAt?: number }; unusual: { official: string; name: string; reason: string; count: number }[] }
+interface Answer { entries: Entry[]; chain: { ok: boolean; entries: number; brokenAt?: number }; unusual: { official: string; name: string; reason: string; count: number }[]; awaiting?: { id: string; rule: { days?: number; basis?: string }; reason: string; proposedBy: string; confirmedBy?: string }[] }
 
 export function AccessLog() {
   const [a, setA] = React.useState<Answer | null>(null);
@@ -33,6 +33,20 @@ export function AccessLog() {
           {a.unusual.length ? (
             <Section title="Worth a look" meta="last 24 hours">
               <ul className="text-sm">{a.unusual.map(u => <li key={`${u.official}-${u.reason}`}>{u.name}: {u.reason} ({u.count})</li>)}</ul>
+            </Section>
+          ) : null}
+          {a.awaiting?.length ? (
+            <Section title="Shortening this log" meta="waiting for the data-protection authority">
+              <ul className="space-y-2 text-sm">{a.awaiting.map(w => (
+                <li key={w.id}>Delete entries older than {w.rule.days} days ({w.rule.basis}): {w.reason}. Proposed by {w.proposedBy}, confirmed by {w.confirmedBy}.{' '}
+                  <button type="button" className="rounded border border-line px-2 py-0.5" onClick={async () => {
+                    const r = await fetch('/api/access-log/retention', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: w.id }) });
+                    const j = await r.json();
+                    setErr(r.ok ? null : j.error);
+                    if (r.ok) setA(x => (x ? { ...x, awaiting: x.awaiting?.filter(y => y.id !== w.id) } : x));
+                  }}>Confirm for the oversight side</button>
+                </li>
+              ))}</ul>
             </Section>
           ) : null}
           <Section title="Entries" meta="newest first">

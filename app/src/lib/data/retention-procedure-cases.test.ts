@@ -33,3 +33,16 @@ describe('retention of cases under procedures', () => {
     expect(getCase(b)!.subject[0]!.name).toBe('Held Person');
   });
 });
+
+describe('shortening the access log', () => {
+  beforeEach(() => resetRetention());
+  it('needs the oversight side after the two administrators', async () => {
+    const { confirmByOversight, retentionRules } = await import('./retention');
+    const p = proposeRetention({ category: 'access-log', action: 'delete', days: 3650, basis: 'Records schedule 9', reason: 'Ten years' }, 'Admin A') as { id: string };
+    expect(decideRetention(p.id, 'confirm', 'Admin B')).toMatchObject({ state: 'awaiting-oversight' });
+    expect(retentionRules()['access-log']).toEqual({ action: 'keep' });
+    expect(confirmByOversight(p.id, 'Admin B')).toHaveProperty('error');
+    expect(confirmByOversight(p.id, 'Data protection officer')).toMatchObject({ state: 'confirmed' });
+    expect(retentionRules()['access-log']).toMatchObject({ action: 'delete', days: 3650 });
+  });
+});

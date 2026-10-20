@@ -133,10 +133,10 @@ describe('retention of personal data', () => {
 });
 
 describe('retention of documents and the access log', () => {
-  it('disposes of old documents (never held ones) and shortens the access log once a second administrator confirms', async () => {
+  it('disposes of old documents (never held ones) and shortens the access log once a second administrator and the oversight side confirm', async () => {
     const { vi } = await import('vitest');
     vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 5).toString('base64'));
-    const { resetRetention, proposeRetention, decideRetention, runRetention } = await import('./retention');
+    const { resetRetention, proposeRetention, decideRetention, runRetention, confirmByOversight } = await import('./retention');
     const { addDocument, holdDocument, getDocument, resetDocuments } = await import('@/lib/records/documents');
     const { recordAccess, listAccess, resetAccessLog } = await import('@/lib/records/access-log');
     resetRetention(); resetDocuments(); resetAccessLog();
@@ -153,6 +153,8 @@ describe('retention of documents and the access log', () => {
       if ('error' in p) throw new Error(p.error);
       expect(decideRetention(p.id, 'confirm', 'Admin A')).toHaveProperty('error');
       decideRetention(p.id, 'confirm', 'Admin B');
+      // The access log also needs the oversight side (directions 15.3).
+      if (category === 'access-log') confirmByOversight(p.id, 'Data protection officer');
     }
     const run = runRetention();
     expect(run.documents).toEqual({ disposed: 1, held: 1 });

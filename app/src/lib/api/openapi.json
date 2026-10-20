@@ -171,6 +171,102 @@
     }
   ],
   "paths": {
+    "/api/access-log/retention": {
+      "post": {
+        "tags": [
+          "access-log"
+        ],
+        "operationId": "post_access_log_retention",
+        "summary": "POST /api/access-log/retention",
+        "description": "POST /api/access-log/retention { id } — the oversight side's confirmation of a rule that deletes from the access log (lib/data/retention.ts confirmByOversight()), after two administrators proposed and confirmed it: the data-protection authority's officials who can sign, or an auditor while none is named (canConfirmAccessLogRetention()); never an administrator.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "id": "ID-0001",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "change": {
+                      "$ref": "#/components/schemas/RetentionChange"
+                    }
+                  },
+                  "required": [
+                    "change"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "change": {
+                        "id": "ID-0001",
+                        "category": "access-log",
+                        "rule": {
+                          "action": "anonymise"
+                        },
+                        "reason": "Text",
+                        "proposedBy": "A. Official",
+                        "proposedAt": "2026-01-15T09:30:00.000Z",
+                        "state": "awaiting-oversight",
+                        "oversightBy": "A. Official",
+                        "decidedBy": "A. Official",
+                        "decidedAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/access-log/retention/route.ts"
+      }
+    },
     "/api/access-log": {
       "get": {
         "tags": [
@@ -294,12 +390,42 @@
                           "count"
                         ]
                       }
+                    },
+                    "awaiting": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "rule": {
+                            "$ref": "#/components/schemas/RetentionRule"
+                          },
+                          "reason": {
+                            "type": "string"
+                          },
+                          "proposedBy": {
+                            "type": "string"
+                          },
+                          "confirmedBy": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "rule",
+                          "reason",
+                          "proposedBy"
+                        ]
+                      }
                     }
                   },
                   "required": [
                     "entries",
                     "chain",
-                    "unusual"
+                    "unusual",
+                    "awaiting"
                   ]
                 },
                 "examples": {
@@ -334,6 +460,16 @@
                           "name": "Example",
                           "reason": "Text",
                           "count": 1
+                        }
+                      ],
+                      "awaiting": [
+                        {
+                          "id": "ID-0001",
+                          "rule": {
+                            "action": "anonymise"
+                          },
+                          "reason": "Text",
+                          "proposedBy": "A. Official"
                         }
                       ]
                     }
@@ -6058,7 +6194,8 @@
                         "source": "citizen",
                         "version": 1,
                         "openedAt": "2026-01-15T09:30:00.000Z",
-                        "closedAt": "2026-01-15T09:30:00.000Z"
+                        "closedAt": "2026-01-15T09:30:00.000Z",
+                        "anonymisedAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
                   }
@@ -6231,7 +6368,8 @@
                         "source": "citizen",
                         "version": 1,
                         "openedAt": "2026-01-15T09:30:00.000Z",
-                        "closedAt": "2026-01-15T09:30:00.000Z"
+                        "closedAt": "2026-01-15T09:30:00.000Z",
+                        "anonymisedAt": "2026-01-15T09:30:00.000Z"
                       },
                       "procedure": {
                         "key": "string",
@@ -6721,7 +6859,8 @@
                         "source": "citizen",
                         "version": 1,
                         "openedAt": "2026-01-15T09:30:00.000Z",
-                        "closedAt": "2026-01-15T09:30:00.000Z"
+                        "closedAt": "2026-01-15T09:30:00.000Z",
+                        "anonymisedAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
                   }
@@ -8061,6 +8200,9 @@
                     },
                     "immigrationExpired": {
                       "type": "number"
+                    },
+                    "unusualAccessRaised": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -8068,7 +8210,8 @@
                     "lapsed",
                     "cases",
                     "expired",
-                    "immigrationExpired"
+                    "immigrationExpired",
+                    "unusualAccessRaised"
                   ]
                 },
                 "examples": {
@@ -8090,7 +8233,8 @@
                           "register": "string"
                         }
                       ],
-                      "immigrationExpired": 1
+                      "immigrationExpired": 1,
+                      "unusualAccessRaised": 1
                     }
                   }
                 }
@@ -9242,6 +9386,9 @@
                           "anonymised": 1,
                           "deleted": 1
                         },
+                        "procedureCases": {
+                          "anonymised": 1
+                        },
                         "documents": {
                           "disposed": 1,
                           "held": 1
@@ -9978,13 +10125,34 @@
                       "required": [
                         "published"
                       ]
+                    },
+                    "cases": {
+                      "type": "object",
+                      "properties": {
+                        "published": {
+                          "type": "boolean"
+                        },
+                        "run": {
+                          "type": "string"
+                        },
+                        "accepted": {
+                          "type": "number"
+                        },
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "published"
+                      ]
                     }
                   },
                   "required": [
                     "ok",
                     "runs",
                     "civil",
-                    "organisations"
+                    "organisations",
+                    "cases"
                   ]
                 },
                 "examples": {
@@ -10007,6 +10175,12 @@
                       "organisations": {
                         "published": true,
                         "entities": 1,
+                        "run": "string",
+                        "accepted": 1,
+                        "error": "Text"
+                      },
+                      "cases": {
+                        "published": true,
                         "run": "string",
                         "accepted": 1,
                         "error": "Text"
@@ -32937,7 +33111,8 @@
                         "reason": "Text",
                         "proposedBy": "A. Official",
                         "proposedAt": "2026-01-15T09:30:00.000Z",
-                        "state": "confirmed",
+                        "state": "awaiting-oversight",
+                        "oversightBy": "A. Official",
                         "decidedBy": "A. Official",
                         "decidedAt": "2026-01-15T09:30:00.000Z"
                       }
@@ -32998,13 +33173,17 @@
                         },
                         "permits": {
                           "$ref": "#/components/schemas/RetentionRule"
+                        },
+                        "procedure-cases": {
+                          "$ref": "#/components/schemas/RetentionRule"
                         }
                       },
                       "required": [
                         "access-log",
                         "cases",
                         "documents",
-                        "permits"
+                        "permits",
+                        "procedure-cases"
                       ]
                     },
                     "categories": {
@@ -33018,7 +33197,8 @@
                               "access-log",
                               "cases",
                               "documents",
-                              "permits"
+                              "permits",
+                              "procedure-cases"
                             ]
                           },
                           "label": {
@@ -33079,6 +33259,9 @@
                         },
                         "permits": {
                           "action": "anonymise"
+                        },
+                        "procedure-cases": {
+                          "action": "anonymise"
                         }
                       },
                       "categories": [
@@ -33098,7 +33281,7 @@
                           "reason": "Text",
                           "proposedBy": "A. Official",
                           "proposedAt": "2026-01-15T09:30:00.000Z",
-                          "state": "confirmed"
+                          "state": "awaiting-oversight"
                         }
                       ],
                       "runs": [
@@ -33217,7 +33400,8 @@
                         "reason": "Text",
                         "proposedBy": "A. Official",
                         "proposedAt": "2026-01-15T09:30:00.000Z",
-                        "state": "confirmed",
+                        "state": "awaiting-oversight",
+                        "oversightBy": "A. Official",
                         "decidedBy": "A. Official",
                         "decidedAt": "2026-01-15T09:30:00.000Z"
                       }
@@ -59383,6 +59567,10 @@
           },
           "closedAt": {
             "type": "string"
+          },
+          "anonymisedAt": {
+            "type": "string",
+            "description": "Set when the nation's retention rule removed the personal fields and names (lib/data/retention.ts)."
           }
         },
         "required": [
@@ -73511,7 +73699,8 @@
               "access-log",
               "cases",
               "documents",
-              "permits"
+              "permits",
+              "procedure-cases"
             ]
           },
           "rule": {
@@ -73529,10 +73718,15 @@
           "state": {
             "type": "string",
             "enum": [
+              "awaiting-oversight",
               "confirmed",
               "proposed",
               "withdrawn"
-            ]
+            ],
+            "description": "awaiting-oversight: deleting from the access log also needs the data-protection authority (directions 15.3)."
+          },
+          "oversightBy": {
+            "type": "string"
           },
           "decidedBy": {
             "type": "string"
@@ -73620,6 +73814,18 @@
               "anonymised",
               "deleted"
             ]
+          },
+          "procedureCases": {
+            "type": "object",
+            "properties": {
+              "anonymised": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "anonymised"
+            ],
+            "description": "Closed cases under procedures anonymised (absent on runs before this category)."
           },
           "documents": {
             "type": "object",

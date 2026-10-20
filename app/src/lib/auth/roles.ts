@@ -181,7 +181,8 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/directives(\/|$)/,                 // canDraftDirective() / canSignDirective() in the route
   /^\/api\/law(\/|$)/,                        // the laws register: canRecordLaw() / canConfirmLaw() in the route
   /^\/api\/cases(\/|$)/,                      // cases: caseActRefusal() in the workflow engine (lib/casework/engine.ts)
-  /^\/api\/organisations\/loads$/,           // loading an existing register: the authority that keeps it (the route checks)
+  /^\/api\/organisations\/loads$/,
+  /^\/api\/access-log\/retention$/,         // oversight confirmation of shortening the access log: canConfirmAccessLogRetention() in the route           // loading an existing register: the authority that keeps it (the route checks)
   /^\/api\/case-packages(\/|$)/,              // procedures: drafted by the responsible institution, approved by one who can sign there (route)
   /^\/api\/documents\/verify$/,               // checks a document code (no change)
   /^\/api\/facilities\/(check|candidates)(\/|$)/, // checks and candidate review (rules in the route)
@@ -519,6 +520,13 @@ export function canReadAccessLog(s: Scope, dataProtection: string | undefined): 
   if (roleOf(s) === 'auditor') return null;
   if (dataProtection && s.institution === dataProtection) return null;
   return 'The access log is read by auditors and by the data-protection authority';
+}
+
+/** Confirming that the access log may be shortened: the data-protection authority's officials who can sign; auditors while none is named. Never an administrator (directions 15.3). */
+export function canConfirmAccessLogRetention(s: Scope, dataProtection: string | undefined): string | null {
+  const role = roleOf(s);
+  if (dataProtection) return s.institution === dataProtection && role === 'signatory' ? null : 'The data-protection authority confirms this (an official who can sign there)';
+  return role === 'auditor' ? null : 'An auditor confirms this while no data-protection authority is named';
 }
 
 /** Recording a version of a law (lib/law/register.ts): officials of the nation's law-register authority; whole-government administrators only while none is named. */

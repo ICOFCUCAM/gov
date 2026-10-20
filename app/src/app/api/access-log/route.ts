@@ -8,6 +8,7 @@ import { readRefusal } from '@/lib/auth/official';
 import { canReadAccessLog } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
 import { listAccess, verifyAccessLog, unusualAccess, type AccessAction } from '@/lib/records/access-log';
+import { retentionChanges } from '@/lib/data/retention';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,5 +29,7 @@ export async function GET(req: NextRequest) {
     limit: Number(q.get('limit')) || undefined,
   });
   const day = new Date(Date.now() - 86_400_000).toISOString();
-  return NextResponse.json({ entries, chain: verifyAccessLog(), unusual: unusualAccess(day) });
+  // Rules to shorten this log, waiting for the oversight side (POST /api/access-log/retention).
+  const awaiting = retentionChanges().filter(c => c.state === 'awaiting-oversight').map(c => ({ id: c.id, rule: c.rule, reason: c.reason, proposedBy: c.proposedBy, confirmedBy: c.decidedBy }));
+  return NextResponse.json({ entries, chain: verifyAccessLog(), unusual: unusualAccess(day), awaiting });
 }

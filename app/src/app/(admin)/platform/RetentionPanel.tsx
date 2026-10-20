@@ -30,6 +30,7 @@ export function RetentionPanel({ onError }: { onError: (e: string | null) => voi
 
   if (!data) return <p className="text-sm text-ink-muted">Loading retention rules…</p>;
   const pending = data.changes.filter(c => c.state === 'proposed');
+  const oversight = data.changes.filter(c => c.state === 'awaiting-oversight');
   return (
     <>
       <Card tight>
@@ -78,6 +79,11 @@ export function RetentionPanel({ onError }: { onError: (e: string | null) => voi
           <Button type="submit">Propose</Button>
         </form>
       </Card>
+      {oversight.map(c => (
+        <Card tight key={c.id}>
+          <p className="text-sm">Shortening the access log ({c.rule.action} after {c.rule.days} days) was confirmed by {c.decidedBy} and now waits for the data-protection authority, which confirms it on the Access log page. Administrators cannot complete it alone.</p>
+        </Card>
+      ))}
       {pending.map(c => (
         <Card tight key={c.id}>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
