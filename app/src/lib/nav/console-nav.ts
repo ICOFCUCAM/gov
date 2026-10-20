@@ -23,11 +23,11 @@ const tab = (label: string, href: string, was?: string): NavTab => ({ label, hre
 
 export const CONSOLE_NAV: NavSection[] = [
   { label: 'My desk', items: [
-    { key: 'work', icon: '☑', label: 'My work', href: '/gov/work', match: /^\/gov\/items\//,
+    { key: 'work', icon: '☑', label: 'My work', href: '/gov/work', match: /^\/gov\/(items|cases)\//,
       purpose: 'Everything waiting on you and your colleagues: decisions, cases, requests and incidents.',
       tabs: [tab('Waiting on officials', '/gov/work', 'My work'), tab('Today', '/gov/home', 'Officer Home'), tab('Directives to me', '/gov/inbox', 'Directive inbox'),
         tab('Case work', '/gov/workbench', 'Officer Workbench'), tab('Citizen requests', '/gov/intake', 'Citizen Intake'), tab('Permits', '/console', 'Officer Console'),
-        tab('Notifications', '/gov/alerts'), tab('Following', '/gov/watchlist', 'Watchlist'), tab('Load cases', '/gov/work/cases')] },
+        tab('Notifications', '/gov/alerts'), tab('Following', '/gov/watchlist', 'Watchlist'), tab('Load cases', '/gov/work/cases'), tab('Cases', '/gov/work/cases/open')] },
     { key: 'me', icon: '◉', label: 'My account', href: '/gov/me', purpose: 'Your profile, your signing key and your session.', tabs: [tab('Profile', '/gov/me')] },
   ]},
   { label: 'Decisions', items: [
