@@ -13,6 +13,7 @@
 import { logExchange, type ExchangeReceipt } from './log';
 import { getPerson, current, fold } from '@/lib/civil/register';
 import { statusOn } from '@/lib/immigration/register';
+import { getOrganisation, publicOrganisation } from '@/lib/organisations/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
 export interface Caller { kind: 'module' | 'integration'; id: string; name: string; institution?: string }
@@ -48,6 +49,16 @@ export const SERVICES: ServiceDef[] = [
       if (!family && !birthDate) return { status: 200, result: 'nothing to compare', data: { match: 'unknown', status: 'unknown' } };
       const same = (!family || fold(family) === fold(v.names.family)) && (!given || fold(given) === fold(v.names.given)) && (!birthDate || birthDate === v.birth?.date);
       return { status: 200, result: same ? 'match' : 'no match', data: { match: same ? 'yes' : 'no', status: same ? v.status : 'unknown' } };
+    },
+  },
+  {
+    id: 'organisation.standing', version: 1, kind: 'query', title: 'Is this organisation registered, licensed or accredited in this register?', owner: 'businessRegister', scope: 'service:organisation.standing',
+    returns: { standing: 'granted, suspended, revoked, expired, struck-off, applied, refused or none', validUntil: 'YYYY-MM-DD', name: 'the registered name' }, dataClass: 'public',
+    handle: input => {
+      const o = getOrganisation(str(input.number));
+      if (!o) return { status: 200, result: 'no such organisation', data: { standing: 'none' } };
+      const s = publicOrganisation(o).standings.find(x => x.register === str(input.register));
+      return { status: 200, result: s ? s.state : 'not in that register', data: { name: publicOrganisation(o).name, standing: s?.state ?? 'none', ...(s?.validUntil ? { validUntil: s.validUntil } : {}) } };
     },
   },
   {

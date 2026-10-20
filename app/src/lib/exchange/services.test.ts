@@ -21,7 +21,7 @@ describe('exchange services', () => {
   });
 
   it('lists every service with its owner, scope and the fields it returns', () => {
-    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
+    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['organisation.standing', 'query', 'service:organisation.standing'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
   });
 });
 
@@ -36,5 +36,17 @@ describe('immigration.status', () => {
     expect(JSON.stringify(r)).not.toContain('Private Holder');
     expect(r.receipt).toBeTruthy();
     expect((await callService(caller, 'immigration.status', { nationality: 'KEN', documentNumber: 'NOPE' }, 'Check')).data).toEqual({ valid: 'no' });
+  });
+});
+
+describe('organisation.standing', () => {
+  it('answers the standing in one register, without representatives', async () => {
+    const { resetOrganisations, createOrganisation, setStanding } = await import('@/lib/organisations/register');
+    resetOrganisations();
+    const o = createOrganisation({ name: 'Riverside Pharmacy', kind: 'pharmacy', representative: { name: 'Private Owner', role: 'Owner' } }, 'c', 'R') as { id: string; number: string };
+    setStanding(o.id, { register: 'business-licences', state: 'granted', reason: 'ok', validUntil: '2027-01-01' }, 'R');
+    const r = await callService({ kind: 'integration', id: 'health', name: 'Health insurer' }, 'organisation.standing', { number: o.number, register: 'business-licences' }, 'Paying a claim');
+    expect(r.data).toEqual({ name: 'Riverside Pharmacy', standing: 'granted', validUntil: '2027-01-01' });
+    expect(JSON.stringify(r)).not.toContain('Private Owner');
   });
 });
