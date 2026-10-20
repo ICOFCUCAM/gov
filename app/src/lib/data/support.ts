@@ -25,6 +25,7 @@ import { recordAudit } from '@/lib/data/store/audit';
 import { isShared, transmit } from './sovereignty';
 import { alertNations } from './comms';
 import { touch } from '@/lib/data/repo/track';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 export const PRIORITIES: TicketPriority[] = ['P1', 'P2', 'P3', 'P4'];
 export const PRIORITY_MEANING: Record<TicketPriority, string> = {
@@ -59,6 +60,8 @@ const DAY = 86_400_000;
 interface SupportDb { tickets: SupportTicket[]; seq: number; tiers: Record<string, SupportTier>; service: ServiceIncident[]; serviceSeq: number }
 
 function seed(): SupportDb {
+  // Sample history: demo and training installations only (lib/ops/mode.ts).
+  if (!samplesAllowed()) return { tickets: [], seq: 3000, tiers: {}, service: [], serviceSeq: 100 };
   const now = Date.now();
   const at = (d: number, m = 0) => new Date(now + d * DAY + m * MIN).toISOString();
   const msg = (t: string, by: string, side: 'nation' | 'publisher' | 'system', text: string) => ({ at: t, by, side, text });

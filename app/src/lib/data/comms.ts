@@ -26,6 +26,7 @@ import { touch } from '@/lib/data/repo/track';
 import { enqueue, cancelFor, statusOfKey } from '@/lib/messaging/outbox';
 import { maskAddress } from '@/lib/messaging/privacy';
 import { alertMessage } from '@/lib/messaging/templates';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 export const CATEGORIES: AlertCategory[] = ['security', 'releases', 'incidents', 'eol'];
 export const CHANNELS: AlertChannel[] = ['email', 'sms'];
@@ -35,6 +36,8 @@ interface Translation { summary: string; changes: string[]; by: string; at: stri
 interface CommsDb { translations: Record<string, Record<string, Translation>>; resources: Record<string, ReleaseResource[]>; officials: Record<string, Official[]>; outbox: AlertDelivery[]; seq: number }
 
 function seed(): CommsDb {
+  // Sample history: demo and training installations only (lib/ops/mode.ts).
+  if (!samplesAllowed()) return { translations: {}, resources: {}, officials: {}, outbox: [], seq: 1 };
   const on = (s: Partial<Record<AlertCategory, boolean>>) => ({ security: false, releases: false, incidents: false, eol: false, ...s });
   return {
     translations: {

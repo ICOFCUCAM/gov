@@ -13,6 +13,7 @@ import type { AdvisoryExposure, AdvisoryNationStatus, AdvisorySeverity, Distribu
 import { recordAudit } from '@/lib/data/store/audit';
 import { compareVersions, gte } from '@/lib/updates/semver';
 import { touch } from '@/lib/data/repo/track';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 /** Publisher patch-time commitments: from disclosure to a released fix. */
 export const PATCH_COMMITMENTS: Record<AdvisorySeverity, number> = { critical: 72, high: 14 * 24, medium: 30 * 24, low: 90 * 24 };
@@ -22,6 +23,8 @@ interface AdvDb { advisories: SecurityAdvisory[]; vex: Record<string, { status: 
 const DAY = 86_400_000;
 
 function seed(): AdvDb {
+  // Sample history: demo and training installations only (lib/ops/mode.ts).
+  if (!samplesAllowed()) return { advisories: [], vex: {} };
   const now = Date.now();
   const at = (d: number) => new Date(now + d * DAY).toISOString();
   return {
