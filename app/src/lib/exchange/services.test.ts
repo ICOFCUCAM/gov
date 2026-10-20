@@ -21,7 +21,7 @@ describe('exchange services', () => {
   });
 
   it('lists every service with its owner, scope and the fields it returns', () => {
-    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['organisation.standing', 'query', 'service:organisation.standing'], ['taxpayer.status', 'query', 'service:taxpayer.status'], ['qualification.verify', 'query', 'service:qualification.verify'], ['professional.standing', 'query', 'service:professional.standing'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
+    expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['organisation.standing', 'query', 'service:organisation.standing'], ['taxpayer.status', 'query', 'service:taxpayer.status'], ['qualification.verify', 'query', 'service:qualification.verify'], ['professional.standing', 'query', 'service:professional.standing'], ['customs.release', 'query', 'service:customs.release'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
   });
 });
 
@@ -87,5 +87,16 @@ describe('professional.standing', () => {
     const r = await callService({ kind: 'integration', id: 'hospital-hr', name: 'Teaching hospital' }, 'professional.standing', { number: e.number }, 'Employment check');
     expect(r.data).toEqual({ registered: 'yes', profession: 'Pharmacists', state: 'registered', conditions: [] });
     expect(JSON.stringify(r)).not.toContain('BR-1985');
+  });
+});
+
+describe('customs.release', () => {
+  it('says whether goods were released, never what or whose', async () => {
+    const { resetCustoms, lodgeDeclaration } = await import('@/lib/customs/register');
+    resetCustoms();
+    const d = lodgeDeclaration({ direction: 'import', declarant: { kind: 'organisation', ref: 'ORG-5', name: 'Secret Importer' }, shipment: { mode: 'sea', transportRef: 'BL-9', from: 'CN', to: 'KE' }, currency: 'KES', goods: '8703 | Cars | JP | 2 u | 4000000' }, 'c', 'Officer') as { number: string };
+    const r = await callService({ kind: 'integration', id: 'vehicle-registry', name: 'Vehicle registry' }, 'customs.release', { number: d.number }, 'First registration of an imported vehicle');
+    expect(r.data).toEqual({ released: 'no', state: 'lodged' });
+    expect(JSON.stringify(r)).not.toMatch(/Secret|ORG-5|Cars|4000000/);
   });
 });

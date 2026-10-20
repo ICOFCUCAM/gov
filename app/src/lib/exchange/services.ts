@@ -17,6 +17,7 @@ import { getOrganisation, publicOrganisation } from '@/lib/organisations/registe
 import { getTaxpayer, findTaxpayers } from '@/lib/tax/register';
 import { verifyAward } from '@/lib/education/register';
 import { getProfessional, publicProfessional } from '@/lib/professions/register';
+import { getDeclaration } from '@/lib/customs/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
 export interface Caller { kind: 'module' | 'integration'; id: string; name: string; institution?: string }
@@ -97,6 +98,17 @@ export const SERVICES: ServiceDef[] = [
       if (!e) return { status: 200, result: 'not registered', data: { registered: 'no' } };
       const p = publicProfessional(e);
       return { status: 200, result: p.state, data: { registered: p.state === 'registered' ? 'yes' : 'no', profession: p.professionTitle, state: p.state, ...(p.validUntil ? { validUntil: p.validUntil } : {}), conditions: p.conditions } };
+    },
+  },
+  {
+    id: 'customs.release', version: 1, kind: 'query', title: 'Have the goods on this declaration been released by customs?', owner: 'customs', scope: 'service:customs.release',
+    returns: { released: 'yes or no', state: 'lodged, assessed, released, release-refused or withdrawn', releasedOn: 'YYYY-MM-DD' }, dataClass: 'restricted',
+    legalBasis: 'The customs law\'s provisions on cooperation with other agencies (named by the customs authority when it approves the service for a caller)',
+    handle: input => {
+      // Never the declarant, the goods, their values or the duty (commercial confidentiality).
+      const d = getDeclaration(str(input.number));
+      if (!d) return { status: 200, result: 'unknown', data: { released: 'no' } };
+      return { status: 200, result: d.state, data: { released: d.state === 'released' ? 'yes' : 'no', state: d.state, ...(d.state === 'released' && d.release ? { releasedOn: d.release.at.slice(0, 10) } : {}) } };
     },
   },
   {
