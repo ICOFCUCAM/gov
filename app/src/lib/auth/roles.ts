@@ -176,6 +176,8 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/boundaries(\/|$)/,                 // canManageBoundaries() in the route
   /^\/api\/directives(\/|$)/,                 // canDraftDirective() / canSignDirective() in the route
   /^\/api\/law(\/|$)/,                        // the laws register: canRecordLaw() / canConfirmLaw() in the route
+  /^\/api\/cases(\/|$)/,                      // cases: caseActRefusal() in the workflow engine (lib/casework/engine.ts)
+  /^\/api\/case-packages(\/|$)/,              // procedures: drafted by the responsible institution, approved by one who can sign there (route)
   /^\/api\/documents\/verify$/,               // checks a document code (no change)
   /^\/api\/facilities\/(check|candidates)(\/|$)/, // checks and candidate review (rules in the route)
   /^\/api\/facilities\/[^/]+$/,               // one site (canSignForSite() etc. in the route)

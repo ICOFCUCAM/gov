@@ -38,6 +38,12 @@
       "name": "cabinet"
     },
     {
+      "name": "case-packages"
+    },
+    {
+      "name": "cases"
+    },
+    {
       "name": "cron"
     },
     {
@@ -4872,6 +4878,1677 @@
           }
         ],
         "x-source": "src/app/api/cabinet/route.ts"
+      }
+    },
+    "/api/case-packages": {
+      "get": {
+        "tags": [
+          "case-packages"
+        ],
+        "operationId": "get_case_packages",
+        "summary": "GET /api/case-packages",
+        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass).",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "packages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ownerInstitution": {
+                            "anyOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "tests": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/PackageTest"
+                            }
+                          },
+                          "testResult": {
+                            "type": "object",
+                            "properties": {
+                              "ok": {
+                                "type": "boolean"
+                              },
+                              "failures": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "ok",
+                              "failures"
+                            ]
+                          },
+                          "key": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "number"
+                          },
+                          "owner": {
+                            "type": "string",
+                            "description": "The authority (resolved through the deployment profile) or an institution id."
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "refPrefix": {
+                            "type": "string"
+                          },
+                          "citations": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/Citation"
+                            }
+                          },
+                          "fields": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/FieldSpec"
+                            }
+                          },
+                          "documents": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/DocumentSpec"
+                            }
+                          },
+                          "stages": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "terminal": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "label"
+                              ]
+                            }
+                          },
+                          "actions": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/ActionSpec"
+                            }
+                          },
+                          "deadlines": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/DeadlineSpec"
+                            }
+                          },
+                          "notifications": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/NotificationSpec"
+                            }
+                          },
+                          "appeal": {
+                            "type": "object",
+                            "properties": {
+                              "days": {
+                                "type": "number"
+                              },
+                              "body": {
+                                "type": "string"
+                              },
+                              "suspensive": {
+                                "type": "boolean"
+                              },
+                              "citation": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "required": [
+                              "days",
+                              "body",
+                              "suspensive"
+                            ]
+                          },
+                          "retention": {
+                            "type": "string"
+                          },
+                          "sensitivity": {
+                            "type": "string",
+                            "enum": [
+                              "normal",
+                              "restricted",
+                              "secret"
+                            ]
+                          },
+                          "migration": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "number"
+                              },
+                              "stageMap": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "stageMap"
+                            ]
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "approved",
+                              "draft",
+                              "superseded"
+                            ]
+                          },
+                          "activeFrom": {
+                            "type": "string"
+                          },
+                          "author": {
+                            "type": "string"
+                          },
+                          "authorId": {
+                            "type": "string"
+                          },
+                          "approvedBy": {
+                            "type": "string"
+                          },
+                          "approvedAt": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "reference": {
+                            "type": "boolean",
+                            "description": "Shipped with CivicOS as a reference; arrives as a draft the nation must approve."
+                          }
+                        },
+                        "required": [
+                          "ownerInstitution",
+                          "tests",
+                          "testResult",
+                          "key",
+                          "version",
+                          "owner",
+                          "title",
+                          "refPrefix",
+                          "citations",
+                          "fields",
+                          "documents",
+                          "stages",
+                          "actions",
+                          "deadlines",
+                          "notifications",
+                          "retention",
+                          "sensitivity",
+                          "state",
+                          "author",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "effects": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "packages",
+                    "effects"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "packages": [
+                        {
+                          "ownerInstitution": "string",
+                          "tests": [
+                            {}
+                          ],
+                          "testResult": {
+                            "ok": true,
+                            "failures": []
+                          },
+                          "key": "string",
+                          "version": 1,
+                          "owner": "string",
+                          "title": "Example",
+                          "refPrefix": "string",
+                          "citations": [
+                            {}
+                          ],
+                          "fields": [
+                            {}
+                          ],
+                          "documents": [
+                            {}
+                          ],
+                          "stages": [
+                            {}
+                          ],
+                          "actions": [
+                            {}
+                          ],
+                          "deadlines": [
+                            {}
+                          ],
+                          "notifications": [
+                            {}
+                          ],
+                          "retention": "string",
+                          "sensitivity": "normal",
+                          "state": "approved",
+                          "author": "string",
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "effects": [
+                        "string"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/case-packages/route.ts"
+      },
+      "post": {
+        "tags": [
+          "case-packages"
+        ],
+        "operationId": "post_case_packages",
+        "summary": "POST /api/case-packages",
+        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "package": {
+                    "$ref": "#/components/schemas/CasePackage"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  },
+                  "activeFrom": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "package": {
+                      "key": "string",
+                      "version": 1,
+                      "owner": "string",
+                      "title": "Example",
+                      "refPrefix": "string",
+                      "citations": [
+                        {
+                          "instrument": "string",
+                          "eId": "ID-0001",
+                          "version": "string",
+                          "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "on": "string"
+                        }
+                      ],
+                      "fields": [
+                        {
+                          "key": "string",
+                          "label": "Example",
+                          "type": "boolean"
+                        }
+                      ],
+                      "documents": [
+                        {
+                          "class": "string",
+                          "label": "Example",
+                          "required": true
+                        }
+                      ],
+                      "stages": [
+                        {
+                          "key": "string",
+                          "label": "Example"
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "key": "string",
+                          "label": "Example",
+                          "from": [],
+                          "to": "string",
+                          "needs": {}
+                        }
+                      ],
+                      "deadlines": [
+                        {
+                          "key": "string",
+                          "label": "Example",
+                          "from": "string",
+                          "days": 1,
+                          "calendar": "calendar",
+                          "onLapse": "deemed-approval"
+                        }
+                      ],
+                      "notifications": [
+                        {
+                          "on": "string",
+                          "to": "applicant",
+                          "template": "string"
+                        }
+                      ],
+                      "appeal": {
+                        "days": 1,
+                        "body": "string",
+                        "suspensive": true
+                      },
+                      "retention": "string",
+                      "sensitivity": "normal",
+                      "migration": {
+                        "from": 1,
+                        "stageMap": {
+                          "key": "string"
+                        }
+                      },
+                      "state": "approved",
+                      "activeFrom": "2026-01-15",
+                      "author": "string",
+                      "authorId": "ID-0001",
+                      "approvedBy": "A. Official",
+                      "approvedAt": "2026-01-15T09:30:00.000Z",
+                      "createdAt": "2026-01-15T09:30:00.000Z",
+                      "reference": true,
+                      "tests": [
+                        {
+                          "name": "Example",
+                          "steps": []
+                        }
+                      ]
+                    },
+                    "key": "string",
+                    "version": 1,
+                    "activeFrom": "2026-01-15",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "package": {
+                      "$ref": "#/components/schemas/CasePackage"
+                    }
+                  },
+                  "required": [
+                    "package"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "package": {
+                        "key": "string",
+                        "version": 1,
+                        "owner": "string",
+                        "title": "Example",
+                        "refPrefix": "string",
+                        "citations": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "fields": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "type": "boolean"
+                          }
+                        ],
+                        "documents": [
+                          {
+                            "class": "string",
+                            "label": "Example",
+                            "required": true
+                          }
+                        ],
+                        "stages": [
+                          {
+                            "key": "string",
+                            "label": "Example"
+                          }
+                        ],
+                        "actions": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "from": [],
+                            "to": "string",
+                            "needs": {}
+                          }
+                        ],
+                        "deadlines": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "from": "string",
+                            "days": 1,
+                            "calendar": "calendar",
+                            "onLapse": "deemed-approval"
+                          }
+                        ],
+                        "notifications": [
+                          {
+                            "on": "string",
+                            "to": "applicant",
+                            "template": "string"
+                          }
+                        ],
+                        "appeal": {
+                          "days": 1,
+                          "body": "string",
+                          "suspensive": true
+                        },
+                        "retention": "string",
+                        "sensitivity": "normal",
+                        "migration": {
+                          "from": 1,
+                          "stageMap": {
+                            "key": "string"
+                          }
+                        },
+                        "state": "approved",
+                        "activeFrom": "2026-01-15",
+                        "author": "string",
+                        "authorId": "ID-0001",
+                        "approvedBy": "A. Official",
+                        "approvedAt": "2026-01-15T09:30:00.000Z",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "reference": true,
+                        "tests": [
+                          {
+                            "name": "Example",
+                            "steps": []
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "package": {
+                      "$ref": "#/components/schemas/CasePackage"
+                    }
+                  },
+                  "required": [
+                    "package"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "package": {
+                        "key": "string",
+                        "version": 1,
+                        "owner": "string",
+                        "title": "Example",
+                        "refPrefix": "string",
+                        "citations": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "fields": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "type": "boolean"
+                          }
+                        ],
+                        "documents": [
+                          {
+                            "class": "string",
+                            "label": "Example",
+                            "required": true
+                          }
+                        ],
+                        "stages": [
+                          {
+                            "key": "string",
+                            "label": "Example"
+                          }
+                        ],
+                        "actions": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "from": [],
+                            "to": "string",
+                            "needs": {}
+                          }
+                        ],
+                        "deadlines": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "from": "string",
+                            "days": 1,
+                            "calendar": "calendar",
+                            "onLapse": "deemed-approval"
+                          }
+                        ],
+                        "notifications": [
+                          {
+                            "on": "string",
+                            "to": "applicant",
+                            "template": "string"
+                          }
+                        ],
+                        "appeal": {
+                          "days": 1,
+                          "body": "string",
+                          "suspensive": true
+                        },
+                        "retention": "string",
+                        "sensitivity": "normal",
+                        "migration": {
+                          "from": 1,
+                          "stageMap": {
+                            "key": "string"
+                          }
+                        },
+                        "state": "approved",
+                        "activeFrom": "2026-01-15",
+                        "author": "string",
+                        "authorId": "ID-0001",
+                        "approvedBy": "A. Official",
+                        "approvedAt": "2026-01-15T09:30:00.000Z",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "reference": true,
+                        "tests": [
+                          {
+                            "name": "Example",
+                            "steps": []
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/case-packages/route.ts"
+      }
+    },
+    "/api/cases/{id}/documents/{doc}": {
+      "get": {
+        "tags": [
+          "cases"
+        ],
+        "operationId": "get_cases_id_documents_doc",
+        "summary": "GET /api/cases/{id}/documents/{doc}",
+        "description": "GET /api/cases/[id]/documents/[doc]?v= — a document's bytes (a version, the latest by default), for those the case rules let read the case; checked against its SHA-256. Reads of restricted and secret cases' documents are written to the access log.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "doc",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/cases/[id]/documents/[doc]/route.ts"
+      }
+    },
+    "/api/cases/{id}/documents": {
+      "post": {
+        "tags": [
+          "cases"
+        ],
+        "operationId": "post_cases_id_documents",
+        "summary": "POST /api/cases/{id}/documents",
+        "description": "POST /api/cases/[id]/documents — attach a document to a case: JSON { class, title, data (base64), note? } (lib/records/documents.ts: PDF, PNG, JPEG or WebP by their bytes, up to 5 MB, sealed at rest). Kept with the case's institution and sensitivity, then attached by the workflow engine (the case rules apply).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "data": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "class": "string",
+                    "title": "Example",
+                    "data": "string",
+                    "note": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "document": {
+                      "$ref": "#/components/schemas/DocumentRecord"
+                    },
+                    "case": {
+                      "$ref": "#/components/schemas/Case"
+                    }
+                  },
+                  "required": [
+                    "document",
+                    "case"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "document": {
+                        "id": "ID-0001",
+                        "class": "string",
+                        "title": "Example",
+                        "institution": "string",
+                        "belongsTo": {
+                          "kind": "case",
+                          "id": "ID-0001"
+                        },
+                        "sensitivity": "normal",
+                        "retention": "string",
+                        "versions": [
+                          {
+                            "n": 1,
+                            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "size": 1,
+                            "mediaType": "application/pdf",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official",
+                            "content": "string"
+                          }
+                        ],
+                        "legalHold": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        },
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "disposed": {
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": "A. Official",
+                          "rule": "string"
+                        }
+                      },
+                      "case": {
+                        "id": "ID-0001",
+                        "ref": "string",
+                        "package": {
+                          "key": "string",
+                          "version": 1
+                        },
+                        "owner": "string",
+                        "stage": "string",
+                        "subject": [
+                          {
+                            "kind": "institution",
+                            "name": "Example"
+                          }
+                        ],
+                        "applicant": {
+                          "kind": "institution",
+                          "name": "Example"
+                        },
+                        "onBehalfOf": {
+                          "kind": "institution",
+                          "name": "Example"
+                        },
+                        "delegation": "string",
+                        "fields": {},
+                        "documents": [
+                          "string"
+                        ],
+                        "assignee": {
+                          "id": "ID-0001",
+                          "name": "Example"
+                        },
+                        "priority": "priority",
+                        "deadlines": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "due": "string"
+                          }
+                        ],
+                        "decisions": [
+                          "string"
+                        ],
+                        "links": [
+                          {
+                            "kind": "appeal",
+                            "case": "string"
+                          }
+                        ],
+                        "sensitivity": "normal",
+                        "legalHold": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        },
+                        "history": [
+                          {
+                            "seq": 1,
+                            "action": "string",
+                            "from": "string",
+                            "to": "string",
+                            "by": {},
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "pending": {
+                          "action": "string",
+                          "by": {
+                            "name": "Example"
+                          },
+                          "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "source": "citizen",
+                        "version": 1,
+                        "openedAt": "2026-01-15T09:30:00.000Z",
+                        "closedAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/cases/[id]/documents/route.ts"
+      }
+    },
+    "/api/cases/{id}": {
+      "get": {
+        "tags": [
+          "cases"
+        ],
+        "operationId": "get_cases_id",
+        "summary": "GET /api/cases/{id}",
+        "description": "/api/cases/[id] — one case (lib/casework/engine.ts). GET: the case with its fields, documents, decisions and history, for those the case rules let read it; reads of restricted and secret cases (and refusals) are written to the access log, with the purpose (?purpose=). POST: a step on the case: act (an action of its procedure; four-eyes where it says), assign, attach a document, hold or release, refer to another institution, or withdraw a proposal waiting for its second official.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "case": {
+                      "$ref": "#/components/schemas/Case"
+                    },
+                    "procedure": {
+                      "$ref": "#/components/schemas/CasePackage"
+                    },
+                    "documents": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DocumentRecord"
+                      }
+                    },
+                    "decisions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SignedDecision"
+                      }
+                    },
+                    "certificates": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Certificate"
+                      }
+                    }
+                  },
+                  "required": [
+                    "case",
+                    "documents",
+                    "decisions",
+                    "certificates"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "case": {
+                        "id": "ID-0001",
+                        "ref": "string",
+                        "package": {
+                          "key": "string",
+                          "version": 1
+                        },
+                        "owner": "string",
+                        "stage": "string",
+                        "subject": [
+                          {
+                            "kind": "institution",
+                            "name": "Example"
+                          }
+                        ],
+                        "applicant": {
+                          "kind": "institution",
+                          "name": "Example"
+                        },
+                        "onBehalfOf": {
+                          "kind": "institution",
+                          "name": "Example"
+                        },
+                        "delegation": "string",
+                        "fields": {},
+                        "documents": [
+                          "string"
+                        ],
+                        "assignee": {
+                          "id": "ID-0001",
+                          "name": "Example"
+                        },
+                        "priority": "priority",
+                        "deadlines": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "due": "string"
+                          }
+                        ],
+                        "decisions": [
+                          "string"
+                        ],
+                        "links": [
+                          {
+                            "kind": "appeal",
+                            "case": "string"
+                          }
+                        ],
+                        "sensitivity": "normal",
+                        "legalHold": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        },
+                        "history": [
+                          {
+                            "seq": 1,
+                            "action": "string",
+                            "from": "string",
+                            "to": "string",
+                            "by": {},
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "pending": {
+                          "action": "string",
+                          "by": {
+                            "name": "Example"
+                          },
+                          "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "source": "citizen",
+                        "version": 1,
+                        "openedAt": "2026-01-15T09:30:00.000Z",
+                        "closedAt": "2026-01-15T09:30:00.000Z"
+                      },
+                      "procedure": {
+                        "key": "string",
+                        "version": 1,
+                        "owner": "string",
+                        "title": "Example",
+                        "refPrefix": "string",
+                        "citations": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "fields": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "type": "boolean"
+                          }
+                        ],
+                        "documents": [
+                          {
+                            "class": "string",
+                            "label": "Example",
+                            "required": true
+                          }
+                        ],
+                        "stages": [
+                          {
+                            "key": "string",
+                            "label": "Example"
+                          }
+                        ],
+                        "actions": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "from": [],
+                            "to": "string",
+                            "needs": {}
+                          }
+                        ],
+                        "deadlines": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "from": "string",
+                            "days": 1,
+                            "calendar": "calendar",
+                            "onLapse": "deemed-approval"
+                          }
+                        ],
+                        "notifications": [
+                          {
+                            "on": "string",
+                            "to": "applicant",
+                            "template": "string"
+                          }
+                        ],
+                        "appeal": {
+                          "days": 1,
+                          "body": "string",
+                          "suspensive": true
+                        },
+                        "retention": "string",
+                        "sensitivity": "normal",
+                        "migration": {
+                          "from": 1,
+                          "stageMap": {
+                            "key": "string"
+                          }
+                        },
+                        "state": "approved",
+                        "activeFrom": "2026-01-15",
+                        "author": "string",
+                        "authorId": "ID-0001",
+                        "approvedBy": "A. Official",
+                        "approvedAt": "2026-01-15T09:30:00.000Z",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "reference": true,
+                        "tests": [
+                          {
+                            "name": "Example",
+                            "steps": []
+                          }
+                        ]
+                      },
+                      "documents": [
+                        {
+                          "id": "ID-0001",
+                          "class": "string",
+                          "title": "Example",
+                          "institution": "string",
+                          "belongsTo": {
+                            "kind": "case",
+                            "id": "ID-0001"
+                          },
+                          "sensitivity": "normal",
+                          "versions": [
+                            {}
+                          ],
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "decisions": [
+                        {
+                          "id": "ID-0001",
+                          "content": {
+                            "subject": {},
+                            "institution": {},
+                            "decision": "string",
+                            "reasons": "string",
+                            "citations": [],
+                            "officials": [],
+                            "at": "2026-01-15T09:30:00.000Z"
+                          },
+                          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "seal": {
+                            "signature": "string",
+                            "keyId": "ID-0001",
+                            "publicKeyPem": "string",
+                            "framework": "platform"
+                          }
+                        }
+                      ],
+                      "certificates": [
+                        {
+                          "id": "ID-0001",
+                          "code": "string",
+                          "kind": "string",
+                          "title": "Example",
+                          "decision": "string",
+                          "institution": {
+                            "id": "ID-0001",
+                            "name": "Example"
+                          },
+                          "publicFacts": {
+                            "key": "string"
+                          },
+                          "issuedAt": "2026-01-15T09:30:00.000Z",
+                          "issuedBy": "A. Official",
+                          "status": "revoked"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/cases/[id]/route.ts"
+      },
+      "post": {
+        "tags": [
+          "cases"
+        ],
+        "operationId": "post_cases_id",
+        "summary": "POST /api/cases/{id}",
+        "description": "/api/cases/[id] — one case (lib/casework/engine.ts). GET: the case with its fields, documents, decisions and history, for those the case rules let read it; reads of restricted and secret cases (and refusals) are written to the access log, with the purpose (?purpose=). POST: a step on the case: act (an action of its procedure; four-eyes where it says), assign, attach a document, hold or release, refer to another institution, or withdraw a proposal waiting for its second official.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/cases/[id]/route.ts"
+      }
+    },
+    "/api/cases": {
+      "get": {
+        "tags": [
+          "cases"
+        ],
+        "operationId": "get_cases",
+        "summary": "GET /api/cases",
+        "description": "/api/cases — cases under the nation's procedures (lib/casework/engine.ts, design §6.5). GET: the cases the official may read (their institution's, or every institution's for officials of the whole government, never a court's from outside it), without personal fields. POST: open a case under the procedure version in force (the responsible institution's officials).",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "open",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "procedure",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cases": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Case"
+                      }
+                    }
+                  },
+                  "required": [
+                    "cases"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "cases": [
+                        {
+                          "id": "ID-0001",
+                          "ref": "string",
+                          "package": {
+                            "key": "string",
+                            "version": 1
+                          },
+                          "owner": "string",
+                          "stage": "string",
+                          "subject": [
+                            {}
+                          ],
+                          "fields": {},
+                          "documents": [
+                            "string"
+                          ],
+                          "priority": "priority",
+                          "deadlines": [
+                            {}
+                          ],
+                          "decisions": [
+                            "string"
+                          ],
+                          "links": [
+                            {}
+                          ],
+                          "sensitivity": "normal",
+                          "history": [
+                            {}
+                          ],
+                          "source": "citizen",
+                          "version": 1,
+                          "openedAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/cases/route.ts"
+      },
+      "post": {
+        "tags": [
+          "cases"
+        ],
+        "operationId": "post_cases",
+        "summary": "POST /api/cases",
+        "description": "/api/cases — cases under the nation's procedures (lib/casework/engine.ts, design §6.5). GET: the cases the official may read (their institution's, or every institution's for officials of the whole government, never a court's from outside it), without personal fields. POST: open a case under the procedure version in force (the responsible institution's officials).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "case": {
+                      "$ref": "#/components/schemas/Case"
+                    }
+                  },
+                  "required": [
+                    "case"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "case": {
+                        "id": "ID-0001",
+                        "ref": "string",
+                        "package": {
+                          "key": "string",
+                          "version": 1
+                        },
+                        "owner": "string",
+                        "stage": "string",
+                        "subject": [
+                          {
+                            "kind": "institution",
+                            "name": "Example"
+                          }
+                        ],
+                        "applicant": {
+                          "kind": "institution",
+                          "name": "Example"
+                        },
+                        "onBehalfOf": {
+                          "kind": "institution",
+                          "name": "Example"
+                        },
+                        "delegation": "string",
+                        "fields": {},
+                        "documents": [
+                          "string"
+                        ],
+                        "assignee": {
+                          "id": "ID-0001",
+                          "name": "Example"
+                        },
+                        "priority": "priority",
+                        "deadlines": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "due": "string"
+                          }
+                        ],
+                        "decisions": [
+                          "string"
+                        ],
+                        "links": [
+                          {
+                            "kind": "appeal",
+                            "case": "string"
+                          }
+                        ],
+                        "sensitivity": "normal",
+                        "legalHold": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        },
+                        "history": [
+                          {
+                            "seq": 1,
+                            "action": "string",
+                            "from": "string",
+                            "to": "string",
+                            "by": {},
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "pending": {
+                          "action": "string",
+                          "by": {
+                            "name": "Example"
+                          },
+                          "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "source": "citizen",
+                        "version": 1,
+                        "openedAt": "2026-01-15T09:30:00.000Z",
+                        "closedAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/cases/route.ts"
       }
     },
     "/api/cron/audit-anchor": {
@@ -52618,6 +54295,91 @@
           "hash"
         ]
       },
+      "ActionSpec": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "from": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "to": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string",
+            "description": "Makes the action a legal decision of this kind (register, grant, refuse, revoke…): sealed, citing the law."
+          },
+          "needs": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": [
+                  "officer",
+                  "signatory"
+                ]
+              },
+              "assigned": {
+                "type": "boolean"
+              },
+              "fourEyes": {
+                "type": "boolean"
+              },
+              "stepUp": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "role"
+            ]
+          },
+          "requires": {
+            "type": "object",
+            "properties": {
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "reasons": {
+                "type": "boolean"
+              },
+              "citations": {
+                "type": "boolean"
+              }
+            }
+          },
+          "effects": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Domain effects the owning module registered (lib/casework/engine.ts registerEffect())."
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "from",
+          "to",
+          "needs"
+        ]
+      },
       "ActiveBoundary": {
         "type": "object",
         "properties": {
@@ -55038,6 +56800,225 @@
           "state"
         ]
       },
+      "Case": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "package": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "version": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "key",
+              "version"
+            ]
+          },
+          "owner": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Party"
+            }
+          },
+          "applicant": {
+            "$ref": "#/components/schemas/Party"
+          },
+          "onBehalfOf": {
+            "$ref": "#/components/schemas/Party"
+          },
+          "delegation": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assignee": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "priority",
+              "routine",
+              "urgent"
+            ]
+          },
+          "deadlines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "due": {
+                  "type": "string"
+                },
+                "met": {
+                  "type": "string"
+                },
+                "lapsed": {
+                  "type": "string"
+                },
+                "citation": {
+                  "$ref": "#/components/schemas/Citation"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "due"
+              ]
+            }
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Sealed decision ids (lib/records/decisions.ts)."
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "appeal",
+                    "appeal-of",
+                    "referral",
+                    "referred-from",
+                    "related",
+                    "supersedes"
+                  ]
+                },
+                "case": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "case"
+              ]
+            }
+          },
+          "sensitivity": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "restricted",
+              "secret"
+            ]
+          },
+          "legalHold": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason"
+            ]
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step"
+            }
+          },
+          "pending": {
+            "$ref": "#/components/schemas/Proposal"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "citizen",
+              "entered",
+              "exchange",
+              "feed",
+              "imported",
+              "sample"
+            ]
+          },
+          "version": {
+            "type": "number"
+          },
+          "openedAt": {
+            "type": "string"
+          },
+          "closedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "package",
+          "owner",
+          "stage",
+          "subject",
+          "fields",
+          "documents",
+          "priority",
+          "deadlines",
+          "decisions",
+          "links",
+          "sensitivity",
+          "history",
+          "source",
+          "version",
+          "openedAt"
+        ]
+      },
       "CaseColumn": {
         "type": "object",
         "properties": {
@@ -55183,6 +57164,191 @@
           "accepted",
           "refused",
           "removedSamples"
+        ]
+      },
+      "CasePackage": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "owner": {
+            "type": "string",
+            "description": "The authority (resolved through the deployment profile) or an institution id."
+          },
+          "title": {
+            "type": "string"
+          },
+          "refPrefix": {
+            "type": "string"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldSpec"
+            }
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentSpec"
+            }
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "terminal": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "key",
+                "label"
+              ]
+            }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionSpec"
+            }
+          },
+          "deadlines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeadlineSpec"
+            }
+          },
+          "notifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationSpec"
+            }
+          },
+          "appeal": {
+            "type": "object",
+            "properties": {
+              "days": {
+                "type": "number"
+              },
+              "body": {
+                "type": "string"
+              },
+              "suspensive": {
+                "type": "boolean"
+              },
+              "citation": {
+                "$ref": "#/components/schemas/Citation"
+              }
+            },
+            "required": [
+              "days",
+              "body",
+              "suspensive"
+            ]
+          },
+          "retention": {
+            "type": "string"
+          },
+          "sensitivity": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "restricted",
+              "secret"
+            ]
+          },
+          "migration": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "number"
+              },
+              "stageMap": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "from",
+              "stageMap"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "draft",
+              "superseded"
+            ]
+          },
+          "activeFrom": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "approvedBy": {
+            "type": "string"
+          },
+          "approvedAt": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "boolean",
+            "description": "Shipped with CivicOS as a reference; arrives as a draft the nation must approve."
+          },
+          "tests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PackageTest"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "version",
+          "owner",
+          "title",
+          "refPrefix",
+          "citations",
+          "fields",
+          "documents",
+          "stages",
+          "actions",
+          "deadlines",
+          "notifications",
+          "retention",
+          "sensitivity",
+          "state",
+          "author",
+          "createdAt",
+          "tests"
         ]
       },
       "CaseRefusal": {
@@ -55359,6 +57525,99 @@
           "decision",
           "by",
           "at"
+        ]
+      },
+      "Certificate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "publicFacts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "What the certificate itself states, as the procedure names it (and nothing more is shown publicly)."
+          },
+          "issuedAt": {
+            "type": "string"
+          },
+          "issuedBy": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "revoked",
+              "superseded",
+              "valid"
+            ]
+          },
+          "reissueOf": {
+            "type": "string"
+          },
+          "supersededBy": {
+            "type": "string"
+          },
+          "revoked": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "reason"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "kind",
+          "title",
+          "decision",
+          "institution",
+          "publicFacts",
+          "issuedAt",
+          "issuedBy",
+          "status"
         ]
       },
       "ChamberRelease": {
@@ -56757,6 +59016,51 @@
           "payload"
         ]
       },
+      "DeadlineSpec": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "description": "Counted from the case reaching this stage ('opened' for opening)."
+          },
+          "days": {
+            "type": "number"
+          },
+          "calendar": {
+            "type": "string",
+            "enum": [
+              "calendar",
+              "working"
+            ]
+          },
+          "citation": {
+            "$ref": "#/components/schemas/Citation"
+          },
+          "onLapse": {
+            "type": "string",
+            "enum": [
+              "deemed-approval",
+              "deemed-refusal",
+              "escalate",
+              "notify"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "from",
+          "days",
+          "calendar",
+          "onLapse"
+        ]
+      },
       "DecidePermitInput": {
         "type": "object",
         "properties": {
@@ -56789,6 +59093,134 @@
         "required": [
           "decision",
           "officerName"
+        ]
+      },
+      "DecisionContent": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "case",
+                  "register"
+                ]
+              },
+              "id": {
+                "type": "string"
+              },
+              "ref": {
+                "type": "string"
+              },
+              "procedure": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "key",
+                  "version"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ],
+            "description": "What was decided: the case (and its procedure version) or the register record."
+          },
+          "institution": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "decision": {
+            "type": "string"
+          },
+          "reasons": {
+            "type": "string"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "officials": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "confirmed",
+                    "decided"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "role",
+                "name"
+              ]
+            },
+            "description": "The officials: who decided, and who confirmed it where the procedure needs two."
+          },
+          "facts": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Facts the decision fixes (registration number, validity, conditions), as the procedure names them."
+          },
+          "at": {
+            "type": "string"
+          },
+          "supersedes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject",
+          "institution",
+          "decision",
+          "reasons",
+          "citations",
+          "officials",
+          "at"
         ]
       },
       "Delivery": {
@@ -58006,6 +60438,178 @@
           "conflictingAttestations",
           "unverified",
           "alarmed"
+        ]
+      },
+      "DocumentRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "class": {
+            "type": "string",
+            "description": "What kind of document, as the procedure names it (e.g. birth-notification, medical-certificate)."
+          },
+          "title": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "belongsTo": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "case",
+                  "register"
+                ]
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ]
+          },
+          "sensitivity": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "restricted",
+              "secret"
+            ]
+          },
+          "retention": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentVersion"
+            }
+          },
+          "legalHold": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "disposed": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "rule"
+            ],
+            "description": "Set when the retention rule destroyed the content: what remains is this record and the hashes."
+          }
+        },
+        "required": [
+          "id",
+          "class",
+          "title",
+          "institution",
+          "belongsTo",
+          "sensitivity",
+          "versions",
+          "createdAt"
+        ]
+      },
+      "DocumentSpec": {
+        "type": "object",
+        "properties": {
+          "class": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "citation": {
+            "$ref": "#/components/schemas/Citation"
+          }
+        },
+        "required": [
+          "class",
+          "label",
+          "required"
+        ]
+      },
+      "DocumentVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "application/pdf",
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "sha256",
+          "size",
+          "mediaType",
+          "at",
+          "by",
+          "content"
         ]
       },
       "DocumentsStatus": {
@@ -59267,6 +61871,53 @@
         "required": [
           "title",
           "summary"
+        ]
+      },
+      "FieldSpec": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "boolean",
+              "choice",
+              "date",
+              "longtext",
+              "number",
+              "organisation",
+              "person",
+              "place",
+              "text"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "For choice."
+          },
+          "personal": {
+            "type": "boolean",
+            "description": "Personal data: shown only to those who may read the case, never in lists or events."
+          },
+          "max": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type"
         ]
       },
       "FieldUnitStatus": {
@@ -63302,6 +65953,30 @@
           "channel"
         ]
       },
+      "NotificationSpec": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string",
+            "enum": [
+              "applicant",
+              "assignee",
+              "owner"
+            ]
+          },
+          "template": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "on",
+          "to",
+          "template"
+        ]
+      },
       "Observation": {
         "type": "object",
         "properties": {
@@ -64186,6 +66861,46 @@
           "iso3"
         ]
       },
+      "PackageTest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string"
+                },
+                "fields": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "documents": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "expect": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "action",
+                "expect"
+              ]
+            }
+          }
+        },
+        "required": [
+          "name",
+          "steps"
+        ]
+      },
       "ParcelImport": {
         "type": "object",
         "properties": {
@@ -64640,6 +67355,30 @@
         "required": [
           "method",
           "accuracyM"
+        ]
+      },
+      "Party": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "institution",
+              "organisation",
+              "person",
+              "unregistered"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "name"
         ]
       },
       "PasskeySummary": {
@@ -65272,6 +68011,55 @@
           "failedChecks",
           "failStreak",
           "degraded"
+        ]
+      },
+      "Proposal": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "by": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "institution": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "idempotencyKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "by",
+          "at"
         ]
       },
       "ProtocolOffice": {
@@ -69240,6 +72028,75 @@
           "nonRepudiation"
         ]
       },
+      "SignedDecision": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "content": {
+            "$ref": "#/components/schemas/DecisionContent"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "SHA-256 of the canonical JSON of { id, content }."
+          },
+          "seal": {
+            "type": "object",
+            "properties": {
+              "signature": {
+                "type": "string"
+              },
+              "keyId": {
+                "type": "string"
+              },
+              "publicKeyPem": {
+                "type": "string"
+              },
+              "framework": {
+                "type": "string",
+                "const": "platform"
+              }
+            },
+            "required": [
+              "signature",
+              "keyId",
+              "publicKeyPem",
+              "framework"
+            ]
+          },
+          "qualified": {
+            "type": "object",
+            "properties": {
+              "service": {
+                "type": "string"
+              },
+              "signature": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "service",
+              "signature",
+              "at"
+            ],
+            "description": "A qualified signature added under the nation's own framework, when connected."
+          },
+          "supersededBy": {
+            "type": "string",
+            "description": "Set when a later decision supersedes this one."
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "sha256",
+          "seal"
+        ]
+      },
       "SignedHeadCheck": {
         "type": "object",
         "properties": {
@@ -72827,6 +75684,86 @@
           "recent",
           "fallbackIncidents",
           "maintenance"
+        ]
+      },
+      "Step": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "number"
+          },
+          "action": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "by": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "institution": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "confirmedBy": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "decision": {
+            "type": "string"
+          },
+          "idempotencyKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "action",
+          "from",
+          "to",
+          "by",
+          "at"
         ]
       },
       "StorePolicy": {
