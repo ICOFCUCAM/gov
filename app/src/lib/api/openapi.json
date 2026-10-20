@@ -146,6 +146,9 @@
       "name": "releases"
     },
     {
+      "name": "rules"
+    },
+    {
       "name": "session"
     },
     {
@@ -26575,6 +26578,10 @@
                             "type": "boolean",
                             "description": "Shipped with the platform, or configured by an administrator."
                           },
+                          "permitType": {
+                            "type": "string",
+                            "description": "The permit type whose approved authority mapping governs it (lib/permits/authority.ts)."
+                          },
                           "createdBy": {
                             "type": "string"
                           },
@@ -26784,6 +26791,7 @@
                         "validityMonths": 1,
                         "publicCheck": true,
                         "reference": true,
+                        "permitType": "string",
                         "createdBy": "A. Official",
                         "createdAt": "2026-01-15T09:30:00.000Z"
                       }
@@ -48256,6 +48264,371 @@
         "x-source": "src/app/api/releases/telemetry/route.ts"
       }
     },
+    "/api/rules": {
+      "get": {
+        "tags": [
+          "rules"
+        ],
+        "operationId": "get_rules",
+        "summary": "GET /api/rules",
+        "description": "/api/rules — operational rules (rate tables, tariff schedules; lib/law/rules.ts). GET: every version with the one in force per key, or ?key=&amount=&code=&on= to see what the rule in force would give. POST: { op: 'draft', rule } (officials of the owning authority; its tests run and must pass), { op: 'approve', key, version } (a different official who can sign there; needs its legal basis), { op: 'withdraw', key, version, reason }. Who acted comes from the sign-in.",
+        "parameters": [
+          {
+            "name": "amount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "on",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "calculation": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/components/schemas/Calculation"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "error": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "error"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "calculation"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "rules": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/RuleVersion"
+                          }
+                        },
+                        "inForce": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "number"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "rules",
+                        "inForce"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "calculation": {
+                        "amountMinor": 1,
+                        "rule": {
+                          "key": "string",
+                          "version": 1,
+                          "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "citations": [
+                            {}
+                          ]
+                        },
+                        "on": "string",
+                        "steps": [
+                          "string"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/rules/route.ts"
+      },
+      "post": {
+        "tags": [
+          "rules"
+        ],
+        "operationId": "post_rules",
+        "summary": "POST /api/rules",
+        "description": "/api/rules — operational rules (rate tables, tariff schedules; lib/law/rules.ts). GET: every version with the one in force per key, or ?key=&amount=&code=&on= to see what the rule in force would give. POST: { op: 'draft', rule } (officials of the owning authority; its tests run and must pass), { op: 'approve', key, version } (a different official who can sign there; needs its legal basis), { op: 'withdraw', key, version, reason }. Who acted comes from the sign-in.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "rule": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "rule": {},
+                    "key": "string",
+                    "version": 1,
+                    "reason": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rule": {
+                      "$ref": "#/components/schemas/RuleVersion"
+                    }
+                  },
+                  "required": [
+                    "rule"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "rule": {
+                        "id": "ID-0001",
+                        "key": "string",
+                        "title": "Example",
+                        "kind": "flat-rate",
+                        "owner": "string",
+                        "version": 1,
+                        "effectiveFrom": "2026-01-15",
+                        "effectiveTo": "2026-01-15",
+                        "citations": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "rate": 1,
+                        "bands": [
+                          {
+                            "from": 1,
+                            "rate": 1
+                          }
+                        ],
+                        "lines": [
+                          {
+                            "code": "string",
+                            "rate": 1
+                          }
+                        ],
+                        "tests": [
+                          {
+                            "name": "Example",
+                            "input": {},
+                            "expectMinor": 1
+                          }
+                        ],
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "state": "approved",
+                        "draftedBy": "A. Official",
+                        "draftedById": "ID-0001",
+                        "draftedAt": "2026-01-15T09:30:00.000Z",
+                        "approvedBy": "A. Official",
+                        "approvedById": "ID-0001",
+                        "approvedAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rule": {
+                      "$ref": "#/components/schemas/RuleVersion"
+                    }
+                  },
+                  "required": [
+                    "rule"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "rule": {
+                        "id": "ID-0001",
+                        "key": "string",
+                        "title": "Example",
+                        "kind": "flat-rate",
+                        "owner": "string",
+                        "version": 1,
+                        "effectiveFrom": "2026-01-15",
+                        "effectiveTo": "2026-01-15",
+                        "citations": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "rate": 1,
+                        "bands": [
+                          {
+                            "from": 1,
+                            "rate": 1
+                          }
+                        ],
+                        "lines": [
+                          {
+                            "code": "string",
+                            "rate": 1
+                          }
+                        ],
+                        "tests": [
+                          {
+                            "name": "Example",
+                            "input": {},
+                            "expectMinor": 1
+                          }
+                        ],
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "state": "approved",
+                        "draftedBy": "A. Official",
+                        "draftedById": "ID-0001",
+                        "draftedAt": "2026-01-15T09:30:00.000Z",
+                        "approvedBy": "A. Official",
+                        "approvedById": "ID-0001",
+                        "approvedAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/rules/route.ts"
+      }
+    },
     "/api/session": {
       "get": {
         "tags": [
@@ -59277,6 +59650,24 @@
           "createdAt"
         ]
       },
+      "Band": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "number"
+          },
+          "to": {
+            "type": "number"
+          },
+          "rate": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "from",
+          "rate"
+        ]
+      },
       "Bill": {
         "type": "object",
         "properties": {
@@ -59915,6 +60306,55 @@
           "verifiedAt",
           "ok",
           "checked"
+        ]
+      },
+      "Calculation": {
+        "type": "object",
+        "properties": {
+          "amountMinor": {
+            "type": "number"
+          },
+          "rule": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "version": {
+                "type": "number"
+              },
+              "digest": {
+                "type": "string"
+              },
+              "citations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Citation"
+                }
+              }
+            },
+            "required": [
+              "key",
+              "version",
+              "digest",
+              "citations"
+            ]
+          },
+          "on": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "amountMinor",
+          "rule",
+          "on",
+          "steps"
         ]
       },
       "CalibrationEntry": {
@@ -74005,6 +74445,10 @@
             "type": "boolean",
             "description": "Shipped with the platform, or configured by an administrator."
           },
+          "permitType": {
+            "type": "string",
+            "description": "The permit type whose approved authority mapping governs it (lib/permits/authority.ts)."
+          },
           "createdBy": {
             "type": "string"
           },
@@ -74841,6 +75285,143 @@
           "newestVerifiedAt",
           "ageMinutes",
           "met"
+        ]
+      },
+      "RuleTest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "input": {
+            "type": "object",
+            "properties": {
+              "amountMinor": {
+                "type": "number"
+              },
+              "code": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "amountMinor"
+            ]
+          },
+          "expectMinor": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "input",
+          "expectMinor"
+        ]
+      },
+      "RuleVersion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "flat-rate",
+              "rate-bands",
+              "tariff"
+            ]
+          },
+          "owner": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "effectiveFrom": {
+            "type": "string"
+          },
+          "effectiveTo": {
+            "type": "string"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "rate": {
+            "type": "number",
+            "description": "flat-rate: one rate; rate-bands: progressive bands over minor units; tariff: rates by classification code prefix."
+          },
+          "bands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Band"
+            }
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TariffLine"
+            }
+          },
+          "tests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleTest"
+            }
+          },
+          "digest": {
+            "type": "string",
+            "description": "SHA-256 of the rule's content (kind, rate, bands, lines): what a calculation cites."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "draft",
+              "withdrawn"
+            ]
+          },
+          "draftedBy": {
+            "type": "string"
+          },
+          "draftedById": {
+            "type": "string"
+          },
+          "draftedAt": {
+            "type": "string"
+          },
+          "approvedBy": {
+            "type": "string"
+          },
+          "approvedById": {
+            "type": "string"
+          },
+          "approvedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "title",
+          "kind",
+          "owner",
+          "version",
+          "effectiveFrom",
+          "citations",
+          "tests",
+          "digest",
+          "state",
+          "draftedBy",
+          "draftedAt"
         ]
       },
       "Run": {
@@ -80847,6 +81428,24 @@
           "fullBytes",
           "transferBytes",
           "savedBytes"
+        ]
+      },
+      "TariffLine": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "rate"
         ]
       },
       "TaskParameter": {

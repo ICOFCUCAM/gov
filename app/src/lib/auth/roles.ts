@@ -184,6 +184,7 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/law(\/|$)/,                        // the laws register: canRecordLaw() / canConfirmLaw() in the route
   /^\/api\/cases(\/|$)/,                      // cases: caseActRefusal() in the workflow engine (lib/casework/engine.ts)
   /^\/api\/organisations\/loads$/,
+  /^\/api\/rules$/,                         // operational rules: canManageRule() in the route
   /^\/api\/access-log\/retention$/,         // oversight confirmation of shortening the access log: canConfirmAccessLogRetention() in the route           // loading an existing register: the authority that keeps it (the route checks)
   /^\/api\/case-packages(\/|$)/,              // procedures: drafted by the responsible institution, approved by one who can sign there (route)
   /^\/api\/documents\/verify$/,               // checks a document code (no change)
@@ -522,6 +523,14 @@ export function canReadAccessLog(s: Scope, dataProtection: string | undefined): 
   if (roleOf(s) === 'auditor') return null;
   if (dataProtection && s.institution === dataProtection) return null;
   return 'The access log is read by auditors and by the data-protection authority';
+}
+
+/** Operational rules (lib/law/rules.ts): drafted by officials of the authority that owns the rule; approved by one who can sign there. Administrators have no say in rates. */
+export function canManageRule(s: Scope, owner: string | undefined, approve: boolean): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors can read rules but not change them';
+  if (!owner || s.institution !== owner) return 'Rules are drafted and approved by the authority that owns them (named under Who is responsible)';
+  if (approve && roleOf(s) !== 'signatory') return 'Approving a rule needs an official who can sign for the authority';
+  return null;
 }
 
 /** Confirming that the access log may be shortened: the data-protection authority's officials who can sign; auditors while none is named. Never an administrator (directions 15.3). */
