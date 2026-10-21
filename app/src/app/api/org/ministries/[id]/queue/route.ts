@@ -8,6 +8,7 @@ import { addCase } from '@/lib/data/case-import';
 import { withOfficial, refusal, readRefusal, caseScope } from '@/lib/auth/official';
 import { canReadInstitution, ministryPermission, isIndependent, readRelationship, relationshipRule, INSTITUTION_RECORDS } from '@/lib/auth/roles';
 import { recordAccess } from '@/lib/records/access-log';
+import { accessBy } from '@/lib/records/access-by';
 export const dynamic = 'force-dynamic';
 export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -21,7 +22,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
     // A refused attempt from outside an independent institution (the legislature, a court, an independent
     // body) is written to the access log (plan phase 2): reaching across a branch is itself an exercise of power.
     const s = await caseScope();
-    if (s && isIndependent(s, params.id)) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'institution-queue', id: params.id }, action: 'refused', result: 'refused', rule: 'Independent institution: read only by its own officials' });
+    if (s && isIndependent(s, params.id)) recordAccess({ ...accessBy(s), record: { register: 'institution-queue', id: params.id }, action: 'refused', result: 'refused', rule: 'Independent institution: read only by its own officials' });
     return refused;
   }
   const r = queueFor(params.id);
@@ -29,7 +30,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
   // A read from another institution under a relationship is written to the access log, naming the relationship and its version.
   const s = await caseScope();
   const grant = s && canReadInstitution(s, params.id) !== null ? readRelationship(s, params.id, INSTITUTION_RECORDS, purpose) : null;
-  if (s && grant) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'institution-queue', id: params.id }, action: 'view', ...(purpose ? { purpose } : {}), result: 'allowed', rule: relationshipRule(grant) });
+  if (s && grant) recordAccess({ ...accessBy(s), record: { register: 'institution-queue', id: params.id }, action: 'view', ...(purpose ? { purpose } : {}), result: 'allowed', rule: relationshipRule(grant) });
   return NextResponse.json(r);
 }
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {

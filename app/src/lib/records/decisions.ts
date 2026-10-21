@@ -11,6 +11,11 @@
 // qualified signature service adds its own signature later (integration
 // register). Held in platform state; nothing here is ever changed, a
 // correction is a new decision that supersedes.
+//
+// Each decision records the constitutional profile version in force when it
+// was made (`profile`: id, version, digest; plan phase 5, guidance §7), inside
+// what the seal covers; absent while the nation has approved none, and on
+// decisions sealed before (which verify as they always did).
 
 import { createHash } from 'node:crypto';
 import { canonicalJson } from '@/lib/data/store/shared';
@@ -21,6 +26,7 @@ import { signer, type Signature } from '@/lib/keys/custody';
 import { verifyBytes } from '@/lib/crypto/signing-key';
 import type { Citation } from '@/lib/law/register';
 import { installationMode } from '@/lib/ops/mode';
+import { profileRef, type ProfileRef } from '@/lib/constitution/profile-state';
 
 export interface DecisionContent {
   /** What was decided: the case (and its procedure version) or the register record. */
@@ -39,6 +45,8 @@ export interface DecisionContent {
   rules?: import('@/lib/casework/engine').RuleRef[];
   /** For a two-official decision: whether the two are known to be different people at the identity provider, or only different accounts. */
   independence?: 'identity-provider' | 'accounts-only' | 'unverified';
+  /** The constitutional profile version in force when it was made (lib/constitution/profile-state.ts); filled by recordDecision(). */
+  profile?: ProfileRef;
   at: string;
   supersedes?: string;
 }
@@ -71,6 +79,7 @@ export async function recordDecision(content: DecisionContent): Promise<SignedDe
   if (content.supersedes && !prev) return { error: 'The decision it supersedes does not exist' };
   if (prev?.supersededBy) return { error: 'That decision is already superseded' };
   const id = uuid7();
+  if (!content.profile) { const ref = profileRef(new Date(content.at)); if (ref) content = { ...content, profile: ref }; }
   const material = decisionMaterial(id, content);
   const sha256 = createHash('sha256').update(material, 'utf8').digest('hex');
   const s = signer('decision');

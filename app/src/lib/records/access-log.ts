@@ -9,14 +9,26 @@
 // officials; nobody edits it; it is shortened only by the nation's retention
 // rule, which keeps the hash of what it removed. Held in platform state
 // (lib/data/persist.ts).
+//
+// Entry formats: the first (no `v`) is hashed over its fixed fields as it
+// always was, so entries written before stay verifiable; version 2 (`v: 2`,
+// plan phase 5, guidance §5.4 and §7) adds the office the official acted
+// under and the constitutional profile version in force (id, version and
+// digest; absent while the nation has approved none), both inside the hash.
 
 import { sha256Hex } from '@/lib/audit/sha256';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
+import { profileRef, type ProfileRef } from '@/lib/constitution/profile-state';
 
 export type AccessAction = 'view' | 'search' | 'export' | 'refused' | 'permission';
 
+/** The office an official acted under (lib/nation/office-register.ts), as the entry records it. */
+export interface AccessOffice { id: string; title: string; acting?: boolean }
+
 export interface AccessEntry {
+  /** The entry format: absent for the first, 2 when the office and profile version are part of the hash. */
+  v?: 2;
   id: string;
   seq: number;
   at: string;
@@ -31,6 +43,10 @@ export interface AccessEntry {
   rule?: string;
   /** Links the entry to an exchange transaction or a request. */
   correlation?: string;
+  /** Format 2: the office held when acting (none when the official holds no recorded office). */
+  office?: AccessOffice;
+  /** Format 2: the constitutional profile version in force (none while the nation has approved none). */
+  profile?: ProfileRef;
   prev: string;
   hash: string;
 }
@@ -46,18 +62,26 @@ const g = globalThis as unknown as { __civicosAccessLog?: AccessDb };
 const db = (): AccessDb => touch('__civicosAccessLog', g.__civicosAccessLog ??= { entries: [], base: { hash: GENESIS, removed: 0 } });
 export function resetAccessLog(): void { g.__civicosAccessLog = undefined; }
 
-const body = (e: Omit<AccessEntry, 'hash'>) => JSON.stringify([e.id, e.seq, e.at, e.by, e.record, e.action, e.purpose ?? null, e.result, e.rule ?? null, e.correlation ?? null, e.prev]);
+/** The first format's hashed fields, unchanged so entries written before still verify. */
+const bodyV1 = (e: Omit<AccessEntry, 'hash'>) => JSON.stringify([e.id, e.seq, e.at, e.by, e.record, e.action, e.purpose ?? null, e.result, e.rule ?? null, e.correlation ?? null, e.prev]);
+/** Format 2: tagged, with the office and the profile version. */
+const bodyV2 = (e: Omit<AccessEntry, 'hash'>) => JSON.stringify(['v2', e.id, e.seq, e.at, e.by, e.record, e.action, e.purpose ?? null, e.result, e.rule ?? null, e.correlation ?? null,
+  e.office ? [e.office.id, e.office.title, !!e.office.acting] : null, e.profile ? [e.profile.id, e.profile.version, e.profile.digest] : null, e.prev]);
+const body = (e: Omit<AccessEntry, 'hash'>) => (e.v === 2 ? bodyV2(e) : bodyV1(e));
 
-/** Write one entry. */
-export function recordAccess(input: Omit<AccessEntry, 'id' | 'seq' | 'at' | 'prev' | 'hash'>, now = new Date()): AccessEntry {
+/** Write one entry (format 2: with the office acted under and the profile version in force). */
+export function recordAccess(input: Omit<AccessEntry, 'v' | 'id' | 'seq' | 'at' | 'prev' | 'hash' | 'profile'>, now = new Date()): AccessEntry {
   const d = db();
   const last = d.entries[d.entries.length - 1];
+  const profile = profileRef(now);
   const e: Omit<AccessEntry, 'hash'> = {
-    id: uuid7(), seq: (last?.seq ?? d.base.removed) + 1, at: now.toISOString(),
+    v: 2, id: uuid7(), seq: (last?.seq ?? d.base.removed) + 1, at: now.toISOString(),
     by: { ...(input.by.id ? { id: input.by.id } : {}), name: input.by.name.slice(0, 200), ...(input.by.institution ? { institution: input.by.institution } : {}) },
     record: { register: input.record.register, ...(input.record.id ? { id: input.record.id } : {}), ...(input.record.query ? { query: input.record.query.slice(0, 200) } : {}) },
     action: input.action, ...(input.purpose ? { purpose: input.purpose.slice(0, 500) } : {}), result: input.result,
     ...(input.rule ? { rule: input.rule.slice(0, 300) } : {}), ...(input.correlation ? { correlation: input.correlation } : {}),
+    ...(input.office ? { office: { id: input.office.id, title: input.office.title.slice(0, 200), ...(input.office.acting ? { acting: true } : {}) } } : {}),
+    ...(profile ? { profile } : {}),
     prev: last?.hash ?? d.base.hash,
   };
   const entry = { ...e, hash: sha256Hex(body(e)) };

@@ -12,6 +12,7 @@ import { authorityFor } from '@/lib/data/store';
 import { ownerInstitution } from '@/lib/casework/packages';
 import { getProfessional, listProfessionals, professions, professionCounts } from '@/lib/professions/register';
 import { recordAccess } from '@/lib/records/access-log';
+import { accessBy } from '@/lib/records/access-by';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
   let allowed: string[] | 'all' = 'all';
   if (s) {
     const why = canReadProfessionals(s, kept(s.institution), purpose);
-    if (number || person || profession || why) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'professions', ...(number ? { id: number } : { query: person ? 'person=…' : profession ? `profession=${profession}` : '(counts)' }) }, action: why ? 'refused' : number ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
+    if (number || person || profession || why) recordAccess({ ...accessBy(s), record: { register: 'professions', ...(number ? { id: number } : { query: person ? 'person=…' : profession ? `profession=${profession}` : '(counts)' }) }, action: why ? 'refused' : number ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
     if (why) return NextResponse.json({ error: why }, { status: 403 });
     if (s.role !== 'auditor') allowed = kept(s.institution);
   }

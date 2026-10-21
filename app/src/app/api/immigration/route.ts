@@ -12,6 +12,7 @@ import { canReadImmigration } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
 import { findGrants, grantCounts } from '@/lib/immigration/register';
 import { recordAccess } from '@/lib/records/access-log';
+import { accessBy } from '@/lib/records/access-by';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
   const purpose = q.get('purpose') ?? undefined;
   if (s) {
     const why = canReadImmigration(s, authorityFor('immigration'), purpose);
-    if (searching || why) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'immigration', ...(number ? { id: number } : { query: nationality ? `nationality=${nationality}&document=…` : '(counts)' }) }, action: why ? 'refused' : number ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
+    if (searching || why) recordAccess({ ...accessBy(s), record: { register: 'immigration', ...(number ? { id: number } : { query: nationality ? `nationality=${nationality}&document=…` : '(counts)' }) }, action: why ? 'refused' : number ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
     if (why) return NextResponse.json({ error: why }, { status: 403 });
   }
   if (!searching) return NextResponse.json({ counts: grantCounts(), grants: [] });

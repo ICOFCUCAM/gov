@@ -13,6 +13,7 @@ import { hearingsOf } from '@/lib/courts/hearings';
 import { getPackage } from '@/lib/casework/packages';
 import { routeActor } from '@/lib/casework/actor';
 import { recordAccess } from '@/lib/records/access-log';
+import { accessBy } from '@/lib/records/access-by';
 import { getDocument } from '@/lib/records/documents';
 import { getDecision } from '@/lib/records/decisions';
 import { certificatesFor } from '@/lib/records/certificates';
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     // A read under an approved audit or request-information relationship is always logged, naming it (plan phase 3).
     const grant = !why && s.institution !== c.owner ? readRelationship(s, c.owner, caseRecordTypes(facts), purpose) : null;
     const rule = why ?? (grant ? relationshipRule(grant) : undefined);
-    if (c.sensitivity !== 'normal' || why || grant) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'cases', id: c.ref }, action: why ? 'refused' : 'view', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(rule ? { rule } : {}) });
+    if (c.sensitivity !== 'normal' || why || grant) recordAccess({ ...accessBy(s), record: { register: 'cases', id: c.ref }, action: why ? 'refused' : 'view', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(rule ? { rule } : {}) });
     if (why) return NextResponse.json({ error: why }, { status: 403 });
   }
   return NextResponse.json({
