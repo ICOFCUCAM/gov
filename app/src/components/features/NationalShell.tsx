@@ -43,16 +43,21 @@ import { useRenderNow } from '@/lib/clock/render-now';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 import { IndexTag } from '@/components/ui/IndexTag';
+import { GeneratedFold, useGenerated, isGenerated } from '@/components/ui/Generated';
 
-// Panels here are calculated from the institutions' models, so they say so unless a panel states otherwise.
-function P({ title, meta, children, signal = 'modelled' }: { title: string; meta?: string; children: React.ReactNode; signal?: SignalKind | null }) {
+// Panels here are calculated from the institutions' generated models (lib/gov/*, lib/institution/*),
+// so they are samples unless a panel states otherwise (audit B §3: not Modelled, their inputs are
+// generated). A sample panel folds to "Not connected" on a production installation (lib/twin/generated.ts).
+function P({ title, meta, children, signal = 'sample' }: { title: string; meta?: string; children: React.ReactNode; signal?: SignalKind | null }) {
+  const gen = useGenerated(signal === 'simulated' ? 'simulated' : 'sample');
+  const folded = isGenerated(signal ?? undefined) && !gen.show;
   return (
     <section className="flex min-h-0 flex-col rounded-[3px] border border-line bg-surface">
       <div className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-        <h2 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}{signal ? <SignalTag kind={signal} source={REFERENCE_MODEL} /> : null}</h2>
-        {meta ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
+        <h2 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}{folded ? <SignalTag kind="unavailable" source={gen.src} /> : signal ? <SignalTag kind={signal} source={REFERENCE_MODEL} /> : null}</h2>
+        {meta && !folded ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
       </div>
-      <div className="min-h-0 flex-1 p-2.5">{children}</div>
+      <div className="min-h-0 flex-1 p-2.5">{folded ? <GeneratedFold what="This panel's figures">{meta ? <div className="mb-1 text-[10px] text-ink-muted">{meta}</div> : null}{children}</GeneratedFold> : children}</div>
     </section>
   );
 }
@@ -837,7 +842,7 @@ export function NationalShell() {
         );
       })()}
 
-      <P title="Where each institution runs" meta="each institution can run on its own servers">
+      <P signal="reported" title="Where each institution runs" meta="each institution can run on its own servers">
         <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
           {deployableRoots().map(r => (
             <Link key={r.root} href={`/app/${r.domain}`} className="focus-ring flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 no-underline transition-colors hover:bg-surface-2/70">
@@ -852,7 +857,7 @@ export function NationalShell() {
         <p className="mt-1.5 text-[9px] text-ink-muted">Each is an independently deployable sovereign root; subsystems live inside the institution, never as separate deployments. The platform root is the nervous system only.</p>
       </P>
 
-      <P title="Sovereign event bus" meta={`${busAgg.total} events from institutions`}>
+      <P signal="reported" title="Sovereign event bus" meta={`${busAgg.total} events from institutions`}>
         {busEvents.length === 0 ? (
           <p className="text-[11px] text-ink-muted">No events from institutions yet. Activating institutions and opening their applications records them here.</p>
         ) : (
@@ -884,7 +889,7 @@ export function NationalShell() {
       </P>
 
       <div className="grid gap-2 xl:grid-cols-3">
-        <P title="Institutions" meta={`${dir.length} active · ${deployable} deployable`}>
+        <P signal="reported" title="Institutions" meta={`${dir.length} active · ${deployable} deployable`}>
           <div className="space-y-1">
             {dir.length === 0 ? <p className="text-[11px] text-ink-muted">No activated institutions. <Link href="/ministries" className="text-link underline">Compose →</Link></p> : dir.slice(0, 7).map(({ ministry: m, readiness: r }) => (
               <Link key={m.id} href={`/gov/ministry/${m.id}`} className="focus-ring flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 no-underline transition-colors hover:bg-surface-2/70">

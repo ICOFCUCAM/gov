@@ -36,18 +36,29 @@ import { useRenderNow } from '@/lib/clock/render-now';
 import { useTwinPrimed } from '@/lib/twin/read';
 import { ENGINE_METRIC_IDS } from '@/lib/twin/engine-metrics';
 import { IndexTag } from '@/components/ui/IndexTag';
-import { SignalTag } from '@/components/ui/SignalTag';
-import { REFERENCE_MODEL } from '@/lib/twin/signal';
+import type { SignalKind } from '@/lib/twin/signal';
+import { readTwin } from '@/lib/twin/read';
+import { GeneratedText, useTile } from '@/components/ui/Generated';
 import { formatMoney } from '@/lib/nation/registry';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 
-/** A headline figure; `tag` marks one that is not observed (an engine index's IndexTag). */
-function Stat({ l, v, t, tag }: { l: string; v: string; t?: 'ok' | 'warn' | 'alert'; tag?: React.ReactNode }) {
+/**
+ * A headline figure. The engines' figures are generated (`kind` sample by
+ * default): marked Sample in demo and training (once per Sample panel),
+ * "Not connected" in production (lib/twin/generated.ts). `tag` replaces the
+ * marker for an engine index (IndexTag); `twin` names the metric a connected
+ * source reports (lib/twin/engine-metrics.ts), shown as observed once it does.
+ */
+function Stat({ l, v, t, tag, kind = 'sample', twin }: { l: string; v: string; t?: 'ok' | 'warn' | 'alert'; tag?: React.ReactNode; kind?: SignalKind; twin?: string }) {
+  const observed = twin ? readTwin(twin, Number.NaN) : null;
+  const k: SignalKind = observed && observed.kind === 'observed' ? 'observed' : kind;
+  // The engines already read the twin's value when it has one (readTwinValue); here only its kind and source.
+  const tile = useTile(v, k, k === 'observed' ? observed?.source : undefined, k === 'observed' ? undefined : tag);
   return (
-    <div className="rounded-[3px] border border-line bg-surface px-3 py-2">
-      <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted"><span className="truncate">{l}</span>{tag}</div>
-      <div className="font-mono text-[15px] tabular-nums" style={{ color: t ? tc(t) : 'rgb(var(--c-ink))' }}>{v}</div>
+    <div className="rounded-[3px] border border-line bg-surface px-3 py-2" data-generated={tile.folded ? 'not-connected' : undefined}>
+      <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted"><span className="truncate">{l}</span>{tile.marker}</div>
+      <div className={`font-mono tabular-nums ${tile.folded ? 'text-[11px] text-ink-muted' : 'text-[15px]'}`} style={tile.folded ? undefined : { color: t ? tc(t) : 'rgb(var(--c-ink))' }}>{tile.value}</div>
     </div>
   );
 }
@@ -151,8 +162,9 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <span style={{ color: chainColor }}>
         audit chain · {chain.intact ? `intact (${chain.entries})` : `BREACH @${chain.brokenAt}`}
       </span>
-      <span className="text-ink-muted">escalation · <span className="text-ink-soft">{esc.current}</span>{esc.next ? ` → ${esc.next.tier} (${esc.next.authority})` : ' · apex'}</span>
-      <span className="ml-auto text-ink-muted">operational stress · <span style={{ color: stress >= 50 ? 'rgb(var(--c-alert))' : stress >= 30 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' }}>{stress}</span></span>
+      {/* Escalation and stress are read from the generated operations model: Sample, or "Not connected" in production. */}
+      <span className="text-ink-muted">escalation · <GeneratedText><span className="text-ink-soft">{esc.current}</span>{esc.next ? ` → ${esc.next.tier} (${esc.next.authority})` : ' · apex'}</GeneratedText></span>
+      <span className="ml-auto text-ink-muted">operational stress · <GeneratedText><span style={{ color: stress >= 50 ? 'rgb(var(--c-alert))' : stress >= 30 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' }}>{stress}</span></GeneratedText></span>
     </div>
     <DirectivesInbox instKeys={[id, m.slug, grp.key]} by={m.name} />
     </>
@@ -762,12 +774,12 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Liquidity runway" v={`${fc.liquidityDays}d`} t={fc.liquidityDays >= 30 ? 'ok' : fc.liquidityDays >= 14 ? 'warn' : 'alert'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
-          <Stat l="Debt / GDP" v={`${fc.debtToGdp}%`} t={fc.debtToGdp >= 65 ? 'alert' : fc.debtToGdp >= 50 ? 'warn' : 'ok'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
-          <Stat l="Primary balance" v={`${fc.primaryBalancePct}%`} t={fc.primaryBalancePct < 0 ? 'warn' : 'ok'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
-          <Stat l="FX reserves" v={formatMoney(fc.fxReservesBn * 1e9, { digits: 1 })} t={fc.fxReservesBn >= 30 ? 'ok' : 'warn'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
-          <Stat l="Macro stability" v={`${fc.macroStability}`} t={fc.tone} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
-          <Stat l="TSA balance" v={formatMoney(br.tsaBalanceBn * 1e9, { digits: 1 })} t={br.tsaBalanceBn >= 12 ? 'ok' : 'warn'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="Liquidity runway" v={`${fc.liquidityDays}d`} t={fc.liquidityDays >= 30 ? 'ok' : fc.liquidityDays >= 14 ? 'warn' : 'alert'} />
+          <Stat l="Debt / GDP" v={`${fc.debtToGdp}%`} t={fc.debtToGdp >= 65 ? 'alert' : fc.debtToGdp >= 50 ? 'warn' : 'ok'} twin="fiscal.debt_to_gdp" />
+          <Stat l="Primary balance" v={`${fc.primaryBalancePct}%`} t={fc.primaryBalancePct < 0 ? 'warn' : 'ok'} />
+          <Stat l="FX reserves" v={formatMoney(fc.fxReservesBn * 1e9, { digits: 1 })} t={fc.fxReservesBn >= 30 ? 'ok' : 'warn'} />
+          <Stat l="Macro stability" v={`${fc.macroStability}`} t={fc.tone} />
+          <Stat l="TSA balance" v={formatMoney(br.tsaBalanceBn * 1e9, { digits: 1 })} t={br.tsaBalanceBn >= 12 ? 'ok' : 'warn'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
           <Panel signal="sample" title="Banking rails" meta="disbursement · settlement · reconciliation" bodyClass="!p-2">
@@ -797,12 +809,12 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Collection rate" v={`${rv.collectionRatePct}%`} t={rv.collectionRatePct >= 85 ? 'ok' : rv.collectionRatePct >= 72 ? 'warn' : 'alert'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
-          <Stat l="Customs throughput" v={`${rv.customsThroughputPct}%`} t={rv.customsThroughputPct >= 80 ? 'ok' : 'warn'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
-          <Stat l="Taxpayers" v={`${rv.taxpayersM}M`} t="ok" tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
-          <Stat l="Arrears" v={formatMoney(rv.arrearsBn * 1e9, { digits: 1 })} t={rv.arrearsBn >= 24 ? 'alert' : 'warn'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
-          <Stat l="Budget execution" v={`${bg.executionPct}%`} t={bg.executionPct >= 80 ? 'ok' : bg.executionPct >= 60 ? 'warn' : 'alert'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
-          <Stat l="Blocked allocations" v={`${bg.blockedAllocations}`} t={bg.blockedAllocations ? 'alert' : 'ok'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat twin="revenue.collection_rate" l="Collection rate" v={`${rv.collectionRatePct}%`} t={rv.collectionRatePct >= 85 ? 'ok' : rv.collectionRatePct >= 72 ? 'warn' : 'alert'} />
+          <Stat l="Customs throughput" v={`${rv.customsThroughputPct}%`} t={rv.customsThroughputPct >= 80 ? 'ok' : 'warn'} />
+          <Stat twin="revenue.taxpayers" l="Taxpayers" v={`${rv.taxpayersM}M`} t="ok" />
+          <Stat l="Arrears" v={formatMoney(rv.arrearsBn * 1e9, { digits: 1 })} t={rv.arrearsBn >= 24 ? 'alert' : 'warn'} />
+          <Stat l="Budget execution" v={`${bg.executionPct}%`} t={bg.executionPct >= 80 ? 'ok' : bg.executionPct >= 60 ? 'warn' : 'alert'} />
+          <Stat l="Blocked allocations" v={`${bg.blockedAllocations}`} t={bg.blockedAllocations ? 'alert' : 'ok'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
           <Panel signal="sample" title="Revenue streams" meta="taxation · customs · collection" bodyClass="!p-2">
@@ -1689,7 +1701,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} tag={s.tag} />)}
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} tag={s.tag} twin={group === 'corrections' && s.l === 'Population' ? 'corrections.population' : undefined} />)}
         </div>
         <RuntimeQueue scope={`${id}:${group}`} kind={kind} title={`${title} runtime — execute the workflow`} by="Justice Officer" n={14} />
       </div>
@@ -1729,7 +1741,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Panel signal="sample" title="Corrections" meta="custodial system" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Facilities" v={`${o.corrections.facilities}`} t="ok" />
-              <Stat l="Population" v={o.corrections.population.toLocaleString()} t="ok" />
+              <Stat l="Population" v={o.corrections.population.toLocaleString()} t="ok" twin="corrections.population" />
               <Stat l="Capacity" v={o.corrections.capacity.toLocaleString()} t="ok" />
               <Stat l="Rehab active" v={o.corrections.rehabActive.toLocaleString()} t="ok" />
             </div>

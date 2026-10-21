@@ -26,7 +26,9 @@ import type {
 
 import { aiLabel, formatMoney } from '@/lib/nation/registry';
 import { SignalTag } from '@/components/ui/SignalTag';
-import { REFERENCE_MODEL } from '@/lib/twin/signal';
+import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
+import { GeneratedText, useGenerated, shownValue, NOT_CONNECTED } from '@/components/ui/Generated';
+import { executivePosture } from '@/lib/gov/executive-posture';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { CONSOLE_NAV, locate } from '@/lib/nav/console-nav';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
@@ -105,6 +107,9 @@ export function CabinetIntelligence() {
 
   const tickN = coord?.tick ?? 0;
   const epoch = Math.floor(tickN / 2);
+  // Generated figures: Sample in demo and training, "Not connected" in production (lib/twin/generated.ts).
+  const gen = useGenerated();
+  const xp = executivePosture(nat, coord);
   const nodes = coord?.nodes ?? [];
   const fabricById = new Map((coord?.fabric ?? []).map(f => [f.ministryId, f]));
   const mapNodes = nodes.map((nd, i) => ({
@@ -303,8 +308,10 @@ export function CabinetIntelligence() {
             className="focus-ring hidden items-center gap-1.5 rounded-sm border px-2 py-1 text-xs no-underline transition-colors sm:flex"
             style={{ borderColor: TONE[resilience.tone], color: TONE[resilience.tone], backgroundColor: `color-mix(in srgb, ${TONE[resilience.tone]} 10%, transparent)` }}>
             <span className="text-[9px] font-bold uppercase tracking-[0.14em]">Resilience</span>
-            <span className="font-mono tabular-nums">{resilience.index}</span>
-            <span className="text-[9px] font-bold uppercase tracking-[0.14em]">{resilience.band}</span>
+            <GeneratedText source={`National resilience index · ${REFERENCE_MODEL}`}>
+              <span className="font-mono tabular-nums">{resilience.index}</span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.14em]">{resilience.band}</span>
+            </GeneratedText>
           </Link>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
           <span className="hidden border-l border-line pl-3 sm:inline">
@@ -372,7 +379,12 @@ export function CabinetIntelligence() {
           <ConsoleTabs here={locate('/gov')} branches={[]} pathname="/gov" />
           {/* Row 1 — executive telemetry (11) */}
           <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11">
-            {instr.map(t => (
+            {instr.map(t => !gen.show ? (
+              <div key={t.l} data-generated="not-connected" className="rounded-[3px] border border-line bg-surface px-2 py-1.5">
+                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</div>
+                <div className="mt-1 flex items-center gap-1 text-[11px] text-ink-muted">{NOT_CONNECTED}<SignalTag kind="unavailable" source={gen.src} /></div>
+              </div>
+            ) : (
               <div key={t.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5"
                 style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
                 <div className="flex items-center justify-between gap-1"><span className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</span><SignalTag kind="sample" source={REFERENCE_MODEL} /></div>
@@ -889,17 +901,19 @@ export function CabinetIntelligence() {
               const cc = casc.filter(c => c.posture === 'critical').length;
               const cs = casc.filter(c => c.posture === 'strained').length;
               const rRoll = regionRollup(nationalRegions(now / 4000));
+              // Readiness from the executive posture; escalations from the recorded incidents; the rest generated.
+              const g = (v: string, t: string) => ({ v: shownValue(gen, v), t: gen.show ? t : 'neutral', kind: gen.kind as SignalKind | undefined, src: gen.src });
               return [
-              { l: 'Readiness', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
-              { l: 'Operational tempo', v: `${Math.round(40 + seed(`tempo:${epoch}`) * 55)} actions/min`, t: 'ok' },
-              { l: 'Active escalations', v: `${escalations.length} · ${escalations.filter(e => e.sevState === 'critical').length} crit`, t: escalations.length ? 'alert' : 'ok' },
-              { l: 'Knock-on risk', v: cc ? `${cc} crit · ${cs} strained` : cs ? `${cs} strained` : 'Contained', t: cc ? 'alert' : cs ? 'warn' : 'ok' },
-              { l: 'Regional readiness', v: `${rRoll.meanReadiness}% · ${rRoll.critical} crit`, t: rRoll.critical ? 'alert' : rRoll.meanReadiness >= 60 ? 'ok' : 'warn' },
-              { l: 'Population impacted', v: `${(0.4 + seed(`pi:${epoch}`) * 9).toFixed(1)}M`, t: 'warn' },
-              { l: 'War Room', v: war ? 'ENGAGED' : 'Standby', t: war ? 'alert' : 'neutral' },
+              { l: 'Readiness', v: war ? 'CRITICAL' : xp.readiness.v, t: war ? 'alert' : xp.readiness.t, kind: war ? undefined : xp.readiness.kind, src: xp.readiness.src },
+              { l: 'Operational tempo', ...g(`${Math.round(40 + seed(`tempo:${epoch}`) * 55)} actions/min`, 'ok') },
+              { l: 'Active escalations', v: `${escalations.length} · ${escalations.filter(e => e.sevState === 'critical').length} crit`, t: escalations.length ? 'alert' : 'ok', kind: xp.incidents.kind, src: xp.incidents.src },
+              { l: 'Knock-on risk', ...g(cc ? `${cc} crit · ${cs} strained` : cs ? `${cs} strained` : 'Contained', cc ? 'alert' : cs ? 'warn' : 'ok') },
+              { l: 'Regional readiness', ...g(`${rRoll.meanReadiness}% · ${rRoll.critical} crit`, rRoll.critical ? 'alert' : rRoll.meanReadiness >= 60 ? 'ok' : 'warn') },
+              { l: 'Population impacted', ...g(`${(0.4 + seed(`pi:${epoch}`) * 9).toFixed(1)}M`, 'warn') },
+              { l: 'War Room', v: war ? 'ENGAGED' : 'Standby', t: war ? 'alert' : 'neutral', kind: undefined, src: '' },
             ]; })().map(s => (
               <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-                <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+                <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}<SignalTag kind={s.kind} source={s.src} /></span>
                 <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
                   {s.l === 'War Room' || s.l === 'Readiness' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
                   {s.v}

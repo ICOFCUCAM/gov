@@ -14,6 +14,29 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard, NationalBureaucracyPulse, DispatchChannel, EncounterThread } from '@/apps/_shared/InstitutionChain';
 import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { GeneratedFold, GeneratedStrip, GeneratedText, useGenerated, useTile, shownValue } from '@/components/ui/Generated';
+import type { SignalKind } from '@/lib/twin/signal';
+
+/** One headline tile: its value and marker (lib/twin/generated.ts), or "Not connected" when generated in production. */
+function TeleTile({ m }: { m: { l: string; v: string; sub: string; d: number; t: string; spark: number[]; kind: SignalKind; src?: string } }) {
+  const tile = useTile(m.v, m.kind, m.src);
+  return (
+    <div className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }} data-generated={tile.folded ? 'not-connected' : undefined}>
+      <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted"><span className="truncate">{m.l}</span>{tile.marker}</div>
+      {tile.folded ? <div className="mt-1 text-[11px] text-ink-muted">{tile.value}</div> : (
+        <>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-mono text-2xl tabular-nums" style={{ color: TONE[m.t] }}>{tile.value}</span>
+            <span className="text-[10px] text-ink-muted">{m.sub}</span>
+            {m.d !== 0 ? <span className="ml-auto text-[10px]" style={{ color: m.d > 0 ? TONE.ok : TONE.alert }}>{m.d > 0 ? '▲' : '▼'} {Math.abs(m.d)}</span> : null}
+          </div>
+          <div className="-mb-1 h-7 overflow-hidden opacity-80"><Spark pts={m.spark} tone={m.t} /></div>
+        </>
+      )}
+    </div>
+  );
+}
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
 
@@ -61,7 +84,16 @@ export function NationalCoordination() {
   }, []);
 
   const epoch = Math.floor((d?.tick ?? Math.floor(now / 15000)) / 2);
+  // Generated figures: Sample in demo and training, "Not connected" in production (lib/twin/generated.ts).
+  const gen = useGenerated();
   const posture = d?.posture;
+  // A posture resting on records is shown in every mode; one from the pressure model only where samples are.
+  const postureKind: SignalKind = posture?.basis === 'records' ? 'record' : 'sample';
+  const postureShown = postureKind === 'record' || gen.show;
+  // Recorded serious incidents (seeded examples only in demo and training): the real pinned list.
+  const pinnedRec = d?.pinnedIncidents ?? [];
+  const pinnedKind: SignalKind = gen.show ? 'sample' : 'record';
+  const pinnedSrc = gen.show ? 'Seeded ministry incidents (sev1, sev2)' : 'Serious incidents recorded by the ministries (sev1, sev2)';
   const risk = posture?.nationalRisk ?? 18;
   const level = posture?.level ?? (risk >= 67 ? 'alert' : risk >= 34 ? 'warn' : 'ok');
   const label = posture?.label ?? (risk >= 67 ? 'CRITICAL' : risk >= 34 ? 'STRAINED' : 'STABLE');
@@ -75,12 +107,16 @@ export function NationalCoordination() {
   });
   const sp = (k: string, n = 18, lo = 30, hi = 80) => waveSeries(`s:${k}`, now / 4000, n, lo, hi);
 
-  const tele = [
-    { l: 'National Risk Index', v: `${risk}`, sub: '/100', d: -7, t: level, spark: sp('ri') },
-    { l: 'Coordinating Institutions', v: `${insts}`, sub: '+3 new today', d: 3, t: 'ok', spark: sp('ci', 22, 20, 60) },
-    { l: 'Knock-on risks', v: `${cascade}`, sub: 'dependencies', d: -2, t: cascade > 6 ? 'warn' : 'ok', spark: sp('ce') },
-    { l: 'Pinned Incidents', v: `${PINNED.length}`, sub: '3 sev1 · 2 sev2 · 1 sev3', d: 0, t: 'alert', spark: sp('pi') },
-    { l: 'Operational status', v: label, sub: 'national tempo', d: 0, t: level, spark: sp('op', 24, 35, 70) },
+  const sevCount = (sv: string) => pinnedRec.filter(p => p.severity === sv).length;
+  const tele: { l: string; v: string; sub: string; d: number; t: string; spark: number[]; kind: SignalKind; src?: string }[] = [
+    { l: 'National Risk Index', v: `${risk}`, sub: '/100', d: -7, t: level, spark: sp('ri'), kind: postureKind, src: posture?.source },
+    // The institutions in the ministry registry when it answers; a generated count otherwise.
+    d?.nodes.length
+      ? { l: 'Coordinating Institutions', v: `${d.nodes.length}`, sub: 'in the ministry registry', d: 0, t: 'ok', spark: sp('ci', 22, 20, 60), kind: 'reported', src: 'Ministry registry' }
+      : { l: 'Coordinating Institutions', v: `${insts}`, sub: 'example count', d: 0, t: 'ok', spark: sp('ci', 22, 20, 60), kind: 'sample' },
+    { l: 'Knock-on risks', v: `${cascade}`, sub: 'dependencies', d: -2, t: cascade > 6 ? 'warn' : 'ok', spark: sp('ce'), kind: 'sample' },
+    { l: 'Pinned Incidents', v: `${pinnedRec.length}`, sub: `${sevCount('sev1')} sev1 · ${sevCount('sev2')} sev2`, d: 0, t: pinnedRec.length ? 'alert' : 'ok', spark: sp('pi'), kind: pinnedKind, src: pinnedSrc },
+    { l: 'Operational status', v: label, sub: 'national tempo', d: 0, t: level, spark: sp('op', 24, 35, 70), kind: postureKind, src: posture?.source },
   ];
 
   return (
@@ -93,29 +129,21 @@ export function NationalCoordination() {
             <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>
               <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE
             </span>
-            <span className="font-mono text-[10px] text-ink-muted">{new Date(now).toLocaleTimeString()} · updated {Math.round((now % 60000) / 1000)}s ago</span>
+            <span className="font-mono text-[10px] text-ink-muted">{new Date(now).toLocaleTimeString()}<GeneratedText> · updated {Math.round((now % 60000) / 1000)}s ago</GeneratedText></span>
           </div>
           <p className="text-xs text-ink-muted">Cross-ministry dependency coordination and national operational oversight.</p>
         </div>
-        <span className="rounded-[3px] border px-3 py-1 text-right" style={{ borderColor: TONE[level] }}>
-          <span className="block text-sm font-bold tracking-widest" style={{ color: TONE[level] }}>{label}</span>
+        <span className="rounded-[3px] border px-3 py-1 text-right" style={{ borderColor: postureShown ? TONE[level] : 'rgb(var(--c-line))' }}>
+          <span className="flex items-center justify-end gap-1 text-sm font-bold tracking-widest" style={{ color: postureShown ? TONE[level] : 'rgb(var(--c-ink-muted))' }}>
+            {postureShown ? label : <SignalTag kind="unavailable" source={gen.src} />}{postureShown ? <SignalTag kind={postureKind} source={posture?.source} /> : null}
+          </span>
           <span className="block text-[9px] uppercase tracking-wide text-ink-muted">risk status</span>
         </span>
       </div>
 
       {/* Telemetry strip — 5 */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
-        {tele.map(m => (
-          <div key={m.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-            <div className="text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{m.l}</div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-mono text-2xl tabular-nums" style={{ color: TONE[m.t] }}>{m.v}</span>
-              <span className="text-[10px] text-ink-muted">{m.sub}</span>
-              {m.d !== 0 ? <span className="ml-auto text-[10px]" style={{ color: m.d > 0 ? TONE.ok : TONE.alert }}>{m.d > 0 ? '▲' : '▼'} {Math.abs(m.d)}</span> : null}
-            </div>
-            <div className="-mb-1 h-7 overflow-hidden opacity-80"><Spark pts={m.spark} tone={m.t} /></div>
-          </div>
-        ))}
+        {tele.map(m => <TeleTile key={m.l} m={m} />)}
       </div>
 
       {/* Main grid */}
@@ -178,7 +206,24 @@ export function NationalCoordination() {
             </div>
           </Panel>
 
-          <Panel signal="sample" title="Pinned incidents" meta={<Link href="/gov/situation-room" className="text-[10px] text-link underline">View all incidents →</Link>} className="flex-1" bodyClass="overflow-y-auto !p-0">
+          <Panel signal="record" title="Pinned incidents" meta={<Link href="/gov/situation-room" className="text-[10px] text-link underline">View all incidents →</Link>} className="flex-1" bodyClass="overflow-y-auto !p-0">
+            {/* Serious incidents the ministries recorded (seeded examples in demo and training). */}
+            <div className="flex items-center gap-1.5 border-b border-line-soft px-3 py-1 text-[9px] uppercase tracking-wide text-ink-muted">
+              Recorded serious incidents <SignalTag kind={pinnedKind} source={pinnedSrc} />
+            </div>
+            {pinnedRec.length === 0 ? <p className="px-3 py-2 text-[10px] text-ink-muted">None recorded.</p> : pinnedRec.map((p, i) => {
+              const tn = p.severity === 'sev1' ? 'alert' : 'warn';
+              return (
+                <Link key={`${p.ministryId}:${i}`} href={`/gov/ministry/${p.ministryId}`} className="focus-ring block border-b border-line-soft px-3 py-2 no-underline transition-colors hover:bg-surface-2/50" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded-[2px] px-1 text-[8px] font-bold tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 20%, transparent)`, color: TONE[tn] }}>{p.severity.toUpperCase()}</span>
+                    <span className="truncate text-[11px] font-medium text-ink">{p.label}</span>
+                  </div>
+                  <span className="block truncate text-[9px] text-ink-muted">{p.ministry} · {p.authority}{p.affects.length ? ` · affects ${p.affects.join(', ')}` : ''}</span>
+                </Link>
+              );
+            })}
+            <GeneratedFold marked what="Example incidents and knock-on escalations" className="m-1.5">
             {cascadeEscalations(cascadeNodes).map(e => {
               const tn = e.severity === 'critical' ? 'alert' : 'warn';
               return (
@@ -238,6 +283,7 @@ export function NationalCoordination() {
                 </div>
               );
             })}
+            </GeneratedFold>
           </Panel>
         </div>
       </div>
@@ -294,7 +340,8 @@ export function NationalCoordination() {
         </Panel>
       </div>
 
-      {/* Lower micro-grid ecosystem — national operational band */}
+      {/* Lower micro-grid ecosystem — national operational band (generated: Sample, or folded in production) */}
+      <GeneratedStrip what="National operational band">
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         {[
           ['How far effects spread', 'cd', 1, 9], ['Mitigation tempo', 'mt', 35, 90], ['Dependency load', 'dl', 30, 85],
@@ -322,7 +369,7 @@ export function NationalCoordination() {
           );
         })}
       </div>
-
+      </GeneratedStrip>
       <Panel signal="sample" title="Infrastructure network pressure" meta="national digital twin">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
@@ -429,15 +476,16 @@ export function NationalCoordination() {
 
       {/* Operational command strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+        {/* The posture where it rests on records; the rest generated (Sample, or "Not connected" in production). */}
         {[
-          { l: 'Readiness', v: label, t: level },
-          { l: 'Operational tempo', v: `${Math.round(40 + seed(`nctempo:${epoch}`) * 55)} actions/min`, t: 'ok' },
-          { l: 'Active escalations', v: `${regs.filter(r => r.p >= 78).length} crit · ${regs.filter(r => r.p >= 58 && r.p < 78).length} watch`, t: regs.some(r => r.p >= 78) ? 'alert' : 'warn' },
-          { l: 'Knock-on risks', v: `${cascade}`, t: cascade > 6 ? 'warn' : 'ok' },
-          { l: 'Coordination', v: 'OPERATIONAL', t: 'ok' },
+          { l: 'Readiness', v: postureShown ? label : shownValue(gen, label), t: postureShown ? level : 'neutral', kind: postureShown ? postureKind : gen.kind, src: postureShown ? posture?.source : gen.src },
+          { l: 'Operational tempo', v: shownValue(gen, `${Math.round(40 + seed(`nctempo:${epoch}`) * 55)} actions/min`), t: gen.show ? 'ok' : 'neutral', kind: gen.kind, src: gen.src },
+          { l: 'Active escalations', v: shownValue(gen, `${regs.filter(r => r.p >= 78).length} crit · ${regs.filter(r => r.p >= 58 && r.p < 78).length} watch`), t: !gen.show ? 'neutral' : regs.some(r => r.p >= 78) ? 'alert' : 'warn', kind: gen.kind, src: gen.src },
+          { l: 'Knock-on risks', v: shownValue(gen, `${cascade}`), t: !gen.show ? 'neutral' : cascade > 6 ? 'warn' : 'ok', kind: gen.kind, src: gen.src },
+          { l: 'Coordination', v: shownValue(gen, 'OPERATIONAL'), t: gen.show ? 'ok' : 'neutral', kind: gen.kind, src: gen.src },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}<SignalTag kind={s.kind as SignalKind} source={s.src} /></span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
               {s.l === 'Readiness' || s.l === 'Coordination' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
               {s.v}

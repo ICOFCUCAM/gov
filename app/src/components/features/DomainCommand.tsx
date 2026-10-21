@@ -7,6 +7,7 @@ import { WorldContext } from '@/components/map/WorldContext';
 import { useNeighbours } from '@/components/map/useNeighbours';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { GeneratedFold, GeneratedStrip, GeneratedText } from '@/components/ui/Generated';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import { regionName, formatMoney } from '@/lib/nation/registry';
 import { SignalTag } from '@/components/ui/SignalTag';
@@ -233,17 +234,20 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }} title="Telemetry on this surface is advisory-simulated, not a live national feed">
             Advisory · Simulated
           </span>
-          <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()} · updated {Math.round((now % 60000) / 1000)}s ago</span>
+          <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}<GeneratedText> · updated {Math.round((now % 60000) / 1000)}s ago</GeneratedText></span>
         </div>
-        {crit >= 1 ? (
+        {/* The alert counts the typed example feed: shown only where samples are. */}
+        {crit >= 1 ? <GeneratedText>
           <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, transparent)` }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
             {crit >= 2 ? 'Domain surge' : 'Domain alert'} · {crit} critical
           </span>
-        ) : null}
+        </GeneratedText> : null}
       </div>
 
+      {/* Headline tiles: generated, each marked Sample; folded under "Not connected" in production. */}
+      <GeneratedFold what="Headline figures">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {cfg.tele.map(m => {
           const raw = w(m.k, m.lo, m.hi);
@@ -258,6 +262,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           );
         })}
       </div>
+      </GeneratedFold>
 
       <div className="grid gap-2 xl:grid-cols-12">
         <Panel signal="sample" title="Operational theatre" meta="domain pressure · live" className="xl:col-span-7" bodyClass="!p-2">
@@ -400,7 +405,8 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         </Panel>
 
-        <Panel signal="sample" title="Command actions" meta="decisions open a draft directive for signature" bodyClass="!p-1.5">
+        {/* Links only, no figures: nothing to mark. */}
+        <Panel title="Command actions" meta="decisions open a draft directive for signature" bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1">
             {cfg.actions.map((q, i) => (
               <Link key={q.l} href={q.h} className="focus-ring group flex items-center gap-1.5 rounded-[3px] border border-line px-2 py-1.5 text-[10px] font-medium text-ink-soft no-underline transition-all hover:bg-surface-2/60">
@@ -429,7 +435,8 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
         );
       })()}
 
-      {/* Lower micro-grid ecosystem — Bloomberg-density operational band */}
+      {/* Lower micro-grid ecosystem — Bloomberg-density operational band (generated: Sample, or folded in production) */}
+      <GeneratedStrip what="Operational band">
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         {MICRO.map(m => {
           const raw = w(`mg:${m.k}`, m.lo, m.hi);
@@ -447,7 +454,9 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           );
         })}
       </div>
+      </GeneratedStrip>
 
+      <GeneratedFold what="Domain status strip">
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {cfg.strip(w).map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
@@ -458,6 +467,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         ))}
       </div>
+      </GeneratedFold>
 
       {(() => {
         const k: WorkKind = domain === 'treasury' ? 'procurement' : domain === 'security' ? 'incident' : 'case';

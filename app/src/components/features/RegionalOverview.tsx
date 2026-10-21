@@ -10,6 +10,25 @@ import { regionName } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { api } from '@/lib/api/client';
 import { useTwinPrimed } from '@/lib/twin/read';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { GeneratedText, useGenerated, useTile, shownValue } from '@/components/ui/Generated';
+import type { SignalKind } from '@/lib/twin/signal';
+
+type Tele = { l: string; v: string; sub: string; t: string; k: string; kind: SignalKind; src?: string };
+
+/** A headline tile marked by where it comes from; a generated one is "Not connected" in production (lib/twin/generated.ts). */
+function RegionTile({ m, ts }: { m: Tele; ts: number }) {
+  const tile = useTile(m.v, m.kind, m.src);
+  const shownGenerated = !tile.folded && (m.kind === 'sample' || m.kind === 'simulated');
+  return (
+    <div className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }} data-generated={tile.folded ? 'not-connected' : undefined}>
+      <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted"><span className="truncate">{m.l}</span>{tile.marker}</div>
+      <div className={`truncate font-mono leading-tight tabular-nums ${tile.folded ? 'text-[11px] text-ink-muted' : 'text-lg'}`} style={tile.folded ? undefined : { color: TONE[m.t] }}>{tile.value}</div>
+      {shownGenerated ? <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={waveSeries(`ro:${m.k}`, ts, 16, 35, 92)} tone={m.t} /></div> : null}
+      {tile.folded ? null : <div className="truncate text-[8px] text-ink-muted">{m.sub}</div>}
+    </div>
+  );
+}
 
 const POS_TONE: Record<string, string> = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' };
 
@@ -43,13 +62,16 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
   const projWorst = [...proj].sort((a, b) => a.readinessDelta - b.readinessDelta)[0];
   const projCritical = proj.filter(p => p.projectedPosture === 'critical').length;
 
-  const tele = [
-    { l: 'Regional status', v: roll.posture.toUpperCase(), sub: `${roll.meanReadiness}% mean readiness`, t: POS_TONE[roll.posture]!, k: 'np' },
-    { l: 'Regions critical', v: String(roll.critical), sub: `${roll.elevated} elevated`, t: roll.critical ? 'alert' : roll.elevated ? 'warn' : 'ok', k: 'rc' },
-    { l: 'Population', v: pop, sub: pop === 'Not connected' ? 'statistics source (National Twin)' : 'observed · National Twin', t: pop === 'Not connected' ? 'neutral' : 'ok', k: 'po' },
-    { l: 'Infrastructure', v: `${roll.meanInfra}%`, sub: 'mean coverage', t: roll.meanInfra >= 80 ? 'ok' : 'warn', k: 'in' },
-    { l: 'Incident load', v: String(roll.totalIncidents), sub: 'active · all regions', t: roll.totalIncidents > 12 ? 'alert' : roll.totalIncidents ? 'warn' : 'ok', k: 'il' },
-    { l: 'Coordination tempo', v: `${Math.round(waveSeries('ro:ct', ts, 1, 40, 90).at(-1)!)}/min`, sub: 'inter-region', t: 'ok', k: 'ct' },
+  // Population from the twin (observed) or not connected; the regional model's figures are generated.
+  const gen = useGenerated();
+  const popKind: SignalKind = pop === 'Not connected' ? 'unavailable' : 'observed';
+  const tele: Tele[] = [
+    { l: 'Regional status', v: roll.posture.toUpperCase(), sub: `${roll.meanReadiness}% mean readiness`, t: POS_TONE[roll.posture]!, k: 'np', kind: 'sample' },
+    { l: 'Regions critical', v: String(roll.critical), sub: `${roll.elevated} elevated`, t: roll.critical ? 'alert' : roll.elevated ? 'warn' : 'ok', k: 'rc', kind: 'sample' },
+    { l: 'Population', v: popKind === 'unavailable' ? '—' : pop, sub: popKind === 'unavailable' ? 'statistics source (National Twin)' : 'observed · National Twin', t: popKind === 'unavailable' ? 'neutral' : 'ok', k: 'po', kind: popKind, src: 'National Twin: population, observed once every region reports' },
+    { l: 'Infrastructure', v: `${roll.meanInfra}%`, sub: 'mean coverage', t: roll.meanInfra >= 80 ? 'ok' : 'warn', k: 'in', kind: 'sample' },
+    { l: 'Incident load', v: String(roll.totalIncidents), sub: 'active · all regions', t: roll.totalIncidents > 12 ? 'alert' : roll.totalIncidents ? 'warn' : 'ok', k: 'il', kind: 'sample' },
+    { l: 'Coordination tempo', v: `${Math.round(waveSeries('ro:ct', ts, 1, 40, 90).at(-1)!)}/min`, sub: 'inter-region', t: 'ok', k: 'ct', kind: 'sample' },
   ];
 
   return (
@@ -61,9 +83,9 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE
           </span>
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>Advisory · Simulated</span>
-          <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()} · updated {Math.round((now % 60000) / 1000)}s ago</span>
+          <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}<GeneratedText> · updated {Math.round((now % 60000) / 1000)}s ago</GeneratedText></span>
         </div>
-        {crit >= 1 ? (
+        {crit >= 1 && gen.show ? (
           <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, transparent)` }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
@@ -73,14 +95,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-        {tele.map(m => (
-          <div key={m.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-            <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
-            <div className="truncate font-mono text-lg leading-tight tabular-nums" style={{ color: TONE[m.t] }}>{m.v}</div>
-            <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={waveSeries(`ro:${m.k}`, ts, 16, 35, 92)} tone={m.t} /></div>
-            <div className="truncate text-[8px] text-ink-muted">{m.sub}</div>
-          </div>
-        ))}
+        {tele.map(m => <RegionTile key={m.l} m={m} ts={ts} />)}
       </div>
 
       <div className="grid gap-2 xl:grid-cols-12">
@@ -312,15 +327,16 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
       </Panel>
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+        {/* Population from the twin; the rest from the regional model (Sample, or "Not connected" in production). */}
         {[
-          { l: 'Regional status', v: roll.posture.toUpperCase(), t: POS_TONE[roll.posture]! },
-          { l: 'Mean readiness', v: `${roll.meanReadiness}%`, t: roll.meanReadiness >= 60 ? 'ok' : 'warn' },
-          { l: 'Critical regions', v: `${roll.critical} · ${roll.elevated} elevated`, t: roll.critical ? 'alert' : 'warn' },
-          { l: 'Population', v: pop, t: pop === 'Not connected' ? 'neutral' : 'ok' },
-          { l: 'Provinces synced', v: 'ALL', t: 'ok' },
+          { l: 'Regional status', v: shownValue(gen, roll.posture.toUpperCase()), t: gen.show ? POS_TONE[roll.posture]! : 'neutral', kind: gen.kind, src: gen.src },
+          { l: 'Mean readiness', v: shownValue(gen, `${roll.meanReadiness}%`), t: !gen.show ? 'neutral' : roll.meanReadiness >= 60 ? 'ok' : 'warn', kind: gen.kind, src: gen.src },
+          { l: 'Critical regions', v: shownValue(gen, `${roll.critical} · ${roll.elevated} elevated`), t: !gen.show ? 'neutral' : roll.critical ? 'alert' : 'warn', kind: gen.kind, src: gen.src },
+          { l: 'Population', v: pop, t: pop === 'Not connected' ? 'neutral' : 'ok', kind: popKind, src: 'National Twin' },
+          { l: 'Provinces synced', v: shownValue(gen, 'ALL'), t: gen.show ? 'ok' : 'neutral', kind: gen.kind, src: gen.src },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}{s.kind === 'unavailable' ? null : <SignalTag kind={s.kind} source={s.src} />}</span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
               {s.l === 'Regional status' || s.l === 'Provinces synced' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
               {s.v}

@@ -70,7 +70,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
         Sovereign what-if engine. Applies a scenario shock and projects propagated impact across ministries, regions, cascade and constitutional stress. Read-only — humans decide and act.
       </p>
 
-      <Panel signal="modelled" title="Scenario vector" meta="select to simulate" bodyClass="!p-1.5">
+      <Panel signal="simulated" title="Scenario vector" meta="select to simulate" bodyClass="!p-1.5">
         <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 xl:grid-cols-5">
           {SCENARIOS.map(sc => {
             const on = sc.key === key;
@@ -86,7 +86,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
         </div>
       </Panel>
 
-      <Panel signal="modelled" title="National threat board" meta="all vectors ranked · composite risk" bodyClass="!p-1.5">
+      <Panel signal="simulated" title="National threat board" meta="all vectors ranked · composite risk" bodyClass="!p-1.5">
         <div className="space-y-1">
           {sweep.map(r => {
             const tn = r.band === 'severe' ? 'alert' : r.band === 'high' ? 'alert' : r.band === 'elevated' ? 'warn' : 'ok';
@@ -111,7 +111,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
         </div>
       </Panel>
 
-      <Panel signal="modelled" title="Cabinet decision board" meta="ranked by residual risk after best response — what to plan against" bodyClass="!p-1.5">
+      <Panel signal="simulated" title="Cabinet decision board" meta="ranked by residual risk after best response — what to plan against" bodyClass="!p-1.5">
         <div className="space-y-1">
           {prio.map((r, i) => {
             const tn = r.priority >= 55 ? 'alert' : r.priority >= 35 ? 'warn' : 'ok';
@@ -143,7 +143,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
         ))}
       </div>
 
-      <Panel signal="modelled" title="Institutional baseline" meta={`RULE 2/3 · simulation layered on ${fp.institutions.length} institutions' real operating state`} bodyClass="!p-2">
+      <Panel signal="simulated" title="Institutional baseline" meta={`RULE 2/3 · simulation layered on ${fp.institutions.length} institutions' real operating state`} bodyClass="!p-2">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <div className="flex items-baseline gap-2">
             <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Institutional baseline</span>
@@ -161,7 +161,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
       </Panel>
 
       {active ? (
-        <Panel signal="modelled" title="National resilience under this scenario" meta="composite headroom consumed" bodyClass="!p-2">
+        <Panel signal="simulated" title="National resilience under this scenario" meta="composite headroom consumed" bodyClass="!p-2">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <div className="flex items-baseline gap-2">
               <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Baseline</span>
@@ -188,7 +188,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
       ) : null}
 
       <div className="grid gap-2 xl:grid-cols-3">
-        <Panel signal="modelled" title="Ministry impact" meta="propagated stress" bodyClass="!p-1.5">
+        <Panel signal="simulated" title="Ministry impact" meta="propagated stress" bodyClass="!p-1.5">
           <div className="space-y-1">
             {s.ministryImpact.map(m => {
               const tn = m.stress >= 70 ? 'alert' : m.stress >= 45 ? 'warn' : 'ok';
@@ -206,7 +206,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
           </div>
         </Panel>
 
-        <Panel signal="modelled" title="Regional impact" meta="projected readiness · posture" bodyClass="!p-1.5">
+        <Panel signal="simulated" title="Regional impact" meta="projected readiness · posture" bodyClass="!p-1.5">
           <div className="space-y-1">
             {regionProj.map(r => {
               const tn = r.projectedPosture === 'critical' ? 'alert' : r.projectedPosture === 'elevated' ? 'warn' : r.projectedPosture === 'watch' ? 'neutral' : 'ok';
@@ -222,7 +222,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
           </div>
         </Panel>
 
-        <Panel signal="modelled" title="Propagation timeline" meta="projected chronology" bodyClass="!p-0">
+        <Panel signal="simulated" title="Propagation timeline" meta="projected chronology" bodyClass="!p-0">
           {s.timeline.map((e, i) => {
             const tn = e.sev === 'alert' ? TONE.alert : e.sev === 'warn' ? TONE.warn : TONE.neutral;
             return (
@@ -235,7 +235,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
         </Panel>
       </div>
 
-      <Panel signal="modelled" title="Mitigation playbook" meta="phased response doctrine · advisory · cabinet decides" bodyClass="!p-1.5">
+      <Panel signal="simulated" title="Mitigation playbook" meta="phased response doctrine · advisory · cabinet decides" bodyClass="!p-1.5">
         <div className="mb-2 grid grid-cols-3 gap-2">
           {([
             { l: 'Gross risk', v: pb.grossRisk, t: pb.grossRisk >= 75 ? 'alert' : pb.grossRisk >= 50 ? 'warn' : 'ok' },
