@@ -604,16 +604,16 @@ its 8 internal forms. All 29 now read `contract: given (CivicOS library)`,
 | taxpayer.registration.public_entity | Register a public entity for tax administration | 15 | `tax.registration` · submitted | spec-form, business-fields, public-entity-register, declaration-group, tin-assigned, procedure-form, spec-tax-lists |
 | taxpayer.registration.nonresident | Register a non-resident taxpayer | 26 | `tax.registration` · submitted (document `identity-evidence`) | spec-form, business-fields, representation-own-fields, declaration-group, tin-assigned, procedure-form, spec-tax-lists |
 | taxpayer.registration.branch | Register a branch or permanent establishment | 23 | `tax.registration` · submitted | spec-form, representation-own-fields, declaration-group, tin-assigned, procedure-form, spec-tax-lists |
-| taxpayer.registration.amend | Amend a taxpayer registration | 16 (+3) | library; intended: a registration amendment procedure (I5) | amendment-not-built, representation-own-fields, declaration-group |
-| taxpayer.details.change | Change taxpayer contact or address details | 16 | library; intended: its change-of-details step (I5) | amendment-not-built, representation-own-fields, declaration-group |
-| taxpayer.obligation.add | Register for an additional tax obligation | 16 | library; intended: its obligation step (I5) | amendment-not-built, representation-own-fields, declaration-group, spec-tax-lists |
-| taxpayer.obligation.cancel | Request cancellation of a tax obligation | 17 | library; intended: its cancellation review (I5) | amendment-not-built, representation-own-fields, declaration-group |
-| taxpayer.registration.transfer | Request transfer to another responsible tax office | 17 | library; intended: its transfer step (I5) | amendment-not-built, representation-own-fields, declaration-group |
+| taxpayer.registration.amend | Amend a taxpayer registration | 16 (+3) | `tax.registration-amendment` · submitted (document `change-request`; since batch 6, §14) | amendment-procedure, representation-own-fields, declaration-group |
+| taxpayer.details.change | Change taxpayer contact or address details | 16 | `tax.registration-amendment` · submitted (document `change-request`; since batch 6, §14) | amendment-procedure, representation-own-fields, declaration-group |
+| taxpayer.obligation.add | Register for an additional tax obligation | 16 | `tax.registration-amendment` · submitted (document `change-request`; since batch 6, §14) | amendment-procedure, representation-own-fields, declaration-group, spec-tax-lists |
+| taxpayer.obligation.cancel | Request cancellation of a tax obligation | 17 | `tax.registration-amendment` · submitted (document `change-request`; since batch 6, §14) | amendment-procedure, representation-own-fields, declaration-group |
+| taxpayer.registration.transfer | Request transfer to another responsible tax office | 17 | `tax.registration-amendment` · submitted (document `change-request`; since batch 6, §14) | amendment-procedure, representation-own-fields, declaration-group |
 | taxpayer.certificate.request | Request a taxpayer registration certificate | 15 | library; intended: a certificate from the tax register; `taxpayer.status` (I5) | status-only, representation-own-fields, fee-group |
 | taxpayer.account.statement | Request a tax account statement | 10 | library; intended: a statement drawn from `account()` (I5) | statement-from-ledger, representation-own-fields |
 | taxpayer.registration.duplicate | Request a replacement registration certificate | 16 | library; intended: a replacement certificate; `taxpayer.status` (I5) | status-only, representation-own-fields, fee-group |
-| taxpayer.registration.suspend_request | Request suspension where national law permits it | 16 | library; intended: a suspension step, only where the law provides one (I5) | amendment-not-built, representation-own-fields, declaration-group |
-| taxpayer.registration.reactivate_request | Request reactivation of a suspended registration | 16 | library; intended: a reactivation step (I5) | amendment-not-built, representation-own-fields, declaration-group |
+| taxpayer.registration.suspend_request | Request suspension where national law permits it | 16 | `tax.registration-amendment` · submitted (document `change-request`; since batch 6, §14) | amendment-procedure, representation-own-fields, declaration-group |
+| taxpayer.registration.reactivate_request | Request reactivation of a suspended registration | 16 | `tax.registration-amendment` · submitted (document `change-request`; since batch 6, §14) | amendment-procedure, representation-own-fields, declaration-group |
 | taxpayer.registration.objection | Object to a registration decision | 18 | library; intended: an objection procedure for registration decisions (`tax.objection` is for assessments) (I5) | registration-dispute-not-built, no-amount, representation-own-fields, declaration-group |
 | taxpayer.registration.appeal | Appeal an eligible registration decision | 20 | library; intended: an appeal to the body the law names (I5) | registration-dispute-not-built, court-appeal, no-amount, representation-own-fields, declaration-group |
 | taxpayer.registration.withdraw | Withdraw a pending registration application | 9 | library; intended: a withdrawal step of `tax.registration` (I5) | withdrawal-not-built, representation-own-fields |
@@ -697,7 +697,9 @@ ID in one file (`two-rows`).
 
 **Procedures.** Ten forms link to `tax.registration` and its stages and steps
 (submitted; verification · `verify` / `propose`; pending-approval ·
-`register`). No amendment, deregistration, certificate, registration-dispute,
+`register`); since batch 6 (§14) the seven change forms link to
+`tax.registration-amendment` (deviation `amendment-procedure` in place of
+`amendment-not-built`). No amendment, deregistration, certificate, registration-dispute,
 withdrawal, request, referral or closure procedure exists, so the other
 nineteen wait in the library with the stage they are intended for; none was
 invented, and `tax.objection` (assessments) is not stretched to registration
@@ -875,3 +877,213 @@ is installed and is adopted only in a version a second official approves.
 | Two-official approval and the links by identity | `catalogue-contracts.test.ts` "approves a risk communication by two officials, and links each public-health form…" |
 | Procedure-link states of the linked forms | `procedure-link.test.ts` "is draft for the public-health forms and the complaint forms…" |
 | Binding scope for public health | `lib/health/programmes/scope.test.ts` |
+
+## 14. Catalogue contracts, batch 6: tax services (21 October 2026)
+
+The owner assigned the tax part of plan step I5 with its forms batch: every
+register row whose ID starts with `tax.` and that was `contract_missing`, 95
+rows of the field series Part 2 §2.6 Departments B–H
+(`FIELD-SERIES-PARTS-01-02.md`): periodic returns, payments, credits and
+refunds, compliance, audit and inspection, assessments, objections, appeals
+and disputes, withholding and third-party reporting, assistance, rulings and
+incentives, debt, payment arrangements and recovery. All 95 now read
+`contract: given (CivicOS library)`, `form_status: contract_draft`, with
+`batch: 6` in their `catalogue` block; none was left for a later pass. The
+periodic return (`tax.return.periodic.submit`) and the inspection checklist
+(`tax.compliance.inspection_checklist`) keep the catalogue's own contracts;
+the eight `tax.return_schema.*` rows are schemas, not forms (integration
+register 20.75). The format, loader, identity, gates and three channels are
+batch 3's (§10, §11); what is new is below.
+
+**Sources answered.** Each contract quotes and meets, piece by piece: its
+row; its department's specific fields, country decisions and safeguards
+(Department B's return contract and engineering constraint, Department C's
+payment and refund fields, Department D's compliance rule and inspection
+safeguard, Department E's dispute fields and deadline rule, Department F's
+withholding fields, Department G's assistance, ruling and incentive fields,
+Department H's debt fields and its rule that no recovery power is inferred
+from a balance); for officers' records, the §2.7 internal fields and their
+universal control; the §2.8 configuration record of its department
+(`country.tax.return_schemas`, `country.tax.payment_refund`,
+`country.tax.compliance_powers`, `country.tax.disputes`,
+`country.tax.debt_recovery`; Departments F and G have none, so their own
+country-decision lines are named); and the specification's tax services and
+decision controls (§5.2, §5.3, §5.5) where they apply. Every batch-6 form also
+answers the shared items of group `tax6` in `shared/common-items.json`
+(§2.6's opening rules, the retention and configuration records of §2.8, the
+§2.9 gates, the specification's tax authority) and Part 1's and the
+supplement's shared rules. The conformance test holds its own list of lines
+per form (`TAX6`, `TAX6_FORM`).
+
+**Tax secrecy.** As batch 3: every field the forms define is `restricted`
+with `confidentiality: "tax"`; every form carries `access.read_rule`
+(`canReadTax()`, every read in the access log) and `access.others` (status
+only through `taxpayer.status`). Field groups: `core.declaration_signature`
+(the act of declaring) and, for the refund application only,
+`core.payout_account`, which the catalogue names for the payout (deviation
+`payout-group`); representation is asked as the forms' own restricted fields.
+
+**Money.** An amount a person states (the taxpayer's claim, declaration,
+proposed schedule or remittance; the deciding officials' adjusted figure) is
+typed money with its currency and named in the form's `amounts.stated`
+policy (deviation `stated-amount`); it is never a charge. Every charge
+(interest on a refund, interest under an arrangement, a penalty on a
+disclosure, tax to be withheld) is a platform field calculated by an approved
+rule (`derived_from_approved_rule`; deviation `charge-by-rule`), with the
+nation's rule named and unset; the procedures refuse such a charge in
+production without the approved rule (`lawAmount()` in
+`lib/tax/procedures.ts`). No fee, rate, threshold, period or deadline is
+typed: 25 new binding rules (`lib/forms/rules.ts`, from
+`nil_return_required_by_rule` to `recovery_suspension_allowed_by_rule`) are
+recorded as not performed and block publication until configured.
+
+**Procedures.** 56 forms are linked by identity to the tax procedures (each
+reads `draft` once installed; `procedure-link.test.ts`):
+
+| Procedure | Forms |
+|---|---|
+| `tax.return` (nil and late returns added) | nil, late submission, response to a return query, officer assessment, decision, notice; the assessment notice; the withholding return |
+| `tax.amendment` | return amendment, clerical correction, assessment amendment, review request, withholding return amendment |
+| `tax.objection` (admissibility, information, withdrawal and not-admitted added) | objection to a return assessment, objection, supplement, extension request, completeness assessment, decision, withdrawal, closure |
+| `tax.refund` | application, supporting evidence, assessment, decision, payment instruction, reconciliation |
+| `tax.compliance` | case opening, scope approval, information request and response, inspection plan, evidence register, interview record, findings draft, taxpayer response, findings review, assessment decision, closure; withholding discrepancy response and decision |
+| `tax.registration-amendment` | withholding-agent registration and amendment; batch 3's seven change forms (§10) |
+| `tax.payment-plan`, `tax.payment-plan-review` | arrangement request, evidence, decision; change and cancellation requests, default review |
+| `tax.disclosure` | voluntary disclosure, disclosure assessment |
+| `tax.ruling` | ruling request, further information, withdrawal, decision, reconsideration |
+
+The other 39 wait in the library with the reason no procedure fits, and no
+power was invented: appeals (to the body the nation names), settlements,
+allocation, transfer, adjustment and reversal of payments, payment disputes,
+compliance extensions, conduct complaints and referrals, withholding
+remittances, certificates and third-party statements, enquiries and
+guidance, incentives, debt statements and every recovery form. Payments
+(`tax.payment.initiate`, `external_reference`, `tax.withholding.payment`)
+open no case: a payment is made against a bill carrying the liability's
+reference and reconciled once (deviation `bill-payment`).
+
+**Findings, never a score.** Officers' assessments, reviews and inspection
+records keep findings as matter, what was found and reasons, a recommended
+procedural next step "not a finding of liability", and the official from the
+signed-in session; no field names a score, rating, probability or risk.
+Inspection, evidence and interview records hold observations only. The
+referral form names no suspect (`no-suspect`; a suspect-identifying
+prosecution referral needs a legal review first). The objection's
+completeness check is by an official who did not take the decision objected
+to.
+
+| Check | Where |
+|---|---|
+| Each contract quotes and meets its lines; typed, classed, registered rules only; nothing a law decides set; three channels; contract draft | `catalogue-contracts.test.ts` (per form) |
+| Tax secrecy, groups, read rule | `catalogue-contracts.test.ts` "holds every tax-services field under tax secrecy…" |
+| Lists empty, stated amounts named, charges by rule | "types in no rate, period, penalty, interest or fee…" |
+| Dispute periods by rule, grounds 20–10,000 characters, appeals to the body named | "counts every dispute period by the approved rule…" |
+| Findings without a score, observations only, no suspect | "records an officer's findings with reasons, never a score…" |
+| Links by identity, payments open no case, periods unset | "links each form to the tax procedure that carries it…"; `procedure-link.test.ts` |
+| The procedures end to end (bills and receipts once, refunds reconciled once, interest refused in production without a rule, two officials) | `lib/tax/services.test.ts` |
+
+Register: contract_missing 1646 → 1551, contract_draft 206 → 301; the `tax.*`
+rows' requirement status Not yet 97 / Partial 8 → Not yet 45 / Partial 60
+(and batch 3's seven change forms Partial).
+
+**Deviations every batch-6 form shares**: `tax-secrecy-class`,
+`no-tax-values`, `config-impact`, `minimisation`, `evidence-requirement`,
+`scanning` (as batch 3, §10).
+
+| Catalogue form | Title | Fields (and questions in repeatable groups) | Belongs to | Deviations (besides the six every batch-6 form shares) |
+|---|---|---|---|---|
+| tax.appeal.response | Submit the authority's response to an appeal | 8 | library; waits for an appeal to the body the nation's law names, transmitted by a referral case | court-appeal, appeal-not-built, officer-from-sign-in |
+| tax.appeal.submit | Submit an appeal to the designated authority | 15 + core.declaration_signature | library; waits for an appeal to the body the nation's law names | representation-own-fields, declaration-group, stated-amount, court-appeal, appeal-not-built |
+| tax.appeal.transmit | Transmit an appeal to the appellate body | 8 | library; waits for an appeal to the body the nation's law names, transmitted by a referral case | referral-case, court-appeal, appeal-not-built, officer-from-sign-in |
+| tax.assessment.amendment | Request amendment of an assessment | 11 + core.declaration_signature | `tax.amendment` · lodged (document `amendment-request`) | representation-own-fields, declaration-group, stated-amount |
+| tax.assessment.notice | Issue an assessment notice | 9 | `tax.return` · assessed · `issue` | delivery-not-recorded, officer-from-sign-in |
+| tax.assessment.review_request | Request administrative review of an assessment | 14 + core.declaration_signature | `tax.amendment` · lodged (document `amendment-request`) | representation-own-fields, declaration-group, stated-amount |
+| tax.assistance.enquiry | Ask a question about a tax obligation | 10 | library; waits for an enquiry service of the tax authority | representation-own-fields, assistance-not-built |
+| tax.assistance.guidance_request | Request guidance on a tax procedure | 10 | library; waits for an enquiry service of the tax authority | representation-own-fields, assistance-not-built |
+| tax.compliance.assessment_decision | Record the authorised assessment decision | 10 | `tax.compliance` · pending-approval · `assess` | decision-in-engine, officer-from-sign-in, no-score |
+| tax.compliance.case.open | Open an authorised compliance case | 9 | `tax.compliance` · opened · `propose-scope` (document `case-opening`) | no-score, officer-from-sign-in |
+| tax.compliance.case_closure | Close a compliance case | 6 | `tax.compliance` · findings-review · `close` | officer-from-sign-in, no-score |
+| tax.compliance.complaint | Complain about the conduct of a compliance officer | 11 + core.declaration_signature | library; waits for a conduct complaint reviewed by the independent or designated body the nation names | representation-own-fields, declaration-group, complaint-not-built, no-score |
+| tax.compliance.evidence_register | Register evidence collected lawfully | 6 (+4) | `tax.compliance` · authorised (document `evidence`) | observations-only, officer-from-sign-in, custody-binding, no-score |
+| tax.compliance.extension_decision | Record an extension decision | 7 | library; waits for an extension step of tax.compliance | officer-from-sign-in, extension-not-built, no-score |
+| tax.compliance.extension_request | Ask for more time to answer an information request | 10 + core.declaration_signature | library; waits for an extension step of tax.compliance | representation-own-fields, declaration-group, extension-not-built, no-score |
+| tax.compliance.findings_draft | Draft compliance findings for review | 7 (+4) | `tax.compliance` · authorised · `draft-findings` | no-score, observations-only, officer-from-sign-in |
+| tax.compliance.findings_review | Review findings and the taxpayer's response | 8 (+3) | `tax.compliance` · findings-review · `propose-assessment` | no-score, officer-from-sign-in |
+| tax.compliance.information_request | Request tax information under an approved power | 7 (+3) | `tax.compliance` · authorised · `request-information` (document `information-request`) | officer-from-sign-in, no-score |
+| tax.compliance.information_response | Respond to a tax information request | 10 (+2) + core.declaration_signature | `tax.compliance` · awaiting-information · `information-received` (document `information-response`) | representation-own-fields, declaration-group, no-score |
+| tax.compliance.inspection_plan | Record an authorised inspection plan | 10 | `tax.compliance` · authorised (document `inspection-record`) | officer-from-sign-in, no-score |
+| tax.compliance.interview_record | Record an interview or meeting, where permitted | 10 | `tax.compliance` · authorised (document `evidence`) | observations-only, officer-from-sign-in, no-score |
+| tax.compliance.referral | Refer a matter to another authority, where the law permits | 7 | library; waits for a referral case to the receiving institution | referral-case, no-suspect, officer-from-sign-in, no-score |
+| tax.compliance.scope.approve | Approve the scope of a compliance review | 11 | `tax.compliance` · scope-review · `authorise` | no-score, decision-in-engine, officer-from-sign-in |
+| tax.compliance.taxpayer_response | Respond to proposed findings | 9 (+3) + core.declaration_signature | `tax.compliance` · awaiting-response · `response-received` (document `taxpayer-response`) | representation-own-fields, declaration-group, no-score |
+| tax.credit.adjustment | Request or record a credit adjustment | 13 + core.declaration_signature | library; waits for a credit adjustment decided by two officials | representation-own-fields, declaration-group, stated-amount, adjustment-not-built |
+| tax.debt.disclosure.assessment | Assess a voluntary disclosure | 9 (+3) | `tax.disclosure` · assessment · `propose` | no-score, officer-from-sign-in, no-recovery-inferred |
+| tax.debt.payment_plan.cancel_request | Request cancellation of a payment arrangement | 10 + core.declaration_signature | `tax.payment-plan-review` · received (document `review-request`) | representation-own-fields, declaration-group, no-recovery-inferred |
+| tax.debt.payment_plan.change_request | Request a change to an approved arrangement | 11 (+3) + core.declaration_signature | `tax.payment-plan-review` · received (document `review-request`) | representation-own-fields, declaration-group, no-recovery-inferred, stated-amount |
+| tax.debt.payment_plan.decision | Approve, refuse or vary a payment arrangement | 13 (+3) | `tax.payment-plan` · pending-approval · `approve` | decision-in-engine, officer-from-sign-in, no-recovery-inferred, stated-amount, charge-by-rule |
+| tax.debt.payment_plan.default_review | Review an alleged payment-arrangement default | 11 (+3) | `tax.payment-plan-review` · review · `propose` | no-score, officer-from-sign-in, no-recovery-inferred |
+| tax.debt.payment_plan.evidence | Send evidence for a payment arrangement | 11 + core.declaration_signature | `tax.payment-plan` · awaiting-evidence · `evidence-received` (document `arrangement-evidence`) | representation-own-fields, declaration-group, no-recovery-inferred |
+| tax.debt.payment_plan.request | Request a payment arrangement | 13 (+3) + core.declaration_signature | `tax.payment-plan` · requested (document `arrangement-request`) | representation-own-fields, declaration-group, no-recovery-inferred, stated-amount |
+| tax.debt.recovery.authorize | Record authorisation for a lawful recovery action | 15 | library; waits for a recovery procedure, only for the recovery actions the nation's law gives | recovery-not-built, no-recovery-inferred, decision-in-engine, officer-from-sign-in |
+| tax.debt.recovery.close | Close a recovery case | 5 | library; waits for a recovery procedure, only for the recovery actions the nation's law gives | recovery-not-built, officer-from-sign-in, no-recovery-inferred |
+| tax.debt.recovery.dispute | Dispute a recovery action | 14 + core.declaration_signature | library; waits for a recovery procedure, only for the recovery actions the nation's law gives | representation-own-fields, declaration-group, stated-amount, recovery-not-built, no-recovery-inferred |
+| tax.debt.recovery.notice | Issue a recovery notice | 10 | library; waits for a recovery procedure, only for the recovery actions the nation's law gives | recovery-not-built, no-recovery-inferred, delivery-not-recorded |
+| tax.debt.recovery.response | Respond to a recovery notice | 10 + core.declaration_signature | library; waits for a recovery procedure, only for the recovery actions the nation's law gives | representation-own-fields, declaration-group, recovery-not-built, no-recovery-inferred |
+| tax.debt.recovery.suspend_request | Request suspension of a recovery action, where permitted | 10 + core.declaration_signature | library; waits for a recovery procedure, only for the recovery actions the nation's law gives | representation-own-fields, declaration-group, recovery-not-built, no-recovery-inferred |
+| tax.debt.statement.request | Request a statement of tax debt | 10 | library; waits for a statement drawn from the tax account | representation-own-fields, no-recovery-inferred, statement-from-ledger |
+| tax.debt.voluntary_disclosure | Disclose an omitted or corrected tax obligation voluntarily | 14 + core.declaration_signature | `tax.disclosure` · received (document `disclosure`) | representation-own-fields, declaration-group, stated-amount, charge-by-rule, no-recovery-inferred |
+| tax.dispute.closure | Close a completed dispute | 6 | `tax.objection` · pending-approval | closure-in-engine, officer-from-sign-in |
+| tax.dispute.settlement_proposal | Propose a settlement, where the law permits | 11 + core.declaration_signature | library; waits for a settlement procedure, only where the law gives the tax authority power to settle or … | representation-own-fields, declaration-group, stated-amount, settlement-not-built |
+| tax.dispute.settlement_review | Review a proposed settlement | 8 (+3) | library; waits for a settlement procedure, only where the law gives the tax authority power to settle or … | no-score, officer-from-sign-in, settlement-not-built |
+| tax.dispute.withdraw | Withdraw an objection or appeal | 11 + core.declaration_signature | `tax.objection` · review · `withdraw` | representation-own-fields, declaration-group |
+| tax.incentive.amendment | Request an amendment to an incentive record | 11 + core.declaration_signature | library; waits for a statutory incentive procedure of the tax authority | incentive-not-built, representation-own-fields, declaration-group |
+| tax.incentive.application | Apply for a statutory tax incentive | 13 + core.declaration_signature | library; waits for a statutory incentive procedure of the tax authority | incentive-not-built, representation-own-fields, declaration-group |
+| tax.incentive.compliance_report | Submit a required incentive-compliance report | 12 (+2) + core.declaration_signature | library; waits for a statutory incentive procedure of the tax authority | incentive-not-built, representation-own-fields, declaration-group |
+| tax.incentive.decision | Record an incentive decision | 11 | library; waits for a statutory incentive procedure of the tax authority | incentive-not-built, decision-in-engine, officer-from-sign-in |
+| tax.incentive.renewal | Renew an incentive, where the law allows renewal | 11 + core.declaration_signature | library; waits for a statutory incentive procedure of the tax authority | incentive-not-built, representation-own-fields, declaration-group |
+| tax.incentive.review_request | Request review of an incentive decision | 11 + core.declaration_signature | library; waits for a statutory incentive procedure of the tax authority | incentive-not-built, representation-own-fields, declaration-group |
+| tax.incentive.surrender | Surrender an incentive | 11 + core.declaration_signature | library; waits for a statutory incentive procedure of the tax authority | incentive-not-built, representation-own-fields, declaration-group |
+| tax.incentive.withdrawal | Withdraw a pending incentive application | 11 + core.declaration_signature | library; waits for a statutory incentive procedure of the tax authority | incentive-not-built, representation-own-fields, declaration-group |
+| tax.objection.assessment | Assess the procedural completeness of an objection | 10 (+3) | `tax.objection` · review · `propose` | no-score, officer-from-sign-in |
+| tax.objection.decision | Record the objection decision | 13 | `tax.objection` · pending-approval · `vary` | decision-in-engine, officer-from-sign-in |
+| tax.objection.extension_request | Ask for more time to object, where the law permits | 10 + core.declaration_signature | `tax.objection` · lodged (document `extension-request`) | representation-own-fields, declaration-group, extension-at-admissibility |
+| tax.objection.submit | Submit a formal tax objection | 14 + core.declaration_signature | `tax.objection` · lodged (document `objection`) | representation-own-fields, declaration-group, stated-amount |
+| tax.objection.supplement | Add evidence to an objection | 10 + core.declaration_signature | `tax.objection` · awaiting-information · `information-received` (document `objection-evidence`) | representation-own-fields, declaration-group |
+| tax.payment.allocation_request | Ask for an unmatched payment to be allocated | 11 + core.declaration_signature | library; waits for an allocation review | representation-own-fields, declaration-group, allocation-not-built, bill-payment |
+| tax.payment.dispute | Dispute a payment allocation or balance | 14 + core.declaration_signature | library; waits for a dispute of a payment allocation or an account balance | representation-own-fields, declaration-group, stated-amount, payment-dispute-not-built |
+| tax.payment.external_reference | Tell us about a payment made elsewhere | 12 | library; no case is opened (a payment against a bill, reconciled once) | representation-own-fields, bill-payment, stated-amount |
+| tax.payment.initiate | Start a tax payment | 11 | library; no case is opened (a payment against a bill, reconciled once) | representation-own-fields, bill-payment, stated-amount |
+| tax.payment.reversal_request | Ask for a payment to be reversed, where the law allows | 11 + core.declaration_signature | library; waits for a reversal review decided by two officials, posting the reversal against the receipt it … | representation-own-fields, declaration-group, bill-payment, reversal-not-built |
+| tax.payment.transfer_request | Ask to move a credit between your tax accounts | 12 + core.declaration_signature | library; waits for an allocation review | representation-own-fields, declaration-group, stated-amount, allocation-not-built, bill-payment |
+| tax.refund.application | Apply for a tax refund | 16 + core.payout_account, core.declaration_signature | `tax.refund` · claimed (document `refund-claim`) | representation-own-fields, declaration-group, stated-amount, payout-group |
+| tax.refund.assessment | Assess a refund claim | 11 (+3) | `tax.refund` · assessment · `propose` | no-score, officer-from-sign-in, stated-amount |
+| tax.refund.decision | Approve, refuse or adjust a refund claim | 13 | `tax.refund` · pending-approval · `approve` | decision-in-engine, officer-from-sign-in, stated-amount, charge-by-rule |
+| tax.refund.payment_instruction | Authorise an approved refund payment | 7 | `tax.refund` · approved · `instruct` | officer-from-sign-in |
+| tax.refund.reconciliation | Reconcile the refund payment | 8 | `tax.refund` · instructed · `reconcile` (document `payout-confirmation`) | officer-from-sign-in, stated-amount |
+| tax.refund.supporting_evidence | Send evidence for a refund claim | 11 + core.declaration_signature | `tax.refund` · awaiting-evidence · `evidence-received` (document `refund-evidence`) | representation-own-fields, declaration-group |
+| tax.return.periodic.amend | Amend a return | 13 + core.declaration_signature | `tax.amendment` · lodged (document `amendment-request`) | representation-own-fields, declaration-group, schema-typed-data |
+| tax.return.periodic.appeal | Appeal a decision on a return | 15 + core.declaration_signature | library; waits for an appeal to the body the nation's law names | representation-own-fields, declaration-group, stated-amount, court-appeal, appeal-not-built |
+| tax.return.periodic.correction | Correct an officer's clerical error | 8 | `tax.amendment` · lodged (document `amendment-request`) | officer-from-sign-in |
+| tax.return.periodic.decision | Record the return's assessed outcome | 10 | `tax.return` · pending-approval · `assess` | decision-in-engine, officer-from-sign-in |
+| tax.return.periodic.further_information | Answer a question about your return | 11 + core.declaration_signature | `tax.return` · returned · `resubmit` (document `return-form`) | representation-own-fields, declaration-group |
+| tax.return.periodic.late_submission | Submit a late return | 14 + core.declaration_signature | `tax.return` · filed (document `return-form`) | representation-own-fields, declaration-group, schema-typed-data, charge-by-rule |
+| tax.return.periodic.nil | Submit a nil return | 11 + core.declaration_signature | `tax.return` · filed (document `return-form`) | representation-own-fields, declaration-group, nil-no-data |
+| tax.return.periodic.notice | Issue a return receipt or assessment notice | 9 | `tax.return` · assessed · `issue` | delivery-not-recorded, officer-from-sign-in |
+| tax.return.periodic.objection | Object to an assessment | 14 + core.declaration_signature | `tax.objection` · lodged (document `objection`) | representation-own-fields, declaration-group, stated-amount |
+| tax.return.periodic.officer_assessment | Record a return assessment | 8 (+3) | `tax.return` · checking · `propose` | no-score, officer-from-sign-in |
+| tax.return.periodic.withdraw_request | Ask for a return to be withdrawn or treated as invalid | 11 + core.declaration_signature | library; waits for a withdrawal or invalidation review of a filed return | representation-own-fields, declaration-group, withdrawal-not-built |
+| tax.ruling.decision | Record a formal ruling | 12 | `tax.ruling` · pending-approval · `issue` | decision-in-engine, officer-from-sign-in |
+| tax.ruling.further_information | Answer a request for ruling information | 10 + core.declaration_signature | `tax.ruling` · awaiting-information · `information-received` (document `ruling-documents`) | representation-own-fields, declaration-group |
+| tax.ruling.reconsideration | Request reconsideration of a ruling, where permitted | 15 + core.declaration_signature | `tax.ruling` · requested (document `ruling-request`) | representation-own-fields, declaration-group |
+| tax.ruling.request | Request a formal tax ruling | 12 + core.declaration_signature | `tax.ruling` · requested (document `ruling-request`) | representation-own-fields, declaration-group |
+| tax.ruling.withdraw | Withdraw a pending ruling request | 10 + core.declaration_signature | `tax.ruling` · review · `withdraw` | representation-own-fields, declaration-group |
+| tax.withholding.certificate.issue | Issue a withholding certificate | 6 | library; waits for third-party reporting | reporting-not-built |
+| tax.withholding.details.amend | Amend withholding-agent details | 12 + core.declaration_signature | `tax.registration-amendment` · submitted (document `change-request`) | representation-own-fields, declaration-group |
+| tax.withholding.discrepancy.decision | Record the discrepancy outcome | 10 | `tax.compliance` · findings-review · `close` | no-score, decision-in-engine, officer-from-sign-in |
+| tax.withholding.discrepancy.response | Respond to a reporting discrepancy | 10 + core.declaration_signature | `tax.compliance` · awaiting-information · `information-received` (document `information-response`) | representation-own-fields, declaration-group |
+| tax.withholding.payment | Submit a withholding remittance | 10 | library; no case is opened (a payment against a bill, reconciled once) | representation-own-fields, bill-payment, stated-amount |
+| tax.withholding.registration | Register as a withholding agent | 11 + core.declaration_signature | `tax.registration-amendment` · submitted (document `change-request`) | representation-own-fields, declaration-group, withholding-as-obligation |
+| tax.withholding.return.amend | Amend a withholding return | 14 (+4) + core.declaration_signature | `tax.amendment` · lodged (document `amendment-request`) | representation-own-fields, declaration-group, stated-amount, charge-by-rule |
+| tax.withholding.return.submit | Submit a withholding return | 13 (+4) + core.declaration_signature | `tax.return` · filed (document `return-form`) | representation-own-fields, declaration-group, stated-amount, charge-by-rule |
+| tax.withholding.statement.correct | Correct a third-party statement | 12 (+4) + core.declaration_signature | library; waits for third-party reporting | representation-own-fields, declaration-group, stated-amount, reporting-not-built |
+| tax.withholding.statement.submit | Submit a required third-party statement | 10 (+4) + core.declaration_signature | library; waits for third-party reporting | representation-own-fields, declaration-group, stated-amount, reporting-not-built |
