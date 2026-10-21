@@ -22,7 +22,7 @@ import { WATCH_FINDING_ACTIONS } from '@/lib/records/watch-actions';
 import { WATCH_ACTIONS } from '@/lib/records/access-watch';
 import type { NationalCoordination, NationalSnapshot } from '@/lib/api/types';
 
-const inMode = (mode: InstallationMode, el: React.ReactElement) => renderToStaticMarkup(h(InstallationModeProvider, { mode }, el));
+const inMode = (mode: InstallationMode, el: React.ReactElement) => renderToStaticMarkup(h(InstallationModeProvider, { mode, children: el }));
 const child = h('span', null, 'GENERATED-FIGURE-42');
 
 describe('the rule for a generated figure', () => {
@@ -196,6 +196,12 @@ describe('console files keep every generated figure marked or folded', () => {
 
   it('the panel wrappers fold generated panels in production', () => {
     expect(read('components/features/SituationRoom.tsx')).toMatch(/isGenerated\(signal\) && !gen\.show/);
+    // The regional maps stay drawn in production, with no generated figure (values=[] and kind unavailable).
+    for (const fn of ['TerritoryHeat', 'NationalMap']) {
+      const src = read('components/features/SituationRoom.tsx');
+      const body = src.slice(src.indexOf(`export function ${fn}(`), src.indexOf('\n}\n', src.indexOf(`export function ${fn}(`)));
+      expect(body, fn).toMatch(/if \(!gen\.show\)[\s\S]*values=\{\[\]\} kind="unavailable"/);
+    }
     expect(read('app/(ops)/ops/OpsCenter.tsx')).toMatch(/isGenerated\(signal\) && !gen\.show/);
     expect(read('components/features/NationalShell.tsx')).toMatch(/isGenerated\(signal \?\? undefined\) && !gen\.show/);
   });

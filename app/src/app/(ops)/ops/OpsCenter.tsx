@@ -248,7 +248,8 @@ export function OpsCenter() {
 
       {/* Operational theatre — territory parity with command surfaces */}
       <div className="grid gap-2 xl:grid-cols-[1.6fr_1fr]">
-        <P title="Operational theatre" meta="cross-institution territory" signal="sample">
+        {/* The map in every mode; its generated load only where samples are (TerritoryHeat). */}
+        <P title="Operational theatre" meta="cross-institution territory" signal={gen.show ? 'sample' : 'unavailable'}>
           <TerritoryHeat epoch={Math.floor(now / 15000)} height={250} />
           <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
             <span>Low load</span>

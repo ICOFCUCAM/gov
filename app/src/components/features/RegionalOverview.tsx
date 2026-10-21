@@ -11,7 +11,7 @@ import { useRenderNow } from '@/lib/clock/render-now';
 import { api } from '@/lib/api/client';
 import { useTwinPrimed } from '@/lib/twin/read';
 import { SignalTag } from '@/components/ui/SignalTag';
-import { GeneratedText, useGenerated, useTile, shownValue } from '@/components/ui/Generated';
+import { GeneratedFold, GeneratedText, useGenerated, useTile, shownValue } from '@/components/ui/Generated';
 import type { SignalKind } from '@/lib/twin/signal';
 
 type Tele = { l: string; v: string; sub: string; t: string; k: string; kind: SignalKind; src?: string };
@@ -99,8 +99,10 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
       </div>
 
       <div className="grid gap-2 xl:grid-cols-12">
-        <Panel signal="sample" title="Regional theatre" meta="provincial posture · live" className="xl:col-span-7" bodyClass="!p-2">
+        {/* The map is drawn in every mode (TerritoryHeat shows its figures only where samples are); the tiles below are generated. */}
+        <Panel signal={gen.show ? 'sample' : 'unavailable'} title="Regional theatre" meta="provincial posture · live" className="xl:col-span-7" bodyClass="!p-2">
           <TerritoryHeat epoch={Math.floor(ts) % 60} height={330} />
+          <GeneratedFold what="Provincial tiles" className="mt-1.5">
           <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-4">
             {[
               ['Provinces synced', 'psy', 80, 100, '%'], ['Field deployment', 'pfd', 22, 58, ''],
@@ -120,6 +122,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
               );
             })}
           </div>
+          </GeneratedFold>
         </Panel>
 
         <Panel signal="sample" title="Regional command grid" meta={`${regions.length} regions · expand for detail`} className="xl:col-span-5" bodyClass="!p-0">

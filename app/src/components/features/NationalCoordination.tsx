@@ -148,7 +148,8 @@ export function NationalCoordination() {
 
       {/* Main grid */}
       <div className="grid gap-2 xl:grid-cols-[1.6fr_1fr]">
-        <Panel signal="sample" title="Strategic risk overlay" meta="darker tile = higher overall risk" bodyClass="!p-2">
+        {/* The map in every mode; its generated risk only where samples are (TerritoryHeat). */}
+        <Panel signal={gen.show ? 'sample' : 'unavailable'} title="Strategic risk overlay" meta="darker tile = higher overall risk" bodyClass="!p-2">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <TerritoryHeat epoch={epoch} height={360} />

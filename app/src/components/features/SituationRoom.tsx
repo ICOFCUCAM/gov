@@ -397,7 +397,27 @@ function regionalFigures(epoch: number, pick: (r: RegionModel) => number = r => 
   };
 }
 
-export function TerritoryHeat({ epoch, height = 150 }: { epoch: number; height?: number; focus?: string; tactical?: boolean }) {
+/** Why a regional map draws no figures on a production installation. */
+const MAP_NOT_CONNECTED = 'Not connected: no source reports this figure for the regions on this installation.';
+
+/**
+ * The nation's own map with the regional model's stress (Sample) in demo and training; in production
+ * the map is drawn with no figures and says it is not connected (lib/twin/generated.ts).
+ */
+export function TerritoryHeat(props: { epoch: number; height?: number; focus?: string; tactical?: boolean }) {
+  const gen = useGenerated();
+  const height = props.height ?? 150;
+  if (!gen.show) {
+    return (
+      <NationMap title="Operational stress by region" values={[]} kind="unavailable" source={gen.src}
+        valueLabel="Stress" unit="index" maxHeight={Math.max(height, 200)} minHeight={Math.min(height, 180)} compact={height < 260}
+        emptyNote={MAP_NOT_CONNECTED} />
+    );
+  }
+  return <TerritoryHeatView {...props} />;
+}
+
+function TerritoryHeatView({ epoch, height = 150 }: { epoch: number; height?: number; focus?: string; tactical?: boolean }) {
   const { values } = React.useMemo(() => regionalFigures(epoch), [epoch]);
   return (
     <NationMap title="Operational stress by region" values={values} kind="sample" source={REGIONAL_SOURCE}
@@ -406,7 +426,23 @@ export function TerritoryHeat({ epoch, height = 150 }: { epoch: number; height?:
   );
 }
 
-export function NationalMap({
+/**
+ * The activity map: the regional model's stress, institutions and flows (Sample) in demo and training;
+ * in production the nation's own map with no generated layer, saying it is not connected.
+ */
+export function NationalMap(props: Parameters<typeof NationalMapView>[0]) {
+  const gen = useGenerated();
+  if (!gen.show) {
+    return (
+      <NationMap title="Activity by region" values={[]} kind="unavailable" source={gen.src}
+        valueLabel="Stress" unit="index" maxHeight={Math.max(props.height ?? 420, 360)} minHeight={360}
+        emptyNote={MAP_NOT_CONNECTED} />
+    );
+  }
+  return <NationalMapView {...props} />;
+}
+
+function NationalMapView({
   mapNodes, edges, incidents, now, layers, epoch, height, onToggleLayer,
 }: {
   mapNodes: { ministryId: string; ministry: string; archetype: string; x: number; y: number; pressure: number }[];
@@ -996,7 +1032,8 @@ export function SituationRoom() {
 
           {/* Map-first band */}
           <div className="grid grid-cols-1 gap-1.5 xl:grid-cols-12">
-            <Panel signal="sample" title="National activity map"
+            {/* The map is drawn in every mode; its generated layers only where samples are (NationalMap). */}
+            <Panel signal={gen.show ? 'sample' : 'unavailable'} title="National activity map"
               meta={
                 <span className="flex items-center gap-1">
                   {([['infra', 'Infra'], ['grid', 'Grid'], ['corridors', 'Corridors'], ['incidents', 'Incidents']] as const).map(([k, lbl]) => (

@@ -115,11 +115,10 @@ export default function NcccWallPage() {
       <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
 
         <WallPanel title="Operational map" className="lg:col-span-2">
-          <GeneratedFold what="The sample layer">
+          {/* The nation's map in every mode; its sample layer only where samples are (TerritoryHeat). */}
           <div className="overflow-hidden rounded-[3px] border border-wall-line">
             <TerritoryHeat epoch={epoch} height={220} focus={nat?.sovereign.stateName} />
           </div>
-          </GeneratedFold>
           <p className="text-wall-muted text-sm mt-2">
             {regions.length ? regions.slice(0, 4).join(' · ') : 'National territory'} · sample layer until sources connect · 1km aggregation grid · DP-ε disclosed · no citizen-individual layer
           </p>
