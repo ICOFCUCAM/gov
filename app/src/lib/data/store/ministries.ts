@@ -239,6 +239,8 @@ export function ministryOperations(id: string): MinistryOperations | { error: st
   return {
     ministry: { id: m.id, name: m.name, archetype: m.archetype, status: m.status },
     generatedAt: new Date().toISOString(),
+    // Generated (seeded) figures, marked wherever they are read.
+    kind: 'sample',
     modules,
   };
 }
@@ -280,6 +282,8 @@ export function regionsFor(id: string): MinistryRegions | { error: string } {
       cases: prof.caseLabel,
     },
     generatedAt: new Date().toISOString(),
+    // Generated (seeded) figures, marked wherever they are read.
+    kind: 'sample',
     regions,
   };
 }

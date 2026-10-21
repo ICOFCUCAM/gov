@@ -7944,7 +7944,8 @@
                             "changed": []
                           }
                         ],
-                        "form": "string"
+                        "form": "string",
+                        "sample": true
                       }
                     }
                   }
@@ -25329,6 +25330,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "kind": {
+                      "type": "string"
+                    },
                     "analytics": {
                       "anyOf": [
                         {
@@ -25352,6 +25356,7 @@
                     }
                   },
                   "required": [
+                    "kind",
                     "analytics"
                   ]
                 },
@@ -25359,6 +25364,7 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "kind": "string",
                       "analytics": [
                         {
                           "label": "Example",
@@ -29147,6 +29153,7 @@
                         "status": "active"
                       },
                       "generatedAt": "2026-01-15T09:30:00.000Z",
+                      "kind": "sample",
                       "modules": [
                         {
                           "module": "string",
@@ -30790,6 +30797,7 @@
                         "cases": "string"
                       },
                       "generatedAt": "2026-01-15T09:30:00.000Z",
+                      "kind": "sample",
                       "regions": [
                         {
                           "region": "string",
@@ -32773,7 +32781,8 @@
                         ],
                         "createdAt": "2026-01-15T09:30:00.000Z",
                         "previousNumber": "string",
-                        "load": "string"
+                        "load": "string",
+                        "sample": true
                       },
                       "full": true
                     }
@@ -37780,6 +37789,7 @@
                         "reason": "drill",
                         "mode": "postgres",
                         "adapter": "string",
+                        "installation": "demo",
                         "archive": "string",
                         "sizeBytes": 1,
                         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -37818,6 +37828,7 @@
                         "kept": [
                           "string"
                         ],
+                        "installation": "demo",
                         "text": "string"
                       }
                     }
@@ -37913,6 +37924,7 @@
                         "reason": "drill",
                         "mode": "postgres",
                         "adapter": "string",
+                        "installation": "demo",
                         "archive": "string",
                         "sizeBytes": 1,
                         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -38423,6 +38435,15 @@
                         "adapter": {
                           "type": "string"
                         },
+                        "installation": {
+                          "type": "string",
+                          "enum": [
+                            "demo",
+                            "production",
+                            "training"
+                          ],
+                          "description": "The installation mode it was taken in (absent before step I0.1); the sealed manifest's copy is the one checked."
+                        },
                         "archive": {
                           "type": "string"
                         },
@@ -38521,6 +38542,7 @@
                         "verifiedAt": "2026-01-15T09:30:00.000Z",
                         "mode": "postgres",
                         "adapter": "string",
+                        "installation": "demo",
                         "archive": "string",
                         "keyProvider": "string",
                         "audit": {
@@ -69343,6 +69365,15 @@
           "adapter": {
             "type": "string"
           },
+          "installation": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "production",
+              "training"
+            ],
+            "description": "The installation mode it was taken in (absent before step I0.1); the sealed manifest's copy is the one checked."
+          },
           "archive": {
             "type": "string"
           },
@@ -81713,6 +81744,16 @@
               "type": "string"
             }
           },
+          "installation": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "production",
+              "training",
+              "unknown"
+            ],
+            "description": "The installation mode the backup was taken in, from its sealed manifest ('unknown' for backups taken before it was recorded)."
+          },
           "text": {
             "type": "string"
           }
@@ -82720,6 +82761,11 @@
           "generatedAt": {
             "type": "string"
           },
+          "kind": {
+            "type": "string",
+            "const": "sample",
+            "description": "Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1)."
+          },
           "modules": {
             "type": "array",
             "items": {
@@ -82730,6 +82776,7 @@
         "required": [
           "ministry",
           "generatedAt",
+          "kind",
           "modules"
         ]
       },
@@ -82851,6 +82898,11 @@
           "generatedAt": {
             "type": "string"
           },
+          "kind": {
+            "type": "string",
+            "const": "sample",
+            "description": "Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1)."
+          },
           "regions": {
             "type": "array",
             "items": {
@@ -82862,6 +82914,7 @@
           "ministry",
           "labels",
           "generatedAt",
+          "kind",
           "regions"
         ]
       },
@@ -85433,6 +85486,11 @@
           "load": {
             "type": "string",
             "description": "The checked load that brought it in (lib/organisations/import.ts), until it is acted on."
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "Registered by a sample case in a demo or training run (lib/casework/engine.ts `sampleMark`); absent on real records."
           }
         },
         "required": [
@@ -86404,6 +86462,11 @@
           },
           "createdAt": {
             "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "Created by a sample case in a demo or training run (lib/casework/engine.ts `sampleMark`); absent on real records."
           }
         },
         "required": [
@@ -88347,6 +88410,11 @@
           },
           "region": {
             "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "A sample record (made by a sample case in a demo or training run): shown with the Sample marker."
           },
           "standings": {
             "type": "array",
@@ -96623,6 +96691,10 @@
           },
           "validUntil": {
             "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -99702,6 +99774,11 @@
           "form": {
             "type": "string",
             "description": "Marriages: the form the law recognises (civil, customary, religious…)."
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "Registered from a sample case in a demo or training run (lib/casework/engine.ts `sampleMark`); absent on real records."
           }
         },
         "required": [

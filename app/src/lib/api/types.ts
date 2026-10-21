@@ -623,6 +623,8 @@ export interface ModuleOps {
 export interface MinistryOperations {
   ministry: { id: string; name: string; archetype: ArchetypeKey; status: MinistryStatus };
   generatedAt: ISODate;
+  /** Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1). */
+  kind: 'sample';
   modules: ModuleOps[];
 }
 
@@ -639,6 +641,8 @@ export interface MinistryRegions {
   ministry: { id: string; name: string; archetype: ArchetypeKey };
   labels: { unit: string; capacity: string; cases: string };
   generatedAt: ISODate;
+  /** Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1). */
+  kind: 'sample';
   regions: RegionStat[];
 }
 
