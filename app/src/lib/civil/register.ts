@@ -40,6 +40,8 @@ export interface Person {
   /** Possible duplicates found and how they were decided (never merged without adjudication). */
   matching: { other: string; score: number; decided?: 'same' | 'different'; by?: string; at: string; case?: string }[];
   createdAt: string;
+  /** Created by a sample case in a demo or training run (lib/casework/engine.ts `sampleMark`); absent on real records. */
+  sample?: true;
 }
 
 export interface VitalEvent {
@@ -60,6 +62,8 @@ export interface VitalEvent {
   amendments: { at: string; case: string; decision?: string; changed: string[] }[];
   /** Marriages: the form the law recognises (civil, customary, religious…). */
   form?: string;
+  /** Registered from a sample case in a demo or training run (lib/casework/engine.ts `sampleMark`); absent on real records. */
+  sample?: true;
 }
 
 interface CivilDb { persons: Person[]; events: VitalEvent[]; birthSeq: number; deathSeq: number; marriageSeq: number }
@@ -104,6 +108,8 @@ export function registerEvent(input: {
   kind: VitalKind; date: string; place: Place; case: string; informant?: VitalEvent['informant']; late?: boolean; form?: string;
   child?: { given: string; family: string; other?: string; sex: Sex; mother?: PersonRef; father?: PersonRef };
   deceased?: string; spouses?: string[];
+  /** From a sample case: the event (and a child's person record) carry the sample marker. */
+  sample?: true;
 }, by: string, now = new Date()): VitalEvent | { error: string } {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return { error: 'The date of the event must be YYYY-MM-DD' };
   if (input.date > now.toISOString().slice(0, 10)) return { error: 'The event cannot be in the future' };
@@ -133,7 +139,7 @@ export function registerEvent(input: {
   if (input.kind === 'birth') {
     const c = input.child!;
     const person: Person = {
-      id: uuid7(), identifiers: { birthRegistration: registrationNumber }, matching: [], createdAt: at,
+      id: uuid7(), identifiers: { birthRegistration: registrationNumber }, matching: [], createdAt: at, ...(input.sample ? { sample: true as const } : {}),
       versions: [{ n: 1, names: { given: c.given.trim(), family: c.family.trim(), ...(c.other ? { other: c.other.trim() } : {}) }, sex: c.sex, birth: { date: input.date, place: input.place }, parents: { ...(c.mother ? { mother: c.mother } : {}), ...(c.father ? { father: c.father } : {}) }, status: 'alive', at, by, reason: 'Birth registration', source: { event: id, case: input.case } }],
     };
     d.persons.push(person);
@@ -146,10 +152,10 @@ export function registerEvent(input: {
   } else {
     for (const s of input.spouses!) persons.push({ role: 'spouse', person: s });
   }
-  const e: VitalEvent = { id, kind: input.kind, registrationNumber, date: input.date, place: input.place, persons, ...(input.kind === 'birth' && input.child ? { parents: { ...(input.child.mother ? { mother: input.child.mother } : {}), ...(input.child.father ? { father: input.child.father } : {}) } } : {}), ...(input.informant ? { informant: input.informant } : {}), case: input.case, registeredAt: at, late: !!input.late, amendments: [], ...(input.form ? { form: input.form } : {}) };
+  const e: VitalEvent = { id, kind: input.kind, registrationNumber, date: input.date, place: input.place, persons, ...(input.kind === 'birth' && input.child ? { parents: { ...(input.child.mother ? { mother: input.child.mother } : {}), ...(input.child.father ? { father: input.child.father } : {}) } } : {}), ...(input.informant ? { informant: input.informant } : {}), case: input.case, registeredAt: at, late: !!input.late, amendments: [], ...(input.form ? { form: input.form } : {}), ...(input.sample ? { sample: true as const } : {}) };
   d.events.push(e);
   // The audit entry and its event carry the registration number and region, never names.
-  recordAudit(by, `civil.${input.kind}.register`, `Civil:${registrationNumber}`, 'ok', `${input.kind} · ${input.date.slice(0, 7)}${input.place.region ? ` · ${input.place.region}` : ''}${input.late ? ' · late' : ''}`);
+  recordAudit(by, `civil.${input.kind}.register`, `Civil:${registrationNumber}`, 'ok', `${input.kind} · ${input.date.slice(0, 7)}${input.place.region ? ` · ${input.place.region}` : ''}${input.late ? ' · late' : ''}${input.sample ? ' · sample' : ''}`);
   return clone(e);
 }
 

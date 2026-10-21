@@ -1,7 +1,9 @@
 // /api/cases — cases under the nation's procedures (lib/casework/engine.ts,
 // design §6.5). GET: the cases the official may read (their institution's,
 // or every institution's for officials of the whole government, never a
-// court's from outside it), without personal fields. POST: open a case under
+// court's from outside it), without personal fields but with the parties'
+// names of normal cases, so each list is written to the access log as one
+// search (query and count). POST: open a case under
 // the procedure version in force (the responsible institution's officials).
 import { NextRequest, NextResponse } from 'next/server';
 import { caseReadRefusal } from '@/lib/auth/roles';
@@ -9,6 +11,7 @@ import { caseScope } from '@/lib/auth/official';
 import { listCases, openCase, caseFacts } from '@/lib/casework/engine';
 import { listView } from '@/lib/casework/view';
 import { routeActor } from '@/lib/casework/actor';
+import { recordSearch } from '@/lib/records/access-search';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +21,8 @@ export async function GET(req: NextRequest) {
   const open = q.get('open');
   const cases = listCases({ owner: q.get('owner') ?? undefined, procedure: q.get('procedure') ?? undefined, stage: q.get('stage') ?? undefined, open: open === null ? undefined : open !== 'false', limit: Number(q.get('limit')) || undefined })
     .filter(c => !s || !caseReadRefusal(s, { ...caseFacts(c), sensitivity: 'normal' }));
+  // The list carries the parties' names of normal cases: one search entry, the query and how many it returned.
+  if (s) recordSearch(s, 'cases', q.toString() || '(all)', cases.length, 'case rules (caseReadRefusal)');
   return NextResponse.json({ cases: cases.map(listView) });
 }
 

@@ -146,6 +146,25 @@ describe('key custody: Vault / OpenBao Transit', () => {
     expect(keyCustodyStatus().data.keys).toBe(2);
   });
 
+  it('audits data key creation and rotation, and the signing keys it loads: ids only, never key material (step I0.1)', async () => {
+    const { listAudit } = await import('@/lib/data/store/audit');
+    const mark = listAudit()[0]?.seq ?? 0;
+    await initKeyCustody();
+    const first = keyring()!.current!;
+    const next = await rotateDataKey();
+    const entries = listAudit().filter(e => e.seq > mark && e.action.startsWith('keys.'));
+    expect(entries.map(e => e.action).sort()).toEqual(['keys.data.create', 'keys.data.rotate', 'keys.signing.register', 'keys.signing.register']);
+    expect(entries.find(e => e.action === 'keys.data.create')).toMatchObject({ actor: 'system (key custody)', resource: `Key:data/${first}` });
+    expect(entries.find(e => e.action === 'keys.data.rotate')!.detail).toContain(`replaces ${first}`);
+    expect(entries.find(e => e.action === 'keys.data.rotate')!.resource).toBe(`Key:data/${next}`);
+    const text = JSON.stringify(entries);
+    expect(text).not.toMatch(/PRIVATE KEY|vault:v1:/);
+    // A restart with the same keys records nothing new.
+    const again = listAudit()[0]!.seq;
+    await initKeyCustody();
+    expect(listAudit().filter(e => e.seq > again && e.action.startsWith('keys.'))).toEqual([]);
+  });
+
   it('signs audit heads in Vault: pending at once, signed when Vault answers, and checked like any head', async () => {
     await initKeyCustody();
     const h = signHead({ seq: 3, hash: 'a'.repeat(64) }, Date.parse('2026-10-19T08:00:00Z'));

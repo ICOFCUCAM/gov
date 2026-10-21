@@ -202,6 +202,13 @@ same: the self-host script and the Helm chart send `X-CivicOS-Scheduler`.
 5. Postgres mode: every other instance stops taking changes ("restart this server"); restart them (rolling). Their read models then load the restored tables.
 6. Re-enter or re-import what was lost from the pre-restore backup's period, by the normal routes, so each change is audited again.
 
+Each backup's sealed manifest records the installation mode that took it
+(`installation`: production, training or demo). A production installation
+refuses to preview, propose or confirm the restore of a demo or training
+backup (`installationRefusal()`); a backup taken before the mode was recorded
+reads as unknown, is allowed, and its loss warning asks you to check where it
+came from.
+
 If the damage was a bad release: switch the software back first (fallback or
 rollback), then restore from the release's page (Update Center), which uses
 the same four-eyes restore of the restore point's backup.

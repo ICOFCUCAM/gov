@@ -36,6 +36,11 @@ import type { RemoteKeyService } from './remote';
 import { VaultTransit } from './vault';
 import { KmsHttp } from './kms-http';
 import { touch } from '@/lib/data/repo/track';
+import { recordAudit } from '@/lib/data/store/audit';
+import { installationMode } from '@/lib/ops/mode';
+
+/** Who key custody's own audit entries name (key creation, rotation, start). */
+export const KEY_CUSTODY_ACTOR = 'system (key custody)';
 
 export type ProviderKind = 'env' | 'vault' | 'kms-http';
 export type SigningPurpose = 'audit' | 'exchange' | 'token' | 'decision';
@@ -95,13 +100,32 @@ const local = (): Local => (lg.__keyCustodyLocal ??= { publics: new Map(), lates
 
 // ── Durable keyring: wrapped data keys only ──────────────────────────
 export interface WrappedDataKey { kid: string; wrapped: string; provider: Exclude<ProviderKind, 'env'>; keyName: string; createdAt: string }
-interface Keyring { dataKeys: WrappedDataKey[]; current?: string }
+/** The production signing key last seen for a purpose (key id and where it is held; never key material). */
+export interface SeenSigningKey { keyId: string; source: Signer['source']; since: string }
+interface Keyring {
+  dataKeys: WrappedDataKey[]; current?: string;
+  /** Production signing keys by purpose, so a change of key at start is audited as a rotation (step I0.1). */
+  signing: Partial<Record<SigningPurpose, SeenSigningKey>>;
+}
 const g = globalThis as unknown as { __civicosKeyring?: Keyring };
 const keyring = (): Keyring => {
-  const k = touch('__civicosKeyring', g.__civicosKeyring ??= { dataKeys: [] });
-  k.dataKeys ??= [];
+  const k = touch('__civicosKeyring', g.__civicosKeyring ??= { dataKeys: [], signing: {} });
+  k.dataKeys ??= []; k.signing ??= {};
   return k;
 };
+
+/**
+ * Why a signing key may not be used here, or null: a production installation
+ * (lib/ops/mode.ts) never signs audit heads, exchange receipts, access tokens
+ * or decisions with the development key generated for one process (step
+ * I0.1). Demo and training installations, and tests, keep it.
+ */
+export function developmentKeyRefusal(purpose: SigningPurpose): string | null {
+  if (installationMode() !== 'production') return null;
+  const s = signer(purpose);
+  if (s.production) return null;
+  return `This production installation has no ${purpose} key: set ${SIGNING_ENV[purpose]} (a PEM key or key file) or CIVICOS_KEY_PROVIDER. A development key generated for this process signs nothing here`;
+}
 
 export const kidOf = (k: Buffer): string => createHash('sha256').update(k).digest('hex').slice(0, 8);
 
@@ -205,8 +229,12 @@ export async function rotateDataKey(now = Date.now()): Promise<string> {
   const kid = kidOf(plaintext);
   local().dataKeys.set(kid, plaintext);
   const k = keyring();
+  const previous = k.current;
   k.dataKeys.push({ kid, wrapped, provider: svc.kind, keyName: name, createdAt: new Date(now).toISOString() });
   k.current = kid;
+  // Key creation and rotation are audited: the key's id, provider and name, never the key.
+  recordAudit(KEY_CUSTODY_ACTOR, previous ? 'keys.data.rotate' : 'keys.data.create', `Key:data/${kid}`, 'ok',
+    `envelope data key ${kid} issued by ${svc.kind} under ${name}${previous ? ` · replaces ${previous} (kept to open what it sealed)` : ''}`);
   (globalThis as { __persistChanges?: number }).__persistChanges = ((globalThis as { __persistChanges?: number }).__persistChanges ?? 0) + 1;
   return kid;
 }
@@ -217,6 +245,8 @@ export interface KeyCustodyStatus {
   ready: boolean;
   signing: Record<SigningPurpose, { keyId?: string; source: Signer['source']; production: boolean }>;
   data: { enabled: boolean; kid?: string; keys: number; unreadable: number };
+  /** Purposes whose key is a development key in a production installation (each use refused). */
+  developmentInProduction?: SigningPurpose[];
   error?: string;
 }
 
@@ -250,12 +280,43 @@ export async function initKeyCustody(): Promise<KeyCustodyStatus> {
     }
     l.ready = problems.length === 0;
     l.error = problems.length ? problems.join('; ') : undefined;
+    noteSigningKeys();
     const status = keyCustodyStatus();
     logger[l.ready ? 'info' : 'error']('keys.init', { provider: status.provider, ready: status.ready, ...(status.error ? { problem: status.error } : {}) });
     return status;
   }
   l.ready = !l.error;
+  noteSigningKeys();
   return keyCustodyStatus();
+}
+
+/**
+ * At start: audit each production signing key that is new or changed since
+ * the last start (registered, or rotated: purpose, source and key ids, never
+ * key material), and in a production installation say loudly which purposes
+ * would otherwise fall back to a development key (each use is refused:
+ * developmentKeyRefusal()).
+ */
+export function noteSigningKeys(now = new Date()): { recorded: SigningPurpose[]; development: SigningPurpose[] } {
+  const ring = keyring();
+  const recorded: SigningPurpose[] = [], development: SigningPurpose[] = [];
+  for (const p of Object.keys(SIGNING_ENV) as SigningPurpose[]) {
+    let half: PublicHalf | undefined, s: Signer;
+    try { s = signer(p); half = s.current(); } catch (e) { logger.error('keys.signing_key', { purpose: p, message: (e as Error).message }); continue; }
+    if (!s.production) { development.push(p); continue; }
+    if (!half) continue; // a remote key not loaded yet: noted at the next start
+    const seen = ring.signing[p];
+    if (seen?.keyId === half.keyId) continue;
+    ring.signing[p] = { keyId: half.keyId, source: s.source, since: now.toISOString() };
+    recordAudit(KEY_CUSTODY_ACTOR, seen ? 'keys.signing.rotate' : 'keys.signing.register', `Key:${p}/${half.keyId}`, 'ok',
+      `${p} signing key ${half.keyId} (${s.source})${seen ? ` replaces ${seen.keyId} (${seen.source}, since ${seen.since.slice(0, 10)})` : ''}`);
+    recorded.push(p);
+  }
+  if (development.length && installationMode() === 'production') {
+    const message = `KEY CUSTODY: this production installation has no ${development.join(', ')} key. Set ${development.map(p => SIGNING_ENV[p]).join(', ')} or CIVICOS_KEY_PROVIDER; until then nothing is signed with a development key and those uses are refused.`;
+    logger.error('keys.development_in_production', { purposes: development, message });
+  }
+  return { recorded, development };
 }
 
 /** What a status page may show (no key material). */
@@ -273,6 +334,7 @@ export function keyCustodyStatus(): KeyCustodyStatus {
     ...(provider !== 'env' && l.service ? { endpoint: l.service.endpoint } : {}),
     ready: provider === 'env' ? true : l.ready,
     signing: { audit: signingOf('audit'), exchange: signingOf('exchange'), token: signingOf('token'), decision: signingOf('decision') },
+    ...(() => { const dev = provider === 'env' && installationMode() === 'production' ? (Object.keys(SIGNING_ENV) as SigningPurpose[]).filter(p => !signingKey(SIGNING_ENV[p]).production) : []; return dev.length ? { developmentInProduction: dev } : {}; })(),
     data: remote
       ? { enabled: !!remote.current, ...(ring.current ? { kid: ring.current } : {}), keys: ring.dataKeys.length, unreadable: ring.dataKeys.filter(w => !l.dataKeys.has(w.kid)).length }
       : { enabled: !!process.env.CIVICOS_DATA_KEK?.trim(), keys: [process.env.CIVICOS_DATA_KEK, process.env.CIVICOS_DATA_KEK_PREVIOUS].filter(v => v?.trim()).length, unreadable: 0 },

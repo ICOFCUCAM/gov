@@ -565,7 +565,7 @@
         ],
         "operationId": "post_admin_officers_bulk",
         "summary": "POST /api/admin/officers/bulk",
-        "description": "/api/admin/officers/bulk — server-side bulk officer onboarding. Accepts a CSV or JSON array of {email,name,charter_id,role,title?} and forwards to civicos_admin_bulk_create_officers via the service-role client. Returns the substrate's per-row result so the UI can show which entries succeeded and which failed. Auth: callers must hold a platform-tier session OR pass the CIVICOS_PROVISIONING_SECRET as a bearer (so CLI/automation can use it without a UI sign-in). The substrate enforces the platform-tier check separately, so this route is a defense-in-depth gate, not the sole authorisation.",
+        "description": "/api/admin/officers/bulk — server-side bulk officer onboarding. Accepts a CSV or JSON array of {email,name,charter_id,role,title?} and forwards to civicos_admin_bulk_create_officers via the service-role client. Returns the substrate's per-row result so the UI can show which entries succeeded and which failed. Auth: callers must hold a platform-tier session OR pass the CIVICOS_PROVISIONING_SECRET as a bearer (so CLI/automation can use it without a UI sign-in). The substrate enforces the platform-tier check separately, so this route is a defense-in-depth gate, not the sole authorisation. Every batch that reaches the substrate is written to the platform audit chain (baseline audit §3.3): who called (the platform officer, or the provisioning secret named as such, since it names no person) and the counts received, created and failed — never an email, name or other row content. The shared secret is to be replaced by named officials (integration register 1.46).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -1060,7 +1060,7 @@
         ],
         "operationId": "get_audit",
         "summary": "GET /api/audit",
-        "description": "The platform audit chain, newest first, one page at a time (go-live review M-8): ?limit= (default 200, at most 1000) and ?before=<seq> for the page after; `total` is the chain's length and `nextBefore` the cursor for the next page (absent on the last one).",
+        "description": "The platform audit chain, newest first, one page at a time (go-live review M-8): ?limit= (default 200, at most 1000) and ?before=<seq> for the page after; `total` is the chain's length and `nextBefore` the cursor for the next page (absent on the last one). Read by auditors and the data-protection authority's officials (canReadAuditChain() in lib/auth/roles.ts; step I0.1): the chain names who acted in every institution, independent ones included, and carries no institution to filter by. Each read is written to the access log as a search of register `audit` (repeats of the same page within a minute once), and a refusal as `refused`. The chain's integrity check stays public (/api/audit/verify).",
         "parameters": [],
         "responses": {
           "200": {
@@ -1961,7 +1961,7 @@
         ],
         "operationId": "get_auth_official",
         "summary": "GET /api/auth/official",
-        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register — or with a passkey ({ method: 'passkey', challengeId, response }, options from /api/auth/passkeys/options). A password sign-in whose account has a passkey is answered with passkey options for the second step, then sent again with { passkey: { challengeId, response } }. Officials who sign in through the government's identity provider start at /api/auth/oidc/start. DELETE signs out, ends the session on the server (review M-1), and answers with the provider's sign-out address when the session came from it. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register — or with a passkey ({ method: 'passkey', challengeId, response }, options from /api/auth/passkeys/options). A password sign-in whose account has a passkey is answered with passkey options for the second step, then sent again with { passkey: { challengeId, response } }. Officials who sign in through the government's identity provider start at /api/auth/oidc/start. DELETE signs out, ends the session on the server (review M-1), and answers with the provider's sign-out address when the session came from it. Every sign-in and sign-out is written to the audit chain; addresses never are. When the middleware asks GET about a change (x-civicos-change-path and -method) that the rules refuse, the refusal is written to the access log here (reference and rule only; lib/records/refusal-log.ts).",
         "parameters": [],
         "responses": {
           "200": {
@@ -2254,7 +2254,7 @@
         ],
         "operationId": "post_auth_official",
         "summary": "POST /api/auth/official",
-        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register — or with a passkey ({ method: 'passkey', challengeId, response }, options from /api/auth/passkeys/options). A password sign-in whose account has a passkey is answered with passkey options for the second step, then sent again with { passkey: { challengeId, response } }. Officials who sign in through the government's identity provider start at /api/auth/oidc/start. DELETE signs out, ends the session on the server (review M-1), and answers with the provider's sign-out address when the session came from it. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register — or with a passkey ({ method: 'passkey', challengeId, response }, options from /api/auth/passkeys/options). A password sign-in whose account has a passkey is answered with passkey options for the second step, then sent again with { passkey: { challengeId, response } }. Officials who sign in through the government's identity provider start at /api/auth/oidc/start. DELETE signs out, ends the session on the server (review M-1), and answers with the provider's sign-out address when the session came from it. Every sign-in and sign-out is written to the audit chain; addresses never are. When the middleware asks GET about a change (x-civicos-change-path and -method) that the rules refuse, the refusal is written to the access log here (reference and rule only; lib/records/refusal-log.ts).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -2400,7 +2400,7 @@
         ],
         "operationId": "delete_auth_official",
         "summary": "DELETE /api/auth/official",
-        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register — or with a passkey ({ method: 'passkey', challengeId, response }, options from /api/auth/passkeys/options). A password sign-in whose account has a passkey is answered with passkey options for the second step, then sent again with { passkey: { challengeId, response } }. Officials who sign in through the government's identity provider start at /api/auth/oidc/start. DELETE signs out, ends the session on the server (review M-1), and answers with the provider's sign-out address when the session came from it. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register — or with a passkey ({ method: 'passkey', challengeId, response }, options from /api/auth/passkeys/options). A password sign-in whose account has a passkey is answered with passkey options for the second step, then sent again with { passkey: { challengeId, response } }. Officials who sign in through the government's identity provider start at /api/auth/oidc/start. DELETE signs out, ends the session on the server (review M-1), and answers with the provider's sign-out address when the session came from it. Every sign-in and sign-out is written to the audit chain; addresses never are. When the middleware asks GET about a change (x-civicos-change-path and -method) that the rules refuse, the refusal is written to the access log here (reference and rule only; lib/records/refusal-log.ts).",
         "parameters": [],
         "responses": {
           "200": {
@@ -3057,7 +3057,7 @@
         ],
         "operationId": "get_auth_officials",
         "summary": "GET /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409). An account of an independent institution (the legislature, a court, the head of state's office, an independent body) is created by that institution's own administrator; an administrator serving the whole government proposes it, and it waits (202) for an official who can sign there to confirm (lib/auth/account-changes.ts, accountChangeRule()). Administrators of another institution may not.",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator (each such read written to the access log as one search with the count), as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409). An account of an independent institution (the legislature, a court, the head of state's office, an independent body) is created by that institution's own administrator; an administrator serving the whole government proposes it, and it waits (202) for an official who can sign there to confirm (lib/auth/account-changes.ts, accountChangeRule()). Administrators of another institution may not.",
         "parameters": [],
         "responses": {
           "200": {
@@ -3222,7 +3222,7 @@
         ],
         "operationId": "post_auth_officials",
         "summary": "POST /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409). An account of an independent institution (the legislature, a court, the head of state's office, an independent body) is created by that institution's own administrator; an administrator serving the whole government proposes it, and it waits (202) for an official who can sign there to confirm (lib/auth/account-changes.ts, accountChangeRule()). Administrators of another institution may not.",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator (each such read written to the access log as one search with the count), as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409). An account of an independent institution (the legislature, a court, the head of state's office, an independent body) is created by that institution's own administrator; an administrator serving the whole government proposes it, and it waits (202) for an official who can sign there to confirm (lib/auth/account-changes.ts, accountChangeRule()). Administrators of another institution may not.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -6817,7 +6817,7 @@
         ],
         "operationId": "get_cases_id",
         "summary": "GET /api/cases/{id}",
-        "description": "/api/cases/[id] — one case (lib/casework/engine.ts). GET: the case with its fields, documents, decisions and history, for those the case rules let read it; reads of restricted and secret cases (and refusals) are written to the access log, with the purpose (?purpose=). POST: a step on the case: act (an action of its procedure; four-eyes where it says), assign, attach a document, hold or release, refer to another institution, or withdraw a proposal waiting for its second official.",
+        "description": "/api/cases/[id] — one case (lib/casework/engine.ts). GET: the case with its fields, documents, decisions and history, for those the case rules let read it; every read by a signed-in official (normal, restricted and secret cases, since each answer carries the personal fields) and every refusal is written to the access log, with the purpose (?purpose=). POST: a step on the case: act (an action of its procedure; four-eyes where it says), assign, attach a document, hold or release, refer to another institution, or withdraw a proposal waiting for its second official.",
         "parameters": [
           {
             "name": "id",
@@ -7166,7 +7166,7 @@
         ],
         "operationId": "post_cases_id",
         "summary": "POST /api/cases/{id}",
-        "description": "/api/cases/[id] — one case (lib/casework/engine.ts). GET: the case with its fields, documents, decisions and history, for those the case rules let read it; reads of restricted and secret cases (and refusals) are written to the access log, with the purpose (?purpose=). POST: a step on the case: act (an action of its procedure; four-eyes where it says), assign, attach a document, hold or release, refer to another institution, or withdraw a proposal waiting for its second official.",
+        "description": "/api/cases/[id] — one case (lib/casework/engine.ts). GET: the case with its fields, documents, decisions and history, for those the case rules let read it; every read by a signed-in official (normal, restricted and secret cases, since each answer carries the personal fields) and every refusal is written to the access log, with the purpose (?purpose=). POST: a step on the case: act (an action of its procedure; four-eyes where it says), assign, attach a document, hold or release, refer to another institution, or withdraw a proposal waiting for its second official.",
         "parameters": [
           {
             "name": "id",
@@ -7232,7 +7232,7 @@
         ],
         "operationId": "get_cases",
         "summary": "GET /api/cases",
-        "description": "/api/cases — cases under the nation's procedures (lib/casework/engine.ts, design §6.5). GET: the cases the official may read (their institution's, or every institution's for officials of the whole government, never a court's from outside it), without personal fields. POST: open a case under the procedure version in force (the responsible institution's officials).",
+        "description": "/api/cases — cases under the nation's procedures (lib/casework/engine.ts, design §6.5). GET: the cases the official may read (their institution's, or every institution's for officials of the whole government, never a court's from outside it), without personal fields but with the parties' names of normal cases, so each list is written to the access log as one search (query and count). POST: open a case under the procedure version in force (the responsible institution's officials).",
         "parameters": [
           {
             "name": "limit",
@@ -7364,7 +7364,7 @@
         ],
         "operationId": "post_cases",
         "summary": "POST /api/cases",
-        "description": "/api/cases — cases under the nation's procedures (lib/casework/engine.ts, design §6.5). GET: the cases the official may read (their institution's, or every institution's for officials of the whole government, never a court's from outside it), without personal fields. POST: open a case under the procedure version in force (the responsible institution's officials).",
+        "description": "/api/cases — cases under the nation's procedures (lib/casework/engine.ts, design §6.5). GET: the cases the official may read (their institution's, or every institution's for officials of the whole government, never a court's from outside it), without personal fields but with the parties' names of normal cases, so each list is written to the access log as one search (query and count). POST: open a case under the procedure version in force (the responsible institution's officials).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -7944,7 +7944,8 @@
                             "changed": []
                           }
                         ],
-                        "form": "string"
+                        "form": "string",
+                        "sample": true
                       }
                     }
                   }
@@ -12999,7 +13000,7 @@
         ],
         "operationId": "get_dual_control",
         "summary": "GET /api/dual-control",
-        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code), the country's rules with their legal basis, a proposal waiting for its second official and every earlier version. POST (administrators): { op: 'propose' (the default), extra?, requireIdentityBinding?, pendingHours?, legalBasis: [{ instrument, eId }] } proposes the country's rules, values left out keeping their current setting, the basis cited from the laws register; { op: 'confirm' } is a different official adopting it; { op: 'withdraw', reason? }. The minimum cannot be lowered here. Who acted comes from the sign-in.",
+        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code), the country's rules with their legal basis, a proposal waiting for its second official and every earlier version. POST (administrators): { op: 'propose' (the default), extra?, requireIdentityBinding?, requireIdentityProvider? (every two-person control needs two persons at the identity provider), pendingHours?, legalBasis: [{ instrument, eId }] } proposes the country's rules, values left out keeping their current setting, the basis cited from the laws register; { op: 'confirm' } is a different official adopting it; { op: 'withdraw', reason? }. The minimum cannot be lowered here. Who acted comes from the sign-in.",
         "parameters": [],
         "responses": {
           "200": {
@@ -13036,6 +13037,7 @@
                           "string"
                         ],
                         "requireIdentityBinding": true,
+                        "requireIdentityProvider": true,
                         "pendingHours": 1,
                         "adopted": true,
                         "by": "A. Official",
@@ -13083,7 +13085,7 @@
         ],
         "operationId": "post_dual_control",
         "summary": "POST /api/dual-control",
-        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code), the country's rules with their legal basis, a proposal waiting for its second official and every earlier version. POST (administrators): { op: 'propose' (the default), extra?, requireIdentityBinding?, pendingHours?, legalBasis: [{ instrument, eId }] } proposes the country's rules, values left out keeping their current setting, the basis cited from the laws register; { op: 'confirm' } is a different official adopting it; { op: 'withdraw', reason? }. The minimum cannot be lowered here. Who acted comes from the sign-in.",
+        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code), the country's rules with their legal basis, a proposal waiting for its second official and every earlier version. POST (administrators): { op: 'propose' (the default), extra?, requireIdentityBinding?, requireIdentityProvider? (every two-person control needs two persons at the identity provider), pendingHours?, legalBasis: [{ instrument, eId }] } proposes the country's rules, values left out keeping their current setting, the basis cited from the laws register; { op: 'confirm' } is a different official adopting it; { op: 'withdraw', reason? }. The minimum cannot be lowered here. Who acted comes from the sign-in.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -13132,6 +13134,7 @@
                           "string"
                         ],
                         "requireIdentityBinding": true,
+                        "requireIdentityProvider": true,
                         "pendingHours": 1,
                         "adopted": true,
                         "by": "A. Official",
@@ -25329,6 +25332,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "kind": {
+                      "type": "string"
+                    },
                     "analytics": {
                       "anyOf": [
                         {
@@ -25352,6 +25358,7 @@
                     }
                   },
                   "required": [
+                    "kind",
                     "analytics"
                   ]
                 },
@@ -25359,6 +25366,7 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "kind": "string",
                       "analytics": [
                         {
                           "label": "Example",
@@ -28291,6 +28299,7 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "kind": "sample",
                       "ministry": {
                         "id": "ID-0001",
                         "name": "Example",
@@ -29147,6 +29156,7 @@
                         "status": "active"
                       },
                       "generatedAt": "2026-01-15T09:30:00.000Z",
+                      "kind": "sample",
                       "modules": [
                         {
                           "module": "string",
@@ -30790,6 +30800,7 @@
                         "cases": "string"
                       },
                       "generatedAt": "2026-01-15T09:30:00.000Z",
+                      "kind": "sample",
                       "regions": [
                         {
                           "region": "string",
@@ -31092,6 +31103,7 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "kind": "sample",
                       "ministry": {
                         "id": "ID-0001",
                         "name": "Example",
@@ -32773,7 +32785,8 @@
                         ],
                         "createdAt": "2026-01-15T09:30:00.000Z",
                         "previousNumber": "string",
-                        "load": "string"
+                        "load": "string",
+                        "sample": true
                       },
                       "full": true
                     }
@@ -33476,7 +33489,7 @@
         ],
         "operationId": "get_parcels_pid",
         "summary": "GET /api/parcels/{pid}",
-        "description": "One land parcel (by its record number PCL-nnnnnn or its national parcel id). GET: the parcel with who acted, its versions and any change waiting; its rights and their holders only for the cadastre authority and officials with need (canSeeParcelRights() in lib/auth/roles.ts; otherwise only how many). POST { action, … }: publish (a different official from the one who recorded it), amend (new outline, land use, survey or rights, with a reason; waits for a second official once published), confirm-amend, discard-amend (reason), withdraw (reason). Each under the verified name, by those the rules allow, audited without holders' names.",
+        "description": "One land parcel (by its record number PCL-nnnnnn or its national parcel id). GET: the parcel with who acted, its versions and any change waiting; its rights and their holders only for the cadastre authority and officials with need (canSeeParcelRights() in lib/auth/roles.ts; otherwise only how many), each such read written to the access log (record reference only). POST { action, … }: publish (a different official from the one who recorded it), amend (new outline, land use, survey or rights, with a reason; waits for a second official once published), confirm-amend, discard-amend (reason), withdraw (reason). Each under the verified name, by those the rules allow, audited without holders' names.",
         "parameters": [
           {
             "name": "pid",
@@ -33634,7 +33647,7 @@
         ],
         "operationId": "post_parcels_pid",
         "summary": "POST /api/parcels/{pid}",
-        "description": "One land parcel (by its record number PCL-nnnnnn or its national parcel id). GET: the parcel with who acted, its versions and any change waiting; its rights and their holders only for the cadastre authority and officials with need (canSeeParcelRights() in lib/auth/roles.ts; otherwise only how many). POST { action, … }: publish (a different official from the one who recorded it), amend (new outline, land use, survey or rights, with a reason; waits for a second official once published), confirm-amend, discard-amend (reason), withdraw (reason). Each under the verified name, by those the rules allow, audited without holders' names.",
+        "description": "One land parcel (by its record number PCL-nnnnnn or its national parcel id). GET: the parcel with who acted, its versions and any change waiting; its rights and their holders only for the cadastre authority and officials with need (canSeeParcelRights() in lib/auth/roles.ts; otherwise only how many), each such read written to the access log (record reference only). POST { action, … }: publish (a different official from the one who recorded it), amend (new outline, land use, survey or rights, with a reason; waits for a second official once published), confirm-amend, discard-amend (reason), withdraw (reason). Each under the verified name, by those the rules allow, audited without holders' names.",
         "parameters": [
           {
             "name": "pid",
@@ -36409,7 +36422,7 @@
         ],
         "operationId": "get_payments",
         "summary": "GET /api/payments",
-        "description": "/api/payments — bills and receipts. GET: the bills the signed-in official may see (general bills, and the bills of liabilities their own institution issued: tax and customs bills are confidential to their issuer) with their receipts. POST { billId, rail? }: the platform's stand-in payment (integration register 1.8), which moves no money: only in demonstration and training installations, never for a tax or customs liability; in production payments arrive from the payment provider or bank.",
+        "description": "/api/payments — bills and receipts. GET: the bills the signed-in official may see (general bills, and the bills of liabilities their own institution issued: tax and customs bills are confidential to their issuer) with their receipts; a read that returns bills naming a payer is written to the access log as one search with the count. POST { billId, rail? }: the platform's stand-in payment (integration register 1.8), which moves no money: only in demonstration and training installations, never for a tax or customs liability; in production payments arrive from the payment provider or bank.",
         "parameters": [],
         "responses": {
           "200": {
@@ -36493,7 +36506,7 @@
         ],
         "operationId": "post_payments",
         "summary": "POST /api/payments",
-        "description": "/api/payments — bills and receipts. GET: the bills the signed-in official may see (general bills, and the bills of liabilities their own institution issued: tax and customs bills are confidential to their issuer) with their receipts. POST { billId, rail? }: the platform's stand-in payment (integration register 1.8), which moves no money: only in demonstration and training installations, never for a tax or customs liability; in production payments arrive from the payment provider or bank.",
+        "description": "/api/payments — bills and receipts. GET: the bills the signed-in official may see (general bills, and the bills of liabilities their own institution issued: tax and customs bills are confidential to their issuer) with their receipts; a read that returns bills naming a payer is written to the access log as one search with the count. POST { billId, rail? }: the platform's stand-in payment (integration register 1.8), which moves no money: only in demonstration and training installations, never for a tax or customs liability; in production payments arrive from the payment provider or bank.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -37083,6 +37096,7 @@
         ],
         "operationId": "get_permits_id",
         "summary": "GET /api/permits/{id}",
+        "description": "/api/permits/[id] — one permit with its applicant and form fields, for the institution that issues it, the whole government and auditors (canReadPermits()). Each read by a signed-in official, and each refusal, is written to the access log (record reference only; baseline audit §3.3).",
         "parameters": [
           {
             "name": "id",
@@ -37779,6 +37793,7 @@
                         "reason": "drill",
                         "mode": "postgres",
                         "adapter": "string",
+                        "installation": "demo",
                         "archive": "string",
                         "sizeBytes": 1,
                         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -37817,6 +37832,7 @@
                         "kept": [
                           "string"
                         ],
+                        "installation": "demo",
                         "text": "string"
                       }
                     }
@@ -37912,6 +37928,7 @@
                         "reason": "drill",
                         "mode": "postgres",
                         "adapter": "string",
+                        "installation": "demo",
                         "archive": "string",
                         "sizeBytes": 1,
                         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -38422,6 +38439,15 @@
                         "adapter": {
                           "type": "string"
                         },
+                        "installation": {
+                          "type": "string",
+                          "enum": [
+                            "demo",
+                            "production",
+                            "training"
+                          ],
+                          "description": "The installation mode it was taken in (absent before step I0.1); the sealed manifest's copy is the one checked."
+                        },
                         "archive": {
                           "type": "string"
                         },
@@ -38520,6 +38546,7 @@
                         "verifiedAt": "2026-01-15T09:30:00.000Z",
                         "mode": "postgres",
                         "adapter": "string",
+                        "installation": "demo",
                         "archive": "string",
                         "keyProvider": "string",
                         "audit": {
@@ -58939,7 +58966,7 @@
         ],
         "operationId": "get_substrate_export",
         "summary": "GET /api/substrate/export",
-        "description": "Comprehensive substrate export — compliance / handover artifact. Returns a single self-describing JSON document containing every row the configured service-role client can see across the lifecycle tables. The audit chain is included verbatim so the receiving party can re-verify integrity offline. Witnesses are included so a successor administration inherits the same tamper-after-the-fact proofs. Auth: CIVICOS_EXPORT_SECRET as Authorization: Bearer (never ?token=; lib/platform-auth.ts). Cost: O(rows). Capped per table via the ?cap query parameter (default 5000, max 50000) so a single response can't blow the lambda budget. Use the existing /api/substrate/digest endpoint for lightweight count snapshots; this endpoint is the full dump.",
+        "description": "Comprehensive substrate export — compliance / handover artifact. Returns a single self-describing JSON document containing every row the configured service-role client can see across the lifecycle tables. The audit chain is included verbatim so the receiving party can re-verify integrity offline. Witnesses are included so a successor administration inherits the same tamper-after-the-fact proofs. Auth: CIVICOS_EXPORT_SECRET as Authorization: Bearer (never ?token=; lib/platform-auth.ts). Cost: O(rows). Capped per table via the ?cap query parameter (default 5000, max 50000) so a single response can't blow the lambda budget. Use the existing /api/substrate/digest endpoint for lightweight count snapshots; this endpoint is the full dump. Every dump is recorded (baseline audit §3.3): an audit-chain entry and an access-log entry (action `export`), naming the caller as the shared export secret (it names no person) with table and row counts only, never a row. The shared secret is to be replaced by named officials or two-official approval (integration register 1.46).",
         "parameters": [
           {
             "name": "cap",
@@ -59069,7 +59096,7 @@
         ],
         "operationId": "post_substrate_export",
         "summary": "POST /api/substrate/export",
-        "description": "Comprehensive substrate export — compliance / handover artifact. Returns a single self-describing JSON document containing every row the configured service-role client can see across the lifecycle tables. The audit chain is included verbatim so the receiving party can re-verify integrity offline. Witnesses are included so a successor administration inherits the same tamper-after-the-fact proofs. Auth: CIVICOS_EXPORT_SECRET as Authorization: Bearer (never ?token=; lib/platform-auth.ts). Cost: O(rows). Capped per table via the ?cap query parameter (default 5000, max 50000) so a single response can't blow the lambda budget. Use the existing /api/substrate/digest endpoint for lightweight count snapshots; this endpoint is the full dump.",
+        "description": "Comprehensive substrate export — compliance / handover artifact. Returns a single self-describing JSON document containing every row the configured service-role client can see across the lifecycle tables. The audit chain is included verbatim so the receiving party can re-verify integrity offline. Witnesses are included so a successor administration inherits the same tamper-after-the-fact proofs. Auth: CIVICOS_EXPORT_SECRET as Authorization: Bearer (never ?token=; lib/platform-auth.ts). Cost: O(rows). Capped per table via the ?cap query parameter (default 5000, max 50000) so a single response can't blow the lambda budget. Use the existing /api/substrate/digest endpoint for lightweight count snapshots; this endpoint is the full dump. Every dump is recorded (baseline audit §3.3): an audit-chain entry and an access-log entry (action `export`), naming the caller as the shared export secret (it names no person) with table and row counts only, never a row. The shared secret is to be replaced by named officials or two-official approval (integration register 1.46).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -69342,6 +69369,15 @@
           "adapter": {
             "type": "string"
           },
+          "installation": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "production",
+              "training"
+            ],
+            "description": "The installation mode it was taken in (absent before step I0.1); the sealed manifest's copy is the one checked."
+          },
           "archive": {
             "type": "string"
           },
@@ -76609,6 +76645,10 @@
             "type": "boolean",
             "description": "Refuse a two-official decision unless both accounts are linked to the national identity provider."
           },
+          "requireIdentityProvider": {
+            "type": "boolean",
+            "description": "Every two-person control (decisions, rule changes, restores, Update Center steps, integrations, laws, offices …: dualControlRefusal()) refuses unless the two are different persons at the national identity provider. Off until the nation adopts it; never shipped on."
+          },
           "pendingHours": {
             "type": "number",
             "description": "How long a proposal waits for its second official before it lapses."
@@ -76776,6 +76816,7 @@
         "required": [
           "extra",
           "requireIdentityBinding",
+          "requireIdentityProvider",
           "pendingHours",
           "adopted"
         ]
@@ -76797,12 +76838,17 @@
           "requireIdentityBinding": {
             "type": "boolean",
             "description": "Refuse a two-official decision unless both accounts are linked to the national identity provider."
+          },
+          "requireIdentityProvider": {
+            "type": "boolean",
+            "description": "Every two-person control (decisions, rule changes, restores, Update Center steps, integrations, laws, offices …: dualControlRefusal()) refuses unless the two are different persons at the national identity provider. Off until the nation adopts it; never shipped on."
           }
         },
         "required": [
           "extra",
           "pendingHours",
-          "requireIdentityBinding"
+          "requireIdentityBinding",
+          "requireIdentityProvider"
         ]
       },
       "EscrowAgreement": {
@@ -81712,6 +81758,16 @@
               "type": "string"
             }
           },
+          "installation": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "production",
+              "training",
+              "unknown"
+            ],
+            "description": "The installation mode the backup was taken in, from its sealed manifest ('unknown' for backups taken before it was recorded)."
+          },
           "text": {
             "type": "string"
           }
@@ -82524,6 +82580,11 @@
       "MinistryFieldOps": {
         "type": "object",
         "properties": {
+          "kind": {
+            "type": "string",
+            "const": "sample",
+            "description": "Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1)."
+          },
           "ministry": {
             "type": "object",
             "properties": {
@@ -82565,6 +82626,7 @@
           }
         },
         "required": [
+          "kind",
           "ministry",
           "units"
         ]
@@ -82719,6 +82781,11 @@
           "generatedAt": {
             "type": "string"
           },
+          "kind": {
+            "type": "string",
+            "const": "sample",
+            "description": "Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1)."
+          },
           "modules": {
             "type": "array",
             "items": {
@@ -82729,6 +82796,7 @@
         "required": [
           "ministry",
           "generatedAt",
+          "kind",
           "modules"
         ]
       },
@@ -82850,6 +82918,11 @@
           "generatedAt": {
             "type": "string"
           },
+          "kind": {
+            "type": "string",
+            "const": "sample",
+            "description": "Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1)."
+          },
           "regions": {
             "type": "array",
             "items": {
@@ -82861,12 +82934,18 @@
           "ministry",
           "labels",
           "generatedAt",
+          "kind",
           "regions"
         ]
       },
       "MinistrySeries": {
         "type": "object",
         "properties": {
+          "kind": {
+            "type": "string",
+            "const": "sample",
+            "description": "Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1)."
+          },
           "ministry": {
             "type": "object",
             "properties": {
@@ -82908,6 +82987,7 @@
           }
         },
         "required": [
+          "kind",
           "ministry",
           "series"
         ]
@@ -85432,6 +85512,11 @@
           "load": {
             "type": "string",
             "description": "The checked load that brought it in (lib/organisations/import.ts), until it is acted on."
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "Registered by a sample case in a demo or training run (lib/casework/engine.ts `sampleMark`); absent on real records."
           }
         },
         "required": [
@@ -86403,6 +86488,11 @@
           },
           "createdAt": {
             "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "Created by a sample case in a demo or training run (lib/casework/engine.ts `sampleMark`); absent on real records."
           }
         },
         "required": [
@@ -88346,6 +88436,11 @@
           },
           "region": {
             "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "A sample record (made by a sample case in a demo or training run): shown with the Sample marker."
           },
           "standings": {
             "type": "array",
@@ -96622,6 +96717,10 @@
           },
           "validUntil": {
             "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -99701,6 +99800,11 @@
           "form": {
             "type": "string",
             "description": "Marriages: the form the law recognises (civil, customary, religious…)."
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "Registered from a sample case in a demo or training run (lib/casework/engine.ts `sampleMark`); absent on real records."
           }
         },
         "required": [

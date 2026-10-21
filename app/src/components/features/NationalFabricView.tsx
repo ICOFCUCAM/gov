@@ -107,7 +107,7 @@ export function NationalFabricView() {
       </div>
 
       <div className="grid gap-2 xl:grid-cols-[1.4fr_1fr]">
-        <Panel signal="modelled" title="Dependency map" meta={`${f.nodes.length} nodes · ${f.edges.length} links`} bodyClass="!p-2">
+        <Panel signal="sample" title="Dependency map" meta={`${f.nodes.length} nodes · ${f.edges.length} links`} bodyClass="!p-2">
           {f.nodes.length === 0 ? (
             <div className="grid h-[360px] place-items-center text-[11px] text-ink-muted">No active institutions — set up and activate ministries to connect them.</div>
           ) : (
@@ -162,7 +162,7 @@ export function NationalFabricView() {
           ) : null}
         </Panel>
 
-        <Panel signal="modelled" title="Systemic-risk institutions" meta="most depended-upon" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Systemic-risk institutions" meta="most depended-upon" bodyClass="!p-1.5">
           <div className="space-y-1">
             {f.systemic.length === 0 ? <p className="p-2 text-[11px] text-ink-muted">No dependency pressure yet.</p> : f.systemic.map(s => {
               const tn = s.weight >= 78 ? 'alert' : s.weight >= 62 ? 'warn' : 'ok';
@@ -183,7 +183,7 @@ export function NationalFabricView() {
         </Panel>
       </div>
 
-      <Panel signal="modelled" title="What weakens resilience most" meta={`pillar ${cascPillar?.score ?? '—'} · stress × dependency weighting`} bodyClass="!p-1.5">
+      <Panel signal="sample" title="What weakens resilience most" meta={`pillar ${cascPillar?.score ?? '—'} · stress × dependency weighting`} bodyClass="!p-1.5">
         {erosion.length === 0 ? (
           <p className="text-[11px] text-ink-muted">No active institutions connected.</p>
         ) : (
@@ -205,7 +205,7 @@ export function NationalFabricView() {
         )}
       </Panel>
 
-      <Panel signal="modelled" title="How problems spread" meta="upstream degradation flowing to dependents" bodyClass="!p-0">
+      <Panel signal="sample" title="How problems spread" meta="upstream degradation flowing to dependents" bodyClass="!p-0">
         <div className="max-h-[300px] overflow-y-auto">
           <table className="w-full text-[11px]">
             <thead><tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8.5px] uppercase tracking-wider text-ink-muted">
@@ -231,7 +231,7 @@ export function NationalFabricView() {
         </div>
       </Panel>
 
-      <Panel signal="modelled" title="Knock-on escalations" meta="actionable · coordination required" bodyClass="!p-0">
+      <Panel signal="sample" title="Knock-on escalations" meta="actionable · coordination required" bodyClass="!p-0">
         {(() => {
           const esc = cascadeEscalations(cascade);
           if (!esc.length) return <p className="p-3 text-[11px] text-ink-muted">No knock-on escalations — spread within limits.</p>;
@@ -253,7 +253,7 @@ export function NationalFabricView() {
         })()}
       </Panel>
 
-      <Panel signal="modelled" title="Knock-on events over time" meta="propagation chronology" bodyClass="!p-0">
+      <Panel signal="sample" title="Knock-on events over time" meta="propagation chronology" bodyClass="!p-0">
         {(() => {
           const events = cascade
             .filter(c => c.contributors.length && c.totalStress >= 30)
@@ -280,7 +280,7 @@ export function NationalFabricView() {
         })()}
       </Panel>
 
-      <Panel signal="modelled" title="Dependency list" meta="live link health" bodyClass="!p-0">
+      <Panel signal="sample" title="Dependency list" meta="live link health" bodyClass="!p-0">
         <div className="max-h-[320px] overflow-y-auto">
           <table className="w-full text-[11px]">
             <thead><tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8.5px] uppercase tracking-wider text-ink-muted">

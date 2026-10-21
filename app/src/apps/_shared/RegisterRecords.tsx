@@ -11,6 +11,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { SignalTag } from '@/components/ui/SignalTag';
+import { GeneratedReveal } from '@/components/ui/Generated';
 import { recordSourcesFor, readOutcome, type AppIdentity, type RecordFigure, type RecordSource } from './register-sources';
 import type { InstallationMode } from '@/lib/ops/mode';
 
@@ -112,7 +113,7 @@ export function SimulatedView({ mode, children }: { mode: InstallationMode; chil
         <SignalTag kind="unavailable" source="These screens are not connected to this nation's records" />
         Simulation screens: not connected to this nation&apos;s records. Open to see them as a simulation.
       </summary>
-      {open ? <div className="p-2">{children}</div> : null}
+      {open ? <div className="p-2"><GeneratedReveal>{children}</GeneratedReveal></div> : null}
     </details>
   );
 }

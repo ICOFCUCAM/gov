@@ -100,6 +100,7 @@ import { InvestigationsCommand } from '@/apps/police-command/InvestigationsComma
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import { IndexTag } from '@/components/ui/IndexTag';
+import { SampleFold } from '@/components/ui/SampleFold';
 
 // Surface registry: maps the normalized surface id to its renderer. Props
 // are uniform ({ id, now }) or prop-less national/infra surfaces.
@@ -195,12 +196,20 @@ const WF: Record<string, WorkKind> = {
   corrections: 'case', permits: 'approval', 'civil-registry': 'approval',
 };
 
-export function InteriorShell({ domain, instanceId, now, role, withheld }: {
+const SHELL_SOURCE = 'Interior simulation engine (lib/gov/interior-systems.ts)';
+
+/** Outside the host's simulation fold (`recordsView`), the shell's own generated chrome folds itself. */
+function ShellFold({ on, what, children }: { on: boolean; what: string; children: React.ReactNode }) {
+  return on ? <SampleFold what={what} source={SHELL_SOURCE}>{children}</SampleFold> : <>{children}</>;
+}
+
+export function InteriorShell({ domain, instanceId, now, role, withheld, recordsView = false }: {
   domain: InteriorDomain;
   instanceId: string;
   now: number;
   role: SovereignRole;
   withheld: Capability[];
+  recordsView?: boolean;
 }) {
   const ts = now / 4000;
   const o = interiorOps(instanceId, ts);
@@ -214,6 +223,7 @@ export function InteriorShell({ domain, instanceId, now, role, withheld }: {
       className="space-y-2 rounded-[5px] p-2"
       style={{ background: INTERIOR_DS.bg, boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
       {/* Orchestration band — Interior's sovereign posture across domains */}
+      <ShellFold on={recordsView} what="Interior posture band">
       <div
         className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[4px] border px-3 py-1.5 text-[10px]"
         style={{ borderColor: `color-mix(in srgb,${INTERIOR_DS.shellAccent} 22%,${INTERIOR_DS.line})` }}>
@@ -230,6 +240,7 @@ export function InteriorShell({ domain, instanceId, now, role, withheld }: {
         </span>
       </div>
       <SovereignHeaderPulse now={now} accent={INTERIOR_DS.shellAccent} />
+      </ShellFold>
 
       <DomainFrame domain={domain} badge={domain.federation ? <FederatedBadge /> : null}>
         {domain.federation
@@ -237,6 +248,7 @@ export function InteriorShell({ domain, instanceId, now, role, withheld }: {
           : renderSurface(domain.surface, instanceId, now)}
       </DomainFrame>
 
+      <ShellFold on={recordsView} what="Practice workflow queue">
       <RuntimeQueue
         scope={`${instanceId}:${domain.key}`}
         kind={wf}
@@ -245,6 +257,7 @@ export function InteriorShell({ domain, instanceId, now, role, withheld }: {
         role={role}
         withheld={withheld}
       />
+      </ShellFold>
     </div>
   );
 }

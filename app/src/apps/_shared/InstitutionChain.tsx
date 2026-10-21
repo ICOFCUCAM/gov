@@ -14,6 +14,7 @@
 //  - clockLabel — same-day/cross-day timestamp formatting
 
 import * as React from 'react';
+import { GeneratedFold } from '@/components/ui/Generated';
 import {
   chainDef, MINISTRY_CHAIN, type Facility, type RecordLineage, type ChainIntegrity,
 } from '@/lib/gov/institution-chain';
@@ -51,6 +52,11 @@ const TIER_C: Record<string, string> = {
 
 // HH:MM for same-day messages, DD/MM HH:MM otherwise — so expanded
 // multi-day threads aren't ambiguous.
+// The chain's stores (lib/gov/{dispatch,records,encounter,referral,enrollment}-store.ts) live in the
+// browser session with seeded baselines: their figures are samples, folded in production.
+const SESSION_NOTE = 'Examples kept in this browser session; nothing here reaches a register or another official.';
+const SESSION_SOURCE = 'Kept in this browser session and seeded by the reference model; nothing here reaches a register or another official';
+
 export function clockLabel(at: number, now: number): string {
   const d = new Date(at);
   const hm = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -67,7 +73,7 @@ export function actorChain(ministryKey: string, key: string, now: number, record
   const facility = facs[pickIndex(key, facs.length, 7)] ?? facs[0]!;
   const d = chainDef(ministryKey);
   // Default the record prefix from the ministry's own record noun (e.g.
-  // 'clinical record' → CLI, 'case file' → CAS) so an omitted prefix is
+  // 'facility return' → FAC, 'case file' → CAS) so an omitted prefix is
   // still meaningful instead of a generic 'REC'.
   const prefix = recordPrefix ?? (d.recordNoun.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase() || 'REC');
   const actorName = actorsOf(ministryKey, facility.id, epoch)[0]?.name ?? `${d.actorRole}`;
@@ -133,7 +139,12 @@ export function ActorChainStrip({ ministryKey, idKey, now, accent, recordPrefix 
 
 const P_TONE: Record<string, string> = { routine: 'rgb(var(--c-ink-muted))', priority: 'rgb(var(--c-warn))', urgent: 'rgb(var(--c-alert))' };
 
-export function DispatchChannel({
+/** Dispatch messages: kept in the browser session, seeded by the reference model (Sample; "Not connected" in production). */
+export function DispatchChannel(props: Parameters<typeof DispatchChannelView>[0]) {
+  return <GeneratedFold marked what="Dispatch messages" source={SESSION_SOURCE} note={SESSION_NOTE}><DispatchChannelView {...props} /></GeneratedFold>;
+}
+
+function DispatchChannelView({
   scope, now, accent, selfTier, selfName, toTier, title,
 }: {
   scope: string; now: number; accent: string;
@@ -207,7 +218,12 @@ const K_TONE: Record<string, string> = {
 // Live two-way service encounter between a PUBLIC actor and the OFFICIAL
 // serving them THROUGH a facility (clinician↔patient, officer↔citizen).
 // The operator posts as `selfAuthor`; turns persist across navigation.
-export function EncounterThread({
+/** Service encounter: kept in the browser session, seeded with examples (Sample; "Not connected" in production). */
+export function EncounterThread(props: Parameters<typeof EncounterThreadView>[0]) {
+  return <GeneratedFold marked what="Service encounter" source={SESSION_SOURCE} note={SESSION_NOTE}><EncounterThreadView {...props} /></GeneratedFold>;
+}
+
+function EncounterThreadView({
   scope, now, accent, selfAuthor, officialName, publicName, title,
 }: {
   scope: string; now: number; accent: string;
@@ -278,7 +294,12 @@ export function EncounterThread({
 
 // The national tier reading every ministry's roll-up at once — the apex of
 // the chain, live. Drop into any national/cabinet surface.
-export function NationalDispatchDigest({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
+/** National coordination roll-up: kept in the browser session, seeded by the reference model (Sample; "Not connected" in production). */
+export function NationalDispatchDigest(props: Parameters<typeof NationalDispatchDigestView>[0]) {
+  return <GeneratedFold marked what="National coordination roll-up" source={SESSION_SOURCE} note={SESSION_NOTE}><NationalDispatchDigestView {...props} /></GeneratedFold>;
+}
+
+function NationalDispatchDigestView({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
   const v = React.useSyncExternalStore(subscribe, version, () => 0);
   const epoch = Math.max(0, Math.floor(now / 4000));
   const scopes = React.useMemo(() => Object.keys(MINISTRY_CHAIN).map(k => `natl:${k.toLowerCase()}`), []);
@@ -309,7 +330,12 @@ export function NationalDispatchDigest({ accent = '#37c7d4', now }: { accent?: s
 // The national records ledger — every record that has rolled to a ministry
 // or synced nationally, across all ministries. Primes each ministry's lead
 // facility register so the apex view is deterministic and never empty.
-export function NationalRecordsLedger({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
+/** National records ledger: kept in the browser session, seeded by the reference model (Sample; "Not connected" in production). */
+export function NationalRecordsLedger(props: Parameters<typeof NationalRecordsLedgerView>[0]) {
+  return <GeneratedFold marked what="National records ledger" source={SESSION_SOURCE} note={SESSION_NOTE}><NationalRecordsLedgerView {...props} /></GeneratedFold>;
+}
+
+function NationalRecordsLedgerView({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
   const rv = React.useSyncExternalStore(recSub, recVer, () => 0);
   const epoch = Math.max(0, Math.floor(now / 4000));
   const ledger = React.useMemo(() => {
@@ -345,7 +371,12 @@ export function NationalRecordsLedger({ accent = '#37c7d4', now }: { accent?: st
 
 // The national view of public service load — recent citizen↔official turns
 // across every ministry's lead service desks. Primes deterministically.
-export function NationalEncounterDigest({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
+/** National service load: kept in the browser session, seeded by the reference model (Sample; "Not connected" in production). */
+export function NationalEncounterDigest(props: Parameters<typeof NationalEncounterDigestView>[0]) {
+  return <GeneratedFold marked what="National service load" source={SESSION_SOURCE} note={SESSION_NOTE}><NationalEncounterDigestView {...props} /></GeneratedFold>;
+}
+
+function NationalEncounterDigestView({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
   const v = React.useSyncExternalStore(encSub, encVer, () => 0);
   const epoch = Math.max(0, Math.floor(now / 4000));
   const feed = React.useMemo(() => {
@@ -378,7 +409,12 @@ export function NationalEncounterDigest({ accent = '#37c7d4', now }: { accent?: 
 
 // The national view of inter-ministry casework — every referral in flight
 // across all ministry inboxes.
-export function NationalReferralBoard({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
+/** Inter-ministry referrals: kept in the browser session, seeded by the reference model (Sample; "Not connected" in production). */
+export function NationalReferralBoard(props: Parameters<typeof NationalReferralBoardView>[0]) {
+  return <GeneratedFold marked what="Inter-ministry referrals" source={SESSION_SOURCE} note={SESSION_NOTE}><NationalReferralBoardView {...props} /></GeneratedFold>;
+}
+
+function NationalReferralBoardView({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
   const v = React.useSyncExternalStore(refSub, refVer, () => 0);
   const epoch = Math.max(0, Math.floor(now / 4000));
   const keys = React.useMemo(() => Object.keys(MINISTRY_CHAIN), []);
@@ -405,7 +441,12 @@ export function NationalReferralBoard({ accent = '#37c7d4', now }: { accent?: st
 }
 
 // One-glance executive summary of every live bureaucratic flow.
-export function NationalBureaucracyPulse({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
+/** Bureaucracy pulse figures: kept in the browser session, seeded by the reference model (Sample; "Not connected" in production). */
+export function NationalBureaucracyPulse(props: Parameters<typeof NationalBureaucracyPulseView>[0]) {
+  return <GeneratedFold marked what="Bureaucracy pulse figures" source={SESSION_SOURCE} note={SESSION_NOTE}><NationalBureaucracyPulseView {...props} /></GeneratedFold>;
+}
+
+function NationalBureaucracyPulseView({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
   const dv = React.useSyncExternalStore(subscribe, version, () => 0);
   const ev = React.useSyncExternalStore(encSub, encVer, () => 0);
   const rev = React.useSyncExternalStore(refSub, refVer, () => 0);

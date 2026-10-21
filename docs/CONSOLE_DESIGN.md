@@ -51,6 +51,33 @@ before connecting sources:
   nation's own.
 - The regional model covers all of the nation's regions.
 
+Generated figures in production (step I0.1, October 2026): one rule,
+`lib/twin/generated.ts`, read by every console surface through
+`components/ui/Generated.tsx`. In demo and training a generated figure is
+shown with its marker (Sample, or Simulation for scenarios); in production it
+is not shown: `Panel signal="sample" | "simulated"` keeps its title and folds
+its figures under "Not connected" (rendered only when an official opens it,
+then marked Simulation), headline tiles go through `useTile()`, strips through
+`GeneratedStrip`, single values through `GeneratedText`. The executive posture
+(`executivePosture().generated`) and the agency apps' `SimulatedView` follow
+the same rule. Records, observations and official statements are never
+folded; where a register exists the screen reads it (bills and hearings on the
+branch screens, the audit chain's verification and the access watches'
+findings on /audit, the operations overview and incident register on /ops,
+the ministry registry, the twin's population). A panel whose inputs are
+generated is Sample, never Modelled. `components/ui/Generated.test.ts` checks
+the rule and scans the console files for untagged panels and tiles.
+
+There are two entry points and one rule. `Generated.tsx` (`useGenerated`,
+`GeneratedFold`, `GeneratedStrip`, `useTile`, `GeneratedText`) is the rule's
+own; `components/ui/SampleFold.tsx` (`SampleFold`, `SampleTag`) is the
+per-panel form used by screens that keep real records open beside generated
+panels (the interior record screens, `/health-ecosystem`, the ministry
+workspace). `SampleTag` reads `useGenerated()` and `SampleFold` renders
+`GeneratedFold`, so both say "Not connected" with the same reason in
+production, open as Simulation, and mark Sample in demo and training;
+`SampleFold.test.ts` checks the two render identically.
+
 Next: a durable store (register 1.1), then the twin core on the substrate
 (entities, sources, time-stamped observations) and the first connector
 (statistics office). Register §16 tracks each item.

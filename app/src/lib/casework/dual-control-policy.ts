@@ -16,7 +16,10 @@
 // minimum. The two must be two signed-in accounts of two different people:
 // when both accounts are linked to the national identity provider that is
 // checked; otherwise the step records that only the accounts differ, and the
-// country can require the link (requireIdentityBinding).
+// country can require the link: for decisions and rule changes
+// (requireIdentityBinding), or for every two-person control on the platform
+// (requireIdentityProvider: dualControlRefusal() in lib/data/dual-control.ts
+// refuses unless independenceOf() is 'identity-provider'). Both ship off.
 //
 // A proposal waiting for its second official lapses after pendingHours; it
 // is kept on the case, and only a new, explicit proposal starts again.
@@ -39,6 +42,13 @@ export interface DualControlPolicy {
   extra: string[];
   /** Refuse a two-official decision unless both accounts are linked to the national identity provider. */
   requireIdentityBinding: boolean;
+  /**
+   * Every two-person control (decisions, rule changes, restores, Update Center
+   * steps, integrations, laws, offices …: dualControlRefusal()) refuses unless
+   * the two are different persons at the national identity provider. Off until
+   * the nation adopts it; never shipped on.
+   */
+  requireIdentityProvider: boolean;
   /** How long a proposal waits for its second official before it lapses. */
   pendingHours: number;
   /** False while these are the platform's defaults, not the country's adopted rules. */
@@ -51,13 +61,13 @@ export interface DualControlPolicy {
   confirmedBy?: string;
   changes?: PolicyChanges<DualControlValues>;
 }
-export type DualControlValues = Pick<DualControlPolicy, 'extra' | 'requireIdentityBinding' | 'pendingHours'>;
-export const DEFAULT_DUAL_CONTROL: DualControlPolicy = { extra: [], requireIdentityBinding: false, pendingHours: DUAL_CONTROL_HOURS, adopted: false };
+export type DualControlValues = Pick<DualControlPolicy, 'extra' | 'requireIdentityBinding' | 'requireIdentityProvider' | 'pendingHours'>;
+export const DEFAULT_DUAL_CONTROL: DualControlPolicy = { extra: [], requireIdentityBinding: false, requireIdentityProvider: false, pendingHours: DUAL_CONTROL_HOURS, adopted: false };
 
 const g = globalThis as unknown as { __civicosDualControl?: DualControlPolicy };
 const db = (): DualControlPolicy => {
   const d = touch('__civicosDualControl', g.__civicosDualControl ??= { ...DEFAULT_DUAL_CONTROL });
-  d.extra ??= []; d.requireIdentityBinding ??= false; d.pendingHours ??= DUAL_CONTROL_HOURS; d.adopted ??= false;
+  d.extra ??= []; d.requireIdentityBinding ??= false; d.requireIdentityProvider ??= false; d.pendingHours ??= DUAL_CONTROL_HOURS; d.adopted ??= false;
   return d;
 };
 export function resetDualControl(): void { g.__civicosDualControl = undefined; }
@@ -83,8 +93,8 @@ export function needsTwoOfficials(c: Case, a: ActionSpec, pkg: Pick<CasePackage,
 }
 
 const AUDIT = 'dual-control.policy';
-const values = (d: DualControlPolicy): DualControlValues => ({ extra: [...d.extra], requireIdentityBinding: d.requireIdentityBinding, pendingHours: d.pendingHours });
-const describe = (v: DualControlValues) => `${v.extra.length} further step(s) · identity binding ${v.requireIdentityBinding ? 'required' : 'not required'} · proposals lapse after ${v.pendingHours} h`;
+const values = (d: DualControlPolicy): DualControlValues => ({ extra: [...d.extra], requireIdentityBinding: d.requireIdentityBinding, requireIdentityProvider: d.requireIdentityProvider, pendingHours: d.pendingHours });
+const describe = (v: DualControlValues) => `${v.extra.length} further step(s) · identity binding ${v.requireIdentityBinding ? 'required' : 'not required'}${v.requireIdentityProvider ? ' · two persons at the identity provider for every two-person control' : ''} · proposals lapse after ${v.pendingHours} h`;
 const check = (v: DualControlValues): string | null => {
   if (v.extra.some(x => !/^[a-z][a-z0-9.-]{1,80}:[a-z][a-z0-9-]{0,40}$/.test(x))) return 'Each further step is packageKey:actionKey (e.g. customs.declaration:release)';
   if (!Number.isInteger(v.pendingHours) || v.pendingHours < 1 || v.pendingHours > 720) return 'The waiting period is a whole number of hours from 1 to 720';
@@ -92,11 +102,12 @@ const check = (v: DualControlValues): string | null => {
 };
 
 /** One administrator proposes the country's rules, citing the law; values left out keep their current setting. */
-export function proposeDualControlPolicy(input: { extra?: unknown; requireIdentityBinding?: unknown; pendingHours?: unknown; legalBasis?: unknown }, by: string, byId?: string, now = new Date()) {
+export function proposeDualControlPolicy(input: { extra?: unknown; requireIdentityBinding?: unknown; requireIdentityProvider?: unknown; pendingHours?: unknown; legalBasis?: unknown }, by: string, byId?: string, now = new Date()) {
   const d = db();
   const change: Partial<DualControlValues> = {
     ...(input.extra !== undefined ? { extra: [...new Set((Array.isArray(input.extra) ? input.extra : []).map(String).map(x => x.trim()).filter(Boolean))] } : {}),
     ...(input.requireIdentityBinding !== undefined ? { requireIdentityBinding: input.requireIdentityBinding === true } : {}),
+    ...(input.requireIdentityProvider !== undefined ? { requireIdentityProvider: input.requireIdentityProvider === true } : {}),
     ...(input.pendingHours !== undefined ? { pendingHours: Number(input.pendingHours) } : {}),
   };
   return proposePolicy(d.changes ??= {}, values(d), change, input.legalBasis, { by, ...(byId ? { byId } : {}), now, pendingHours: d.pendingHours, audit: AUDIT, context: 'Two-official rules for decisions', check, describe });

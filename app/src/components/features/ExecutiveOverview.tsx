@@ -11,6 +11,7 @@ import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { formatMoney } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { SampleFold, SampleTag } from '@/components/ui/SampleFold';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';
@@ -30,6 +31,8 @@ const MUT = '#5d6a77';
 
 const ID = 'exo';
 
+const SAMPLE_SOURCE = 'Typed example figures and telemetry waves (no record behind them): budgets, projects and indicators are samples, not the nation\'s';
+
 function Card({ title, sub, action, children, className }: {
   title: string; sub?: string; action?: string; children: React.ReactNode; className?: string;
 }) {
@@ -37,7 +40,7 @@ function Card({ title, sub, action, children, className }: {
     <section className={`flex flex-col rounded-lg border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
       <div className="flex items-center justify-between border-b px-3.5 py-2.5" style={{ borderColor: LINE2 }}>
         <div>
-          <h3 className="text-[12px] font-semibold" style={{ color: INK }}>{title}</h3>
+          <h3 className="text-[12px] font-semibold" style={{ color: INK }}>{title} <SampleTag source={SAMPLE_SOURCE} /></h3>
           {sub ? <div className="text-[9px]" style={{ color: MUT }}>{sub}</div> : null}
         </div>
         {action ? <span className="text-[9.5px] font-medium" style={{ color: CYAN }}>{action}</span> : null}
@@ -169,6 +172,7 @@ export function ExecutiveOverview() {
   const trB = waveSeries(`eo:tb:${ID}`, ts, 6, 40, 70).map((v, i) => Math.round(v + i * 1.5));
 
   return (
+    <SampleFold what="Executive Overview" source={SAMPLE_SOURCE}>
     <div className="min-h-screen space-y-3 p-3" style={{ background: BG, color: INK }}>
       {/* ── Header ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -323,5 +327,6 @@ export function ExecutiveOverview() {
         <span>Performance Index {opi} · Uptime 99.97% · Citizen Satisfaction 82.1% · Last Updated {tm}</span>
       </div>
     </div>
+    </SampleFold>
   );
 }

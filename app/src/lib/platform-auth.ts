@@ -82,16 +82,22 @@ export function secretEquals(given: string, expected: string): boolean {
   return timingSafeEqual(a, b);
 }
 
+/** The platform-tier officer a request's Supabase JWT belongs to (asked of the substrate under their own RLS), or null. */
+export async function platformActor(req: Request, roles: ReadonlySet<string> = PLATFORM_ROLES): Promise<{ id?: string; name?: string; role: string } | null> {
+  const bearer = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+  if (!bearer || bearer.split('.').length !== 3) return null; // not a JWT
+  const scoped = tokenScopedClient(bearer);
+  if (!scoped) return null;
+  const { data, error } = await scoped.rpc('civicos_current_actor');
+  if (error || !data) return null;
+  const actor = (Array.isArray(data) ? data[0] : data) as { kind?: string; role?: string; id?: string; name?: string } | null;
+  if (!actor || actor.kind !== 'officer' || !roles.has(actor.role ?? '')) return null;
+  return { role: actor.role!, ...(actor.id ? { id: String(actor.id) } : {}), ...(actor.name ? { name: String(actor.name) } : {}) };
+}
+
 /** Platform-tier officer session path (Supabase JWT). */
 export async function sessionAuthorized(req: Request, roles: ReadonlySet<string> = PLATFORM_ROLES): Promise<boolean> {
-  const bearer = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  if (!bearer || bearer.split('.').length !== 3) return false; // not a JWT
-  const scoped = tokenScopedClient(bearer);
-  if (!scoped) return false;
-  const { data, error } = await scoped.rpc('civicos_current_actor');
-  if (error || !data) return false;
-  const actor = (Array.isArray(data) ? data[0] : data) as { kind?: string; role?: string } | null;
-  return !!actor && actor.kind === 'officer' && roles.has(actor.role ?? '');
+  return !!(await platformActor(req, roles));
 }
 
 /** The substrate's administrator role: the only one that changes connections to

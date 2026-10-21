@@ -19,7 +19,7 @@ import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
 import { cronRoute } from '@/lib/ops/cron-runs';
 import { serverClient } from '@/lib/db/client';
-import { signer } from '@/lib/keys/custody';
+import { signer, developmentKeyRefusal } from '@/lib/keys/custody';
 import { canonicalWitnessMaterial } from '@/lib/db/signatures';
 import { base64ToHex, jwkFromPublicPem } from '@/lib/audit/witness-signature';
 
@@ -34,6 +34,9 @@ async function runJob(req: Request) {
   if (!authorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const sb = serverClient();
   if (!sb) return NextResponse.json({ error: 'substrate not configured' }, { status: 503 });
+  // A production installation never witnesses with a development key (step I0.1).
+  const keyRefused = developmentKeyRefusal('audit');
+  if (keyRefused) return NextResponse.json({ error: keyRefused }, { status: 503 });
 
   const url = new URL(req.url);
   const scopeLimit = Math.max(1, Number(url.searchParams.get('scopes') ?? '50') | 0);

@@ -65,7 +65,7 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
   const revenue = [
     { label: 'Government Allocation', pct: 42.3, amt: formatMoney(1.20e9), tone: 'info' as Tone },
     { label: 'Insurance Premiums', pct: 28.7, amt: formatMoney(0.82e9), tone: 'ok' as Tone },
-    { label: 'Patient Payments', pct: 15.6, amt: formatMoney(0.44e9), tone: 'warn' as Tone },
+    { label: 'Out-of-pocket Payments', pct: 15.6, amt: formatMoney(0.44e9), tone: 'warn' as Tone },
     { label: 'Grants & Donations', pct: 7.8, amt: formatMoney(0.22e9), tone: 'alert' as Tone },
     { label: 'Other Income', pct: 5.6, amt: formatMoney(0.16e9), tone: 'info' as Tone },
   ];

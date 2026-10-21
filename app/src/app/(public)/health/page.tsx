@@ -8,7 +8,7 @@
 // ?preset=care-finder or civic-standard shows the alternatives.
 
 import Link from 'next/link';
-import { publicHealthSite } from '@/lib/gov/health-operations';
+import { readPublicHealthAlert } from '@/lib/public-sites/health-alert';
 import { siteMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
@@ -44,14 +44,14 @@ const href = (i: PublicSiteLinkItem) => (typeof i === 'string' ? '/health' : i.h
 
 export default async function PublicHealthHomepage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
   const searchParams = await props.searchParams;
-  const s = publicHealthSite(100); // deterministic, SSR-stable
-  const live = {
-    healthAlert: s.emergencyBanner.active ? s.emergencyBanner.text : 'No national health emergency is in effect. Follow the advisories from your regional health authority.',
-  };
+  // A recorded state of emergency in force, else (demo and training only) the simulation's alert, marked Sample (lib/public-sites/health-alert.ts).
+  const alertNow = readPublicHealthAlert();
+  const live = { healthAlert: alertNow.text };
+  const sampleLive = alertNow.sample ? ['healthAlert'] : [];
   const preview = searchParams?.preview;
   const preset = presetFor('health', searchParams?.preset ?? (preview ? effectiveContent('health', preview).previewPreset ?? undefined : undefined));
-  if (!preset.bespoke) return <PublicSite id="health" request={await siteRequest()} theme={THEME} preset={preset.id} preview={preview} live={live} illustration={ART} />;
-  return <HealthPortal site={siteProps('health', { theme: THEME, illustration: ART, live, preview, request: await siteRequest() })} />;
+  if (!preset.bespoke) return <PublicSite id="health" request={await siteRequest()} theme={THEME} preset={preset.id} preview={preview} live={live} sampleLive={sampleLive} illustration={ART} />;
+  return <HealthPortal site={siteProps('health', { theme: THEME, illustration: ART, live, preview, request: await siteRequest(), sampleLive })} />;
 }
 
 function HealthPortal({ site }: { site: PublicSiteShellProps }) {
@@ -143,11 +143,12 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
       </section>
 
       <div className="mx-auto max-w-[1280px] space-y-10 px-6 py-8">
-        {/* 4. Health alert banner (live from the health-operations engine) */}
+        {/* 4. Health alert banner: a recorded emergency, or (demo and training) the simulation's, marked Sample */}
         {alert ? (
           <div className="flex flex-col items-start gap-1.5 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:gap-3" style={{ borderColor: '#f6c5c5', background: '#fdeeee' }}>
             <span className="flex shrink-0 items-center gap-2 text-[13px] font-bold" style={{ color: '#c0232c' }}><span aria-hidden>⚠</span> {alert.label}</span>
             <span className="w-full min-w-0 text-[13px] text-slate-700 sm:w-auto sm:flex-1">{alert.text}</span>
+            {alert.sample ? <SampleChip label={t.sampleAlert} note={t.sampleAlertNote} /> : null}
             <Link href="#news" className="text-[12px] font-semibold" style={{ color: '#c0232c' }}>{t.viewAlerts}</Link>
           </div>
         ) : null}

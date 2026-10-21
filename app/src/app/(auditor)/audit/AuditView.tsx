@@ -9,6 +9,31 @@ import type { AuditEntry, AuditVerification } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { useOfficial } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { GeneratedFold, useGenerated, useTile, shownValue } from '@/components/ui/Generated';
+import type { SignalKind } from '@/lib/twin/signal';
+import { WATCH_FINDING_ACTIONS } from '@/lib/records/watch-actions';
+
+type TeleFig = { l: string; v: string; sub: string; t: string; kind: SignalKind; src?: string };
+
+/** A headline tile marked by its source; a generated one is "Not connected" in production (lib/twin/generated.ts). */
+function AuditTile({ m }: { m: TeleFig }) {
+  const tile = useTile(m.v, m.kind, m.src);
+  return (
+    <div className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+      <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted"><span className="truncate">{m.l}</span>{tile.marker}</div>
+      <div className={`font-mono leading-tight tabular-nums ${tile.folded ? 'text-[11px] text-ink-muted' : 'text-lg'}`} style={tile.folded ? undefined : { color: TONE[m.t] }}>{tile.value}</div>
+      {tile.folded ? null : <div className="truncate text-[8px] text-ink-muted">{m.sub}</div>}
+    </div>
+  );
+}
+
+/** "12s ago", "4m ago", "3h ago". */
+function ago(iso: string | undefined, now: number): string {
+  if (!iso) return 'not yet';
+  const sec = Math.max(0, Math.round((now - Date.parse(iso)) / 1000));
+  return sec < 60 ? `${sec}s ago` : sec < 3600 ? `${Math.round(sec / 60)}m ago` : `${Math.round(sec / 3600)}h ago`;
+}
 
 const CONTROLS = [
   { l: 'Access control', k: 'ac' },
@@ -81,12 +106,28 @@ export function AuditView() {
   const [official, setOfficial] = useOfficial();
   const [note, setNote] = React.useState<string | null>(null);
 
+  // Reading the chain's entries is limited to auditors and the data-protection authority's officials
+  // (GET /api/audit, canReadAuditChain() in lib/auth/roles.ts). A refused official sees the refusal, the
+  // page stops asking for the entries, and the chain's verification (public) keeps refreshing.
+  const [refused, setRefused] = React.useState<string | null>(null);
+  const refusedRef = React.useRef(false);
   const load = React.useCallback(async () => {
-    const [page, v] = await Promise.all([api.audit.list({ limit: PAGE }), api.audit.verify().catch(() => null)]);
-    setEvents(page.events);
-    setTotal(page.total);
-    // Until older pages are read, the cursor follows the newest page.
-    if (!olderLoaded.current) setNextBefore(page.nextBefore);
+    const verifyP = api.audit.verify().catch(() => null);
+    if (!refusedRef.current) {
+      const res = await fetch(`/api/audit?limit=${PAGE}`, { cache: 'no-store' }).catch(() => null);
+      if (res && (res.status === 401 || res.status === 403)) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        refusedRef.current = true;
+        setRefused(body.error ?? (res.status === 401 ? 'Sign in as an official to read the audit chain.' : 'This account may not read the audit chain.'));
+      } else if (res && res.ok) {
+        const page = (await res.json()) as { events: AuditEntry[]; total: number; nextBefore?: number };
+        setEvents(page.events);
+        setTotal(page.total);
+        // Until older pages are read, the cursor follows the newest page.
+        if (!olderLoaded.current) setNextBefore(page.nextBefore);
+      }
+    }
+    const v = await verifyP;
     if (v) setVerify(v);
   }, []);
 
@@ -125,27 +166,28 @@ export function AuditView() {
   }, [events, older]);
   const denied = evs.filter(e => e.outcome !== 'ok').length;
   const sp = (k: string, lo = 35, hi = 90) => waveSeries(`au:${k}`, ts, 16, lo, hi);
+  const gen = useGenerated();
 
-  const tele = [
-    { l: 'Chain integrity', v: verify ? (intact ? 'INTACT' : 'BROKEN') : '—', sub: intact ? 'tamper-evident' : 'investigate', t: tone, spark: sp('ci', intact ? 80 : 10, intact ? 99 : 40) },
-    { l: 'Events recorded', v: String(Math.max(total, evs.length)), sub: `+${evs.filter(e => now - Date.parse(e.at) < 86_400_000).length} / 24h`, t: 'ok', spark: sp('er', 20, 70) },
-    { l: 'Verified links', v: String(verify?.checked ?? 0), sub: 'hash continuity', t: 'ok', spark: sp('vl', 60, 95) },
-    { l: 'Non-ok outcomes', v: String(denied), sub: denied ? 'review queue' : 'clean', t: denied ? 'warn' : 'ok', spark: sp('no', 0, denied ? 50 : 8) },
-    { l: 'Anomaly signals', v: String(2 + Math.round(seed(`an:${epoch}`) * 4)), sub: 'sample · no detector connected', t: 'warn', spark: sp('an', 10, 55) },
-    { l: 'Attestation', v: 'CURRENT', sub: `last ${Math.round((now % 60000) / 1000)}s`, t: 'ok', spark: sp('at', 70, 96) },
+  // Findings the access watches raised (lib/records/access-watch.ts) in the last 30 days, among the entries read.
+  const since = now - 30 * 86_400_000;
+  const findings = evs.filter(e => WATCH_FINDING_ACTIONS[e.action] && Date.parse(e.at) >= since);
+  const partial = Math.max(total, evs.length) > evs.length;
+  const CHAIN_SRC = 'The audit chain and its verification (GET /api/audit, /api/audit/verify)';
+
+  // Every headline figure is read from the audit chain and its verification; none is generated.
+  const tele: TeleFig[] = [
+    { l: 'Chain integrity', v: verify ? (intact ? 'INTACT' : 'BROKEN') : '—', sub: intact ? 'tamper-evident' : 'investigate', t: tone, kind: 'record', src: CHAIN_SRC },
+    { l: 'Events recorded', v: refused ? '—' : String(Math.max(total, evs.length)), sub: refused ? 'entries not readable by this account' : `+${evs.filter(e => now - Date.parse(e.at) < 86_400_000).length} / 24h`, t: 'ok', kind: refused ? 'unavailable' : 'record', src: CHAIN_SRC },
+    { l: 'Verified links', v: String(verify?.checked ?? 0), sub: 'hash continuity', t: 'ok', kind: 'record', src: CHAIN_SRC },
+    { l: 'Non-ok outcomes', v: refused ? '—' : String(denied), sub: refused ? 'entries not readable by this account' : denied ? 'review queue' : 'clean', t: denied ? 'warn' : 'ok', kind: refused ? 'unavailable' : 'record', src: CHAIN_SRC },
+    { l: 'Watch findings · 30 days', v: refused ? '—' : String(findings.length), sub: refused ? 'entries not readable by this account' : partial ? `in the newest ${evs.length} entries · a prompt, never a conclusion` : 'a prompt, never a conclusion', t: findings.length ? 'warn' : 'ok', kind: refused ? 'unavailable' : 'record', src: 'Findings the access watches raised on the audit chain (lib/records/access-watch.ts)' },
+    { l: 'Attestation', v: !verify ? '—' : !intact ? 'BROKEN' : verify.complete === false ? 'CATCHING UP' : 'CURRENT', sub: verify ? `verified ${ago(verify.verifiedAt, now)}${verify.fullCheckAt ? ` · full check ${ago(verify.fullCheckAt, now)}` : ''}` : 'not verified yet', t: !verify ? 'neutral' : intact ? 'ok' : 'alert', kind: 'record', src: 'The chain\'s verification (GET /api/audit/verify)' },
   ];
 
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-        {tele.map(m => (
-          <div key={m.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-            <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
-            <div className="font-mono text-lg leading-tight tabular-nums" style={{ color: TONE[m.t] }}>{m.v}</div>
-            <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={m.spark} tone={m.t} /></div>
-            <div className="truncate text-[8px] text-ink-muted">{m.sub}</div>
-          </div>
-        ))}
+        {tele.map(m => <AuditTile key={m.l} m={m} />)}
       </div>
 
       <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
@@ -179,7 +221,17 @@ export function AuditView() {
           </div>
         </Panel>
 
-        <Panel signal="sample" title="Anomaly signals" meta="behavioural detection" bodyClass="!p-1.5">
+        <Panel signal="record" title="Anomaly signals" meta="access watches · last 30 days" bodyClass="!p-1.5">
+          {/* What the access watches raised on the audit chain: a prompt to look, never a conclusion. */}
+          <div className="mb-1.5 grid grid-cols-1 gap-1">
+            {refused ? <p className="text-[10px] text-ink-muted">Read by auditors and the data-protection authority only.</p> : findings.length === 0 ? <p className="text-[10px] text-ink-muted">No finding raised{partial ? ` in the newest ${evs.length} entries` : ''}.</p> : findings.slice(0, 6).map(f => (
+              <div key={f.id} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{WATCH_FINDING_ACTIONS[f.action]} · {f.resource}</span>
+                <span className="shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">#{f.seq} · {new Date(f.at).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+          <GeneratedFold marked what="Example behavioural signals">
           <div className="grid grid-cols-1 gap-1">
             {[
               { l: 'Off-hours privileged action', t: 'warn' },
@@ -194,9 +246,10 @@ export function AuditView() {
               </div>
             ))}
           </div>
+          </GeneratedFold>
         </Panel>
 
-        <Panel title="Integrity actions" meta="oversight authority" bodyClass="!p-1.5">
+        <Panel signal="record" title="Integrity actions" meta="oversight authority" bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1">
             {([
               { l: 'Re-verify chain', g: '⛓', a: () => void api.audit.verify(true).then(v => { setVerify(v); setNote(v.ok ? `Chain verified: ${v.checked} links intact.` : `Chain broken at entry ${v.brokenAtSeq}.`); }) },
@@ -223,6 +276,7 @@ export function AuditView() {
       </div>
 
       <Panel
+        signal="record"
         title="Tamper-evident audit chain"
         meta={
           <span className="flex items-center gap-2">
@@ -236,7 +290,12 @@ export function AuditView() {
         }
         bodyClass="overflow-auto !p-0"
       >
-        {events === null ? (
+        {refused ? (
+          <div role="status" className="space-y-1 p-3 text-xs text-ink-soft">
+            <p><strong>The chain&apos;s entries are not shown to this account.</strong> {refused}</p>
+            <p className="text-ink-muted">Who acted, on which record, is read only by auditors and the officials of the data-protection authority, so that those who run the platform do not oversee themselves. The chain&apos;s verification above stays open to every official.</p>
+          </div>
+        ) : events === null ? (
           <p className="p-3 text-xs text-ink-muted">Replaying hash chain…</p>
         ) : events.length === 0 ? (
           <EmptyState title="No audit events yet" hint="State-changing actions (decisions, payments, escalations) are hash-chained here as they occur." />
@@ -277,15 +336,16 @@ export function AuditView() {
 
       {/* Operational command strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+        {/* Integrity from the chain's verification; the rest is generated (Sample, or "Not connected" in production). */}
         {[
-          { l: 'Integrity posture', v: intact ? 'ASSURED' : 'BREACH', t: tone },
-          { l: 'Verification tempo', v: `${Math.round(20 + seed(`avt:${epoch}`) * 40)} / min`, t: 'ok' },
-          { l: 'Open inquiries', v: `${denied ? 1 : 0} active`, t: denied ? 'warn' : 'ok' },
-          { l: 'Coverage', v: `${94 + Math.round(seed(`cov:${epoch}`) * 5)}%`, t: 'ok' },
-          { l: 'Oversight', v: 'INDEPENDENT', t: 'ok' },
+          { l: 'Integrity posture', v: verify ? (intact ? 'ASSURED' : 'BREACH') : '—', t: verify ? tone : 'neutral', kind: 'record' as SignalKind, src: 'The chain\'s verification (GET /api/audit/verify)' },
+          { l: 'Verification tempo', v: shownValue(gen, `${Math.round(20 + seed(`avt:${epoch}`) * 40)} / min`), t: gen.show ? 'ok' : 'neutral', kind: gen.kind, src: gen.src },
+          { l: 'Open inquiries', v: shownValue(gen, `${denied ? 1 : 0} active`), t: !gen.show ? 'neutral' : denied ? 'warn' : 'ok', kind: gen.kind, src: gen.src },
+          { l: 'Coverage', v: shownValue(gen, `${94 + Math.round(seed(`cov:${epoch}`) * 5)}%`), t: gen.show ? 'ok' : 'neutral', kind: gen.kind, src: gen.src },
+          { l: 'Oversight', v: shownValue(gen, 'INDEPENDENT'), t: gen.show ? 'ok' : 'neutral', kind: gen.kind, src: gen.src },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="flex min-w-0 flex-wrap items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}<SignalTag kind={s.kind} source={s.src} /></span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
               {s.l === 'Integrity posture' || s.l === 'Oversight' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
               {s.v}

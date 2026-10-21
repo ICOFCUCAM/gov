@@ -379,6 +379,8 @@ export const yo: Messages = {
     live: 'Láàyè',
     sampleNews: 'Àwọn àpẹẹrẹ ìkéde',
     sampleNote: 'A ń fi wọ́n hàn títí {name} yóò fi tẹ ti ara rẹ̀ jáde.',
+    sampleAlert: 'Àpẹẹrẹ · kì í ṣe ìkìlọ̀ gidi',
+    sampleAlertNote: 'Ìkìlọ̀ àfarawé tí a fi hàn nínú ìfihàn tàbí ìdánilẹ́kọ̀ọ́; kò sí pàjáwìrì tí a kéde.',
     browseTopics: 'Ṣàwárí nípa àkọlé',
     gatewayLink: 'Èyí ni ojú-ìwé {name} lórí pẹpẹ orílẹ̀-èdè. Ojú-òpó rẹ̀ pàtàkì ni {host}.',
     gatewayMigrate: '{name} ń gbé ojú-òpó rẹ̀ wá síbí láti {host}; àwọn ojú-ìwé tí a kò tíì gbé wà níbẹ̀ síbẹ̀.',

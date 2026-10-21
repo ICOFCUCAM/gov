@@ -1,7 +1,9 @@
 // What a reader sees of a case (docs/GOVERNMENT_OPERATING_MODEL.md §4.1 step
 // 3): lists carry no personal fields; a case's own page carries them only for
-// those the case rules let read it (caseReadRefusal()). Reads of restricted
-// and secret cases are written to the access log by the route.
+// those the case rules let read it (caseReadRefusal()). Every case read, and
+// every list (as one search naming how many cases it returned: a list still
+// carries the parties' names of normal cases), is written to the access log
+// by the route.
 
 import { getPackage } from './packages';
 import type { Case } from './types';

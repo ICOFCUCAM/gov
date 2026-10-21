@@ -2,8 +2,8 @@
 
 // Domain 6 — Laboratory Systems. A TRUE laboratory execution system:
 // specimen lifecycle pipeline, priority-laned queue intelligence, outbreak
-// detection + regional escalation tree, capacity-based diagnostics
-// routing, panic-value acknowledgement, AI guidance and the executable
+// detection + regional escalation tree, capacity-based testing
+// routing, result-acknowledgement counts (no person's result), AI guidance and the executable
 // specimen-workflow runtime. Cinematic sovereign language, distinct rhythm.
 
 import * as React from 'react';
@@ -33,7 +33,7 @@ export function LaboratorySystem({ id, now, role, withheld }: {
   const pTone: Tone = lx.posture === 'crisis' ? 'alert' : lx.posture === 'strained' ? 'warn' : 'ok';
   const adv = aiAdvisory('Laboratory Systems', [
     { label: 'Cases past target', value: Math.min(100, lx.slaBreaches), adverse: true },
-    { label: 'Unacknowledged panic values', value: Math.min(100, unacked * 22), adverse: true },
+    { label: 'Unacknowledged urgent results', value: Math.min(100, unacked * 22), adverse: true },
     { label: 'Outbreak escalation', value: lx.escalationLevel === 'national' ? 92 : lx.escalationLevel === 'regional' ? 58 : 12, adverse: true },
     { label: 'Turnaround', value: Math.min(100, net.meanTurnaroundHrs), adverse: true },
   ]);
@@ -117,9 +117,9 @@ export function LaboratorySystem({ id, now, role, withheld }: {
         </CommandPanel>
       </div>
 
-      <CommandPanel title="Critical-result alerts" meta="panic values · acknowledge to clear" accent={ACC} live>
+      <CommandPanel title="Urgent results awaiting acknowledgement" meta="by test · acknowledge to clear" accent={ACC} live>
         {lx.criticalAlerts.length === 0 ? (
-          <p className="text-[10px] text-ink-muted">No outstanding panic values — all critical results acknowledged.</p>
+          <p className="text-[10px] text-ink-muted">No urgent result is waiting for acknowledgement.</p>
         ) : (
           <div className="space-y-1.5">
             {lx.criticalAlerts.map(a => {
@@ -129,7 +129,7 @@ export function LaboratorySystem({ id, now, role, withheld }: {
                   style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)', borderLeft: `3px solid ${sc(done ? 'ok' : a.ageMin >= 30 ? 'alert' : 'warn')}`, background: 'rgba(20,32,46,0.35)' }}>
                   <span className="font-mono text-[8.5px] tabular-nums text-ink-muted">{a.id}</span>
                   <span className="text-[10px] font-medium text-ink">{a.test}</span>
-                  <span className="text-[8.5px] text-ink-muted">{a.patient} · {a.ageMin}m ago</span>
+                  <span className="text-[8.5px] text-ink-muted">waiting {a.ageMin}m</span>
                   {done ? (
                     <span className="ml-auto text-[8px] font-bold uppercase tracking-wider" style={{ color: sc('ok') }}>✓ acknowledged</span>
                   ) : (
@@ -145,7 +145,7 @@ export function LaboratorySystem({ id, now, role, withheld }: {
       </CommandPanel>
 
       <div className="grid gap-2 xl:grid-cols-2">
-        <CommandPanel title="Diagnostics routing" meta="specimen → lab tier · capacity" accent={ACC}>
+        <CommandPanel title="Testing routing" meta="specimen → lab tier · capacity" accent={ACC}>
           <div className="space-y-1">
             {lx.routing.map(r => (
               <div key={`${r.specimen}-${r.tier}`} className="flex items-center gap-2 text-[9px]">

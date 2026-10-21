@@ -52,7 +52,8 @@ export interface PublicSiteHero {
   sideNote?: { icon: string; title: string; body: string; cta: string; href?: string };
 }
 
-export interface PublicSiteAlert { label: string; text: string }
+/** `sample`: the text comes from a simulation (demo and training only) and carries the Sample marker. */
+export interface PublicSiteAlert { label: string; text: string; sample?: boolean }
 export interface PublicSiteQuickService { title: string; subtitle: string; color: string; icon: string; href?: string }
 export interface PublicSiteFeaturedCard { kicker: string; title: string; body: string; cta: string; tone: 'primary' | 'subtle' | 'amber'; href?: string }
 /** `live`: read from the platform's own data rather than typed in. */
@@ -245,6 +246,7 @@ export function PublicSiteShell({
               <span aria-hidden>⚠</span> {alert.label}
             </span>
             <span className="min-w-0 flex-1 text-[13px] text-slate-700">{alert.text}</span>
+            {alert.sample ? <SampleChip label={t.sampleAlert} note={t.sampleAlertNote} /> : null}
             <span className="text-[12px] font-semibold" style={{ color: '#c0232c' }}>{t.viewAlerts}</span>
           </div>
         ) : null}

@@ -4,6 +4,14 @@
 // One cinematic command surface tiling all nine federated health domains as
 // live preview modules. Dark sovereign UI, real deterministic engines, real
 // maps. Built to the reference concept; not a dashboard, not a website.
+//
+// Truth in production (audit B, C1): the nine tiles come from simulation
+// engines, so the wall sits under the same notice and fold as the agency apps
+// (apps/_shared/RegisterRecords.tsx): Sample in demo and training, folded to
+// "Not connected" in production. Above the fold, standalone at /health-ecosystem,
+// the records the platform's registers hold for health (facility returns,
+// professions, cases, registered sites). Administrative and aggregate only:
+// no patient or clinical field anywhere (lib/gov/health-admin.ts).
 
 import * as React from 'react';
 import { NotYetButton } from '@/components/ui/NotYetButton';
@@ -14,9 +22,13 @@ import { SignalTag } from '@/components/ui/SignalTag';
 import { healthGeo } from '@/lib/gov/health-geo';
 import { KpiSpark, Donut, TrendChart, RingGauge, Sparkline, sc, type Tone } from '@/apps/_shared/SovereignUI';
 import {
-  nationalSituation, clinicianWorkstation, citizenPortalView, diseaseCommandView,
+  nationalSituation, diseaseCommandView,
   emergencyCommandView, pharmaSupplyCommand, healthFinanceExecution, publicHealthSite,
 } from '@/lib/gov/health-operations';
+import { workforceDesk, portalUsage } from '@/lib/gov/health-admin';
+import { RegisterRecords, SimulatedView } from '@/apps/_shared/RegisterRecords';
+import { api } from '@/lib/api/client';
+import type { InstallationMode } from '@/lib/ops/mode';
 import { hospitalOps } from '@/lib/gov/health-systems';
 import { waveSeries } from '@/lib/telemetry';
 import { formatMoney, aiLabel } from '@/lib/nation/registry';
@@ -86,6 +98,11 @@ function Tile({
   );
 }
 
+/** The simulation fold, only where the wall stands alone (inside the health application the app folds it). */
+function Fold({ on, mode, children }: { on: boolean; mode: InstallationMode; children: React.ReactNode }) {
+  return on ? <SimulatedView mode={mode}>{children}</SimulatedView> : <>{children}</>;
+}
+
 function Kpi({ label, value, unit, tone, points }: { label: string; value: string; unit?: string; tone: Tone; points?: number[] }) {
   return <KpiSpark label={label} value={value} unit={unit} tone={tone} points={points} />;
 }
@@ -111,8 +128,19 @@ function Bar({ label, pct, tone, tail }: { label: string; pct: number; tone: Ton
   );
 }
 
-export function HealthEcosystemWall() {
+/**
+ * `standalone` (the /health-ecosystem page): the wall carries its own records
+ * strip and simulation fold. Inside the health application (AppHost) the app
+ * already shows both, so the wall renders its tiles only.
+ */
+export function HealthEcosystemWall({ mode = 'production', standalone = false }: { mode?: InstallationMode; standalone?: boolean } = {}) {
   const [now, setNow] = React.useState(useRenderNow());
+  const [healthId, setHealthId] = React.useState<string | undefined>(undefined);
+  React.useEffect(() => {
+    if (!standalone) return;
+    // The health ministry's own registry record, for its cases, organisations, sites and incidents.
+    api.org.ministries().then(r => setHealthId(r.ministries.find(m => m.archetype === 'HEALTH' && m.status === 'active')?.id)).catch(() => {});
+  }, [standalone]);
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
@@ -123,8 +151,8 @@ export function HealthEcosystemWall() {
   const geo = healthGeo(ID, ts);
   const ns = nationalSituation(ID, ts);
   const ho = hospitalOps(ID, ts);
-  const cw = clinicianWorkstation(ID, ts);
-  const cp = citizenPortalView(ID, ts);
+  const wf = workforceDesk(ID, ts);
+  const pu = portalUsage(ID, ts);
   const di = diseaseCommandView(ID, ts);
   const er = emergencyCommandView(ID, ts);
   const ph = pharmaSupplyCommand(ID, ts);
@@ -175,8 +203,23 @@ export function HealthEcosystemWall() {
         </div>
       </header>
 
+      <main id="main" className="relative z-10 mx-auto w-full max-w-[1920px]">
+      {standalone ? (
+        <div className="space-y-2 px-[10px] pt-[10px]">
+          {/* The records the platform's registers hold for health, read under each register's own rules. */}
+          <RegisterRecords app={{ id: 'ministry-health', domain: 'health', kind: 'ministry', archetypeOrBranch: 'HEALTH', instanceId: healthId }} mode={mode} />
+          <section aria-label="Registered health sites" className="rounded-[3px] border border-line bg-bg p-2">
+            <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink">Registered health sites</h2>
+              <span className="text-[10px] text-ink-muted">From the national facility register; the map&apos;s simulated layers are off.</span>
+            </div>
+            <GeoMap geo={geo} metric="pressure" title="Registered health sites" height={220} recordsOnly />
+          </section>
+        </div>
+      ) : null}
+      <Fold on={standalone} mode={mode}>
       {/* OPERATIONAL WALL — fixed 3×3 sovereign grid (1.05fr 1.05fr 1fr / 410 370 320) */}
-      <main className="relative z-10 mx-auto w-full max-w-[1920px] overflow-x-auto"
+      <div className="overflow-x-auto"
         style={{
           display: 'grid',
           gridTemplateColumns: '1.05fr 1.05fr 1fr',
@@ -246,7 +289,7 @@ export function HealthEcosystemWall() {
             <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
               <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">{aiLabel('AI Recommendations', 'Recommendations')}</div>
               <div className="space-y-0.5">
-                {[[`Redirect 14 ICU patients · ${ns.worstRegion} → ${geo.reroute.toRegion !== ns.worstRegion ? geo.reroute.toRegion : geo.regions[geo.regions.length - 1]?.region ?? 'Highland'}`, 'Approve', 'alert'], ['Activate Emergency Medicine Reserve (EMR)', 'Review', 'warn'], [`Increase genomic surveillance · ${geo.corridors[0]?.from ?? 'Capital District'}`, 'Review', 'warn']].map(([r, b, t]) => (
+                {[[`Shift 14 ICU beds of capacity · ${ns.worstRegion} → ${geo.reroute.toRegion !== ns.worstRegion ? geo.reroute.toRegion : geo.regions[geo.regions.length - 1]?.region ?? 'Highland'}`, 'Approve', 'alert'], ['Activate Emergency Medicine Reserve (EMR)', 'Review', 'warn'], [`Increase genomic surveillance · ${geo.corridors[0]?.from ?? 'Capital District'}`, 'Review', 'warn']].map(([r, b, t]) => (
                   <div key={r} className="flex items-center gap-1 rounded-[2px] px-1 py-0.5" style={{ background: 'rgba(0,0,0,0.25)', borderLeft: `2px solid ${sc(t as Tone)}` }}>
                     <span className="min-w-0 flex-1 truncate text-[7px] text-ink-soft">{r}</span>
                     <span className="shrink-0 rounded-[2px] px-1 py-0.5 text-[6px] font-bold uppercase" style={{ border: `1px solid ${b === 'Approve' ? sc('ok') : ACC.command}`, color: b === 'Approve' ? sc('ok') : ACC.command }}>{b}</span>
@@ -327,102 +370,103 @@ export function HealthEcosystemWall() {
           </div>
         </Tile>
 
-        {/* 3 — DOCTOR WORKSPACE */}
-        <Tile n={3} href="/app/health/doctor" title="Doctor Workspace" sub="Clinical Command Center"
-          accent={ACC.doctor} posture={cw.patient.riskBand === 'High' ? 'HIGH RISK' : 'CLINICAL'}
-          postureTone={cw.patient.riskBand === 'High' ? 'alert' : 'ok'} time={time} navActive="Patient Queue"
-          nav={['Dashboard', 'Patient Queue', 'Patients', 'Diagnostics', 'Lab Results', 'Imaging', 'Prescriptions', 'Referrals', 'Messages', 'Protocols', aiLabel('AI Assistant', 'Assistant')]}>
-          {/* clinician profile + KPI strip */}
+        {/* 3 — WORKFORCE & LICENSING (administrative: who is on the register and on duty, licences and returns; no patient or clinical field) */}
+        <Tile n={3} href="/app/health/doctor" title="Health Workforce & Licensing" sub="Professionals · licences · returns"
+          accent={ACC.doctor} posture={wf.kpis.licencesPending > 4 ? 'BACKLOG' : 'ON TRACK'}
+          postureTone={wf.kpis.licencesPending > 4 ? 'warn' : 'ok'} time={time} navActive="Licensing Queue"
+          nav={['Dashboard', 'Licensing Queue', 'Professionals', 'Inspections', 'Returns', 'Renewals', 'Rota', 'Establishment', 'Messages', 'Protocols', aiLabel('AI Assistant', 'Assistant')]}>
+          {/* duty officer + KPI strip */}
           <div className="flex shrink-0 items-center gap-1">
             <div className="flex flex-1 items-center gap-2 rounded-[3px] border px-2 py-1" style={{ borderColor: 'rgba(95,168,255,0.2)', background: 'rgba(8,16,30,0.6)' }}>
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>{cw.patient.attending.split(' ').map(s => s[0]).slice(0, 2).join('')}</span>
-              <div className="min-w-0 flex-1"><div className="truncate text-[9px] font-semibold text-ink">{cw.patient.attending}</div><div className="truncate text-[7px] text-ink-muted">Attending · {cw.patient.ward}</div></div>
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>{wf.member.name.split(' ').map(s => s[0]).slice(0, 2).join('')}</span>
+              <div className="min-w-0 flex-1"><div className="truncate text-[9px] font-semibold text-ink">{wf.member.name}</div><div className="truncate text-[7px] text-ink-muted">Licensing officer · {wf.member.facility}</div></div>
             </div>
-            {[['PATIENTS', cw.queueCount, 'ok'], ['CRIT', cw.patient.alerts.length, cw.patient.alerts.length ? 'alert' : 'ok'], ['PENDING', cw.resultsPending, cw.resultsPending ? 'warn' : 'ok'], ['ORDERS', cw.ordersPending, cw.ordersPending ? 'warn' : 'ok']].map(([l, v, t]) => (
+            {[['ON REGISTER', wf.kpis.onRegister.toLocaleString('en'), 'ok'], ['RENEWALS', wf.kpis.renewalsDue, wf.kpis.renewalsDue ? 'warn' : 'ok'], ['LICENCES', wf.kpis.licencesPending, wf.kpis.licencesPending ? 'warn' : 'ok'], ['RETURNS DUE', wf.kpis.returnsDue, wf.kpis.returnsDue > 12 ? 'alert' : 'ok']].map(([l, v, t]) => (
               <div key={l as string} className="flex w-[58px] shrink-0 flex-col rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(95,168,255,0.18)', background: 'rgba(8,16,30,0.6)' }}>
-                <div className="text-[6px] font-bold uppercase tracking-[0.1em] text-ink-muted">{l as string}</div>
-                <div className="font-mono text-[18px] font-bold leading-none tabular-nums" style={{ color: sc(t as Tone), textShadow: `0 0 8px color-mix(in srgb,${sc(t as Tone)} 45%,transparent)` }}>{v as number}</div>
+                <div className="truncate text-[6px] font-bold uppercase tracking-[0.1em] text-ink-muted">{l as string}</div>
+                <div className="truncate font-mono text-[15px] font-bold leading-none tabular-nums" style={{ color: sc(t as Tone), textShadow: `0 0 8px color-mix(in srgb,${sc(t as Tone)} 45%,transparent)` }}>{v as number | string}</div>
               </div>
             ))}
           </div>
-          {/* patient queue | patient summary */}
+          {/* licensing queue | workforce by cadre */}
           <div className="flex min-h-0 flex-1 gap-1">
             <div className="flex min-w-0 flex-1 flex-col rounded-[4px] border" style={{ borderColor: 'rgba(95,168,255,0.2)', background: 'rgba(8,16,30,0.5)' }}>
               <div className="flex items-center justify-between border-b px-1.5 py-1" style={{ borderColor: 'rgba(95,168,255,0.16)' }}>
-                <span className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Patient Queue</span>
-                <span className="text-[6.5px] text-ink-muted">All ({cw.queueCount}) · Critical ({cw.patient.alerts.length})</span>
+                <span className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Facility Licensing Queue</span>
+                <span className="text-[6.5px] text-ink-muted">All ({wf.licensing.length}) · Over 30 days ({wf.licensing.filter(l => l.ageDays > 30).length})</span>
               </div>
               <div className="min-h-0 flex-1 space-y-0.5 overflow-hidden p-1">
-                {cw.queue.slice(0, 7).map(q => (
-                  <div key={q.id} className="flex items-center gap-1.5 rounded-[2px] px-1.5 py-1 text-[7.5px]" style={{ background: 'rgba(0,0,0,0.22)' }}>
-                    <span className="font-mono text-[6.5px] text-ink-muted">{q.id}</span>
-                    <span className="min-w-0 flex-1 truncate text-ink-soft">{q.name}</span>
-                    <span className="shrink-0 text-[6.5px] text-ink-muted">{q.ward} · {q.time}</span>
-                    <span className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[6px] font-bold uppercase" style={{ background: `color-mix(in srgb,${sc(q.tone)} 20%,transparent)`, color: sc(q.tone) }}>{q.acuity}</span>
+                {wf.licensing.slice(0, 7).map(q => (
+                  <div key={q.ref} className="flex items-center gap-1.5 rounded-[2px] px-1.5 py-1 text-[7.5px]" style={{ background: 'rgba(0,0,0,0.22)' }}>
+                    <span className="font-mono text-[6.5px] text-ink-muted">{q.ref}</span>
+                    <span className="min-w-0 flex-1 truncate text-ink-soft">{q.subject}</span>
+                    <span className="shrink-0 text-[6.5px] text-ink-muted">{q.ageDays}d</span>
+                    <span className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[6px] font-bold uppercase" style={{ background: `color-mix(in srgb,${sc(q.tone)} 20%,transparent)`, color: sc(q.tone) }}>{q.stage}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div className="flex w-[150px] shrink-0 flex-col rounded-[4px] border p-1.5" style={{ borderColor: 'rgba(95,168,255,0.2)', background: 'rgba(8,16,30,0.5)' }}>
-              <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Patient Summary</div>
-              <div className="mt-1 truncate text-[9px] font-semibold text-ink">{cw.patient.name}</div>
-              <div className="text-[6.5px] text-ink-muted">{cw.patient.mrn} · {cw.patient.age}{cw.patient.sex[0]} · {cw.patient.blood}</div>
-              <div className="mt-1 grid grid-cols-2 gap-x-1 gap-y-0.5">
-                {cw.patient.vitals.slice(0, 4).map(v => (
-                  <div key={v.label} className="flex justify-between text-[6.5px]"><span className="text-ink-muted">{v.label}</span><span className="font-mono" style={{ color: sc(v.tone) }}>{v.value}</span></div>
+              <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Workforce by Cadre</div>
+              <div className="mt-1 space-y-0.5">
+                {wf.cadres.slice(0, 6).map(c => (
+                  <div key={c.cadre} className="flex items-center gap-1 text-[6.5px]">
+                    <span className="w-16 shrink-0 truncate text-ink-muted">{c.cadre}</span>
+                    <span className="h-1 flex-1 overflow-hidden rounded-full" style={{ background: '#16222e' }}><span className="block h-full rounded-full" style={{ width: `${c.filledPct}%`, background: sc(c.tone) }} /></span>
+                    <span className="w-6 shrink-0 text-right font-mono" style={{ color: sc(c.tone) }}>{c.filledPct}%</span>
+                  </div>
                 ))}
               </div>
               <div className="mt-1 flex items-center gap-1.5">
-                <RingGauge value={cw.patient.riskScore} label="risk" tone={cw.patient.riskBand === 'High' ? 'alert' : cw.patient.riskBand === 'Moderate' ? 'warn' : 'ok'} size={48} sub={cw.patient.riskBand} />
-                <IndexTag index="health-operations.ts · riskScore" />
-                <div className="min-w-0 flex-1 text-[6.5px] text-ink-soft">{cw.patient.ai.recommended.slice(0, 3).map(r => <div key={r} className="truncate">▸ {r}</div>)}</div>
+                <RingGauge value={wf.kpis.establishmentPct} label="filled" tone={wf.kpis.establishmentPct >= 85 ? 'ok' : wf.kpis.establishmentPct >= 70 ? 'warn' : 'alert'} size={48} sub="%" />
+                <div className="min-w-0 flex-1 text-[6.5px] text-ink-soft">{wf.advisory.recommended.slice(0, 3).map(r => <div key={r} className="truncate">▸ {r}</div>)}</div>
               </div>
-              <NotYetButton reason="the platform keeps no patient or clinical record, so there is nothing to analyse; this panel is a simulation" className="mt-auto rounded-[2px] py-1 text-[7px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>{aiLabel('Run AI Analysis', 'Run Analysis')}</NotYetButton>
+              <NotYetButton reason="workforce planning is not recorded on the platform yet; professionals are on the professions register, and this panel is a simulation" className="mt-auto rounded-[2px] py-1 text-[7px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>{aiLabel('Run AI Analysis', 'Run Analysis')}</NotYetButton>
             </div>
           </div>
-          {/* today's schedule */}
+          {/* today's inspections and returns */}
           <div className="shrink-0 rounded-[4px] border p-1" style={{ borderColor: 'rgba(95,168,255,0.18)', background: 'rgba(8,16,30,0.5)' }}>
-            <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Today's Schedule</div>
+            <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Today&apos;s Schedule · inspections and returns</div>
             <div className="flex gap-0.5">
-              {cw.patient.timeline.slice(0, 8).map((e, i) => (
-                <div key={i} className="h-3 flex-1 rounded-[1px]" style={{ background: `color-mix(in srgb,${sc(e.tone)} 55%,transparent)` }} title={`${e.at} ${e.detail}`} />
+              {wf.duty.slice(0, 8).map((e, i) => (
+                <div key={i} className="h-3 flex-1 rounded-[1px]" style={{ background: `color-mix(in srgb,${sc(e.tone)} 55%,transparent)` }} title={`${e.at} ${e.kind}: ${e.detail}`} />
               ))}
             </div>
           </div>
         </Tile>
 
-        {/* 4 — CITIZEN HEALTH PORTAL */}
-        <Tile n={4} href="/app/health/portal" title="Citizen Health Portal" sub="Your Health, Your Rights"
-          accent={ACC.citizen} posture={cp.healthBand.toUpperCase()} postureTone={cp.healthBand === 'Low' ? 'alert' : cp.healthBand === 'Fair' ? 'warn' : 'ok'}
+        {/* 4 — CITIZEN HEALTH PORTAL (service use counted, never a person's health) */}
+        <Tile n={4} href="/app/health/portal" title="Citizen Health Portal" sub="Services · bookings · requests"
+          accent={ACC.citizen} posture={pu.onTimeTone === 'ok' ? 'ON TIME' : pu.onTimeTone === 'warn' ? 'SLOW' : 'LATE'} postureTone={pu.onTimeTone === 'info' ? 'ok' : pu.onTimeTone}
           time={time} navActive="Overview"
-          nav={['Overview', 'Appointments', 'Prescriptions', 'Health Records', 'Lab Reports', 'Vaccinations', 'Insurance', 'Telemedicine', 'Reminders', 'Emergency ID', 'Settings']}>
-          {/* welcome + actions */}
+          nav={['Overview', 'Appointments', 'Certificates', 'Facilities', 'Programmes', 'Vaccinations', 'Insurance', 'Telemedicine', 'Reminders', 'Emergency', 'Settings']}>
+          {/* this month + actions */}
           <div className="flex shrink-0 items-center gap-1">
             <div className="flex-1 rounded-[3px] border px-2 py-1" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.6)' }}>
-              <div className="text-[7px] text-ink-muted">Welcome,</div>
-              <div className="text-[11px] font-semibold text-ink">{cp.name}</div>
-              <div className="font-mono text-[7px] text-ink-muted">HEALTH ID · {cp.healthId}</div>
+              <div className="text-[7px] text-ink-muted">Bookings this month</div>
+              <div className="text-[11px] font-semibold text-ink">{pu.bookedThisMonth.toLocaleString('en')}</div>
+              <div className="font-mono text-[7px] text-ink-muted">{pu.facilitySearches.toLocaleString('en')} facility searches</div>
             </div>
-            {['Book Appointment', 'Teleconsult', 'Prescriptions'].map(a => (
+            {['Book Appointment', 'Find Facility', 'Certificates'].map(a => (
               <div key={a} className="grid w-[78px] shrink-0 place-items-center rounded-[3px] border px-1 py-2 text-center text-[7px] text-ink-soft" style={{ borderColor: 'rgba(54,211,155,0.18)', background: 'rgba(8,26,20,0.5)' }}>{a}</div>
             ))}
           </div>
-          {/* left detail column | health score + insurance */}
+          {/* requests by kind | requests on time + scheme membership */}
           <div className="flex min-h-0 flex-1 gap-1">
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="shrink-0 rounded-[4px] border p-1.5" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
-                <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Upcoming Appointment</div>
-                <div className="mt-0.5 text-[8.5px] text-ink-soft">{cp.upcoming.spec} · {cp.upcoming.doctor}</div>
-                <div className="text-[7px] text-ink-muted">{cp.upcoming.date} · {cp.upcoming.time} · {cp.upcoming.place}</div>
+                <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Busiest Service</div>
+                <div className="mt-0.5 text-[8.5px] text-ink-soft">{pu.busiest.service}</div>
+                <div className="text-[7px] text-ink-muted">{pu.busiest.place} · {pu.certificatesIssued.toLocaleString('en')} certificates issued</div>
               </div>
               <div className="flex min-h-0 flex-1 flex-col rounded-[4px] border p-1.5" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
-                <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Health Timeline</div>
+                <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Requests by Kind</div>
                 <div className="mt-0.5 min-h-0 flex-1 space-y-0.5 overflow-hidden">
-                  {cp.timeline.slice(0, 6).map((tl, i) => (
-                    <div key={i} className="flex items-center gap-1.5 text-[7px]">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: sc(tl.tone) }} />
-                      <span className="min-w-0 flex-1 truncate text-ink-soft">{tl.detail}</span>
-                      <span className="shrink-0 text-ink-muted">{tl.date}</span>
+                  {pu.requests.slice(0, 6).map(r => (
+                    <div key={r.kind} className="flex items-center gap-1.5 text-[7px]">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: sc(r.tone === 'info' ? 'ok' : r.tone) }} />
+                      <span className="min-w-0 flex-1 truncate text-ink-soft">{r.kind}</span>
+                      <span className="shrink-0 font-mono text-ink-muted">{r.count.toLocaleString('en')}</span>
                     </div>
                   ))}
                 </div>
@@ -430,14 +474,14 @@ export function HealthEcosystemWall() {
             </div>
             <div className="flex w-[128px] shrink-0 flex-col gap-1">
               <div className="flex flex-1 flex-col items-center justify-center rounded-[4px] border" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
-                <RingGauge value={cp.healthScore} label="score" tone={cp.healthBand === 'Low' ? 'alert' : cp.healthBand === 'Fair' ? 'warn' : 'ok'} size={84} sub={cp.healthBand} />
-                <IndexTag index="health-operations.ts · healthScore" />
+                <RingGauge value={pu.onTimePct} label="on time" tone={pu.onTimeTone === 'info' ? 'ok' : pu.onTimeTone} size={84} sub="%" />
+                <div className="text-[6px] uppercase tracking-wider text-ink-muted">requests answered on time</div>
               </div>
               <div className="shrink-0 rounded-[4px] border p-1.5" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
-                <div className="text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-soft">Insurance</div>
-                <div className="truncate text-[7px] text-ink-soft">{cp.insurance.plan}</div>
-                <div className="mt-0.5 h-1.5 overflow-hidden rounded-full" style={{ background: '#0c1c16' }}><span className="block h-full rounded-full" style={{ width: `${cp.insurance.coverageUsedPct}%`, background: sc(cp.insurance.coverageUsedPct >= 80 ? 'alert' : 'ok') }} /></div>
-                <div className="mt-0.5 text-[6px] text-ink-muted">Valid {cp.insurance.validTill}</div>
+                <div className="text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-soft">Scheme Membership</div>
+                <div className="truncate text-[7px] text-ink-soft">{pu.schemeMembershipPct}% of residents</div>
+                <div className="mt-0.5 h-1.5 overflow-hidden rounded-full" style={{ background: '#0c1c16' }}><span className="block h-full rounded-full" style={{ width: `${pu.schemeMembershipPct}%`, background: sc(pu.schemeMembershipPct >= 70 ? 'ok' : 'warn') }} /></div>
+                <div className="mt-0.5 text-[6px] text-ink-muted">aggregate · scheme returns</div>
               </div>
             </div>
           </div>
@@ -539,8 +583,8 @@ export function HealthEcosystemWall() {
             <div className="flex w-[126px] shrink-0 flex-col rounded-[4px] border" style={{ borderColor: 'rgba(255,90,100,0.22)', background: 'rgba(28,10,12,0.5)' }}>
               <div className="border-b px-1.5 py-1 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft" style={{ borderColor: 'rgba(255,90,100,0.18)' }}>Incident Command</div>
               <div className="min-h-0 flex-1 space-y-1 overflow-hidden p-1.5">
-                <div className="flex justify-between text-[7px]"><span className="text-ink-muted">PATIENTS</span><span className="font-mono text-ink">{inc?.affected ?? 42}</span></div>
-                <div className="flex justify-between text-[7px]"><span className="text-ink-muted">CRITICAL</span><span className="font-mono" style={{ color: sc('alert') }}>{inc?.resources.rescue ?? 12}</span></div>
+                <div className="flex justify-between text-[7px]"><span className="text-ink-muted">AFFECTED</span><span className="font-mono text-ink">{inc?.affected ?? 42}</span></div>
+                <div className="flex justify-between text-[7px]"><span className="text-ink-muted">SERIOUS</span><span className="font-mono" style={{ color: sc('alert') }}>{inc?.resources.rescue ?? 12}</span></div>
                 <div className="flex justify-between text-[7px]"><span className="text-ink-muted">MINOR</span><span className="font-mono" style={{ color: sc('ok') }}>{inc?.resources.vehicles ?? 12}</span></div>
                 <div className="mt-1 border-t pt-1 text-[6px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgba(255,90,100,0.14)' }}>Resources Deployed</div>
                 {er.resources.slice(0, 4).map(r => (
@@ -760,6 +804,8 @@ export function HealthEcosystemWall() {
           </div>
         </Tile>
 
+      </div>
+      </Fold>
       </main>
 
       <footer className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-t px-5 py-2.5 text-[8px] uppercase tracking-[0.18em] text-ink-muted"

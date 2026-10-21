@@ -7,6 +7,8 @@ vi.mock('@/lib/casework/actor', () => ({ routeActor: async (by?: string) => ({ i
 const { GET, POST } = await import('./route');
 const { issueBill, listBills, payBill } = await import('@/lib/data/store/payments');
 const { listAudit } = await import('@/lib/data/store/audit');
+const { listAccess, resetAccessLog } = await import('@/lib/records/access-log');
+const { resetSearchLog } = await import('@/lib/records/access-search');
 
 const post = (body: unknown) => POST(new Request('http://x', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body), headers: { 'content-type': 'application/json' } }) as never);
 let n = 0;
@@ -30,6 +32,21 @@ describe('GET /api/payments', () => {
     json = await (await GET()).json();
     expect(json.bills.some((x: { id: string }) => x.id === b.id)).toBe(true);
   });
+
+  it('writes a read that returns bills naming a payer to the access log as one search with the count, never the payer (step I0.1)', async () => {
+    resetAccessLog(); resetSearchLog();
+    taxBill('ministry-of-finance');
+    scope = { id: 'o', name: 'O', label: 'Other ministry', role: 'signatory', institution: 'ministry-of-health' };
+    await GET();
+    expect(listAccess({ register: 'bills' })).toHaveLength(0);
+    scope = { id: 't', name: 'T', label: 'Tax official', role: 'officer', institution: 'ministry-of-finance' };
+    await GET(); await GET();
+    const log = listAccess({ register: 'bills' });
+    expect(log).toHaveLength(1);
+    const named = (await (await GET()).json()).bills.filter((x: { payer?: unknown }) => x.payer).length;
+    expect(log[0]).toMatchObject({ v: 2, action: 'search', result: 'allowed', by: { id: 't', name: 'Tax official', institution: 'ministry-of-finance' }, record: { query: `bills naming a payer → ${named}` } });
+    expect(JSON.stringify(log)).not.toMatch(/Secret Taxpayer|BR-\d/);
+  });
 });
 
 describe('POST /api/payments (the stand-in payment)', () => {
@@ -52,9 +69,13 @@ describe('POST /api/payments (the stand-in payment)', () => {
     const b = taxBill('ministry-of-finance');
     expect((await post({ billId: b.id })).status).toBe(409);
     expect(listBills().find(x => x.id === b.id)?.status).not.toBe('paid');
+    // A general bill of its own, so the production refusal is always exercised.
+    const general = issueBill({ kind: 'licence-fee', description: 'licence fee', amountMinor: 1200, currency: 'KES', dueDate: '2026-12-31', reference: `licence:TEST-${++n}` }, 'Licensing official') as { id: string };
     vi.stubEnv('CIVICOS_MODE', 'production');
-    const general = listBills().find(x => !x.payer && x.status !== 'paid');
-    if (general) expect((await post({ billId: general.id })).status).toBe(409);
+    expect((await post({ billId: general.id })).status).toBe(409);
+    // payBill itself refuses in production, whoever calls it.
+    expect(payBill(general.id, 'Test rail')).toEqual({ error: expect.stringMatching(/No payment provider is connected/) });
+    expect(listBills().find(x => x.id === general.id)?.status).toBe('due');
   });
 
   it('keeps payBill usable by the store (demonstration flows) with the simulated mark', () => {

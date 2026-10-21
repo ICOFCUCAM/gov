@@ -804,6 +804,23 @@ export function canReadAccessLog(s: Scope, dataProtection: string | undefined): 
   return 'The access log is read by auditors and by the data-protection authority';
 }
 
+/**
+ * Reading the platform audit chain (GET /api/audit; step I0.1): auditors and
+ * the data-protection authority's officials, as for the access log. The chain
+ * names who acted across every institution, courts, the legislature and
+ * independent bodies included, and its entries carry no institution to filter
+ * by, so neither an administrator nor any whole-government or ministry
+ * official reads it through the API: audit administration stays apart from
+ * operations, and whole-government reach stops at independent institutions.
+ * Its integrity check (/api/audit/verify) stays public; screens that show an
+ * institution its own history read their records, not the chain.
+ */
+export function canReadAuditChain(s: Scope, dataProtection: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return null;
+  if (dataProtection && s.institution === dataProtection) return null;
+  return 'The audit chain is read by auditors and by the data-protection authority';
+}
+
 /** Operational rules (lib/law/rules.ts): drafted by officials of the authority that owns the rule; approved by one who can sign there. Administrators have no say in rates. */
 export function canManageRule(s: Scope, owner: string | undefined, approve: boolean): string | null {
   if (roleOf(s) === 'auditor') return 'Auditors can read rules but not change them';

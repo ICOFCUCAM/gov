@@ -25,6 +25,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { seal, open, encryptionAtRest } from '@/lib/crypto/envelope';
 import { providerKind, remoteService, remoteKeyNames } from '@/lib/keys/custody';
+import type { InstallationMode } from '@/lib/ops/mode';
 
 export const ARCHIVE_FORMAT = 'civicos-backup/1';
 const MAGIC = Buffer.from('CVBKUP1\n', 'utf8');
@@ -51,6 +52,12 @@ export interface Manifest {
   reason: BackupReason;
   /** snapshot: the platform's stores (memory, file, supabase modes); postgres: the record tables. */
   mode: 'snapshot' | 'postgres';
+  /**
+   * What the installation was when the backup was taken (lib/ops/mode.ts): a
+   * production installation refuses to restore a demo or training backup.
+   * Absent in backups taken before step I0.1 (read as unknown).
+   */
+  installation?: InstallationMode;
   adapter: string;
   app: { release: string | null; package: string; node: string };
   schema: { snapshotFormat: number; records?: string; migrations?: string[] };

@@ -144,6 +144,9 @@ export interface Messages {
     live: string;
     sampleNews: string;
     sampleNote: string;
+    /** Marks a public alert that comes from the simulation (demo and training only). */
+    sampleAlert: string;
+    sampleAlertNote: string;
     browseTopics: string;
     gatewayLink: string;
     gatewayMigrate: string;
@@ -885,6 +888,8 @@ export const en: Messages = {
     live: 'Live',
     sampleNews: 'Sample announcements',
     sampleNote: 'Shown until the {name} publishes its own.',
+    sampleAlert: 'Sample · not a real alert',
+    sampleAlertNote: 'A simulated alert shown in a demonstration or training installation; no emergency has been declared.',
     browseTopics: 'Browse by topic',
     gatewayLink: 'This is the {name} on the national platform. Its main website is {host}.',
     gatewayMigrate: 'The {name} is moving its website here from {host}; pages not yet moved are still there.',

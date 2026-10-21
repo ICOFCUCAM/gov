@@ -54,7 +54,7 @@ export function HospitalSystem({ id, now, role, withheld }: {
   const cInt = chainIntegrity('HEALTH', epoch);
   const cTone = cInt.status === 'synchronised' ? 'ok' : cInt.status === 'lagging' ? 'warn' : 'alert';
   const rv = React.useSyncExternalStore(recSub, recVer, () => 0);
-  const clinRecs = React.useMemo(() => recordsOf('HEALTH', fac.id, 'clinical record', now), [fac.id, now, rv]);
+  const clinRecs = React.useMemo(() => recordsOf('HEALTH', fac.id, 'administrative return', now), [fac.id, now, rv]);
   const [recSubj, setRecSubj] = React.useState('');
   const [recBy, setRecBy] = React.useState('');
   const recActor = recBy || roster[0]?.name || 'Physician';
@@ -94,16 +94,16 @@ export function HospitalSystem({ id, now, role, withheld }: {
             <span>roll-up {cInt.uplinkLatencyMin}m · national lag {cInt.nationalLagMin}m</span>
           </div>
         </CommandPanel>
-        <CommandPanel title={`Clinical records · ${fac.id}`} meta={`${clinRecs.length} held · captured → synced`} accent={ACC}>
+        <CommandPanel title={`Administrative returns · ${fac.id}`} meta={`${clinRecs.length} held · captured → synced`} accent={ACC}>
           <div className="mb-1.5 flex items-center gap-1.5">
             <select value={recActor} onChange={e => setRecBy(e.target.value)}
               className="focus-ring max-w-[120px] shrink-0 rounded-[3px] border bg-surface px-1 py-1 text-[9px] text-ink-soft" style={{ borderColor: 'rgb(var(--c-line))' }}>
               {roster.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
             </select>
-            <input value={recSubj} onChange={e => setRecSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && recSubj.trim()) { fileRecord('HEALTH', fac.id, recSubj, recActor, 'clinical record', now); setRecSubj(''); } }}
-              placeholder={`File a clinical record at ${fac.id}…`}
+            <input value={recSubj} onChange={e => setRecSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && recSubj.trim()) { fileRecord('HEALTH', fac.id, recSubj, recActor, 'administrative return', now); setRecSubj(''); } }}
+              placeholder={`File an administrative return at ${fac.id} (capacity, staffing, supplies; never a person's health)…`}
               className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
-            <button type="button" onClick={() => { if (recSubj.trim()) { fileRecord('HEALTH', fac.id, recSubj, recActor, 'clinical record', now); setRecSubj(''); } }}
+            <button type="button" onClick={() => { if (recSubj.trim()) { fileRecord('HEALTH', fac.id, recSubj, recActor, 'administrative return', now); setRecSubj(''); } }}
               className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: ACC, color: ACC }}>File</button>
           </div>
           <div className="max-h-[132px] space-y-0.5 overflow-y-auto">

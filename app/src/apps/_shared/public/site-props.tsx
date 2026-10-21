@@ -25,6 +25,8 @@ export interface SitePropsOptions {
   preview?: string;
   /** The visitor's language and the page's origin (siteRequest()); the nation's language and no address without it. */
   request?: SiteRequest;
+  /** Live keys whose value comes from a simulation (demo and training only): an alert reading one carries the Sample marker. */
+  sampleLive?: string[];
 }
 
 const hostOf = (url: string) => new URL(url).hostname.replace(/^www\./, '');
@@ -67,7 +69,7 @@ export async function visitorLocale(): Promise<string> {
   return (await siteRequest()).locale;
 }
 
-export function siteProps(id: string, { theme: given, illustration, live = {}, year = new Date().getFullYear(), preview, request }: SitePropsOptions): PublicSiteShellProps {
+export function siteProps(id: string, { theme: given, illustration, live = {}, year = new Date().getFullYear(), preview, request, sampleLive = [] }: SitePropsOptions): PublicSiteShellProps {
   const { content: raw, settings, previewing, previewBrand, language } = effectiveContent(id, preview, request?.locale ?? nationLocale());
   // The ministry's own colours when it brought them (a previewed proposal's first), darkened where
   // needed so text in them stays readable (WCAG AA).
@@ -109,7 +111,7 @@ export function siteProps(id: string, { theme: given, illustration, live = {}, y
       illustration,
       ...(c.hero.sideNote ? { sideNote: { ...c.hero.sideNote, href: href(c.hero.sideNote.to) } } : {}),
     },
-    alert: c.alert,
+    alert: c.alert && (sampleLive.some(k => raw.alert?.text.includes(`{live.${k}}`)) ? { ...c.alert, sample: true } : c.alert),
     quickServices: c.quickServices.map(q => ({ title: q.title, subtitle: q.subtitle, icon: q.icon, color: colour(q.color), href: href(q.to) })),
     featured: c.featured.map(f => ({ kicker: f.kicker, title: f.title, body: f.body, cta: f.cta, tone: f.tone, href: href(f.to) })) as PublicSiteShellProps['featured'],
     statistics: c.statistics.map((s, i) => ({ ...s, live: liveAt.has(i) })),

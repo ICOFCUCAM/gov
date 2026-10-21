@@ -12,7 +12,7 @@
 // (with reinstatement) and a revocation. Four-eyes on registration, grants,
 // suspensions, reinstatements and revocations.
 
-import { registerEffect, registeredEffects, type EffectContext } from '@/lib/casework/engine';
+import { registerEffect, registeredEffects, sampleMark, type EffectContext } from '@/lib/casework/engine';
 import { draftPackage, listPackages, ownerInstitution } from '@/lib/casework/packages';
 import { authorityFor } from '@/lib/data/store';
 import { getFacility } from '@/lib/data/facilities';
@@ -80,7 +80,7 @@ function change(ctx: EffectContext, state: StandingState, opts: { conditions?: b
   const o = orgOf(c);
   if (!o) return { error: `No organisation ${str(c.fields.organisation) || '(none given)'} in the register` };
   const reason = c.pending?.reason ?? `${ctx.action.label} (${c.ref})`;
-  const s = setStanding(o.id, { register: r.key, state, reason, case: c.id, ...(opts.conditions && str(c.fields.conditions) ? { conditions: list(c.fields.conditions) } : {}) }, actor.name, now);
+  const s = setStanding(o.id, { register: r.key, state, reason, case: c.id, ...sampleMark(c), ...(opts.conditions && str(c.fields.conditions) ? { conditions: list(c.fields.conditions) } : {}) }, actor.name, now);
   if ('error' in s) return s;
   return {
     facts: { organisation: o.number, register: r.key, standing: s.state, ...(s.validUntil ? { validUntil: s.validUntil } : {}) },
@@ -100,9 +100,9 @@ registerEffect('org.register', (ctx: EffectContext) => {
   const r = registerFor(c);
   if ('error' in r) return r;
   const f = c.fields;
-  const o = createOrganisation({ name: f.orgName, kind: f.orgKind, region: f.region, address: f.address, representative: { name: f.representativeName, role: f.representativeRole } }, c.id, actor.name, now);
+  const o = createOrganisation({ name: f.orgName, kind: f.orgKind, region: f.region, address: f.address, representative: { name: f.representativeName, role: f.representativeRole }, ...sampleMark(c) }, c.id, actor.name, now);
   if ('error' in o) return o;
-  const s = setStanding(o.id, { register: r.key, state: 'granted', reason: c.pending?.reason ?? `Registered (${c.ref})`, case: c.id }, actor.name, now);
+  const s = setStanding(o.id, { register: r.key, state: 'granted', reason: c.pending?.reason ?? `Registered (${c.ref})`, case: c.id, ...sampleMark(c) }, actor.name, now);
   if ('error' in s) return s;
   return { facts: { organisation: o.number, register: r.key, standing: 'granted' }, after: (d?: { id: string }) => { if (d) attachStandingDecision(o.id, r.key, d.id); } };
 });

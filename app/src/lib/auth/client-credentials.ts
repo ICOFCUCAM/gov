@@ -22,7 +22,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { verifyIntegrationKey, verifyIntegrationToken, type IntegrationAccess } from '@/lib/data/store';
-import { signer, publicHalfById } from '@/lib/keys/custody';
+import { signer, publicHalfById, developmentKeyRefusal } from '@/lib/keys/custody';
 import { verifyBytes } from '@/lib/crypto/signing-key';
 
 /** How long an access token lives. */
@@ -41,7 +41,7 @@ export interface TokenRequest {
 /** What the token endpoint answers: an RFC 6749 §5.1 body, or a §5.2 error with its status. */
 export type TokenAnswer =
   | { ok: true; body: { access_token: string; token_type: 'Bearer'; expires_in: number; scope: string } }
-  | { ok: false; status: 400 | 401 | 429; body: { error: 'invalid_request' | 'invalid_client' | 'unsupported_grant_type' | 'invalid_scope' | 'slow_down'; error_description: string }; basic?: boolean; retryAfterSeconds?: number };
+  | { ok: false; status: 400 | 401 | 429 | 503; body: { error: 'invalid_request' | 'invalid_client' | 'unsupported_grant_type' | 'invalid_scope' | 'slow_down' | 'temporarily_unavailable'; error_description: string }; basic?: boolean; retryAfterSeconds?: number };
 
 interface Claims { iss: string; sub: string; client_id: string; scope: string; iat: number; exp: number; jti: string; kp: string }
 
@@ -86,6 +86,9 @@ export async function issueToken(issuer: string, authorization: string | null | 
   if (!scopes.length) return { ok: false, status: 400, body: { error: 'invalid_scope', error_description: 'This integration holds no scope' } };
   const iat = Math.floor(now / 1000);
   const claims: Claims = { iss: issuer, sub: client.id, client_id: client.id, scope: scopes.join(' '), iat, exp: iat + TOKEN_TTL_SECONDS, jti: randomUUID(), kp: client.keyPrefix ?? '' };
+  // A production installation never issues a token signed with a development key (step I0.1).
+  const refused = developmentKeyRefusal('token');
+  if (refused) return { ok: false, status: 503, body: { error: 'temporarily_unavailable', error_description: refused } };
   const s = signer('token');
   const half = await s.load();
   const head = b64url(JSON.stringify({ alg: 'EdDSA', typ: TOKEN_TYPE, kid: half.keyId }));

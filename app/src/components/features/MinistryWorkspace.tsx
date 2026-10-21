@@ -44,6 +44,7 @@ import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { RegisterRecords } from '@/apps/_shared/RegisterRecords';
 import { useInstallationMode } from '@/lib/ops/mode-context';
+import { SampleFold, SampleTag } from '@/components/ui/SampleFold';
 
 const EXAMPLE_CASE = 'An example case from the platform. Load this institution\'s own cases under My work › Load cases.';
 
@@ -79,6 +80,14 @@ const PRIMARY: Tab[] = ['command', 'approvals', 'incidents', 'escalations', 'reg
  * archetype-specialised operational tabs. One canonical implementation,
  * composed per archetype from the profile + operational data.
  */
+// Generated sections (audit B C19): marked Sample in demo and training, folded to
+// "Not connected" in production (components/ui/SampleFold.tsx). The regional,
+// series and field figures come from the ministry operations model, computed per
+// institution with no record behind it; the state and ecosystem panels from the
+// reference model.
+const SEEDED_OPS = 'Ministry operations model (lib/data/store/ministries.ts): generated per institution, no record behind it';
+const MODEL_OPS = `Institution model · ${REFERENCE_MODEL}`;
+
 const NAME_FIRST = 'Name the acting official first (under "Needs you now"): every action is recorded under a person.';
 
 export function MinistryWorkspace({ id }: { id: string }) {
@@ -401,12 +410,15 @@ export function MinistryWorkspace({ id }: { id: string }) {
           { l: 'Status', v: readiness ? LIFECYCLE_LABEL[readiness.lifecycle] : (inst?.status ?? '—'), c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))', dot: true },
           { l: 'Readiness', v: readiness ? `${readiness.total}%` : '—', c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))' },
           { l: 'Situation', v: mode === 'CRISIS' ? 'Crisis' : mode === 'ESCALATION' ? 'Incident open' : 'Normal', c: modeTone, dot: true },
-          { l: 'Pressure from other ministries', v: cascadeSelf ? `${cascadeSelf.totalStress}${cascadeSelf.inheritedStress ? ` (+${cascadeSelf.inheritedStress})` : ''}` : '—', c: cascadeCrit ? 'rgb(var(--c-alert))' : cascadeStrain ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))', dot: cascadeCrit || cascadeStrain, sample: true },
+          // A cascade-model figure: a sample in demo and training, not connected in production.
+          installMode === 'production'
+            ? { l: 'Pressure from other ministries', v: 'Not connected', c: 'rgb(var(--c-ink-muted))', sample: true }
+            : { l: 'Pressure from other ministries', v: cascadeSelf ? `${cascadeSelf.totalStress}${cascadeSelf.inheritedStress ? ` (+${cascadeSelf.inheritedStress})` : ''}` : '—', c: cascadeCrit ? 'rgb(var(--c-alert))' : cascadeStrain ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))', dot: cascadeCrit || cascadeStrain, sample: true },
           { l: 'Active incidents', v: String(activeAlerts.length), c: activeAlerts.length ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
           { l: 'Queue', v: `${openQueue} open`, c: openQueue > 6 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink))' },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}{'sample' in s && s.sample ? <SignalTag kind="sample" source={`Cascade model over ${REFERENCE_MODEL.toLowerCase()}`} /> : null}</span>
+            <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}{'sample' in s && s.sample ? <SampleTag source={`Cascade model over ${REFERENCE_MODEL.toLowerCase()}`} /> : null}</span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: s.c }}>
               {s.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: s.c }} /> : null}
               {s.v}
@@ -539,7 +551,8 @@ export function MinistryWorkspace({ id }: { id: string }) {
             ];
             return (
               <>
-              <Section title="Operational state" meta="institution model">
+              <Section title="Operational state" meta={<>institution model <SampleTag source={MODEL_OPS} /></>}>
+                <SampleFold what="Operational state" source={MODEL_OPS} marked>
                 <div className="grid grid-cols-3 gap-1 sm:grid-cols-5 xl:grid-cols-9">
                   {cells.map(([l, v, c]) => (
                     <div key={l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
@@ -549,8 +562,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
                   ))}
                 </div>
                 <p className="mt-1.5 text-[10px] text-ink-soft">▸ <span style={{ color: TONE.warn }}>{aiHeadline ? 'AI advisory' : 'Advisory'}:</span> {aiHeadline ?? op.aiAdvisory}</p>
+                              </SampleFold>
               </Section>
-              <Section title="Service figures" meta={<SignalTag kind="sample" source={REFERENCE_MODEL} />}>
+              <Section title="Service figures" meta={<SampleTag source={MODEL_OPS} />}>
+                <SampleFold what="Service figures" source={MODEL_OPS} marked>
                 <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
                   {serviceReadings(id, (archetype || 'GENERIC') as ArchetypeKey, now / 4000).map(r => (
                     <div key={r.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
@@ -560,8 +575,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
                     </div>
                   ))}
                 </div>
+                              </SampleFold>
               </Section>
-              <Section title="Institutional ecosystem" meta={`${fab.layers.length} layers · 3 tiers · ${fab.dependencies.length} dependencies`}>
+              <Section title="Institutional ecosystem" meta={<>{`${fab.layers.length} layers · 3 tiers · ${fab.dependencies.length} dependencies`} <SampleTag source={MODEL_OPS} /></>}>
+                <SampleFold what="Institutional ecosystem" source={MODEL_OPS} marked>
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   {fab.layers.map(l => {
                     const ets = now / 4000;
@@ -621,11 +638,13 @@ export function MinistryWorkspace({ id }: { id: string }) {
                     })}
                   </div>
                 </div>
+                              </SampleFold>
               </Section>
               </>
             );
           })()}
-          <Section title="Command indicators" meta="last 12 periods">
+          <Section title="Command indicators" meta={<>last 12 periods <SampleTag source={SEEDED_OPS} /></>}>
+            <SampleFold what="Command indicators" source={SEEDED_OPS} marked>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {series.map(s => (
                 <Sparkbars
@@ -639,8 +658,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 />
               ))}
             </div>
+                      </SampleFold>
           </Section>
-          <Section title="Regional status" meta="darker tile = more open cases">
+          <Section title="Regional status" meta={<>darker tile = more open cases <SampleTag source={SEEDED_OPS} /></>}>
+            <SampleFold what="Regional status" source={SEEDED_OPS} marked>
             <RegionMatrix
               cells={regions.map(r => ({
                 label: r.region,
@@ -650,9 +671,11 @@ export function MinistryWorkspace({ id }: { id: string }) {
               }))}
               onSelect={() => chooseTab('regional')}
             />
+                      </SampleFold>
           </Section>
           <div className="grid gap-5 lg:grid-cols-2">
-            <Section title="On time" meta="target 95%">
+            <Section title="On time" meta={<>target 95% <SampleTag source={SEEDED_OPS} /></>}>
+              <SampleFold what="On time" source={SEEDED_OPS} marked>
               <SLAMonitor
                 rows={regions.map(r => ({
                   label: r.region,
@@ -662,8 +685,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
                   target: 95,
                 }))}
               />
+                          </SampleFold>
             </Section>
-            <Section title="Caseload concentration" meta={`${totalCases} ${labels.cases.toLowerCase()}`}>
+            <Section title="Caseload concentration" meta={<>{installMode === 'production' ? labels.cases.toLowerCase() : `${totalCases} ${labels.cases.toLowerCase()}`} <SampleTag source={SEEDED_OPS} /></>}>
+              <SampleFold what="Caseload concentration" source={SEEDED_OPS} marked>
               <FlowBars
                 segments={regions.map(r => ({
                   label: r.region,
@@ -671,6 +696,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                   tone: r.status,
                 }))}
               />
+                          </SampleFold>
             </Section>
           </div>
           {activeAlerts.length > 0 ? (
@@ -851,7 +877,8 @@ export function MinistryWorkspace({ id }: { id: string }) {
 
       {tab === 'regional' && (
         <div className="space-y-3">
-          <Section title="Regional theatre" meta="institutional deployment · pressure">
+          <Section title="Regional theatre" meta={<>institutional deployment · pressure <SampleTag source={MODEL_OPS} /></>}>
+            <SampleFold what="Regional theatre" source={MODEL_OPS} marked>
             <div className="overflow-hidden rounded-[3px] border border-line-soft">
               <TerritoryHeat epoch={(id.charCodeAt(0) || 7) % 50} height={230} />
             </div>
@@ -860,8 +887,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
               <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
               <span>Critical</span>
             </div>
+                      </SampleFold>
           </Section>
-          <Section title="National regional posture" meta="shared regional command model">
+          <Section title="National regional posture" meta={<>shared regional command model <SampleTag source={MODEL_OPS} /></>}>
+            <SampleFold what="National regional posture" source={MODEL_OPS} marked>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
               {nationalRegions(now / 4000).map(r => {
                 const tn = r.posture === 'critical' ? 'alert' : r.posture === 'elevated' ? 'warn' : r.posture === 'watch' ? 'neutral' : 'ok';
@@ -875,8 +904,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 );
               })}
             </div>
+                      </SampleFold>
           </Section>
-          <Section title="Regional oversight" meta={`${regions.length} ${labels.unit.toLowerCase()}`}>
+          <Section title="Regional oversight" meta={<>{`${regions.length} ${labels.unit.toLowerCase()}`} <SampleTag source={SEEDED_OPS} /></>}>
+          <SampleFold what="Regional oversight" source={SEEDED_OPS} marked>
           <EnterpriseTable
             columns={regionCols}
             rows={regions}
@@ -897,6 +928,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
               </div>
             )}
           />
+                  </SampleFold>
         </Section>
         </div>
       )}
@@ -1001,7 +1033,8 @@ export function MinistryWorkspace({ id }: { id: string }) {
       )}
 
       {tab === 'field' && (
-        <Section title="Field operations" meta={`${field.length} unit types`}>
+        <Section title="Field operations" meta={<>{`${field.length} unit types`} <SampleTag source={SEEDED_OPS} /></>}>
+          <SampleFold what="Field operations" source={SEEDED_OPS} marked>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {field.map(u => (
               <Card tight key={u.unit}>
@@ -1021,6 +1054,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
             ))}
             {field.length === 0 ? <p className="text-sm text-ink-muted">No field units configured.</p> : null}
           </div>
+                  </SampleFold>
         </Section>
       )}
 

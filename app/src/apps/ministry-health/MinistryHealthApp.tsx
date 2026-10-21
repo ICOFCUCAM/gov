@@ -8,9 +8,10 @@
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import {
-  doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
-  workloadIntelligence, hospitalOps, diseaseIntel, patientServices,
+  doctorRoster, referrals, prescriptions, labRequests,
+  workloadIntelligence, hospitalOps, diseaseIntel,
 } from '@/lib/gov/health-systems';
+import { serviceVolumes, emergencyAttendance } from '@/lib/gov/health-admin';
 import {
   pharmaceuticalSupply, laboratoryNetwork, healthFinance,
   healthRegulatory, emergencyMedical, healthCommand,
@@ -84,13 +85,13 @@ function Panel({ title, meta, children }: { title: string; meta?: string; childr
 }
 
 const DOMAIN_WF: Record<string, WorkKind> = {
-  command: 'incident', hospitals: 'case', doctor: 'encounter', patient: 'approval',
+  command: 'incident', hospitals: 'case', doctor: 'permit', patient: 'approval',
   pharma: 'procurement', disease: 'incident', lab: 'case', emergency: 'incident',
   finance: 'procurement', regulatory: 'permit', situation: 'incident', grid: 'case', portal: 'approval', interop: 'case', simulation: 'incident', security: 'incident', executive: 'incident', research: 'case', wards: 'case',
 };
 const DOMAIN_LABEL: Record<string, string> = {
-  command: 'Health Command', hospitals: 'Hospital Network', doctor: 'Doctor Systems',
-  patient: 'Patient Systems', pharma: 'Pharmaceutical Systems', disease: 'Disease Intelligence',
+  command: 'Health Command', hospitals: 'Hospital Network', doctor: 'Workforce & Licensing',
+  patient: 'Health Service Access', pharma: 'Pharmaceutical Systems', disease: 'Disease Intelligence',
   lab: 'Laboratory Systems', emergency: 'Emergency Medical', finance: 'Health Finance',
   regulatory: 'Regulatory Systems',
 };
@@ -217,7 +218,7 @@ export function MinistryHealthApp({
   } else if (d === 'doctor') {
     const roster = doctorRoster(id, ts);
     const wl = workloadIntelligence(roster);
-    const q = intakeQueue(id, ts);
+    const ed = emergencyAttendance(id, ts);
     body = (
       <>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
@@ -225,7 +226,7 @@ export function MinistryHealthApp({
           <Stat l="Available" v={`${roster.filter(r => r.status === 'available').length}`} t="ok" />
           <Stat l="Mean workload" v={`${wl.meanWorkload}%`} t={wl.meanWorkload >= 85 ? 'alert' : wl.meanWorkload >= 70 ? 'warn' : 'ok'} />
           <Stat l="Burnout alerts" v={`${wl.burnoutAlert}`} t={wl.burnoutAlert ? 'alert' : 'ok'} />
-          <Stat l="Intake queue" v={`${q.length}`} t={q.filter(p => p.triage <= 2).length ? 'warn' : 'ok'} />
+          <Stat l="Emergency attendances" v={`${ed.present}`} t={ed.waitingOverHour ? 'warn' : 'ok'} />
           <Stat l="Open referrals" v={`${referrals(id, ts).length}`} t="warn" />
         </div>
         <Panel title="Workload intelligence" meta="by specialty">
@@ -234,7 +235,7 @@ export function MinistryHealthApp({
       </>
     );
   } else if (d === 'patient') {
-    const ps = patientServices(id, ts);
+    const ps = serviceVolumes(id, ts);
     body = (
       <>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">

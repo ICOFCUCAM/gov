@@ -6,6 +6,7 @@
 // nationalOperatingState / forecast); it does not script its own logic.
 
 import * as React from 'react';
+import { useTile } from '@/components/ui/Generated';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { resolveIdentity } from '@/lib/sovereign-identity';
@@ -30,14 +31,16 @@ import { IndexTag } from '@/components/ui/IndexTag';
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
 
 /** A figure; `tag` marks one that is not observed (an engine index's IndexTag). */
+/** A generated figure (the briefing's engines run on the reference model): its marker comes from its Sample panel; "Not connected" in production. */
 function Stat({ label, value, tone = 'ok', note, tag }: { label: string; value: string; tone?: string; note?: string; tag?: React.ReactNode }) {
+  const tile = useTile(value, 'sample', undefined, tag);
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1.5 last:border-0">
-      <span className="flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-ink-muted">{label}{tag}</span>
+      <span className="flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-ink-muted">{label}{tile.marker}</span>
       <span className="flex items-baseline gap-2">
-        {note ? <span className="text-[10px] text-ink-muted">{note}</span> : null}
-        <span className="font-mono text-sm tabular-nums" style={{ color: TONE[tone] ?? 'rgb(var(--c-ink))' }}>
-          <LiveValue raw={value} />
+        {note && !tile.folded ? <span className="text-[10px] text-ink-muted">{note}</span> : null}
+        <span className="font-mono text-sm tabular-nums" style={{ color: tile.folded ? 'rgb(var(--c-ink-muted))' : TONE[tone] ?? 'rgb(var(--c-ink))' }}>
+          {tile.folded ? tile.value : <LiveValue raw={value} />}
         </span>
       </span>
     </div>
@@ -480,7 +483,7 @@ export function ExecutiveBriefingChamber() {
 
       <main className="mx-auto w-full max-w-[1320px] flex-1 space-y-3 p-4">
         <div className="grid gap-3 xl:grid-cols-3">
-          <Panel signal="modelled" title="National status & society" meta="evolving doctrine · civilian state">
+          <Panel signal="sample" title="National status & society" meta="evolving doctrine · civilian state">
             <div className="mb-2 flex items-baseline justify-between">
               <span className="text-lg font-semibold tracking-wide text-ink">{post.label.replace('-', ' ')}</span>
               <span className="font-mono text-sm tabular-nums" style={{ color: TONE[stabTone] }}>
@@ -506,7 +509,7 @@ export function ExecutiveBriefingChamber() {
             </p>
           </Panel>
 
-          <Panel signal="modelled" title="Reserve & infrastructure integrity" meta="finite national capacity">
+          <Panel signal="sample" title="Reserve & infrastructure integrity" meta="finite national capacity">
             <Stat label="Strategic reserves" value={`${opS.resources.reserves.headroom}%`} tone={reserveTone} note="headroom" />
             <Stat label="Telecom coordination" value={`${opS.display.telecom.toFixed(0)}%`} tone={opS.display.telecom >= 90 ? 'ok' : opS.display.telecom >= 78 ? 'warn' : 'alert'} />
             <Stat label="Energy grid load" value={`${opS.display.gridLoad}%`} tone={opS.display.gridLoad >= 85 ? 'alert' : opS.display.gridLoad >= 70 ? 'warn' : 'ok'} />
@@ -536,7 +539,7 @@ export function ExecutiveBriefingChamber() {
             </p>
           </Panel>
 
-          <Panel signal="modelled" title="Strategic foresight" meta="anticipatory · probabilistic">
+          <Panel signal="sample" title="Strategic foresight" meta="anticipatory · probabilistic">
             <Stat label="Projected national risk" value={`${foresight.projLo}–${foresight.projHi}`} tone={projTone} note={`p${foresight.projRisk} · ${foresight.horizon}`} />
             <Stat label="Foresight confidence" value={`${foresight.confidence}%`} tone={foresight.confidence >= 70 ? 'ok' : foresight.confidence >= 50 ? 'warn' : 'alert'} />
             <Stat label="Energy grid outlook" value={`${fEn.h24}→${fEn.h72}%`} tone={fc(fEn.risk)} />
@@ -583,7 +586,7 @@ export function ExecutiveBriefingChamber() {
           </Panel>
         </div>
 
-        <Panel signal="modelled" title="Active strategic threats" meta="executive attention priority">
+        <Panel signal="sample" title="Active strategic threats" meta="executive attention priority">
           {threats.length === 0 ? (
             <p className="py-6 text-center text-sm text-ink-muted">No cross-ministry escalations require executive attention.</p>
           ) : (
@@ -617,7 +620,7 @@ export function ExecutiveBriefingChamber() {
         </Panel>
 
         <div className="grid gap-3 xl:grid-cols-2">
-          <Panel signal="modelled" title="Ministry alignment & conflict"
+          <Panel signal="sample" title="Ministry alignment & conflict"
             meta={`coordination load ${coordLoad}% · ${aligned}/${ministries.length} aligned`}>
             {ministries.length === 0 ? (
               <p className="py-4 text-center text-sm text-ink-muted">Waiting for readings from institutions…</p>
@@ -671,7 +674,7 @@ export function ExecutiveBriefingChamber() {
             </div>
           </Panel>
 
-          <Panel signal="modelled" title="Executive directive flow" meta="institutional governance procedure">
+          <Panel signal="sample" title="Executive directive flow" meta="institutional governance procedure">
             {threats.length === 0 ? (
               <p className="py-4 text-center text-sm text-ink-muted">No directives pending executive review.</p>
             ) : threats.map(({ c, g }, i) => (
@@ -718,7 +721,7 @@ export function ExecutiveBriefingChamber() {
           </Panel>
         </div>
 
-        <Panel signal="modelled" title="Policy doctrine simulation"
+        <Panel signal="sample" title="Policy doctrine simulation"
           meta={`alternate futures · ${policy.ambiguity >= 60 ? 'contested' : 'distinct'} · recommend ${policy.recommended.toLowerCase()}`}>
           <div className="hidden grid-cols-[1.6fr_repeat(6,1fr)_0.8fr] gap-x-3 border-b border-line pb-1 text-[10px] uppercase tracking-[0.12em] text-ink-muted sm:grid">
             <span>Doctrine</span><span className="text-right">Stability</span><span className="text-right">Reserves</span>
@@ -752,7 +755,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel signal="modelled" title="Sovereign directive register"
+        <Panel signal="sample" title="Sovereign directive register"
           meta={`${register.era} · ${register.active} active · ${register.completed} completed · ${register.failed} failed`}>
           <div className="hidden grid-cols-[2fr_1fr_1.4fr_0.7fr_0.9fr] gap-x-3 border-b border-line pb-1 text-[10px] uppercase tracking-[0.12em] text-ink-muted sm:grid">
             <span>Directive</span><span>Ministry</span><span>Stage</span><span className="text-right">Prog.</span><span className="text-right">Exec.</span>
@@ -776,7 +779,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel signal="modelled" title="Intelligence assessment (modelled)"
+        <Panel signal="sample" title="Intelligence assessment (modelled)"
           meta={`${intel.posture} · analytic confidence ${intel.assessmentConfidence}% · threat ${intel.threatLevel}`}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
@@ -810,7 +813,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel signal="modelled" title="National continuity chronology"
+        <Panel signal="sample" title="National continuity chronology"
           meta={`administration ${chron.administration} · ${chron.currentEra} · ${chron.span}-epoch record`}>
           <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Governing eras</div>
           <div className="mb-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-ink-muted">
@@ -835,7 +838,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel signal="modelled" title="Interstate coordination & alliance framework"
+        <Panel signal="sample" title="Interstate coordination & alliance framework"
           meta={`${alliance.regionalOrder} · bloc ${alliance.blocPosture.toLowerCase()} · consensus ${alliance.coalitionConsensus}`}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
@@ -866,7 +869,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel signal="modelled" title="National operations execution"
+        <Panel signal="sample" title="National operations execution"
           meta={`${nops.activeCount} active · ${nops.atRisk} under strain`}>
           {nops.operations.map(o => (
             <div key={o.key} className="border-b border-line-soft py-2 last:border-0">
@@ -895,7 +898,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel signal="modelled" title="National population & social order"
+        <Panel signal="sample" title="National population & social order"
           meta={`society ${popn.label.toLowerCase()} · governability ${popn.governability} · feedback drag ${popn.feedbackDrag}`}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
@@ -924,7 +927,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel signal="modelled" title="Live national scenario"
+        <Panel signal="sample" title="Live national scenario"
           meta={`${scen.name} · ${scen.stage.toLowerCase()} · ${scen.verdict.toLowerCase()}`}>
           <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] uppercase tracking-[0.14em]">
             {['Emerging', 'Developing', 'Peak', 'Cascading', 'Arbitration', 'Containment', 'Stabilizing', 'After-action'].map((s, i) => (
@@ -972,7 +975,7 @@ export function ExecutiveBriefingChamber() {
           <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">{scen.note} Leadership arbitrates ministry tension under live pressure; indecision deepens the cascade.</p>
         </Panel>
 
-        <Panel signal="modelled" title="Executive directive"
+        <Panel signal="sample" title="Executive directive"
           meta={directive === 'NONE' ? `administration ${lead.administration} · no override` : `administration ${lead.administration} · ${dproj.stage.toLowerCase()}`}>
           {directive === 'NONE' ? (
             <p className="py-3 text-[12px] text-ink-muted">
@@ -1014,7 +1017,7 @@ export function ExecutiveBriefingChamber() {
           )}
         </Panel>
 
-        <Panel signal="modelled" title="Sovereign governance audit"
+        <Panel signal="sample" title="Sovereign governance audit"
           meta={<>{audit.healthVerdict} · civilization {audit.trajectory} ({audit.civScore} <IndexTag index="sovereign-operating-model.ts · civScore" />) · institutional decay {audit.institutionalDecay}</>}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
@@ -1045,7 +1048,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel signal="modelled" title="Civilizational memory & historical inheritance"
+        <Panel signal="sample" title="Civilizational memory & historical inheritance"
           meta={`generation ${civ.generation} · ${civ.personality.toLowerCase()} · ${civ.trajectory.toLowerCase()} · continuity ${civ.civContinuity}`}>
           <div className="mb-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[11px]">
             <span className="text-ink-muted">Governing personality <span className="font-semibold text-ink-soft">{civ.personality}</span></span>
@@ -1088,7 +1091,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel signal="modelled" title="Institutional record & state address"
+        <Panel signal="sample" title="Institutional record & state address"
           meta={`${irec.stateTone} status · ${irec.identity}`}>
           <p className="text-[12px] leading-relaxed text-ink-soft">{irec.nationalAddress}</p>
           <div className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
@@ -1115,7 +1118,7 @@ export function ExecutiveBriefingChamber() {
           ) : null}
         </Panel>
 
-        <Panel signal="modelled" title="Institutional frailty & historical imperfection"
+        <Panel signal="sample" title="Institutional frailty & historical imperfection"
           meta={`drift toward ${frail.drift.toLowerCase()} · entropy ${frail.entropy} · misjudgement ${frail.misjudgementRisk}`}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>

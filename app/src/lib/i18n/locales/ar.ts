@@ -379,6 +379,8 @@ export const ar: Messages = {
     live: 'مباشر',
     sampleNews: 'إعلانات توضيحية',
     sampleNote: 'تُعرض إلى أن ينشر {name} إعلاناته.',
+    sampleAlert: 'نموذج · ليس تنبيهًا حقيقيًا',
+    sampleAlertNote: 'تنبيه محاكى يُعرض في تثبيت للعرض أو التدريب؛ لم تُعلن أي حالة طوارئ.',
     browseTopics: 'تصفح حسب الموضوع',
     gatewayLink: 'هذه صفحة {name} على المنصة الوطنية. موقعها الرئيسي هو {host}.',
     gatewayMigrate: 'تنقل {name} موقعها إلى هنا من {host}؛ والصفحات التي لم تُنقل بعد ما زالت هناك.',

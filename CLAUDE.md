@@ -33,6 +33,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   `samplesAllowed()` first; `seed-mode.test.ts`), has no demo citizen, and
   agency apps show the Simulation notice; training and demo show a banner on
   every page. Unset in a production build it runs as production and warns.
+  In production a sample case neither opens nor moves (`openCase()`, `act()`;
+  effects mark what a sample case writes with `sampleMark()`), a demo or
+  training backup is not restored, `payBill()` refuses, probation never
+  passes on simulated health, and no development key signs
+  (`developmentKeyRefusal()`).
 - Progress is measured by legally valid services working end to end, not by
   screens. Each register and record type has one named owner; the twin
   derives from records and never creates authoritative facts.
@@ -128,7 +133,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   `lib/casework/dual-control-policy.ts` whatever a procedure says; the
   country adds steps, never removes them. Dual control compares people
   (`personOf()`, identity-provider link) and records `independence`; a
-  waiting proposal lapses and is kept (`lapsedProposals`).
+  waiting proposal lapses and is kept (`lapsedProposals`). Every two-person
+  check goes through `dualControlRefusal()`, which refuses an accounts-only
+  pair once the country adopts `requireIdentityProvider` (ships off).
 - The public professional check takes one person by full name (the number
   only narrows it), shows the profession's `publicFields`, is rate-limited
   and watched for harvesting; bulk checks go through `professional.standing`.
@@ -143,6 +150,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   the data-protection authority after two administrators
   (`confirmByOversight()`, which compares persons, never names). Unusual access is raised by
   `lib/records/access-watch.ts`; a finding is a prompt, never a conclusion.
+  The audit chain (`/api/audit`) is read only under `canReadAuditChain()`, logged;
+  refusals (`refusal()`, `readRefusal()`, the middleware's 403) are logged as
+  reference and rule (`lib/records/refusal-log.ts`).
 
 ## Constitutional architecture
 

@@ -12,11 +12,17 @@ import { api } from '@/lib/api/client';
 import type { NationalSnapshot } from '@/lib/api/types';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
+import { GeneratedFold } from '@/components/ui/Generated';
+import { useSeparation } from '@/components/features/SeparationChecks';
+import type { AuditVerification } from '@/lib/api/types';
 
 // The coordination wall shows a declared emergency: an active sev1 incident in
 // the nation's institutions (/api/national). With none it stands watch. Places
 // are the nation's own regions; indicators, options and the ticker are samples
-// from the reference model until the nation connects its sources.
+// from the reference model until the nation connects its sources: marked Sample
+// in demo and training, folded under "Not connected" in production
+// (lib/twin/generated.ts). The invariant watch shows only what a check reads:
+// the audit chain's verification and the separation-of-powers checks.
 
 export default function NcccWallPage() {
   const [now, setNow] = React.useState(useRenderNow());
@@ -48,6 +54,30 @@ export default function NcccWallPage() {
     { l: 'Evacuation throughput', v: `${(1.1 + seed(`ev:${epoch}`) * 0.8).toFixed(1)}k/h`, t: 'ok', k: 'ev' },
   ];
   const scenarioCount = 44 + Math.round(seed(`sc:${epoch}`) * 7);
+  // Tripwires are the sample indicators past their amber line (read from the indicators above, never typed).
+  const tripwires = indicators.filter(i => i.t === 'warn');
+
+  // The invariants a check can read today; the others say no check is connected.
+  const separation = useSeparation();
+  const [verify, setVerify] = React.useState<AuditVerification | null>(null);
+  const [verifyFailed, setVerifyFailed] = React.useState(false);
+  React.useEffect(() => {
+    let live = true;
+    const load = () => api.audit.verify().then(v => { if (live) { setVerify(v); setVerifyFailed(false); } }).catch(() => { if (live) setVerifyFailed(true); });
+    void load();
+    const t = setInterval(load, 30_000);
+    return () => { live = false; clearInterval(t); };
+  }, []);
+  type Inv = { l: string; state: 'held' | 'broken' | 'unknown' | 'unchecked'; by: string };
+  const invariants: Inv[] = [
+    { l: 'Sovereignty of principal', state: 'unchecked', by: 'No check connected' },
+    { l: 'Contestability', state: 'unchecked', by: 'No check connected' },
+    { l: 'Auditability', state: verify ? (verify.ok ? 'held' : 'broken') : verifyFailed ? 'unknown' : 'unknown', by: verify ? `Audit chain: ${verify.ok ? `${verify.checked} links verified` : `broken at entry ${verify.brokenAtSeq}`}` : 'Audit chain verification not read' },
+    { l: 'Replaceability / exit', state: 'unchecked', by: 'No check connected' },
+    { l: 'Constitutional supremacy', state: separation.data ? (separation.data.intact ? 'held' : 'broken') : 'unknown', by: separation.data ? `Separation of powers: ${separation.data.intact ? 'every check holds' : 'a check does not hold'} (observed from the configuration)` : 'Separation-of-powers checks not read' },
+    { l: 'Inclusion floor', state: 'unchecked', by: 'No check connected' },
+    { l: 'No superintelligent unilateralism', state: 'unchecked', by: 'No check connected' },
+  ];
 
   const options = [
     { o: `A — Pre-position 4 convoys to ${place(0)}`, r: '+14% ±6%', c: '12', d: '0', n: '—' },
@@ -85,6 +115,7 @@ export default function NcccWallPage() {
       <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
 
         <WallPanel title="Operational map" className="lg:col-span-2">
+          {/* The nation's map in every mode; its sample layer only where samples are (TerritoryHeat). */}
           <div className="overflow-hidden rounded-[3px] border border-wall-line">
             <TerritoryHeat epoch={epoch} height={220} focus={nat?.sovereign.stateName} />
           </div>
@@ -94,6 +125,7 @@ export default function NcccWallPage() {
         </WallPanel>
 
         <WallPanel title="Indicators" className="lg:col-span-2">
+          <GeneratedFold what="Indicators and tripwires">
           <p className="-mt-1 mb-2 flex items-center gap-2 text-xs text-wall-muted"><SignalTag kind="sample" source={REFERENCE_MODEL} /> reference model until the nation&apos;s sources report</p>
           <div className="grid grid-cols-2 gap-2">
             {indicators.map(ind => (
@@ -106,7 +138,10 @@ export default function NcccWallPage() {
               </div>
             ))}
           </div>
-          <p className="mt-2 text-sm"><strong>Tripwires:</strong> <Pill tone="warn">1 amber (water pressure)</Pill></p>
+          <p className="mt-2 text-sm"><strong>Tripwires:</strong> {tripwires.length
+            ? <Pill tone="warn">{tripwires.length} amber ({tripwires.map(i => i.l.toLowerCase()).join(', ')})</Pill>
+            : <Pill tone="ok">none</Pill>}</p>
+          </GeneratedFold>
         </WallPanel>
 
         <WallPanel title="Timeline" className="lg:col-span-2">
@@ -126,6 +161,7 @@ export default function NcccWallPage() {
         </WallPanel>
 
         <WallPanel title="Comms ticker" className="lg:col-span-2">
+          <GeneratedFold what="Example messages">
           <p className="-mt-1 mb-2 flex items-center gap-2 text-xs text-wall-muted"><SignalTag kind="sample" source={REFERENCE_MODEL} /> example messages; no messaging channel is connected yet</p>
           <div className="text-sm space-y-2">
             <p><strong>Public:</strong> &ldquo;{emergency ? 'Advisory in force; see the safety pages.' : 'No public advisory in force.'}&rdquo;</p>
@@ -133,6 +169,7 @@ export default function NcccWallPage() {
             <p><strong>Cross-sovereign:</strong> &ldquo;Border coordination with neighbouring states active.&rdquo;</p>
             <p><strong>Misinformation:</strong> &ldquo;False video re. bridge collapse — debunked.&rdquo;</p>
           </div>
+          </GeneratedFold>
         </WallPanel>
 
         <WallPanel span="full">
@@ -140,9 +177,13 @@ export default function NcccWallPage() {
             <h3 className="text-lg font-semibold text-wall-ink m-0">{aiLabel('AI scenario panel', 'Scenario panel')}</h3>
             <ClassBanner decisionClass="D" />
           </div>
+          <GeneratedFold kind="simulated" marked what="The example scenario">
           <p>
             Currently modeling: <strong>cyclone landfall +6h shift</strong> — surfacing{' '}
-            <span className="font-mono tabular-nums" style={{ color: TONE.warn }}>{scenarioCount}</span> cascading indicators.{' '}
+            <span className="font-mono tabular-nums" style={{ color: TONE.warn }}>{scenarioCount}</span> cascading indicators.
+          </p>
+          </GeneratedFold>
+          <p>
             <em>Officer approval required to base any decision on these scenarios.</em>{' '}
             {aiLabel('AI does not decide. ', '')}Humans sign per remit.
           </p>
@@ -153,6 +194,7 @@ export default function NcccWallPage() {
             <h3 className="flex items-center gap-2 text-lg font-semibold text-wall-ink m-0">Deliberation table — current options <SignalTag kind="sample" source={REFERENCE_MODEL} /></h3>
             <Pill tone="warn">Awaiting authority sign-offs</Pill>
           </div>
+          <GeneratedFold what="Example options">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-wall-muted text-left">
@@ -177,17 +219,24 @@ export default function NcccWallPage() {
               </tbody>
             </table>
           </div>
+          </GeneratedFold>
           <p className="text-wall-muted text-sm mt-2">
             Each authority signs their own remit individually. There is no joint &ldquo;approve&rdquo; button.
           </p>
         </WallPanel>
 
         <WallPanel span="full" title="Invariant watch (live)">
+          {/* A tick only where a check reads a record; the others say plainly that nothing checks them yet. */}
           <div className="flex gap-2 flex-wrap">
-            {['Sovereignty of principal', 'Contestability', 'Auditability', 'Replaceability / exit', 'Constitutional supremacy', 'Inclusion floor', 'No superintelligent unilateralism'].map(inv => (
-              <Pill key={inv} tone="ok">✓ {inv}</Pill>
+            {invariants.map(inv => (
+              <Pill key={inv.l} tone={inv.state === 'held' ? 'ok' : inv.state === 'broken' ? 'alert' : 'neutral'} title={inv.by} data-invariant={inv.state}>
+                {inv.state === 'held' ? '✓' : inv.state === 'broken' ? '✗' : '○'} {inv.l}{inv.state === 'unchecked' ? ' · not checked' : inv.state === 'unknown' ? ' · not read' : ''}
+              </Pill>
             ))}
           </div>
+          <p className="text-wall-muted text-sm mt-2">
+            {invariants.filter(i => i.state !== 'unchecked').map(i => i.by).join(' · ')}. The others have no check connected yet.
+          </p>
           <p className="text-wall-muted text-sm mt-2">
             Not on this wall: citizen-individual map layers · predictive citizen-behavior visualization · surveillance feeds.
             Per Companions 142, 154, 158.

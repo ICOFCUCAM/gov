@@ -42,6 +42,7 @@ import { encryptionAtRest } from '@/lib/crypto/envelope';
 import { providerKind } from '@/lib/keys/custody';
 import { syncBackupCatalogue } from './store/platform-ops';
 import type { BackupRecord } from '@/lib/api/types';
+import { installationMode, MODE_LABEL, type InstallationMode } from '@/lib/ops/mode';
 
 export const SCHEDULE_ACTOR = 'system (backup schedule)';
 
@@ -63,6 +64,8 @@ export interface Verification { at: string; by: string; ok: boolean; scratch: Dr
 export interface BackupEntry {
   id: string; createdAt: string; createdBy: string; reason: BackupReason;
   mode: Manifest['mode']; adapter: string;
+  /** The installation mode it was taken in (absent before step I0.1); the sealed manifest's copy is the one checked. */
+  installation?: InstallationMode;
   archive: string; sizeBytes: number; sha256: string; keyProvider: string;
   audit: Manifest['audit']; release: string | null; parts: number; stateDigest: string;
   verification?: Verification;
@@ -76,6 +79,8 @@ export interface LossWarning {
   /** Stores or tables whose content differs from the backup. */
   changed: string[]; added: string[];
   kept: string[];
+  /** The installation mode the backup was taken in, from its sealed manifest ('unknown' for backups taken before it was recorded). */
+  installation?: InstallationMode | 'unknown';
   text: string;
 }
 export interface RestoreProposal {
@@ -169,18 +174,18 @@ async function takeBackup(by: string, reason: BackupReason): Promise<Result<Back
   try {
     const cap = await captureState({ pgDump: process.env.CIVICOS_BACKUP_PG_DUMP?.trim() || undefined, databaseUrl: process.env.DATABASE_URL });
     const { archive, manifest } = await packArchive({
-      id, createdAt: at.toISOString(), createdBy: by, reason, mode: cap.mode, adapter: cap.adapter,
+      id, createdAt: at.toISOString(), createdBy: by, reason, mode: cap.mode, installation: installationMode(), adapter: cap.adapter,
       app: { release: await releaseNow(), package: PACKAGE_VERSION, node: process.version },
       schema: cap.schema, audit: cap.audit, excluded: EXCLUDED_NOTES, keptOnRestore: KEPT_ON_RESTORE,
     }, cap.parts);
     const entry: BackupEntry = {
-      id, createdAt: manifest.createdAt, createdBy: by, reason, mode: manifest.mode, adapter: manifest.adapter,
+      id, createdAt: manifest.createdAt, createdBy: by, reason, mode: manifest.mode, ...(manifest.installation ? { installation: manifest.installation } : {}), adapter: manifest.adapter,
       archive: archiveName(id), sizeBytes: archive.length, sha256: sha256(archive), keyProvider: peekArchive(archive).provider,
       audit: manifest.audit, release: manifest.app.release, parts: manifest.parts.length, stateDigest: manifest.stateDigest,
     };
     await t.put(archiveName(id), archive);
     await t.put(entryName(id), Buffer.from(JSON.stringify(entry, null, 2), 'utf8'));
-    recordAudit(by, 'backup.create', `Backup:${id}`, 'ok', `${reason} · ${manifest.mode} · ${manifest.parts.length} parts · ${archive.length} bytes · sha256 ${entry.sha256.slice(0, 16)}… · audit head ${manifest.audit.seq} · ${t.kind}`);
+    recordAudit(by, 'backup.create', `Backup:${id}`, 'ok', `${reason} · ${manifest.mode} · ${manifest.installation ?? 'unknown'} installation · ${manifest.parts.length} parts · ${archive.length} bytes · sha256 ${entry.sha256.slice(0, 16)}… · audit head ${manifest.audit.seq} · ${t.kind}`);
     await resync(t);
     return entry;
   } catch (e) {
@@ -246,6 +251,18 @@ export async function takeRestorePoint(by: string): Promise<Result<RestorePointB
 // ── Restore ───────────────────────────────────────────────────────────────
 const PROPOSAL_MINUTES = 30;
 
+/**
+ * Whether a backup made by an installation of one mode may be restored into
+ * this one (step I0.1): a production installation never takes the state of a
+ * demonstration or training installation (sample records, the demo cast).
+ * A backup taken before the mode was recorded is unknown: allowed, and the
+ * loss warning says to check where it came from.
+ */
+export function installationRefusal(made: Manifest['installation'], running: InstallationMode = installationMode()): string | null {
+  if (running !== 'production' || !made || made === 'production') return null;
+  return `This backup was taken by a ${MODE_LABEL[made].toLowerCase()}: its sample records and demonstration accounts never enter a production installation. Restore it into a ${made} installation`;
+}
+
 async function lossWarning(entry: BackupEntry, manifest: Manifest): Promise<LossWarning> {
   const live = await liveDigest();
   const was = new Map(manifest.parts.map(p => [p.name, p.sha256]));
@@ -267,8 +284,9 @@ async function lossWarning(entry: BackupEntry, manifest: Manifest): Promise<Loss
     divergent ? 'The running audit chain does not contain this backup\'s head: it holds another history.' : '',
     `Kept as they are: ${KEPT_ON_RESTORE.join(', ')} (the backup records, the Update Center's record of the software running, the access log and the event delivery state: consumers are told to re-read, and events after the restored point are never delivered).`,
     'The current state is backed up first; its backup and hash are named in the audit entry that records the restore.',
+    !manifest.installation && installationMode() === 'production' ? 'This backup does not record which installation mode took it (it predates that record): check that it was taken by this production installation, not a demonstration or training one.' : '',
   ].filter(Boolean).join(' ');
-  return { backupId: entry.id, backupAt: entry.createdAt, auditEntriesLost: lost, ...(lost ? { auditFrom: manifest.audit.seq + 1, auditTo: live.audit.seq } : {}), divergent, changed, added, kept: KEPT_ON_RESTORE, text };
+  return { backupId: entry.id, backupAt: entry.createdAt, auditEntriesLost: lost, ...(lost ? { auditFrom: manifest.audit.seq + 1, auditTo: live.audit.seq } : {}), divergent, changed, added, kept: KEPT_ON_RESTORE, installation: manifest.installation ?? 'unknown', text };
 }
 
 /** What a restore of this backup would lose (no change). */
@@ -278,6 +296,8 @@ export async function restorePreview(id: string): Promise<Result<{ backup: Backu
   if (!entry) return fail('Backup not found', 404);
   try {
     const opened = await readBack(t, entry);
+    const refused = installationRefusal(opened.manifest.installation);
+    if (refused) return fail(refused, 409);
     return { backup: entry, warning: await lossWarning(entry, opened.manifest) };
   } catch (e) { return fail((e as Error).message, 409); }
 }
@@ -311,6 +331,8 @@ export function requestRestore(id: string, input: { by?: string; acknowledgeLoss
     if (!proposal) {
       let opened;
       try { opened = await readBack(t, entry); } catch (e) { return fail(`The backup cannot be restored: ${(e as Error).message}`); }
+      const refused = installationRefusal(opened.manifest.installation);
+      if (refused) { recordAudit(by, 'backup.restore.propose', `Backup:${id}`, 'denied', refused); return fail(refused); }
       const warning = await lossWarning(entry, opened.manifest);
       if (input.acknowledgeLoss !== true) return fail(`${warning.text} Acknowledge the loss to propose the restore.`, 422);
       const at = new Date();
@@ -342,6 +364,8 @@ export function cancelRestore(id: string, input: { by?: string }): Result<{ canc
 async function executeRestore(t: BackupTarget, entry: BackupEntry, proposal: RestoreProposal, confirmedBy: string): Promise<Result<RestoreOutcome>> {
   let opened;
   try { opened = await readBack(t, entry); } catch (e) { return fail(`The backup cannot be restored: ${(e as Error).message}`); }
+  const refused = installationRefusal(opened.manifest.installation);
+  if (refused) { recordAudit(confirmedBy, 'backup.restore', `Backup:${entry.id}`, 'denied', refused); return fail(refused); }
   const run = await dryRun(opened);
   if (!run.ok) return fail(`The backup did not pass its dry run, so nothing was restored: ${run.problem}`);
   // The state about to be replaced is kept first: never restore without a copy of what it replaces.

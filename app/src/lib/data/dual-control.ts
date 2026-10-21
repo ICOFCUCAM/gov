@@ -15,6 +15,17 @@ export const DUAL_CONTROL_HOURS = 24;
  * Returns the reason it may not, or null.
  */
 export function dualControlRefusal(proposer: { by: string; byId?: string }, confirmer: { by: string; byId?: string }): string | null {
+  const why = accountsRefusal(proposer, confirmer);
+  if (why) return why;
+  // The country's rule (lib/casework/dual-control-policy.ts, adopted through lib/law/policy-change.ts):
+  // two accounts are not enough, the two must be different persons at the national identity provider.
+  if (identityProviderRequired() && independenceOf(proposer.byId, confirmer.byId) !== 'identity-provider') {
+    return 'The nation requires two different persons at the national identity provider for every two-person control: both officials must be signed in with accounts linked to it (Officials → link identity)';
+  }
+  return null;
+}
+
+function accountsRefusal(proposer: { by: string; byId?: string }, confirmer: { by: string; byId?: string }): string | null {
   const same = `${proposer.by} proposed this; a second, different official must confirm it (dual control)`;
   if (proposer.byId && !confirmer.byId) return `${proposer.by} proposed this signed in; the second official must sign in to confirm it`;
   if (proposer.byId && confirmer.byId) {
@@ -25,6 +36,19 @@ export function dualControlRefusal(proposer: { by: string; byId?: string }, conf
     return null;
   }
   return proposer.by.trim().toLowerCase() === confirmer.by.trim().toLowerCase() ? same : null;
+}
+
+/**
+ * Whether the nation's adopted two-person rules require identity-provider
+ * independence for every two-person control (`requireIdentityProvider`,
+ * kept by lib/casework/dual-control-policy.ts on `__civicosDualControl` and
+ * changed only through lib/law/policy-change.ts). Read here, like
+ * dualControlPendingHours(), for stores that cannot import the case engine.
+ * Never shipped on: false until a nation adopts it.
+ */
+export function identityProviderRequired(): boolean {
+  const d = (globalThis as unknown as { __civicosDualControl?: { adopted?: boolean; requireIdentityProvider?: boolean } }).__civicosDualControl;
+  return d?.adopted === true && d.requireIdentityProvider === true;
 }
 
 /**

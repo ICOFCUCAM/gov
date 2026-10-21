@@ -16,28 +16,39 @@ import type { Incident, OpsOverview, Ministry } from '@/lib/api/types';
 import { regionList } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { aiLabel } from '@/lib/nation/registry';
+import { GeneratedFold, GeneratedStrip, GeneratedText, useGenerated, useTile, isGenerated, shownValue } from '@/components/ui/Generated';
 
-const ME = 'W. Tanaka (ops)';
+// Who acted, when no official is signed in (a signed-in official's verified name replaces it on the server, lib/auth/official.ts).
+const ME = 'Operations duty officer';
 const sp = (k: string, n = 20, lo = 30, hi = 80) =>
   Array.from({ length: n }).map((_, i) => lo + seed(`ops:${k}:${i}`) * (hi - lo));
 
-function P({ title, meta, className = '', signal, children }: { title: string; meta?: React.ReactNode; className?: string; signal?: SignalKind; children: React.ReactNode }) {
+/**
+ * A panel that says where its figures come from (lib/twin/signal.ts). A generated one
+ * (`sample`, `simulated`) folds to "Not connected" on a production installation (lib/twin/generated.ts).
+ */
+function P({ title, meta, className = '', signal, source = REFERENCE_MODEL, children }: { title: string; meta?: React.ReactNode; className?: string; signal: SignalKind; source?: string; children: React.ReactNode }) {
+  const gen = useGenerated(signal === 'simulated' ? 'simulated' : 'sample');
+  const folded = isGenerated(signal) && !gen.show;
   return (
     <section className={`flex min-h-0 flex-col rounded-[3px] border border-line bg-surface ${className}`}>
       <div className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-        <h2 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}{signal ? <SignalTag kind={signal} source={REFERENCE_MODEL} /> : null}</h2>
-        {meta ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
+        <h2 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}<SignalTag kind={folded ? 'unavailable' : signal} source={folded ? gen.src : source} /></h2>
+        {meta && !folded ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
       </div>
-      <div className="min-h-0 flex-1 p-2.5">{children}</div>
+      <div className="min-h-0 flex-1 p-2.5">{folded ? <GeneratedFold what="This panel's figures">{meta ? <div className="mb-1 text-[10px] text-ink-muted">{meta}</div> : null}{children}</GeneratedFold> : children}</div>
     </section>
   );
 }
-function Tile({ l, v, sub, t = 'ok', spark }: { l: string; v: string; sub?: string; t?: string; spark?: number[] }) {
+/** A headline tile marked by its source; a generated one is "Not connected" in production. Sparklines are drawn only for generated figures shown as samples. */
+function Tile({ l, v, sub, t = 'ok', spark, kind, src }: { l: string; v: string; sub?: string; t?: string; spark?: number[]; kind: SignalKind; src?: string }) {
+  const tile = useTile(v, kind, src);
+  const showSpark = !!spark && isGenerated(kind) && !tile.folded;
   return (
-    <div className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-      <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{l}</div>
-      <div className="font-mono text-2xl leading-tight tabular-nums" style={{ color: TONE[t] }}>{v}</div>
-      {spark ? <div className="-mb-1 h-6 overflow-hidden opacity-80"><Spark pts={spark} tone={t} /></div> : <div className="truncate text-[10px] text-ink-muted">{sub}</div>}
+    <div className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }} data-generated={tile.folded ? 'not-connected' : undefined}>
+      <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted"><span className="truncate">{l}</span>{tile.marker}</div>
+      <div className={`font-mono leading-tight tabular-nums ${tile.folded ? 'text-[11px] text-ink-muted' : 'text-2xl'}`} style={tile.folded ? undefined : { color: TONE[t] }}>{tile.value}</div>
+      {showSpark ? <div className="-mb-1 h-6 overflow-hidden opacity-80"><Spark pts={spark!} tone={t} /></div> : tile.folded ? null : <div className="truncate text-[10px] text-ink-muted">{sub}</div>}
     </div>
   );
 }
@@ -103,25 +114,42 @@ export function OpsCenter() {
     } finally { setBusy(null); }
   }
 
+  // What /api/ops/overview and the incident register return is shown as it is. The example
+  // services, queues, municipalities and incidents fill in only where samples are allowed (demo,
+  // training), marked Sample; a production installation shows what is recorded, or says none / not connected.
+  const gen = useGenerated();
   const s = ov?.summary;
-  const services = (ov?.services?.length ? ov.services.map(v => ({ name: v.name, sub: v.detail ?? '', status: v.status, latencyMs: v.latencyMs ?? 0, detail: v.detail ?? '' })) : SVC_FALLBACK);
-  const queues = (ov?.queues?.length ? ov.queues.map(q => ({ name: q.name, depth: q.depth, cap: q.depth + 40, slaHours: q.slaHours, breaching: q.breaching })) : Q_FALLBACK);
-  const tenants = ov?.tenants?.length ? ov.tenants : MUNI.map((m, i) => ({ municipality: m, status: i === 1 ? 'degraded' : 'ok', openPermits: Math.round(seed(`mp:${m}`) * 6), slaBreaches: i === 1 ? 1 : 0, lastSyncMinutes: i === 1 ? 137 : 4 + Math.round(seed(`ms:${m}`) * 24) }));
-  const liveInc = incidents?.length ? incidents.slice(0, 6).map((x, i) => ({ id: x.id, title: x.title, sev: x.severity, lbl: x.severity === 'sev1' ? 'CRITICAL' : x.severity === 'sev2' ? 'ELEVATED' : 'WATCH', scope: x.scope, tm: new Date(x.openedAt).toLocaleTimeString().slice(0, 5), real: x })) : INC_FALLBACK;
+  const realSvc = !!ov?.services?.length, realQ = !!ov, realTen = !!ov?.tenants?.length, realInc = !!incidents;
+  const services = (realSvc ? ov!.services.map(v => ({ name: v.name, sub: v.detail ?? '', status: v.status, latencyMs: v.latencyMs ?? 0, detail: v.detail ?? '' })) : gen.show ? SVC_FALLBACK : []);
+  // A real queue has no capacity on record: its depth is shown without one.
+  const queues: { name: string; depth: number; cap: number | null; slaHours: number; breaching: boolean }[] = ov?.queues?.length
+    ? ov.queues.map(q => ({ name: q.name, depth: q.depth, cap: null, slaHours: q.slaHours, breaching: q.breaching }))
+    : realQ || !gen.show ? [] : Q_FALLBACK;
+  const tenants = realTen ? ov!.tenants : gen.show ? MUNI.map((m, i) => ({ municipality: m, status: i === 1 ? 'degraded' : 'ok', openPermits: Math.round(seed(`mp:${m}`) * 6), slaBreaches: i === 1 ? 1 : 0, lastSyncMinutes: i === 1 ? 137 : 4 + Math.round(seed(`ms:${m}`) * 24) })) : [];
+  const liveInc = incidents?.length ? incidents.slice(0, 6).map(x => ({ id: x.id, title: x.title, sev: x.severity, lbl: x.severity === 'sev1' ? 'CRITICAL' : x.severity === 'sev2' ? 'ELEVATED' : 'WATCH', scope: x.scope, tm: new Date(x.openedAt).toLocaleTimeString().slice(0, 5), real: x })) : realInc || !gen.show ? [] : INC_FALLBACK;
+  const svcKind: SignalKind = realSvc ? 'observed' : gen.show ? 'sample' : 'unavailable';
+  const qKind: SignalKind = realQ ? 'record' : gen.show ? 'sample' : 'unavailable';
+  const tenKind: SignalKind = realTen ? 'reported' : gen.show ? 'sample' : 'unavailable';
+  const incKind: SignalKind = incidents?.length ? 'record' : realInc ? 'record' : gen.show ? 'sample' : 'unavailable';
+  const OPS_SRC = 'Platform operations (GET /api/ops/overview)';
+  const INC_SRC = 'Operational incidents recorded by officials (GET /api/ops/incidents)';
 
   const svcOk = ov ? `${s!.servicesOk}/${s!.servicesTotal}` : `${services.filter(v => v.status === 'ok').length}/${services.length}`;
   const slaPct = ov ? s!.slaCompliancePct : 100;
   const qBreach = ov ? s!.queuesBreaching : queues.filter(q => q.breaching).length;
   const openInc = ov ? s!.openIncidents : liveInc.filter(i => i.sev !== 'sev3').length;
+  const critInc = liveInc.filter(i => i.sev === 'sev1').length;
   const auditOk = ov ? s!.auditIntact : true;
+  const ovKind: SignalKind = ov ? 'record' : 'sample';
+  const svcPct = (() => { const [a, b] = svcOk.split('/').map(Number); return b ? Math.round((a! / b) * 100) : 0; })();
 
-  const overview = [
-    { l: 'Services healthy', v: svcOk, t: svcOk.split('/')[0] === svcOk.split('/')[1] ? 'ok' : 'warn', spark: sp('sh', 20, 60, 95), sub: '80% healthy' },
-    { l: 'On time', v: `${slaPct}%`, t: slaPct >= 95 ? 'ok' : slaPct >= 80 ? 'warn' : 'alert', spark: sp('sla', 22, 70, 100), sub: 'all services' },
-    { l: 'Queues breaching', v: String(qBreach), t: qBreach === 0 ? 'ok' : 'alert', spark: sp('qb', 22, 0, 40), sub: '12% of total' },
-    { l: 'Open incidents', v: String(openInc), t: openInc === 0 ? 'ok' : 'warn', spark: sp('oi', 20, 0, 20), sub: '1 critical' },
-    { l: 'Operations status', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', spark: sp('op', 24, 40, 70), sub: qBreach > 4 || !auditOk ? `${qBreach} queues late${auditOk ? '' : ' · audit review'}` : 'queues on time' },
-    { l: 'Response time between systems', v: `${120 + Math.round(seed(`xl:${Math.floor(now / 15000)}`) * 90)}ms`, t: 'ok', spark: sp('xl', 22, 40, 80), sub: 'p95 mesh · sample' },
+  const overview: { l: string; v: string; t: string; spark: number[]; sub: string; kind: SignalKind; src?: string }[] = [
+    { l: 'Services healthy', v: svcOk, t: svcOk.split('/')[0] === svcOk.split('/')[1] ? 'ok' : 'warn', spark: sp('sh', 20, 60, 95), sub: `${svcPct}% healthy`, kind: ovKind, src: OPS_SRC },
+    { l: 'On time', v: `${slaPct}%`, t: slaPct >= 95 ? 'ok' : slaPct >= 80 ? 'warn' : 'alert', spark: sp('sla', 22, 70, 100), sub: 'all services', kind: ovKind, src: OPS_SRC },
+    { l: 'Queues breaching', v: String(qBreach), t: qBreach === 0 ? 'ok' : 'alert', spark: sp('qb', 22, 0, 40), sub: `of ${queues.length} queues`, kind: ovKind, src: OPS_SRC },
+    { l: 'Open incidents', v: String(openInc), t: openInc === 0 ? 'ok' : 'warn', spark: sp('oi', 20, 0, 20), sub: `${critInc} critical`, kind: ovKind, src: OPS_SRC },
+    { l: 'Operations status', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', spark: sp('op', 24, 40, 70), sub: qBreach > 4 || !auditOk ? `${qBreach} queues late${auditOk ? '' : ' · audit review'}` : 'queues on time', kind: ovKind, src: OPS_SRC },
+    { l: 'Response time between systems', v: `${120 + Math.round(seed(`xl:${Math.floor(now / 15000)}`) * 90)}ms`, t: 'ok', spark: sp('xl', 22, 40, 80), sub: 'p95 mesh', kind: 'sample' },
   ];
   const qTotal = queues.reduce((a, q) => a + q.depth, 0);
   const donut = queues.slice(0, 4).map((q, i) => ({ label: q.name, value: q.depth, tone: ['ok', 'warn', 'alert', 'neutral'][i] ?? 'neutral' }));
@@ -143,10 +171,10 @@ export function OpsCenter() {
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Operations Centre</h2>
             <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}><span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE</span>
-            <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()} · updated {Math.round((now % 60000) / 1000)}s ago</span>
+            <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}<GeneratedText> · updated {Math.round((now % 60000) / 1000)}s ago</GeneratedText></span>
             {openInc >= 1 ? (
               <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, transparent)` }}>
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
@@ -171,7 +199,8 @@ export function OpsCenter() {
       </div>
 
       {/* Row 2 — service health matrix (6) */}
-      <P title="Service health" meta={`${services.length} systems`} >
+      <P title="Service health" meta={`${services.length} systems`} signal={svcKind} source={OPS_SRC}>
+        {services.length === 0 ? <p className="text-[11px] text-ink-muted">Not connected: the platform's service checks did not answer.</p> : null}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {services.map(v => {
             const deg = v.status !== 'ok';
@@ -183,7 +212,7 @@ export function OpsCenter() {
                   <span className="flex items-center gap-1 text-[9px]" style={{ color: TONE[tn] }}><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[tn] }} />{deg ? 'Degraded' : 'OK'}</span>
                 </div>
                 <div className="font-mono text-lg tabular-nums" style={{ color: TONE[tn] }}>{v.latencyMs} ms<span className="ml-1 text-[9px] text-ink-muted">p95</span></div>
-                <div className="-mb-1 h-6 overflow-hidden opacity-80"><Spark pts={sp(`svc:${v.name}`, 18, deg ? 50 : 20, deg ? 95 : 55)} tone={tn} /></div>
+                {gen.show ? <div className="-mb-1 h-6 overflow-hidden opacity-80"><Spark pts={sp(`svc:${v.name}`, 18, deg ? 50 : 20, deg ? 95 : 55)} tone={tn} /></div> : null}
                 <div className="truncate text-[9px] text-ink-muted">{v.detail}</div>
               </div>
             );
@@ -193,16 +222,18 @@ export function OpsCenter() {
 
       {/* Row 3 — queue intelligence + breakdown */}
       <div className="grid gap-2 xl:grid-cols-[1.7fr_1fr]">
-        <P title="Queue intelligence" meta={`${qTotal} total`}>
+        <P title="Queue intelligence" meta={`${qTotal} total`} signal={qKind} source={OPS_SRC}>
           <div className="space-y-2">
+            {queues.length === 0 ? <p className="text-[11px] text-ink-muted">{realQ ? 'No queue items recorded.' : 'Not connected: the operations overview did not answer.'}</p> : null}
             {queues.map(q => {
-              const pct = Math.min(100, Math.round((q.depth / Math.max(1, q.cap)) * 100));
+              // A recorded queue has no capacity: its bar shows lateness only.
+              const pct = q.cap === null ? (q.breaching ? 100 : 0) : Math.min(100, Math.round((q.depth / Math.max(1, q.cap)) * 100));
               const tn = q.breaching ? 'alert' : pct > 70 ? 'warn' : 'ok';
               return (
                 <div key={q.name}>
                   <div className="flex items-baseline justify-between text-[11px]">
                     <span className="text-ink"><strong>{q.name}</strong> <span className="text-ink-muted">{q.slaHours ? `· target ${Math.round(q.slaHours / 24)}d ${q.breaching ? '· late' : '· on time'}` : '· none late'}</span></span>
-                    <span className="font-mono tabular-nums text-ink-muted">{q.depth} / {q.cap}<span className="ml-2" style={{ color: TONE[tn] }}>{pct}%</span></span>
+                    <span className="font-mono tabular-nums text-ink-muted">{q.cap === null ? q.depth : <>{q.depth} / {q.cap}<span className="ml-2" style={{ color: TONE[tn] }}>{pct}%</span></>}</span>
                   </div>
                   <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: TONE[tn] }} /></div>
                 </div>
@@ -210,14 +241,15 @@ export function OpsCenter() {
             })}
           </div>
         </P>
-        <P title="Queue breakdown" meta={`${qTotal} queued`}>
+        <P title="Queue breakdown" meta={`${qTotal} queued`} signal={qKind} source={OPS_SRC}>
           <Donut segs={donut} />
         </P>
       </div>
 
       {/* Operational theatre — territory parity with command surfaces */}
       <div className="grid gap-2 xl:grid-cols-[1.6fr_1fr]">
-        <P title="Operational theatre" meta="cross-institution territory">
+        {/* The map in every mode; its generated load only where samples are (TerritoryHeat). */}
+        <P title="Operational theatre" meta="cross-institution territory" signal={gen.show ? 'sample' : 'unavailable'}>
           <TerritoryHeat epoch={Math.floor(now / 15000)} height={250} />
           <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
             <span>Low load</span>
@@ -225,7 +257,7 @@ export function OpsCenter() {
             <span>Saturated</span>
           </div>
         </P>
-        <P title="Regional operational status" meta="shared regional command model">
+        <P title="Regional operational status" meta="shared regional command model" signal="sample">
           <div className="space-y-1.5">
             {nationalRegions(now / 4000).map(r => {
               const t = r.posture === 'critical' ? 'alert' : r.posture === 'elevated' ? 'warn' : r.posture === 'watch' ? 'neutral' : 'ok';
@@ -246,7 +278,9 @@ export function OpsCenter() {
       </div>
 
       {/* Row 4 — municipality health */}
-      <P title="Municipality health" meta={`${tenants.length} of 47`} >
+      {/* The municipalities connected to the platform (or, in demo and training, examples); never a typed national total. */}
+      <P title="Municipality health" meta={realTen ? `${tenants.length} connected` : `${tenants.length} examples`} signal={tenKind} source={OPS_SRC}>
+        {tenants.length === 0 ? <p className="text-[11px] text-ink-muted">No municipality is connected to the platform.</p> : null}
         <div className="overflow-x-auto">
           <table className="w-full text-[11px]">
             <thead><tr className="border-b border-line bg-surface-2 text-left text-[8px] uppercase tracking-wide text-ink-muted">
@@ -262,7 +296,7 @@ export function OpsCenter() {
                     <td className="px-2 py-1.5 text-right font-mono tabular-nums text-ink-soft">{tn.openPermits}</td>
                     <td className="px-2 py-1.5 text-right font-mono tabular-nums" style={{ color: tn.slaBreaches > 0 ? TONE.alert : 'rgb(var(--c-ink-muted))' }}>{tn.slaBreaches}</td>
                     <td className="px-2 py-1.5 font-mono text-[10px]" style={{ color: tn.lastSyncMinutes > 120 ? TONE.alert : 'rgb(var(--c-ink-muted))' }}>{tn.lastSyncMinutes} min ago</td>
-                    <td className="px-3 py-1.5"><div className="h-5 w-28 overflow-hidden opacity-80"><Spark pts={sp(`mt:${tn.municipality}`, 16, st === 'warn' ? 45 : 25, st === 'warn' ? 90 : 60)} tone={st} /></div></td>
+                    <td className="px-3 py-1.5">{gen.show ? <div className="h-5 w-28 overflow-hidden opacity-80"><Spark pts={sp(`mt:${tn.municipality}`, 16, st === 'warn' ? 45 : 25, st === 'warn' ? 90 : 60)} tone={st} /></div> : <span className="text-[10px] text-ink-muted">—</span>}</td>
                   </tr>
                 );
               })}
@@ -273,7 +307,8 @@ export function OpsCenter() {
 
       {/* Row 5 — incident command */}
       <div className="grid gap-2 xl:grid-cols-[1fr_1.1fr]">
-        <P title="Incident escalation chronology" meta="live">
+        {/* The chronology's ages and owners are generated around each incident: Sample, folded in production. */}
+        <P title="Incident escalation chronology" meta="live" signal="sample">
           <div className="space-y-1">
             {liveInc.map((c, i) => {
               const tn = c.sev === 'sev1' ? 'alert' : c.sev === 'sev2' ? 'warn' : 'neutral';
@@ -315,8 +350,9 @@ export function OpsCenter() {
             })}
           </div>
         </P>
-        <P title="Live incident feed" meta={<Link href="/gov/situation-room" className="text-[10px] text-link underline">View all →</Link>} >
+        <P title="Live incident feed" meta={<Link href="/gov/situation-room" className="text-[10px] text-link underline">View all →</Link>} signal={incKind} source={INC_SRC}>
           <div className="space-y-2">
+            {liveInc.length === 0 ? <p className="text-[11px] text-ink-muted">{realInc ? 'No incidents recorded.' : 'Not connected: the incident register did not answer.'}</p> : null}
             {liveInc.map((c, i) => {
               const tn = c.sev === 'sev1' ? 'alert' : c.sev === 'sev2' ? 'warn' : 'neutral';
               return (
@@ -365,7 +401,8 @@ export function OpsCenter() {
       </div>
 
       {/* Lower micro-grid ecosystem — cross-system operational band */}
-      <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-ink-muted">Cross-system band <SignalTag kind="sample" source={REFERENCE_MODEL} /></p>
+      <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-ink-muted">Cross-system band</p>
+      <GeneratedStrip what="Cross-system band">
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         {[
           ['Service health', 'sh', 90, 99], ['Queue depth', 'qd', 10, 60], ['Handled per hour', 'tp', 40, 95],
@@ -393,9 +430,10 @@ export function OpsCenter() {
           );
         })}
       </div>
+      </GeneratedStrip>
 
       {svcInst.length > 0 ? (
-        <P title="Institutional service operations" meta={`${svcMean}% mean signature health · ${svcInst.filter(s => s.alert).length} degraded`}>
+        <P title="Institutional service operations" meta={`${svcMean}% mean signature health · ${svcInst.filter(s => s.alert).length} degraded`} signal="sample">
           <div className="grid gap-2 lg:grid-cols-2">
             <div className="space-y-1">
               {svcInst.map(s => {
@@ -431,7 +469,8 @@ export function OpsCenter() {
         </P>
       ) : null}
 
-      <P title="Infrastructure network pressure" meta="network model" signal="modelled">
+      {/* The network model's pressures are generated (lib/gov/infrastructure.ts): Sample, not Modelled. */}
+      <P title="Infrastructure network pressure" meta="network model" signal="sample">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
             const p = networkPressure(k, now / 4000);
@@ -451,15 +490,16 @@ export function OpsCenter() {
 
       {/* Operational command strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+        {/* Readiness, incidents and the audit from the operations overview; tempo and throughput generated. */}
         {[
-          { l: 'Readiness', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok' },
-          { l: 'Operational tempo', v: `${Math.round(40 + seed(`opstempo:${Math.floor(now / 15000)}`) * 55)} ops/min · sample`, t: 'ok' },
-          { l: 'Open incidents', v: `${openInc} · ${openInc ? '1 crit' : 'nominal'}`, t: openInc ? 'alert' : 'ok' },
-          { l: 'Queue handled', v: `${(1.2 + seed(`tput:${Math.floor(now / 15000)}`) * 0.6).toFixed(2)}M / 24h · sample`, t: 'ok' },
-          { l: 'Audit consistency', v: auditOk ? 'INTACT' : 'REVIEW', t: auditOk ? 'ok' : 'alert' },
+          { l: 'Readiness', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', kind: ovKind, src: OPS_SRC },
+          { l: 'Operational tempo', v: shownValue(gen, `${Math.round(40 + seed(`opstempo:${Math.floor(now / 15000)}`) * 55)} ops/min`), t: gen.show ? 'ok' : 'neutral', kind: gen.kind, src: gen.src },
+          { l: 'Open incidents', v: `${openInc} · ${openInc ? `${critInc} crit` : 'nominal'}`, t: openInc ? 'alert' : 'ok', kind: ovKind, src: OPS_SRC },
+          { l: 'Queue handled', v: shownValue(gen, `${(1.2 + seed(`tput:${Math.floor(now / 15000)}`) * 0.6).toFixed(2)}M / 24h`), t: gen.show ? 'ok' : 'neutral', kind: gen.kind, src: gen.src },
+          { l: 'Audit consistency', v: auditOk ? 'INTACT' : 'REVIEW', t: auditOk ? 'ok' : 'alert', kind: ovKind, src: OPS_SRC },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="flex min-w-0 flex-wrap items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}<SignalTag kind={s.kind} source={s.src} /></span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
               {s.l === 'Readiness' || s.l === 'Audit consistency' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
               {s.v}

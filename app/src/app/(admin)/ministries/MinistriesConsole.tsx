@@ -13,6 +13,8 @@ import { instantiateMinistry, systemKindLabel } from '@/lib/institution/blueprin
 import type { Archetype, ArchetypeKey, Ministry } from '@/lib/api/types';
 import { InstitutionStandingPanel } from '@/components/features/InstitutionStanding';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { GeneratedText, useGenerated, NOT_CONNECTED } from '@/components/ui/Generated';
 
 export function MinistriesConsole() {
   const [archetypes, setArchetypes] = React.useState<Archetype[]>([]);
@@ -20,6 +22,8 @@ export function MinistriesConsole() {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
   const [now, setNow] = React.useState(useRenderNow());
+  // Generated health figures: Sample in demo and training, "Not connected" in production (lib/twin/generated.ts).
+  const gen = useGenerated();
 
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 2000);
@@ -153,10 +157,11 @@ export function MinistriesConsole() {
                 </div>
                 {(() => {
                   const eco = instantiateMinistry(m, now / 4000);
+                  // Groups and systems come from the archetype's blueprint; operational and degraded are generated.
                   return (
                     <div className="mt-1 text-[10px] text-ink-muted">
                       {eco.activated
-                        ? `${eco.stats.groups} groups · ${eco.stats.systems} systems · ${eco.stats.operational} operational${eco.stats.degraded ? ` · ${eco.stats.degraded} degraded` : ''}`
+                        ? <>{`${eco.stats.groups} groups · ${eco.stats.systems} systems · `}<GeneratedText>{`${eco.stats.operational} operational${eco.stats.degraded ? ` · ${eco.stats.degraded} degraded` : ''}`}</GeneratedText></>
                         : `${eco.stats.systems} systems blueprinted · awaiting activation`}
                     </div>
                   );
@@ -297,11 +302,13 @@ export function MinistriesConsole() {
                 {(() => {
                   const eco = instantiateMinistry(current, now / 4000);
                   const tone = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
+                  // The blueprint (groups, systems, kinds) is the archetype's; health, status and uptime are generated.
                   return (
                     <Card tight>
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
                           Generated institutional ecosystem
+                          <SignalTag kind={gen.kind} source={`Health, status and uptime · ${gen.src}`} className="ml-1.5" />
                         </h3>
                         <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
                           style={{ backgroundColor: `color-mix(in srgb, ${eco.activated ? tone('ok') : tone('warn')} 18%, transparent)`, color: eco.activated ? tone('ok') : tone('warn') }}>
@@ -312,7 +319,7 @@ export function MinistriesConsole() {
                         Instantiated from the <strong>{current.archetype}</strong> archetype:
                         {' '}{eco.stats.groups} system groups · {eco.stats.systems} operational systems.
                         {eco.activated
-                          ? ` ${eco.stats.operational} operational · ${eco.stats.degraded} degraded · ${eco.stats.meanHealth}% mean health.`
+                          ? <> <GeneratedText>{`${eco.stats.operational} operational · ${eco.stats.degraded} degraded · ${eco.stats.meanHealth}% mean health.`}</GeneratedText></>
                           : ' Activation provisions every system below — the ministry becomes a running institution, not an empty container.'}
                       </p>
                       <div className="mt-2 grid gap-2 lg:grid-cols-2">
@@ -320,21 +327,21 @@ export function MinistriesConsole() {
                           <div key={g.key} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
                             <div className="flex items-center justify-between gap-2">
                               <a href={`/ministries/${current.id}/system/${g.key}`} className="text-[11px] font-semibold text-link no-underline hover:underline">{g.name} →</a>
-                              <span className="font-mono text-[10px] tabular-nums" style={{ color: tone(g.tone) }}>
-                                {eco.activated ? `${g.health}%` : '— '}
+                              <span className="font-mono text-[10px] tabular-nums" style={{ color: gen.show ? tone(g.tone) : 'rgb(var(--c-ink-muted))' }}>
+                                {!eco.activated ? '— ' : gen.show ? `${g.health}%` : NOT_CONNECTED}
                               </span>
                             </div>
                             <div className="text-[9px] text-ink-muted">{g.purpose}</div>
                             <ul className="mt-1.5 space-y-0.5">
                               {g.systems.map(s => {
-                                const st = s.status === 'operational' ? tone('ok') : s.status === 'degraded' ? tone('alert') : 'rgb(var(--c-ink-muted))';
+                                const st = !gen.show ? 'rgb(var(--c-ink-muted))' : s.status === 'operational' ? tone('ok') : s.status === 'degraded' ? tone('alert') : 'rgb(var(--c-ink-muted))';
                                 return (
                                   <li key={s.name} className="flex items-center gap-1.5 text-[10px]">
                                     <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: st }} />
                                     <span className="min-w-0 flex-1 truncate text-ink-soft">{s.name}</span>
                                     <span className="shrink-0 text-[8px] uppercase tracking-wider text-ink-muted">{systemKindLabel(s.kind)}</span>
                                     {s.status !== 'provisioning' ? (
-                                      <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: st }}>{s.uptime}%</span>
+                                      <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: st }}>{gen.show ? `${s.uptime}%` : '—'}</span>
                                     ) : (
                                       <span className="w-8 shrink-0 text-right text-[8px] uppercase text-ink-muted">prov</span>
                                     )}

@@ -5,7 +5,7 @@
 // (and adds the citations of its own law in a new version) before any case
 // runs. Importing this module registers its effects with the engine.
 
-import { registerEffect, type EffectContext } from '@/lib/casework/engine';
+import { registerEffect, sampleMark, type EffectContext } from '@/lib/casework/engine';
 import { draftPackage, listPackages } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
 import { issueCertificate } from '@/lib/records/certificates';
@@ -27,7 +27,7 @@ registerEffect('civil.registerBirth', ({ case: c, actor, now }: EffectContext) =
   const date = str(f.birthDate);
   const late = !!date && (now.getTime() - Date.parse(`${date}T00:00:00Z`)) / 86_400_000 > LATE_AFTER_DAYS;
   const e = registerEvent({
-    kind: 'birth', date, case: c.id, late,
+    kind: 'birth', date, case: c.id, late, ...sampleMark(c),
     place: { text: str(f.birthPlace), ...(str(f.region) ? { region: str(f.region) } : {}), ...(str(f.birthFacility) ? { facility: str(f.birthFacility) } : {}) },
     child: { given: str(f.childGiven), family: str(f.childFamily), sex: (['female', 'male', 'other'].includes(str(f.sex)) ? str(f.sex) : 'unknown') as Sex,
       mother: { given: str(f.motherGiven), family: str(f.motherFamily) }, ...(str(f.fatherFamily) ? { father: { given: str(f.fatherGiven), family: str(f.fatherFamily) } } : {}) },
@@ -51,7 +51,7 @@ registerEffect('civil.registerDeath', ({ case: c, actor, now }: EffectContext) =
   const f = c.fields;
   const p = getPerson(str(f.deceasedRegistration));
   if (!p) return { error: `No person with birth registration ${str(f.deceasedRegistration)} in the register: register the birth late first` };
-  const e = registerEvent({ kind: 'death', date: str(f.deathDate), case: c.id, deceased: p.id, place: { text: str(f.deathPlace), ...(str(f.region) ? { region: str(f.region) } : {}) }, ...(str(f.informantName) ? { informant: { name: str(f.informantName), ...(str(f.informantRelation) ? { relation: str(f.informantRelation) } : {}) } } : {}) }, actor.name, now);
+  const e = registerEvent({ kind: 'death', date: str(f.deathDate), case: c.id, ...sampleMark(c), deceased: p.id, place: { text: str(f.deathPlace), ...(str(f.region) ? { region: str(f.region) } : {}) }, ...(str(f.informantName) ? { informant: { name: str(f.informantName), ...(str(f.informantRelation) ? { relation: str(f.informantRelation) } : {}) } } : {}) }, actor.name, now);
   if ('error' in e) return { error: e.error };
   return { facts: { registrationNumber: e.registrationNumber, dateOfDeath: e.date }, after: d => { if (d) attachDecision(e.id, d.id); } };
 });
@@ -60,7 +60,7 @@ registerEffect('civil.registerMarriage', ({ case: c, actor, now }: EffectContext
   const f = c.fields;
   const a = getPerson(str(f.spouseOneRegistration)), b = getPerson(str(f.spouseTwoRegistration));
   if (!a || !b) return { error: 'Both spouses must be in the register (by their birth registration numbers)' };
-  const e = registerEvent({ kind: 'marriage', date: str(f.marriageDate), case: c.id, spouses: [a.id, b.id], form: str(f.form), place: { text: str(f.marriagePlace), ...(str(f.region) ? { region: str(f.region) } : {}) } }, actor.name, now);
+  const e = registerEvent({ kind: 'marriage', date: str(f.marriageDate), case: c.id, ...sampleMark(c), spouses: [a.id, b.id], form: str(f.form), place: { text: str(f.marriagePlace), ...(str(f.region) ? { region: str(f.region) } : {}) } }, actor.name, now);
   if ('error' in e) return { error: e.error };
   return { facts: { registrationNumber: e.registrationNumber, dateOfMarriage: e.date, form: str(f.form) }, after: d => { if (d) attachDecision(e.id, d.id); } };
 });

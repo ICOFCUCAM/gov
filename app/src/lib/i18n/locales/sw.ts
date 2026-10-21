@@ -380,6 +380,8 @@ export const sw: Messages = {
     live: 'Moja kwa moja',
     sampleNews: 'Matangazo ya mfano',
     sampleNote: 'Yanaonyeshwa hadi {name} ichapishe yake.',
+    sampleAlert: 'Mfano · si tahadhari halisi',
+    sampleAlertNote: 'Tahadhari ya kuigwa inayoonyeshwa katika usakinishaji wa maonyesho au mafunzo; hakuna dharura iliyotangazwa.',
     browseTopics: 'Vinjari kwa mada',
     gatewayLink: 'Huu ni ukurasa wa {name} kwenye jukwaa la taifa. Tovuti yake kuu ni {host}.',
     gatewayMigrate: '{name} inahamishia tovuti yake hapa kutoka {host}; kurasa ambazo bado hazijahamishwa ziko huko.',

@@ -625,7 +625,7 @@ export function healthCommand(instId: string, t: number): HealthCommand {
   if (ems.massCasualtyActive >= 1) directives.push({ priority: 'critical', title: 'Stand up mass-casualty coordination', rationale: `${ems.massCasualtyActive} region(s) at mass-casualty posture`, target: 'emergency' });
   if (ph.classesCritical >= 1) directives.push({ priority: ph.posture === 'shortage' ? 'critical' : 'priority', title: 'Emergency pharmaceutical redistribution', rationale: `${ph.classesCritical} drug class(es) critical/stockout`, target: 'pharma' });
   if (dis.nationalRt > 1.3) directives.push({ priority: 'critical', title: 'Escalate outbreak containment', rationale: `National Rt ${dis.nationalRt} — exponential spread`, target: 'disease' });
-  if (lab.posture === 'overloaded') directives.push({ priority: 'priority', title: 'Surge diagnostic capacity', rationale: `Lab turnaround ${lab.meanTurnaroundHrs}h — diagnostics delayed`, target: 'lab' });
+  if (lab.posture === 'overloaded') directives.push({ priority: 'priority', title: 'Surge laboratory capacity', rationale: `Lab turnaround ${lab.meanTurnaroundHrs}h — results delayed`, target: 'lab' });
   if (ems.meanResponseMin >= 15 && ems.massCasualtyActive === 0) directives.push({ priority: 'priority', title: 'Rebalance ambulance deployment', rationale: `EMS mean response ${ems.meanResponseMin}m`, target: 'emergency' });
   directives.sort((a, b) => ({ critical: 0, priority: 1, advisory: 2 }[a.priority] - { critical: 0, priority: 1, advisory: 2 }[b.priority]));
 

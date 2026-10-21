@@ -192,7 +192,8 @@ and `route-lock.json`.
 
 | Step | Content | Size |
 |---|---|---|
-| I0 | Read-only audit (Part 6 "immediate next step"): inventory of routes, APIs, stores, jobs; archetypes and register owners; every screen still on generated samples; production/demo isolation; security and independence gaps; the acceptance-test register (§3.5). Writes `docs/reviews/…-institutional-baseline-audit.md`. No code changes | M |
+| I0 | **Done 21 October 2026.** Read-only audit (Part 6 "immediate next step"): `docs/reviews/2026-10-institutional-baseline-audit.md` (inventory, generated screens, isolation and audit coverage, gap register) and the acceptance register `docs/INSTITUTIONAL_ACCEPTANCE.md` (91 items: 32 proven, 43 partial, 16 not yet) | M |
+| I0.1 | **Done 21 October 2026.** Truth and safety in production (added by the audit, §5 there): no simulated update health in production; sample cases, backups and payments refused outside demo and training; every generated figure marked and folded to "Not connected" in production like the agency apps; no patient or clinical figures on the health wall; audit and access-log gaps closed; two-person independence as a country rule; small corrections and cheap acceptance tests. Removes nothing | M |
 | I1 | Form contract (§3.1) in `FieldSpec`, renderer for self-service, assisted and print; existing packages keep working | L |
 | I2 | Departments as records, capability manifest, department completeness view (§3.4) | M |
 | I3 | Indicator definitions and the twin contract (§3.2); replace generated sector panels with record-computed indicators or "Not connected" | L |

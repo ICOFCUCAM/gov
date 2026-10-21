@@ -4,6 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/api/client';
+// Kept out of the lazy bundle: which interior screens read the platform's own records.
+import { isRecordDomain as isInteriorRecordDomain } from '@/apps/ministry-interior/core/domains';
 import { TONE } from '@/components/features/SituationRoom';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, findApp, version as orchVersion } from '@/services/orchestration-engine';
@@ -200,10 +202,19 @@ export function AppHost({ domain, initialKey, mode = 'production' }: { domain: s
               }
             }
             const vt = verdict.posture === 'breach' ? 'alert' : fiscalGate ? 'alert' : verdict.posture === 'under-review' ? 'warn' : 'ok';
+            // A screen that reads the platform's own records (the interior app's civil register, permits and
+            // observed population) stands outside the simulation fold, so production shows the records;
+            // the screen folds its own generated panels.
+            const interiorRecords = app.activated && app.kind === 'ministry' && !!app.instanceId && app.archetypeOrBranch === 'INTERIOR' && isInteriorRecordDomain(active);
             return (
               <>
                 {/* The institution's records in the platform's real registers, then its simulation screens (marked). */}
                 <RegisterRecords app={app} mode={mode} />
+                {interiorRecords ? (
+                  <div className="mb-2">
+                    <MinistryInteriorApp instanceId={app.instanceId!} domain={active ?? 'national-overview'} now={now} role={role} withheld={withheld} recordsView />
+                  </div>
+                ) : null}
                 <SimulatedView mode={mode}>
                 <div className="mb-2 rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid rgb(var(--c-${vt}))` }}>
                   <div className="flex flex-wrap items-center gap-2">
@@ -295,7 +306,9 @@ export function AppHost({ domain, initialKey, mode = 'production' }: { domain: s
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'ENERGY' ? (
                   <MinistryEnergyApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'INTERIOR' ? (
-                  <MinistryInteriorApp instanceId={app.instanceId} domain={active ?? 'national-overview'} now={now} role={role} withheld={withheld} />
+                  interiorRecords
+                    ? <p className="text-[11px] text-ink-muted">This screen reads the platform&apos;s records and is shown above, with its own generated panels marked.</p>
+                    : <MinistryInteriorApp instanceId={app.instanceId} domain={active ?? 'national-overview'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId ? (
                   <SectorInstitutionApp instanceId={app.instanceId} archetype={app.archetypeOrBranch as ArchetypeKey} label={app.label} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'branch' && app.id === 'presidency' ? (

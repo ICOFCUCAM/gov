@@ -6,6 +6,8 @@ vi.mock('@/lib/db/client', () => ({
 }));
 
 import { GET } from './route';
+import { listAudit } from '@/lib/data/store/audit';
+import { listAccess, resetAccessLog } from '@/lib/records/access-log';
 
 beforeEach(() => {
   serverClientMock.mockReset();
@@ -106,5 +108,40 @@ describe('GET /api/substrate/export', () => {
     const res = await GET(new Request('http://x?cap=9999999', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.row_cap_per_table).toBeLessThanOrEqual(50_000);
+  });
+
+  it('writes one audit entry and one access-log export entry per dump, naming the shared secret and counts only (baseline audit §3.3)', async () => {
+    process.env.CIVICOS_EXPORT_SECRET = 'correct';
+    resetAccessLog();
+    serverClientMock.mockReturnValue({
+      from: (view: string) => ({
+        select: () => ({
+          limit: () => Promise.resolve({ data: view === 'civicos_citizens' ? [{ id: 'c-1', full_name: 'Amina Example', national_id: 'NID-777' }] : [], count: 1, error: null }),
+        }),
+      }),
+    });
+    const before = listAudit().length;
+    expect((await GET(new Request('http://x', { headers: { authorization: 'Bearer correct' } }))).status).toBe(200);
+    const audit = listAudit().slice(0, listAudit().length - before);
+    expect(audit).toHaveLength(1);
+    expect(audit[0]).toMatchObject({ action: 'substrate.export', resource: 'Substrate:export', outcome: 'ok' });
+    expect(audit[0]!.actor).toMatch(/CIVICOS_EXPORT_SECRET; no named official/);
+    expect(audit[0]!.detail).toMatch(/rows 1;/);
+    const access = listAccess({ register: 'substrate' });
+    expect(access).toHaveLength(1);
+    expect(access[0]).toMatchObject({ v: 2, action: 'export', result: 'allowed' });
+    expect(access[0]!.by.name).toMatch(/CIVICOS_EXPORT_SECRET/);
+    // No row content anywhere in what was recorded.
+    const recorded = JSON.stringify([audit, access]);
+    expect(recorded).not.toContain('Amina');
+    expect(recorded).not.toContain('NID-777');
+  });
+
+  it('records nothing for a refused caller', async () => {
+    resetAccessLog();
+    const before = listAudit().length;
+    expect((await GET(new Request('http://x'))).status).toBe(401);
+    expect(listAudit()).toHaveLength(before);
+    expect(listAccess()).toHaveLength(0);
   });
 });

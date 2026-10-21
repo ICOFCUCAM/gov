@@ -5,6 +5,7 @@
 import Link from 'next/link';
 import { getSovereign, getSetup } from '@/lib/data/store';
 import { nationOffices, type NationOffices } from '@/lib/nation/offices';
+import { readGovernmentStatus, type PublicStatusLine } from '@/lib/public-sites/government-status';
 
 export const dynamic = 'force-dynamic';
 const offices = () => nationOffices(getSovereign(), !!getSetup());
@@ -59,6 +60,16 @@ const institutionsFor = (o: NationOffices): Institution[] => [
   { href: '/portal', name: 'Citizen Super-Portal', branch: 'citizen', tagline: 'Every ministry · one wallet', crest: '◯' },
 ];
 
+/** A line that is not a record or an observation says so: Sample, or Not connected / Not recorded (lib/twin/signal.ts). */
+function Marker({ line }: { line: PublicStatusLine }) {
+  if (line.kind === 'sample' || line.kind === 'simulated' || line.kind === 'modelled') {
+    return <span title={line.source} className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style={{ borderColor: '#e7c879', background: '#fdf6e3', color: '#7a4f0b' }}>Sample<span className="sr-only">: {line.source}</span></span>;
+  }
+  if (line.kind === 'unavailable') return <span className="sr-only">({line.source})</span>;
+  return null;
+}
+const toneColour = (l: PublicStatusLine) => (l.tone === 'alert' ? '#b42318' : l.tone === 'warn' ? '#8a5a00' : l.tone === 'ok' ? TEAL : '#475569');
+
 const BRANCH_LABEL: Record<Institution['branch'], string> = {
   executive: 'Executive Branch',
   legislative: 'Legislative Branch',
@@ -72,6 +83,7 @@ const BRANCH_ORDER: Institution['branch'][] = ['executive', 'legislative', 'judi
 
 export default function GovernmentDirectoryPage() {
   const o = offices();
+  const status = readGovernmentStatus();
   const INSTITUTIONS = institutionsFor(o);
   const byBranch = BRANCH_ORDER.map(b => ({ branch: b, items: INSTITUTIONS.filter(i => i.branch === b) }));
 
@@ -124,18 +136,21 @@ export default function GovernmentDirectoryPage() {
             </div>
           </div>
           <div className="rounded-xl border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: GOLD_TEXT }}>National Posture</div>
-            <div className="mt-2 text-[28px] font-bold" style={{ color: TEAL }}>STEADY</div>
-            <div className="text-[12px] text-slate-600">National readiness 86/100 · 0 major incidents</div>
+            {/* Each line read from the system that holds it (lib/public-sites/government-status.ts); nothing typed in. */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: GOLD_TEXT }}>National Posture</div>
+              <Marker line={status.posture} />
+            </div>
+            <div className="mt-2 text-[28px] font-bold" style={{ color: toneColour(status.posture) }}>{status.posture.value}</div>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-slate-600">
+              <span>{status.readiness.label} {status.readiness.value}</span><Marker line={status.readiness} />
+              <span aria-hidden>·</span>
+              <span>{status.majorIncidents.label} {status.majorIncidents.value}</span><Marker line={status.majorIncidents} />
+            </div>
             <hr className="my-3" style={{ borderColor: LINE }} />
             <div className="space-y-1.5 text-[12px]">
-              {[
-                ['Cabinet sitting', 'Wednesday — agenda public'],
-                ['Public briefing', 'Every 6h · 5 languages'],
-                ['Constitutional posture', '✓ separation intact'],
-                ['Audit chain', '✓ intact across branches'],
-              ].map(([k, v]) => (
-                <div key={k} className="flex justify-between"><span className="text-slate-600">{k}</span><span className="text-slate-800">{v}</span></div>
+              {status.lines.map(l => (
+                <div key={l.label} className="flex flex-wrap items-center justify-between gap-x-2"><span className="text-slate-600">{l.label}</span><span className="flex items-center gap-1.5 text-slate-800" title={l.source}>{l.value}<Marker line={l} /></span></div>
               ))}
             </div>
             <Link href="/noc" className="mt-3 inline-block text-[12px] underline underline-offset-2" style={{ color: TEAL }}>View live briefing →</Link>
