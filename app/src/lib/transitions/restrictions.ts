@@ -34,7 +34,10 @@ function caretakerFor(institution: string, now: Date) {
   const whole = periods.find(p => p.institution === EXECUTIVE_OFFICE);
   if (!whole) return undefined;
   if (institution === EXECUTIVE_OFFICE) return whole;
-  return institutionBounds(now).independent.includes(institution) ? undefined : whole;
+  // The national government's caretaker period covers neither independent
+  // institutions nor regional and local governments with their own powers.
+  const bounds = institutionBounds(now);
+  return bounds.independent.includes(institution) || bounds.subnational?.includes(institution) ? undefined : whole;
 }
 
 /**

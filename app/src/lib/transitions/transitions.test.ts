@@ -68,6 +68,7 @@ beforeEach(async () => {
   exec = mk('Cabinet Office'); health = mk('Ministry of Health'); court = mk('Constitutional Court'); assembly = mk('National Assembly'); region = mk('Northern Region');
   recordTermsDuringSetup(court, { standing: 'judiciary', branch: 'judiciary' }, 'First Admin');
   recordTermsDuringSetup(assembly, { standing: 'legislature', branch: 'legislature' }, 'First Admin');
+  recordTermsDuringSetup(region, { standing: 'subnational', branch: 'executive' }, 'First Admin');
   setSovereign({ regions: ['North', 'South'], deployment: { authorities: { businessRegister: health } } }, 'test');
   A = await account('Admin A', 'administrator'); B = await account('Admin B', 'administrator'); C = await account('Admin C', 'administrator');
   healthSigner = await account('Health Signer', 'signatory', health); healthSigner2 = await account('Health Signer Two', 'signatory', health);
@@ -294,6 +295,8 @@ describe('transitions and emergencies', () => {
     // Unlisted kinds go on; an independent institution is not covered by the government's caretaker period.
     expect(caretakerRefusal({ institution: health, procedure: 'other.permit', decision: 'grant' })).toBeNull();
     expect(caretakerRefusal({ institution: court, procedure: 'test.licence' })).toBeNull();
+    // Nor a regional government with its own powers.
+    expect(caretakerRefusal({ institution: region, procedure: 'test.licence' })).toBeNull();
     expect(draftDirective({ ref: 'D-2', kind: 'policy', issuedByCharterId: 'executive-office', title: 'New policy', by: 'Admin A' })).toMatchObject({ error: expect.stringMatching(/caretaker period/) });
     expect(draftDirective({ ref: 'D-3', kind: 'communication', issuedByCharterId: 'executive-office', title: 'Notice', by: 'Admin A' })).not.toHaveProperty('error');
     // Ended (two people): the restriction goes with it.

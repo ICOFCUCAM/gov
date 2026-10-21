@@ -217,7 +217,7 @@ What has been built is locked. Work only upgrades it toward the vision in
   events: cited from the laws register, confirmed by a different person (never the one named), every
   version kept; none and no rule ships. Their consequences live in one place
   (`lib/transitions/restrictions.ts`): a caretaker period refuses only the kinds the nation's adopted
-  rules list; a court's ruling that a provision is invalid or suspended refuses new decisions citing it
+  rules list (the whole government's never reaches independent or subnational institutions); a court's ruling that a provision is invalid or suspended refuses new decisions citing it
   and flags (never changes) earlier ones; a declared interest recuses at once (`CaseFacts.recused`).
   An emergency lapses at expiry and nothing in `roles.ts` reads it; impeachment stages run in order by
   the institution named for each; a holding past its recorded term is no longer in force.

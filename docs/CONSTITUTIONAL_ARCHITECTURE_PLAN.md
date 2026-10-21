@@ -252,7 +252,8 @@ through `policy-change.ts`; none ships, the guidance's caretaker list is shown a
 Enforced: recusal in `caseActRefusal()` (`CaseFacts.recused`, from the declaration on, lifted by two people); caretaker
 restrictions and courts' rulings in one place (`lib/transitions/restrictions.ts`) read by a case-engine decision guard
 (at proposal and confirmation; guards now receive the citations) and by directives (draft and signing) — only the kinds
-the nation listed, a warning while it listed none; a ruling that a provision is invalid or suspended refuses new
+the nation listed, a warning while it listed none (the whole government's caretaker period does not reach independent
+or subnational institutions); a ruling that a provision is invalid or suspended refuses new
 decisions and directives citing it (a stayed one, read-down, interpretation or remittal does not), and decisions it
 touches are flagged for legal assessment, never changed; impeachment stages in order, none skipped, no outcome changes an
 account or holding; emergencies lapse at their expiry (computed), renewal is a new confirmed declaration, and nothing in
