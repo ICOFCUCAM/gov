@@ -123,7 +123,7 @@ export function NationalCoordination() {
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link href="/gov" className="focus-ring text-[11px] text-ink-muted underline underline-offset-2">← Cabinet</Link>
             <h2 className="text-xl font-semibold tracking-tight text-ink">National Coordination Intelligence</h2>
             <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>
