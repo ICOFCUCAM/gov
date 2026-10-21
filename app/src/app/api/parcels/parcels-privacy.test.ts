@@ -12,6 +12,7 @@ import { listMinistries } from '@/lib/data/store';
 import { listAudit } from '@/lib/data/store/audit';
 import { resetParcels, recordParcel, actOnParcel, proposeParcelPolicyChange, decideParcelPolicyChange, importParcels } from '@/lib/data/parcels';
 import { resetParcelTiles } from '@/lib/twin/parcel-tiles';
+import { listAccess, resetAccessLog } from '@/lib/records/access-log';
 
 let official: { name: string; institution?: string; role?: string } | null = null;
 vi.mock('@/lib/auth/official', async importOriginal => ({
@@ -122,5 +123,21 @@ describe('holder privacy across every output of the parcel register', () => {
     // Even the authority's list never carries them (only a parcel's own record does).
     official = { name: 'Clerk at Lands', institution: lands, role: 'officer' };
     expect(await text(await list.GET(req('/api/parcels?state=all')))).not.toMatch(PRIVATE);
+  }, 60_000);
+
+  it('writes each read of rights and holders to the access log by reference only; a read without them is not logged (step I0.1)', async () => {
+    resetAccessLog();
+    const read = () => one.GET(req('/api/parcels/NRB%2F1%2F100'), params({ pid: 'NRB%2F1%2F100' }));
+    official = { name: 'Clerk at Lands', institution: lands, role: 'officer' };
+    await read();
+    official = { name: 'Government auditor', role: 'auditor' };
+    await read();
+    official = { name: 'Signatory elsewhere', institution: other, role: 'signatory' };
+    await read();
+    const log = listAccess({ register: 'parcels' });
+    expect(log).toHaveLength(2);
+    expect(log.every(e => e.v === 2 && e.action === 'view' && e.result === 'allowed' && e.record.id === 'PCL-000001')).toBe(true);
+    expect(log.map(e => e.by.name).sort()).toEqual(['Clerk at Lands', 'Government auditor']);
+    expect(JSON.stringify(log)).not.toMatch(PRIVATE);
   }, 60_000);
 });

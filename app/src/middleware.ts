@@ -8,6 +8,7 @@ import { OFFICIAL_COOKIE, verifyToken, type OfficialClaims } from '@/lib/auth/se
 import { apiPermission, PUBLIC_WRITE, SELF_AUTHENTICATED, verifiesOwnCredential, CITIZEN_DEMO_WRITES } from '@/lib/auth/roles';
 import { contentSecurityPolicy } from '../security-headers.mjs';
 import { POLICIES, take, tooMany, clientAddress, type Scope } from '@/lib/ops/rate-limit-core';
+import { ROUTE_HEADER, CHANGE_METHOD_HEADER, routeRef } from '@/lib/records/route-ref';
 
 // Sovereign access gate. It requires a verified official (the signed
 // civicos_official cookie) for every non-public page, read and change when
@@ -132,7 +133,9 @@ async function liveOfficial(req: NextRequest): Promise<{ official: OfficialClaim
   try {
     const base = process.env.CIVICOS_INTERNAL_URL || req.nextUrl.origin;
     // The path of the change, so an instance can accept changes to the per-record registers without the snapshot lease (CIVICOS_STATE=postgres).
-    const r = await fetch(new URL('/api/auth/official', base), { headers: { cookie: req.headers.get('cookie') ?? '', 'x-civicos-change-path': req.nextUrl.pathname }, cache: 'no-store' });
+    // And its method: when the rules refuse the change, the platform writes that refusal to the access log
+    // (the edge cannot), deciding with the same apiPermission() this gate applies (lib/records/refusal-log.ts).
+    const r = await fetch(new URL('/api/auth/official', base), { headers: { cookie: req.headers.get('cookie') ?? '', 'x-civicos-change-path': req.nextUrl.pathname, [CHANGE_METHOD_HEADER]: req.method }, cache: 'no-store' });
     if (!r.ok) return undefined;
     const j = (await r.json()) as { official?: OfficialClaims | null; state?: { writable?: boolean } };
     // An instance that does not hold the state writer's lease (lib/data/persist.ts) refuses changes.
@@ -246,6 +249,8 @@ function handle(req: NextRequest, requestId: string, nonce: string): NextRespons
   if (crossSite) return crossSite;
   const forwarded = new Headers(req.headers);
   forwarded.set('x-request-id', requestId);
+  // What the request asked for, for a route's refusal in the access log (lib/records/route-ref.ts); a caller's value is replaced.
+  forwarded.set(ROUTE_HEADER, routeRef(req.method, req.nextUrl.pathname));
   const limited = rateGate(req);
   if (limited) return limited.then(r => r ?? next(req, forwarded, nonce));
   return next(req, forwarded, nonce);

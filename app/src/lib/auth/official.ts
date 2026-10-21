@@ -6,7 +6,9 @@
 // (declared names, as before); with CIVICOS_AUTH=enforce the middleware
 // refuses such changes before they get here.
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
+import { logRefusal, type RefusalRef } from '@/lib/records/refusal-log';
+import { ROUTE_HEADER } from '@/lib/records/route-ref';
 import { NextResponse } from 'next/server';
 import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, verifyToken, type OfficialClaims } from './session-token';
 import { createHash } from 'node:crypto';
@@ -103,15 +105,37 @@ export async function withOfficial<T>(body: T): Promise<T> {
 }
 
 /**
+ * What a refused request asked for, for the access log: the record the route
+ * names, else the method and path the middleware forwarded (ROUTE_HEADER),
+ * else only that it was an API request.
+ */
+async function requestRef(ref?: RefusalRef): Promise<RefusalRef> {
+  if (ref) return ref;
+  try {
+    const r = (await headers()).get(ROUTE_HEADER);
+    if (r) return { register: 'api', id: r.slice(0, 200) };
+  } catch { /* outside a request */ }
+  return { register: 'api' };
+}
+
+/** A 403 with the reason, the refusal written to the access log first (reference and rule only; lib/records/refusal-log.ts). */
+async function refused(o: CurrentOfficial, why: string, ref?: RefusalRef): Promise<NextResponse> {
+  logRefusal({ id: o.sub, label: actorLabel(o), ...(o.institution ? { institution: o.institution } : {}) }, await requestRef(ref), why);
+  return NextResponse.json({ error: why }, { status: 403 });
+}
+
+/**
  * Check a rule from lib/auth/roles.ts against the signed-in official: a 403
  * response with the reason when it refuses, null to go ahead. Without a
  * signed-in official there is nothing to check here (declared names; the
- * middleware refuses changes when sign-in is enforced).
+ * middleware refuses changes when sign-in is enforced). A refusal is written
+ * to the access log as `refused`, naming `ref` (the record asked for) or the
+ * request's method and path, and the rule; never the protected content.
  */
-export async function refusal(rule: (s: Scope) => string | null): Promise<NextResponse | null> {
+export async function refusal(rule: (s: Scope) => string | null, ref?: RefusalRef): Promise<NextResponse | null> {
   const o = await currentOfficial();
   const why = o ? secondStepMissing(o) ?? rule(o) : null;
-  return why ? NextResponse.json({ error: why }, { status: 403 }) : null;
+  return why ? refused(o!, why, ref) : null;
 }
 
 /**
@@ -130,12 +154,13 @@ export function pathRefusal(req: Request): Promise<NextResponse | null> {
  * canReadPermits()) against the signed-in official: a 403 with the reason, or
  * null to go ahead. Reads do not need the second sign-in step. Without a
  * signed-in official there is nothing to check (CIVICOS_AUTH=enforce refuses
- * reads without one in the middleware).
+ * reads without one in the middleware). A refusal is written to the access
+ * log as refusal() writes it.
  */
-export async function readRefusal(rule: (s: Scope) => string | null): Promise<NextResponse | null> {
+export async function readRefusal(rule: (s: Scope) => string | null, ref?: RefusalRef): Promise<NextResponse | null> {
   const o = await currentOfficial();
   const why = o ? rule(o) : null;
-  return why ? NextResponse.json({ error: why }, { status: 403 }) : null;
+  return why ? refused(o!, why, ref) : null;
 }
 
 /**

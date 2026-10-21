@@ -1,7 +1,8 @@
 // /api/cases/[id] — one case (lib/casework/engine.ts). GET: the case with its
 // fields, documents, decisions and history, for those the case rules let
-// read it; reads of restricted and secret cases (and refusals) are written to
-// the access log, with the purpose (?purpose=). POST: a step on the case:
+// read it; every read by a signed-in official (normal, restricted and secret
+// cases, since each answer carries the personal fields) and every refusal is
+// written to the access log, with the purpose (?purpose=). POST: a step on the case:
 // act (an action of its procedure; four-eyes where it says), assign, attach a
 // document, hold or release, refer to another institution, or withdraw a
 // proposal waiting for its second official.
@@ -33,7 +34,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     // A read under an approved audit or request-information relationship is always logged, naming it (plan phase 3).
     const grant = !why && s.institution !== c.owner ? readRelationship(s, c.owner, caseRecordTypes(facts), purpose) : null;
     const rule = why ?? (grant ? relationshipRule(grant) : undefined);
-    if (c.sensitivity !== 'normal' || why || grant) recordAccess({ ...accessBy(s), record: { register: 'cases', id: c.ref }, action: why ? 'refused' : 'view', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(rule ? { rule } : {}) });
+    // Every read is logged, normal cases too: the answer carries the personal fields, subject and applicant (baseline audit §3.3).
+    recordAccess({ ...accessBy(s), record: { register: 'cases', id: c.ref }, action: why ? 'refused' : 'view', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(rule ? { rule } : {}) });
     if (why) return NextResponse.json({ error: why }, { status: 403 });
   }
   return NextResponse.json({

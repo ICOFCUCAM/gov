@@ -10,7 +10,10 @@
 // government's identity provider start at /api/auth/oidc/start. DELETE signs
 // out, ends the session on the server (review M-1), and answers with the
 // provider's sign-out address when the session came from it. Every sign-in
-// and sign-out is written to the audit chain; addresses never are.
+// and sign-out is written to the audit chain; addresses never are. When the
+// middleware asks GET about a change (x-civicos-change-path and -method) that
+// the rules refuse, the refusal is written to the access log here (reference
+// and rule only; lib/records/refusal-log.ts).
 
 import { authEnforced, openInProduction } from '@/lib/auth/mode';
 import { NextRequest, NextResponse } from 'next/server';
@@ -28,19 +31,29 @@ import type { OfficialRole } from '@/lib/auth/roles';
 import { officerForUser, substrateScope, substrateAal2 } from '@/lib/auth/substrate-officials';
 import { deviceOf } from '@/lib/auth/activity';
 import { stateWritable, CHANGE_PATH_HEADER } from '@/lib/data/persist';
-import { roleOf } from '@/lib/auth/roles';
+import { roleOf, apiPermission } from '@/lib/auth/roles';
+import { logRefusal } from '@/lib/records/refusal-log';
+import { CHANGE_METHOD_HEADER, routeRef } from '@/lib/records/route-ref';
 import { limit } from '@/lib/ops/rate-limit';
 import { localAccountsAllowed } from '@/lib/auth/setup-token';
 
 export const dynamic = 'force-dynamic';
 
 const enforced = () => authEnforced();
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 export async function GET() {
   const o = await currentOfficial();
   // The path of the change the middleware is checking (lib/data/persist.ts RECORD_ROUTES).
-  let forPath: string | undefined;
-  try { forPath = (await headers()).get(CHANGE_PATH_HEADER) ?? undefined; } catch { forPath = undefined; }
+  let forPath: string | undefined, forMethod: string | undefined;
+  try { const h = await headers(); forPath = h.get(CHANGE_PATH_HEADER) ?? undefined; forMethod = h.get(CHANGE_METHOD_HEADER) ?? undefined; } catch { forPath = undefined; }
+  // The middleware refuses a change the rules do not allow (roleGate, apiPermission()); the edge cannot write the
+  // access log, so the refusal is written here, decided by the same rule on the same account (reference and rule only;
+  // repeated refusals are deduplicated, lib/records/refusal-log.ts). Only the official's own refusals can be written.
+  if (o && forPath && forMethod && MUTATING_METHODS.has(forMethod.toUpperCase()) && stateWritable(forPath)) {
+    const why = apiPermission(o, forMethod, forPath);
+    if (why) logRefusal({ id: o.sub, label: actorLabel(o), ...(o.institution ? { institution: o.institution } : {}) }, { register: 'api', id: routeRef(forMethod, forPath) }, why);
+  }
   // The offices the official holds and their institution's standing (plan phase 4): for the greeting and the home
   // page only. Holding an office grants no permission (lib/auth/roles.ts never reads it).
   const inst = o?.institution ? getMinistry(o.institution) : undefined;

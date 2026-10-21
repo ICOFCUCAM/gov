@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPermit, listPermits, permitHolders } from '@/lib/data/store';
-import { readRefusal } from '@/lib/auth/official';
+import { readRefusal, caseScope } from '@/lib/auth/official';
 import { canReadPermits } from '@/lib/auth/roles';
+import { recordSearch } from '@/lib/records/access-search';
 import type { CreatePermitInput } from '@/lib/api/types';
 
 export const dynamic = 'force-dynamic';
 
-/** Permits and their applicants: the issuing institution, the whole government and auditors (review M-3). */
+/**
+ * Permits and their applicants: the issuing institution, the whole government and auditors (review M-3).
+ * The list carries applicants' names, so each read is one search entry in the access log with the count.
+ */
 export async function GET() {
-  const refused = await readRefusal(s => canReadPermits(s, permitHolders()));
+  const refused = await readRefusal(s => canReadPermits(s, permitHolders()), { register: 'permits' });
   if (refused) return refused;
-  return NextResponse.json({ permits: listPermits() });
+  const permits = listPermits();
+  const s = await caseScope();
+  if (s) recordSearch(s, 'permits', '(all)', permits.length, 'permit issuer, whole government or auditor (canReadPermits)');
+  return NextResponse.json({ permits });
 }
 
 export async function POST(req: NextRequest) {

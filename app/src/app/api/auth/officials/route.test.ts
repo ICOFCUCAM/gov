@@ -11,6 +11,8 @@ vi.mock('@/lib/auth/official', () => ({
 
 import { GET } from './route';
 import { resetOfficials, createAccount, setTwoStepPolicy } from '@/lib/auth/officials';
+import { listAccess, resetAccessLog } from '@/lib/records/access-log';
+import { resetSearchLog } from '@/lib/records/access-search';
 
 const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
 process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
@@ -59,5 +61,18 @@ describe('GET /api/auth/officials', () => {
       const text = JSON.stringify(d);
       for (const hidden of ['@gov.example', 'lastSignIn', 'twoStep', 'secondStepOn', 'passkeys', 'createdBy', 'role']) expect(text, `${role} ${hidden}`).not.toContain(hidden);
     }
+  });
+
+  it('writes the full list to the access log as one search with the count, never an email; the directory is not logged (step I0.1)', async () => {
+    resetAccessLog(); resetSearchLog();
+    official.mockReturnValue({ sub: 'local:y', name: 'B. Officer', role: 'officer', institution: 'min-health' });
+    await list();
+    expect(listAccess({ register: 'officials' })).toHaveLength(0);
+    official.mockReturnValue({ sub: 'local:x', name: 'A. Admin', role: 'administrator' });
+    await list(); await list();
+    const log = listAccess({ register: 'officials' });
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ v: 2, action: 'search', result: 'allowed', by: { id: 'local:x', name: 'A. Admin' }, record: { query: '(all accounts, full) → 2' } });
+    expect(JSON.stringify(log)).not.toContain('@gov.example');
   });
 });

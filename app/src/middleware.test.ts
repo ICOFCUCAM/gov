@@ -430,6 +430,27 @@ describe('request ids', () => {
     // Route handlers see the same id on the request.
     expect(made.headers.get('x-middleware-request-x-request-id')).toBe(made.headers.get('x-request-id'));
   });
+
+  it('forwards what the request asked for (method and path, no query) to the route for its refusals in the access log, replacing a caller\'s value', async () => {
+    const r = await middleware(new NextRequest('http://localhost/api/cases/CIV-1?purpose=x', { method: 'POST', headers: { 'x-civicos-route': 'GET /api/forged' } }));
+    expect(r.headers.get('x-middleware-request-x-civicos-route')).toBe('POST /api/cases/CIV-1');
+  });
+});
+
+describe('the middleware\'s refusals reach the access log (step I0.1)', () => {
+  const before = process.env.CIVICOS_SESSION_SECRET;
+  const realFetch = globalThis.fetch;
+  afterEach(() => { process.env.CIVICOS_SESSION_SECRET = before; globalThis.fetch = realFetch; });
+
+  it('asks the platform about a change with its path and method, so the platform writes the refusal the middleware answers', async () => {
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    const asked: Record<string, string>[] = [];
+    const platform = standInPlatform(() => null);
+    globalThis.fetch = (async (url: unknown, init?: { headers?: Record<string, string> }) => { asked.push(init?.headers ?? {}); return platform(url as string, init as RequestInit); }) as typeof fetch;
+    const r = await middleware(new NextRequest('http://localhost/api/sovereign', { method: 'POST', headers: { cookie: await officialCookie({ role: 'auditor' }) } }));
+    expect(r.status).toBe(403);
+    expect(asked.at(-1)).toMatchObject({ 'x-civicos-change-path': '/api/sovereign', 'x-civicos-change-method': 'POST' });
+  });
 });
 
 describe('the demo cast routes (lib/auth/demo-cast.ts)', () => {

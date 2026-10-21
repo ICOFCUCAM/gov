@@ -1,5 +1,6 @@
 // Platform accounts for officials (lib/auth/officials.ts). GET lists them
-// (never password hashes): in full for an administrator, as a directory
+// (never password hashes): in full for an administrator (each such read
+// written to the access log as one search with the count), as a directory
 // (name, office, institution) for any other signed-in official. An
 // administrator also gets the installation's two-step policy (`twoStep`: who
 // must use the second sign-in step, who last set it), so the Official
@@ -22,6 +23,7 @@ import { roleOf, accountChangeRule } from '@/lib/auth/roles';
 import { proposeAccountChange } from '@/lib/auth/account-changes';
 import { LOCAL_ACCOUNTS_REFUSED } from '@/lib/auth/setup-token';
 import { stateWritable, persistenceStatus } from '@/lib/data/persist';
+import { recordSearch } from '@/lib/records/access-search';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +32,13 @@ export async function GET() {
   if (!o) return NextResponse.json({ error: 'Sign in as an official' }, { status: 401 });
   // Administrators see every account in full. Everyone else sees who is who (name, office,
   // institution), never email, last sign-in or whose second step is off (go-live review L-3).
-  if (roleOf(o) === 'administrator') return NextResponse.json({ accounts: listAccounts(), full: true, twoStep: { policy: twoStepPolicy(), set: twoStepPolicySet() } });
+  if (roleOf(o) === 'administrator') {
+    // The full list carries emails, roles and sign-in history: one search entry in the access log with the count.
+    // The directory below (name, office, institution) is what every official may see of a colleague and is not logged.
+    const accounts = listAccounts();
+    recordSearch({ id: o.sub, label: actorLabel(o), institution: o.institution }, 'officials', '(all accounts, full)', accounts.length, 'administrator (full account list)');
+    return NextResponse.json({ accounts, full: true, twoStep: { policy: twoStepPolicy(), set: twoStepPolicySet() } });
+  }
   return NextResponse.json({ accounts: listAccounts().map(directoryEntry), full: false });
 }
 

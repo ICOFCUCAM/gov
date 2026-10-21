@@ -7,6 +7,8 @@ vi.mock('@/lib/casework/actor', () => ({ routeActor: async (by?: string) => ({ i
 const { GET, POST } = await import('./route');
 const { issueBill, listBills, payBill } = await import('@/lib/data/store/payments');
 const { listAudit } = await import('@/lib/data/store/audit');
+const { listAccess, resetAccessLog } = await import('@/lib/records/access-log');
+const { resetSearchLog } = await import('@/lib/records/access-search');
 
 const post = (body: unknown) => POST(new Request('http://x', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body), headers: { 'content-type': 'application/json' } }) as never);
 let n = 0;
@@ -29,6 +31,21 @@ describe('GET /api/payments', () => {
     scope = { id: 't', name: 'T', label: 'Tax official', role: 'officer', institution: 'ministry-of-finance' };
     json = await (await GET()).json();
     expect(json.bills.some((x: { id: string }) => x.id === b.id)).toBe(true);
+  });
+
+  it('writes a read that returns bills naming a payer to the access log as one search with the count, never the payer (step I0.1)', async () => {
+    resetAccessLog(); resetSearchLog();
+    taxBill('ministry-of-finance');
+    scope = { id: 'o', name: 'O', label: 'Other ministry', role: 'signatory', institution: 'ministry-of-health' };
+    await GET();
+    expect(listAccess({ register: 'bills' })).toHaveLength(0);
+    scope = { id: 't', name: 'T', label: 'Tax official', role: 'officer', institution: 'ministry-of-finance' };
+    await GET(); await GET();
+    const log = listAccess({ register: 'bills' });
+    expect(log).toHaveLength(1);
+    const named = (await (await GET()).json()).bills.filter((x: { payer?: unknown }) => x.payer).length;
+    expect(log[0]).toMatchObject({ v: 2, action: 'search', result: 'allowed', by: { id: 't', name: 'Tax official', institution: 'ministry-of-finance' }, record: { query: `bills naming a payer → ${named}` } });
+    expect(JSON.stringify(log)).not.toMatch(/Secret Taxpayer|BR-\d/);
   });
 });
 
