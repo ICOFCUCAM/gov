@@ -26,7 +26,7 @@ import {
   proposeSealKey, approveSealKey, withdrawSealKey, reportCompromise, confirmCompromise, withdrawCompromise, reviewCompromise,
   proposeSealKeyRules, confirmSealKeyRules, withdrawSealKeyRules, fingerprintOf, type SealActor,
 } from '@/lib/keys/seal-register';
-import { listDecisions, sealedAt } from '@/lib/records/decisions';
+import { listDecisions, sealTime } from '@/lib/records/decisions';
 import { getMinistry } from '@/lib/data/store';
 import { AUTHORITIES } from '@/lib/nation/deployment';
 import { installationMode } from '@/lib/ops/mode';
@@ -49,7 +49,7 @@ export async function GET() {
   const seen = new Map<string, { keyId: string; publicKeyPem: string; count: number; first: string; last: string }>();
   for (const d of listDecisions()) {
     if (known.has(d.seal.keyId)) continue;
-    const at = sealedAt(d);
+    const at = sealTime(d).at;
     const e = seen.get(d.seal.keyId) ?? { keyId: d.seal.keyId, publicKeyPem: d.seal.publicKeyPem, count: 0, first: at, last: at };
     e.count++; if (at < e.first) e.first = at; if (at > e.last) e.last = at;
     seen.set(d.seal.keyId, e);

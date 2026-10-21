@@ -71,7 +71,8 @@ What has been built is locked. Work only upgrades it toward the vision in
   `legislatureResolution` option, shipped off, is for nations whose law demands
   one). Activation retires the previous key; retired keys verify forever;
   revocation is reported by one and confirmed by a second official at once,
-  flags only seals after the compromise time and is reviewed afterwards by the
+  flags only seals whose audit-chain time (the `decision.seal` entry; never
+  the record's own `content.at`/`seal.at`) is after the compromise time and is reviewed afterwards by the
   authority. Never change or delete a decision for a key; demo and training
   trust a new key as a sample. Public trust list: `GET /api/trust/keys`.
 - Organisations (`lib/organisations/register.ts`) change only through the

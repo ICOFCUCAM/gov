@@ -419,7 +419,7 @@ export function presentedStanding(purpose: SealPurpose, publicKeyPem: string): {
 
 // ── Verification ─────────────────────────────────────────────────────
 
-export type SealState = 'trusted' | 'before-registration' | 'unregistered' | 'outside-validity' | 'after-compromise' | 'not-approved';
+export type SealState = 'trusted' | 'before-registration' | 'unregistered' | 'outside-validity' | 'after-compromise' | 'not-approved' | 'no-audit-record';
 export interface SealStanding {
   state: SealState;
   /** False when the seal must not be relied on (whatever its mathematics). */
@@ -434,8 +434,17 @@ export interface SealStanding {
 const basisText = (k: SealKey) => k.basis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`);
 const covers = (k: SealKey, t: number) => !!k.validFrom && Date.parse(k.validFrom) <= t && (!k.validUntil || t <= Date.parse(k.validUntil));
 
-/** What the register says about a seal made with `publicKeyPem` at `sealedAt` (the mathematics are checked by the caller). */
-export function sealStanding(purpose: SealPurpose, publicKeyPem: string, sealedAt: string): SealStanding {
+/**
+ * What the register says about a seal made with `publicKeyPem` at `sealedAt`
+ * (the mathematics are checked by the caller). `sealedAt` must be a
+ * tamper-evident time: the audit chain's entry for the seal (`audited`). A
+ * time the record states for itself (`seal.at`, `content.at`) proves nothing,
+ * since whoever holds a stolen key can write any time into what they sign:
+ * without an audit entry a seal is not trusted, except, as before the
+ * register, one made with a key the register has never held, dated before the
+ * register started.
+ */
+export function sealStanding(purpose: SealPurpose, publicKeyPem: string, sealedAt: string, audited = true): SealStanding {
   const fp = fingerprintOf(publicKeyPem);
   if (!fp) return { state: 'unregistered', trusted: false, keyId: 'unknown', note: 'The seal\'s key is not an Ed25519 public key' };
   const d = db();
@@ -446,6 +455,10 @@ export function sealStanding(purpose: SealPurpose, publicKeyPem: string, sealedA
   const base = { keyId: fp.keyId, fingerprint: fp.fingerprint };
   const view = (k: SealKey): SealStanding['key'] => ({ id: k.id, status: k.status, ...(k.validFrom ? { validFrom: k.validFrom } : {}), ...(k.validUntil ? { validUntil: k.validUntil } : {}), basis: basisText(k), approvedBy: k.approvals.map(a => a.by),
     ...(k.sample ? { sample: true } : {}), ...(k.historic ? { historic: true } : {}), ...(compromiseConfirmed(k) ? { compromisedFrom: k.compromise!.compromisedFrom } : {}) });
+  if (!audited) {
+    if (!mine.length && before) return { ...base, state: 'before-registration', trusted: true, note: 'Key not in the register (sealed before key registration); no audit-chain record of this seal' };
+    return { ...base, state: 'no-audit-record', trusted: false, ...(mine[0] ? { key: view(mine[0]) } : {}), note: 'Not trusted: no audit-chain record of this seal' };
+  }
   const approved = mine.filter(k => ['active', 'retired', 'revoked'].includes(k.status) && k.validFrom);
   const hit = approved.find(k => covers(k, t));
   if (hit) {

@@ -4,15 +4,15 @@
 // law names (at least two officials), never one person; a compromise flags
 // only what was sealed after it; nothing ships approved.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { generateKeyPairSync, createPrivateKey, createPublicKey } from 'node:crypto';
+import { generateKeyPairSync, createPrivateKey, createPublicKey, createHash, sign } from 'node:crypto';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   proposeSealKey, approveSealKey, withdrawSealKey, reportCompromise, confirmCompromise, withdrawCompromise, reviewCompromise,
   proposeSealKeyRules, confirmSealKeyRules, sealKeyRules, listSealKeys, getSealKey, resetSealKeys, trustList, waitingSealKeys,
-  sealKeyRefusal, DEFAULT_SEAL_KEY_RULES, type SealActor,
+  sealKeyRefusal, fingerprintOf, DEFAULT_SEAL_KEY_RULES, type SealActor,
 } from './seal-register';
-import { recordDecision, verifyDecision, sealReport, getDecision, resetDecisions, type DecisionContent } from '@/lib/records/decisions';
+import { recordDecision, verifyDecision, sealReport, getDecision, resetDecisions, decisionMaterial, type DecisionContent } from '@/lib/records/decisions';
 import { issueCertificate, checkCode, resetCertificates } from '@/lib/records/certificates';
 import { recordVersion, confirmVersion, resetLaw } from '@/lib/law/register';
 import { setSovereign, listMinistries, getSovereign } from '@/lib/data/store';
@@ -34,6 +34,13 @@ const content = (x: Partial<DecisionContent> = {}): DecisionContent => ({
   subject: { kind: 'case', id: 'c1', ref: 'CIV-1' }, institution: { id: 'civil', name: 'Civil Registry' },
   decision: 'register', reasons: 'All evidence present.', citations: [], officials: [{ role: 'decided', name: 'B. Registrar' }], at: new Date().toISOString(), ...x,
 });
+/** A decision record signed outside the platform with a stolen key: any times it likes, no audit-chain entry. */
+const forge = (priv: string, c: DecisionContent, sealAt: string, id = `019a0000-0000-7000-8000-${String(Math.floor(Math.random() * 1e12)).padStart(12, '0')}`) => {
+  const material = decisionMaterial(id, c);
+  const pub = createPublicKey(createPrivateKey(priv)).export({ type: 'spki', format: 'pem' }).toString();
+  return { id, content: c, sha256: createHash('sha256').update(material, 'utf8').digest('hex'),
+    seal: { keyId: fingerprintOf(pub)!.keyId, publicKeyPem: pub, signature: sign(null, Buffer.from(material, 'utf8'), createPrivateKey(priv)).toString('base64'), framework: 'platform' as const, at: sealAt } };
+};
 const sealed = async (x: Partial<DecisionContent> = {}) => { const d = await recordDecision(content(x)); if ('error' in d) throw new Error(d.error); return d; };
 const law = (title: string, source?: 'legislature') => {
   const v = recordVersion({ instrument: { title, type: 'act', jurisdiction: 'X', year: 2020, number: title.slice(0, 3), issuingAuthority: 'Parliament' }, dates: { inForce: '2020-01-01' }, provisions: [{ eId: 'sec_1', num: '1', text: `${title}: the seal keys authority approves the state's seal keys.` }],
@@ -182,6 +189,28 @@ describe('seal key register', () => {
     expect(trustList().keys[0]).toMatchObject({ status: 'revoked', compromisedFrom: from });
   });
 
+  it('trust is judged by the audit chain\'s time: a backdated forgery with a compromised key is not trusted, a genuine earlier decision stays trusted', async () => {
+    vi.stubEnv('CIVICOS_MODE', 'production');
+    vi.stubEnv('CIVICOS_DECISION_KEY', A.priv);
+    const a = adopt(A.pub);
+    const genuine = await sealed();
+    const from = new Date(Date.now() + 5).toISOString();
+    await new Promise(r => setTimeout(r, 20));
+    reportCompromise(a.id, { compromisedFrom: from, reason: 'Key stolen' }, admin('r'));
+    confirmCompromise(a.id, signatory('s5'));
+    // After the compromise, the thief signs a decision claiming (content.at and seal.at) a time before it.
+    const early = new Date(Date.parse(from) - 60_000).toISOString();
+    const forged = forge(A.priv, content({ at: early, decision: 'grant' }), early);
+    expect(sealReport(forged)).toMatchObject({ ok: false, timeFrom: 'record', key: { state: 'no-audit-record', note: 'Not trusted: no audit-chain record of this seal' } });
+    // Nor under a genuine decision's id: the audit entry names the genuine record's hash.
+    const underGenuineId = forge(A.priv, content({ at: early, decision: 'grant' }), early, genuine.id);
+    expect(verifyDecision(underGenuineId)).toMatchObject({ ok: false, problem: expect.stringMatching(/no audit-chain record/) });
+    // The genuine decision, sealed before the compromise, is judged by its audit entry and stays trusted.
+    expect(sealReport(getDecision(genuine.id)!)).toMatchObject({ ok: true, timeFrom: 'audit-chain', key: { state: 'trusted' } });
+    // Claiming a later display time does not change it either way.
+    expect(verifyDecision({ ...getDecision(genuine.id)!, seal: { ...genuine.seal, at: new Date(Date.parse(from) + 60_000).toISOString() } })).toEqual({ ok: true });
+  });
+
   it('decisions sealed before the register verify as before and say so; historic keys are registered by the same two-person approval', async () => {
     // Sealed before the register existed (an installation upgraded to this version).
     vi.stubEnv('CIVICOS_DECISION_KEY', C.priv);
@@ -192,7 +221,7 @@ describe('seal key register', () => {
     expect(sealReport(old)).toMatchObject({ ok: true, key: { state: 'before-registration', note: 'Key not in the register (sealed before key registration)' } });
     const h = proposeSealKey({ publicKeyPem: old.seal.publicKeyPem, historic: true, legalBasis: basis() }, admin('p'));
     if ('error' in h) throw new Error(h.error);
-    expect(h).toMatchObject({ historic: true, validFrom: old.seal.at, validUntil: old.seal.at });
+    expect(h).toMatchObject({ historic: true, validFrom: sealReport(old).sealedAt, validUntil: sealReport(old).sealedAt });
     approveSealKey(h.id, {}, signatory('s1'));
     expect(approveSealKey(h.id, {}, signatory('s2'))).toMatchObject({ status: 'retired', historic: true });
     expect(sealReport(old).key).toMatchObject({ state: 'trusted', key: { historic: true } });
@@ -200,8 +229,10 @@ describe('seal key register', () => {
     vi.stubEnv('CIVICOS_MODE', 'production');
     vi.stubEnv('CIVICOS_DECISION_KEY', B.priv);
     adopt(B.pub);
-    expect(sealReport(other).key.state).toBe('before-registration');
-    expect(sealReport({ ...other, seal: { ...other.seal, at: new Date(Date.now() + 1000).toISOString() } })).toMatchObject({ ok: false, key: { state: 'unregistered', trusted: false } });
+    expect(sealReport(other)).toMatchObject({ ok: true, timeFrom: 'audit-chain', key: { state: 'before-registration' } });
+    // A record made outside recordDecision() with a key the register does not hold, dated after the register started: not trusted.
+    const stray = forge(C.priv, content({ at: new Date().toISOString() }), new Date().toISOString());
+    expect(sealReport(stray)).toMatchObject({ ok: false, timeFrom: 'record', key: { state: 'no-audit-record', trusted: false } });
   });
 
   it('an existing installation registers the key it already uses: approving it covers what it sealed before', async () => {
@@ -211,9 +242,9 @@ describe('seal key register', () => {
     vi.stubEnv('CIVICOS_MODE', 'production');
     const k = proposeSealKey({ legalBasis: basis() }, admin('p'), A.pub);
     if ('error' in k) throw new Error(k.error);
-    expect(k.coversFrom).toBe(earlier.seal.at);
+    expect(k.coversFrom).toBe(sealReport(earlier).sealedAt);
     approveSealKey(k.id, {}, signatory('s1'), A.pub);
-    expect(approveSealKey(k.id, {}, signatory('s2'), A.pub)).toMatchObject({ status: 'active', validFrom: earlier.seal.at });
+    expect(approveSealKey(k.id, {}, signatory('s2'), A.pub)).toMatchObject({ status: 'active', validFrom: sealReport(earlier).sealedAt });
     expect(sealReport(earlier).key.state).toBe('trusted');
   });
 

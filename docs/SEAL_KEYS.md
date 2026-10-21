@@ -80,14 +80,29 @@ authority approve it. Decisions sealed before stay valid.
 ## Verification
 
 `verifyDecision()` checks the hash, the signature against the key embedded in
-the decision, and the register: the seal's time (`seal.at`, the time the
-platform sealed it; `content.at` for decisions sealed before it was kept) must
-fall within the validity of an approved record of that key and before any
-confirmed compromise time. A key not in the register is accepted only for a
-seal made before the register started for that purpose (`since`), and the
-check says "Key not in the register (sealed before key registration)".
+the decision, and the register, judging the seal by a **tamper-evident time**:
+the audit chain's `decision.seal` entry that `recordDecision()` wrote for that
+record (`sealAuditTime()`). The hash chain fixes that entry's time and
+position; it must name the record's hash and key, and its own hash must hold.
+The times a record states for itself (`content.at`, `seal.at`) are display
+only: whoever holds a stolen key can sign any time they like into a record, so
+neither can prove a seal came before a compromise.
+
+- The audit entry's time must fall within the validity of an approved record
+  of that key and before any confirmed compromise time.
+- No audit entry (a record that never went through `recordDecision()`, or a
+  forgery, including one made under a genuine decision's id): **not trusted —
+  no audit-chain record of this seal**. The one exception keeps the behaviour
+  before the register: a key the register has never held, with a record dated
+  before the register started, verifies as "Key not in the register (sealed
+  before key registration)".
+- A key not in the register is accepted only for a seal whose audit time is
+  before the register started for that purpose (`since`), reported as "Key not
+  in the register (sealed before key registration)".
+
 `/verify/<code>` shows the key, its validity and legal basis, and the
-fingerprint.
+fingerprint. Document signatures (`/api/signatures`) are timed the same way:
+their `document.sign` entry names the signature id, its hash and key.
 
 ## Trust list format (`GET /api/trust/keys`)
 
@@ -122,14 +137,20 @@ Public, read-only, no sign-in; never names an official.
 To check a decision record outside the platform: recompute
 `SHA-256(canonicalJson({ type: 'civicos.decision', v: 1, id, content }))`,
 verify the Ed25519 signature with `seal.publicKeyPem`, compute the SHA-256 of
-that key's DER SPKI and find it in the list for purpose `decision`; the seal's
-time must lie within `validFrom`–`validUntil` and before `compromisedFrom`.
-A seal before `since` with a key not in the list predates the register.
+that key's DER SPKI and find it in the list for purpose `decision`. Outside
+the platform the seal's time is the record's own claim; for a key the list
+shows `revoked` (or a `compromisedFrom`), ask the issuing institution (or
+`/verify/<code>`, which uses the audit chain's time) before relying on a seal
+the record dates before the compromise. For other keys the claimed time must
+lie within `validFrom`–`validUntil`; a seal before `since` with a key not in
+the list predates the register.
 
 ## Limits (integration register 18.43)
 
-- The seal's time is the platform's own record; a qualified time-stamp
-  (RFC 3161) from the nation's trust service would make it independent.
+- The seal's time is the platform's audit chain (tamper-evident, signed heads,
+  anchored by `/api/cron/audit-anchor`), which an outside verifier cannot read;
+  a qualified time-stamp (RFC 3161) from the nation's trust service on each
+  seal would let anyone check it offline.
 - The trust list is served by the platform; publishing it signed (ETSI TS 119
   612 style) or through the nation's qualified trust service, and keys held in
   an HSM, are for the nation's signature framework.

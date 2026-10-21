@@ -159,8 +159,10 @@ export async function signDocument(req: SignatureRequest): Promise<SignatureResu
   const seal = await signer('decision').sign(material);
   const untrusted = sealKeyRefusal('decision', seal.publicKeyPem);
   if (untrusted) throw new SealRefused(untrusted);
-  recordAudit(req.signerName, 'document.sign', `Document:${req.documentId}`, 'ok', `${req.documentTitle.slice(0, 120)} · key ${seal.keyId}`);
-  return { id, documentId: req.documentId, signerName: req.signerName, signedAt, hash: createHash('sha256').update(material, 'utf8').digest('hex'), nonRepudiation: true, seal: { keyId: seal.keyId, publicKeyPem: seal.publicKeyPem, signature: seal.signature } };
+  const sha = createHash('sha256').update(material, 'utf8').digest('hex');
+  // The audit entry is the signature's tamper-evident time (as `decision.seal` is a decision's): it names the signature, its hash and key.
+  recordAudit(req.signerName, 'document.sign', `Document:${req.documentId}`, 'ok', `${req.documentTitle.slice(0, 120)} · signature ${id} · ${sha.slice(0, 12)} · key ${seal.keyId}`);
+  return { id, documentId: req.documentId, signerName: req.signerName, signedAt, hash: sha, nonRepudiation: true, seal: { keyId: seal.keyId, publicKeyPem: seal.publicKeyPem, signature: seal.signature } };
 }
 
 // ── Municipal onboarding ──────────────────────────────────────────────

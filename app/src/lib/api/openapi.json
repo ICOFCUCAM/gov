@@ -99113,10 +99113,10 @@
       "SuspensionValues": {
         "type": "object",
         "properties": {
-          "confirmWithinHours": {
+          "reviewWithinDays": {
             "type": "number"
           },
-          "reviewWithinDays": {
+          "confirmWithinHours": {
             "type": "number"
           },
           "suspendBy": {
@@ -99128,8 +99128,8 @@
           }
         },
         "required": [
-          "confirmWithinHours",
           "reviewWithinDays",
+          "confirmWithinHours",
           "suspendBy"
         ]
       },
