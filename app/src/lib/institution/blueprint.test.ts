@@ -30,7 +30,7 @@ describe('institutional blueprint factory', () => {
     expect(names).toContain('Health Command');
     expect(names).toContain('Hospital Network');
     expect(names).toContain('Doctor Systems');
-    expect(names).toContain('Patient Systems');
+    expect(names).toContain('Health Service Access');
     expect(names).toContain('Emergency Medical Systems');
     const cmd = bp.find(g => g.key === 'command')!;
     expect(cmd.systems.map(s => s.name)).toContain('National healthcare command centre');

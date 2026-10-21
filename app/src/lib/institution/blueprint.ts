@@ -40,19 +40,19 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('ICU & critical-care systems', 'network'), S('Operating theatres', 'network'),
       S('Emergency wards', 'emergency'),
     ]),
-    G('doctor', 'Doctor Systems', 'Clinical workforce & care workflows', [
-      S('Doctor portal', 'personnel'), S('Diagnosis workflows', 'workflow'),
-      S('Patient intake', 'workflow'), S('Treatment workflows', 'workflow'),
-      S('Referral system', 'workflow'),
+    G('doctor', 'Doctor Systems', 'Health workforce, licensing & rota (administrative)', [
+      S('Workforce portal', 'personnel'), S('Licensing workflows', 'workflow'),
+      S('Service desks', 'workflow'), S('Rota workflows', 'workflow'),
+      S('Referral counts', 'workflow'),
     ]),
-    G('patient', 'Patient Systems', 'Citizen-facing health services', [
-      S('Citizen health app', 'citizen'), S('Medical records', 'registry'),
-      S('Appointments', 'citizen'), S('Prescriptions', 'citizen'),
-      S('Vaccination records', 'registry'),
+    G('patient', 'Health Service Access', 'Citizen-facing health services (counts, no person\'s record)', [
+      S('Citizen health app', 'citizen'), S('Records exchange standards', 'registry'),
+      S('Appointments', 'citizen'), S('Dispensing returns', 'citizen'),
+      S('Immunisation coverage', 'registry'),
     ]),
     G('disease', 'Disease Intelligence', 'Epidemiology & population health', [
       S('Epidemiology engine', 'intelligence'), S('Outbreak tracking', 'intelligence'),
-      S('Diagnostic aggregation', 'analytics'), S('Demographic analytics', 'analytics'),
+      S('Testing aggregation', 'analytics'), S('Demographic analytics', 'analytics'),
     ]),
     G('lab', 'Laboratory Systems', 'Pathology & testing networks', [
       S('Pathology', 'network'), S('Testing & results', 'workflow'),
@@ -111,15 +111,15 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Medication schedules', 'workflow'),
     ]),
     // ── Health reference-tier expansion (9 new domains) ───────────
-    G('ward-board', 'Ward Board', '◧ II — inpatient bay layout', [S('Bay status', 'field')]),
-    G('icu-board', 'ICU Board', '◧ III — critical care · live vital signs', [S('Vital signs per bay', 'emergency')]),
+    G('ward-board', 'Ward Board', '◧ II — ward bay status', [S('Bay status', 'field')]),
+    G('icu-board', 'ICU Board', '◧ III — critical care capacity', [S('Staffing and equipment per bay', 'emergency')]),
     G('or-board', 'Operating Theatre Board', '◧ IV — surgical scheduling', [S('Theatre line-up', 'workflow')]),
-    G('emergency-department', 'Emergency Department', '◧ V — ED triage queue', [S('Triage queue', 'emergency')]),
+    G('emergency-department', 'Emergency Department', '◧ V — attendances by acuity', [S('Attendance counts', 'emergency')]),
     G('syndromic-surveillance', 'Syndromic Surveillance', '⌬ I — outbreak detection', [S('Above-baseline alerts', 'intelligence')]),
     G('contact-tracing', 'Contact Tracing', '⌬ II — privacy-safe contact tracing', [S('Consent doctrine', 'workflow')]),
-    G('master-patient-index', 'Master Patient Index', '⊟ I — CivicID-linked MPI', [S('Linkage doctrine', 'registry')]),
-    G('longitudinal-ehr', 'Longitudinal EHR', '⊟ II — FHIR R5+ encounter view', [S('Encounter chart', 'workflow')]),
-    G('break-glass-audit', 'Break-Glass Audit', '◇ II — emergency EHR access with mandatory review', [S('Invocation log', 'audit')]),
+    G('master-patient-index', 'Facility & Service Index', '⊟ I — licensed facilities and services (no person index)', [S('Index doctrine', 'registry')]),
+    G('longitudinal-ehr', 'Records Exchange Standards', '⊟ II — exchange agreements and formats (no record held)', [S('Exchange log', 'workflow')]),
+    G('break-glass-audit', 'Emergency Access Reviews', '◇ II — emergency access with mandatory review', [S('Invocation log', 'audit')]),
   ],
   FINANCE: [
     G('command', 'Fiscal Command', 'Sovereign fiscal authority', [
