@@ -22,6 +22,8 @@ import rules as KB  # noqa: E402
 import reassign  # noqa: E402
 import plan_weaker  # noqa: E402
 import findings  # noqa: E402
+import catalogue  # noqa: E402
+import gap_report  # noqa: E402
 
 REPO = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
 OUT_JSON = os.path.join(REPO, 'docs/requirements/requirements.json')
@@ -299,7 +301,7 @@ def main():
         rid = f"S{r['part']}-{sec_key}-{counters[(r['part'], sec_key)]:02d}"
         lines = f"{r['line']}" + (f"-{r['lines_to']}" if r.get('lines_to') and r['lines_to'] != r['line'] else '')
         out.append({
-            'id': rid, 'part': r['part'], 'section': sec_key, 'section_title': r['section_title'], 'lines': lines,
+            'id': rid, 'source': 'docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md', 'part': r['part'], 'section': sec_key, 'section_title': r['section_title'], 'lines': lines,
             'sector': r['sector'], 'category': r['category'], 'text': r['text'], 'status': res['status'],
             'evidence': res['evidence'], 'missing': miss, 'step': res['step'], 'also_steps': ','.join(also),
             'kind': r['kind'], 'basis': res['rule'], **({'acceptance_id': res['acceptance_id']} if res.get('acceptance_id') else {}),
@@ -324,23 +326,33 @@ def main():
         n = sum(1 for o in out if o['part'] == part and (o['section'] == sid or o['section'].startswith(sid + '.')))
         if n == 0:
             zero.append((line, part, sid, title))
+    # second source: the forms catalogue (docs/forms-catalogue/, one series, parts 1-13)
+    cat_rows, cat_checks, cat_md = catalogue.build(REPO)
     os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)
     with open(OUT_JSON, 'w', encoding='utf-8') as f:
-        json.dump(out, f, indent=1, ensure_ascii=False)
-        f.write('\n')
-    write_md(out, heads, zero)
+        # one row per line: diffs stay readable and the file small
+        f.write('[\n' + ',\n'.join(json.dumps(o, ensure_ascii=False) for o in out + cat_rows) + '\n]\n')
+    write_md(out, heads, zero, cat_md, cat_rows)
+    gap = gap_report.write(REPO, cat_rows, cat_checks)
     st = collections.Counter(o['status'] for o in out)
     print('rows', len(out))
     print('status', dict(st))
     print('step', dict(collections.Counter(o['step'] for o in out)))
     print('basis', dict(collections.Counter(o['basis'] for o in out)))
     print('headings', sum(1 for h in heads if h[2] != 'part'), 'zero-row sections', zero)
-    return 1 if zero else 0
+    print('catalogue rows', len(cat_rows), 'with id', sum(1 for o in cat_rows if o.get('catalogue_id')))
+    print('catalogue status', dict(collections.Counter(o['status'] for o in cat_rows)))
+    print('catalogue step', dict(collections.Counter(o['step'] for o in cat_rows)))
+    print('form status', gap['form_status'], 'verified', gap['verified'], 'unmatched contracts', gap['contracts']['unmatched'], 'scope mismatches', cat_checks['scope_mismatch'])
+    bad = cat_checks['scope_mismatch'] or cat_checks['scope_unknown'] or gap['contracts']['unmatched'] or gap['production_candidates'] or cat_checks['unaccounted'] or cat_checks['zero'] or cat_checks['ids_missing'] or any(o['step'] == 'Unassigned' for o in cat_rows)
+    print('catalogue checks: unaccounted', len(cat_checks['unaccounted']), 'zero-row headings', cat_checks['zero'], 'ids missing', cat_checks['ids_missing'],
+          'unassigned', sum(1 for o in cat_rows if o['step'] == 'Unassigned'))
+    return 1 if (zero or bad) else 0
 
 
 # ------------------------------------------------------------------ markdown
 STATUSES = ['Met', 'Partial', 'Not yet', 'Platform rule stricter', 'Country decision', 'Lower priority']
-STEPS = ['—', 'I0.2', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'I8', 'I9', 'I10', 'I11', 'Throughout', 'Unassigned']
+STEPS = ['—', 'I0.2', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'I8', 'I9', 'I10', 'I11', 'I12', 'I13', 'Throughout', 'Unassigned']
 
 
 
@@ -363,9 +375,14 @@ def table_counts(out, key, keys):
     return hdr + '\n'.join(lines) + '\n'
 
 
-def write_md(out, heads, zero):
+def write_md(out, heads, zero, cat_md='', cat_rows=()):
     md = []
     md.append('# Institutional requirements traceability register\n')
+    cs = collections.Counter(o['status'] for o in cat_rows)
+    md.append('**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): ' + f'{len(out)} rows, ids `S<part>-…`, below. '
+              '(2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): ' + f'{len(cat_rows)} rows ('
+              + ', '.join(f'{k} {cs[k]}' for k in ['Met', 'Partial', 'Not yet', 'Legal review', 'Platform rule stricter', 'Country decision', 'Lower priority'] if cs.get(k))
+              + '), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.\n')
     md.append('Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts) against the code in `app/src` '
               'on 21 October 2026 (main checkout, after step I0.1), with the plan step that delivers each one '
               '(`docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md` §5). Machine-readable rows: `docs/requirements/requirements.json`. '
@@ -434,7 +451,7 @@ def write_md(out, heads, zero):
             for o in rs:
                 step = o['step'] + (f" (+{o['also_steps']})" if o['also_steps'] else '')
                 md.append(f"| {o['id']} | {o['lines']} | {o['category']} | {esc(o['text'][:220])} | {o['status']} | {esc(o['evidence'][:150])} | {esc(o['missing'][:150])} | {step} |")
-    open(OUT_MD, 'w', encoding='utf-8').write('\n'.join(md) + '\n')
+    open(OUT_MD, 'w', encoding='utf-8').write('\n'.join(md) + '\n' + cat_md)
 
 
 if __name__ == '__main__':
