@@ -50,6 +50,13 @@ before connecting sources:
 - The national snapshot no longer invents a population; the region count is the
   nation's own.
 - The regional model covers all of the nation's regions.
+- Generated panels in production (step I0.1): a panel whose figures come from
+  an engine or a model carries `SampleTag` in its header and wraps its body in
+  `SampleFold` (`components/ui/SampleFold.tsx`): shown under Sample in demo and
+  training, folded to "Not connected" (and not rendered) in production, like
+  the agency apps' `SimulatedView`. A screen that reads real records stays
+  outside the fold and folds only its generated panels (the interior record
+  screens, `/health-ecosystem`, the ministry workspace).
 
 Next: a durable store (register 1.1), then the twin core on the substrate
 (entities, sources, time-stamped observations) and the first connector
