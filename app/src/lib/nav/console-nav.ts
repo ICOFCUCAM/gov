@@ -99,7 +99,7 @@ export const CONSOLE_NAV: NavSection[] = [
   ]},
   { label: 'Set-up & platform', items: [
     { key: 'cfg', icon: '⚙', label: 'National settings', href: '/gov/configuration', purpose: 'The nation\'s profile, offices, regions and how work flows.',
-      tabs: [tab('National settings', '/gov/configuration', 'Sovereign Configuration'), tab('Who is responsible', '/gov/configuration/responsible'), tab('Offices', '/gov/configuration/offices'), tab('Relationships', '/gov/configuration/relationships'), tab('Setup', '/setup'), tab('Onboarding', '/admin/onboarding'),
+      tabs: [tab('National settings', '/gov/configuration', 'Sovereign Configuration'), tab('Who is responsible', '/gov/configuration/responsible'), tab('Offices', '/gov/configuration/offices'), tab('Relationships', '/gov/configuration/relationships'), tab('Constitution', '/gov/configuration/constitution'), tab('Setup', '/setup'), tab('Onboarding', '/admin/onboarding'),
         tab('Workflows', '/gov/workflows', 'Workflow Catalogue')] },
     { key: 'upd', icon: '⬆', label: 'Updates', href: '/updates', purpose: 'New versions of the platform: what they change, and installing them safely.',
       tabs: [tab('Updates', '/updates', 'Update chamber'), tab('Publisher console', '/admin/releases')] },

@@ -7,11 +7,12 @@
 // Read-only: nothing here changes a record.
 
 import { AUTHORITIES, REQUIRED_AUTHORITIES } from '@/lib/nation/deployment';
-import { authorityFor, getSetup, getSovereign, authorityChanges } from '@/lib/data/store/sovereign';
+import { authorityFor, getSetup, getSovereign, authorityChanges, classificationChanges } from '@/lib/data/store/sovereign';
 import { waitingInstitutionTerms } from '@/lib/data/store/institutions';
 import { listRelationships, waitingRelationships } from '@/lib/data/store/relationships';
 import { waitingAccountChanges } from '@/lib/auth/account-changes';
 import { listOffices, waitingOffices, waitingHoldings } from '@/lib/nation/office-register';
+import { constitutionOverview, waitingProfileSteps } from '@/lib/constitution/profile';
 import { listMinistries } from '@/lib/data/store/ministries';
 import { listAccounts, twoStepPolicy } from '@/lib/auth/officials';
 import { listInstruments } from '@/lib/law/register';
@@ -120,6 +121,19 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Head of government named', done: !!head, href: '/gov/configuration/offices', detail: head ? (head.derived ? `${head.title} (from the executive title set in setup; record it as an office to give it an institution and legal basis)` : head.title) : undefined },
         { label: 'Each recorded office cites its legal basis', done: unsourced.length === 0, href: '/gov/configuration/offices', detail: own.length ? `${own.length - unsourced.length} of ${own.length}${unsourced.length ? ` · without: ${unsourced.slice(0, 4).map(o => o.title).join(', ')}` : ''}` : 'No offices recorded beyond the head of government (optional)' },
         { label: 'Each recorded office has its holder linked', done: vacant.length === 0, href: '/gov/configuration/offices', detail: own.length ? `${own.length - vacant.length} of ${own.length}${vacant.length ? ` · nobody linked: ${vacant.slice(0, 4).map(o => o.title).join(', ')}` : ''}` : 'Nothing to link yet (optional)' },
+      ] };
+    }),
+
+    // The constitutional profile (plan phase 5): optional in demo and training, the recommended step in production.
+    track({ key: 'constitution', title: 'Constitutional profile', why: 'The parts of the constitution the platform enforces (classification, institutions\' standing, who is responsible, offices, relationships, the country\'s rules), approved together as one version through the nation\'s own legal process, with the date it applies from. Recorded, never decided, by the platform.', href: '/gov/configuration/constitution' }, () => {
+      const o = constitutionOverview();
+      const optional = samplesAllowed(env);
+      return { checks: [
+        { label: `Constitutional profile approved and active${optional ? ' (optional in demo and training)' : ' (recommended)'}`, done: !!o.inForce, href: '/gov/configuration/constitution',
+          detail: o.inForce ? `Version ${o.inForce.version} from ${o.inForce.effectiveFrom} · digest ${o.inForce.digest.slice(0, 12)}` : o.profiles.length ? `${n(o.profiles.length, 'version')} recorded, none active yet` : 'None drafted: draft one once setup is complete' },
+        { label: 'No part changed since the active profile was approved', done: !!o.inForce && o.drift.length === 0, href: '/gov/configuration/constitution',
+          detail: !o.inForce ? 'No active profile yet' : o.drift.length ? `Changed since: ${o.drift.map(k => o.labels.parts[k]).join(', ')} (draft a new version)` : undefined },
+        { label: 'No part frozen by a dispute', done: o.frozen.length === 0, href: '/gov/configuration/constitution', detail: o.frozen.length ? o.frozen.map(f => `${o.labels.parts[f.part]} (version ${f.version})`).join(', ') : undefined },
       ] };
     }),
 
@@ -276,6 +290,9 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const r of waitingRelationships()) wait({ what: `Relationship: ${r.what} (waiting for confirmation)`, proposedBy: r.by, at: r.at, href: '/gov/configuration/relationships' }); });
   safe(() => { for (const c of waitingAccountChanges())wait({ what: `${c.summary} (waiting for the institution to confirm)`, proposedBy: c.by, at: c.at, href: '/admin/officials' }); });
   safe(() => { for (const o of waitingOffices()) wait({ what: `Office: ${o.title} — a change waiting for a second official`, proposedBy: o.pending.by, at: o.pending.at, href: '/gov/configuration/offices' }); });
+  safe(() => { for (const p of waitingProfileSteps()) wait({ what: p.what, proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
+  safe(() => { const p = constitutionOverview().process.changes.pending; if (p) wait({ what: 'Steps for changing the constitutional profile: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
+  safe(() => { const p = classificationChanges().pending; if (p) wait({ what: 'Classification of the state: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/offices' }); });
   safe(() => { for (const h of waitingHoldings()) wait({ what: `${h.holderName} to hold an office — waiting for a second official`, proposedBy: h.proposedBy, at: h.proposedAt, href: '/gov/configuration/offices' }); });
   safe(() => { for (const c of waitingAccountChanges()) wait({ what: `${c.summary} (waiting for the institution to confirm)`, proposedBy: c.by, at: c.at, href: '/admin/officials' }); });
 

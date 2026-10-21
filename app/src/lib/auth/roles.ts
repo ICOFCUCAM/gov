@@ -310,6 +310,11 @@ const OFFICIAL_WORK: RegExp[] = [
   // confirmed by a different official, by the office's institution when it is independent (checked in the store).
   // Holding an office grants no permission: nothing in this file reads it.
   /^\/api\/offices$/,
+  // The constitutional profile (plan phase 5, lib/constitution/profile.ts): each step checks who may take it in the
+  // store (drafting by a whole-government administrator; legal review, validation and approval by people other than
+  // the drafter; consultation by the consulted institution's own officials; disputes by any administrator or one who
+  // can sign). Not ADMIN_ONLY: an independent institution's signatory answers a consultation or raises a dispute.
+  /^\/api\/constitution\/profile$/,
 ];
 
 export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official';

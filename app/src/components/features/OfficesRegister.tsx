@@ -187,15 +187,36 @@ export function OfficesRegister() {
         </ul>
       </Section>
 
-      <ClassificationPanel profile={profile} classification={classification} onSaved={p => setProfile(p)} />
+      <ClassificationPanel profile={profile} classification={classification} setupRunning={data?.setupRunning ?? true} onSaved={p => setProfile(p)} />
       {msg ? <p role="status" className="text-xs text-ink-muted">{msg}</p> : null}
     </div>
   );
 }
 
-function ClassificationPanel({ profile, classification, onSaved }: { profile: SovereignProfile | null; classification: (StateClassification & { derived: boolean }) | null; onSaved: (p: SovereignProfile) => void }) {
+interface ClassChanges { pending?: { by: string; at: string; values: { classification: StateClassification | null } }; history?: { outcome: string; by: string; at: string; confirmed?: { by: string }; basis: { title?: string; instrument: string; num?: string; eId: string }[] }[] }
+
+function ClassificationPanel({ profile, classification, setupRunning, onSaved }: { profile: SovereignProfile | null; classification: (StateClassification & { derived: boolean }) | null; setupRunning: boolean; onSaved: (p: SovereignProfile) => void }) {
   const [edit, setEdit] = React.useState<Record<string, string>>({});
   const [msg, setMsg] = React.useState<string | null>(null);
+  // After setup the classification changes through its own change process (plan phase 5): proposed citing the law, a different official confirms.
+  const [changes, setChanges] = React.useState<ClassChanges>({});
+  const loadChanges = React.useCallback(async () => {
+    const r = await fetch('/api/sovereign/classification', { cache: 'no-store' }).catch(() => null);
+    if (r?.ok) setChanges(((await r.json()) as { changes: ClassChanges }).changes ?? {});
+  }, []);
+  React.useEffect(() => { if (!setupRunning) void loadChanges(); }, [setupRunning, loadChanges]);
+  const step = async (body: Record<string, unknown>, done: string) => {
+    setMsg(null);
+    try {
+      const r = await fetch('/api/sovereign/classification', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      const out = (await r.json().catch(() => ({}))) as { error?: string };
+      if (!r.ok) throw new Error(out.error ?? `Request failed (${r.status})`);
+      await loadChanges();
+      const s = await api.sovereign.get().catch(() => null);
+      if (s) onSaved(s.sovereign);
+      setMsg(done);
+    } catch (e) { setMsg(e instanceof Error ? e.message : 'Could not save'); }
+  };
   React.useEffect(() => {
     if (!classification) return;
     setEdit({ ...Object.fromEntries(AXES.map(a => [a.key, classification[a.key].join(', ')])), style: classification.style ?? '', sources: (classification.sources ?? []).join('\n'), effectiveFrom: classification.effectiveFrom ?? '' });
@@ -209,6 +230,10 @@ function ClassificationPanel({ profile, classification, onSaved }: { profile: So
       sources: (edit.sources ?? '').split('\n').map(x => x.trim()).filter(Boolean),
       ...(edit.effectiveFrom ? { effectiveFrom: edit.effectiveFrom } : {}),
     };
+    if (!setupRunning) {
+      void step({ op: 'propose', classification: c, legalBasis: edit.instrument ? [{ instrument: edit.instrument.trim(), eId: (edit.eId ?? '').trim() }] : [] }, 'Proposed: a different official confirms it before it takes effect.');
+      return;
+    }
     try {
       const r = await api.sovereign.update({ constitution: { ...(profile.constitution ?? {}), classification: c as unknown as StateClassification } });
       onSaved(r.sovereign); setMsg('Saved.');
@@ -234,7 +259,23 @@ function ClassificationPanel({ profile, classification, onSaved }: { profile: So
         <label className="text-sm">Applies from (YYYY-MM-DD)<input className={field} value={edit.effectiveFrom ?? ''} onChange={e => setEdit(x => ({ ...x, effectiveFrom: e.target.value }))} /></label>
         <label className="text-sm md:col-span-2">Sources: one instrument per line<textarea className={field} rows={2} value={edit.sources ?? ''} onChange={e => setEdit(x => ({ ...x, sources: e.target.value }))} /></label>
       </div>
-      <div className="mt-2 flex items-center gap-3"><Button variant="primary" onClick={() => void save()}>Save the classification</Button>{msg ? <span role="status" className="text-xs text-ink-muted">{msg}</span> : null}</div>
+      {!setupRunning ? (
+        <div className="mt-2 grid gap-2 md:grid-cols-2">
+          <label className="text-sm">Legal basis: law (id from Laws)<input className={field} value={edit.instrument ?? ''} onChange={e => setEdit(x => ({ ...x, instrument: e.target.value }))} placeholder="/eli/…" /></label>
+          <label className="text-sm">Provision (e.g. art_1)<input className={field} value={edit.eId ?? ''} onChange={e => setEdit(x => ({ ...x, eId: e.target.value }))} /></label>
+        </div>
+      ) : null}
+      {changes.pending ? (
+        <div className="mt-2 rounded border border-line p-2 text-sm">
+          <p>Waiting for a second official: proposed by {changes.pending.by} ({changes.pending.values.classification ? 'a recorded classification' : 'return to the derived classification'})</p>
+          <div className="mt-1 flex gap-2">
+            <Button onClick={() => void step({ op: 'confirm' }, 'Confirmed: the classification applies.')}>Confirm</Button>
+            <Button variant="secondary" onClick={() => void step({ op: 'withdraw' }, 'Withdrawn.')}>Withdraw the proposal</Button>
+          </div>
+        </div>
+      ) : null}
+      <div className="mt-2 flex items-center gap-3"><Button variant="primary" onClick={() => void save()}>{setupRunning ? 'Save the classification' : 'Propose this classification'}</Button>{msg ? <span role="status" className="text-xs text-ink-muted">{msg}</span> : null}</div>
+      {!setupRunning ? <p className="mt-1 text-xs text-ink-muted">Setup is complete: a change is proposed citing the law and takes effect when a different official confirms it; a dispute over the constitutional profile freezes it.{changes.history?.length ? ` ${changes.history.length} earlier proposal(s) kept.` : ''}</p> : null}
     </Section>
   );
 }
