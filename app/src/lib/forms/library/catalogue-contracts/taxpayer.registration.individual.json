@@ -1,0 +1,859 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "taxpayer.registration.individual",
+ "record_type": "taxpayer.registration_case",
+ "form_version": 1,
+ "procedure_package_id": "tax.registration",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "country.tax.registration: taxpayer categories, registration identifiers, tax obligations and registration procedures (approved by the authorized tax and legal authority).",
+  "Registration thresholds and obligation triggers: an approved rule per tax (lib/law/rules.ts); none ships.",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for these records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "taxpayer.registration.individual",
+  "part": 2,
+  "section": "2.6",
+  "line": 2523,
+  "batch": 3
+ },
+ "library": {
+  "title": "Register as an individual taxpayer",
+  "intro": "Register a person as a taxpayer for the taxes the law applies to them. The tax authority checks the identity, decides, and gives a taxpayer identification number or a refusal with reasons. Everything here is under tax secrecy.",
+  "owner": "tax",
+  "filled_by": "The individual, or someone authorised to act for them, online, at an office or on paper.",
+  "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
+  "procedure": {
+   "key": "tax.registration",
+   "stage": "submitted",
+   "document": "identity-evidence"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadTax() in lib/auth/roles.ts: the tax authority's officials and auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only registration status, through the taxpayer.status exchange service, for an approved purpose"
+  },
+  "nation_values": [
+   {
+    "key": "tax.registration.threshold",
+    "kind": "threshold",
+    "source": "rule",
+    "decision": "Who must or may register for each tax and from when: the registration thresholds and obligation triggers of each tax."
+   },
+   {
+    "key": "tax.registration.deadline",
+    "kind": "days",
+    "source": "rule",
+    "decision": "The time within which a person must register after an obligation arises."
+   },
+   {
+    "key": "tax.registration.decision-period",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The time the tax authority has to decide a registration, if the law sets one."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "spec-form",
+    "what": "The specification's taxpayer registration form (taxpayer-registration-v1) maps onto this contract: applicant_type → taxpayer.applicant_type; tax_types_requested → taxpayer.obligations_requested; business_address → taxpayer.registered_address; contact_channel → taxpayer.contact; acting_capacity → taxpayer.representative_capacity; representation_evidence → taxpayer.authority_evidence; declaration → declaration.confirmed; national_identifier → taxpayer.national_identifier; legal_name → taxpayer.legal_name. Not asked here: organisation_id (an individual is a person: taxpayer.person, the civil register reference)",
+    "why": "The catalogue's and the specification's registration forms are one service; the field ids are the catalogue's, every class at least as strict as the specification's.",
+    "rule": "Specification §5.4 (taxpayer registration form); CLAUDE.md forms: library forms load in their own JSON, never a second format"
+   },
+   {
+    "id": "business-fields",
+    "field": "taxpayer.organisation, taxpayer.registration_ref",
+    "what": "Of the catalogue's business registration contract (taxpayer.registration.business), these fields are not asked here: taxpayer.organisation, taxpayer.registration_ref",
+    "why": "An individual is a person in the civil register, not an organisation; a person carrying on business in their own name answers the trading name, activity and start date.",
+    "rule": "Field series Part 1 §1.6 (only what the decision needs); Part 2 §2.6 (the business contract)"
+   },
+   {
+    "id": "representation-own-fields",
+    "field": "taxpayer.representative",
+    "what": "Representation is asked as the form's own fields (taxpayer.acting_through_representative, taxpayer.representative_capacity, taxpayer.representative, taxpayer.authority_evidence; the ids of the catalogue's business registration contract, with the capacities of civicos.representation.capacity.v1), not through the field group core.representation, whose fields carry personal and administrative classes",
+    "why": "A form uses a field group by id and version and never changes its fields (Part 1 §1.1); who represents a taxpayer is under tax secrecy, so the same questions are asked as the form's own, restricted fields.",
+    "rule": "CLAUDE.md Tax (tax data read by the tax authority only); field series Part 1 §1.1 (groups are immutable)"
+   },
+   {
+    "id": "declaration-group",
+    "field": "declaration.confirmed",
+    "what": "The business contract's taxpayer.declaration (must_be_true) and the specification's signed attestation are carried by the field group core.declaration_signature: the approved text version, the confirmation, the signing method, the signature (restricted) and the time; its fields record the act of declaring and hold no taxpayer data",
+    "why": "The specification asks for a valid signature on a versioned text; the group gives both without a second declaration format.",
+    "rule": "CLAUDE.md forms: library forms load in their own JSON, never a second format; field series Part 1 §1.1"
+   },
+   {
+    "id": "tin-assigned",
+    "field": "taxpayer.tin",
+    "what": "The taxpayer identification number is set by the tax register when the registration is decided (effect tax.register), never asked of the applicant",
+    "why": "A tax officer must not create a taxpayer record outside the approved registration workflow; the identifier is the register's.",
+    "rule": "CLAUDE.md Government operating model: registers change only through procedure effects; field series Part 2 §2.6"
+   },
+   {
+    "id": "procedure-form",
+    "what": "Linked to tax.registration, which already carries the specification's taxpayer registration form (taxpayer-registration-v1); this contract is the catalogue's, attached when the nation adopts it in a new procedure version",
+    "why": "Attaching it changes an existing reference procedure; a different official approves procedure versions.",
+    "rule": "CLAUDE.md Government operating model: cases change only under an approved procedure package"
+   },
+   {
+    "id": "spec-tax-lists",
+    "what": "Taxpayer types and tax types ship empty here, naming the standard expected; the specification's form in the library (taxpayer-registration-v1) carries proposed lists for the nation to review",
+    "why": "Whether a nation has a given tax or taxpayer category is its law; no list is assumed.",
+    "rule": "Field series Part 2 §2.6 (CivicOS must not assume that every nation has VAT …); CLAUDE.md lib/law/rules.ts rule"
+   },
+   {
+    "id": "tax-secrecy-class",
+    "what": "Every field of the form is restricted and marked tax secrecy (confidentiality tax), stricter than the catalogue's administrative and personal classes where it gives them; the case is restricted and read only under canReadTax() (the tax authority's officials, auditors with a purpose), every read in the access log; other institutions learn status only through the taxpayer.status exchange service",
+    "why": "Tax records are confidential: a class label alone grants no access, and nothing about a taxpayer leaves the tax authority except through an approved exchange for an approved purpose.",
+    "rule": "CLAUDE.md Tax: lib/tax/ is read by the tax authority only (canReadTax(), every read in the access log); others use the taxpayer.status exchange service"
+   },
+   {
+    "id": "no-tax-values",
+    "what": "No rate, threshold, penalty, interest, deadline, registration threshold, obligation trigger or fee is typed: each is a named nation value checked by a binding rule (recorded as not performed and a publication blocker until the nation approves it); tax types, taxpayer categories and obligations are nation lists that ship empty, naming the standard expected",
+    "why": "The field series Part 2 §2.6: tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, retention and appeal rights come from approved national rules, never universal constants.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2523,
+    "quotes": [
+     "taxpayer.registration.individual",
+     "Register as an individual taxpayer",
+     "Individual or authorized representative",
+     "Application",
+     "Taxpayer account created"
+    ],
+    "met_by": {
+     "fields": [
+      "taxpayer.person",
+      "taxpayer.legal_name",
+      "taxpayer.obligations_requested",
+      "taxpayer.representative",
+      "taxpayer.tin"
+     ],
+     "procedure": "register"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 386,
+    "quotes": [
+     "Taxpayer Services",
+     "Registration, taxpayer accounts, guidance, notices and assisted filing"
+    ],
+    "met_by": {
+     "fields": [
+      "taxpayer.person",
+      "taxpayer.national_identifier",
+      "taxpayer.obligations_requested"
+     ],
+     "platform": {
+      "file": "app/src/components/features/forms/FormRenderer.tsx",
+      "how": "The same form self-service, assisted at an office and on paper"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 403,
+    "quotes": [
+     "Taxpayer registration",
+     "Application → identity/entity validation → tax-type selection → authority checks → registration decision",
+     "Taxpayer number and registration certificate or refusal"
+    ],
+    "met_by": {
+     "fields": [
+      "taxpayer.person",
+      "taxpayer.national_identifier",
+      "taxpayer.obligations_requested",
+      "taxpayer.tin"
+     ],
+     "procedure": "verify",
+     "platform": {
+      "file": "app/src/lib/tax/procedures.ts",
+      "how": "tax.registration: application, verification of identity and entity, the obligations chosen, a decision by an official who can sign: a taxpayer number or a refusal with reasons"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 501,
+    "quotes": [
+     "This form is a concrete starting contract, but the country must decide the tax types, mandatory identifiers, taxpayer categories, required evidence, representation law and any legal declaration text.",
+     "Do not make a national ID mandatory where the law permits registration without it."
+    ],
+    "met_by": {
+     "country_decision": "country.tax.registration",
+     "deviation": "spec-tax-lists"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "taxpayer.applicant_type",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.country.approved_taxpayer_types",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Type of taxpayer"
+   },
+   "hint": {
+    "en": "Choose the category that matches the registration being requested."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select type of taxpayer.",
+     "value_in_source": "Choose an available taxpayer type."
+    }
+   },
+   "country_decision": "country.tax.registration: the taxpayer categories (none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.person",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.person",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Civil register reference"
+   },
+   "hint": {
+    "en": "Your entry in the civil register, if you have one; registration is possible without it where the law allows."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.legal_name",
+   "type": "localized_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Full legal name"
+   },
+   "hint": {
+    "en": "The name exactly as it is registered, in each official language used."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter full legal name.",
+     "length": "Full legal name must be 300 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.national_identifier",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "identifier_format_from_source",
+     "params": {}
+    },
+    {
+     "rule": "verify_with_service",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "National identity or birth registration number"
+   },
+   "hint": {
+    "en": "If the law lets you register without one, leave it empty."
+   },
+   "error_text": {
+    "en": {
+     "identifier_format_from_source": "Check the number."
+    }
+   },
+   "country_decision": "country.tax.registration: the identifiers accepted, and whether any is mandatory (never a national identity number where the law permits registration without it).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.identity_evidence",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "identity-evidence",
+     "when": "as_the_approved_registration_procedure_requires"
+    }
+   ],
+   "label": {
+    "en": "Identity or registration evidence"
+   },
+   "hint": {
+    "en": "Any evidence the approved procedure accepts; a national identity card is never the only way."
+   },
+   "error_text": {
+    "en": {
+     "required": "Add identity or registration evidence.",
+     "evidence_requirement_in_approved_package": "This evidence is not included in the approved procedure."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.registered_address",
+   "type": "address",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "address_satisfies_service_policy",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "registered_address",
+     "when": "when_the_address_must_be_verified_under_the_approved_procedure"
+    }
+   ],
+   "label": {
+    "en": "Your address for tax purposes"
+   },
+   "hint": {
+    "en": "Where you live, or the address the law uses for individual taxpayers."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter your address for tax purposes.",
+     "address_satisfies_service_policy": "Provide an address permitted for this registration."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Address and contact"
+   }
+  },
+  {
+   "id": "taxpayer.contact",
+   "type": "contact",
+   "required": true,
+   "validation": [
+    {
+     "rule": "at_least_one_permitted_contact_method",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Contact details"
+   },
+   "hint": {
+    "en": "Provide the contact method required by the approved procedure."
+   },
+   "error_text": {
+    "en": {
+     "at_least_one_permitted_contact_method": "Provide at least one permitted contact method."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Address and contact"
+   }
+  },
+  {
+   "id": "taxpayer.carries_on_business",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Do you carry on a business or self-employment in your own name?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Taxes"
+   }
+  },
+  {
+   "id": "taxpayer.trading_name",
+   "type": "localized_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "taxpayer.carries_on_business",
+      "equals": true
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Trading name"
+   },
+   "hint": {
+    "en": "Enter this only if it differs from your legal name."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter trading name.",
+     "length": "Check the trading name."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Taxes"
+   }
+  },
+  {
+   "id": "taxpayer.business_activity",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "taxpayer.carries_on_business",
+      "equals": true
+     }
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.country.approved.business_activity_codes",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Main business activity"
+   },
+   "hint": {
+    "en": "Choose the activity that best describes the business."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select main business activity.",
+     "value_in_source": "Choose an available business activity."
+    }
+   },
+   "country_decision": "country.tax.registration: the business activity codes. Expected source: ISIC Rev. 4 or the nation's adaptation of it (none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "Taxes"
+   }
+  },
+  {
+   "id": "taxpayer.business_start_date",
+   "type": "date",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "taxpayer.carries_on_business",
+      "equals": true
+     }
+    },
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    },
+    {
+     "rule": "date_allowed_by_registration_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "business_activity_start",
+     "when": "when_required_by_the_approved_registration_procedure"
+    }
+   ],
+   "label": {
+    "en": "Date business activity started or is expected to start"
+   },
+   "hint": {
+    "en": "Use the actual or expected date requested by the procedure."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter date business activity started or is expected to start.",
+     "date_not_in_future": "Check the date.",
+     "date_allowed_by_registration_rule": "The date does not meet the configured registration rule."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Taxes"
+   }
+  },
+  {
+   "id": "taxpayer.obligations_requested",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "obligations_available_for_taxpayer_type",
+     "params": {}
+    },
+    {
+     "rule": "registration_obligation_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.country.approved.tax_obligations",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Tax obligations requested"
+   },
+   "hint": {
+    "en": "Select the tax registrations relevant to this taxpayer."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select tax obligations requested.",
+     "obligations_available_for_taxpayer_type": "One or more selected obligations are not available for this taxpayer type."
+    }
+   },
+   "country_decision": "country.tax.registration: the tax obligations open to each taxpayer type, as the tax types in force under the nation's law (none ship; expected source: the nation's tax laws, mapped to the IMF GFSM 2014 classification of taxes for statistics).",
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "Taxes"
+   }
+  },
+  {
+   "id": "taxpayer.acting_through_representative",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Are you acting for the taxpayer as their representative?"
+   },
+   "hint": {
+    "en": "Answer yes if you are completing this for someone else (a person, a business or an institution)."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Someone acting for the taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.representative_capacity",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "taxpayer.acting_through_representative",
+      "equals": true
+     }
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.representation.capacity.v1",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "In what capacity are you acting?"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select in what capacity are you acting?.",
+     "value_in_source": "Choose one of the listed values for in what capacity are you acting?."
+    }
+   },
+   "country_decision": "country.tax.registration: the representation law (who may act for a taxpayer and with what evidence).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "Someone acting for the taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.representative",
+   "type": "person",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "taxpayer.acting_through_representative",
+      "equals": true
+     }
+    }
+   ],
+   "values_source": "civicos.registry.person",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "authority_to_act",
+     "when": "when_a_representative_submits_the_request"
+    }
+   ],
+   "label": {
+    "en": "Authorized representative"
+   },
+   "hint": {
+    "en": "Provide this only when someone is acting for the taxpayer."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter the representative's details."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Someone acting for the taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.authority_evidence",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "taxpayer.acting_through_representative",
+      "equals": true
+     }
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "authority_to_act",
+     "when": "when_required_by_the_approved_representation_rule"
+    }
+   ],
+   "label": {
+    "en": "Evidence of authority to act"
+   },
+   "hint": {
+    "en": "Provide the approved evidence of authority if required."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Provide the required evidence of authority.",
+     "evidence_requirement_in_approved_package": "This evidence is not included in the approved procedure."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Someone acting for the taxpayer"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "taxpayer.tin",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Taxpayer identification number"
+   },
+   "hint": {
+    "en": "Given by the tax authority's register when the registration is decided; never typed by the applicant."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "taxpayer.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is sent."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  }
+ ]
+}

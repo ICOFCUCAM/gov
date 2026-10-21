@@ -52,8 +52,8 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | Status | Forms |
 |---|---|
 | catalogued | 0 |
-| contract_missing | 1677 |
-| contract_draft | 175 |
+| contract_missing | 1648 |
+| contract_draft | 204 |
 | under_review | 91 |
 | blocked | 1 |
 | excluded | 128 |
@@ -69,7 +69,7 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 
 ## Contracts CivicOS wrote (form library, controlled batches)
 
-46 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 46 matched to exactly one registered form (by source file and catalogue ID), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
+75 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 75 matched to exactly one registered form (by source file and catalogue ID, and by line where the catalogue repeats an ID in one file), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
 
 
 **Batch 1** (health regulation, owner approved 21 October 2026): 25 contracts added; form status contract_draft 25.
@@ -128,27 +128,61 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | HLT-MED-023 | HLT-MED-023 | 29 | contract_draft | allowed |
 | HLT-MED-024 | HLT-MED-024 | 6 | contract_draft | allowed |
 
+**Batch 3** (taxpayer registration and account, owner approved 21 October 2026): 29 contracts added; form status contract_draft 29.
+
+| Form | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|
+| taxpayer.account.statement | taxpayer.account.statement | 10 | contract_draft | allowed |
+| taxpayer.certificate.request | taxpayer.certificate.request | 15 | contract_draft | allowed |
+| taxpayer.details.change | taxpayer.details.change | 16 | contract_draft | allowed |
+| taxpayer.obligation.add | taxpayer.obligation.add | 16 | contract_draft | allowed |
+| taxpayer.obligation.cancel | taxpayer.obligation.cancel | 17 | contract_draft | allowed |
+| taxpayer.registration.amend | taxpayer.registration.amend | 19 | contract_draft | allowed |
+| taxpayer.registration.appeal | taxpayer.registration.appeal | 20 | contract_draft | allowed |
+| taxpayer.registration.appeal_assessment | taxpayer.registration.appeal_assessment | 14 | contract_draft | allowed |
+| taxpayer.registration.assessment | taxpayer.registration.assessment | 10 | contract_draft | allowed |
+| taxpayer.registration.branch | taxpayer.registration.branch | 23 | contract_draft | allowed |
+| taxpayer.registration.closure_record | taxpayer.registration.closure_record | 7 | contract_draft | allowed |
+| taxpayer.registration.decision | taxpayer.registration.decision | 12 | contract_draft | allowed |
+| taxpayer.registration.decision_record | taxpayer.registration.decision_record | 10 | contract_draft | allowed |
+| taxpayer.registration.duplicate | taxpayer.registration.duplicate | 16 | contract_draft | allowed |
+| taxpayer.registration.further_information | taxpayer.registration.further_information | 13 | contract_draft | allowed |
+| taxpayer.registration.further_information | taxpayer.registration.further_information@P2 | 12 | contract_draft | allowed |
+| taxpayer.registration.individual | taxpayer.registration.individual | 23 | contract_draft | allowed |
+| taxpayer.registration.inspection | taxpayer.registration.inspection | 13 | contract_draft | allowed |
+| taxpayer.registration.inspection_checklist | taxpayer.registration.inspection_checklist | 14 | contract_draft | allowed |
+| taxpayer.registration.nonresident | taxpayer.registration.nonresident | 26 | contract_draft | allowed |
+| taxpayer.registration.objection | taxpayer.registration.objection | 18 | contract_draft | allowed |
+| taxpayer.registration.public_entity | taxpayer.registration.public_entity | 15 | contract_draft | allowed |
+| taxpayer.registration.reactivate_request | taxpayer.registration.reactivate_request | 16 | contract_draft | allowed |
+| taxpayer.registration.referral | taxpayer.registration.referral | 11 | contract_draft | allowed |
+| taxpayer.registration.referral_record | taxpayer.registration.referral_record | 11 | contract_draft | allowed |
+| taxpayer.registration.suspend_request | taxpayer.registration.suspend_request | 16 | contract_draft | allowed |
+| taxpayer.registration.transfer | taxpayer.registration.transfer | 17 | contract_draft | allowed |
+| taxpayer.registration.verification_record | taxpayer.registration.verification_record | 9 | contract_draft | allowed |
+| taxpayer.registration.withdraw | taxpayer.registration.withdraw | 9 | contract_draft | allowed |
+
 **Totals beside the earlier ones** (the register without the library's contracts, after each batch, and now):
 
-| Status | Before (without the library) | After batch 1 | After batch 2 | Now |
-|---|---|---|---|---|
-| catalogued | 0 | 0 | 0 | 0 |
-| contract_missing | 1723 | 1698 | 1677 | 1677 |
-| contract_draft | 129 | 154 | 175 | 175 |
-| under_review | 91 | 91 | 91 | 91 |
-| blocked | 1 | 1 | 1 | 1 |
-| excluded | 128 | 128 | 128 | 128 |
-| approved | 0 | 0 | 0 | 0 |
-| production | 0 | 0 | 0 | 0 |
-| forms without a contract | 1927 | 1902 | 1881 | 1881 |
+| Status | Before (without the library) | After batch 1 | After batch 2 | After batch 3 | Now |
+|---|---|---|---|---|---|
+| catalogued | 0 | 0 | 0 | 0 | 0 |
+| contract_missing | 1723 | 1698 | 1677 | 1648 | 1648 |
+| contract_draft | 129 | 154 | 175 | 204 | 204 |
+| under_review | 91 | 91 | 91 | 91 | 91 |
+| blocked | 1 | 1 | 1 | 1 | 1 |
+| excluded | 128 | 128 | 128 | 128 | 128 |
+| approved | 0 | 0 | 0 | 0 | 0 |
+| production | 0 | 0 | 0 | 0 | 0 |
+| forms without a contract | 1927 | 1902 | 1881 | 1852 | 1852 |
 
 ## Forms with no contract
 
-1881 forms have no field contract (`contract: not yet given` in the register). By part:
+1852 forms have no field contract (`contract: not yet given` in the register). By part:
 
 | Part | Forms without a contract |
 |---|---|
-| Part 2 | 263 |
+| Part 2 | 234 |
 | Part 3 | 361 |
 | Part 4 | 116 |
 | Part 5 | 136 |

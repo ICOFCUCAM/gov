@@ -153,6 +153,16 @@ export const RULE_REGISTRY: Record<string, RegisteredRule> = {
   safety_report_deadline_from_rule: binding('Reported within the time the law sets', 'the time within which an authorisation holder, manufacturer or importer must report a safety concern or device incident, set by the nation (CFG-MED-003); shipped unset'),
   controlled_quantity_limit_from_rule: binding('Within the quantities the nation may authorise', 'the quantities of each controlled substance the nation may authorise in a period, under its controlled-substances law (CFG-MED-003); none ship'),
   review_request_period_from_rule: binding('Asked for within the period the law allows', 'the period within which a reconsideration or appeal of a regulatory decision may be asked for, set by the nation; shipped unset'),
+  // ── Taxpayer registration and account (field series Part 2 §2.6, catalogue contracts batch 3): values the nation's tax law decides, none shipped ──
+  registration_obligation_from_rule: binding('Registration required or allowed under the rule', 'who must or may register for each tax and from when: the registration thresholds and obligation triggers, set by the nation (country.tax.registration); none ship'),
+  obligation_effective_date_from_rule: binding('From a date the rule allows', 'when an added, cancelled, suspended or reactivated tax obligation takes effect, set by the nation (country.tax.registration); none ship'),
+  obligation_cancellation_allowed_by_rule: binding('A cancellation the rule allows', 'the grounds and conditions on which a tax obligation may be cancelled, set by the nation (country.tax.registration); none ship'),
+  suspension_allowed_by_rule: binding('A suspension national law permits', 'whether national law permits a tax registration to be suspended, on which grounds and for how long (country.tax.registration); none ships'),
+  withdrawal_allowed_by_rule: binding('A withdrawal the procedure permits', 'whether and until which stage a pending registration application may be withdrawn (country.tax.registration); none ships'),
+  tax_office_assignment_from_rule: binding('A tax office the assignment rules allow', 'the responsible tax offices and the rules assigning taxpayers to them (country.tax.registration); none ship'),
+  tax_information_response_period_from_rule: binding('Within the period allowed to answer', 'the period a registration applicant has to answer a request for further information, set by the nation (country.tax.registration); shipped unset'),
+  dispute_period_from_rule: binding('Lodged within the period the law allows', 'the period to object to or appeal a tax decision, counted from the legally relevant event date, and the powers to extend it (country.tax.disputes); shipped unset'),
+  certificate_validity_from_rule: binding('Within the validity the law gives a certificate', 'whether a taxpayer registration certificate has a validity period and how long (country.tax.registration); shipped unset'),
   // ── The specification's own validations (loaded from its form contracts) ──
   verify_with_service: r('Checked with an exchange service where the law allows', 'server'),
   configured_profile: binding('Checked against the country\'s configuration', 'the configuration the rule names'),

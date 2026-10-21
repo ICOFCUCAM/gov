@@ -73,6 +73,16 @@ LIBRARY_GIVEN = 'given (CivicOS library)'
 CONTRACT_GIVEN = ('given', LIBRARY_GIVEN)
 
 
+def row_lines(o):
+    """The line numbers a register row covers (its `lines`: a number, a range a-b, or several separated by commas)."""
+    out = set()
+    for part in str(o.get('lines') or '').split(','):
+        a, _, b = part.strip().partition('-')
+        if a.isdigit():
+            out.update(range(int(a), int(b if b.isdigit() else a) + 1))
+    return out
+
+
 def library_contracts(repo):
     """The form library's catalogue contracts: path, the register row they name (source, id), batch and every field key (a field group's fields
     as the form uses them, a repeatable group's questions as key.question)."""
@@ -94,7 +104,7 @@ def library_contracts(repo):
                 keys.append(x['id'])
                 keys += [f"{x['id']}.{i['id']}" for i in x.get('items') or []]
         cat = c.get('catalogue') or {}
-        out.append(dict(path=f'{LIBRARY}/{f}', source=cat.get('source'), id=cat.get('id'), form_id=c.get('form_id'), fields=keys,
+        out.append(dict(path=f'{LIBRARY}/{f}', source=cat.get('source'), id=cat.get('id'), line=cat.get('line'), form_id=c.get('form_id'), fields=keys,
                         batch=cat.get('batch', 1), title=(c.get('library') or {}).get('title', '')))
     return out
 FORM_STATUSES = ['catalogued', 'contract_missing', 'contract_draft', 'under_review', 'blocked', 'excluded', 'approved', 'production']
@@ -238,10 +248,13 @@ def build(repo):
         if o['category'] == 'form':
             cid = o['catalogue_id']
             o['contract'] = 'given' if ((o['source'], cid) in given or (cid in given_ids and cid not in checks['collisions'])) else 'not yet given'
-    # a form whose text gives no contract and whose contract CivicOS wrote (the form library): matched by source and ID to exactly one row
+    # a form whose text gives no contract and whose contract CivicOS wrote (the form library): matched by source and ID to exactly one row;
+    # where the catalogue repeats an ID in one document (taxpayer.registration.further_information, Part 2 §2.6), by the line the contract names
     checks['library'] = library_contracts(repo)
     for c in checks['library']:
         match = [o for o in rows if o['category'] == 'form' and o['source'] == c['source'] and o['catalogue_id'] == c['id']]
+        if len(match) > 1:
+            match = [o for o in match if c.get('line') in row_lines(o)]
         c['matches'] = [o['id'] for o in match]
         if len(match) == 1 and match[0]['contract'] != 'given':
             match[0]['contract'] = LIBRARY_GIVEN

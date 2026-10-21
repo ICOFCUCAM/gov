@@ -1,0 +1,601 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "taxpayer.registration.assessment",
+ "record_type": "taxpayer.registration_assessment",
+ "form_version": 1,
+ "procedure_package_id": "tax.registration",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "country.tax.registration: taxpayer categories, registration identifiers, tax obligations and registration procedures (approved by the authorized tax and legal authority).",
+  "Registration thresholds and obligation triggers: an approved rule per tax (lib/law/rules.ts); none ships.",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for these records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "taxpayer.registration.assessment",
+  "part": 2,
+  "section": "2.6",
+  "line": 2711,
+  "batch": 3
+ },
+ "library": {
+  "title": "Assess a registration application",
+  "intro": "The officer's assessment of completeness and eligibility under the approved registration rule: the rules applied, the evidence reviewed, what is missing and the recommendation, with reasons. A recommendation, never the decision.",
+  "owner": "tax",
+  "filled_by": "An official of the tax authority, signed in.",
+  "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
+  "procedure": {
+   "key": "tax.registration",
+   "stage": "verification",
+   "action": "propose"
+  },
+  "lists": {
+   "tax.evidence.review_outcomes": {
+    "values": [
+     {
+      "value": "sufficient",
+      "label": "Sufficient"
+     },
+     {
+      "value": "insufficient",
+      "label": "Insufficient"
+     },
+     {
+      "value": "inconsistent",
+      "label": "Inconsistent"
+     },
+     {
+      "value": "not-verifiable",
+      "label": "Could not be verified"
+     }
+    ],
+    "proposed": true
+   },
+   "tax.registration.recommendation_types": {
+    "values": [
+     {
+      "value": "approve",
+      "label": "Approve"
+     },
+     {
+      "value": "refuse",
+      "label": "Refuse"
+     },
+     {
+      "value": "request-information",
+      "label": "Request further information"
+     },
+     {
+      "value": "refer",
+      "label": "Refer"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "policies": {
+   "access.read_rule": "canReadTax() in lib/auth/roles.ts: the tax authority's officials and auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only registration status, through the taxpayer.status exchange service, for an approved purpose"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "no-score",
+    "what": "No risk score, rating or automatic finding: the officer records what was checked and found, with reasons; a risk indicator, where the law allows one, only helps an officer choose work and is recorded with its policy version and human review",
+    "why": "A score must not determine liability or a decision; findings are an officer's, with reasons.",
+    "rule": "Field series Part 2 §2.6 Department D; specification §5.2; CLAUDE.md: AI never makes a legally material decision"
+   },
+   {
+    "id": "decision-in-engine",
+    "what": "The decision is made and sealed by the case engine (tax.registration \"register\" or \"refuse\", by an official who can sign, different from the one who proposed it), never by submitting this form; the form records what the decision-maker states",
+    "why": "Every decision cites the law version that applied and is signed with the decision key; AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts"
+   },
+   {
+    "id": "tax-secrecy-class",
+    "what": "Every field of the form is restricted and marked tax secrecy (confidentiality tax), stricter than the catalogue's administrative and personal classes where it gives them; the case is restricted and read only under canReadTax() (the tax authority's officials, auditors with a purpose), every read in the access log; other institutions learn status only through the taxpayer.status exchange service",
+    "why": "Tax records are confidential: a class label alone grants no access, and nothing about a taxpayer leaves the tax authority except through an approved exchange for an approved purpose.",
+    "rule": "CLAUDE.md Tax: lib/tax/ is read by the tax authority only (canReadTax(), every read in the access log); others use the taxpayer.status exchange service"
+   },
+   {
+    "id": "no-tax-values",
+    "what": "No rate, threshold, penalty, interest, deadline, registration threshold, obligation trigger or fee is typed: each is a named nation value checked by a binding rule (recorded as not performed and a publication blocker until the nation approves it); tax types, taxpayer categories and obligations are nation lists that ship empty, naming the standard expected",
+    "why": "The field series Part 2 §2.6: tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, retention and appeal rights come from approved national rules, never universal constants.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2711,
+    "quotes": [
+     "taxpayer.registration.assessment — assess completeness and eligibility under the approved registration rule."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.rule_refs",
+      "assessment.complete",
+      "assessment.eligibility"
+     ],
+     "procedure": "propose"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2720,
+    "quotes": [
+     "assessment.case_ref: identifier_reference, required; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.case_ref"
+     ],
+     "deviation": "tax-secrecy-class"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2721,
+    "quotes": [
+     "assessment.rule_refs: registry_reference, required; the exact approved rules applied; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.rule_refs"
+     ],
+     "deviation": "tax-secrecy-class"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2722,
+    "quotes": [
+     "assessment.evidence_review: choice, required; source tax.evidence.review_outcomes; restricted."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.evidence_review"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2723,
+    "quotes": [
+     "assessment.missing_items: choice, conditional on an incomplete application; source tax.registration.required_items; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.missing_items"
+     ],
+     "deviation": "tax-secrecy-class"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2724,
+    "quotes": [
+     "assessment.recommendation: choice, required; source tax.registration.recommendation_types; restricted."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.recommendation"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3191,
+    "quotes": [
+     "case_ref: identifier_reference, required; source is the owning institution's authorized case registry."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.case_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3193,
+    "quotes": [
+     "rule_refs: registry_reference, required for assessment and decision records; exact approved rules used."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.rule_refs"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3194,
+    "quotes": [
+     "evidence_refs: registry_reference, conditional according to the procedure."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.evidence_refs"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 397,
+    "quotes": [
+     "Risk scores must not independently determine liability, deny a refund or impose a penalty.",
+     "If a country authorizes risk-based selection, record the policy version, inputs, purpose and human review.",
+     "Provide a lawful challenge mechanism where applicable."
+    ],
+    "met_by": {
+     "deviation": "no-score"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3205,
+    "quotes": [
+     "Universal control: these records must be bound to the actual service-specific procedure package.",
+     "A generic internal form cannot be used to bypass the case's approved stages, skip mandatory legal review or issue a decision that the officer is not authorized to make."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "Each record is made at a step of the procedure package its case runs under; it cannot move the case past a stage, skip a review or decide what the official may not (caseActRefusal())"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2710,
+    "quotes": [
+     "The following forms are available only to authorized tax officers and reviewers:"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Officials of the tax authority only: caseActRefusal() refuses anyone else, and administrators and whole-government officials get no domain authority"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "assessment.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Case reference"
+   },
+   "hint": {
+    "en": "The registration case this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter case reference.",
+     "case_exists_and_is_open": "There is no open case with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.rule_refs",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.approved_rules",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Rules applied"
+   },
+   "hint": {
+    "en": "The approved rules applied, by key and version (lib/law/rules.ts)."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select rules applied.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.evidence_review",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.evidence.review_outcomes",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Evidence review"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select evidence review.",
+     "value_in_source": "Choose one of the listed values for evidence review."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.evidence_refs",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Evidence reviewed"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.complete",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Is the application complete?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.missing_items",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "assessment.complete",
+      "equals": false
+     }
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registration.required_items",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Missing items"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select missing items.",
+     "value_in_source": "Choose one of the listed values for missing items."
+    }
+   },
+   "country_decision": "country.tax.registration: the items the approved registration procedure requires (none ship).",
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.eligibility",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Eligibility under the rule"
+   },
+   "hint": {
+    "en": "What was found against each condition of the rule, and why."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter eligibility under the rule.",
+     "length": "Eligibility under the rule must be 10000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.recommendation",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registration.recommendation_types",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recommendation"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select recommendation.",
+     "value_in_source": "Choose one of the listed values for recommendation."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded by"
+   },
+   "hint": {
+    "en": "The signed-in official who records this; never typed in."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "assessment.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  }
+ ]
+}

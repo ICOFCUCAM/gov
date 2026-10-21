@@ -59,6 +59,15 @@ const PAGES = [
   { path: '/gov/law/procedures/forms/HLT-MED-017', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-MED-019', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-MED-024', map: false, text: /register status/i },
+  // Catalogue contracts, batch 3 (taxpayer registration and account).
+  { path: '/gov/law/procedures/forms/taxpayer.registration.individual', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.registration.individual/print', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.registration.nonresident', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.details.change', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.registration.objection', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.certificate.request', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.registration.decision', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.registration.further_information@P2', map: false, text: /register status/i },
   // The seal key register (lib/keys/seal-register.ts).
   { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
 ];
