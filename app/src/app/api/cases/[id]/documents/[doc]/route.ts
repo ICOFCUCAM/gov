@@ -3,7 +3,7 @@
 // against its SHA-256. Reads of restricted and secret cases' documents are
 // written to the access log.
 import { NextRequest, NextResponse } from 'next/server';
-import { caseReadRefusal } from '@/lib/auth/roles';
+import { caseReadRefusal, caseRecordTypes, readRelationship, relationshipRule } from '@/lib/auth/roles';
 import { caseScope } from '@/lib/auth/official';
 import { getCase, caseFacts } from '@/lib/casework/engine';
 import { documentBytes, getDocument } from '@/lib/records/documents';
@@ -19,8 +19,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
   const s = await caseScope();
   const purpose = req.nextUrl.searchParams.get('purpose') ?? undefined;
   if (s) {
-    const why = caseReadRefusal(s, caseFacts(c), purpose);
-    if (c.sensitivity !== 'normal' || why) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'documents', id: d.id }, action: why ? 'refused' : 'view', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
+    const facts = caseFacts(c);
+    const why = caseReadRefusal(s, facts, purpose);
+    // A read under an approved audit or request-information relationship is always logged, naming it (plan phase 3).
+    const grant = !why && s.institution !== c.owner ? readRelationship(s, c.owner, caseRecordTypes(facts), purpose) : null;
+    const rule = why ?? (grant ? relationshipRule(grant) : undefined);
+    if (c.sensitivity !== 'normal' || why || grant) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'documents', id: d.id }, action: why ? 'refused' : 'view', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(rule ? { rule } : {}) });
     if (why) return NextResponse.json({ error: why }, { status: 403 });
   }
   const v = Number(req.nextUrl.searchParams.get('v')) || undefined;

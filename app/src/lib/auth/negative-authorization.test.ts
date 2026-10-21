@@ -33,6 +33,8 @@ const official = await import('@/app/api/auth/officials/[id]/route');
 const changes = await import('@/app/api/auth/account-changes/[id]/route');
 const directives = await import('@/app/api/directives/route');
 const standing = await import('@/app/api/org/ministries/[id]/standing/route');
+const relationships = await import('@/app/api/org/relationships/route');
+const directiveRef = await import('@/app/api/directives/[ref]/route');
 
 const PW = 'correct horse battery';
 const post = (url: string, body: unknown) => new NextRequest(`http://localhost${url}`, { method: 'POST', body: JSON.stringify(body) });
@@ -230,5 +232,131 @@ describe('an independent institution\'s standing changes with its own confirmati
     expect((await standing.POST(post(`/api/org/ministries/${court}/standing`, { op: 'withdraw' }), ctx(court))).status).toBe(403);
     await as(ids.admin!);
     expect((await standing.POST(post(`/api/org/ministries/${court}/standing`, { op: 'withdraw' }), ctx(court))).status).toBe(200);
+  });
+});
+
+// ── Relationships between institutions (plan phase 3; guidance §3.3, §5.1) ──
+describe('relationships: an instruction needs an approved instruct relationship; asking for information is a read, never a change', () => {
+  let basis: { instrument: string; eId: string }[];
+  let treasury: string;
+  const rel = async (body: Record<string, unknown>) => relationships.POST(post('/api/org/relationships', body));
+  const directive = (ref: string, body: Record<string, unknown>) => directives.POST(post('/api/directives', { ref, title: ref, ...body }));
+  const healthCase = (sensitivity: 'normal' | 'restricted' | 'secret') => caseFacts({ owner: HEALTH, sensitivity, package: { key: 'health.licence', version: 1 } } as unknown as Case);
+
+  beforeAll(async () => {
+    const law = recordVersion({ instrument: { title: 'Oversight Act', type: 'act', jurisdiction: 'X', year: 2021, number: '7', issuingAuthority: 'Parliament' }, dates: { inForce: '2021-01-01' }, provisions: [{ eId: 'sec_4', num: '4', text: 'x' }] }, 'L1', 'l1');
+    if ('error' in law) throw new Error(law.error);
+    confirmVersion(law.instrument.id, law.version.id, 'L2', 'l2');
+    basis = [{ instrument: law.instrument.id, eId: 'sec_4' }];
+    ids.commissionSigner = await account('chair@commission.test', 'signatory', commission);
+    ids.commissionOfficer = await account('investigator@commission.test', 'officer', commission);
+    ids.healthOfficer = await account('officer@health.test', 'officer', HEALTH);
+    treasury = mk('Treasury', 'treasury-rel');
+  });
+
+  it('refuses an instruction to an independent institution, or from one institution to another, without an approved relationship', async () => {
+    await as(ids.signer!);
+    const r = await directive('DIR-REL-1', { kind: 'instruction', targets: [assembly] });
+    expect(r.status).toBe(422);
+    expect((await r.json()).error).toMatch(/independent and cannot be instructed: no approved relationship lets the executive office instruct it/);
+    await as(ids.healthOfficer!);
+    const m = await directive('DIR-REL-2', { kind: 'budget', targets: [treasury] });
+    expect(m.status).toBe(422);
+    expect((await m.json()).error).toMatch(/No approved relationship lets Ministry of Health instruct Treasury \(budget\): an institution instructs another only under a power the law gives it/);
+    // Asking or informing needs no relationship; the executive office still instructs executive institutions.
+    expect((await directive('DIR-REL-3', { kind: 'request', targets: [commission] })).status).toBe(201);
+    await as(ids.signer!);
+    expect((await directive('DIR-REL-4', { kind: 'instruction', targets: [HEALTH] })).status).toBe(201);
+  });
+
+  it('an approved instruct relationship, confirmed by the independent institution itself, lets the executive office instruct it; ending it stops the signature', async () => {
+    await as(ids.admin!);
+    const p = await rel({ op: 'propose', from: 'executive-office', to: assembly, type: 'instruct', scope: { recordTypes: ['budget'] }, legalBasis: basis });
+    expect(p.status).toBe(201);
+    const id = (await p.json()).relationship.id as string;
+    // Another whole-government administrator cannot confirm it: the Assembly confirms.
+    await as(ids.admin2!);
+    expect((await rel({ op: 'confirm', id })).status).toBe(403);
+    await as(ids.clerk!);
+    const c = await rel({ op: 'confirm', id });
+    expect(c.status).toBe(200);
+    expect((await c.json()).relationship).toMatchObject({ status: 'approved', inForce: true });
+    await as(ids.signer!);
+    // Only the kinds it covers.
+    expect((await directive('DIR-REL-5', { kind: 'instruction', targets: [assembly] })).status).toBe(422);
+    expect((await directive('DIR-REL-6', { kind: 'budget', targets: [assembly] })).status).toBe(201);
+    // Ended (a new version, confirmed again by the Assembly): the draft can no longer be signed.
+    await as(ids.admin!);
+    expect((await rel({ op: 'end', id, legalBasis: basis })).status).toBe(200);
+    await as(ids.clerk!);
+    expect((await rel({ op: 'confirm', id })).status).toBe(200);
+    await as(ids.signer!);
+    const s = await directiveRef.POST(post('/api/directives/DIR-REL-6', { action: 'sign' }), { params: Promise.resolve({ ref: 'DIR-REL-6' }) });
+    expect(s.status).toBe(422);
+    expect((await s.json()).error).toMatch(/cannot be instructed/);
+  });
+
+  it('a request-information relationship grants a read-only, purpose-bound, logged read of the listed records; never a change, a decision, a secret case or a court\'s', async () => {
+    await as(ids.admin!);
+    const p = await rel({ op: 'propose', from: commission, to: HEALTH, type: 'request_information', scope: { recordTypes: ['cases', 'queue'], purposes: ['Electoral spending audit'] }, legalBasis: basis });
+    expect(p.status).toBe(201);
+    const id = (await p.json()).relationship.id as string;
+    // The commission is independent with its own officials who can sign: it confirms, not the government.
+    await as(ids.admin2!);
+    expect((await rel({ op: 'confirm', id })).status).toBe(403);
+    await as(ids.commissionSigner!);
+    expect((await rel({ op: 'confirm', id })).status).toBe(200);
+
+    await as(ids.commissionOfficer!);
+    const noPurpose = await queue.GET(get(`/api/org/ministries/${HEALTH}/queue`), ctx(HEALTH));
+    expect(noPurpose.status).toBe(403);
+    expect((await noPurpose.json()).error).toMatch(/state one of electoral spending audit/);
+    expect((await queue.GET(get(`/api/org/ministries/${HEALTH}/queue?purpose=Curiosity`), ctx(HEALTH))).status).toBe(403);
+    const read = await queue.GET(get(`/api/org/ministries/${HEALTH}/queue?purpose=${encodeURIComponent('Electoral spending audit')}`), ctx(HEALTH));
+    expect(read.status).toBe(200);
+    const logged = listAccess({ register: 'institution-queue' }).find(e => e.record.id === HEALTH && e.by.institution === commission && e.result === 'allowed');
+    expect(logged?.rule).toMatch(new RegExp(`Relationship ${id} version 1`));
+    expect(logged?.purpose).toBe('Electoral spending audit');
+    // Never the reverse direction.
+    await as(ids.healthOfficer!);
+    expect((await queue.GET(get(`/api/org/ministries/${commission}/queue?purpose=Electoral%20spending%20audit`), ctx(commission))).status).toBe(403);
+
+    const b = institutionBounds();
+    const officer: Scope = { role: 'officer', institution: commission, bounds: b };
+    const signer: Scope = { role: 'signatory', institution: commission, bounds: b };
+    expect(caseReadRefusal(officer, healthCase('normal'), 'Electoral spending audit')).toBeNull();
+    expect(caseReadRefusal(officer, healthCase('restricted'), 'Electoral spending audit')).toBeNull();
+    expect(caseReadRefusal(officer, healthCase('normal'))).toMatch(/state one of/);
+    expect(caseReadRefusal(officer, healthCase('secret'), 'Electoral spending audit')).toBeTruthy();
+    expect(caseReadRefusal(officer, caseFacts({ owner: court, sensitivity: 'normal' } as Case), 'Electoral spending audit')).toMatch(/court/);
+    // Read only: no change in the workspace, no case work, no decision.
+    expect(ministryPermission(signer, HEALTH)).toBeTruthy();
+    expect(apiPermission(signer, 'POST', `/api/org/ministries/${HEALTH}/queue`)).toBeTruthy();
+    expect(caseActRefusal(signer, healthCase('normal'))).toBeTruthy();
+    expect(caseActRefusal(signer, { ...healthCase('normal'), decision: true })).toBeTruthy();
+    await as(ids.commissionSigner!);
+    expect((await queue.POST(post(`/api/org/ministries/${HEALTH}/queue`, { reference: 'X-1', subject: 'x', received: '2026-01-01' }), ctx(HEALTH))).status).toBe(403);
+
+    // Suspended: the read stops.
+    await as(ids.admin!);
+    expect((await rel({ op: 'suspend', id, legalBasis: basis })).status).toBe(200);
+    await as(ids.commissionSigner!);
+    expect((await rel({ op: 'confirm', id })).status).toBe(200);
+    await as(ids.commissionOfficer!);
+    expect((await queue.GET(get(`/api/org/ministries/${HEALTH}/queue?purpose=Electoral%20spending%20audit`), ctx(HEALTH))).status).toBe(403);
+    expect(caseReadRefusal({ ...officer, bounds: institutionBounds() }, healthCase('normal'), 'Electoral spending audit')).toBeTruthy();
+  });
+
+  it('a relationship is proposed only by an administrator, and the proposer cannot confirm it', async () => {
+    await as(ids.healthOfficer!);
+    expect((await rel({ op: 'propose', from: HEALTH, to: commission, type: 'receive_reports', legalBasis: basis })).status).toBe(403);
+    await as(ids.healthAdmin!);
+    const p = await rel({ op: 'propose', from: HEALTH, to: treasury, type: 'receive_reports', legalBasis: basis });
+    expect(p.status).toBe(201);
+    const id = (await p.json()).relationship.id as string;
+    expect((await rel({ op: 'confirm', id })).status).toBe(403);
+    expect(apiPermission({ role: 'auditor' }, 'POST', '/api/org/relationships')).toMatch(/Auditors/);
+    await as(ids.admin!);
+    expect((await rel({ op: 'confirm', id })).status).toBe(200);
   });
 });

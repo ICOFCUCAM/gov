@@ -14,6 +14,7 @@
 //                 ministry incidents, field operations, series
 //   sovereign     the nation profile, cabinet, setup, presets
 //   institutions  the constitutional terms of each institution (standing, independence)
+//   relationships the relationships between institutions (instruct, audit, request information …)
 //   national      the national snapshot and the coordination fabric
 //
 // Every import of '@/lib/data/store' keeps working: this module re-exports
@@ -29,4 +30,5 @@ export * from './store/platform-ops';
 export * from './store/ministries';
 export * from './store/sovereign';
 export * from './store/institutions';
+export * from './store/relationships';
 export * from './store/national';

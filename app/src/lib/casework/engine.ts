@@ -145,6 +145,8 @@ const facts = (c: Case, a?: ActionSpec) => {
   const b = institutionBounds();
   return {
     owner: c.owner, sensitivity: c.sensitivity, assigned: c.assignee ? [c.assignee.id] : [],
+    // The procedure's key: a read relationship may cover one procedure's cases only (plan phase 3).
+    ...(c.package?.key ? { recordType: c.package.key } : {}),
     judicial: b.judicial.includes(c.owner),
     independent: b.independent.includes(c.owner),
     ...(a ? { decision: !!a.decision, stepUp: !!a.needs.stepUp } : {}),
