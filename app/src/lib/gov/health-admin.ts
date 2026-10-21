@@ -12,7 +12,7 @@
 // Pure and deterministic.
 
 import { seed, wave, waveSeries } from '@/lib/telemetry';
-import { doctorRoster, hospitalOps, patientServices as serviceVolumes } from '@/lib/gov/health-systems';
+import { doctorRoster, hospitalOps, referrals, patientServices as serviceVolumes } from '@/lib/gov/health-systems';
 import { patientDeepExecution as serviceExecution, citizenPortalView as portalView } from '@/lib/gov/health-operations';
 
 export type Tone = 'ok' | 'warn' | 'alert' | 'info';
@@ -199,4 +199,20 @@ export function bayBoard(id: string, t: number, total = 16) {
 export function emergencyAttendance(id: string, t: number) {
   const levels = [1, 2, 3, 4, 5].map(level => ({ level, count: Math.round(wave(`ea:lv:${id}:${level}`, t, level <= 2 ? 0 : 2, level <= 2 ? 6 : 24)), meanWaitMin: Math.round(wave(`ea:wt:${id}:${level}`, t, level <= 2 ? 0 : 10, level <= 2 ? 15 : 180)) }));
   return { levels, present: levels.reduce((a, l) => a + l.count, 0), waitingOverHour: levels.filter(l => l.meanWaitMin > 60).reduce((a, l) => a + l.count, 0) };
+}
+
+/**
+ * Referrals between facilities, counted by the service they go to: how many,
+ * how many urgent, the oldest waiting. Never a person, a reason or a condition.
+ */
+export function referralCounts(id: string, t: number): { service: string; count: number; urgent: number; oldestHrs: number; tone: Tone }[] {
+  const by = new Map<string, { count: number; urgent: number; oldestHrs: number }>();
+  for (const r of referrals(id, t, 24)) {
+    const x = by.get(r.to) ?? { count: 0, urgent: 0, oldestHrs: 0 };
+    x.count += 1;
+    if (r.urgency !== 'routine') x.urgent += 1;
+    x.oldestHrs = Math.max(x.oldestHrs, r.ageHrs);
+    by.set(r.to, x);
+  }
+  return [...by].map(([service, x]) => ({ service, ...x, tone: tone(x.oldestHrs <= 24, x.oldestHrs <= 48) })).sort((a, b) => b.count - a.count);
 }

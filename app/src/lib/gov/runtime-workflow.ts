@@ -151,7 +151,7 @@ export const WORKFLOWS: Record<WorkKind, WorkflowDef> = {
     },
   },
   lab: {
-    kind: 'lab', label: 'Diagnostic specimen', stages: ['Received', 'Accessioned', 'In assay', 'Verified', 'Reported', 'Rejected'],
+    kind: 'lab', label: 'Laboratory specimen', stages: ['Received', 'Accessioned', 'In assay', 'Verified', 'Reported', 'Rejected'],
     terminal: ['Reported', 'Rejected'],
     transitions: {
       Received: { assign: 'Accessioned', advance: 'Accessioned', reject: 'Rejected' },

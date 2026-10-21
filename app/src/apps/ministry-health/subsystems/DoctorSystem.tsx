@@ -359,8 +359,8 @@ export function DoctorSystem({ id, now, role, withheld }: {
 
       <RuntimeQueue
         scope={`${id}:doctor`}
-        kind="encounter"
-        title="Workforce request runtime — submit → review → decide → close"
+        kind="permit"
+        title="Registration & licensing runtime — filed → verified → inspected → decided"
         by="Licensing Officer"
         role={role}
         withheld={withheld}

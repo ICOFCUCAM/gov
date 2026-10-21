@@ -85,7 +85,7 @@ function Panel({ title, meta, children }: { title: string; meta?: string; childr
 }
 
 const DOMAIN_WF: Record<string, WorkKind> = {
-  command: 'incident', hospitals: 'case', doctor: 'encounter', patient: 'approval',
+  command: 'incident', hospitals: 'case', doctor: 'permit', patient: 'approval',
   pharma: 'procurement', disease: 'incident', lab: 'case', emergency: 'incident',
   finance: 'procurement', regulatory: 'permit', situation: 'incident', grid: 'case', portal: 'approval', interop: 'case', simulation: 'incident', security: 'incident', executive: 'incident', research: 'case', wards: 'case',
 };

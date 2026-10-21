@@ -5,10 +5,12 @@
 // apps/ministry-health for the words a patient or clinical field carries, with
 // each exception named and justified; and a check that the administrative
 // engine the screens read (lib/gov/health-admin.ts) answers with no such field.
+// Rendered health surfaces outside this application (the ministry system
+// console, blueprint, institution chain, work kinds): health-surfaces.test.ts.
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { workforceDesk, serviceAccess, portalUsage, bayBoard, emergencyAttendance } from '@/lib/gov/health-admin';
+import { workforceDesk, serviceAccess, portalUsage, bayBoard, emergencyAttendance, referralCounts } from '@/lib/gov/health-admin';
 
 const ROOT = join(__dirname);
 const FORBIDDEN: [string, RegExp][] = [
@@ -72,7 +74,7 @@ describe('the health application carries no patient or clinical field', () => {
   });
 
   it('the administrative engine the screens read answers with no patient or clinical field', () => {
-    const outputs = [workforceDesk('health', 100), workforceDesk('health', 250, 'DR-1003'), serviceAccess('health', 100), portalUsage('health', 100), bayBoard('health', 100), emergencyAttendance('health', 100)];
+    const outputs = [workforceDesk('health', 100), workforceDesk('health', 250, 'DR-1003'), serviceAccess('health', 100), portalUsage('health', 100), bayBoard('health', 100), emergencyAttendance('health', 100), referralCounts('health', 100)];
     const words = JSON.stringify(outputs);
     for (const [name, re] of FORBIDDEN) expect(re.test(words), name).toBe(false);
     // Facility boards say how a bay stands, never who is in it.

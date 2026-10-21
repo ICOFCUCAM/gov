@@ -15,7 +15,7 @@ const SVC: Partial<Record<ArchetypeKey, ServiceKpi[]>> = {
     { l: 'Ambulance dispatch', unit: 'min', lo: 6, hi: 24, good: 'low' },
     { l: 'Outbreak Rt', unit: '', lo: 6, hi: 24, good: 'low' },
     { l: 'Pharmacy stock', unit: 'd', lo: 8, hi: 60, good: 'high' },
-    { l: 'Diagnostics throughput', unit: '/h', lo: 40, hi: 96, good: 'high' },
+    { l: 'Laboratory throughput', unit: '/h', lo: 40, hi: 96, good: 'high' },
     { l: 'Vaccination coverage', unit: '%', lo: 55, hi: 96, good: 'high' },
     { l: 'Mortality index', unit: '', lo: 4, hi: 22, good: 'low' },
   ],

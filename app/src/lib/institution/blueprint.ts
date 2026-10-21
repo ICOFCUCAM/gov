@@ -40,7 +40,7 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('ICU & critical-care systems', 'network'), S('Operating theatres', 'network'),
       S('Emergency wards', 'emergency'),
     ]),
-    G('doctor', 'Doctor Systems', 'Health workforce, licensing & rota (administrative)', [
+    G('doctor', 'Workforce & Licensing', 'Health workforce, licensing & rota (administrative)', [
       S('Workforce portal', 'personnel'), S('Licensing workflows', 'workflow'),
       S('Service desks', 'workflow'), S('Rota workflows', 'workflow'),
       S('Referral counts', 'workflow'),
@@ -83,8 +83,8 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Blood & warehouse network', 'logistics'),
     ]),
     G('portal', 'Citizen Health Portal', 'Citizen digital health ecosystem', [
-      S('Digital health ID', 'citizen'), S('Health timeline', 'citizen'),
-      S('Telemedicine & personal health guidance', 'citizen'),
+      S('Portal sign-in', 'citizen'), S('Service usage timeline', 'citizen'),
+      S('Telehealth service line', 'citizen'),
     ]),
     G('interop', 'National Interoperability', 'Cross-government health data fabric', [
       S('Inter-ministry links', 'interop'), S('Identity federation', 'registry'),
@@ -108,7 +108,7 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
     ]),
     G('wards', 'Ward & Surgical Ops', 'Ward management & surgical orchestration', [
       S('Ward & nurse stations', 'network'), S('Surgical queue', 'workflow'),
-      S('Medication schedules', 'workflow'),
+      S('Medicine stock rounds', 'workflow'),
     ]),
     // ── Health reference-tier expansion (9 new domains) ───────────
     G('ward-board', 'Ward Board', '◧ II — ward bay status', [S('Bay status', 'field')]),

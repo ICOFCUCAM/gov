@@ -14,7 +14,7 @@ import type { WorkKind } from '@/lib/gov/runtime-workflow';
 // Which workflow a blueprint group runs.
 const GROUP_KIND: Record<string, WorkKind> = {
   regulatory: 'permit', procurement: 'procurement', command: 'incident',
-  citizen: 'approval', audit: 'case', doctor: 'encounter',
+  citizen: 'approval', audit: 'case', doctor: 'permit',
 };
 function kindForGroup(key: string): WorkKind {
   return GROUP_KIND[key] ?? 'case';

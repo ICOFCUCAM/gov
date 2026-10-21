@@ -68,7 +68,7 @@ const CHAINS: Record<PropagationTrigger, { label: string; nodes: ChainNode[] }> 
     nodes: [
       { institution: 'Emergency Command', signal: 'MCI declared', action: 'Activate mass-casualty plan', hopHrs: 0 },
       { institution: 'Hospital Network', signal: 'Trauma surge', action: 'Open surge beds · divert non-critical', amplifies: true, hopHrs: 1 },
-      { institution: 'Doctor Systems', signal: 'Clinician recall', action: 'Recall on-call & trauma teams', hopHrs: 2 },
+      { institution: 'Workforce & Licensing', signal: 'Clinician recall', action: 'Recall on-call & trauma teams', hopHrs: 2 },
       { institution: 'Pharmaceutical', signal: 'Blood & resus demand', action: 'Release emergency stock & blood', hopHrs: 3 },
       { institution: 'Treasury Procurement', signal: 'Emergency authorisation', action: 'Authorise emergency expenditure', hopHrs: 6 },
       { institution: 'Cabinet', signal: 'National coordination', action: 'National disaster coordination', hopHrs: 10 },

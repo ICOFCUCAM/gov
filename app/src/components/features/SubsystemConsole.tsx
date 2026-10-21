@@ -6,11 +6,11 @@ import { api } from '@/lib/api/client';
 import { TONE, Panel, Spark, waveSeries } from '@/components/features/SituationRoom';
 import { instantiateMinistry, systemKindLabel, blueprintFor } from '@/lib/institution/blueprint';
 import {
-  doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
-  workloadIntelligence, hospitalOps, diseaseIntel, patientServices,
+  hospitalOps, diseaseIntel,
   laboratoryOps, pharmaceuticalOps, emergencyMedicalOps, healthCommand, healthFinanceOps,
   healthRegulatoryOps,
 } from '@/lib/gov/health-systems';
+import { workforceDesk, serviceAccess, portalUsage, emergencyAttendance, referralCounts } from '@/lib/gov/health-admin';
 import {
   fiscalCommand, revenueOps, budgetOps, procurementOps, bankingRails,
   citizenFinance, fiscalAssurance, treasuryCommand,
@@ -41,7 +41,8 @@ import { readTwin } from '@/lib/twin/read';
 import { GeneratedText, useTile } from '@/components/ui/Generated';
 import { formatMoney } from '@/lib/nation/registry';
 
-const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
+// 'info' (a neutral reading from lib/gov/health-admin.ts) reads in the soft ink.
+const tc = (t: 'ok' | 'warn' | 'alert' | 'info') => (t === 'info' ? 'rgb(var(--c-ink-soft))' : `rgb(var(--c-${t}))`);
 
 /**
  * A headline figure. The engines' figures are generated (`kind` sample by
@@ -171,29 +172,30 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   );
 
   // ── HEALTH operational worlds ────────────────────────────────────────
+  // Administrative and aggregate only (CLAUDE.md, Health; lib/gov/health-admin.ts):
+  // the workforce and its registration, licensing, staffing, attendances
+  // counted by acuity, referral counts and stock, never a person's condition.
   if (isHealth && group === 'doctor') {
-    const roster = doctorRoster(id, ts);
-    const wl = workloadIntelligence(roster);
-    const queue = intakeQueue(id, ts);
-    const refs = referrals(id, ts);
-    const rx = prescriptions(id, ts);
-    const labs = labRequests(id, ts);
+    const desk = workforceDesk(id, ts, selDoc ?? undefined);
+    const team = desk.team;
+    const ed = emergencyAttendance(id, ts);
+    const refs = referralCounts(id, ts);
     return (
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Clinicians on roster" v={`${roster.length}`} />
-          <Stat l="Available now" v={`${roster.filter(d => d.status === 'available').length}`} t="ok" />
-          <Stat l="Mean workload" v={`${wl.meanWorkload}%`} t={wl.meanWorkload >= 85 ? 'alert' : wl.meanWorkload >= 70 ? 'warn' : 'ok'} />
-          <Stat l="Burnout alerts" v={`${wl.burnoutAlert}`} t={wl.burnoutAlert ? 'alert' : 'ok'} />
-          <Stat l="Intake queue" v={`${queue.length}`} t={queue.filter(p => p.triage <= 2).length ? 'warn' : 'ok'} />
-          <Stat l="Open referrals" v={`${refs.length}`} t="warn" />
+          <Stat l="Professionals on register" v={desk.kpis.onRegister.toLocaleString('en')} />
+          <Stat l="On duty now" v={`${desk.kpis.onDuty}`} t="ok" />
+          <Stat l="Establishment filled" v={`${desk.kpis.establishmentPct}%`} t={desk.kpis.establishmentPct >= 85 ? 'ok' : desk.kpis.establishmentPct >= 70 ? 'warn' : 'alert'} />
+          <Stat l="Renewals due" v={`${desk.kpis.renewalsDue}`} t={desk.kpis.renewalsDue ? 'warn' : 'ok'} />
+          <Stat l="Attendances present" v={`${ed.present}`} t={ed.waitingOverHour ? 'warn' : 'ok'} />
+          <Stat l="Open referrals" v={`${refs.reduce((a, r) => a + r.count, 0)}`} t="warn" />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel signal="sample" title="Doctor dashboard" meta="roster · workload · status" className="xl:col-span-2" bodyClass="!p-0">
+          <Panel signal="sample" title="Workforce desk" meta="team · registration · duty" className="xl:col-span-2" bodyClass="!p-0">
             <div className="max-h-[320px] overflow-y-auto">
-              {roster.map(d => {
-                const wt = d.workload >= 85 ? 'alert' : d.workload >= 70 ? 'warn' : 'ok';
+              {team.map(d => {
+                const st = d.standing === 'registered' ? 'ok' : 'warn';
                 const open = selDoc === d.id;
                 return (
                   <div key={d.id} className="border-b border-line-soft last:border-0">
@@ -201,25 +203,22 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
                       <span className="w-16 shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{d.id}</span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[11px] text-ink">{d.name}</span>
-                        <span className="block truncate text-[8.5px] text-ink-muted">{d.specialty} · {d.region} · {d.patientsToday} today{d.onCall ? ' · on-call' : ''}</span>
+                        <span className="block truncate text-[8.5px] text-ink-muted">{d.profession} · {d.number}</span>
                       </span>
-                      <span className="w-16 shrink-0 text-[8px] uppercase tracking-wider" style={{ color: d.status === 'available' ? TONE.ok : d.status === 'off-duty' ? 'rgb(var(--c-ink-muted))' : TONE.warn }}>{d.status}</span>
-                      <span className="w-24 shrink-0">
-                        <span className="mb-0.5 block text-right font-mono text-[9px] tabular-nums" style={{ color: tc(wt) }}>{d.workload}%</span>
-                        <span className="block h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${d.workload}%`, backgroundColor: tc(wt) }} /></span>
-                      </span>
+                      <span className="w-16 shrink-0 text-[8px] uppercase tracking-wider" style={{ color: d.shift === 'on duty' ? TONE.ok : d.shift === 'off duty' ? 'rgb(var(--c-ink-muted))' : TONE.warn }}>{d.shift}</span>
+                      <span className="w-24 shrink-0 text-right text-[8px] uppercase tracking-wider" style={{ color: tc(st) }}>{d.standing}</span>
                     </button>
                     {open ? (
                       <div className="grid grid-cols-2 gap-1.5 bg-surface-2/40 px-3 py-2 sm:grid-cols-4">
                         {[
-                          ['Caseload today', `${d.patientsToday}`],
-                          ['Workload', `${d.workload}%`],
-                          ['Burnout risk', `${d.burnoutRisk}%`],
-                          ['On-call', d.onCall ? 'Yes' : 'No'],
-                          ['Specialty', d.specialty],
-                          ['Region', d.region],
-                          ['Status', d.status],
-                          ['Shift load', `${Math.round(waveSeries(`docshift:${id}:${d.id}`, ts, 6, 4, 14).at(-1)!)} pending`],
+                          ['Profession', d.profession],
+                          ['Register number', d.number],
+                          ['Standing', d.standing],
+                          ['Duty', d.shift],
+                          ['Facility', desk.member.facility],
+                          ['Registration valid', desk.member.validUntil],
+                          ['Rota', desk.member.rota],
+                          ['Training done', `${desk.member.cpdPct}%`],
                         ].map(([l, v]) => (
                           <div key={l} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-1">
                             <div className="truncate text-[7.5px] uppercase tracking-wider text-ink-muted">{l}</div>
@@ -233,69 +232,69 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               })}
             </div>
           </Panel>
-          <Panel signal="sample" title="Workload intelligence" meta="by specialty" bodyClass="!p-2">
+          <Panel signal="sample" title="Staffing by cadre" meta="in post · establishment" bodyClass="!p-2">
             <div className="space-y-1">
-              {wl.specialties.map(s => (
-                <div key={s.specialty} className="flex items-center gap-2 text-[10px]">
-                  <span className="min-w-0 flex-1 truncate text-ink-soft">{s.specialty}</span>
-                  <span className="text-[8px] text-ink-muted">{s.doctors}d</span>
-                  <div className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${s.load}%`, backgroundColor: tc(s.tone) }} /></div>
-                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(s.tone) }}>{s.load}</span>
+              {desk.cadres.map(s => (
+                <div key={s.cadre} className="flex items-center gap-2 text-[10px]">
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{s.cadre}</span>
+                  <span className="text-[8px] text-ink-muted">{s.inPost}/{s.establishment}</span>
+                  <div className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${s.filledPct}%`, backgroundColor: tc(s.tone) }} /></div>
+                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(s.tone) }}>{s.filledPct}</span>
                 </div>
               ))}
             </div>
           </Panel>
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel signal="sample" title="Patient intake & triage" meta="diagnosis → treatment workflow" bodyClass="!p-0">
+          <Panel signal="sample" title="Attendances by acuity" meta="counts per level · mean wait · no person" bodyClass="!p-0">
             <div className="max-h-[260px] overflow-y-auto">
-              {queue.map(p => {
-                const tg = p.triage <= 2 ? 'alert' : p.triage === 3 ? 'warn' : 'ok';
+              {ed.levels.map(l => {
+                const tg = l.meanWaitMin > 120 ? 'alert' : l.meanWaitMin > 60 ? 'warn' : 'ok';
                 return (
-                  <div key={p.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
-                    <span className="grid h-4 w-4 shrink-0 place-items-center rounded-[3px] text-[8px] font-bold text-white" style={{ backgroundColor: tc(tg) }}>{p.triage}</span>
-                    <span className="min-w-0 flex-1 truncate text-ink-soft">{p.complaint} · {p.age}y</span>
-                    <span className="shrink-0 text-[8px] uppercase tracking-wider text-ink-muted">{p.stage}</span>
-                    <span className="w-10 shrink-0 text-right font-mono tabular-nums text-ink-muted">{p.waitMin}m</span>
+                  <div key={l.level} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                    <span className="grid h-4 w-4 shrink-0 place-items-center rounded-[3px] text-[8px] font-bold text-white" style={{ backgroundColor: tc(tg) }}>{l.level}</span>
+                    <span className="min-w-0 flex-1 truncate text-ink-soft">Acuity level {l.level}</span>
+                    <span className="shrink-0 font-mono tabular-nums text-ink-soft">{l.count}</span>
+                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">{l.meanWaitMin}m</span>
                   </div>
                 );
               })}
             </div>
           </Panel>
-          <Panel signal="sample" title="Prescriptions & lab requests" meta="issuance · diagnostics" bodyClass="!p-2">
-            <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Prescriptions</div>
+          <Panel signal="sample" title="Stock & laboratory turnaround" meta="days of cover · within target" bodyClass="!p-2">
+            <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Stock</div>
             <div className="mb-2 space-y-0.5">
-              {rx.map(p => (
-                <div key={p.id} className="flex items-center gap-2 text-[10px]">
-                  <span className="min-w-0 flex-1 truncate text-ink-soft">{p.drug}</span>
-                  <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: p.status === 'flagged' ? TONE.alert : p.status === 'dispensed' ? TONE.ok : TONE.warn }}>{p.status}</span>
+              {desk.stock.map(p => (
+                <div key={p.item} className="flex items-center gap-2 text-[10px]">
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{p.item}</span>
+                  <span className="shrink-0 font-mono text-[9px] tabular-nums" style={{ color: tc(p.tone) }}>{p.daysCover}d</span>
                 </div>
               ))}
             </div>
-            <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Lab requests</div>
+            <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Laboratory turnaround</div>
             <div className="space-y-0.5">
-              {labs.map(l => (
-                <div key={l.id} className="flex items-center gap-2 text-[10px]">
+              {desk.turnaround.map(l => (
+                <div key={l.test} className="flex items-center gap-2 text-[10px]">
                   <span className="min-w-0 flex-1 truncate text-ink-soft">{l.test}</span>
-                  <span className="shrink-0 text-[8px] uppercase text-ink-muted">{l.priority}</span>
-                  <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: l.status === 'resulted' ? TONE.ok : TONE.warn }}>{l.status}</span>
+                  <span className="shrink-0 text-[8px] text-ink-muted">{l.medianHrs}h</span>
+                  <span className="shrink-0 font-mono text-[9px] tabular-nums" style={{ color: tc(l.tone) }}>{l.withinTargetPct}%</span>
                 </div>
               ))}
             </div>
           </Panel>
-          <Panel signal="sample" title="Referrals & specialist routing" meta="regional medical coordination" bodyClass="!p-0">
+          <Panel signal="sample" title="Referrals between facilities" meta="counted by service · oldest waiting" bodyClass="!p-0">
             {refs.map(r => (
-              <div key={r.id} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+              <div key={r.service} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-ink">{r.to}</span>
-                  <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: r.urgency === 'emergency' ? TONE.alert : r.urgency === 'urgent' ? TONE.warn : TONE.ok }}>{r.urgency}</span>
+                  <span className="truncate text-ink">{r.service}</span>
+                  <span className="shrink-0 font-mono tabular-nums" style={{ color: tc(r.tone) }}>{r.count}</span>
                 </div>
-                <div className="truncate text-[8.5px] text-ink-muted">{r.reason} · from {r.from} · {r.ageHrs}h</div>
+                <div className="truncate text-[8.5px] text-ink-muted">{r.urgent} urgent · oldest {r.oldestHrs}h</div>
               </div>
             ))}
           </Panel>
         </div>
-        <RuntimeQueue scope={`${id}:enc`} kind="encounter" title="Clinical encounter runtime — execute the care pathway" by="Attending" />
+        <RuntimeQueue scope={`${id}:enc`} kind="permit" title="Registration & licensing runtime — filed → verified → inspected → decided" by="Licensing Officer" />
       </div>
     );
   }
@@ -398,88 +397,92 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   }
 
   if (isHealth && group === 'patient') {
-    const ps = patientServices(id, ts);
-    const rx = prescriptions(id, ts);
-    const labs = labRequests(id, ts);
-    const refs = referrals(id, ts);
+    // Service access counted per desk and per service, never a person's record (lib/gov/health-admin.ts).
+    const sa = serviceAccess(id, ts);
+    const pu = portalUsage(id, ts);
+    const desk = workforceDesk(id, ts);
+    const refs = referralCounts(id, ts);
     return (
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Citizens enrolled" v={`${ps.registeredM}M`} t="ok" />
-          <Stat l="Portal uptime" v={`${ps.portalUptime}%`} t={ps.portalUptime >= 99 ? 'ok' : 'warn'} />
-          <Stat l="Appointments today" v={ps.appointmentsToday.toLocaleString()} t="ok" />
-          <Stat l="Insurance coverage" v={`${ps.insuranceCoverage}%`} t={ps.insuranceCoverage >= 75 ? 'ok' : 'warn'} />
-          <Stat l="Claims pending" v={ps.claimsPending.toLocaleString()} t={ps.claimsPending > 3000 ? 'alert' : 'warn'} />
-          <Stat l="Treatment adherence" v={`${ps.treatmentTracking.adherencePct}%`} t={ps.treatmentTracking.adherencePct >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Citizens enrolled" v={`${sa.enrolledM}M`} t="ok" />
+          <Stat l="Portal uptime" v={`${sa.portalUptime}%`} t={sa.portalUptime >= 99 ? 'ok' : 'warn'} />
+          <Stat l="Appointments today" v={sa.appointmentsToday.toLocaleString('en')} t="ok" />
+          <Stat l="Scheme membership" v={`${pu.schemeMembershipPct}%`} t={pu.schemeMembershipPct >= 75 ? 'ok' : 'warn'} />
+          <Stat l="Requests on time" v={`${pu.onTimePct}%`} t={pu.onTimeTone === 'info' ? undefined : pu.onTimeTone} />
+          <Stat l="Appointments honoured" v={`${sa.appointmentsHonouredPct}%`} t={sa.appointmentsHonouredPct >= 80 ? 'ok' : 'warn'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel signal="sample" title="Patient portal — appointments" meta="citizen-facing scheduling" bodyClass="!p-0">
-            {ps.appointments.map(a => (
-              <div key={a.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
-                <span className="w-12 shrink-0 font-mono tabular-nums text-ink-muted">{a.when}</span>
-                <span className="min-w-0 flex-1 truncate text-ink-soft">{a.clinic}</span>
-                <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: a.status === 'completed' ? TONE.ok : a.status === 'in-queue' ? TONE.warn : 'rgb(var(--c-ink-muted))' }}>{a.status}</span>
+          <Panel signal="sample" title="Portal usage — requests by service" meta="citizen-facing services · counts" bodyClass="!p-0">
+            {pu.requests.map(a => (
+              <div key={a.kind} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{a.kind}</span>
+                <span className="shrink-0 font-mono tabular-nums" style={{ color: a.tone === 'warn' ? TONE.warn : 'rgb(var(--c-ink-soft))' }}>{a.count.toLocaleString('en')}</span>
               </div>
             ))}
           </Panel>
-          <Panel signal="sample" title="Vaccination records" meta="immunisation registry" bodyClass="!p-2">
+          <Panel signal="sample" title="Vaccination coverage" meta="immunisation returns · aggregate" bodyClass="!p-2">
             <div className="space-y-1">
-              {ps.vaccination.map(v => {
-                const vt = v.status === 'overdue' ? 'alert' : v.status === 'due' ? 'warn' : 'ok';
-                return (
-                  <div key={v.vaccine} className="flex items-center gap-2 text-[10px]">
-                    <span className="min-w-0 flex-1 truncate text-ink-soft">{v.vaccine}</span>
-                    <span className="shrink-0 text-ink-muted">{v.doses}d</span>
-                    <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: tc(vt) }}>{v.status}</span>
-                  </div>
-                );
-              })}
+              {sa.vaccination.map(v => (
+                <div key={v.vaccine} className="flex items-center gap-2 text-[10px]">
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{v.vaccine}</span>
+                  <span className="shrink-0 text-ink-muted">{v.trend}</span>
+                  <span className="shrink-0 font-mono text-[9px] tabular-nums" style={{ color: tc(v.tone) }}>{v.coveragePct}%</span>
+                </div>
+              ))}
             </div>
             <div className="mt-2 text-[9px] text-ink-muted">Linked to disease-intelligence vaccination analytics &amp; pharmaceutical demand.</div>
           </Panel>
-          <Panel signal="sample" title="Health alerts & treatment tracking" meta="citizen health continuity" bodyClass="!p-2">
+          <Panel signal="sample" title="Public health advisories & programme coverage" meta="programmes · aggregate" bodyClass="!p-2">
             <div className="space-y-1">
-              {ps.alerts.map((al, i) => (
+              {pu.advisories.map((al, i) => (
                 <div key={i} className="flex items-start gap-1.5 text-[10px]">
-                  <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: al.level === 'urgent' ? TONE.alert : al.level === 'advisory' ? TONE.warn : TONE.ok }} />
-                  <span className="min-w-0"><span className="block text-ink">{al.label}</span><span className="block truncate text-[8.5px] text-ink-muted">{al.detail}</span></span>
+                  <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: al.tone === 'alert' ? TONE.alert : al.tone === 'warn' ? TONE.warn : TONE.ok }} />
+                  <span className="min-w-0"><span className="block text-ink">{al.title}</span><span className="block truncate text-[8.5px] text-ink-muted">{al.body}</span></span>
+                </div>
+              ))}
+              {pu.programmes.map(p => (
+                <div key={p.name} className="flex items-center gap-2 text-[10px]">
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{p.name}</span>
+                  <span className="shrink-0 font-mono text-[9px] tabular-nums" style={{ color: tc(p.tone) }}>{p.coveragePct}%</span>
                 </div>
               ))}
             </div>
             <div className="mt-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[10px]">
-              <span className="text-ink-soft">Active treatment plans</span>
-              <span className="ml-2 font-mono tabular-nums" style={{ color: TONE.ok }}>{ps.treatmentTracking.active.toLocaleString()}</span>
-              <span className="ml-2 text-ink-muted">adherence {ps.treatmentTracking.adherencePct}%</span>
+              <span className="text-ink-soft">Certificates issued</span>
+              <span className="ml-2 font-mono tabular-nums" style={{ color: TONE.ok }}>{pu.certificatesIssued.toLocaleString('en')}</span>
+              <span className="ml-2 text-ink-muted">booked this month {pu.bookedThisMonth.toLocaleString('en')}</span>
             </div>
           </Panel>
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel signal="sample" title="Prescriptions" meta="issuance · dispensing" bodyClass="!p-0">
-            {rx.map(p => (
-              <div key={p.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
-                <span className="min-w-0 flex-1 truncate text-ink-soft">{p.drug}</span>
-                <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: p.status === 'flagged' ? TONE.alert : p.status === 'dispensed' ? TONE.ok : TONE.warn }}>{p.status}</span>
+          <Panel signal="sample" title="Dispensing returns" meta="issued · flagged · by category" bodyClass="!p-0">
+            {sa.dispensing.map(p => (
+              <div key={p.category} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{p.category}</span>
+                <span className="shrink-0 font-mono tabular-nums text-ink-soft">{p.issued.toLocaleString('en')}</span>
+                <span className="w-10 shrink-0 text-right font-mono text-[9px] tabular-nums" style={{ color: p.flagged ? TONE.alert : TONE.ok }}>{p.flagged}</span>
               </div>
             ))}
           </Panel>
-          <Panel signal="sample" title="Laboratory results" meta="diagnostics return" bodyClass="!p-0">
-            {labs.map(l => (
-              <div key={l.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+          <Panel signal="sample" title="Laboratory turnaround" meta="median hours · within target" bodyClass="!p-0">
+            {desk.turnaround.map(l => (
+              <div key={l.test} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
                 <span className="min-w-0 flex-1 truncate text-ink-soft">{l.test}</span>
-                <span className="shrink-0 text-[8px] uppercase text-ink-muted">{l.priority}</span>
-                <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: l.status === 'resulted' ? TONE.ok : TONE.warn }}>{l.status}</span>
+                <span className="shrink-0 text-[8px] uppercase text-ink-muted">{l.medianHrs}h</span>
+                <span className="shrink-0 font-mono text-[9px] tabular-nums" style={{ color: tc(l.tone) }}>{l.withinTargetPct}%</span>
               </div>
             ))}
           </Panel>
-          <Panel signal="sample" title="Referrals & specialist routing" meta="continuity of care" bodyClass="!p-0">
+          <Panel signal="sample" title="Referrals between facilities" meta="counted by service" bodyClass="!p-0">
             {refs.map(r => (
-              <div key={r.id} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+              <div key={r.service} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-ink">{r.to}</span>
-                  <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: r.urgency === 'emergency' ? TONE.alert : r.urgency === 'urgent' ? TONE.warn : TONE.ok }}>{r.urgency}</span>
+                  <span className="truncate text-ink">{r.service}</span>
+                  <span className="shrink-0 font-mono tabular-nums" style={{ color: tc(r.tone) }}>{r.count}</span>
                 </div>
-                <div className="truncate text-[8.5px] text-ink-muted">{r.reason} · from {r.from}</div>
+                <div className="truncate text-[8.5px] text-ink-muted">{r.urgent} urgent · oldest {r.oldestHrs}h</div>
               </div>
             ))}
           </Panel>
@@ -618,7 +621,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
             <div className="mt-2 h-7 overflow-hidden opacity-80"><Spark pts={waveSeries(`hosp:intake:${id}`, ts, 24, 30, 92)} tone={h.loadBalanceTone} /></div>
           </Panel>
-          <Panel signal="sample" title="Staffing & mortality intelligence" meta="clinical analytics" bodyClass="!p-2">
+          <Panel signal="sample" title="Staffing & mortality intelligence" meta="facility returns · aggregate" bodyClass="!p-2">
             <div className="mb-2"><div className="flex justify-between text-[10px]"><span className="text-ink-soft">Staffing level</span><span className="font-mono tabular-nums" style={{ color: tc(h.staffingPct >= 80 ? 'ok' : 'warn') }}>{h.staffingPct}%</span></div>
               <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${h.staffingPct}%`, backgroundColor: tc(h.staffingPct >= 80 ? 'ok' : 'warn') }} /></div></div>
             <div className="text-[10px] text-ink-soft">Mortality index <span className="font-mono" style={{ color: tc(h.mortalityIndex >= 16 ? 'alert' : 'warn') }}>{h.mortalityIndex}</span> / 1000 admissions <IndexTag index="health-systems.ts · mortalityIndex" entityId={`institution:${id}`} /></div>
@@ -645,7 +648,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Rejection rate" v={`${L.rejectionRatePct}%`} t={L.rejectionRatePct >= 6 ? 'warn' : 'ok'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel signal="sample" title="Diagnostic pipeline" meta="assay · pending · in-assay · turnaround" bodyClass="!p-0">
+          <Panel signal="sample" title="Laboratory pipeline" meta="assay · pending · in-assay · turnaround" bodyClass="!p-0">
             {L.assays.map(a => (
               <div key={a.assay} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(a.tone)}` }}>
                 <span className="w-40 shrink-0 truncate text-[11px] text-ink">{a.assay}</span>

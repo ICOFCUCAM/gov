@@ -21,7 +21,7 @@ const C: Record<ArchetypeKey, Subsystem[]> = {
   HEALTH: [
     { name: 'Tertiary hospitals', unit: 'facilities', scale: 38 },
     { name: 'District clinics', unit: 'facilities', scale: 420 },
-    { name: 'Diagnostic laboratories', unit: 'labs', scale: 96 },
+    { name: 'Medical laboratories', unit: 'labs', scale: 96 },
     { name: 'Pharmacies & dispensaries', unit: 'outlets', scale: 510 },
     { name: 'Ambulance fleet', unit: 'vehicles', scale: 240 },
     { name: 'Epidemiology centres', unit: 'centres', scale: 22 },
