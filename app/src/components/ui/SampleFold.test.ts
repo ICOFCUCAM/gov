@@ -7,10 +7,12 @@ import { SampleFold, SampleTag } from './SampleFold';
 import { InstallationModeProvider } from '@/lib/ops/mode-context';
 import type { InstallationMode } from '@/lib/ops/mode';
 
+const Provider = InstallationModeProvider as React.FC<{ mode: InstallationMode; children?: React.ReactNode }>;
+
 const FIGURE = 'Regional figure 4,812';
 const fold = (mode: InstallationMode | null, marked = false) => {
   const el = React.createElement(SampleFold, { what: 'Regional status', source: 'Ministry operations model', marked }, React.createElement('span', null, FIGURE));
-  return renderToStaticMarkup(mode ? React.createElement(InstallationModeProvider, { mode, children: el }) : el);
+  return renderToStaticMarkup(mode ? React.createElement(Provider, { mode }, el) : el);
 };
 
 describe('SampleFold', () => {
@@ -33,7 +35,7 @@ describe('SampleFold', () => {
   });
 
   it('SampleTag says Sample where samples are allowed and Not connected in production', () => {
-    const tag = (mode: InstallationMode) => renderToStaticMarkup(React.createElement(InstallationModeProvider, { mode, children: React.createElement(SampleTag, { source: 'x' }) }));
+    const tag = (mode: InstallationMode) => renderToStaticMarkup(React.createElement(Provider, { mode }, React.createElement(SampleTag, { source: 'x' })));
     expect(tag('demo')).toContain('Sample');
     expect(tag('production')).toContain('Not connected');
   });

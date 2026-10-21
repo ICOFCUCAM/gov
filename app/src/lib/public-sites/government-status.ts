@@ -62,8 +62,8 @@ export function publicGovernmentStatus(i: GovernmentStatusInput): PublicGovernme
   const tone = (t: string): StatusTone => (t === 'ok' || t === 'warn' || t === 'alert' ? t : 'neutral');
 
   const posture: PublicStatusLine = p.loaded
-    ? { label: 'National posture', value: p.risk.v, kind: p.risk.kind, source: p.risk.src, tone: tone(p.risk.t) }
-    : { label: 'National posture', value: NOT_CONNECTED, kind: 'unavailable', source: 'The national snapshot did not answer', tone: 'neutral' };
+    ? { label: 'Overall state', value: p.risk.v, kind: p.risk.kind, source: p.risk.src, tone: tone(p.risk.t) }
+    : { label: 'Overall state', value: NOT_CONNECTED, kind: 'unavailable', source: 'The national snapshot did not answer', tone: 'neutral' };
   const readiness: PublicStatusLine = { label: 'National readiness', value: p.readiness.v, kind: p.readiness.kind, source: p.readiness.src, tone: tone(p.readiness.t) };
 
   const incidents = i.snapshot?.crossMinistryIncidents ?? [];
