@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common) and \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common) \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority) and \"tax6\" (batch 6, tax services: the same parts beside registration). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -77,7 +77,102 @@
   "taxpayer.registration.assessment",
   "taxpayer.registration.verification_record",
   "taxpayer.registration.appeal_assessment",
-  "taxpayer.registration.closure_record"
+  "taxpayer.registration.closure_record",
+  "tax.appeal.response",
+  "tax.appeal.submit",
+  "tax.appeal.transmit",
+  "tax.assessment.amendment",
+  "tax.assessment.notice",
+  "tax.assessment.review_request",
+  "tax.assistance.enquiry",
+  "tax.assistance.guidance_request",
+  "tax.compliance.assessment_decision",
+  "tax.compliance.case.open",
+  "tax.compliance.case_closure",
+  "tax.compliance.complaint",
+  "tax.compliance.evidence_register",
+  "tax.compliance.extension_decision",
+  "tax.compliance.extension_request",
+  "tax.compliance.findings_draft",
+  "tax.compliance.findings_review",
+  "tax.compliance.information_request",
+  "tax.compliance.information_response",
+  "tax.compliance.inspection_plan",
+  "tax.compliance.interview_record",
+  "tax.compliance.referral",
+  "tax.compliance.scope.approve",
+  "tax.compliance.taxpayer_response",
+  "tax.credit.adjustment",
+  "tax.debt.disclosure.assessment",
+  "tax.debt.payment_plan.cancel_request",
+  "tax.debt.payment_plan.change_request",
+  "tax.debt.payment_plan.decision",
+  "tax.debt.payment_plan.default_review",
+  "tax.debt.payment_plan.evidence",
+  "tax.debt.payment_plan.request",
+  "tax.debt.recovery.authorize",
+  "tax.debt.recovery.close",
+  "tax.debt.recovery.dispute",
+  "tax.debt.recovery.notice",
+  "tax.debt.recovery.response",
+  "tax.debt.recovery.suspend_request",
+  "tax.debt.statement.request",
+  "tax.debt.voluntary_disclosure",
+  "tax.dispute.closure",
+  "tax.dispute.settlement_proposal",
+  "tax.dispute.settlement_review",
+  "tax.dispute.withdraw",
+  "tax.incentive.amendment",
+  "tax.incentive.application",
+  "tax.incentive.compliance_report",
+  "tax.incentive.decision",
+  "tax.incentive.renewal",
+  "tax.incentive.review_request",
+  "tax.incentive.surrender",
+  "tax.incentive.withdrawal",
+  "tax.objection.assessment",
+  "tax.objection.decision",
+  "tax.objection.extension_request",
+  "tax.objection.submit",
+  "tax.objection.supplement",
+  "tax.payment.allocation_request",
+  "tax.payment.dispute",
+  "tax.payment.external_reference",
+  "tax.payment.initiate",
+  "tax.payment.reversal_request",
+  "tax.payment.transfer_request",
+  "tax.refund.application",
+  "tax.refund.assessment",
+  "tax.refund.decision",
+  "tax.refund.payment_instruction",
+  "tax.refund.reconciliation",
+  "tax.refund.supporting_evidence",
+  "tax.return.periodic.amend",
+  "tax.return.periodic.appeal",
+  "tax.return.periodic.correction",
+  "tax.return.periodic.decision",
+  "tax.return.periodic.further_information",
+  "tax.return.periodic.late_submission",
+  "tax.return.periodic.nil",
+  "tax.return.periodic.notice",
+  "tax.return.periodic.objection",
+  "tax.return.periodic.officer_assessment",
+  "tax.return.periodic.withdraw_request",
+  "tax.ruling.decision",
+  "tax.ruling.further_information",
+  "tax.ruling.reconsideration",
+  "tax.ruling.request",
+  "tax.ruling.withdraw",
+  "tax.withholding.certificate.issue",
+  "tax.withholding.details.amend",
+  "tax.withholding.discrepancy.decision",
+  "tax.withholding.discrepancy.response",
+  "tax.withholding.payment",
+  "tax.withholding.registration",
+  "tax.withholding.return.amend",
+  "tax.withholding.return.submit",
+  "tax.withholding.statement.correct",
+  "tax.withholding.statement.submit"
  ],
  "groups": {
   "health": [
@@ -160,6 +255,103 @@
    "taxpayer.registration.verification_record",
    "taxpayer.registration.appeal_assessment",
    "taxpayer.registration.closure_record"
+  ],
+  "tax6": [
+   "tax.appeal.response",
+   "tax.appeal.submit",
+   "tax.appeal.transmit",
+   "tax.assessment.amendment",
+   "tax.assessment.notice",
+   "tax.assessment.review_request",
+   "tax.assistance.enquiry",
+   "tax.assistance.guidance_request",
+   "tax.compliance.assessment_decision",
+   "tax.compliance.case.open",
+   "tax.compliance.case_closure",
+   "tax.compliance.complaint",
+   "tax.compliance.evidence_register",
+   "tax.compliance.extension_decision",
+   "tax.compliance.extension_request",
+   "tax.compliance.findings_draft",
+   "tax.compliance.findings_review",
+   "tax.compliance.information_request",
+   "tax.compliance.information_response",
+   "tax.compliance.inspection_plan",
+   "tax.compliance.interview_record",
+   "tax.compliance.referral",
+   "tax.compliance.scope.approve",
+   "tax.compliance.taxpayer_response",
+   "tax.credit.adjustment",
+   "tax.debt.disclosure.assessment",
+   "tax.debt.payment_plan.cancel_request",
+   "tax.debt.payment_plan.change_request",
+   "tax.debt.payment_plan.decision",
+   "tax.debt.payment_plan.default_review",
+   "tax.debt.payment_plan.evidence",
+   "tax.debt.payment_plan.request",
+   "tax.debt.recovery.authorize",
+   "tax.debt.recovery.close",
+   "tax.debt.recovery.dispute",
+   "tax.debt.recovery.notice",
+   "tax.debt.recovery.response",
+   "tax.debt.recovery.suspend_request",
+   "tax.debt.statement.request",
+   "tax.debt.voluntary_disclosure",
+   "tax.dispute.closure",
+   "tax.dispute.settlement_proposal",
+   "tax.dispute.settlement_review",
+   "tax.dispute.withdraw",
+   "tax.incentive.amendment",
+   "tax.incentive.application",
+   "tax.incentive.compliance_report",
+   "tax.incentive.decision",
+   "tax.incentive.renewal",
+   "tax.incentive.review_request",
+   "tax.incentive.surrender",
+   "tax.incentive.withdrawal",
+   "tax.objection.assessment",
+   "tax.objection.decision",
+   "tax.objection.extension_request",
+   "tax.objection.submit",
+   "tax.objection.supplement",
+   "tax.payment.allocation_request",
+   "tax.payment.dispute",
+   "tax.payment.external_reference",
+   "tax.payment.initiate",
+   "tax.payment.reversal_request",
+   "tax.payment.transfer_request",
+   "tax.refund.application",
+   "tax.refund.assessment",
+   "tax.refund.decision",
+   "tax.refund.payment_instruction",
+   "tax.refund.reconciliation",
+   "tax.refund.supporting_evidence",
+   "tax.return.periodic.amend",
+   "tax.return.periodic.appeal",
+   "tax.return.periodic.correction",
+   "tax.return.periodic.decision",
+   "tax.return.periodic.further_information",
+   "tax.return.periodic.late_submission",
+   "tax.return.periodic.nil",
+   "tax.return.periodic.notice",
+   "tax.return.periodic.objection",
+   "tax.return.periodic.officer_assessment",
+   "tax.return.periodic.withdraw_request",
+   "tax.ruling.decision",
+   "tax.ruling.further_information",
+   "tax.ruling.reconsideration",
+   "tax.ruling.request",
+   "tax.ruling.withdraw",
+   "tax.withholding.certificate.issue",
+   "tax.withholding.details.amend",
+   "tax.withholding.discrepancy.decision",
+   "tax.withholding.discrepancy.response",
+   "tax.withholding.payment",
+   "tax.withholding.registration",
+   "tax.withholding.return.amend",
+   "tax.withholding.return.submit",
+   "tax.withholding.statement.correct",
+   "tax.withholding.statement.submit"
   ]
  },
  "items": [
@@ -1874,6 +2066,259 @@
   },
   {
    "for": "tax",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 511,
+   "quotes": [
+    "The national twin receives approved aggregate figures, not individual returns."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/register.ts",
+     "how": "taxCounts(): counts only, never a taxpayer's record"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2517,
+   "quotes": [
+    "The Revenue/Tax Authority must have a separate configured service catalogue for each tax type that the country actually administers.",
+    "CivicOS must not assume that every nation has VAT, corporate income tax, personal income tax, property tax, excise, withholding tax or a particular taxpayer identifier."
+   ],
+   "met_by": {
+    "deviation": "no-tax-values",
+    "platform": {
+     "file": "app/src/lib/law/rules.ts",
+     "how": "Each tax type is calculated only by its own approved rule version; a service is activated only by a procedure version the nation approves for a tax it has"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2519,
+   "quotes": [
+    "Tax is a legally consequential domain.",
+    "Tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, records-retention periods and appeal rights must come from approved national rules.",
+    "They must never be hard-coded as universal CivicOS constants."
+   ],
+   "met_by": {
+    "deviation": "no-tax-values",
+    "platform": {
+     "file": "app/src/lib/law/rules.ts",
+     "how": "Rates, thresholds, deadlines and fees only from approved, cited, tested rule versions; calculate() refuses without one"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3225,
+   "quotes": [
+    "country.exec.finance.retention",
+    "Retention schedules, confidentiality, publication, disclosure and access restrictions for all records in this part",
+    "Records owner and authorized legal/privacy reviewers"
+   ],
+   "met_by": {
+    "country_decision": "country.exec.finance.retention",
+    "platform": {
+     "file": "app/src/lib/data/retention.ts",
+     "how": "Retention rules confirmed by two officials; disclosure only through the exchange layer"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3226,
+   "quotes": [
+    "Each configuration record must itself be versioned, reviewed by a different authorized official from its proposer where required, and linked to the applicable law version.",
+    "Changing a configuration must trigger an impact assessment for the affected forms and open procedure packages."
+   ],
+   "met_by": {
+    "deviation": "config-impact",
+    "platform": {
+     "file": "app/src/lib/law/policy-change.ts",
+     "how": "Country rule sets are versions citing the laws register, proposed by one official and confirmed by a different one; every version kept"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3231,
+   "quotes": [
+    "Every form is owned by a configured institution and bound to a verified authority record."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Owned by the tax slot of the deployment profile (authorityFor('tax')); the authority gate resolves it before publication"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3236,
+   "quotes": [
+    "Every activated service has its applicable intake, assessment, evidence, decision, notification, correction, review and closure stages."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/procedures.ts",
+     "how": "Batch 6 holds intake, assessment, evidence, decision, notice, correction, review and closure forms; the tax procedures carry them through those stages, approved by two officials before a service is activated"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3251,
+   "quotes": [
+    "Every legally material decision records the authority, rule version, decision-maker, reasons where required, evidence and timestamp."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The sealed decision records the authority, the law and rule versions, the decision-maker, the reasons, the evidence and the time"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3256,
+   "quotes": [
+    "The system enforces the configured separation between proposing, reviewing, approving, executing and reconciling."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/dual-control-policy.ts",
+     "how": "Two officials at the platform minimum whatever a procedure says; the proposer never approves"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3261,
+   "quotes": [
+    "Taxpayer information, confidential Cabinet papers, debt records and payment details are accessible only for authorized purposes."
+   ],
+   "met_by": {
+    "deviation": "tax-secrecy-class",
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "canReadTax(): the tax authority's officials, auditors with a purpose; every read in the access log"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3266,
+   "quotes": [
+    "All published forms pass the required language, right-to-left, keyboard, screen-reader, mobile and assisted-channel tests."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "One definition renders self-service, assisted and print; accessibility and localisation are a publication gate"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3271,
+   "quotes": [
+    "Production reports use sourced records; estimates and modelled figures are explicitly identified; missing integrations are not represented as live data."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+     "how": "A library draft: no return, assessment, balance, refund or arrangement is shown as real; statements come from recorded entries; sample records carry the Sample marker"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 376,
+   "quotes": [
+    "The tax authority administers taxes established by law.",
+    "It may be a department within a ministry, a semi-autonomous revenue authority or a statutory agency.",
+    "Its legal powers may include registration, assessment, collection, audit, refund processing, objections and referrals to courts or other enforcement bodies."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Whatever form the tax administration takes, the nation names it once under Who is responsible (slot tax); its powers come from its law"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 378,
+   "quotes": [
+    "CivicOS must separate the tax-policy authority from the tax-administration authority when they are different institutions."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Only the tax administration slot (tax) owns these forms; a tax-policy institution named apart has no power over a taxpayer's record"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 380,
+   "quotes": [
+    "A minister or treasury officer must not change an individual's liability by editing a tax record outside the legally authorized tax procedure."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/register.ts",
+     "how": "Tax records change only through the effects of decided cases; no route writes them directly and no other file imports a changing function (register-writes.test.ts)"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 509,
+   "quotes": [
+    "Amendments never overwrite the original return or assessment."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/register.ts",
+     "how": "Returns keep every version; an assessment is varied by a posted adjustment, never overwritten; a taxpayer's history is kept"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 510,
+   "quotes": [
+    "Read access to tax records is restricted to authorized tax personnel and legally authorized disclosures."
+   ],
+   "met_by": {
+    "deviation": "tax-secrecy-class",
+    "exchange": "taxpayer.status",
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "canReadTax(): authorised tax personnel and auditors with a purpose; others through the taxpayer.status exchange for an approved purpose"
+    }
+   }
+  },
+  {
+   "for": "tax6",
    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
    "line": 511,
    "quotes": [

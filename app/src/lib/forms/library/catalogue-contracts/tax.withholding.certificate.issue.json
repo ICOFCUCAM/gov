@@ -1,0 +1,326 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "tax.withholding.certificate.issue",
+ "record_type": "tax.withholding_certificate",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "Department F country decisions (part of country.tax.registration and country.tax.return_schemas): withholding categories, reporting entities, payee-identification requirements, tax calculation rules, reporting periods, certificate requirements and confidentiality rules; enabled only where the law imposes these duties.",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for these records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "tax.withholding.certificate.issue",
+  "part": 2,
+  "section": "2.6",
+  "line": 3087,
+  "batch": 6
+ },
+ "library": {
+  "title": "Issue a withholding certificate",
+  "intro": "The certificate a withholding agent gives a payee: the payments made and tax withheld for a period, as reported in the agent's return. Only where the law requires one.",
+  "owner": "tax",
+  "filled_by": "The withholding agent, through its authorised official.",
+  "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
+  "procedure": null,
+  "intended": "Third-party reporting (statements received, matched against returns, discrepancies raised with an officer's findings): not built; the form waits in the library (plan step I5).",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadTax() in lib/auth/roles.ts: the tax authority's officials and auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only registration status, through the taxpayer.status exchange service, for an approved purpose"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "reporting-not-built",
+    "what": "No third-party reporting service: a certificate states only what the agent's return reported, and the payee's data stays under tax secrecy",
+    "why": "Certificate requirements and payee identification are the nation's rules.",
+    "rule": "CLAUDE.md Government operating model: cases change only under an approved procedure package; plan step I5"
+   },
+   {
+    "id": "tax-secrecy-class",
+    "what": "Every field of the form is restricted and marked tax secrecy (confidentiality tax), stricter than the catalogue's administrative and personal classes where it gives them; the case is restricted and read only under canReadTax() (the tax authority's officials, auditors with a purpose), every read in the access log; other institutions learn status only through the taxpayer.status exchange service",
+    "why": "Tax records are confidential: a class label alone grants no access, and nothing about a taxpayer leaves the tax authority except through an approved exchange for an approved purpose.",
+    "rule": "CLAUDE.md Tax: lib/tax/ is read by the tax authority only (canReadTax(), every read in the access log); others use the taxpayer.status exchange service"
+   },
+   {
+    "id": "no-tax-values",
+    "what": "No rate, threshold, penalty, interest, deadline, filing period, refund period, instalment term or fee is typed: each is a named nation value checked by a binding rule (recorded as not performed and a publication blocker until the nation approves it); tax types, periods, schemas, methods, bases, remedies, outcomes and actions are nation lists that ship empty",
+    "why": "The field series Part 2 §2.6: tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, retention and appeal rights come from approved national rules, never universal constants.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3087,
+    "quotes": [
+     "tax.withholding.certificate.issue",
+     "Issue a withholding certificate",
+     "Authorized withholding agent",
+     "Certificate",
+     "Certificate record"
+    ],
+    "met_by": {
+     "fields": [
+      "certificate.return_ref",
+      "certificate.number"
+     ],
+     "deviation": "reporting-not-built"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3080,
+    "quotes": [
+     "This department is enabled only if the country imposes relevant withholding or third-party tax-reporting duties."
+    ],
+    "met_by": {
+     "country_decision": "Department F country decisions",
+     "deviation": "no-tax-values"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3104,
+    "quotes": [
+     "Country decisions: withholding categories, reporting entities, payee-identification requirements, tax calculation rules, reporting periods, certificate requirements and confidentiality rules."
+    ],
+    "met_by": {
+     "country_decision": "Department F country decisions"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3093,
+    "quotes": [
+     "withholding.agent_ref: registry_reference, required."
+    ],
+    "met_by": {
+     "fields": [
+      "withholding.agent_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3095,
+    "quotes": [
+     "withholding.period_ref: registry_reference, required; approved filing periods."
+    ],
+    "met_by": {
+     "fields": [
+      "withholding.period_ref"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "withholding.agent_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "taxpayer_active_for_period",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registry.taxpayer_accounts",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Withholding agent (its taxpayer account)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter withholding agent (its taxpayer account).",
+     "reference_exists": "There is no record with that reference.",
+     "taxpayer_active_for_period": "The taxpayer account is not eligible for this period."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The certificate"
+   }
+  },
+  {
+   "id": "withholding.period_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "filing_period_valid_for_tax_type",
+     "params": {}
+    },
+    {
+     "rule": "filing_window_status_resolved",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.country.approved.filing_periods",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Reporting period"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reporting period."
+    }
+   },
+   "country_decision": "Department F country decisions: reporting periods (none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The certificate"
+   }
+  },
+  {
+   "id": "certificate.payee_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registry.taxpayer_accounts",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Payee"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter payee.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The certificate"
+   }
+  },
+  {
+   "id": "certificate.return_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "withholding_certificate_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registry.returns",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The withholding return it rests on"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the withholding return it rests on.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": "Department F country decisions: whether certificates are required and what they state (none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The certificate"
+   }
+  },
+  {
+   "id": "certificate.number",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Certificate number"
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "certificate.issued_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Issued at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  }
+ ]
+}
