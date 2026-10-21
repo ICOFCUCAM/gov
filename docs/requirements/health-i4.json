@@ -1630,7 +1630,7 @@
    "missing": [
     "The gate met in a production installation with the nation's own records: a deployment act (authorised officials completing real cases), never shipped or set by the platform",
     "Certificates, recall-notice deliveries and capacity returns of organisations outside the institution's registers are not yet in the export (integration register 20.43)",
-    "Export and import exercised in memory, file and supabase modes; postgres mode is not yet exercised by a test (integration register 20.42)",
+    "Export and import are tested in memory; the file, supabase and postgres state modes are not yet exercised by a test (integration register 20.42)",
     "Choosing the pilot (S6-I-14 to S6-I-21) and appeals run end to end (S2-B-03, S6-K-15) stay with their own rows"
    ],
    "owner": "healthRegulation",

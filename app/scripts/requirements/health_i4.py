@@ -270,7 +270,7 @@ DEPENDENCIES = [
         ],
         missing=['The gate met in a production installation with the nation\'s own records: a deployment act (authorised officials completing real cases), never shipped or set by the platform',
                  'Certificates, recall-notice deliveries and capacity returns of organisations outside the institution\'s registers are not yet in the export (integration register 20.43)',
-                 'Export and import exercised in memory, file and supabase modes; postgres mode is not yet exercised by a test (integration register 20.42)',
+                 'Export and import are tested in memory; the file, supabase and postgres state modes are not yet exercised by a test (integration register 20.42)',
                  'Choosing the pilot (S6-I-14 to S6-I-21) and appeals run end to end (S2-B-03, S6-K-15) stay with their own rows'],
         owner='healthRegulation', contracts=[], access=['Export: proposed by an administrator of the institution, confirmed by a different official who can sign there; download by its administrators and signatories, logged as an export', 'Import: two administrators serving the whole government', 'Exit gate: administrators, auditors, the pilot institutions\' officials and the whole government (read only)'],
         provenance=['Record identity unchanged when federating later: an import keeps every id, reference and number and the evidence the decisions verify against', 'Decisions are never re-sealed; documents are sealed again under the new installation\'s key only after each version\'s SHA-256 is checked'],

@@ -33,7 +33,7 @@ export function PilotExitGate() {
       <Section title="Pilot exit gate" meta={`${gate.scope.label} · computed ${gate.computedAt.slice(0, 16).replace('T', ' ')} UTC`}>
         <p className="max-w-3xl text-xs text-ink-muted">
           Exit gate of the pilot (roadmap 05): authorised users complete the service with real records and verifiable audit evidence.
-          Computed from the records each time this page is read; nobody sets it. {gate.note}
+          Nobody sets it. {gate.note}
         </p>
         <div className={`mt-3 rounded border p-3 text-sm ${gate.met ? 'border-line' : 'border-line bg-surface'}`} data-testid="pilot-gate-status">
           <p className="text-base font-semibold">{gate.met ? 'Met' : 'Not met'}</p>
