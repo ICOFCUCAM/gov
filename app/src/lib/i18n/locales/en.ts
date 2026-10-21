@@ -232,6 +232,14 @@ export interface Messages {
     verifySealBad: string;
     verifyIssuedBy: string;
     verifyIssuedOn: string;
+    verifyKeyValid: string;
+    verifyKeyInUse: string;
+    verifyKeyBasis: string;
+    verifyKeySample: string;
+    verifyKeyBefore: string;
+    verifyKeyUntrusted: string;
+    verifyKeyCompromised: string;
+    verifyTrustList: string;
     kindService: string;
     kindNews: string;
     kindProgramme: string;
@@ -975,6 +983,14 @@ export const en: Messages = {
     verifySealBad: 'The seal does not verify: do not rely on this certificate.',
     verifyIssuedBy: 'Issued by {name}',
     verifyIssuedOn: 'Issued on {date}',
+    verifyKeyValid: 'Sealed with key {key}, valid from {from} until {until}.',
+    verifyKeyInUse: 'Sealed with key {key}, in use since {from}.',
+    verifyKeyBasis: 'The key was approved under {basis}.',
+    verifyKeySample: 'This is a sample key of a demonstration or training installation.',
+    verifyKeyBefore: 'The seal\'s key is not in the register of seal keys: it was sealed before keys were registered.',
+    verifyKeyUntrusted: 'The register of seal keys does not trust this seal\'s key for the time it was sealed: do not rely on this certificate.',
+    verifyKeyCompromised: 'The key was reported compromised from {date}; seals made after that are not trusted.',
+    verifyTrustList: 'Published list of seal keys',
     kindService: 'Service',
     kindNews: 'News',
     kindProgramme: 'Programme',

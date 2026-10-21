@@ -78,6 +78,22 @@ export function listAudit(): AuditEntry[] {
   return [...chain()].reverse();
 }
 
+/**
+ * The first entry of the chain with this action and resource (e.g. the
+ * `decision.seal` entry of `Decision:<id>`), whose time and position the hash
+ * chain fixes. Indexed as the chain grows; rebuilt when the chain is replaced
+ * (a restore) or trimmed.
+ */
+const ig = globalThis as unknown as { __auditFirstIndex?: { chain: AuditEntry[]; first?: AuditEntry; n: number; map: Map<string, AuditEntry> } };
+export function firstAuditEntry(action: string, resource: string): AuditEntry | undefined {
+  const c = chain();
+  let x = ig.__auditFirstIndex;
+  if (!x || x.chain !== c || x.n > c.length || x.first !== c[0]) x = ig.__auditFirstIndex = { chain: c, first: c[0], n: 0, map: new Map() };
+  for (; x.n < c.length; x.n++) { const e = c[x.n]!; const k = `${e.action}\u0000${e.resource}`; if (!x.map.has(k)) x.map.set(k, e); }
+  x.first = c[0];
+  return x.map.get(`${action}\u0000${resource}`);
+}
+
 /** The index of the first entry with `seq >= seq` (the chain is in sequence order). */
 function indexOfSeq(c: AuditEntry[], seq: number): number {
   let lo = 0, hi = c.length;

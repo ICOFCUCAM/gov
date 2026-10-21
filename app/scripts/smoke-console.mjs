@@ -45,6 +45,8 @@ const PAGES = [
   { path: '/gov/law/procedures/forms', map: false, text: /forms/i },
   { path: '/gov/law/procedures/forms/taxpayer-registration-v1', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/taxpayer-registration-v1/print', map: false, text: /register status/i },
+  // The seal key register (lib/keys/seal-register.ts).
+  { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
 ];
 const VIEWPORTS = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 

@@ -5,6 +5,7 @@
 export interface GlossaryEntry { term: string; plain: string; meaning: string }
 
 export const GLOSSARY: GlossaryEntry[] = [
+  { term: 'Seal key / signing key / trust list / key fingerprint', plain: 'Seal keys', meaning: 'The digital keys that seal the state\'s decisions and certificates. Each is approved by the authority the nation\'s law names, valid for a period, and published with its fingerprint (a SHA-256 of the public key) so anyone can check a certificate; replacing a key never invalidates what an earlier key sealed, and a key reported compromised flags only what was sealed after.' },
   { term: 'Substrate', plain: 'The shared database', meaning: 'The nation\'s own database service that holds officers, directives, cases and the audit record when it is connected.' },
   { term: 'Twin / national digital twin', plain: 'National data', meaning: 'The facts the government relies on (population, services, places), each with its source, when it was true and when it was recorded.' },
   { term: 'Observation', plain: 'Recorded fact', meaning: 'A value a registered source reported, such as a census figure for a region.' },

@@ -1,0 +1,2371 @@
+{
+ "about": "Binding scope of catalogue forms (owner's direction 2026-10-21, docs/forms-catalogue/DIRECTION-2026-10-21-REGISTER-FIRST.md §1). Read by app/scripts/requirements/catalogue.py: excluded -> form status 'excluded' (flag excluded_pending_scope_review); requires_legal_review -> 'under_review' (flag requires_legal_review); allowed -> named explicitly as allowed. A form not listed is in scope by default and is never approved or in production through this file. Changing an entry is a change to the register: cite the rule.",
+ "rules": {
+  "health": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates",
+  "education": "CLAUDE.md Education: 'Returns carry aggregate counts only; there is no student record system'",
+  "police": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding'",
+  "justice": "Directions §15 and plan §4: prosecution, custody and corrections after the judiciary's and the country's legal review, as unapproved drafts (I11)",
+  "security": "Catalogue part 11 §3.3 and the owner's direction §1: intelligence products and oversight records need legal review; no classified content where not accredited",
+  "elections": "Plan §4 and the owner's direction §1: voter registration under the electoral body alone, legal review first",
+  "operational": "Plan §4: anything operational in defence is out of scope"
+ },
+ "forms": [
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-001",
+   "title": "Investigation referral receipt",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Prosecution records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-002",
+   "title": "Evidence package intake",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Prosecution records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-003",
+   "title": "Prosecutorial case registration",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-004",
+   "title": "Evidence review record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Prosecution records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-005",
+   "title": "Additional evidence request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Prosecution records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-006",
+   "title": "Witness or expert coordination record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Prosecution records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-007",
+   "title": "Charging decision preparation",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Prosecution records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-008",
+   "title": "Authorized charging decision",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-009",
+   "title": "Decision not to prosecute",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-010",
+   "title": "Case discontinuance or withdrawal",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Prosecution records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-011",
+   "title": "Charge amendment request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Prosecution records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-012",
+   "title": "Court filing package",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Prosecution records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-013",
+   "title": "Disclosure and evidence-sharing record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Prosecution records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-014",
+   "title": "Prosecutorial review request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-015",
+   "title": "Prosecutorial conflict declaration",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-016",
+   "title": "Case handover record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-PRO-017",
+   "title": "Prosecutorial closure record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-INV-004",
+   "title": "Warrant application package",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Warrants, searches, seizures and restricted court records: legal review first"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-INV-005",
+   "title": "Authenticated warrant receipt",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Warrants, searches, seizures and restricted court records: legal review first"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-INV-006",
+   "title": "Warrant execution report",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Warrants, searches, seizures and restricted court records: legal review first"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-INV-007",
+   "title": "Search or seizure inventory",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Warrants, searches, seizures and restricted court records: legal review first"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-INV-008",
+   "title": "Seized property custody transfer",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Warrants, searches, seizures and restricted court records: legal review first"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-INV-010",
+   "title": "Lawful request for restricted court records",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Warrants, searches, seizures and restricted court records: legal review first"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-001",
+   "title": "Admission authorization receipt",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-002",
+   "title": "Person admission record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-003",
+   "title": "Legal custody status review",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-004",
+   "title": "Custody transfer request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-005",
+   "title": "Custody transfer record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-006",
+   "title": "Detention order verification",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-007",
+   "title": "Detention deadline review",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-008",
+   "title": "Court appearance coordination",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-009",
+   "title": "Legal representative access request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-010",
+   "title": "Family or approved visitor access request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-011",
+   "title": "Restricted custody communication request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-012",
+   "title": "Health referral or accommodation request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-013",
+   "title": "Custody incident report",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-014",
+   "title": "Custody status discrepancy report",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-015",
+   "title": "Release authorization receipt",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-016",
+   "title": "Release eligibility review",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-017",
+   "title": "Release execution record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-018",
+   "title": "Release handover or supervision referral",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-019",
+   "title": "Custody record correction",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-CUS-020",
+   "title": "Detention complaint or review request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-001",
+   "title": "Individual sentence administration record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-002",
+   "title": "Sentence calculation review",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-003",
+   "title": "Rehabilitation plan",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-004",
+   "title": "Education or vocational programme enrolment",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-005",
+   "title": "Programme completion record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-006",
+   "title": "Disciplinary incident report",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-007",
+   "title": "Disciplinary decision",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-008",
+   "title": "Disciplinary appeal or complaint",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-009",
+   "title": "Temporary leave or external activity request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-010",
+   "title": "Sentence variation or remission referral",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-011",
+   "title": "Release preparation checklist",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-COR-012",
+   "title": "Post-release service referral",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-001",
+   "title": "Supervision order receipt",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-002",
+   "title": "Supervision intake",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-003",
+   "title": "Supervision plan",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-004",
+   "title": "Appointment and attendance record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-005",
+   "title": "Approved condition variation request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-006",
+   "title": "Compliance observation record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-007",
+   "title": "Alleged condition breach report",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-008",
+   "title": "Breach review referral",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-009",
+   "title": "Parole eligibility referral",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-010",
+   "title": "Parole decision record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary's alone; police stays intake and referral"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-011",
+   "title": "Supervision transfer",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-012",
+   "title": "Supervision completion record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "JUS-SUP-013",
+   "title": "Supervision complaint or review",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Procedure package, field contract and record for this form; no Custody, corrections and supervision records exist"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-001",
+   "title": "Patient registration",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-002",
+   "title": "Identity verification for care",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-003",
+   "title": "Patient demographic correction",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-004",
+   "title": "Patient record-link review",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-005",
+   "title": "Emergency or unidentified patient intake",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-006",
+   "title": "Patient representative authorization",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-007",
+   "title": "Patient contact preference",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-008",
+   "title": "Patient access request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-009",
+   "title": "Patient record correction request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-010",
+   "title": "Patient record disclosure request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-011",
+   "title": "Patient record transfer request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PAT-012",
+   "title": "Patient complaint or service concern",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-ADM-001",
+   "title": "Appointment request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-ADM-002",
+   "title": "Appointment scheduling",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-ADM-003",
+   "title": "Referral intake",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-ADM-004",
+   "title": "Admission record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-ADM-005",
+   "title": "Transfer between care facilities",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-ADM-006",
+   "title": "Discharge administration",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-ADM-007",
+   "title": "Waiting-list registration",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-ADM-008",
+   "title": "Waiting-list priority review",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-ADM-009",
+   "title": "Missed appointment record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-ADM-010",
+   "title": "Medical certificate request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-001",
+   "title": "Clinical encounter record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-002",
+   "title": "Clinical assessment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-003",
+   "title": "Diagnosis record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-004",
+   "title": "Medication reconciliation",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-005",
+   "title": "Medication order",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-006",
+   "title": "Allergy and adverse reaction record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-007",
+   "title": "Laboratory or diagnostic test order",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-008",
+   "title": "Laboratory result record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-009",
+   "title": "Imaging request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-010",
+   "title": "Imaging report",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-011",
+   "title": "Procedure consent record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-012",
+   "title": "Treatment plan",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-013",
+   "title": "Care plan review",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-014",
+   "title": "Specialist referral",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-015",
+   "title": "Discharge summary",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-016",
+   "title": "Follow-up care plan",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-017",
+   "title": "Clinical incident report",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-018",
+   "title": "Clinical record amendment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-019",
+   "title": "Clinical second-opinion request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-CLI-020",
+   "title": "Patient clinical-record access request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-001",
+   "title": "Notifiable condition report",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-002",
+   "title": "Laboratory public-health notification",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-003",
+   "title": "Case investigation record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-004",
+   "title": "Case classification review",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-005",
+   "title": "Contact investigation record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-006",
+   "title": "Exposure assessment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-007",
+   "title": "Outbreak notification",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-008",
+   "title": "Outbreak investigation",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-009",
+   "title": "Public-health intervention authorization",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-010",
+   "title": "Public-health intervention review",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-012",
+   "title": "Vaccination record submission",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-013",
+   "title": "Adverse event following immunization report",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-016",
+   "title": "Public-health data correction",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-017",
+   "title": "Public-health investigation closure",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-018",
+   "title": "Public-health disclosure authorization",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-MED-016",
+   "title": "Adverse drug reaction report",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Adverse reaction reports and clinical trial safety data carry patient data: CivicOS holds only the regulator's administrative decision (authorisation, its conditions) without patient fields"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-MED-021",
+   "title": "Clinical trial authorization",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Adverse reaction reports and clinical trial safety data carry patient data: CivicOS holds only the regulator's administrative decision (authorisation, its conditions) without patient fields"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-MED-022",
+   "title": "Clinical trial amendment or safety update",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Adverse reaction reports and clinical trial safety data carry patient data: CivicOS holds only the regulator's administrative decision (authorisation, its conditions) without patient fields"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FIN-006",
+   "title": "Healthcare service claim",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Service claims carry diagnoses and treatments: CivicOS holds no claim; coverage registration and payments to providers by aggregate only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FIN-007",
+   "title": "Claim evidence submission",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Service claims carry diagnoses and treatments: CivicOS holds no claim; coverage registration and payments to providers by aggregate only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FIN-008",
+   "title": "Claim assessment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Service claims carry diagnoses and treatments: CivicOS holds no claim; coverage registration and payments to providers by aggregate only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FIN-009",
+   "title": "Claim payment authorization",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Service claims carry diagnoses and treatments: CivicOS holds no claim; coverage registration and payments to providers by aggregate only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FIN-010",
+   "title": "Claim correction or resubmission",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Service claims carry diagnoses and treatments: CivicOS holds no claim; coverage registration and payments to providers by aggregate only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FIN-011",
+   "title": "Claim rejection review",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Service claims carry diagnoses and treatments: CivicOS holds no claim; coverage registration and payments to providers by aggregate only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FIN-012",
+   "title": "Patient reimbursement request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Service claims carry diagnoses and treatments: CivicOS holds no claim; coverage registration and payments to providers by aggregate only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-SOC-002",
+   "title": "Care needs assessment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Care needs assessments and individual care plans are clinical or care records: held by the care provider, not CivicOS; the support decision is held without care details"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-SOC-007",
+   "title": "Individual care plan",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Care needs assessments and individual care plans are clinical or care records: held by the care provider, not CivicOS; the support decision is held without care details"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-SOC-008",
+   "title": "Care plan review",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "Care needs assessments and individual care plans are clinical or care records: held by the care provider, not CivicOS; the support decision is held without care details"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-001",
+   "title": "Student enrolment application",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No student record system; qualifications through cases and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-002",
+   "title": "Student registration",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No student record system; qualifications through cases and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-003",
+   "title": "School transfer request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-004",
+   "title": "Transfer and records handover",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-005",
+   "title": "Student withdrawal or departure",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-006",
+   "title": "Attendance record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No student record system; qualifications through cases and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-007",
+   "title": "Absence explanation",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-008",
+   "title": "Student particulars correction",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No student record system; qualifications through cases and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-009",
+   "title": "Guardian or representative authorization",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-010",
+   "title": "Student record access request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No student record system; qualifications through cases and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-011",
+   "title": "Student record disclosure request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No student record system; qualifications through cases and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-012",
+   "title": "Student support referral",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-013",
+   "title": "Student safeguarding concern",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-014",
+   "title": "Student complaint or grievance",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-STU-015",
+   "title": "Student progression or completion record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No student record system; qualifications through cases and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-EXM-002",
+   "title": "Candidate registration",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Candidate-level registration, attendance and marks are the examination body's own records; results enter CivicOS only as qualification records"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-EXM-003",
+   "title": "Examination eligibility review",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Candidate-level registration, attendance and marks are the examination body's own records; results enter CivicOS only as qualification records"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-EXM-004",
+   "title": "Examination accommodation request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Candidate-level registration, attendance and marks are the examination body's own records; results enter CivicOS only as qualification records"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-EXM-007",
+   "title": "Candidate attendance record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Candidate-level registration, attendance and marks are the examination body's own records; results enter CivicOS only as qualification records"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-EXM-010",
+   "title": "Marking record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Candidate-level registration, attendance and marks are the examination body's own records; results enter CivicOS only as qualification records"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-EXM-011",
+   "title": "Moderation record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Candidate-level registration, attendance and marks are the examination body's own records; results enter CivicOS only as qualification records"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-004",
+   "title": "Student admission application",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-005",
+   "title": "Admission eligibility assessment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-006",
+   "title": "Admission decision",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-007",
+   "title": "Student matriculation",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-008",
+   "title": "Course or module registration",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-009",
+   "title": "Academic progression review",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-010",
+   "title": "Leave of absence request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-011",
+   "title": "Programme transfer request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-012",
+   "title": "Academic transcript request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-013",
+   "title": "Graduation eligibility review",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-015",
+   "title": "Academic appeal",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-016",
+   "title": "Academic misconduct allegation",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-017",
+   "title": "Academic misconduct determination",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-018",
+   "title": "Student fee assessment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-019",
+   "title": "Fee waiver or hardship request",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-020",
+   "title": "Research student registration",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-021",
+   "title": "Thesis submission",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-022",
+   "title": "Thesis examination or defence",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-023",
+   "title": "Academic record correction",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-UNI-024",
+   "title": "Student complaint or grievance",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Admissions, matriculation, module registration, progression, transcripts, fees and theses are the institution's own student records; CivicOS holds the award (qualification) and aggregates only"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-VOC-003",
+   "title": "Learner enrolment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Learner enrolment and training records are the provider's; the skills certificate enters as a qualification record"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-VOC-007",
+   "title": "Workplace training record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Learner enrolment and training records are the provider's; the skills certificate enters as a qualification record"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-VOC-008",
+   "title": "Competency assessment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Learner enrolment and training records are the provider's; the skills certificate enters as a qualification record"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-VOC-009",
+   "title": "Practical examination",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Learner enrolment and training records are the provider's; the skills certificate enters as a qualification record"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-VOC-011",
+   "title": "Prior learning assessment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Learner enrolment and training records are the provider's; the skills certificate enters as a qualification record"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-VOC-012",
+   "title": "Training completion record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "Learner enrolment and training records are the provider's; the skills certificate enters as a qualification record"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SAFE-POL-003",
+   "title": "Witness statement record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Statements and identification records belong to an investigation: kept out until a legal review sets their safeguards"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SAFE-POL-004",
+   "title": "Victim or affected-person statement",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Statements and identification records belong to an investigation: kept out until a legal review sets their safeguards"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SAFE-POL-007",
+   "title": "Found person or unidentified person report",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Statements and identification records belong to an investigation: kept out until a legal review sets their safeguards"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SAFE-POL-008",
+   "title": "Lost or found property report",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "CivicOS records no evidence, custody or investigation record; each needs legal review and independent safeguards before a draft"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SAFE-POL-014",
+   "title": "Police use-of-force report",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Use of force, seizure, warrants, arrest and detention, custody release and evidence to prosecution: none is recorded; each needs its own legal basis, safeguards and independent review before any draft"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SAFE-POL-015",
+   "title": "Police property seizure record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Use of force, seizure, warrants, arrest and detention, custody release and evidence to prosecution: none is recorded; each needs its own legal basis, safeguards and independent review before any draft"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SAFE-POL-016",
+   "title": "Warrant or court-order execution record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Use of force, seizure, warrants, arrest and detention, custody release and evidence to prosecution: none is recorded; each needs its own legal basis, safeguards and independent review before any draft"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SAFE-POL-017",
+   "title": "Arrest or detention event record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Use of force, seizure, warrants, arrest and detention, custody release and evidence to prosecution: none is recorded; each needs its own legal basis, safeguards and independent review before any draft"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SAFE-POL-018",
+   "title": "Release or transfer from custody",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Use of force, seizure, warrants, arrest and detention, custody release and evidence to prosecution: none is recorded; each needs its own legal basis, safeguards and independent review before any draft"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SAFE-POL-019",
+   "title": "Evidence submission to prosecution",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (lib/police/procedures.ts (incident intake, triage, classification citing the law, assignment, referral as a linked case, closure with reasons, reopening",
+   "reason": "Use of force, seizure, warrants, arrest and detention, custody release and evidence to prosecution: none is recorded; each needs its own legal basis, safeguards and independent review before any draft"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SEC-INT-003",
+   "title": "Intelligence assessment submission",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class",
+   "reason": "Intelligence assessments and products: never their content in CivicOS; approved metadata or a reference only, after legal review"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SEC-INT-004",
+   "title": "Intelligence product release review",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class",
+   "reason": "Intelligence assessments and products: never their content in CivicOS; approved metadata or a reference only, after legal review"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SEC-INT-012",
+   "title": "Intelligence oversight inspection",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class",
+   "reason": "Oversight inspection and access-audit records of intelligence bodies: metadata only, after legal review"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "id": "SEC-INT-016",
+   "title": "Intelligence information access audit",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class",
+   "reason": "Oversight inspection and access-audit records of intelligence bodies: metadata only, after legal review"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "id": "DEM-ELC-003",
+   "title": "Voter registration application",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Plan §4 and the owner's direction 2026-10-21 §1 (voter registration: legal review first",
+   "reason": "Voter registration, correction, transfer and review hold personal data under the electoral body alone; legal review before any build"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "id": "DEM-ELC-004",
+   "title": "Voter record correction",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Plan §4 and the owner's direction 2026-10-21 §1 (voter registration: legal review first",
+   "reason": "Voter registration, correction, transfer and review hold personal data under the electoral body alone; legal review before any build"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "id": "DEM-ELC-005",
+   "title": "Voter registration transfer",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Plan §4 and the owner's direction 2026-10-21 §1 (voter registration: legal review first",
+   "reason": "Voter registration, correction, transfer and review hold personal data under the electoral body alone; legal review before any build"
+  },
+  {
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "id": "DEM-ELC-006",
+   "title": "Voter register review request",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Plan §4 and the owner's direction 2026-10-21 §1 (voter registration: legal review first",
+   "reason": "Voter registration, correction, transfer and review hold personal data under the electoral body alone; legal review before any build"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "JUS-PRO-006",
+   "title": "Prosecution case referral",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Suspect references and custody admission records: the country's legal review first; drafts only"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "JUS-COR-008",
+   "title": "Corrections case and sentence record",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)",
+   "reason": "Suspect references and custody admission records: the country's legal review first; drafts only"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "HLT-PAT-001",
+   "title": "Patient registration",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient, encounter, referral, dispensing or care-plan record on a named person"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "HLT-ENC-002",
+   "title": "Clinical encounter",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient, encounter, referral, dispensing or care-plan record on a named person"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "HLT-REF-003",
+   "title": "Clinical referral",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient, encounter, referral, dispensing or care-plan record on a named person"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "HLT-MED-004",
+   "title": "Medicine authorization or dispensing record",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient, encounter, referral, dispensing or care-plan record on a named person"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "HLT-CARE-008",
+   "title": "Social care plan",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'",
+   "reason": "CivicOS holds no patient, encounter, referral, dispensing or care-plan record on a named person"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "EDU-STD-001",
+   "title": "Student registration",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No registration, admission, enrolment, attendance or result record on a named student; attendance as aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "EDU-ADM-002",
+   "title": "Admission application",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No registration, admission, enrolment, attendance or result record on a named student; attendance as aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "EDU-ENR-003",
+   "title": "Enrolment",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No registration, admission, enrolment, attendance or result record on a named student; attendance as aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "EDU-ATT-004",
+   "title": "Attendance and participation return",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No registration, admission, enrolment, attendance or result record on a named student; attendance as aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "EDU-RES-005",
+   "title": "Assessment result",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "CLAUDE.md Education: 'Returns carry aggregate counts only",
+   "reason": "No registration, admission, enrolment, attendance or result record on a named student; attendance as aggregate returns only"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "DEF-OPS-002",
+   "title": "Operational task authorization",
+   "scope": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "rule": "Plan §4: anything operational is out of scope",
+   "reason": "No operational task authorisation is held"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "SEC-INT-006",
+   "title": "Intelligence product registration",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class",
+   "reason": "The platform is not an intelligence repository: product and oversight metadata only after legal review"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "SEC-OVS-007",
+   "title": "Intelligence oversight review",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class",
+   "reason": "The platform is not an intelligence repository: product and oversight metadata only after legal review"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "ELE-REG-004",
+   "title": "Voter registration",
+   "scope": "requires_legal_review",
+   "flag": "requires_legal_review",
+   "rule": "Plan §4 (electoral, legal review first)",
+   "reason": "Voter registration holds personal data under the electoral body alone; legal review before any build"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-015",
+   "title": "Public-health aggregate data submission",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (approved aggregate public-health statistics); CLAUDE.md Health: returns are aggregates",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FAC-001",
+   "title": "Facility establishment application",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FAC-002",
+   "title": "Facility licence application",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FAC-003",
+   "title": "Facility inspection",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FAC-004",
+   "title": "Facility corrective action plan",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FAC-005",
+   "title": "Facility licence renewal",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FAC-006",
+   "title": "Service or capacity variation",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FAC-007",
+   "title": "Facility closure notification",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FAC-008",
+   "title": "Facility suspension or revocation review",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FAC-009",
+   "title": "Facility complaint or safety concern",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-FAC-010",
+   "title": "Facility licence verification",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-SCH-001",
+   "title": "School establishment application",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (school and institution registration); CLAUDE.md Education: schools are organisations (a standing in the schools register)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-SCH-002",
+   "title": "School registration",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (school and institution registration); CLAUDE.md Education: schools are organisations (a standing in the schools register)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-SCH-003",
+   "title": "School licence or approval application",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (school and institution registration); CLAUDE.md Education: schools are organisations (a standing in the schools register)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-SCH-004",
+   "title": "School licence renewal",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (school and institution registration); CLAUDE.md Education: schools are organisations (a standing in the schools register)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-SCH-005",
+   "title": "School inspection record",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (school and institution registration); CLAUDE.md Education: schools are organisations (a standing in the schools register)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-SCH-006",
+   "title": "School corrective action plan",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (school and institution registration); CLAUDE.md Education: schools are organisations (a standing in the schools register)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-SCH-007",
+   "title": "School closure or suspension request",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (school and institution registration); CLAUDE.md Education: schools are organisations (a standing in the schools register)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-SCH-008",
+   "title": "School profile amendment",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (school and institution registration); CLAUDE.md Education: schools are organisations (a standing in the schools register)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-CRE-005",
+   "title": "Qualification verification request",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (qualification verification); CLAUDE.md Education: qualifications through education cases, checked through qualification.verify",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-CRE-006",
+   "title": "Qualification verification response",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (qualification verification); CLAUDE.md Education: qualifications through education cases, checked through qualification.verify",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-001",
+   "title": "Institution accreditation application",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-002",
+   "title": "Programme accreditation application",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-003",
+   "title": "Accreditation evidence submission",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-004",
+   "title": "Accreditation assessment",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-005",
+   "title": "External review or site visit",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-006",
+   "title": "Accreditation decision",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-007",
+   "title": "Accreditation renewal",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-008",
+   "title": "Accreditation condition monitoring",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-009",
+   "title": "Corrective action plan",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-010",
+   "title": "Corrective action verification",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-011",
+   "title": "Accreditation variation request",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-012",
+   "title": "Accreditation suspension or withdrawal review",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-013",
+   "title": "Accreditation appeal",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-ACC-014",
+   "title": "Accreditation status verification",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "EDU-VOC-017",
+   "title": "Qualification verification",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (qualification verification); CLAUDE.md Education: qualifications through education cases, checked through qualification.verify",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "HLT-PUB-005",
+   "title": "Public health incident",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (approved aggregate public-health statistics); CLAUDE.md Health: returns are aggregates",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "HLT-FAC-006",
+   "title": "Health facility registration",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (health facility registration and inspections); CLAUDE.md Health: facilities and pharmacies are organisations licensed in the health regulator's registers",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "HLT-INS-007",
+   "title": "Health inspection",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (facility inspections)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "EDU-CER-006",
+   "title": "Qualification award",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (qualification verification); CLAUDE.md Education: qualifications through education cases, checked through qualification.verify",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "EDU-FAC-007",
+   "title": "Education institution registration",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (school and institution registration); CLAUDE.md Education: schools are organisations (a standing in the schools register)",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "id": "EDU-ACC-008",
+   "title": "Programme accreditation",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (programme accreditation)",
+   "reason": ""
+  }
+ ],
+ "non_form_contracts": [
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "id": "example.service.application",
+   "reason": "Part 1 §1.1 canonical field-contract shape: the text calls its identities 'schema illustrations, not usable production identities'"
+  }
+ ],
+ "field_group_contracts": "A JSON contract with a group_id (core.*) defines a reusable field group, matched to its group row 'ID: core.<name>.v<version>' (part 1 §1.2), not to a form"
+}

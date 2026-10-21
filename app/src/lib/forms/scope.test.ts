@@ -2,7 +2,7 @@
 // excluded forms are never drafted; forms held for a legal review are not
 // published until an authorised official records one.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { asNationSets, setNationDays } from '@/lib/casework/testkit';
 import { setSovereign, listMinistries } from '@/lib/data/store';
@@ -36,17 +36,16 @@ describe('scope of forms', () => {
     for (const f of CANONICAL_LIBRARY) expect(scopeOf([f.specId], f.fields), f.specId).toMatchObject({ status: 'allowed' });
   });
 
-  it('is one list: the envelope importer and the requirements register read the same', () => {
+  it('is one list: the requirements register\'s form-scope.json, read by the envelope importer too', () => {
     expect(EXCLUDED_CONTRACTS).toEqual({ ...EXCLUDED_FORMS, ...LEGAL_REVIEW_FORMS });
-    // Once the register agent's file lands, the two must agree.
-    const file = join(process.cwd(), '..', 'docs', 'requirements', 'form-scope.json');
-    if (existsSync(file)) {
-      const j = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
-      const ids = (v: unknown): string[] => (Array.isArray(v) ? v.map(x => (typeof x === 'string' ? x : String((x as { id?: string; form_id?: string }).id ?? (x as { form_id?: string }).form_id))) : v && typeof v === 'object' ? Object.keys(v) : []);
-      const excluded = ids(j.excluded ?? j.excluded_pending_scope_review), review = ids(j.legal_review ?? j.requires_legal_review);
-      expect(new Set(excluded)).toEqual(new Set(Object.keys(EXCLUDED_FORMS)));
-      expect(new Set(review)).toEqual(new Set(Object.keys(LEGAL_REVIEW_FORMS)));
-    }
+    const j = JSON.parse(readFileSync(join(process.cwd(), '..', 'docs', 'requirements', 'form-scope.json'), 'utf8')) as { forms: { id: string; scope: string }[] };
+    const ids = (scope: string) => new Set(j.forms.filter(f => f.scope === scope).map(f => f.id));
+    expect(new Set(Object.keys(EXCLUDED_FORMS))).toEqual(ids('excluded'));
+    expect(new Set(Object.keys(LEGAL_REVIEW_FORMS))).toEqual(ids('requires_legal_review'));
+    // The owner's named exclusions and legal reviews are there.
+    for (const id of ['HLT-PAT-001', 'EDU-STD-001']) expect(EXCLUDED_FORMS[id], id).toBeDefined();
+    for (const id of ['JUS-PRO-006', 'JUS-COR-008', 'SEC-INT-006', 'SEC-OVS-007', 'ELE-REG-004']) expect(LEGAL_REVIEW_FORMS[id], id).toBeDefined();
+    expect(scopeOf(['HLT-FAC-002'], []).status).toBe('allowed');
   });
 });
 
@@ -68,7 +67,7 @@ describe('scope in drafting and publication', () => {
 
   it('refuses to draft a form in the excluded scope, by field or by catalogue id, and to edit one into it', () => {
     expect(draft({ fields: [...REFERENCE_BIRTH.fields, { key: 'patientId', label: 'Patient number', type: 'text' }] })).toMatchObject({ error: expect.stringMatching(/Outside the approved scope.*patientId/) });
-    expect(draft({ form: { ...REFERENCE_BIRTH.form!, catalogueIds: ['EDU-STD-001'] } })).toMatchObject({ error: expect.stringMatching(/Outside the approved scope.*student/) });
+    expect(draft({ form: { ...REFERENCE_BIRTH.form!, catalogueIds: ['EDU-STD-001'] } })).toMatchObject({ error: expect.stringMatching(/Outside the approved scope/) });
     expect(draft({})).not.toHaveProperty('error');
     expect(editDraft('civil.birth', 2, { fields: [...getPackage('civil.birth', 2)!.fields, { key: 'clinicalNotes', label: 'Notes', type: 'longtext' }] }, 'Official ed', 'ed', registeredEffects())).toMatchObject({ error: expect.stringMatching(/Outside the approved scope/) });
   });

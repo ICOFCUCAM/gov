@@ -6,35 +6,30 @@
 // form that needs a legal review is not published until one is recorded
 // (lib/forms/publication.ts).
 //
-// The requirements register will keep the same lists in
-// docs/requirements/form-scope.json; until it lands this module is the one
-// place they are defined, and scope.test.ts compares the two once it exists.
-// Pure: the designer loads it.
+// The lists by catalogue id are the requirements register's
+// (docs/requirements/form-scope.json, read here as it stands; the register
+// changes them, citing the rule). The field words below add a check of our
+// own: a form whose fields name a patient, a student, a suspect… falls in the
+// same scope even when no id says so. Pure: the designer loads it.
+
+import FORM_SCOPE from '../../../../docs/requirements/form-scope.json';
 
 export type ScopeStatus = 'allowed' | 'excluded' | 'legal_review';
 export interface ScopeFinding { status: ScopeStatus; reason?: string; matched?: string }
 
-/** Forms whose implementation the approved scope prohibits, by catalogue id. */
-export const EXCLUDED_FORMS: Record<string, string> = {
-  'HLT-PAT-001': 'Patient registration: no patient or clinical field anywhere, no national patient record.',
-  'HLT-ENC-002': 'Individual clinical encounters are excluded.',
-  'HLT-REF-003': 'Patient-specific referrals are excluded.',
-  'HLT-MED-004': 'Dispensing records on named patients are excluded.',
-  'HLT-CARE-008': 'Personal care plans are excluded.',
-  'EDU-STD-001': 'Named student registration is excluded: there is no student record system.',
-  'EDU-ENR-003': 'Enrolment of named students is excluded.',
-  'EDU-ATT-004': 'Individual attendance is excluded (aggregate returns only).',
-  'EDU-RES-005': 'Individual assessment results are excluded.',
-};
+interface ScopeEntry { id: string; title?: string; scope: 'excluded' | 'requires_legal_review' | 'allowed'; rule?: string; reason?: string }
+const ENTRIES = (FORM_SCOPE as { forms: ScopeEntry[] }).forms;
+const listed = (scope: ScopeEntry['scope']): Record<string, string> =>
+  Object.fromEntries(ENTRIES.filter(e => e.scope === scope).map(e => [e.id.toUpperCase(), `${e.title ? `${e.title}: ` : ''}${e.rule ?? e.reason ?? scope}`]));
 
-/** Forms blocked until a legal review is recorded by an authorised official. */
-export const LEGAL_REVIEW_FORMS: Record<string, string> = {
-  'JUS-PRO-006': 'Suspect-identifying prosecution referral: a legal review comes first.',
-  'JUS-COR-008': 'Prison admission records: a legal review comes first.',
-  'SEC-INT-006': 'Intelligence products: a legal review comes first.',
-  'SEC-OVS-007': 'Intelligence oversight records: a legal review comes first.',
-  'ELE-REG-004': 'Voter registration: a legal review comes first.',
-};
+/** Forms whose implementation the approved scope prohibits, by catalogue id (the register's `excluded`). */
+export const EXCLUDED_FORMS: Record<string, string> = listed('excluded');
+
+/** Forms blocked until a legal review is recorded by an authorised official (the register's `requires_legal_review`). */
+export const LEGAL_REVIEW_FORMS: Record<string, string> = listed('requires_legal_review');
+
+/** Forms the register names as allowed (a form not listed is in scope by default; neither is ever approved through this list). */
+export const ALLOWED_FORMS: Record<string, string> = listed('allowed');
 
 /** Words in a field's key that put a form in the excluded scope (patient and clinical data, named students). */
 export const EXCLUDED_FIELD_WORDS: Record<string, string> = {

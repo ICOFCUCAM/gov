@@ -3,6 +3,7 @@
 // draft, held by another institution, expired or not yet in force; and the
 // sealed decision keeps the exact mapping and rule versions it rested on.
 import { asNationSets } from '@/lib/casework/testkit';
+import { approvedSealKeyFixture } from '@/lib/keys/seal-register.fixture';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { generateKeyPairSync } from 'node:crypto';
 import { openCase, act, attach, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
@@ -44,6 +45,7 @@ describe('decision authority (E) and provenance (F)', () => {
     for (const r of [resetCases, resetPackages, resetDocuments, resetDecisions, resetLaw, resetRules, resetTax, resetPermitAuthorities]) r();
     vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 7).toString('base64'));
     vi.stubEnv('CIVICOS_DECISION_KEY', KEY);
+    approvedSealKeyFixture(KEY); // a production installation seals only with an approved key (lib/keys/seal-register.ts)
     [TAX, OTHER] = listMinistries().slice(0, 2).map(m => m.id) as [string, string];
     setSovereign({ deployment: { authorities: { tax: TAX, customs: TAX, civilRegistration: TAX } } }, 'Administrator');
     for (const p of [...TAX_PROCEDURES, ...CUSTOMS_PROCEDURES]) { draftPackage(asNationSets(p), 'A', 'a', registeredEffects()); approvePackage(p.key, 1, 'B', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); }

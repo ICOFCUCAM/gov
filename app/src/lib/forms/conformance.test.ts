@@ -176,7 +176,8 @@ describe('the shared envelope standard (contract_version 1.0.0)', () => {
     const domains = blocks.filter(b => typeof b.domain === 'string' && Array.isArray(b.contracts));
     expect(domains.length).toBeGreaterThanOrEqual(18);
     const ids = domains.flatMap(d => (d.contracts as { form_id: string }[]).map(c => c.form_id));
-    for (const id of Object.keys(EXCLUDED_CONTRACTS)) expect(text, id).toContain(id);
+    // The supplement's contracts that the register's scope lists hold are never loaded.
+    expect(ids.filter(i => EXCLUDED_CONTRACTS[i]).length).toBeGreaterThan(5);
     // Every contract whose id or fields fall in the excluded or legal-review scope is held, by its id or by its fields' words.
     const held = domains.flatMap(d => (d.contracts as EnvelopeContract[]).filter(c => scopeOf([c.form_id], c.fields.map(f => ({ key: f.field_id ?? f.key }))).status !== 'allowed').map(c => c.form_id));
     for (const id of ids.filter(i => EXCLUDED_CONTRACTS[i])) expect(held, id).toContain(id);

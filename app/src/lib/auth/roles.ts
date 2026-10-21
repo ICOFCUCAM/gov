@@ -342,6 +342,10 @@ const OFFICIAL_WORK: RegExp[] = [
   // declarant of an interest …). Not ADMIN_ONLY: a court's signatory records a ruling. Nothing here reads a transition
   // to grant a permission; a declared conflict of interest only removes one (caseActRefusal()).
   /^\/api\/constitution\/transitions$/,
+  // The seal key register (lib/keys/seal-register.ts): proposed by an administrator or a signatory of the seal keys
+  // authority, approved only by officials who can sign there (sealKeyProposeRefusal() / sealKeyApproveRefusal(),
+  // checked in the store). Not ADMIN_ONLY: the approvers are the named authority's own officials.
+  /^\/api\/seal-keys$/,
 ];
 
 export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official' | 'legislature';
@@ -834,6 +838,38 @@ export function canConfirmAccessLogRetention(s: Scope, dataProtection: string | 
   const role = roleOf(s);
   if (dataProtection) return s.institution === dataProtection && role === 'signatory' ? null : 'The data-protection authority confirms this (an official who can sign there)';
   return role === 'auditor' ? null : 'An auditor confirms this while no data-protection authority is named';
+}
+
+/**
+ * The seal key register (lib/keys/seal-register.ts). Proposing a key, or
+ * reporting one compromised: an administrator, or an official who can sign at
+ * the institution the nation's seal-key rules name (`authority`). Approving a
+ * key, confirming a reported compromise and reviewing it afterwards: only an
+ * official who can sign at that institution; nobody while the nation has
+ * named none (the platform never assumes one). Whole-government scope and
+ * seniority grant nothing here.
+ */
+export function sealKeyProposeRefusal(s: Scope, authority: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (role === 'administrator') return null;
+  if (authority && s.institution === authority && role === 'signatory') return null;
+  return 'An administrator, or an official who can sign at the seal keys authority, proposes a seal key or reports one compromised';
+}
+export function sealKeyApproveRefusal(s: Scope, authority: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (!authority) return 'Name the seal keys authority first (Who is responsible, and the seal-key rules citing the law that names it): the platform never assumes who approves the state\'s seal';
+  if (s.institution !== authority || role !== 'signatory') return 'Only an official who can sign at the seal keys authority approves a seal key, confirms a compromise or reviews it';
+  return null;
+}
+/** The country's seal-key rules (lib/law/policy-change.ts): proposed by an administrator; confirmed by a different administrator or one who can sign at the seal keys authority. */
+export function sealKeyRulesRefusal(s: Scope, authority: string | undefined, step: 'propose' | 'confirm'): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (role === 'administrator') return null;
+  if (step === 'confirm' && authority && s.institution === authority && role === 'signatory') return null;
+  return step === 'propose' ? 'An administrator proposes the seal-key rules, citing the law' : 'An administrator, or an official who can sign at the seal keys authority, confirms the seal-key rules';
 }
 
 /** Recording a version of a law (lib/law/register.ts): officials of the nation's law-register authority; whole-government administrators only while none is named. */

@@ -111,11 +111,13 @@ reads `requires_approval` until an authorised official records a legal review.
 
 ## 5. Scope (binding)
 
-`app/src/lib/forms/scope.ts` holds the lists until the requirements register's
-`docs/requirements/form-scope.json` lands (the scope test compares the two
-once it exists).
+The scope lists by catalogue id are the requirements register's
+`docs/requirements/form-scope.json` (128 excluded, 91 requiring legal review,
+42 named as allowed), read as they stand by `app/src/lib/forms/scope.ts`;
+the scope test holds the two equal. On top of them the platform checks the
+fields' own keys, so a form no id names still falls in the same scope.
 
-- **Excluded** (never drafted): patient registration, clinical encounters,
+- **Excluded** (never drafted): among them patient registration, clinical encounters,
   patient-specific referrals and dispensing, personal care plans; named
   student registration, enrolment, attendance and individual results
   (`HLT-PAT-001`, `HLT-ENC-002`, `HLT-REF-003`, `HLT-MED-004`, `HLT-CARE-008`,

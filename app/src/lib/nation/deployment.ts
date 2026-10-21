@@ -16,7 +16,9 @@ export type AuthorityKey =
   // Constitutional bodies (docs/CONSTITUTIONAL_ARCHITECTURE.md §2.3–2.6): empty slots,
   // named only when the nation has such a body. Nothing is assumed.
   | 'legislature' | 'supremeAudit' | 'electoral' | 'centralBank' | 'ombudsman'
-  | 'anticorruption' | 'humanRights' | 'headOfState' | 'constitutionalCourt';
+  | 'anticorruption' | 'humanRights' | 'headOfState' | 'constitutionalCourt'
+  // The body the nation's law names to approve the state's seal keys (lib/keys/seal-register.ts): empty until named.
+  | 'trustServices';
 
 export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts' | 'tax' | 'customs' | 'education' | 'health' | 'professions';
 
@@ -65,6 +67,7 @@ export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string;
   { key: 'ombudsman', label: 'Ombudsman', registers: 'Complaints about public bodies and their findings', optional: true },
   { key: 'anticorruption', label: 'Anti-corruption body', registers: 'Corruption complaints, investigations and referrals', optional: true },
   { key: 'humanRights', label: 'Human rights body', registers: 'Human rights complaints, inquiries and reports', optional: true },
+  { key: 'trustServices', label: 'Seal keys authority', registers: 'The state\'s seal keys: which keys may seal decisions and certificates, their validity and revocation', optional: true },
 ];
 /** The slots every installation fills (the registers the platform runs). */
 export const REQUIRED_AUTHORITIES = AUTHORITIES.filter(a => !a.optional);

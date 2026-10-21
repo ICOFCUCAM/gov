@@ -1,0 +1,2278 @@
+{
+ "generated_by": "app/scripts/requirements/extract.py (gap_report.py)",
+ "sources": {
+  "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md": "575219ab49a97459991dd4a108e1be578b28798781bc9d7167c6ae726ba7b778",
+  "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md": "dc95030bf3fa24ebb935d0c77ec647796601fb0cb0a33244c71db81e54f44e11",
+  "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md": "67317d4aeec431e12d51e8bf4906689b49a23e2514ccbcc091fcfb47af70a067",
+  "docs/forms-catalogue/PARTS-08-11.md": "247cb9dbe0b6339d7c58410d0c917cc0d61c942088ef45695dd18b33c17ed187",
+  "docs/forms-catalogue/PARTS-12-13.md": "c801d41e56eb3da005de09ce8d6618565d592d32b6aaf4a9eef0830e9323b8f3",
+  "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md": "c878eb6ca87bb07bab04adc3281d57c19424d7cf1aeef4617760b66f25c40d04",
+  "docs/requirements/form-scope.json": "f97b483076bde3403784c6921f69b1b5540422f3059de2bf280665617d519a16"
+ },
+ "reported": {
+  "listed forms, parts 14–22": 216,
+  "contracts, parts 14–22": 61,
+  "core contracts, parts 5–13": 72
+ },
+ "verified": {
+  "listed forms, parts 14–22": 216,
+  "contracts, parts 14–22": 61,
+  "core contracts, parts 5–13": 72
+ },
+ "unique_form_ids": 2055,
+ "form_rows": 2072,
+ "forms_by_part": {
+  "Part 2": 269,
+  "Part 3": 365,
+  "Part 4": 116,
+  "Part 5": 136,
+  "Part 6": 142,
+  "Part 7": 152,
+  "Part 8": 202,
+  "Part 9": 77,
+  "Part 10": 76,
+  "Part 11": 66,
+  "Part 12": 94,
+  "Part 13": 83,
+  "Part 14": 20,
+  "Part 15": 24,
+  "Part 16": 24,
+  "Part 17": 24,
+  "Part 18": 20,
+  "Part 19": 20,
+  "Part 20": 24,
+  "Part 21": 40,
+  "Part 22": 20,
+  "Part 5 (supplement, Stage B contracts)": 8,
+  "Part 6 (supplement, Stage B contracts)": 8,
+  "Part 7 (supplement, Stage B contracts)": 8,
+  "Part 8 (supplement, Stage B contracts)": 8,
+  "Part 9 (supplement, Stage B contracts)": 8,
+  "Part 10 (supplement, Stage B contracts)": 8,
+  "Part 11 (supplement, Stage B contracts)": 10,
+  "Part 12 (supplement, Stage B contracts)": 10,
+  "Part 13 (supplement, Stage B contracts)": 10
+ },
+ "form_status": {
+  "contract_missing": 1723,
+  "contract_draft": 129,
+  "under_review": 91,
+  "excluded": 128,
+  "blocked": 1
+ },
+ "contracts": {
+  "total": 160,
+  "matched_to_one_form": 144,
+  "field_groups": 15,
+  "not_a_form": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "id": "example.service.application",
+    "reason": "Part 1 §1.1 canonical field-contract shape: the text calls its identities 'schema illustrations, not usable production identities'"
+   }
+  ],
+  "unmatched": [],
+  "ambiguous": [],
+  "forms_with_more_than_one": [
+   "LAB-EMP-001"
+  ]
+ },
+ "forms_without_contract": 1927,
+ "incomplete_contracts": [
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 214,
+   "id": "core.person",
+   "kind": "group",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 328,
+   "id": "core.birth_date",
+   "kind": "group",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 429,
+   "id": "core.address",
+   "kind": "group",
+   "fields": 11,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 589,
+   "id": "core.contact",
+   "kind": "group",
+   "fields": 4,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 661,
+   "id": "core.organisation",
+   "kind": "group",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 770,
+   "id": "core.representation",
+   "kind": "group",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 869,
+   "id": "core.identity_evidence_seen",
+   "kind": "group",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 979,
+   "id": "core.declaration_signature",
+   "kind": "group",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1067,
+   "id": "core.consent",
+   "kind": "group",
+   "fields": 4,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1143,
+   "id": "core.payment",
+   "kind": "group",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1230,
+   "id": "core.evidence_upload",
+   "kind": "group",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1319,
+   "id": "core.payout_account",
+   "kind": "group",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1406,
+   "id": "core.nationality_residence",
+   "kind": "group",
+   "fields": 4,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1481,
+   "id": "core.accessibility_needs",
+   "kind": "group",
+   "fields": 3,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1541,
+   "id": "core.language_preference",
+   "kind": "group",
+   "fields": 4,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1913,
+   "id": "exec.cabinet.paper.submit",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2148,
+   "id": "treasury.payment.instruction",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2334,
+   "id": "budget.bid.submit",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2546,
+   "id": "taxpayer.registration.business",
+   "kind": "form",
+   "fields": 12,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2748,
+   "id": "tax.return.periodic.submit",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2916,
+   "id": "tax.compliance.inspection_checklist",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+   "line": 62,
+   "id": "customs.import.declaration.submit",
+   "kind": "form",
+   "fields": 11,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+   "line": 713,
+   "id": "procurement.plan.item.add",
+   "kind": "form",
+   "fields": 10,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+   "line": 1039,
+   "id": "procurement.contract.variation.request",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+   "line": 1242,
+   "id": "exchange.customs_permit.verify",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 64,
+   "id": "LAB-EMP-001",
+   "kind": "form",
+   "fields": 1,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "placeholders only"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 189,
+   "id": "LAB-EMP-001",
+   "kind": "form",
+   "fields": 10,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 205,
+   "id": "LAB-EMP-003",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 220,
+   "id": "LAB-EMP-004",
+   "kind": "form",
+   "fields": 10,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 236,
+   "id": "LAB-EMP-005",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 251,
+   "id": "LAB-EMP-008",
+   "kind": "form",
+   "fields": 10,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 267,
+   "id": "LAB-EMP-009",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 281,
+   "id": "LAB-EMP-010",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 296,
+   "id": "LAB-EMP-011",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 310,
+   "id": "LAB-EMP-016",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 325,
+   "id": "LAB-EMP-020",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 374,
+   "id": "SOC-BEN-001",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 387,
+   "id": "SOC-BEN-002",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 402,
+   "id": "SOC-BEN-003",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 414,
+   "id": "SOC-BEN-004",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 428,
+   "id": "SOC-BEN-010",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 441,
+   "id": "SOC-BEN-015",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 455,
+   "id": "SOC-BEN-018",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 470,
+   "id": "SOC-BEN-019",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 484,
+   "id": "SOC-BEN-020",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 534,
+   "id": "FOR-CON-001",
+   "kind": "form",
+   "fields": 10,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 550,
+   "id": "FOR-CON-002",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 564,
+   "id": "FOR-CON-004",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 578,
+   "id": "FOR-CON-013",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 592,
+   "id": "FOR-CON-014",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 605,
+   "id": "FOR-DIP-018",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 620,
+   "id": "FOR-DIP-019",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 671,
+   "id": "TCS-TOU-001",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 684,
+   "id": "TCS-CUL-008",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 699,
+   "id": "TCS-CUL-010",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 713,
+   "id": "TCS-YTH-015",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 727,
+   "id": "TCS-SPT-018",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 740,
+   "id": "TCS-SPT-023",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 787,
+   "id": "LIC-PRO-002",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 802,
+   "id": "LIC-PRO-003",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 817,
+   "id": "LIC-PRO-007",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 830,
+   "id": "LIC-PRO-013",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 844,
+   "id": "LIC-PRO-018",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 890,
+   "id": "LRG-ORG-001",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 903,
+   "id": "LRG-ORG-005",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 917,
+   "id": "LRG-FIN-008",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 931,
+   "id": "LRG-SVC-013",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 944,
+   "id": "LRG-PLN-015",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 958,
+   "id": "LRG-REP-020",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1008,
+   "id": "HPC-HOU-002",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1023,
+   "id": "HPC-PLN-009",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1038,
+   "id": "HPC-BLD-014",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1053,
+   "id": "HPC-BLD-018",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1067,
+   "id": "HPC-BLD-020",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1133,
+   "id": "ADM-HR-002",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1147,
+   "id": "ADM-PAY-012",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1162,
+   "id": "ADM-PRC-018",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1177,
+   "id": "ADM-ICT-029",
+   "kind": "form",
+   "fields": 10,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1193,
+   "id": "ADM-ICT-030",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1208,
+   "id": "ADM-AUD-036",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1223,
+   "id": "ADM-GOV-039",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1276,
+   "id": "FGS-STD-001",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1291,
+   "id": "FGS-STD-003",
+   "kind": "form",
+   "fields": 10,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1307,
+   "id": "FGS-STD-004",
+   "kind": "form",
+   "fields": 9,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1322,
+   "id": "FGS-STD-006",
+   "kind": "form",
+   "fields": 10,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1338,
+   "id": "FGS-STD-014",
+   "kind": "form",
+   "fields": 11,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1355,
+   "id": "FGS-STD-015",
+   "kind": "form",
+   "fields": 10,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1399,
+   "id": "JUS-CASE-001",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1411,
+   "id": "JUS-FIL-002",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1422,
+   "id": "JUS-EVD-003",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1433,
+   "id": "JUS-DEC-004",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1445,
+   "id": "JUS-APP-005",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1455,
+   "id": "JUS-PRO-006",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1465,
+   "id": "JUS-LEG-007",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1475,
+   "id": "JUS-COR-008",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1503,
+   "id": "HLT-PAT-001",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1513,
+   "id": "HLT-ENC-002",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1524,
+   "id": "HLT-REF-003",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1535,
+   "id": "HLT-MED-004",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1546,
+   "id": "HLT-PUB-005",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1557,
+   "id": "HLT-FAC-006",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1568,
+   "id": "HLT-INS-007",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1578,
+   "id": "HLT-CARE-008",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1606,
+   "id": "EDU-STD-001",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1617,
+   "id": "EDU-ADM-002",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1627,
+   "id": "EDU-ENR-003",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1637,
+   "id": "EDU-RES-005",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1648,
+   "id": "EDU-CER-006",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1659,
+   "id": "EDU-FAC-007",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1669,
+   "id": "EDU-ACC-008",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1697,
+   "id": "AGR-LIC-001",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1707,
+   "id": "AGR-SUB-002",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1718,
+   "id": "LND-REG-003",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1729,
+   "id": "ENV-PER-004",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1740,
+   "id": "ENV-INS-005",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1751,
+   "id": "WAT-USE-006",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1762,
+   "id": "ENE-PRO-007",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1773,
+   "id": "NAT-EXT-008",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1802,
+   "id": "TRN-VEH-001",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1813,
+   "id": "TRN-LIC-002",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1824,
+   "id": "TRN-ROAD-003",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1835,
+   "id": "TRN-INC-004",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1847,
+   "id": "TRN-OPS-005",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1858,
+   "id": "TRN-MAR-006",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1868,
+   "id": "TRN-AVI-007",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1878,
+   "id": "TRN-INF-008",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1907,
+   "id": "SAF-INC-001",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1919,
+   "id": "SAF-OPS-003",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1931,
+   "id": "SAF-DIS-004",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1943,
+   "id": "SAF-RES-005",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1955,
+   "id": "SAF-FIR-006",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1966,
+   "id": "SAF-INV-007",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1977,
+   "id": "SAF-REC-008",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2007,
+   "id": "DEF-AUT-001",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2019,
+   "id": "DEF-LOG-003",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2029,
+   "id": "SEC-INC-005",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2042,
+   "id": "SEC-INT-006",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2054,
+   "id": "SEC-OVS-007",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2065,
+   "id": "CIP-REG-008",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2076,
+   "id": "CIP-RSK-009",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2088,
+   "id": "CIP-INC-010",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2120,
+   "id": "LEG-BIL-001",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2131,
+   "id": "LEG-VOT-003",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2143,
+   "id": "ELE-REG-004",
+   "kind": "form",
+   "fields": 5,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2153,
+   "id": "ELE-CAN-005",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2164,
+   "id": "ELE-RES-006",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2175,
+   "id": "POL-REG-008",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2186,
+   "id": "IND-APP-009",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2197,
+   "id": "ACC-CMP-010",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2229,
+   "id": "DGV-SVC-001",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2240,
+   "id": "DGV-IDN-002",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2251,
+   "id": "DGV-REP-003",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2262,
+   "id": "DGV-DOC-004",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2274,
+   "id": "DGV-REC-005",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2285,
+   "id": "DGV-STA-006",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2297,
+   "id": "DGV-STA-007",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2308,
+   "id": "DGV-INT-008",
+   "kind": "form",
+   "fields": 8,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2321,
+   "id": "DGV-INT-009",
+   "kind": "form",
+   "fields": 7,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2333,
+   "id": "DGV-INT-010",
+   "kind": "form",
+   "fields": 6,
+   "fields_missing_type_or_required": [],
+   "legal_basis": "none in the contract"
+  }
+ ],
+ "duplicate_ids": {
+  "JUS-PRO-006": [
+   [
+    "FIELD-SERIES-PARTS-05-07.md",
+    "Witness or expert coordination record"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Prosecution case referral"
+   ]
+  ],
+  "JUS-COR-008": [
+   [
+    "FIELD-SERIES-PARTS-05-07.md",
+    "Disciplinary appeal or complaint"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Corrections case and sentence record"
+   ]
+  ],
+  "HLT-MED-004": [
+   [
+    "FIELD-SERIES-PARTS-05-07.md",
+    "Additional information request"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Medicine authorization or dispensing record"
+   ]
+  ],
+  "HLT-FAC-006": [
+   [
+    "FIELD-SERIES-PARTS-05-07.md",
+    "Service or capacity variation"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Health facility registration"
+   ]
+  ],
+  "EDU-ACC-008": [
+   [
+    "FIELD-SERIES-PARTS-05-07.md",
+    "Accreditation condition monitoring"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Programme accreditation"
+   ]
+  ],
+  "EDU-RES-005": [
+   [
+    "FIELD-SERIES-PARTS-05-07.md",
+    "Grant agreement"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Assessment result"
+   ]
+  ],
+  "LND-REG-003": [
+   [
+    "PARTS-08-11.md",
+    "Cadastral survey submission"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Land record registration or amendment"
+   ]
+  ],
+  "ENV-PER-004": [
+   [
+    "PARTS-08-11.md",
+    "Environmental assessment completeness review"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Environmental permit application"
+   ]
+  ],
+  "TRN-OPS-005": [
+   [
+    "PARTS-08-11.md",
+    "Freight operator licence"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Commercial transport operator registration"
+   ]
+  ],
+  "TRN-ROAD-003": [
+   [
+    "PARTS-08-11.md",
+    "Road closure request"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Road works permit"
+   ]
+  ],
+  "TRN-MAR-006": [
+   [
+    "PARTS-08-11.md",
+    "Port access or operating permit"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Maritime vessel registration"
+   ]
+  ],
+  "TRN-AVI-007": [
+   [
+    "PARTS-08-11.md",
+    "Airport infrastructure works application"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Aviation operator or facility application"
+   ]
+  ],
+  "TRN-INF-008": [
+   [
+    "PARTS-08-11.md",
+    "Construction inspection"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Public infrastructure project submission"
+   ]
+  ],
+  "SEC-INT-006": [
+   [
+    "PARTS-08-11.md",
+    "Classified information access request"
+   ],
+   [
+    "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "Intelligence product registration"
+   ]
+  ]
+ },
+ "same_title_different_ids": {
+  "submit a corrective action plan [procurement]": [
+   "procurement.audit.action_plan",
+   "procurement.contract.corrective_action"
+  ],
+  "case registration [JUS]": [
+   "JUS-CASE-001",
+   "JUS-CRT-002"
+  ],
+  "evidence submission [JUS]": [
+   "JUS-CRT-009",
+   "JUS-EVD-003"
+  ],
+  "legal aid application [JUS]": [
+   "JUS-LEG-007",
+   "JUS-LGL-001"
+  ],
+  "care plan review [HLT]": [
+   "HLT-CLI-013",
+   "HLT-SOC-008"
+  ],
+  "student registration [EDU]": [
+   "EDU-STD-001",
+   "EDU-STU-002"
+  ],
+  "student complaint or grievance [EDU]": [
+   "EDU-STU-014",
+   "EDU-UNI-024"
+  ],
+  "environmental permit application [ENV]": [
+   "ENV-PER-001",
+   "ENV-PER-004"
+  ],
+  "environmental inspection [ENV]": [
+   "ENV-INS-005",
+   "ENV-PER-016"
+  ]
+ },
+ "scope_violations": [
+  {
+   "id": "HLT-PAT-001",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "form_status": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "JUS-PRO-006@P5",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "under_review",
+   "flag": "requires_legal_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "JUS-COR-008@P5",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "under_review",
+   "flag": "requires_legal_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "HLT-PAT-001@P6",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "HLT-ENC-002",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "HLT-REF-003",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "HLT-MED-004@P6",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "HLT-CARE-008",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "EDU-STD-001",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "EDU-ADM-002",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "EDU-ENR-003",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "EDU-RES-005@P7",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "excluded",
+   "flag": "excluded_pending_scope_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "EDU-CER-006",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "blocked",
+   "flag": "excluded_pending_scope_review",
+   "why": "Its contract carries fields outside the approved scope (student_id): the contract is excluded pending scope review and cannot pass validation"
+  },
+  {
+   "id": "SEC-INT-006@P11",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "under_review",
+   "flag": "requires_legal_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "SEC-OVS-007",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "under_review",
+   "flag": "requires_legal_review",
+   "why": "a contract was given for a form outside the approved scope"
+  },
+  {
+   "id": "ELE-REG-004",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "form_status": "under_review",
+   "flag": "requires_legal_review",
+   "why": "a contract was given for a form outside the approved scope"
+  }
+ ],
+ "legal_review": [
+  {
+   "id": "JUS-PRO-001",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-002",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-003",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-004",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-005",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-006",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-007",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-008",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-009",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-010",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-011",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-012",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-013",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-014",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-015",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-016",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-017",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-INV-004",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-INV-005",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-INV-006",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-INV-007",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-INV-008",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-INV-010",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-001",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-002",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-003",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-004",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-005",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-006",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-007",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-008",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-009",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-010",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-011",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-012",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-013",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-014",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-015",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-016",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-017",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-018",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-019",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-CUS-020",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-001",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-002",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-003",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-004",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-005",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-006",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-007",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-008",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-009",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-010",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-011",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-012",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-001",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-002",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-003",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-004",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-005",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-006",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-007",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-008",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-009",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-010",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-011",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-012",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-SUP-013",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SAFE-POL-003",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SAFE-POL-004",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SAFE-POL-007",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SAFE-POL-008",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SAFE-POL-014",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SAFE-POL-015",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SAFE-POL-016",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SAFE-POL-017",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SAFE-POL-018",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SAFE-POL-019",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SEC-INT-003",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SEC-INT-004",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SEC-INT-012",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SEC-INT-016",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "DEM-ELC-003",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "DEM-ELC-004",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "DEM-ELC-005",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "DEM-ELC-006",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-PRO-006@P5",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "JUS-COR-008@P5",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SEC-INT-006@P11",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "SEC-OVS-007",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "flag": "requires_legal_review"
+  },
+  {
+   "id": "ELE-REG-004",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "flag": "requires_legal_review"
+  }
+ ],
+ "production_candidates": [],
+ "gates": [
+  "The form owner and competent authority are verified.",
+  "Legal references and their versions have been approved.",
+  "Required fields and validation rules pass automated tests.",
+  "Data sources are authoritative or explicitly labelled otherwise.",
+  "Access controls and restricted-record audit tests pass.",
+  "Workflow and decision permissions pass negative tests.",
+  "Accessibility and localization tests pass.",
+  "Retention and correction rules are approved.",
+  "Release and rollback plans are recorded.",
+  "The production approver is distinct from the proposer wherever separation of duties is required."
+ ]
+}
