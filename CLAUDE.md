@@ -117,6 +117,15 @@ What has been built is locked. Work only upgrades it toward the vision in
   are on the professions register, each profession kept by its regulator.
   Public, administrative and clinical data stay apart: no patient or clinical
   field anywhere, no national patient record; returns are aggregates.
+  Public-health programmes (`lib/health/programmes/`, the `publicHealth`
+  slot) change only through their procedures' effects; interventions are area
+  measures under the nation's rules (CFG-PH-003, shipped empty); returns keep
+  reported, suspected, confirmed and modelled apart and are published only
+  through `publishedReturn()` after the small-cell rule
+  (`lib/health/small-cells.ts`, unset: nothing published). Workforce counts
+  are derived from the professions register (`lib/professions/workforce.ts`),
+  never typed. Complaints (`lib/health/complaints/`) are restricted cases
+  referred into the licence or fitness case; they decide nothing.
 - Medicines and devices (`lib/health/products/`): the product register is kept for the
   `medicinesRegulation` slot (`lib/data/register-owners.ts`) and changes only through the
   effects of its procedures (`procedures.ts`: authorisation, variation, renewal, suspension
@@ -245,7 +254,8 @@ What has been built is locked. Work only upgrades it toward the vision in
   exists; missing contracts are written only in controlled batches the owner
   approves (batch 1, health regulation, 25 forms; batch 2, medicines and
   devices regulation, 21 forms; batch 3, taxpayer registration and account,
-  29 forms: owner 2026-10-21), as library
+  29 forms; batch 4, public-health programme forms, 2 forms: owner
+  2026-10-21), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.
 - Every requirement of that specification is a row of
