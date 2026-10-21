@@ -3,9 +3,11 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
-import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/SituationRoom';
+import { TONE, Panel } from '@/components/features/SituationRoom';
+import { BranchTile, useBranchRecords, billCounts, recordFigure, BILLS_SOURCE, HEARINGS_SOURCE, type BranchFigure } from '@/components/features/BranchRecords';
+import { GeneratedText } from '@/components/ui/Generated';
 import { constitutionFor } from '@/lib/gov/constitution';
-import { legislativePipeline, judicialDocket, branchReadiness } from '@/lib/gov/branches';
+import { judicialDocket, branchReadiness } from '@/lib/gov/branches';
 import { useSeparation, separationWord, SeparationCheckList } from '@/components/features/SeparationChecks';
 import type { StateForm, NationalConstitution } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
@@ -21,20 +23,23 @@ export function BranchesView() {
   }, []);
   const ts = now / 4000;
   const m = constitutionFor(form, nation);
-  const bills = legislativePipeline(ts);
   const docket = judicialDocket(ts);
   // Separation of powers as observed from the configuration (audit G), not generated.
   const separation = useSeparation();
   const sepOk = !!separation.data?.intact;
   const sepTone = !separation.data ? TONE.neutral : sepOk ? TONE.ok : TONE.warn;
 
-  const tele = [
-    { l: 'Constitutional form', v: m.label, t: 'ok', k: 'cf' },
-    { l: 'Branches', v: String(m.branches.length), t: 'ok', k: 'br' },
-    { l: 'Legislature', v: m.legislature.structure.toUpperCase(), t: 'ok', k: 'lg' },
-    { l: 'Bills in progress', v: String(bills.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'bp' },
-    { l: 'Open cases', v: String(docket.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'oc' },
-    { l: 'Separation', v: separationWord(separation.data).toUpperCase(), t: !separation.data ? 'neutral' : sepOk ? 'ok' : 'warn', k: 'si' },
+  // Bills from the legislature's record and hearings from the courts' cause list; open court cases stay
+  // with the courts (their files are closed to other institutions), so that figure is generated.
+  const rec = useBranchRecords();
+  const tele: BranchFigure[] = [
+    { l: 'Constitutional form', v: m.label, t: 'ok', k: 'cf', kind: 'reported', src: 'National settings' },
+    { l: 'Branches', v: String(m.branches.length), t: 'ok', k: 'br', kind: 'reported', src: 'National settings' },
+    { l: 'Legislature', v: m.legislature.structure.toUpperCase(), t: 'ok', k: 'lg', kind: 'reported', src: 'National settings' },
+    recordFigure('Bills in progress', 'bp', rec.bills ? billCounts(rec.bills).inProgress : null, BILLS_SOURCE),
+    { l: 'Open cases', v: String(docket.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'oc', kind: 'sample' },
+    recordFigure('Hearings listed · 7 days', 'hl', rec.hearings, HEARINGS_SOURCE),
+    { l: 'Separation', v: separationWord(separation.data).toUpperCase(), t: !separation.data ? 'neutral' : sepOk ? 'ok' : 'warn', k: 'si', kind: 'reported', src: 'Checks on the separation of powers, read from the configuration' },
   ];
 
   return (
@@ -64,21 +69,16 @@ export function BranchesView() {
         The branches follow the form of government set in National settings. {m.selection}.
       </p>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-        {tele.map(t => (
-          <div key={t.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-            <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{t.l}</div>
-            <div className="truncate font-mono text-[13px] leading-tight tabular-nums" style={{ color: TONE[t.t] }}>{t.v}</div>
-            <div className="-mb-1 h-4 overflow-hidden opacity-70"><Spark pts={waveSeries(`cv:${t.k}`, ts, 14, 40, 92)} tone={t.t} /></div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+        {tele.map(t => <BranchTile key={t.l} m={t} sparkKey={`cv:${t.k}`} ts={ts} size="sm" />)}
       </div>
 
       <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
         {m.branches.map(b => {
           const r = branchReadiness(b.key, ts);
           return (
-            <Panel signal="sample" key={b.key} title={b.name} meta={`readiness ${r.total}% · ${r.posture}`} className="min-h-[200px]" bodyClass="!p-1.5">
+            // The branch's bodies and mandate come from the configuration; its readiness is generated.
+            <Panel signal="reported" key={b.key} title={b.name} meta={<GeneratedText>readiness {r.total}% · {r.posture}</GeneratedText>} className="min-h-[200px]" bodyClass="!p-1.5">
               <p className="mb-1.5 text-[10px] text-ink-muted">{b.mandate}</p>
               <div className="space-y-1">
                 {b.bodies.map(body => (
@@ -95,7 +95,7 @@ export function BranchesView() {
       </div>
 
       <div className="grid gap-2 xl:grid-cols-2">
-        <Panel title="Authority chain" meta={m.selection} bodyClass="!p-0">
+        <Panel signal="reported" title="Authority chain" meta={m.selection} bodyClass="!p-0">
           {m.authorityChain.map(a => (
             <div key={a.rank} className="flex items-center gap-3 border-b border-line-soft px-3 py-2 last:border-0">
               <span className="grid h-5 w-5 place-items-center rounded-[3px] bg-surface-2 text-[10px] font-bold text-ink-soft">{a.rank}</span>
@@ -103,7 +103,7 @@ export function BranchesView() {
             </div>
           ))}
         </Panel>
-        <Panel title="Checks on the separation of powers" meta="observed from the configuration" bodyClass="!p-1.5">
+        <Panel signal="reported" title="Checks on the separation of powers" meta="observed from the configuration" bodyClass="!p-1.5">
           <SeparationCheckList data={separation.data} failed={separation.failed} />
         </Panel>
       </div>

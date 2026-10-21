@@ -4,6 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/SituationRoom';
+import { BranchTile, useBranchRecords, billCounts, recordFigure, BILLS_SOURCE, HEARINGS_SOURCE, type BranchFigure } from '@/components/features/BranchRecords';
+import { GeneratedStrip, GeneratedText } from '@/components/ui/Generated';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { instantiateInstitution, systemKindLabel, type InstitutionKind } from '@/lib/institution/blueprint';
 import { legislativeState, committeeInquiries, BILL_STAGES } from '@/lib/gov/legislative-engine';
@@ -59,36 +61,42 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
   // Reset to the first tab whenever the engine (hence the tab set) changes.
   React.useEffect(() => { setTab(firstTab); }, [firstTab]);
 
-  const tele = (() => {
+  // Bills from the legislature's record and hearings from the courts' public cause list
+  // (components/features/BranchRecords.tsx); everything else here is generated (`sample`).
+  const rec = useBranchRecords();
+  const bc = rec.bills ? billCounts(rec.bills) : null;
+  const gen = (x: Omit<BranchFigure, 'kind'>): BranchFigure => ({ ...x, kind: 'sample' });
+  const tele: BranchFigure[] = (() => {
     if (engine === 'legislative') {
       const ch = chambersFor(form, ts); const bl = legislativePipeline(ts); const cm = committees(ts);
       return [
-        { l: 'Chambers in session', v: `${ch.filter(c => c.sitting).length}/${ch.length}`, t: 'ok', k: 'cs' },
-        { l: 'Quorum', v: ch.every(c => c.inQuorum) ? 'HELD' : 'AT RISK', t: ch.every(c => c.inQuorum) ? 'ok' : 'warn', k: 'qm' },
-        { l: 'Bills in pipeline', v: String(bl.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'bp' },
-        { l: 'Blocked stages', v: String(bl.reduce((a, s) => a + s.blocked, 0)), t: 'warn', k: 'bk' },
-        { l: 'Committees sitting', v: String(cm.filter(c => c.status === 'in session').length), t: 'ok', k: 'cm' },
-        { l: 'Branch posture', v: r.posture, t: r.tone, k: 'po' },
+        gen({ l: 'Chambers in session', v: `${ch.filter(c => c.sitting).length}/${ch.length}`, t: 'ok', k: 'cs' }),
+        gen({ l: 'Quorum', v: ch.every(c => c.inQuorum) ? 'HELD' : 'AT RISK', t: ch.every(c => c.inQuorum) ? 'ok' : 'warn', k: 'qm' }),
+        recordFigure('Bills in pipeline', 'bp', bc ? bc.inProgress : null, BILLS_SOURCE),
+        gen({ l: 'Blocked stages', v: String(bl.reduce((a, s) => a + s.blocked, 0)), t: 'warn', k: 'bk' }),
+        gen({ l: 'Committees sitting', v: String(cm.filter(c => c.status === 'in session').length), t: 'ok', k: 'cm' }),
+        gen({ l: 'Branch posture', v: r.posture, t: r.tone, k: 'po' }),
       ];
     }
     if (engine === 'judicial') {
       const co = courtHierarchyFor(form, ts); const dk = judicialDocket(ts); const cr = constitutionalReview(ts);
       return [
-        { l: 'Courts', v: String(co.length), t: 'ok', k: 'ct' },
-        { l: 'Open cases', v: String(dk.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'oc' },
-        { l: 'Mean clearance', v: `${Math.round(co.reduce((a, c) => a + c.clearance, 0) / co.length)}%`, t: 'ok', k: 'cl' },
-        { l: 'Constitutional review', v: String(cr.length), t: 'warn', k: 'cr' },
-        { l: 'Backlog', v: String(co.reduce((a, c) => a + c.backlog, 0)), t: 'warn', k: 'bl' },
-        { l: 'Branch posture', v: r.posture, t: r.tone, k: 'po' },
+        gen({ l: 'Courts', v: String(co.length), t: 'ok', k: 'ct' }),
+        gen({ l: 'Open cases', v: String(dk.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'oc' }),
+        recordFigure('Hearings listed · 7 days', 'hl', rec.hearings, HEARINGS_SOURCE),
+        gen({ l: 'Mean clearance', v: `${Math.round(co.reduce((a, c) => a + c.clearance, 0) / co.length)}%`, t: 'ok', k: 'cl' }),
+        gen({ l: 'Constitutional review', v: String(cr.length), t: 'warn', k: 'cr' }),
+        gen({ l: 'Backlog', v: String(co.reduce((a, c) => a + c.backlog, 0)), t: 'warn', k: 'bl' }),
+        gen({ l: 'Branch posture', v: r.posture, t: r.tone, k: 'po' }),
       ];
     }
     return [
-      { l: 'Bodies', v: String(b.bodies.length), t: 'ok', k: 'bd' },
-      { l: 'Constitutional standing', v: `${r.dims[0]!.v}%`, t: 'ok', k: 'st' },
-      { l: 'Independence', v: `${r.dims[2]!.v}%`, t: r.dims[2]!.v >= 80 ? 'ok' : 'warn', k: 'in' },
-      { l: 'Process integrity', v: `${r.dims[3]!.v}%`, t: 'ok', k: 'pi' },
-      { l: 'Accountability', v: `${r.dims[4]!.v}%`, t: 'ok', k: 'ac' },
-      { l: 'Branch posture', v: r.posture, t: r.tone, k: 'po' },
+      { l: 'Bodies', v: String(b.bodies.length), t: 'ok', k: 'bd', kind: 'reported', src: 'National settings (constitutional form)' },
+      gen({ l: 'Constitutional standing', v: `${r.dims[0]!.v}%`, t: 'ok', k: 'st' }),
+      gen({ l: 'Independence', v: `${r.dims[2]!.v}%`, t: r.dims[2]!.v >= 80 ? 'ok' : 'warn', k: 'in' }),
+      gen({ l: 'Process integrity', v: `${r.dims[3]!.v}%`, t: 'ok', k: 'pi' }),
+      gen({ l: 'Accountability', v: `${r.dims[4]!.v}%`, t: 'ok', k: 'ac' }),
+      gen({ l: 'Branch posture', v: r.posture, t: r.tone, k: 'po' }),
     ];
   })();
 
@@ -105,20 +113,14 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
         </div>
         <span className="rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
           style={{ borderColor: sepTone, color: sepTone, backgroundColor: `color-mix(in srgb, ${sepTone} 12%, transparent)` }}>
-          Separation · {separationWord(separation.data)} · Readiness {r.total}% (sample)
+          Separation · {separationWord(separation.data)} · <GeneratedText>Readiness {r.total}%</GeneratedText>
         </span>
       </div>
 
       <p className="text-[11px] text-ink-muted">{b.mandate} · derived from configured constitutional form ({model.label}).</p>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-        {tele.map(m => (
-          <div key={m.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-            <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
-            <div className="font-mono text-lg leading-tight tabular-nums" style={{ color: TONE[m.t] }}>{m.v}</div>
-            <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={waveSeries(`bw:${b.key}:${m.k}`, ts, 16, 35, 92)} tone={m.t} /></div>
-          </div>
-        ))}
+      <div className={`grid grid-cols-2 gap-2 sm:grid-cols-3 ${tele.length > 6 ? 'xl:grid-cols-7' : 'xl:grid-cols-6'}`}>
+        {tele.map(m => <BranchTile key={m.l} m={m} sparkKey={`bw:${b.key}:${m.k}`} ts={ts} />)}
       </div>
 
       <div className="flex flex-wrap gap-1 border-b border-line" role="tablist">
@@ -179,19 +181,15 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
         return (
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-              {[
-                { l: 'Bills tracked', v: `${ls.bills.length}`, t: 'ok' as const },
-                { l: 'In session', v: `${ls.inSession}`, t: 'ok' as const },
-                { l: 'Blocked', v: `${ls.blocked}`, t: ls.blocked ? 'alert' as const : 'ok' as const },
-                { l: 'Published YTD', v: `${ls.publishedYtd}`, t: 'ok' as const },
-                { l: 'Attendance', v: `${ls.attendancePct}%`, t: ls.attendancePct >= 60 ? 'ok' as const : 'warn' as const },
-                { l: 'Quorum', v: ls.quorum ? 'HELD' : 'AT RISK', t: ls.quorum ? 'ok' as const : 'alert' as const },
-              ].map(s => (
-                <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2">
-                  <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
-                  <div className="font-mono text-[14px] tabular-nums" style={{ color: TONE[s.t] }}>{s.v}</div>
-                </div>
-              ))}
+              {/* Bills tracked and published from the legislature's record; the sitting figures are generated. */}
+              {([
+                recordFigure('Bills tracked', 'bt', bc ? bc.total : null, BILLS_SOURCE),
+                gen({ l: 'In session', v: `${ls.inSession}`, t: 'ok', k: 'is' }),
+                gen({ l: 'Blocked', v: `${ls.blocked}`, t: ls.blocked ? 'alert' : 'ok', k: 'bl' }),
+                recordFigure('Published this year', 'py', bc ? bc.publishedThisYear : null, BILLS_SOURCE),
+                gen({ l: 'Attendance', v: `${ls.attendancePct}%`, t: ls.attendancePct >= 60 ? 'ok' : 'warn', k: 'at' }),
+                gen({ l: 'Quorum', v: ls.quorum ? 'HELD' : 'AT RISK', t: ls.quorum ? 'ok' : 'alert', k: 'qm' }),
+              ] as BranchFigure[]).map(s => <BranchTile key={s.l} m={s} size="sm" />)}
             </div>
 
             <div className="grid gap-2 xl:grid-cols-3">
@@ -370,20 +368,17 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
         const stTone = (c: typeof js.cases[number]) => c.stage === 'Closed' ? TONE.ok : c.backlogged ? TONE.alert : TONE.warn;
         return (
           <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-              {[
-                { l: 'Open cases', v: `${js.openCases}`, t: 'ok' as const },
-                { l: 'Appeals', v: `${js.appeals}`, t: 'warn' as const },
-                { l: 'Constitutional', v: `${js.constitutionalMatters}`, t: js.constitutionalMatters ? 'warn' as const : 'ok' as const },
-                { l: 'Mean clearance', v: `${js.meanClearance}%`, t: js.meanClearance >= 80 ? 'ok' as const : js.meanClearance >= 65 ? 'warn' as const : 'alert' as const },
-                { l: 'Total backlog', v: `${js.totalBacklog}`, t: js.totalBacklog > 900 ? 'alert' as const : js.totalBacklog > 500 ? 'warn' as const : 'ok' as const },
-                { l: 'Tiers', v: `${js.tiers.length}`, t: 'ok' as const },
-              ].map(s => (
-                <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2">
-                  <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
-                  <div className="font-mono text-[14px] tabular-nums" style={{ color: TONE[s.t] }}>{s.v}</div>
-                </div>
-              ))}
+            {/* Hearings from the courts' public cause list; the case figures are generated (court files stay with the courts). */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+              {([
+                gen({ l: 'Open cases', v: `${js.openCases}`, t: 'ok', k: 'oc' }),
+                gen({ l: 'Appeals', v: `${js.appeals}`, t: 'warn', k: 'ap' }),
+                gen({ l: 'Constitutional', v: `${js.constitutionalMatters}`, t: js.constitutionalMatters ? 'warn' : 'ok', k: 'cm' }),
+                gen({ l: 'Mean clearance', v: `${js.meanClearance}%`, t: js.meanClearance >= 80 ? 'ok' : js.meanClearance >= 65 ? 'warn' : 'alert', k: 'mc' }),
+                gen({ l: 'Total backlog', v: `${js.totalBacklog}`, t: js.totalBacklog > 900 ? 'alert' : js.totalBacklog > 500 ? 'warn' : 'ok', k: 'tb' }),
+                gen({ l: 'Tiers', v: `${js.tiers.length}`, t: 'ok', k: 'ti' }),
+                recordFigure('Hearings listed · 7 days', 'hl', rec.hearings, HEARINGS_SOURCE),
+              ] as BranchFigure[]).map(s => <BranchTile key={s.l} m={s} size="sm" />)}
             </div>
 
             <div className="grid gap-2 xl:grid-cols-3">
@@ -575,7 +570,7 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
       )}
 
       {(tab === 'Authority' || tab === 'Authority chain') && (
-        <Panel signal="sample" title="Constitutional authority chain" meta={model.selection} bodyClass="!p-0">
+        <Panel signal="reported" title="Constitutional authority chain" meta={model.selection} bodyClass="!p-0">
           {model.authorityChain.map(a => (
             <div key={a.rank} className="flex items-center gap-3 border-b border-line-soft px-3 py-2 last:border-0">
               <span className="grid h-5 w-5 place-items-center rounded-[3px] bg-surface-2 text-[10px] font-bold text-ink-soft">{a.rank}</span>
@@ -586,11 +581,12 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
       )}
 
       {(tab === 'Constitutional posture' || tab === 'Controls' || tab === 'Electoral cycle') && (
-        <Panel title={tab} meta="observed from the configuration" bodyClass="!p-1.5">
+        <Panel signal="reported" title={tab} meta="observed from the configuration" bodyClass="!p-1.5">
           <SeparationCheckList data={separation.data} failed={separation.failed} />
         </Panel>
       )}
 
+      <GeneratedStrip what="Branch readiness">
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {r.dims.map(d => (
           <div key={d.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
@@ -599,6 +595,7 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
           </div>
         ))}
       </div>
+      </GeneratedStrip>
 
       <p className="text-[10px] text-ink-muted">
         {model.emergencyDoctrine}. Read-only and advisory — the constituted branch exercises authority through constitutional process. <Link href="/gov/branches" className="text-link underline underline-offset-2">Constitutional overview →</Link>
