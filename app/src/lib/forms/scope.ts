@@ -16,7 +16,7 @@
 // form that names the catalogue document it answers (FormSpec.catalogueSource)
 // is matched against that document's entry only. Pure: the designer loads it.
 
-import FORM_SCOPE from '../../../../docs/requirements/form-scope.json';
+import FORM_SCOPE from './data/form-scope.json';
 
 export type ScopeStatus = 'allowed' | 'excluded' | 'legal_review';
 export interface ScopeFinding { status: ScopeStatus; reason?: string; matched?: string }

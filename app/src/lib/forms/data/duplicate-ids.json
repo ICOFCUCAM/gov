@@ -1,0 +1,142 @@
+{
+ "JUS-PRO-006": [
+  [
+   "FIELD-SERIES-PARTS-05-07.md",
+   "Witness or expert coordination record"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Prosecution case referral"
+  ]
+ ],
+ "JUS-COR-008": [
+  [
+   "FIELD-SERIES-PARTS-05-07.md",
+   "Disciplinary appeal or complaint"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Corrections case and sentence record"
+  ]
+ ],
+ "HLT-MED-004": [
+  [
+   "FIELD-SERIES-PARTS-05-07.md",
+   "Additional information request"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Medicine authorization or dispensing record"
+  ]
+ ],
+ "HLT-FAC-006": [
+  [
+   "FIELD-SERIES-PARTS-05-07.md",
+   "Service or capacity variation"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Health facility registration"
+  ]
+ ],
+ "EDU-ACC-008": [
+  [
+   "FIELD-SERIES-PARTS-05-07.md",
+   "Accreditation condition monitoring"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Programme accreditation"
+  ]
+ ],
+ "EDU-RES-005": [
+  [
+   "FIELD-SERIES-PARTS-05-07.md",
+   "Grant agreement"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Assessment result"
+  ]
+ ],
+ "LND-REG-003": [
+  [
+   "PARTS-08-11.md",
+   "Cadastral survey submission"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Land record registration or amendment"
+  ]
+ ],
+ "ENV-PER-004": [
+  [
+   "PARTS-08-11.md",
+   "Environmental assessment completeness review"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Environmental permit application"
+  ]
+ ],
+ "TRN-OPS-005": [
+  [
+   "PARTS-08-11.md",
+   "Freight operator licence"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Commercial transport operator registration"
+  ]
+ ],
+ "TRN-ROAD-003": [
+  [
+   "PARTS-08-11.md",
+   "Road closure request"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Road works permit"
+  ]
+ ],
+ "TRN-MAR-006": [
+  [
+   "PARTS-08-11.md",
+   "Port access or operating permit"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Maritime vessel registration"
+  ]
+ ],
+ "TRN-AVI-007": [
+  [
+   "PARTS-08-11.md",
+   "Airport infrastructure works application"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Aviation operator or facility application"
+  ]
+ ],
+ "TRN-INF-008": [
+  [
+   "PARTS-08-11.md",
+   "Construction inspection"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Public infrastructure project submission"
+  ]
+ ],
+ "SEC-INT-006": [
+  [
+   "PARTS-08-11.md",
+   "Classified information access request"
+  ],
+  [
+   "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "Intelligence product registration"
+  ]
+ ]
+}

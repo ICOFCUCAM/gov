@@ -23,8 +23,8 @@
 // (app/scripts/requirements/catalogue.py, the same format). Server only: it
 // reads the generated gap report.
 
-import GAP from '../../../../docs/forms-catalogue/gap-report.json';
-import FORM_SCOPE from '../../../../docs/requirements/form-scope.json';
+import GAP from './data/duplicate-ids.json';
+import FORM_SCOPE from './data/form-scope.json';
 
 export interface FormIdentity {
   /** The catalogue document (file name without .md). */
@@ -97,7 +97,7 @@ export interface CatalogueEntry {
 interface ScopeEntry { source?: string; id: string; title?: string; scope: CatalogueEntry['scope']; rule?: string; reason?: string }
 const SCOPE_ENTRIES = (FORM_SCOPE as { forms: ScopeEntry[] }).forms;
 /** IDs the catalogue uses for different forms in different documents (the gap report's duplicate IDs: [file, title] per occurrence). */
-export const DUPLICATE_IDS: Record<string, [string, string][]> = (GAP as unknown as { duplicate_ids: Record<string, [string, string][]> }).duplicate_ids;
+export const DUPLICATE_IDS: Record<string, [string, string][]> = GAP as unknown as Record<string, [string, string][]>;
 
 /** Every catalogue entry known to carry this ID: each occurrence of a duplicate ID, and the scope list's entries, by catalogue. */
 export function catalogueEntries(formId: string): CatalogueEntry[] {
