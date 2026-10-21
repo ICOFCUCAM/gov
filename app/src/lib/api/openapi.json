@@ -179,6 +179,9 @@
       "name": "rules"
     },
     {
+      "name": "seal-keys"
+    },
+    {
       "name": "session"
     },
     {
@@ -198,6 +201,9 @@
     },
     {
       "name": "tax"
+    },
+    {
+      "name": "trust"
     },
     {
       "name": "twin"
@@ -8095,6 +8101,7 @@
                           "institutions",
                           "offices",
                           "relationships",
+                          "sealKeys",
                           "suspension",
                           "transitionRules"
                         ]
@@ -8116,6 +8123,7 @@
                               "institutions",
                               "offices",
                               "relationships",
+                              "sealKeys",
                               "suspension",
                               "transitionRules"
                             ]
@@ -8388,6 +8396,9 @@
                             "relationships": {
                               "type": "string"
                             },
+                            "sealKeys": {
+                              "type": "string"
+                            },
                             "suspension": {
                               "type": "string"
                             },
@@ -8403,6 +8414,7 @@
                             "institutions",
                             "offices",
                             "relationships",
+                            "sealKeys",
                             "suspension",
                             "transitionRules"
                           ]
@@ -8539,6 +8551,7 @@
                           "institutions": "string",
                           "offices": "string",
                           "relationships": "string",
+                          "sealKeys": "string",
                           "suspension": "string",
                           "transitionRules": "string"
                         }
@@ -8695,6 +8708,7 @@
                           "institutions",
                           "offices",
                           "relationships",
+                          "sealKeys",
                           "suspension",
                           "transitionRules"
                         ]
@@ -8716,6 +8730,7 @@
                               "institutions",
                               "offices",
                               "relationships",
+                              "sealKeys",
                               "suspension",
                               "transitionRules"
                             ]
@@ -8988,6 +9003,9 @@
                             "relationships": {
                               "type": "string"
                             },
+                            "sealKeys": {
+                              "type": "string"
+                            },
                             "suspension": {
                               "type": "string"
                             },
@@ -9003,6 +9021,7 @@
                             "institutions",
                             "offices",
                             "relationships",
+                            "sealKeys",
                             "suspension",
                             "transitionRules"
                           ]
@@ -9136,6 +9155,7 @@
                           "institutions": "string",
                           "offices": "string",
                           "relationships": "string",
+                          "sealKeys": "string",
                           "suspension": "string",
                           "transitionRules": "string"
                         }
@@ -14283,7 +14303,8 @@
                               "professionalRegulation",
                               "statistics",
                               "supremeAudit",
-                              "tax"
+                              "tax",
+                              "trustServices"
                             ]
                           },
                           "scope": {
@@ -39852,7 +39873,8 @@
                                       "professionalRegulation",
                                       "statistics",
                                       "supremeAudit",
-                                      "tax"
+                                      "tax",
+                                      "trustServices"
                                     ]
                                   }
                                 },
@@ -56329,6 +56351,432 @@
         "x-source": "src/app/api/rules/route.ts"
       }
     },
+    "/api/seal-keys": {
+      "get": {
+        "tags": [
+          "seal-keys"
+        ],
+        "operationId": "get_seal_keys",
+        "summary": "GET /api/seal-keys",
+        "description": "/api/seal-keys — the seal key register (lib/keys/seal-register.ts): which keys may seal decisions and certificates, their validity, who approved each under which law, compromise and review. The legal process behind each approval is the nation's; the platform records it. GET: every key with its history, the country's seal-key rules, the authority that approves (named in Who is responsible), the key the key provider presents now and where it stands, keys that sealed decisions but are not in the register (historic candidates), and waiting steps. POST { op }: 'propose' { purpose?, publicKeyPem?, historic?, validFrom?, validUntil?, legalBasis: [{ instrument, eId }], resolution?, reason? } an administrator or a signatory of the seal keys authority; without publicKeyPem the key presented now; 'approve' { id, resolution? } an official who can sign at the seal keys authority (a different person each time); 'withdraw' { id, reason } a waiting proposal; 'report-compromise' { id, compromisedFrom?, reason } stops the key sealing at once; 'confirm-compromise' { id } a different official, at once (no waiting period): revoked; 'withdraw-compromise' { id, reason } an unconfirmed report; 'review-compromise' { id, outcome: 'upheld' | 'earlier', compromisedFrom?, note } the authority's later review; 'propose-rules' { authority?, approvers?, legislatureResolution?, reviewWithinDays?, legalBasis } an administrator; 'confirm-rules' / 'withdraw-rules' { reason? } a different official. Who acted comes from the sign-in, never the request.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SealKey"
+                      }
+                    },
+                    "rules": {
+                      "$ref": "#/components/schemas/SealKeyRules"
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "demo",
+                        "production",
+                        "training"
+                      ]
+                    },
+                    "authority": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slot": {
+                          "type": "string",
+                          "enum": [
+                            "anticorruption",
+                            "businessRegister",
+                            "centralBank",
+                            "civilRegistration",
+                            "constitutionalCourt",
+                            "customs",
+                            "dataProtection",
+                            "education",
+                            "electoral",
+                            "headOfState",
+                            "healthRegulation",
+                            "higherEducationAccreditation",
+                            "humanRights",
+                            "identity",
+                            "immigration",
+                            "judiciary",
+                            "lawRegister",
+                            "legislature",
+                            "ombudsman",
+                            "police",
+                            "professionalRegulation",
+                            "statistics",
+                            "supremeAudit",
+                            "tax",
+                            "trustServices"
+                          ]
+                        },
+                        "label": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "slot",
+                        "label"
+                      ]
+                    },
+                    "presented": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "development",
+                                "env",
+                                "file",
+                                "kms-http",
+                                "vault"
+                              ]
+                            },
+                            "development": {
+                              "type": "boolean"
+                            },
+                            "publicKeyPem": {
+                              "type": "string"
+                            },
+                            "keyId": {
+                              "type": "string"
+                            },
+                            "fingerprint": {
+                              "type": "string"
+                            },
+                            "state": {
+                              "type": "string",
+                              "enum": [
+                                "active",
+                                "approved",
+                                "compromise-reported",
+                                "proposed",
+                                "retired",
+                                "revoked",
+                                "unregistered",
+                                "withdrawn"
+                              ]
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "seals": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "source",
+                            "development"
+                          ]
+                        }
+                      ]
+                    },
+                    "since": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "historicCandidates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "keyId": {
+                            "type": "string"
+                          },
+                          "publicKeyPem": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "number"
+                          },
+                          "first": {
+                            "type": "string"
+                          },
+                          "last": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "keyId",
+                          "publicKeyPem",
+                          "count",
+                          "first",
+                          "last"
+                        ]
+                      }
+                    },
+                    "waiting": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "what": {
+                            "type": "string"
+                          },
+                          "by": {
+                            "type": "string"
+                          },
+                          "at": {
+                            "type": "string"
+                          },
+                          "overdue": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "what",
+                          "by",
+                          "at"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "keys",
+                    "rules",
+                    "mode",
+                    "authority",
+                    "presented",
+                    "since",
+                    "historicCandidates",
+                    "waiting"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "keys": [
+                        {
+                          "id": "ID-0001",
+                          "purpose": "audit",
+                          "keyId": "ID-0001",
+                          "fingerprint": "string",
+                          "publicKeyPem": "string",
+                          "status": "active",
+                          "basis": [
+                            {}
+                          ],
+                          "proposed": {
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          },
+                          "approvals": [
+                            {}
+                          ],
+                          "history": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "rules": {
+                        "adopted": true,
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "confirmedBy": "A. Official",
+                        "citations": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "changes": {},
+                        "authority": "anticorruption",
+                        "approvers": 1,
+                        "legislatureResolution": true,
+                        "reviewWithinDays": 1
+                      },
+                      "mode": "demo",
+                      "authority": {
+                        "id": "ID-0001",
+                        "name": "Example",
+                        "slot": "anticorruption",
+                        "label": "Example"
+                      },
+                      "presented": {
+                        "source": "development",
+                        "development": true,
+                        "publicKeyPem": "string",
+                        "keyId": "ID-0001",
+                        "fingerprint": "string",
+                        "state": "active",
+                        "id": "ID-0001",
+                        "seals": true
+                      },
+                      "since": "2026-01-15T09:30:00.000Z",
+                      "historicCandidates": [
+                        {
+                          "keyId": "ID-0001",
+                          "publicKeyPem": "string",
+                          "count": 1,
+                          "first": "string",
+                          "last": "string"
+                        }
+                      ],
+                      "waiting": [
+                        {
+                          "what": "string",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/seal-keys/route.ts"
+      },
+      "post": {
+        "tags": [
+          "seal-keys"
+        ],
+        "operationId": "post_seal_keys",
+        "summary": "POST /api/seal-keys",
+        "description": "/api/seal-keys — the seal key register (lib/keys/seal-register.ts): which keys may seal decisions and certificates, their validity, who approved each under which law, compromise and review. The legal process behind each approval is the nation's; the platform records it. GET: every key with its history, the country's seal-key rules, the authority that approves (named in Who is responsible), the key the key provider presents now and where it stands, keys that sealed decisions but are not in the register (historic candidates), and waiting steps. POST { op }: 'propose' { purpose?, publicKeyPem?, historic?, validFrom?, validUntil?, legalBasis: [{ instrument, eId }], resolution?, reason? } an administrator or a signatory of the seal keys authority; without publicKeyPem the key presented now; 'approve' { id, resolution? } an official who can sign at the seal keys authority (a different person each time); 'withdraw' { id, reason } a waiting proposal; 'report-compromise' { id, compromisedFrom?, reason } stops the key sealing at once; 'confirm-compromise' { id } a different official, at once (no waiting period): revoked; 'withdraw-compromise' { id, reason } an unconfirmed report; 'review-compromise' { id, outcome: 'upheld' | 'earlier', compromisedFrom?, note } the authority's later review; 'propose-rules' { authority?, approvers?, legislatureResolution?, reviewWithinDays?, legalBasis } an administrator; 'confirm-rules' / 'withdraw-rules' { reason? } a different official. Who acted comes from the sign-in, never the request.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/seal-keys/route.ts"
+      }
+    },
     "/api/session": {
       "get": {
         "tags": [
@@ -56712,6 +57160,9 @@
                         },
                         "tax": {
                           "type": "string"
+                        },
+                        "trustServices": {
+                          "type": "string"
                         }
                       }
                     },
@@ -56797,6 +57248,9 @@
                                       "type": "string"
                                     },
                                     "tax": {
+                                      "type": "string"
+                                    },
+                                    "trustServices": {
                                       "type": "string"
                                     }
                                   }
@@ -56943,6 +57397,9 @@
                                       },
                                       "tax": {
                                         "type": "string"
+                                      },
+                                      "trustServices": {
+                                        "type": "string"
                                       }
                                     }
                                   }
@@ -57052,7 +57509,8 @@
                         "professionalRegulation": "string",
                         "statistics": "string",
                         "supremeAudit": "string",
-                        "tax": "string"
+                        "tax": "string",
+                        "trustServices": "string"
                       },
                       "changes": {
                         "pending": {
@@ -57229,6 +57687,9 @@
                         },
                         "tax": {
                           "type": "string"
+                        },
+                        "trustServices": {
+                          "type": "string"
                         }
                       }
                     },
@@ -57314,6 +57775,9 @@
                                       "type": "string"
                                     },
                                     "tax": {
+                                      "type": "string"
+                                    },
+                                    "trustServices": {
                                       "type": "string"
                                     }
                                   }
@@ -57460,6 +57924,9 @@
                                       },
                                       "tax": {
                                         "type": "string"
+                                      },
+                                      "trustServices": {
+                                        "type": "string"
                                       }
                                     }
                                   }
@@ -57567,7 +58034,8 @@
                         "professionalRegulation": "string",
                         "statistics": "string",
                         "supremeAudit": "string",
-                        "tax": "string"
+                        "tax": "string",
+                        "trustServices": "string"
                       },
                       "changes": {
                         "pending": {
@@ -59414,6 +59882,115 @@
           }
         ],
         "x-source": "src/app/api/tax/route.ts"
+      }
+    },
+    "/api/trust/keys": {
+      "get": {
+        "tags": [
+          "trust"
+        ],
+        "operationId": "get_trust_keys",
+        "summary": "GET /api/trust/keys",
+        "description": "GET /api/trust/keys — the public trust list of the state's seal keys (lib/keys/seal-register.ts; format in docs/SEAL_KEYS.md): every key ever recorded except withdrawn proposals, with its purpose, public key, SHA-256 fingerprint, status, validity, compromise time and legal basis, so a certificate or decision can be checked outside the platform. Public and read-only (no sign-in); never names an official.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "format": {
+                      "type": "string",
+                      "const": "civicos.trust-list"
+                    },
+                    "version": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "generatedAt": {
+                      "type": "string"
+                    },
+                    "since": {
+                      "type": "object",
+                      "properties": {
+                        "audit": {
+                          "type": "string"
+                        },
+                        "decision": {
+                          "type": "string"
+                        },
+                        "exchange": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TrustListEntry"
+                      }
+                    }
+                  },
+                  "required": [
+                    "format",
+                    "version",
+                    "generatedAt",
+                    "since",
+                    "keys"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "format": "civicos.trust-list",
+                      "version": 1,
+                      "generatedAt": "2026-01-15T09:30:00.000Z",
+                      "since": {
+                        "audit": "string",
+                        "decision": "string",
+                        "exchange": "string"
+                      },
+                      "keys": [
+                        {
+                          "purpose": "audit",
+                          "keyId": "ID-0001",
+                          "fingerprint": "string",
+                          "publicKeyPem": "string",
+                          "status": "active",
+                          "validFrom": "2026-01-15",
+                          "validUntil": "string",
+                          "compromisedFrom": "2026-01-15",
+                          "compromiseReported": true,
+                          "historic": true,
+                          "sample": true,
+                          "approvedAt": "2026-01-15T09:30:00.000Z",
+                          "legalBasis": [
+                            {}
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/trust/keys/route.ts"
       }
     },
     "/api/twin/catalog": {
@@ -72889,6 +73466,110 @@
           "at"
         ]
       },
+      "Compromise": {
+        "type": "object",
+        "properties": {
+          "reportedAt": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "compromisedFrom": {
+            "type": "string",
+            "description": "From when the key is no longer trusted: decisions sealed at or after it verify as not trusted."
+          },
+          "reason": {
+            "type": "string"
+          },
+          "confirmed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "independence": {
+                "type": "string",
+                "enum": [
+                  "accounts-only",
+                  "identity-provider",
+                  "unverified"
+                ]
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "independence"
+            ]
+          },
+          "withdrawn": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason"
+            ]
+          },
+          "review": {
+            "type": "object",
+            "properties": {
+              "dueBy": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "earlier",
+                  "upheld"
+                ]
+              },
+              "note": {
+                "type": "string"
+              },
+              "previousFrom": {
+                "type": "string"
+              }
+            },
+            "description": "The named authority's later review (mandatory; due by `dueBy`)."
+          }
+        },
+        "required": [
+          "reportedAt",
+          "by",
+          "compromisedFrom",
+          "reason"
+        ]
+      },
       "ConfigBundle": {
         "type": "object",
         "properties": {
@@ -73079,6 +73760,7 @@
                 "institutions",
                 "offices",
                 "relationships",
+                "sealKeys",
                 "suspension",
                 "transitionRules"
               ]
@@ -75371,6 +76053,9 @@
                 "type": "string"
               },
               "tax": {
+                "type": "string"
+              },
+              "trustServices": {
                 "type": "string"
               }
             },
@@ -81523,6 +82208,7 @@
               "institutions",
               "offices",
               "relationships",
+              "sealKeys",
               "suspension",
               "transitionRules"
             ]
@@ -86143,6 +86829,7 @@
               "institutions",
               "offices",
               "relationships",
+              "sealKeys",
               "suspension",
               "transitionRules"
             ]
@@ -87258,6 +87945,7 @@
                 "institutions",
                 "offices",
                 "relationships",
+                "sealKeys",
                 "suspension",
                 "transitionRules"
               ]
@@ -89736,7 +90424,8 @@
                       "professionalRegulation",
                       "statistics",
                       "supremeAudit",
-                      "tax"
+                      "tax",
+                      "trustServices"
                     ]
                   }
                 },
@@ -91621,6 +92310,539 @@
           "labels"
         ]
       },
+      "SealKey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "audit",
+              "decision",
+              "exchange"
+            ]
+          },
+          "keyId": {
+            "type": "string",
+            "description": "`ed25519:<first 16 hex of the fingerprint>` as seals carry it."
+          },
+          "fingerprint": {
+            "type": "string",
+            "description": "SHA-256 (hex) of the public key's DER SubjectPublicKeyInfo."
+          },
+          "publicKeyPem": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "approved",
+              "proposed",
+              "retired",
+              "revoked",
+              "withdrawn"
+            ]
+          },
+          "historic": {
+            "type": "boolean",
+            "description": "A key that sealed before the register existed, registered afterwards with the period it sealed in."
+          },
+          "sample": {
+            "type": "boolean",
+            "description": "Trusted automatically in a demonstration or training installation."
+          },
+          "coversFrom": {
+            "type": "string",
+            "description": "Earliest decision this key had already sealed when it was proposed (approving it covers them)."
+          },
+          "validFrom": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "resolution": {
+            "$ref": "#/components/schemas/Citation"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "proposed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at"
+            ]
+          },
+          "approvals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SealKeyApproval"
+            }
+          },
+          "rules": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number"
+              },
+              "authority": {
+                "type": "string",
+                "enum": [
+                  "anticorruption",
+                  "businessRegister",
+                  "centralBank",
+                  "civilRegistration",
+                  "constitutionalCourt",
+                  "customs",
+                  "dataProtection",
+                  "education",
+                  "electoral",
+                  "headOfState",
+                  "healthRegulation",
+                  "higherEducationAccreditation",
+                  "humanRights",
+                  "identity",
+                  "immigration",
+                  "judiciary",
+                  "lawRegister",
+                  "legislature",
+                  "ombudsman",
+                  "police",
+                  "professionalRegulation",
+                  "statistics",
+                  "supremeAudit",
+                  "tax",
+                  "trustServices"
+                ]
+              },
+              "institution": {
+                "type": "string"
+              },
+              "approvers": {
+                "type": "number"
+              },
+              "legislatureResolution": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "version",
+              "authority",
+              "institution",
+              "approvers",
+              "legislatureResolution"
+            ],
+            "description": "The rules the approval was made under."
+          },
+          "approvedAt": {
+            "type": "string"
+          },
+          "activated": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by"
+            ]
+          },
+          "retired": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "reason"
+            ]
+          },
+          "compromise": {
+            "$ref": "#/components/schemas/Compromise"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SealKeyEvent"
+            },
+            "description": "Every step, oldest first: nothing is overwritten without a trace."
+          }
+        },
+        "required": [
+          "id",
+          "purpose",
+          "keyId",
+          "fingerprint",
+          "publicKeyPem",
+          "status",
+          "basis",
+          "proposed",
+          "approvals",
+          "history"
+        ]
+      },
+      "SealKeyApproval": {
+        "type": "object",
+        "properties": {
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "independence": {
+            "type": "string",
+            "enum": [
+              "accounts-only",
+              "identity-provider",
+              "unverified"
+            ]
+          }
+        },
+        "required": [
+          "by",
+          "at",
+          "independence"
+        ]
+      },
+      "SealKeyEvent": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "step": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "approved",
+              "proposed",
+              "retired",
+              "revoked",
+              "withdrawn"
+            ]
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "by",
+          "step",
+          "status"
+        ]
+      },
+      "SealKeyRuleValues": {
+        "type": "object",
+        "properties": {
+          "authority": {
+            "type": "string",
+            "enum": [
+              "anticorruption",
+              "businessRegister",
+              "centralBank",
+              "civilRegistration",
+              "constitutionalCourt",
+              "customs",
+              "dataProtection",
+              "education",
+              "electoral",
+              "headOfState",
+              "healthRegulation",
+              "higherEducationAccreditation",
+              "humanRights",
+              "identity",
+              "immigration",
+              "judiciary",
+              "lawRegister",
+              "legislature",
+              "ombudsman",
+              "police",
+              "professionalRegulation",
+              "statistics",
+              "supremeAudit",
+              "tax",
+              "trustServices"
+            ],
+            "description": "The slot of who is responsible whose institution approves seal keys (the nation's law names it)."
+          },
+          "approvers": {
+            "type": "number",
+            "description": "Approvals needed, each by a different official (platform minimum 2)."
+          },
+          "legislatureResolution": {
+            "type": "boolean",
+            "description": "Each key also needs an enacted instrument of the legislature, cited from the laws register. Shipped off."
+          },
+          "reviewWithinDays": {
+            "type": "number",
+            "description": "Days within which the authority reviews a confirmed compromise."
+          }
+        },
+        "required": [
+          "authority",
+          "approvers",
+          "legislatureResolution",
+          "reviewWithinDays"
+        ]
+      },
+      "SealKeyRules": {
+        "type": "object",
+        "properties": {
+          "adopted": {
+            "type": "boolean",
+            "description": "False while these are the platform's defaults, not the country's adopted rules."
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "confirmedBy": {
+            "type": "string"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "changes": {
+            "type": "object",
+            "properties": {
+              "pending": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "$ref": "#/components/schemas/SealKeyRuleValues"
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    }
+                  },
+                  "by": {
+                    "type": "string"
+                  },
+                  "byId": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  },
+                  "confirmed": {
+                    "type": "object",
+                    "properties": {
+                      "by": {
+                        "type": "string"
+                      },
+                      "byId": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      },
+                      "independence": {
+                        "type": "string",
+                        "enum": [
+                          "accounts-only",
+                          "identity-provider",
+                          "unverified"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "by",
+                      "at",
+                      "independence"
+                    ]
+                  },
+                  "expiresAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "values",
+                  "basis",
+                  "by",
+                  "at",
+                  "expiresAt"
+                ],
+                "description": "A proposal waiting for its second official."
+              },
+              "history": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "values": {
+                      "$ref": "#/components/schemas/SealKeyRuleValues"
+                    },
+                    "basis": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Citation"
+                      }
+                    },
+                    "by": {
+                      "type": "string"
+                    },
+                    "byId": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "confirmed": {
+                      "type": "object",
+                      "properties": {
+                        "by": {
+                          "type": "string"
+                        },
+                        "byId": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "string"
+                        },
+                        "independence": {
+                          "type": "string",
+                          "enum": [
+                            "accounts-only",
+                            "identity-provider",
+                            "unverified"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "by",
+                        "at",
+                        "independence"
+                      ]
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "adopted",
+                        "lapsed",
+                        "withdrawn"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "values",
+                    "basis",
+                    "by",
+                    "at",
+                    "outcome"
+                  ]
+                },
+                "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+              }
+            }
+          },
+          "authority": {
+            "type": "string",
+            "enum": [
+              "anticorruption",
+              "businessRegister",
+              "centralBank",
+              "civilRegistration",
+              "constitutionalCourt",
+              "customs",
+              "dataProtection",
+              "education",
+              "electoral",
+              "headOfState",
+              "healthRegulation",
+              "higherEducationAccreditation",
+              "humanRights",
+              "identity",
+              "immigration",
+              "judiciary",
+              "lawRegister",
+              "legislature",
+              "ombudsman",
+              "police",
+              "professionalRegulation",
+              "statistics",
+              "supremeAudit",
+              "tax",
+              "trustServices"
+            ],
+            "description": "The slot of who is responsible whose institution approves seal keys (the nation's law names it)."
+          },
+          "approvers": {
+            "type": "number",
+            "description": "Approvals needed, each by a different official (platform minimum 2)."
+          },
+          "legislatureResolution": {
+            "type": "boolean",
+            "description": "Each key also needs an enacted instrument of the legislature, cited from the laws register. Shipped off."
+          },
+          "reviewWithinDays": {
+            "type": "number",
+            "description": "Days within which the authority reviews a confirmed compromise."
+          }
+        },
+        "required": [
+          "adopted",
+          "authority",
+          "approvers",
+          "legislatureResolution",
+          "reviewWithinDays"
+        ]
+      },
       "SecurityAdvisory": {
         "type": "object",
         "properties": {
@@ -92829,7 +94051,8 @@
                   "professionalRegulation",
                   "statistics",
                   "supremeAudit",
-                  "tax"
+                  "tax",
+                  "trustServices"
                 ]
               },
               "label": {
@@ -93201,6 +94424,9 @@
               "framework": {
                 "type": "string",
                 "const": "platform"
+              },
+              "at": {
+                "type": "string"
               }
             },
             "required": [
@@ -99057,6 +100283,131 @@
             "target"
           ]
         }
+      },
+      "TrustListEntry": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "audit",
+              "decision",
+              "exchange"
+            ]
+          },
+          "keyId": {
+            "type": "string"
+          },
+          "fingerprint": {
+            "type": "string"
+          },
+          "publicKeyPem": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "approved",
+              "proposed",
+              "retired",
+              "revoked",
+              "withdrawn"
+            ]
+          },
+          "validFrom": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "validUntil": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "compromisedFrom": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "compromiseReported": {
+            "type": "boolean"
+          },
+          "historic": {
+            "type": "boolean"
+          },
+          "sample": {
+            "type": "boolean"
+          },
+          "approvedAt": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "legalBasis": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "instrument": {
+                  "type": "string"
+                },
+                "eId": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "num": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "instrument",
+                "eId",
+                "version"
+              ]
+            }
+          }
+        },
+        "required": [
+          "purpose",
+          "keyId",
+          "fingerprint",
+          "publicKeyPem",
+          "status",
+          "validFrom",
+          "validUntil",
+          "compromisedFrom",
+          "compromiseReported",
+          "historic",
+          "sample",
+          "approvedAt",
+          "legalBasis"
+        ]
       },
       "TwinEntity": {
         "type": "object",

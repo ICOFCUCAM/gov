@@ -36,6 +36,8 @@ import { installationMode, modeUnset, samplesAllowed } from '@/lib/ops/mode';
 import { listCases } from '@/lib/casework/engine';
 import { HOME_NATION, nationRecord } from '@/lib/data/updates';
 import { scheduledJobsHealthy } from '@/lib/ops/cron-runs';
+import { sealKeyRules, sealKeyAuthority, presentedStanding, waitingSealKeys } from '@/lib/keys/seal-register';
+import { signer } from '@/lib/keys/custody';
 
 export type TrackState = 'done' | 'in-progress' | 'not-started' | 'blocked';
 export interface Check { label: string; done: boolean; href: string; detail?: string }
@@ -195,6 +197,23 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       ] };
     }),
 
+    // The seal key register (lib/keys/seal-register.ts): a production installation seals no decision with a key it has not approved.
+    track({ key: 'seal-keys', title: 'Seal keys', why: 'The keys that seal the state\'s decisions and certificates: each approved by the authority the nation\'s law names (two officials at least), valid for a period, published so anyone can check a certificate. A production installation seals nothing with a key that is not approved.', href: '/gov/configuration/seal-keys' }, () => {
+      const r = sealKeyRules();
+      const authority = sealKeyAuthority();
+      const half = signer('decision').current();
+      const st = half ? presentedStanding('decision', half.publicKeyPem) : null;
+      const sample = st?.state === 'unregistered' && st.seals;
+      const open = waitingSealKeys().filter(w => /compromis/.test(w.what));
+      return { checks: [
+        { label: 'Seal keys authority named (Who is responsible)', done: !!authority, href: '/gov/configuration/responsible', detail: authority ? undefined : 'Nobody can approve a seal key until the nation names the authority its law designates' },
+        { label: 'Seal-key rules adopted, citing the law (recommended; the platform minimum of two approvals applies until then)', done: r.adopted, href: '/gov/configuration/seal-keys', detail: r.adopted ? `${r.approvers} approvals${r.legislatureResolution ? ' and the legislature\'s instrument' : ''} for each key` : undefined },
+        { label: 'The decision key in use is approved in the register', done: !!st && (st.state === 'active' || st.state === 'approved' || sample), href: '/gov/configuration/seal-keys',
+          detail: !st ? 'The key provider has not presented the key yet' : sample ? `${st.keyId}: trusted as a sample at its first seal (demonstration or training only)` : `${st.keyId}: ${st.state}` },
+        { label: 'No compromise waiting for confirmation or review', done: open.length === 0, href: '/gov/configuration/seal-keys', detail: open.length ? open.map(w => w.what).join('; ').slice(0, 200) : undefined },
+      ] };
+    }),
+
     track({ key: 'procedures', title: 'Procedures', why: 'How each kind of case runs: drafted by one official, tested, approved by another. Cases open only under an approved procedure.', href: '/gov/law/procedures' }, () => {
       const pk = listPackages();
       const approved = pk.filter(p => p.state === 'approved');
@@ -333,6 +352,7 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
     }
   });
   safe(() => { for (const t of waitingTransitions()) wait({ what: `${t.what} — waiting for a second official`, proposedBy: t.by, at: t.at, href: '/gov/configuration/transitions' }); });
+  safe(() => { for (const w of waitingSealKeys()) if (!/review/.test(w.what) || w.overdue) wait({ what: w.what, proposedBy: w.by, at: w.at, href: '/gov/configuration/seal-keys' }); });
   safe(() => { for (const h of waitingHoldings()) wait({ what: `${h.holderName} to hold an office — waiting for a second official`, proposedBy: h.proposedBy, at: h.proposedAt, href: '/gov/configuration/offices' }); });
 
   waiting.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''));

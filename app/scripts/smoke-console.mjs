@@ -41,6 +41,8 @@ const PAGES = [
   { path: '/gov/legislature', map: false, text: /bills and votes/i },
   // Plan phase 6: transitions and emergencies.
   { path: '/gov/configuration/transitions', map: false, text: /record a legal event/i },
+  // The seal key register (lib/keys/seal-register.ts).
+  { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
 ];
 const VIEWPORTS = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 
