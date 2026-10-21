@@ -48,6 +48,20 @@
 // (lib/health/programmes/procedures.ts); every individual public-health form
 // stays excluded (docs/requirements/form-scope.json).
 //
+// Batch 7 (owner approved; plan step I8, independent oversight): the
+// catalogue Part 12 accountability forms the oversight procedures carry
+// (lib/oversight/procedures.ts): DEM-CON-012 ombudsman complaint, DEM-CON-013
+// human rights complaint, DEM-CON-014 public audit finding, DEM-CON-018
+// personal data rights request, DEM-CON-019 protected disclosure, DEM-CON-020
+// the institution's oversight response and DEM-PUB-009 public integrity
+// complaint (docs/forms-catalogue/PARTS-12-13.md). The answers about the
+// person who raised a matter go to the protected-identity record, never the
+// case (lib/oversight/protected-identity.ts); a finding is a recommendation
+// with reasons; a referral carries the case reference only; no field names a
+// suspect. Each body is the institution the nation names for its slot,
+// shipped empty. Voter registration (DEM-ELC-003 … 006) and the other forms
+// the scope holds for legal review are not written.
+//
 // Each contract is a JSON file in the canonical format
 // (civicos.form-contract.v1, lib/forms/canonical.ts; never a second format),
 // with two blocks of its own beside the fields: `catalogue` names the one
@@ -149,6 +163,13 @@ import txAssessment from './catalogue-contracts/taxpayer.registration.assessment
 import txVerificationRecord from './catalogue-contracts/taxpayer.registration.verification_record.json';
 import txAppealAssessment from './catalogue-contracts/taxpayer.registration.appeal_assessment.json';
 import txClosureRecord from './catalogue-contracts/taxpayer.registration.closure_record.json';
+import con012 from './catalogue-contracts/DEM-CON-012.json';
+import con013 from './catalogue-contracts/DEM-CON-013.json';
+import con014 from './catalogue-contracts/DEM-CON-014.json';
+import con018 from './catalogue-contracts/DEM-CON-018.json';
+import con019 from './catalogue-contracts/DEM-CON-019.json';
+import con020 from './catalogue-contracts/DEM-CON-020.json';
+import pub009 from './catalogue-contracts/DEM-PUB-009.json';
 
 /** What meets a catalogue passage: fields of the contract, a documented deviation, a platform rule (with the file that enforces it), a country decision, a step of the linked procedure, an exchange service or a policy of the form. */
 export interface MetBy {
@@ -220,12 +241,17 @@ export const BATCH_2 = [med001, med002, med003, med004, med005, med006, med007, 
 export const BATCH_3 = [txIndividual, txPublicEntity, txNonresident, txBranch, txAmend, txDetailsChange, txObligationAdd, txObligationCancel, txTransfer, txCertificateRequest, txAccountStatement, txDuplicate, txSuspendRequest, txReactivateRequest, txObjection, txAppeal, txWithdraw, txDecision, txDecisionRecord, txInspection, txInspectionChecklist, txFurtherInformation, txFurtherInformationP2, txReferral, txReferralRecord, txAssessment, txVerificationRecord, txAppealAssessment, txClosureRecord] as unknown as CatalogueContractJson[];
 /** Batch 4: public-health programme forms (owner approved, 21 October 2026). */
 export const BATCH_4 = [ph011, ph014] as unknown as CatalogueContractJson[];
-/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3). */
+/** Batch 7: independent oversight and accountability forms, catalogue Part 12 (owner approved, 21 October 2026; plan I8). */
+export const BATCH_7 = [con012, con013, con014, con018, con019, con020, pub009] as unknown as CatalogueContractJson[];
+/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; oversight: batch 7). */
 export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; groups: Record<string, string[]>; items: (CatalogueItem & { for?: string })[] });
 /** The shared items that apply to one contract. */
 export const commonItemsFor = (formId: string): CatalogueItem[] => (COMMON_ITEMS.applies_to.includes(formId) ? COMMON_ITEMS.items.filter(i => !i.for || COMMON_ITEMS.groups[i.for]?.includes(formId)).map(({ for: _for, ...i }) => i) : []);
 /** Who the standard notices name, by the deployment-profile slot that owns the form. */
-const INSTITUTION: Record<string, string> = { professionalRegulation: 'The professional regulator', tax: 'The tax authority', publicHealth: 'The public-health authority' };
+const INSTITUTION: Record<string, string> = {
+  professionalRegulation: 'The professional regulator', tax: 'The tax authority', publicHealth: 'The public-health authority',
+  ombudsman: 'The ombudsman', humanRights: 'The human rights institution', anticorruption: 'The anti-corruption commission', supremeAudit: 'The public audit office', dataProtection: 'The data-protection authority',
+};
 
 function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
   const { definition, notes } = importCanonicalForm(c, { title: c.library.title, groups: fieldGroup });
@@ -255,7 +281,7 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 }
 
 /** Every catalogue contract CivicOS has written, as library drafts. */
-export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4))];
+export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_7.map(c => load(c, 7))];
 
 /**
  * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without

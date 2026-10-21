@@ -8,6 +8,13 @@
   "docs/forms-catalogue/PARTS-12-13.md": "c801d41e56eb3da005de09ce8d6618565d592d32b6aaf4a9eef0830e9323b8f3",
   "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md": "c878eb6ca87bb07bab04adc3281d57c19424d7cf1aeef4617760b66f25c40d04",
   "docs/requirements/form-scope.json": "083d5543e815ff6c9bee8586e9c8c0ee2afa61cd5b208e39d085f7bdae8ff658",
+  "app/src/lib/forms/library/catalogue-contracts/DEM-CON-012.json": "91ba130e1b3eaf47c6a8ba53bc163d80df0f42eb54b8449a47523127471ec49b",
+  "app/src/lib/forms/library/catalogue-contracts/DEM-CON-013.json": "abbe31f434c4d636c9d49f0f4971c9f3a79b1fd10835fbfaa23182772ea3b380",
+  "app/src/lib/forms/library/catalogue-contracts/DEM-CON-014.json": "ca15233e16e6c4d22d5905713bfc5aa0f6b6ffcb155dbcf81507529e8857db99",
+  "app/src/lib/forms/library/catalogue-contracts/DEM-CON-018.json": "5e9277d157d37b61cc1dde30c07561d2e0c9cdc8d75bfc715ae241531d1b5ad5",
+  "app/src/lib/forms/library/catalogue-contracts/DEM-CON-019.json": "99348afb496cf813b0c86008c4e05ba3b459e996a3a9327616dcd53eb38a3348",
+  "app/src/lib/forms/library/catalogue-contracts/DEM-CON-020.json": "041daa30bb084cc6dff2bde2174ac85eb53f8dd3272a267295e4c9a39ca71d6b",
+  "app/src/lib/forms/library/catalogue-contracts/DEM-PUB-009.json": "0b239913fbea157b5a0816c156db830e99993769e42b57760a69933d11eed91b",
   "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-001.json": "d95b517d3cd56d6c90044128beb122ecd971ff9cfd797f051d055d782c3edaf9",
   "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-002.json": "9c24ce4dd7c24abc7f447a3978f8c176cf032b62b2d6e2f9717d628f9087934d",
   "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-003.json": "f7fb7f822e294bb5c2bcd0b2d91e9170d70e8c227b9584f1dd8d5dde407ad47c",
@@ -131,8 +138,8 @@
   "Part 13 (supplement, Stage B contracts)": 10
  },
  "form_status": {
-  "contract_missing": 1646,
-  "contract_draft": 206,
+  "contract_missing": 1639,
+  "contract_draft": 213,
   "under_review": 91,
   "excluded": 128,
   "blocked": 1
@@ -154,10 +161,10 @@
    "LAB-EMP-001"
   ]
  },
- "forms_without_contract": 1850,
+ "forms_without_contract": 1843,
  "library_contracts": {
-  "total": 77,
-  "matched_to_one_form": 77,
+  "total": 84,
+  "matched_to_one_form": 84,
   "unmatched_or_ambiguous": [],
   "batches": [
    {
@@ -885,6 +892,77 @@
     "form_status": {
      "contract_draft": 2
     }
+   },
+   {
+    "batch": 7,
+    "contracts": [
+     {
+      "id": "DEM-CON-012",
+      "identity": "PARTS-12-13:DEM-CON-012@1",
+      "row": "DEM-CON-012",
+      "file": "app/src/lib/forms/library/catalogue-contracts/DEM-CON-012.json",
+      "fields": 23,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "DEM-CON-013",
+      "identity": "PARTS-12-13:DEM-CON-013@1",
+      "row": "DEM-CON-013",
+      "file": "app/src/lib/forms/library/catalogue-contracts/DEM-CON-013.json",
+      "fields": 24,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "DEM-CON-014",
+      "identity": "PARTS-12-13:DEM-CON-014@1",
+      "row": "DEM-CON-014",
+      "file": "app/src/lib/forms/library/catalogue-contracts/DEM-CON-014.json",
+      "fields": 13,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "DEM-CON-018",
+      "identity": "PARTS-12-13:DEM-CON-018@1",
+      "row": "DEM-CON-018",
+      "file": "app/src/lib/forms/library/catalogue-contracts/DEM-CON-018.json",
+      "fields": 18,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "DEM-CON-019",
+      "identity": "PARTS-12-13:DEM-CON-019@1",
+      "row": "DEM-CON-019",
+      "file": "app/src/lib/forms/library/catalogue-contracts/DEM-CON-019.json",
+      "fields": 22,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "DEM-CON-020",
+      "identity": "PARTS-12-13:DEM-CON-020@1",
+      "row": "DEM-CON-020",
+      "file": "app/src/lib/forms/library/catalogue-contracts/DEM-CON-020.json",
+      "fields": 12,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "DEM-PUB-009",
+      "identity": "PARTS-12-13:DEM-PUB-009@1",
+      "row": "DEM-PUB-009",
+      "file": "app/src/lib/forms/library/catalogue-contracts/DEM-PUB-009.json",
+      "fields": 17,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     }
+    ],
+    "form_status": {
+     "contract_draft": 7
+    }
    }
   ],
   "form_status_without_library": {
@@ -923,13 +1001,21 @@
     "under_review": 91,
     "excluded": 128,
     "blocked": 1
+   },
+   "7": {
+    "contract_missing": 1639,
+    "contract_draft": 213,
+    "under_review": 91,
+    "excluded": 128,
+    "blocked": 1
    }
   },
   "forms_without_contract_after_batch": {
    "1": 1902,
    "2": 1881,
    "3": 1852,
-   "4": 1850
+   "4": 1850,
+   "7": 1843
   }
  },
  "incomplete_contracts": [

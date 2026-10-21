@@ -1,6 +1,6 @@
 # Institutional requirements traceability register
 
-**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): 2827 rows, ids `S<part>-…`, below. (2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): 7548 rows (Met 103, Partial 2775, Not yet 3508, Legal review 250, Platform rule stricter 337, Country decision 266, Lower priority 309), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.
+**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): 2827 rows, ids `S<part>-…`, below. (2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): 7548 rows (Met 113, Partial 2772, Not yet 3501, Legal review 250, Platform rule stricter 337, Country decision 266, Lower priority 309), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.
 
 Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts) against the code in `app/src` on 21 October 2026 (main checkout, after step I0.1), with the plan step that delivers each one (`docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md` §5). Machine-readable rows: `docs/requirements/requirements.json`. Re-run from the repository root: `python3 -I app/scripts/requirements/extract.py .` (scripts in `app/scripts/requirements/`; status knowledge base `rules.py`, step reassignment under the revised plan `reassign.py`). Checked by `app/src/lib/requirements/requirements.test.ts`.
 
@@ -20,33 +20,33 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 |---|---|---|---|---|---|---|---|
 | 0 (intro) | 1 | 9 | 0 | 0 | 1 | 0 | 11 |
 | 1 | 73 | 125 | 290 | 5 | 11 | 48 | 552 |
-| 2 | 108 | 231 | 220 | 16 | 0 | 0 | 575 |
+| 2 | 109 | 230 | 220 | 16 | 0 | 0 | 575 |
 | 3 | 57 | 144 | 271 | 23 | 2 | 85 | 582 |
-| 4 | 77 | 88 | 241 | 0 | 1 | 73 | 480 |
+| 4 | 174 | 143 | 112 | 0 | 1 | 50 | 480 |
 | 5 | 66 | 189 | 43 | 0 | 18 | 0 | 316 |
 | 6 | 74 | 184 | 35 | 8 | 8 | 2 | 311 |
-| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
+| **All** | **554** | **1024** | **971** | **52** | **41** | **185** | **2827** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 456 | 0 | 0 | 39 | 4 | 0 | 499 |
+| — | 554 | 0 | 0 | 39 | 4 | 0 | 597 |
 | I0.2 | 0 | 2 | 0 | 0 | 0 | 0 | 2 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
-| I2 | 0 | 66 | 40 | 0 | 1 | 0 | 107 |
-| I3 | 0 | 136 | 26 | 0 | 0 | 0 | 162 |
+| I2 | 0 | 90 | 40 | 0 | 1 | 0 | 131 |
+| I3 | 0 | 161 | 26 | 0 | 0 | 0 | 187 |
 | I4 | 0 | 53 | 1 | 0 | 8 | 0 | 62 |
 | I5 | 0 | 59 | 273 | 0 | 8 | 2 | 342 |
 | I6 | 0 | 43 | 203 | 4 | 0 | 0 | 250 |
 | I7 | 0 | 50 | 252 | 0 | 0 | 0 | 302 |
-| I8 | 0 | 60 | 234 | 0 | 0 | 0 | 294 |
+| I8 | 0 | 63 | 105 | 0 | 0 | 0 | 168 |
 | I9 | 0 | 249 | 29 | 0 | 17 | 0 | 295 |
 | I10 | 0 | 147 | 23 | 6 | 0 | 2 | 178 |
-| I11 | 0 | 42 | 5 | 3 | 0 | 195 | 245 |
+| I11 | 0 | 44 | 5 | 3 | 0 | 172 | 224 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
-| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
+| **All** | **554** | **1024** | **971** | **52** | **41** | **185** | **2827** |
 
 
 ### By sector
@@ -68,7 +68,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | National twin | 14 | 29 | 22 | 0 | 0 | 2 | 67 |
 | Acceptance | 13 | 11 | 2 | 0 | 0 | 0 | 26 |
 | Institution catalogue | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
-| Civil registration and identity | 20 | 48 | 0 | 0 | 0 | 0 | 68 |
+| Civil registration and identity | 21 | 47 | 0 | 0 | 0 | 0 | 68 |
 | Health | 10 | 42 | 2 | 3 | 0 | 0 | 57 |
 | Education | 10 | 24 | 4 | 5 | 0 | 0 | 43 |
 | Immigration | 22 | 16 | 1 | 7 | 0 | 0 | 46 |
@@ -80,7 +80,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Institution workspace contract | 4 | 9 | 0 | 0 | 0 | 0 | 13 |
 | Exchange | 9 | 23 | 7 | 0 | 0 | 2 | 41 |
 | Fieldwork and legacy | 1 | 15 | 8 | 0 | 0 | 0 | 24 |
-| Readiness and acceptance | 27 | 29 | 21 | 0 | 0 | 0 | 77 |
+| Readiness and acceptance | 31 | 27 | 19 | 0 | 0 | 0 | 77 |
 | Judiciary | 13 | 43 | 0 | 0 | 0 | 0 | 56 |
 | Prosecution | 1 | 0 | 0 | 0 | 0 | 25 | 26 |
 | Corrections | 0 | 0 | 0 | 0 | 0 | 38 | 38 |
@@ -95,15 +95,15 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Environment | 0 | 5 | 32 | 0 | 0 | 0 | 37 |
 | Housing and building control | 0 | 0 | 30 | 0 | 0 | 0 | 30 |
 | Public works | 0 | 0 | 39 | 0 | 0 | 0 | 39 |
-| Implementation order and risks | 15 | 9 | 3 | 0 | 0 | 1 | 28 |
+| Implementation order and risks | 16 | 9 | 2 | 0 | 0 | 1 | 28 |
 | Independence (general) | 3 | 1 | 0 | 0 | 0 | 0 | 4 |
 | Legislature | 14 | 19 | 7 | 0 | 0 | 0 | 40 |
 | Electoral | 0 | 0 | 0 | 0 | 0 | 44 | 44 |
-| Supreme audit | 1 | 4 | 33 | 0 | 0 | 0 | 38 |
-| Ombudsman | 0 | 2 | 36 | 0 | 0 | 0 | 38 |
-| Data protection | 1 | 7 | 31 | 0 | 0 | 0 | 39 |
-| Human rights | 0 | 2 | 30 | 0 | 1 | 0 | 33 |
-| Anti-corruption | 2 | 2 | 7 | 0 | 0 | 28 | 39 |
+| Supreme audit | 18 | 19 | 1 | 0 | 0 | 0 | 38 |
+| Ombudsman | 23 | 14 | 1 | 0 | 0 | 0 | 38 |
+| Data protection | 19 | 14 | 6 | 0 | 0 | 0 | 39 |
+| Human rights | 17 | 12 | 3 | 0 | 1 | 0 | 33 |
+| Anti-corruption | 19 | 15 | 0 | 0 | 0 | 5 | 39 |
 | Statistics | 1 | 9 | 28 | 0 | 0 | 0 | 38 |
 | Regulators | 3 | 10 | 27 | 0 | 0 | 0 | 40 |
 | Public service commission | 0 | 4 | 30 | 0 | 0 | 0 | 34 |
@@ -128,30 +128,30 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Roadmap | 23 | 9 | 4 | 0 | 8 | 0 | 44 |
 | Risks | 14 | 8 | 0 | 0 | 0 | 0 | 22 |
 | Launch checklist | 14 | 9 | 0 | 0 | 0 | 0 | 23 |
-| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
+| **All** | **554** | **1024** | **971** | **52** | **41** | **185** | **2827** |
 
 
 ### By category
 
 | Category | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| KPI | 0 | 49 | 119 | 1 | 0 | 26 | 195 |
-| acceptance | 43 | 35 | 13 | 0 | 0 | 0 | 91 |
+| KPI | 0 | 74 | 99 | 1 | 0 | 21 | 195 |
+| acceptance | 47 | 33 | 11 | 0 | 0 | 0 | 91 |
 | architecture | 81 | 150 | 35 | 0 | 25 | 0 | 291 |
-| department | 0 | 96 | 230 | 13 | 0 | 52 | 391 |
+| department | 0 | 126 | 204 | 13 | 0 | 48 | 391 |
 | design | 15 | 133 | 30 | 8 | 0 | 2 | 188 |
 | exchange | 10 | 69 | 25 | 0 | 0 | 2 | 106 |
 | fieldwork | 1 | 15 | 8 | 0 | 0 | 0 | 24 |
 | form | 1 | 49 | 22 | 1 | 0 | 0 | 73 |
-| procedure | 76 | 50 | 269 | 4 | 0 | 43 | 442 |
-| prose-rule | 92 | 123 | 81 | 16 | 15 | 35 | 362 |
-| register | 50 | 54 | 215 | 8 | 0 | 42 | 369 |
+| procedure | 118 | 48 | 233 | 4 | 0 | 39 | 442 |
+| prose-rule | 105 | 120 | 74 | 16 | 15 | 32 | 362 |
+| register | 88 | 61 | 177 | 8 | 0 | 35 | 369 |
 | risk | 18 | 11 | 0 | 0 | 0 | 0 | 29 |
-| role | 10 | 40 | 0 | 1 | 0 | 4 | 55 |
+| role | 11 | 39 | 0 | 1 | 0 | 4 | 55 |
 | security | 41 | 40 | 2 | 0 | 1 | 0 | 84 |
 | service | 3 | 5 | 20 | 0 | 0 | 0 | 28 |
 | twin | 15 | 51 | 31 | 0 | 0 | 2 | 99 |
-| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
+| **All** | **554** | **1024** | **971** | **52** | **41** | **185** | **2827** |
 
 
 ## Plan gaps closed by the revised plan
@@ -262,7 +262,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S0-intro-05 | 42-46 | prose-rule | 1 — A1 — Executive, finance, revenue and economic institutions: Presidency and Cabinet, Treasury, tax, customs, central bank, trade, investment, procurement and related economic regulators. | Partial | Tax, customs operational; presidency, treasury, trade partial; procurement screens only; central bank absent (audit A §3) | See Part 1 rows | I5 |
 | S0-intro-06 | 48-52 | prose-rule | 2 — A2 — Human services and population administration: Civil registration, identity, health, education, immigration, labour, social protection, agriculture, water and professional licensing. | Partial | CRVS, education, immigration, professions operational; health partial; labour, social protection, agriculture, water screens only | See Part 2 rows | I6 (+I4) |
 | S0-intro-07 | 54-58 | prose-rule | 3 — A3 — Justice, security, territory and infrastructure: Judiciary, legislature, police, civilian defence administration, foreign affairs, lands, transport, energy, environment, disaster management and local government. | Partial | Judiciary, mapping operational; police, emergency, land, local partial; corrections, transport, energy, environment screens only; prosecution, defence | See Part 3 rows | I7 (+I11) |
-| S0-intro-08 | 60-64 | prose-rule | 4 — A4 — Independent bodies and cross-government regulators: Elections, audit, statistics, anti-corruption, ombudsman, human rights, data protection, public service commissions, central bank and sector regulators. | Partial | Legislature operational; audit, data protection, statistics, regulators partial; electoral, ombudsman, human rights, anti-corruption, PSC absent | See Part 4 rows | I8 (+I11) |
+| S0-intro-08 | 60-64 | prose-rule | 4 — A4 — Independent bodies and cross-government regulators: Elections, audit, statistics, anti-corruption, ombudsman, human rights, data protection, public service commissions, central bank and sector regulators. | Partial | Legislature operational; public audit engagements, ombudsman and human rights complaints, protected disclosures and data-protection requests since pla | See Part 4 rows | I8 (+I11) |
 | S0-intro-09 | 66-70 | prose-rule | 5 — B and D — Standalone/federated architecture and completeness: Institution kernel, portable records and signatures, progressive onboarding, mixed hosting, service boundaries, measurable department readiness and first- | Partial | Kernel built and tested; institution export, migration manifest, event envelope missing | See Part 5 rows | I9 |
 | S0-intro-10 | 72-76 | prose-rule | 6 — C, E and F — Premium design system, build order and risk controls: Concrete UI specifications, institutional visual identity, accessible interaction patterns, deployment priorities, standards and security/legal accep | Partial | Console tokens and grounds exist; no workspace ground or component-state test | See Part 6 rows | I10 |
 | S0-intro-11 | 78 | prose-rule | The aim is an implementable specification, not a claim that every country's legal forms, fees, deadlines and powers can be safely pre-approved in a universal package. | Country decision | Platform provides: laws [] and rules [] ship empty, procedures and permit mappings ship as unapproved drafts (audit A §2.6-2.8) | reference procedures pre-fill deadline and appeal day counts (e.g. lib/civil/procedures.ts:122-124, lib/courts/procedures.ts:91-92, lib/immigration/pr | I1 |
@@ -904,7 +904,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 |---|---|---|---|---|---|---|---|
 | S2-A-01 | 1116 | prose-rule | A nation may divide, merge or rename institutions, but CivicOS must record the actual legal mandate and responsible authority for each function. | Met | lib/data/store/institutions.ts (standing, branch, basis, effectiveFrom, independence per dimension, prohibitions, records); test lib/data/store/instit |  | — |
 
-### Civil registration and identity — Met 20, Partial 48
+### Civil registration and identity — Met 21, Partial 47
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -967,7 +967,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S2-C.1-44 | 1287 | role | Records custodian: manage authorised archival functions. | Partial | Officer/Can sign roles in the civil registration institution; exchange service returns only declared fields | Role scoping by task (senior registrar exceptions, credential officer) | I2 |
 | S2-C.1-45 | 1288 | role | Auditor: review evidence and events without silently changing records. | Met | lib/auth/roles.ts caseActRefusal()/caseReadRefusal()/reaches(); tests lib/auth/case-rules.test.ts, lib/auth/negative-authorization.test.ts (auditors r |  | — |
 | S2-C.1-46 | 1289 | role | Identity verification service: return only approved attributes. | Partial | Officer/Can sign roles in the civil registration institution; exchange service returns only declared fields | Role scoping by task (senior registrar exceptions, credential officer) | I2 |
-| S2-C.1-47 | 1290 | role | Independent privacy oversight: inspect access and investigate misuse, without inheriting unrestricted operational access. | Partial | Data-protection authority reads the access log (roles.ts), access-watch findings | Investigation procedure scoping access (I8) | I8 |
+| S2-C.1-47 | 1290 | role | Independent privacy oversight: inspect access and investigate misuse, without inheriting unrestricted operational access. | Met | Data-protection authority reads the access log (roles.ts), access-watch findings; data-protection.rights-request and .investigation (the controller as |  | — |
 | S2-C.1-48 | 1294 | twin | Birth and death registration completeness | Partial | Civil register exists; aggregates in lib/civil/twin.ts | Indicator definitions | I3 |
 | S2-C.1-49 | 1294 | twin | Median processing time | Partial | Civil register exists; aggregates in lib/civil/twin.ts | Indicator definitions | I3 |
 | S2-C.1-50 | 1294 | twin | Pending cases by age band | Partial | Civil register exists; aggregates in lib/civil/twin.ts | Indicator definitions | I3 |
@@ -2331,216 +2331,216 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-C.2-41 | 2961 | KPI | Publication timeliness | Lower priority | Plan §4; absent (acceptance P4-03, P4-15 partial) | absent: no module, register or procedure (audit A §3) | I11 |
 | S4-C.2-42 | 2961 | prose-rule | Turnout and result figures must be traceable to the relevant election event and source. | Lower priority | Plan §4; absent (acceptance P4-03, P4-15 partial) | absent: no module, register or procedure (audit A §3) | I11 |
 
-### Supreme audit — Met 1, Partial 4, Not yet 33
+### Supreme audit — Met 18, Partial 19, Not yet 1
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S4-A.3-01 | 2792 | prose-rule | Public expenditure, compliance, performance and financial audit. | Partial | Slots exist (supremeAudit, ombudsman, dataProtection, humanRights, statistics); see C rows | Workflows | I8 |
-| S4-A.3-02 | 2794 | prose-rule | Maintains independent audit plans, working papers, findings, management responses and published reports. | Partial | Slots exist (supremeAudit, ombudsman, dataProtection, humanRights, statistics); see C rows | Workflows | I8 |
+| S4-A.3-01 | 2792 | prose-rule | Public expenditure, compliance, performance and financial audit. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-A.3-02 | 2794 | prose-rule | Maintains independent audit plans, working papers, findings, management responses and published reports. | Partial | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic | Publication of the approved report on the office's public site and laying it before the legislature are recorded as a step, not carried out | I8 |
 | S4-C.3-01 | 2965 | prose-rule | A supreme audit institution needs a dedicated workspace that allows auditors to examine records without becoming administrators of the institutions they audit. | Met | Audit relationship: read listed records for a listed purpose, never a change (readRelationship()) |  | — |
-| S4-C.3-02 | 2969 | department | Risk-based audit planning | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.3-03 | 2970 | department | Financial and compliance audits | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.3-04 | 2971 | department | Performance audits | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.3-05 | 2972 | department | Evidence requests and submissions | Partial | request_information relationship reads, logged | Evidence request records with due date and status; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or lega | I8 (+I2) |
-| S4-C.3-06 | 2973 | department | Working papers and audit tests | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.3-07 | 2974 | department | Findings and recommendations | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.3-08 | 2975 | department | Management responses | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.3-09 | 2976 | department | Follow-up and remediation | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.3-10 | 2977 | department | Publication and legislative reporting | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.3-11 | 2978 | department | Audit quality assurance | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.3-12 | 2984 | register | Audit engagement: Scope, objectives, authority, period, team and approved plan | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-13 | 2985 | register | Evidence request: Audited entity, requested evidence, purpose, due date and status | Partial | request_information relationship reads, logged | Evidence request records with due date and status | I8 |
-| S4-C.3-14 | 2986 | register | Evidence item: Source, received time, integrity information, custodian and audit use | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-15 | 2987 | register | Audit test: Procedure, sample or population definition, result and reviewer | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-16 | 2988 | register | Finding: Criteria, condition, evidence, cause, effect and proposed recommendation | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-17 | 2989 | register | Management response: Respondent, response, supporting evidence and date | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-18 | 2990 | register | Recommendation: Owner, agreed or disputed action, due date if established and follow-up status | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-19 | 2991 | register | Audit report: Approved version, sign-off, publication status and distribution | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-20 | 2995 | procedure | Approve and record the audit mandate, scope and team. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-21 | 2996 | procedure | Notify the audited institution through the approved process. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-22 | 2997 | procedure | Request evidence with a clear authority and purpose. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-23 | 2998 | procedure | Preserve submitted material and its provenance. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-24 | 2999 | procedure | Record tests, working papers, findings and review notes. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-25 | 3000 | procedure | Provide the audited entity its authorised response opportunity. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-26 | 3001 | procedure | Approve the report through the audit institution's own governance. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-27 | 3002 | procedure | Publish or submit it as authorised. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-28 | 3003 | procedure | Track recommendations and subsequent verification. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-29 | 3005 | procedure | Separation rule: the audited ministry may respond to a finding and submit evidence, but it must not edit the audit institution's finding or delete its working papers. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-30 | 3005 | procedure | A disagreement should be recorded as a response or review, not resolved by overwriting the auditor's record. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
-| S4-C.3-31 | 3007 | KPI | Audit-plan completion | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data | I8 (+I3) |
-| S4-C.3-32 | 3007 | KPI | Evidence-request turnaround | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data | I8 (+I3) |
-| S4-C.3-33 | 3007 | KPI | Report review time | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data | I8 (+I3) |
-| S4-C.3-34 | 3007 | KPI | Recommendation follow-up | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data | I8 (+I3) |
-| S4-C.3-35 | 3007 | KPI | Repeat findings | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data | I8 (+I3) |
-| S4-C.3-36 | 3007 | procedure | Avoid rewarding auditors simply for the number or monetary value of findings. | Not yet | No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04) | Audit engagement procedure and registers | I8 |
+| S4-C.3-02 | 2969 | department | Risk-based audit planning | Partial | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic | An audit programme with the office's own risk assessment (officials' reasons, never a score); Department = {id, name} only (lib/api/types.ts:536): no  | I8 (+I2) |
+| S4-C.3-03 | 2970 | department | Financial and compliance audits | Partial | Functions exist: audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record- | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.3-04 | 2971 | department | Performance audits | Partial | Functions exist: audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record- | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.3-05 | 2972 | department | Evidence requests and submissions | Partial | Functions exist: audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record- | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.3-06 | 2973 | department | Working papers and audit tests | Partial | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic | Audit tests and evidence items as structured records (custodian, audit use, reviewer); Department = {id, name} only (lib/api/types.ts:536): no account | I8 (+I2) |
+| S4-C.3-07 | 2974 | department | Findings and recommendations | Partial | Functions exist: audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record- | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.3-08 | 2975 | department | Management responses | Partial | Functions exist: audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record- | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.3-09 | 2976 | department | Follow-up and remediation | Partial | Functions exist: audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record- | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.3-10 | 2977 | department | Publication and legislative reporting | Partial | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic | The report published through the office's Site editor and laid before the legislature as a legislative record; distribution list; Department = {id, na | I8 (+I2) |
+| S4-C.3-11 | 2978 | department | Audit quality assurance | Not yet | absent: no module, register or procedure (audit A §3) | Quality review of engagements; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
+| S4-C.3-12 | 2984 | register | Audit engagement: Scope, objectives, authority, period, team and approved plan | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-13 | 2985 | register | Evidence request: Audited entity, requested evidence, purpose, due date and status | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-14 | 2986 | register | Evidence item: Source, received time, integrity information, custodian and audit use | Partial | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic | Audit tests and evidence items as structured records (custodian, audit use, reviewer) | I8 |
+| S4-C.3-15 | 2987 | register | Audit test: Procedure, sample or population definition, result and reviewer | Partial | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic | Audit tests and evidence items as structured records (custodian, audit use, reviewer) | I8 |
+| S4-C.3-16 | 2988 | register | Finding: Criteria, condition, evidence, cause, effect and proposed recommendation | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-17 | 2989 | register | Management response: Respondent, response, supporting evidence and date | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-18 | 2990 | register | Recommendation: Owner, agreed or disputed action, due date if established and follow-up status | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-19 | 2991 | register | Audit report: Approved version, sign-off, publication status and distribution | Partial | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic | The report published through the office's Site editor and laid before the legislature as a legislative record; distribution list | I8 |
+| S4-C.3-20 | 2995 | procedure | Approve and record the audit mandate, scope and team. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-21 | 2996 | procedure | Notify the audited institution through the approved process. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-22 | 2997 | procedure | Request evidence with a clear authority and purpose. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-23 | 2998 | procedure | Preserve submitted material and its provenance. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-24 | 2999 | procedure | Record tests, working papers, findings and review notes. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-25 | 3000 | procedure | Provide the audited entity its authorised response opportunity. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-26 | 3001 | procedure | Approve the report through the audit institution's own governance. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-27 | 3002 | procedure | Publish or submit it as authorised. | Partial | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic | The report published through the office's Site editor and laid before the legislature as a legislative record; distribution list | I8 |
+| S4-C.3-28 | 3003 | procedure | Track recommendations and subsequent verification. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-29 | 3005 | procedure | Separation rule: the audited ministry may respond to a finding and submit evidence, but it must not edit the audit institution's finding or delete its working papers. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-30 | 3005 | procedure | A disagreement should be recorded as a response or review, not resolved by overwriting the auditor's record. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
+| S4-C.3-31 | 3007 | KPI | Audit-plan completion | Partial | Records exist: engagements, evidence requests with dates, findings and follow-up (lib/oversight/procedures.ts (reference drafts, each body an independ | Indicator definitions | I3 |
+| S4-C.3-32 | 3007 | KPI | Evidence-request turnaround | Partial | Records exist: engagements, evidence requests with dates, findings and follow-up (lib/oversight/procedures.ts (reference drafts, each body an independ | Indicator definitions | I3 |
+| S4-C.3-33 | 3007 | KPI | Report review time | Partial | Records exist: engagements, evidence requests with dates, findings and follow-up (lib/oversight/procedures.ts (reference drafts, each body an independ | Indicator definitions | I3 |
+| S4-C.3-34 | 3007 | KPI | Recommendation follow-up | Partial | Records exist: engagements, evidence requests with dates, findings and follow-up (lib/oversight/procedures.ts (reference drafts, each body an independ | Indicator definitions | I3 |
+| S4-C.3-35 | 3007 | KPI | Repeat findings | Partial | Records exist: engagements, evidence requests with dates, findings and follow-up (lib/oversight/procedures.ts (reference drafts, each body an independ | Indicator definitions | I3 |
+| S4-C.3-36 | 3007 | procedure | Avoid rewarding auditors simply for the number or monetary value of findings. | Met | audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communic |  | — |
 
-### Ombudsman — Partial 2, Not yet 36
-
-| ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
-|---|---|---|---|---|---|---|---|
-| S4-A.4-01 | 2798 | prose-rule | Complaints about public administration, maladministration and rights-related concerns within mandate. | Partial | Slots exist (supremeAudit, ombudsman, dataProtection, humanRights, statistics); see C rows | Workflows | I8 |
-| S4-A.4-02 | 2800 | prose-rule | Keeps complaint handling, evidence, findings and recommendations distinct from the institution being investigated. | Partial | Slots exist (supremeAudit, ombudsman, dataProtection, humanRights, statistics); see C rows | Workflows | I8 |
-| S4-C.4-01 | 3013 | department | Complaint intake and accessibility support | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.4-02 | 3014 | department | Jurisdiction and admissibility review | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.4-03 | 3015 | department | Early resolution and referral | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.4-04 | 3016 | department | Investigation and evidence requests | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.4-05 | 3017 | department | Confidential interviews | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.4-06 | 3018 | department | Findings and recommendations | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.4-07 | 3019 | department | Agency responses and follow-up | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.4-08 | 3020 | department | Systemic-issue investigations | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.4-09 | 3021 | department | Public reporting and case archive | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.4-10 | 3025 | register | Complaint ID and preferred contact method | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-11 | 3026 | register | Respondent institution and jurisdiction | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-12 | 3027 | register | Issue category and alleged administrative action | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-13 | 3028 | register | Dates, evidence and affected decision | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-14 | 3029 | register | Confidentiality or safety concerns | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-15 | 3030 | register | Admissibility decision and reasons | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-16 | 3031 | register | Investigator and assigned authority | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-17 | 3032 | register | Findings, recommendation and response | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-18 | 3033 | register | Closure reason and review route | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-19 | 3037 | procedure | Intake → jurisdiction review → admissibility decision → evidence collection → investigation → findings → authorised recommendation or other outcome → response monitoring → closure. | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-20 | 3037 | procedure | Stage 1 of 9: Intake | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-21 | 3037 | procedure | Stage 2 of 9: jurisdiction review | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-22 | 3037 | procedure | Stage 3 of 9: admissibility decision | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-23 | 3037 | procedure | Stage 4 of 9: evidence collection | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-24 | 3037 | procedure | Stage 5 of 9: investigation | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-25 | 3037 | procedure | Stage 6 of 9: findings | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-26 | 3037 | procedure | Stage 7 of 9: authorised recommendation or other outcome | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-27 | 3037 | procedure | Stage 8 of 9: response monitoring | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-28 | 3037 | procedure | Stage 9 of 9: closure | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-29 | 3039 | procedure | A complaint is not a finding of misconduct. | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-30 | 3039 | procedure | The institution being complained about should receive only the information needed for a lawful response, with protections for confidential sources and sensitive complainant details. | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity | I8 |
-| S4-C.4-31 | 3041 | KPI | Intake accessibility | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-| S4-C.4-32 | 3041 | KPI | Admissibility time | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-| S4-C.4-33 | 3041 | KPI | Case age | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-| S4-C.4-34 | 3041 | KPI | Recommendations answered | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-| S4-C.4-35 | 3041 | KPI | Overdue follow-up | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-| S4-C.4-36 | 3041 | KPI | Recurring systemic issues | Not yet | absent: no module, register or procedure (audit A §3) (slot ombudsman) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-
-### Data protection — Met 1, Partial 7, Not yet 31
+### Ombudsman — Met 23, Partial 14, Not yet 1
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S4-A.5-01 | 2804 | prose-rule | Independent oversight of personal-data processing, within statutory powers. | Partial | Slots exist (supremeAudit, ombudsman, dataProtection, humanRights, statistics); see C rows | Workflows | I8 |
-| S4-A.5-02 | 2806 | prose-rule | Investigates complaints, audits data practices and manages authorised enforcement actions without inheriting the operational control of every register. | Partial | Slots exist (supremeAudit, ombudsman, dataProtection, humanRights, statistics); see C rows | Workflows | I8 |
+| S4-A.4-01 | 2798 | prose-rule | Complaints about public administration, maladministration and rights-related concerns within mandate. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-A.4-02 | 2800 | prose-rule | Keeps complaint handling, evidence, findings and recommendations distinct from the institution being investigated. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-01 | 3013 | department | Complaint intake and accessibility support | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.4-02 | 3014 | department | Jurisdiction and admissibility review | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.4-03 | 3015 | department | Early resolution and referral | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.4-04 | 3016 | department | Investigation and evidence requests | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.4-05 | 3017 | department | Confidential interviews | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis | Interview scheduling and consent record; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
+| S4-C.4-06 | 3018 | department | Findings and recommendations | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.4-07 | 3019 | department | Agency responses and follow-up | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.4-08 | 3020 | department | Systemic-issue investigations | Not yet | Complaints only | An own-initiative (systemic) investigation procedure; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or l | I8 (+I2) |
+| S4-C.4-09 | 3021 | department | Public reporting and case archive | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis | Public reports through the body's Site editor; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal ba | I8 (+I2) |
+| S4-C.4-10 | 3025 | register | Complaint ID and preferred contact method | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-11 | 3026 | register | Respondent institution and jurisdiction | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-12 | 3027 | register | Issue category and alleged administrative action | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-13 | 3028 | register | Dates, evidence and affected decision | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-14 | 3029 | register | Confidentiality or safety concerns | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-15 | 3030 | register | Admissibility decision and reasons | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-16 | 3031 | register | Investigator and assigned authority | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-17 | 3032 | register | Findings, recommendation and response | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-18 | 3033 | register | Closure reason and review route | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-19 | 3037 | procedure | Intake → jurisdiction review → admissibility decision → evidence collection → investigation → findings → authorised recommendation or other outcome → response monitoring → closure. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-20 | 3037 | procedure | Stage 1 of 9: Intake | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-21 | 3037 | procedure | Stage 2 of 9: jurisdiction review | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-22 | 3037 | procedure | Stage 3 of 9: admissibility decision | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-23 | 3037 | procedure | Stage 4 of 9: evidence collection | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-24 | 3037 | procedure | Stage 5 of 9: investigation | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-25 | 3037 | procedure | Stage 6 of 9: findings | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-26 | 3037 | procedure | Stage 7 of 9: authorised recommendation or other outcome | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-27 | 3037 | procedure | Stage 8 of 9: response monitoring | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-28 | 3037 | procedure | Stage 9 of 9: closure | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-29 | 3039 | procedure | A complaint is not a finding of misconduct. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-30 | 3039 | procedure | The institution being complained about should receive only the information needed for a lawful response, with protections for confidential sources and sensitive complainant details. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.4-31 | 3041 | KPI | Intake accessibility | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.4-32 | 3041 | KPI | Admissibility time | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.4-33 | 3041 | KPI | Case age | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.4-34 | 3041 | KPI | Recommendations answered | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.4-35 | 3041 | KPI | Overdue follow-up | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.4-36 | 3041 | KPI | Recurring systemic issues | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+
+### Data protection — Met 19, Partial 14, Not yet 6
+
+| ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
+|---|---|---|---|---|---|---|---|
+| S4-A.5-01 | 2804 | prose-rule | Independent oversight of personal-data processing, within statutory powers. | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-A.5-02 | 2806 | prose-rule | Investigates complaints, audits data practices and manages authorised enforcement actions without inheriting the operational control of every register. | Partial | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga | Audits of data practices (inspection programmes) and enforcement powers beyond a recommendation or order recorded with reasons | I8 |
 | S4-C.5-01 | 3045 | prose-rule | Its role must be distinct from the team that builds or operates the platform. | Met | Administrators do not read the access log; shortening needs confirmByOversight() |  | — |
-| S4-C.5-02 | 3051 | department | Complaints about personal-data processing | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.5-03 | 3052 | department | Investigations and evidence requests | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.5-04 | 3053 | department | Controller and processor registers where required | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.5-05 | 3054 | department | Data-breach notifications | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
+| S4-C.5-02 | 3051 | department | Complaints about personal-data processing | Partial | Functions exist: data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and a | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.5-03 | 3052 | department | Investigations and evidence requests | Partial | Functions exist: data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and a | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.5-04 | 3053 | department | Controller and processor registers where required | Not yet | absent: no module, register or procedure (audit A §3) | Controller and processor register, breach notification form, inspection programme, guidance and public decisions, cross-border cooperation; Department | I8 (+I2) |
+| S4-C.5-05 | 3054 | department | Data-breach notifications | Not yet | absent: no module, register or procedure (audit A §3) | Controller and processor register, breach notification form, inspection programme, guidance and public decisions, cross-border cooperation; Department | I8 (+I2) |
 | S4-C.5-06 | 3055 | department | Data-protection impact assessments | Partial | DPIA template in evidence packs (lib/data/evidence.ts) | DPIA records per processing; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.5-07 | 3056 | department | Inspection and audit programmes | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.5-08 | 3057 | department | Corrective directions and enforcement | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.5-09 | 3058 | department | Guidance and public decisions | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.5-10 | 3059 | department | Cross-border cooperation where authorised | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.5-11 | 3060 | department | CivicOS access-log review and misuse investigations | Partial | Data-protection authority reads the access log (roles.ts), every read logged; access-watch findings (lib/records/access-watch.ts) | Investigation case scoping the read; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.5-12 | 3064 | register | Complaint and affected processing activity | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-13 | 3065 | register | Responsible controller and processor references | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-14 | 3066 | register | Data categories and purposes | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-15 | 3067 | register | Alleged or observed breach | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-16 | 3068 | register | Evidence request and response | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-17 | 3069 | register | Investigation findings | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-18 | 3070 | register | Legal provisions and version | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-19 | 3071 | register | Corrective action or enforcement decision | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-20 | 3072 | register | Review or appeal status | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-21 | 3073 | register | Publication and redaction record | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-22 | 3077 | procedure | Receive the complaint, audit alert or referral. | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-23 | 3078 | procedure | Record the allegation and preserve relevant evidence. | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-24 | 3079 | procedure | Determine jurisdiction and the applicable investigation powers. | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-25 | 3080 | procedure | Request the relevant access logs or records through the authorised mechanism. | Partial | Data-protection authority reads the access log (roles.ts), every read logged; access-watch findings (lib/records/access-watch.ts) | Investigation case scoping the read | I8 |
-| S4-C.5-26 | 3081 | procedure | Review access purpose, role, scope and legal basis. | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-27 | 3082 | procedure | Record findings separately from the original allegation. | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-28 | 3083 | procedure | Issue any authorised recommendation, order or other outcome. | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-29 | 3084 | procedure | Track compliance and preserve the review history. | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-30 | 3086 | procedure | Critical boundary: privacy oversight staff must not receive blanket access to all raw personal data merely because they regulate data protection. | Partial | DPA reads access log metadata, never record content | Purpose-scoped investigation grants (acceptance P4-05) | I8 |
-| S4-C.5-31 | 3086 | procedure | Their access should be based on specific investigatory authority and limited to the evidence required. | Partial | DPA reads access log metadata, never record content | Purpose-scoped investigation grants (acceptance P4-05) | I8 |
-| S4-C.5-32 | 3086 | procedure | Where direct access to a record is necessary, the purpose, scope and access event must be recorded. | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure | I8 |
-| S4-C.5-33 | 3088 | KPI | Complaint workload | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data) — plan  | I8 (+I3) |
-| S4-C.5-34 | 3088 | KPI | Breach-notification processing | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data) — plan  | I8 (+I3) |
-| S4-C.5-35 | 3088 | KPI | Investigation age | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data) — plan  | I8 (+I3) |
-| S4-C.5-36 | 3088 | KPI | Compliance with authorised corrective actions | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data) — plan  | I8 (+I3) |
-| S4-C.5-37 | 3088 | KPI | Repeat access-control failures | Not yet | No privacy-investigation procedure, breach notifications, controller register | Privacy investigation procedure; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data) — plan  | I8 (+I3) |
+| S4-C.5-07 | 3056 | department | Inspection and audit programmes | Not yet | absent: no module, register or procedure (audit A §3) | Controller and processor register, breach notification form, inspection programme, guidance and public decisions, cross-border cooperation; Department | I8 (+I2) |
+| S4-C.5-08 | 3057 | department | Corrective directions and enforcement | Partial | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga | Processor references, structured data categories, appeal tracking, the publication and redaction record, enforcement powers beyond a recorded order; D | I8 (+I2) |
+| S4-C.5-09 | 3058 | department | Guidance and public decisions | Not yet | absent: no module, register or procedure (audit A §3) | Controller and processor register, breach notification form, inspection programme, guidance and public decisions, cross-border cooperation; Department | I8 (+I2) |
+| S4-C.5-10 | 3059 | department | Cross-border cooperation where authorised | Not yet | absent: no module, register or procedure (audit A §3) | Controller and processor register, breach notification form, inspection programme, guidance and public decisions, cross-border cooperation; Department | I8 (+I2) |
+| S4-C.5-11 | 3060 | department | CivicOS access-log review and misuse investigations | Partial | Functions exist: Data-protection authority reads the access log (roles.ts), every read logged; access-watch findings (lib/records/access-watch.ts); da | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.5-12 | 3064 | register | Complaint and affected processing activity | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-13 | 3065 | register | Responsible controller and processor references | Partial | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga | Processor references, structured data categories, appeal tracking, the publication and redaction record, enforcement powers beyond a recorded order | I8 |
+| S4-C.5-14 | 3066 | register | Data categories and purposes | Partial | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga | Processor references, structured data categories, appeal tracking, the publication and redaction record, enforcement powers beyond a recorded order | I8 |
+| S4-C.5-15 | 3067 | register | Alleged or observed breach | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-16 | 3068 | register | Evidence request and response | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-17 | 3069 | register | Investigation findings | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-18 | 3070 | register | Legal provisions and version | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-19 | 3071 | register | Corrective action or enforcement decision | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-20 | 3072 | register | Review or appeal status | Partial | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga | Processor references, structured data categories, appeal tracking, the publication and redaction record, enforcement powers beyond a recorded order | I8 |
+| S4-C.5-21 | 3073 | register | Publication and redaction record | Partial | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga | Processor references, structured data categories, appeal tracking, the publication and redaction record, enforcement powers beyond a recorded order | I8 |
+| S4-C.5-22 | 3077 | procedure | Receive the complaint, audit alert or referral. | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-23 | 3078 | procedure | Record the allegation and preserve relevant evidence. | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-24 | 3079 | procedure | Determine jurisdiction and the applicable investigation powers. | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-25 | 3080 | procedure | Request the relevant access logs or records through the authorised mechanism. | Met | Data-protection authority reads the access log (roles.ts), every read logged; access-watch findings (lib/records/access-watch.ts); data-protection.rig |  | — |
+| S4-C.5-26 | 3081 | procedure | Review access purpose, role, scope and legal basis. | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-27 | 3082 | procedure | Record findings separately from the original allegation. | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-28 | 3083 | procedure | Issue any authorised recommendation, order or other outcome. | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-29 | 3084 | procedure | Track compliance and preserve the review history. | Met | data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investiga |  | — |
+| S4-C.5-30 | 3086 | procedure | Critical boundary: privacy oversight staff must not receive blanket access to all raw personal data merely because they regulate data protection. | Met | DPA reads access log metadata, never record content; data-protection.rights-request and .investigation (the controller asked only under an approved re |  | — |
+| S4-C.5-31 | 3086 | procedure | Their access should be based on specific investigatory authority and limited to the evidence required. | Met | DPA reads access log metadata, never record content; data-protection.rights-request and .investigation (the controller asked only under an approved re |  | — |
+| S4-C.5-32 | 3086 | procedure | Where direct access to a record is necessary, the purpose, scope and access event must be recorded. | Met | DPA reads access log metadata, never record content; data-protection.rights-request and .investigation (the controller asked only under an approved re |  | — |
+| S4-C.5-33 | 3088 | KPI | Complaint workload | Partial | Records exist (data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and ans | Indicator definitions | I3 |
+| S4-C.5-34 | 3088 | KPI | Breach-notification processing | Not yet | absent: no module, register or procedure (audit A §3) | Controller and processor register, breach notification form, inspection programme, guidance and public decisions, cross-border cooperation; Indicator  | I8 (+I3) |
+| S4-C.5-35 | 3088 | KPI | Investigation age | Partial | Records exist (data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and ans | Indicator definitions | I3 |
+| S4-C.5-36 | 3088 | KPI | Compliance with authorised corrective actions | Partial | Records exist (data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and ans | Indicator definitions | I3 |
+| S4-C.5-37 | 3088 | KPI | Repeat access-control failures | Partial | Records exist (data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and ans | Indicator definitions | I3 |
 
-### Human rights — Partial 2, Not yet 30, Country decision 1
-
-| ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
-|---|---|---|---|---|---|---|---|
-| S4-A.6-01 | 2810 | prose-rule | Human-rights monitoring, recommendations, reports and authorised inquiries. | Partial | Slots exist (supremeAudit, ombudsman, dataProtection, humanRights, statistics); see C rows | Workflows | I8 |
-| S4-A.6-02 | 2812 | prose-rule | Maintains protected complaints and investigation records with safeguards for complainants, witnesses and vulnerable people. | Partial | Slots exist (supremeAudit, ombudsman, dataProtection, humanRights, statistics); see C rows | Workflows | I8 |
-| S4-C.6-01 | 3092 | prose-rule | They should inform the configuration, while national law determines the body's actual powers. | Country decision | Platform provides the decision as configuration: procedures drafted, tested and approved by two officials (lib/casework/packages.ts), rules (lib/law/r |  | — |
-| S4-C.6-02 | 3096 | department | Rights-related complaint intake | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.6-03 | 3097 | department | Monitoring and authorised visits | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.6-04 | 3098 | department | Investigations and evidence handling | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.6-05 | 3099 | department | Recommendations and institutional responses | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.6-06 | 3100 | department | Thematic inquiries | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.6-07 | 3101 | department | Public reports and parliamentary submissions | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.6-08 | 3102 | department | Civil-society and stakeholder consultations | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.6-09 | 3103 | department | Follow-up on recommendations | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basi | I8 (+I2) |
-| S4-C.6-10 | 3105 | register | Complaint | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-11 | 3105 | register | Affected rights category | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-12 | 3105 | register | Respondent | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-13 | 3105 | register | Source | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-14 | 3105 | register | Protected witness reference | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-15 | 3105 | register | Investigation event | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-16 | 3105 | register | Evidence | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-17 | 3105 | register | Finding | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-18 | 3105 | register | Recommendation | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-19 | 3105 | register | Response | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-20 | 3105 | register | Follow-up | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-21 | 3109 | prose-rule | Separate allegation, corroborated evidence, finding and recommendation. | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-22 | 3110 | prose-rule | Apply heightened restrictions to vulnerable persons and protected sources. | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-23 | 3111 | prose-rule | Keep confidential submissions separate from public report material. | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-24 | 3112 | prose-rule | Do not disclose an identity merely because an executive institution requests it. | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-25 | 3113 | prose-rule | Provide an independent publication workflow and preserve the final report's integrity. | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-| S4-C.6-26 | 3115 | KPI | Complaint accessibility | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-| S4-C.6-27 | 3115 | KPI | Investigation workload | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-| S4-C.6-28 | 3115 | KPI | Recommendation follow-up | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-| S4-C.6-29 | 3115 | KPI | Systemic issues identified | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-| S4-C.6-30 | 3115 | KPI | Report publication | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no d | I8 (+I3) |
-| S4-C.6-31 | 3115 | prose-rule | These measures must not be interpreted as a complete measure of human-rights compliance. | Not yet | absent: no module, register or procedure (audit A §3) (slot humanRights); no protected-identity field class (audit C 3.1 4.6) | Complaint procedure with protected identity | I8 |
-
-### Anti-corruption — Met 2, Partial 2, Not yet 7, Lower priority 28
+### Human rights — Met 17, Partial 12, Not yet 3, Country decision 1
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S4-A.7-01 | 2816 | prose-rule | Corruption prevention, authorised investigations, disclosures and referrals. | Lower priority | Plan §4 anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 (+I8) |
-| S4-A.7-02 | 2818 | prose-rule | Separates allegations, intelligence, verified evidence, findings and referrals; protects sources and restricts sensitive access. | Lower priority | Plan §4 anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 (+I8) |
-| S4-C.7-01 | 3119 | prose-rule | Where these functions are split across agencies, CivicOS should preserve those boundaries. | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-02 | 3123 | department | Protected disclosures and whistleblower intake | Not yet | No protected-identity concept (grep whistleblow = 0; audit C S-1) | Protected disclosure intake with source separated (acceptance P4-07); Department = {id, name} only (lib/api/types.ts:536): no accountable office, serv | I8 (+I9,I2) |
+| S4-A.6-01 | 2810 | prose-rule | Human-rights monitoring, recommendations, reports and authorised inquiries. | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis | Monitoring visits, thematic inquiries and reports | I8 |
+| S4-A.6-02 | 2812 | prose-rule | Maintains protected complaints and investigation records with safeguards for complainants, witnesses and vulnerable people. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-01 | 3092 | prose-rule | They should inform the configuration, while national law determines the body's actual powers. | Country decision | The institution's powers are the nation's law (slot humanRights, shipped empty) |  | — |
+| S4-C.6-02 | 3096 | department | Rights-related complaint intake | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.6-03 | 3097 | department | Monitoring and authorised visits | Not yet | Complaints only | Monitoring visits, thematic inquiries and consultations as procedures of the institution; Department = {id, name} only (lib/api/types.ts:536): no acco | I8 (+I2) |
+| S4-C.6-04 | 3098 | department | Investigations and evidence handling | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.6-05 | 3099 | department | Recommendations and institutional responses | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.6-06 | 3100 | department | Thematic inquiries | Not yet | Complaints only | Monitoring visits, thematic inquiries and consultations as procedures of the institution; Department = {id, name} only (lib/api/types.ts:536): no acco | I8 (+I2) |
+| S4-C.6-07 | 3101 | department | Public reports and parliamentary submissions | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis | Reports as records of the institution, published and submitted to the legislature; Department = {id, name} only (lib/api/types.ts:536): no accountable | I8 (+I2) |
+| S4-C.6-08 | 3102 | department | Civil-society and stakeholder consultations | Not yet | Complaints only | Monitoring visits, thematic inquiries and consultations as procedures of the institution; Department = {id, name} only (lib/api/types.ts:536): no acco | I8 (+I2) |
+| S4-C.6-09 | 3103 | department | Follow-up on recommendations | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.6-10 | 3105 | register | Complaint | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-11 | 3105 | register | Affected rights category | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-12 | 3105 | register | Respondent | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-13 | 3105 | register | Source | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-14 | 3105 | register | Protected witness reference | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-15 | 3105 | register | Investigation event | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-16 | 3105 | register | Evidence | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-17 | 3105 | register | Finding | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-18 | 3105 | register | Recommendation | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-19 | 3105 | register | Response | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-20 | 3105 | register | Follow-up | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-21 | 3109 | prose-rule | Separate allegation, corroborated evidence, finding and recommendation. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-22 | 3110 | prose-rule | Apply heightened restrictions to vulnerable persons and protected sources. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-23 | 3111 | prose-rule | Keep confidential submissions separate from public report material. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-24 | 3112 | prose-rule | Do not disclose an identity merely because an executive institution requests it. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.6-25 | 3113 | prose-rule | Provide an independent publication workflow and preserve the final report's integrity. | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis | Reports as records of the institution, published and submitted to the legislature | I8 |
+| S4-C.6-26 | 3115 | KPI | Complaint accessibility | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.6-27 | 3115 | KPI | Investigation workload | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.6-28 | 3115 | KPI | Recommendation follow-up | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.6-29 | 3115 | KPI | Systemic issues identified | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.6-30 | 3115 | KPI | Report publication | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.6-31 | 3115 | prose-rule | These measures must not be interpreted as a complete measure of human-rights compliance. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+
+### Anti-corruption — Met 19, Partial 15, Lower priority 5
+
+| ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
+|---|---|---|---|---|---|---|---|
+| S4-A.7-01 | 2816 | prose-rule | Corruption prevention, authorised investigations, disclosures and referrals. | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis | Prevention programmes (plan §4: lower priority) | I11 (+I8) |
+| S4-A.7-02 | 2818 | prose-rule | Separates allegations, intelligence, verified evidence, findings and referrals; protects sources and restricts sensitive access. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-01 | 3119 | prose-rule | Where these functions are split across agencies, CivicOS should preserve those boundaries. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-02 | 3123 | department | Protected disclosures and whistleblower intake | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
 | S4-C.7-03 | 3124 | department | Conflict-of-interest declarations | Partial | lib/transitions/ (acting, delegation, conflict/recusal, emergency, caretaker, court rulings); tests lib/transitions/*.test.ts (declaration of interest | Declarations register with verification; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
 | S4-C.7-04 | 3125 | department | Asset or interest declarations where legally required | Partial | lib/transitions/ (acting, delegation, conflict/recusal, emergency, caretaker, court rulings); tests lib/transitions/*.test.ts (declaration of interest | Declarations register with verification; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I8 (+I2) |
-| S4-C.7-05 | 3126 | department | Procurement-integrity referrals | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-06 | 3127 | department | Investigative casework | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-07 | 3128 | department | Evidence and source protection | Not yet | No protected-identity concept (grep whistleblow = 0; audit C S-1) | Protected disclosure intake with source separated (acceptance P4-07); Department = {id, name} only (lib/api/types.ts:536): no accountable office, serv | I8 (+I9,I2) |
+| S4-C.7-05 | 3126 | department | Procurement-integrity referrals | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.7-06 | 3127 | department | Investigative casework | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.7-07 | 3128 | department | Evidence and source protection | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
 | S4-C.7-08 | 3129 | department | Risk assessment of institutional processes | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
 | S4-C.7-09 | 3130 | department | Prevention and guidance programmes | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-10 | 3131 | department | Referrals to prosecution, audit or other competent bodies | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-11 | 3132 | department | Findings, orders or reports within the commission's authority | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-12 | 3134 | register | Disclosure | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-13 | 3134 | register | Source protection classification | Not yet | No protected-identity concept (grep whistleblow = 0; audit C S-1) | Protected disclosure intake with source separated (acceptance P4-07) | I8 (+I9) |
-| S4-C.7-14 | 3134 | register | Allegation | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-15 | 3134 | register | Evidence | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-16 | 3134 | register | Investigation | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
+| S4-C.7-10 | 3131 | department | Referrals to prosecution, audit or other competent bodies | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis | A referral identifying a person to a prosecution needs legal review; Department = {id, name} only (lib/api/types.ts:536): no accountable office, servi | I11 (+I8,I2) |
+| S4-C.7-11 | 3132 | department | Findings, orders or reports within the commission's authority | Partial | Functions exist: lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complai | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I2 |
+| S4-C.7-12 | 3134 | register | Disclosure | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-13 | 3134 | register | Source protection classification | Partial | lib/oversight/protected-identity.ts (the person who raised a matter kept apart from the case: never in a list, search, case read or export; read only  | Source protection classification as a field of the procedure | I8 |
+| S4-C.7-14 | 3134 | register | Allegation | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-15 | 3134 | register | Evidence | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-16 | 3134 | register | Investigation | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
 | S4-C.7-17 | 3134 | register | Declaration | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
 | S4-C.7-18 | 3134 | register | Verification event | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-19 | 3134 | register | Finding | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-20 | 3134 | register | Referral | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-21 | 3134 | register | Authorised outcome | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-22 | 3138 | procedure | Receive the report through an approved confidential channel. | Not yet | No protected-identity concept (grep whistleblow = 0; audit C S-1) | Protected disclosure intake with source separated (acceptance P4-07) | I8 (+I9) |
-| S4-C.7-23 | 3139 | procedure | Separate source identity from the general case record where practicable. | Not yet | No protected-identity concept (grep whistleblow = 0; audit C S-1) | Protected disclosure intake with source separated (acceptance P4-07) | I8 (+I9) |
-| S4-C.7-24 | 3140 | procedure | Assess jurisdiction and immediate protection needs. | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-25 | 3141 | procedure | Restrict access to specifically authorised staff. | Not yet | No protected-identity concept (grep whistleblow = 0; audit C S-1) | Protected disclosure intake with source separated (acceptance P4-07) | I8 (+I9) |
-| S4-C.7-26 | 3142 | procedure | Preserve evidence and record the chain of custody. | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-27 | 3143 | procedure | Conduct the authorised review or investigation. | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-28 | 3144 | procedure | Record the outcome, referral or closure and reasons. | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-29 | 3145 | procedure | Monitor authorised protection measures without exposing the source to unrelated users. | Not yet | No protected-identity concept (grep whistleblow = 0; audit C S-1) | Protected disclosure intake with source separated (acceptance P4-07) | I8 (+I9) |
+| S4-C.7-19 | 3134 | register | Finding | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-20 | 3134 | register | Referral | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-21 | 3134 | register | Authorised outcome | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-22 | 3138 | procedure | Receive the report through an approved confidential channel. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-23 | 3139 | procedure | Separate source identity from the general case record where practicable. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-24 | 3140 | procedure | Assess jurisdiction and immediate protection needs. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-25 | 3141 | procedure | Restrict access to specifically authorised staff. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-26 | 3142 | procedure | Preserve evidence and record the chain of custody. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-27 | 3143 | procedure | Conduct the authorised review or investigation. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-28 | 3144 | procedure | Record the outcome, referral or closure and reasons. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
+| S4-C.7-29 | 3145 | procedure | Monitor authorised protection measures without exposing the source to unrelated users. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis |  | — |
 | S4-C.7-30 | 3147 | procedure | Safeguards: a flagged procurement transaction is not proof of corruption; an undisclosed interest is not automatically proof of criminal conduct. | Met | AI advisory only; access-watch findings are prompts, never conclusions |  | — |
 | S4-C.7-31 | 3147 | procedure | AI may identify patterns for human review, but it must not label a person corrupt, issue a legally material finding or automatically refer a person for punitive action without the prescribed process. | Met | AI advisory only; access-watch findings are prompts, never conclusions |  | — |
-| S4-C.7-32 | 3149 | KPI | Disclosure processing | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-33 | 3149 | KPI | Case age | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-34 | 3149 | KPI | Protection incidents | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-35 | 3149 | KPI | Evidence completeness | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
-| S4-C.7-36 | 3149 | KPI | Referral outcomes | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
+| S4-C.7-32 | 3149 | KPI | Disclosure processing | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.7-33 | 3149 | KPI | Case age | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.7-34 | 3149 | KPI | Protection incidents | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.7-35 | 3149 | KPI | Evidence completeness | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
+| S4-C.7-36 | 3149 | KPI | Referral outcomes | Partial | Records exist (lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint | Indicator definitions | I3 |
 | S4-C.7-37 | 3149 | KPI | Implementation of prevention recommendations | Lower priority | Plan §4: anti-corruption investigation lower priority | absent: no module, register or procedure (audit A §3) | I11 |
 
 ### Statistics — Met 1, Partial 9, Not yet 28
@@ -2738,7 +2738,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-E-24 | 3334 | security | High-risk changes should require two distinct authorised people, with proposal and confirmation performed by different identities. | Met | dualControlRefusal() compares persons (acceptance P4-11) | Enforced only once the country adopts requireIdentityProvider | — |
 | S4-E-25 | 3334 | security | The system should verify that the identities are genuinely distinct and preserve the full approval chain. | Met | dualControlRefusal() compares persons (acceptance P4-11) | Enforced only once the country adopts requireIdentityProvider | — |
 
-### Readiness and acceptance — Met 11, Partial 10, Not yet 8
+### Readiness and acceptance — Met 15, Partial 8, Not yet 6
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2759,10 +2759,10 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-G-02 | 3384 | acceptance | An executive-wide administrator cannot read a protected parliamentary, judicial or independent-investigation record merely by virtue of their platform role. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-01: `app/src/lib/auth/negative-authorization.test.ts` "refuses a whole-government administrator, officer and audit |  | — |
 | S4-G-03 | 3385 | acceptance | An independent institution can manage its own users without giving its administrator authority over another independent institution. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-02: `app/src/lib/auth/negative-authorization.test.ts` "the court's own administrator acts directly; another instit |  | — |
 | S4-G-04 | 3386 | acceptance | An election result cannot be silently overwritten, and provisional results cannot be misrepresented as officially declared results. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P4-03: None. | Elections are not built (plan §4). | I11 |
-| S4-G-05 | 3387 | acceptance | An audit finding remains under the audit institution's control when the audited entity submits a disagreement. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P4-04: None. | There is no audit-engagement or finding workflow. | I8 |
-| S4-G-06 | 3388 | acceptance | A privacy authority's investigation access is scoped and recorded. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-05: `app/src/lib/auth/negative-authorization.test.ts` "a request-information relationship grants a read-only, purp | Purpose-bound, logged reads under a relationship are proven. There is no privacy-investigation procedure for the data-protection authority. | I8 |
-| S4-G-07 | 3389 | acceptance | A human-rights complainant's protected identity is not exposed through ordinary case search. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-06: `app/src/lib/auth/case-rules.test.ts` "keeps restricted and secret cases to the assigned, signatories and supe | Restricted-case isolation is proven generically. There is no human-rights complaint procedure, no protected-identity field and no case-search test. | I8 |
-| S4-G-08 | 3390 | acceptance | A whistleblower identity is not automatically included in an ordinary case export. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P4-07: None. | There is no protected-disclosure procedure. An institution-scoped export exists (`lib/portability/export.ts`, Health I4) for the test once the procedu | I8 (+I9) |
+| S4-G-05 | 3387 | acceptance | An audit finding remains under the audit institution's control when the audited entity submits a disagreement. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-04: `app/src/lib/oversight/oversight.test.ts` "keeps an audit finding under the audit office when the audited mini |  | — |
+| S4-G-06 | 3388 | acceptance | A privacy authority's investigation access is scoped and recorded. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-05: `app/src/lib/auth/negative-authorization.test.ts` "a request-information relationship grants a read-only, purp |  | — |
+| S4-G-07 | 3389 | acceptance | A human-rights complainant's protected identity is not exposed through ordinary case search. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-06: `app/src/lib/auth/case-rules.test.ts` "keeps restricted and secret cases to the assigned, signatories and supe |  | — |
+| S4-G-08 | 3390 | acceptance | A whistleblower identity is not automatically included in an ordinary case export. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-07: `app/src/lib/oversight/oversight.test.ts` "never puts a whistleblower's identity in the commission's ordinary  |  | — |
 | S4-G-09 | 3391 | acceptance | An official statistical release preserves its methodology, version and revision history. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-08: `app/src/lib/twin/register.test.ts` "withdrawing an import … supersedes its observations, never deletes them…" | Revision-keeping is proven for twin observations. There is no statistical-release procedure with methodology and version. | I8 |
 | S4-G-10 | 3392 | acceptance | A regulator cannot impose a sanction or alter an approved tariff without the applicable authority and workflow. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-09: `app/src/lib/professions/procedures.test.ts` "…suspends, reinstates and revokes with four eyes"; `app/src/app/ | Professional sanctions and tariffs that need an approved rule are proven. There is no general regulator supervision or enforcement procedure. | I8 |
 | S4-G-11 | 3393 | acceptance | Shared payroll or payment infrastructure cannot change the originating institution's approved decision. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-10: `app/src/app/api/payments/route.test.ts` "never marks a tax or customs bill paid…"; `app/src/lib/customs/regis | Proven for payments only. Payroll does not exist. | I5 |
@@ -2772,7 +2772,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-G-15 | 3397 | acceptance | Failed authorisation attempts are logged without exposing the protected content to the requester. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-14: `app/src/app/api/education/route.test.ts` "…logs every read and refusal" (403 to the requester, log holds no r |  | — |
 | S4-G-16 | 3398 | acceptance | Demo records, simulated officials and test election results cannot enter a production register. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-15: `app/src/lib/data/store/seed-mode.test.ts`; `app/src/lib/auth/demo-cast.test.ts` "is refused everywhere in a p | Demo records and simulated officials are proven. Test election results cannot be tested because elections do not exist. | I11 |
 
-### Implementation order and risks — Met 6, Partial 3, Not yet 1, Lower priority 1
+### Implementation order and risks — Met 7, Partial 3, Lower priority 1
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2780,7 +2780,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-H-02 | 3404 | prose-rule | First: institutional standing and access boundaries. Implement institution identities, branch and independence attributes, delegations, policy enforcement, protected audit and two-person approval. | Met | Constitutional phases 0-7 |  | — |
 | S4-H-03 | 3405 | prose-rule | Second: shared legal and document foundations. Establish versioned legal instruments, signed records, publication approvals, document integrity and controlled evidence exchange. | Met | Laws register, sealed decisions, site publication approvals, exchange |  | — |
 | S4-H-04 | 3406 | prose-rule | Third: parliamentary and statistical services. Build legislative records, proceedings, official publication and statistical metadata with clear public/private boundaries. | Partial | Legislature record built; statistics release absent | Statistical metadata | I8 |
-| S4-H-05 | 3407 | prose-rule | Fourth: oversight workflows. Implement audit engagements, public complaints, privacy investigations, protected disclosures and recommendations. | Not yet | Oversight workflows absent |  | I8 |
+| S4-H-05 | 3407 | prose-rule | Fourth: oversight workflows. Implement audit engagements, public complaints, privacy investigations, protected disclosures and recommendations. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis | Adoption by the nation (bodies named, procedures and mappings approved) | — |
 | S4-H-06 | 3408 | prose-rule | Fifth: electoral and regulatory workflows. Add event-specific permissions, temporary access, protected registers, result verification, licensing and enforcement. | Lower priority | Electoral (I11); regulatory partially |  | I11 (+I8) |
 | S4-H-07 | 3409 | prose-rule | Sixth: independent recovery and exit. Test institution-specific backups, data export, configuration portability, key recovery and service continuity before declaring the deployment production-ready. | Partial | Institution data export tested: lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, doc | Institution-specific backups; configuration portability beyond procedures | I9 |
 | S4-H-08 | 3413 | prose-rule | CivicOS should make independent institutions first-class sovereign tenants, not subordinate departments inside an executive-controlled application. | Met | Plan follows |  | — |
@@ -3526,9 +3526,9 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 
 *Platform rule stricter* means CivicOS will not hold the item at all (cited rule); the row says what it holds instead. Rows with basis `domain` are assessed at the level of their domain (no item-specific rule): the status is the domain's state and the step the domain's step; a contract and its fields follow the form they define. Every catalogue form carries `I1-catalogue` in `also_steps`: its field contract designed in the form library at or above the catalogue's standard, beside the sector step that builds its procedure. Steps I12 and I13 were added to the plan for the catalogue (plan §5).
 
-**Self-check.** Content lines not accounted for: 0. Headings (parts, sections, sub-sections) without a row: none. Catalogue IDs without a row: 0. Rows without a step: 0. Forms: 2072, with their own JSON contract: 145, with a contract CivicOS wrote (form library): 77, contract not yet given: 1850.
+**Self-check.** Content lines not accounted for: 0. Headings (parts, sections, sub-sections) without a row: none. Catalogue IDs without a row: 0. Rows without a step: 0. Forms: 2072, with their own JSON contract: 145, with a contract CivicOS wrote (form library): 84, contract not yet given: 1843.
 
-**Form status.** catalogued 0, contract_missing 1646, contract_draft 206, under_review 91, blocked 1, excluded 128, approved 0, production 0.
+**Form status.** catalogued 0, contract_missing 1639, contract_draft 213, under_review 91, blocked 1, excluded 128, approved 0, production 0.
 
 **Inputs.** All 13 parts and the supplement received. The topics the 13 parts left out are now catalogued by the supplement (table below); the earlier gap rows became the supplement's rows. Still missing from the received text: the field contract of every form listed only in a table (`contract: not yet given`).
 
@@ -3582,7 +3582,7 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 9 | 2 | 78 | 270 | 0 | 3 | 18 | 0 | 371 |
 | Part 10 | 5 | 75 | 262 | 62 | 6 | 13 | 0 | 423 |
 | Part 11 | 5 | 62 | 224 | 4 | 27 | 19 | 49 | 390 |
-| Part 12 | 16 | 210 | 52 | 4 | 8 | 24 | 97 | 411 |
+| Part 12 | 26 | 207 | 45 | 4 | 8 | 24 | 97 | 411 |
 | Part 13 | 15 | 372 | 150 | 0 | 1 | 21 | 0 | 559 |
 | Supplement: shared contract standard | 0 | 48 | 2 | 0 | 0 | 0 | 0 | 50 |
 | Part 5 (supplement, Stage B contracts) | 3 | 39 | 7 | 15 | 0 | 0 | 0 | 64 |
@@ -3603,31 +3603,31 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 20 | 0 | 12 | 62 | 0 | 0 | 0 | 0 | 74 |
 | Part 21 | 1 | 40 | 76 | 0 | 0 | 0 | 0 | 117 |
 | Part 22 | 0 | 77 | 21 | 0 | 0 | 0 | 0 | 98 |
-| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
+| **All** | **113** | **2772** | **3501** | **250** | **337** | **266** | **309** | **7548** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Legal review | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|---|
-| — | 103 | 0 | 0 | 0 | 308 | 115 | 0 | 526 |
+| — | 113 | 0 | 0 | 0 | 308 | 115 | 0 | 536 |
 | I1 | 0 | 773 | 23 | 0 | 0 | 0 | 0 | 796 |
-| I2 | 0 | 91 | 75 | 0 | 6 | 0 | 0 | 172 |
+| I2 | 0 | 90 | 75 | 0 | 6 | 0 | 0 | 171 |
 | I3 | 0 | 26 | 2 | 0 | 0 | 0 | 0 | 28 |
 | I4 | 0 | 115 | 35 | 0 | 0 | 3 | 0 | 153 |
 | I5 | 0 | 308 | 984 | 0 | 0 | 55 | 121 | 1468 |
 | I6 | 0 | 320 | 803 | 0 | 0 | 21 | 0 | 1144 |
 | I7 | 0 | 246 | 957 | 0 | 0 | 43 | 0 | 1246 |
-| I8 | 0 | 200 | 135 | 0 | 0 | 3 | 0 | 338 |
+| I8 | 0 | 198 | 128 | 0 | 0 | 3 | 0 | 329 |
 | I9 | 0 | 159 | 49 | 0 | 0 | 0 | 0 | 208 |
 | I11 | 0 | 115 | 42 | 229 | 0 | 13 | 173 | 572 |
 | I12 | 0 | 20 | 264 | 21 | 23 | 13 | 15 | 356 |
 | I13 | 0 | 93 | 138 | 0 | 0 | 0 | 0 | 231 |
 | Throughout | 0 | 309 | 1 | 0 | 0 | 0 | 0 | 310 |
-| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
+| **All** | **113** | **2772** | **3501** | **250** | **337** | **266** | **309** | **7548** |
 
 
-Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 3, I7 25, I8 15, I9 63, Throughout 13.
+Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 3, I7 25, I8 14, I9 63, Throughout 13.
 
 
 ### By sector
@@ -3703,12 +3703,12 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 
 | Cybersecurity incident management | 0 | 4 | 46 | 0 | 0 | 3 | 0 | 53 |
 | Critical infrastructure resilience | 0 | 0 | 79 | 0 | 1 | 2 | 0 | 82 |
 | National security directives | 0 | 2 | 19 | 0 | 0 | 0 | 0 | 21 |
-| Constitutional offices and independent institutions | 1 | 39 | 15 | 0 | 0 | 2 | 0 | 57 |
-| Democratic institutions (general) | 6 | 142 | 0 | 0 | 4 | 3 | 0 | 155 |
+| Constitutional offices and independent institutions | 5 | 41 | 9 | 0 | 0 | 2 | 0 | 57 |
+| Democratic institutions (general) | 12 | 136 | 0 | 0 | 4 | 3 | 0 | 155 |
 | Legislature | 11 | 50 | 10 | 0 | 0 | 3 | 0 | 74 |
 | Elections | 0 | 3 | 0 | 11 | 4 | 5 | 71 | 94 |
 | Political parties and campaign finance | 0 | 1 | 0 | 0 | 0 | 3 | 51 | 55 |
-| Public participation and information access | 0 | 3 | 37 | 0 | 0 | 2 | 0 | 42 |
+| Public participation and information access | 0 | 4 | 36 | 0 | 0 | 2 | 0 | 42 |
 | Citizen and business digital services | 1 | 25 | 56 | 0 | 0 | 0 | 0 | 82 |
 | Whole-of-government workflow | 3 | 41 | 6 | 0 | 0 | 0 | 0 | 50 |
 | Records, documents and digital trust | 1 | 61 | 16 | 0 | 0 | 0 | 0 | 78 |
@@ -3724,30 +3724,30 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 
 | Local and regional government | 0 | 11 | 63 | 0 | 0 | 0 | 0 | 74 |
 | Housing, planning and building control | 0 | 12 | 62 | 0 | 0 | 0 | 0 | 74 |
 | Shared internal administration | 1 | 40 | 76 | 0 | 0 | 0 | 0 | 117 |
-| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
+| **All** | **113** | **2772** | **3501** | **250** | **337** | **266** | **309** | **7548** |
 
 
 ### By category
 
 | Category | Met | Partial | Not yet | Legal review | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|---|
-| acceptance gate | 11 | 117 | 25 | 3 | 10 | 0 | 0 | 166 |
+| acceptance gate | 13 | 115 | 25 | 3 | 10 | 0 | 0 | 166 |
 | configuration | 0 | 0 | 0 | 10 | 7 | 199 | 0 | 216 |
 | data contract | 0 | 1106 | 1117 | 34 | 80 | 1 | 86 | 2424 |
 | definition of done | 4 | 24 | 9 | 0 | 3 | 1 | 0 | 41 |
 | engineering deliverable | 0 | 77 | 42 | 4 | 9 | 2 | 0 | 134 |
 | exchange | 1 | 13 | 34 | 5 | 2 | 0 | 0 | 55 |
 | field group | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
-| form | 64 | 259 | 1401 | 91 | 128 | 0 | 129 | 2072 |
-| permission | 0 | 53 | 0 | 4 | 0 | 0 | 0 | 57 |
-| register | 1 | 10 | 34 | 1 | 0 | 0 | 12 | 58 |
-| safeguard | 14 | 360 | 240 | 28 | 42 | 24 | 21 | 729 |
-| scope | 8 | 625 | 522 | 45 | 47 | 38 | 48 | 1333 |
+| form | 64 | 266 | 1394 | 91 | 128 | 0 | 129 | 2072 |
+| permission | 1 | 52 | 0 | 4 | 0 | 0 | 0 | 57 |
+| register | 2 | 9 | 34 | 1 | 0 | 0 | 12 | 58 |
+| safeguard | 16 | 358 | 240 | 28 | 42 | 24 | 21 | 729 |
+| scope | 12 | 621 | 522 | 45 | 47 | 38 | 48 | 1333 |
 | state | 0 | 12 | 17 | 11 | 0 | 0 | 0 | 40 |
 | table row | 0 | 68 | 28 | 14 | 9 | 1 | 1 | 121 |
 | values source | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 11 |
 | workflow stage | 0 | 39 | 39 | 0 | 0 | 0 | 12 | 90 |
-| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
+| **All** | **113** | **2772** | **3501** | **250** | **337** | **266** | **309** | **7548** |
 
 
 ### Deviations: platform rule stricter and legal review (587 rows)
@@ -9885,7 +9885,7 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 #### Part 12 — Part 12 (PARTS-12-13.md)
 
 
-##### Democratic institutions (general) — Met 6, Partial 139, Platform rule stricter 4, Country decision 3
+##### Democratic institutions (general) — Met 12, Partial 133, Platform rule stricter 4, Country decision 3
 
 | ID | Lines | Section | Cat. | Item | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|---|
@@ -9956,7 +9956,7 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | FC12-9-07 | 448 | 9 | scope | Record the source and authorization of every public data release. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-9-08 | 449 | 9 | scope | Support corrections without erasing original events. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-9-09 | 450 | 9 | safeguard | Provide machine-readable exports only where the applicable disclosure rules permit them. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
-| FC12-9-10 | 451 | 9 | scope | Keep independent institutions' records under their own configured authority. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
+| FC12-9-10 | 451 | 9 | scope | Keep independent institutions' records under their own configured authority. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int |  | — |
 | FC12-10.1-01 | 454 | 10.1 | safeguard | CivicOS must provide the same configured legal process to parties, candidates and political participants who meet the applicable criteria. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-10.1-02 | 457 | 10.1 | scope | Rank political parties by ideological alignment with the government. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-10.1-03 | 458 | 10.1 | scope | Suppress a petition or consultation submission because of its viewpoint. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
@@ -9977,17 +9977,17 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | FC12-10.2-11 | 475 | 10.2 | permission | political_party.registration.assess | Partial | lib/auth/roles.ts caseActRefusal()/caseReadRefusal()/reaches(); tests lib/auth/case-rules.test.ts, lib/auth/negative-authorization.test.ts;  | Task-level scoping (plan I2); the domain's procedures | I2 (+I8) |
 | FC12-10.2-12 | 476 | 10.2 | permission | political_finance.return.review | Partial | lib/auth/roles.ts caseActRefusal()/caseReadRefusal()/reaches(); tests lib/auth/case-rules.test.ts, lib/auth/negative-authorization.test.ts;  | Task-level scoping (plan I2); the domain's procedures | I2 (+I8) |
 | FC12-10.2-13 | 477 | 10.2 | scope | constitutional_appointment.assess | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
-| FC12-10.2-14 | 478 | 10.2 | permission | independent_body.case.manage | Partial | lib/auth/roles.ts caseActRefusal()/caseReadRefusal()/reaches(); tests lib/auth/case-rules.test.ts, lib/auth/negative-authorization.test.ts;  | Task-level scoping (plan I2); the domain's procedures | I2 (+I8) |
+| FC12-10.2-14 | 478 | 10.2 | permission | independent_body.case.manage | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int |  | — |
 | FC12-10.2-15 | 479 | 10.2 | scope | public_consultation.publish | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-10.2-16 | 480 | 10.2 | scope | public_information_request.decide | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-10.2-17 | 481 | 10.2 | scope | These are proposed technical permissions, not statutory powers. | Platform rule stricter | CLAUDE.md: one rule set lib/auth/roles.ts decides permissions (never a second place); holding an office grants no permission (roles.ts never | Task-level permission names are expressed as package steps and roles.ts rules, mapped to institutions and roles, never to offices; attribute | I2 |
 | FC12-10.2-18 | 481 | 10.2 | safeguard | Each country must map them to its authorized offices and procedures. | Platform rule stricter | CLAUDE.md: one rule set lib/auth/roles.ts decides permissions (never a second place); holding an office grants no permission (roles.ts never | Task-level permission names are expressed as package steps and roles.ts rules, mapped to institutions and roles, never to offices; attribute | I2 |
 | FC12-10.2-19 | 484 | 10.2 | scope | Restrict access to individual voter records to authorized electoral functions. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-10.2-20 | 485 | 10.2 | scope | Separate confidential ballot systems from identifiable voter records. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
-| FC12-10.2-21 | 486 | 10.2 | scope | Protect whistleblower and complainant identities. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
+| FC12-10.2-21 | 486 | 10.2 | scope | Protect whistleblower and complainant identities. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int |  | — |
 | FC12-10.2-22 | 487 | 10.2 | scope | Apply legally required redactions to public documents. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-10.2-23 | 488 | 10.2 | scope | Log access to restricted records and audit bulk exports. | Partial | lib/records/access-log.ts recordAccess() (format 2, office and profile in hash), lib/records/refusal-log.ts; tests lib/records/access-log.te | Every read of this domain's personal data once its records exist | I8 |
-| FC12-10.2-24 | 489 | 10.2 | scope | Keep independent review cases inaccessible to unauthorized staff of the institution under review. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
+| FC12-10.2-24 | 489 | 10.2 | scope | Keep independent review cases inaccessible to unauthorized staff of the institution under review. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int |  | — |
 | FC12-10.2-25 | 490 | 10.2 | scope | Support retention, archival and deletion under applicable legal requirements. | Partial | lib/data/retention.ts (rules proposed by one administrator, confirmed by another, legal basis recorded; legal hold respected; sweep audited  | Retention schedules per record class with archival transfer | I8 |
 | FC12-10.3-01 | 492 | 10.3 | scope | AI may assist with legislative document comparison, accessibility translation, consultation summarization, administrative completeness checks and financial return arithmetic. | Partial | AI is advisory only and off unless the nation opts in (SovereignProfile.aiAssistant); /api/ai/advisory refuses when off, callers fall back t | No test proves that no AI output can reach act(), a register change or a publication; no register of AI features (owner, permitted inputs, o | Throughout |
 | FC12-10.3-02 | 495 | 10.3 | scope | Certify election results. | Partial | AI is advisory only and off unless the nation opts in (SovereignProfile.aiAssistant); /api/ai/advisory refuses when off, callers fall back t | No test proves that no AI output can reach act(), a register change or a publication; no register of AI features (owner, permitted inputs, o | Throughout |
@@ -10031,8 +10031,8 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | FC12-13-05 | 587 | 13 | acceptance gate | Ballot secrecy: No prohibited link is created between an identified voter and their vote. | Platform rule stricter | CivicOS records no vote of any voter and is no electronic voting system (plan §4: electoral results after legal review) |  | — |
 | FC12-13-06 | 588 | 13 | acceptance gate | Equal treatment: The same lawful criteria apply consistently to eligible parties and candidates. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-13-07 | 589 | 13 | acceptance gate | Finance transparency: Public disclosures follow approved rules and distinguish declared, verified and audited amounts. | Partial | lib/law/rules.ts (approved, cited, tested rule versions; calculate() refuses without one); test lib/law/rules.test.ts; lib/data/store/paymen | Applies to the built records; not verified line by line for this catalogue item | I8 |
-| FC12-13-08 | 590 | 13 | acceptance gate | Independent oversight: Findings cannot be silently changed or suppressed by the institution under review. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
-| FC12-13-09 | 591 | 13 | acceptance gate | Privacy: Voter, donor, whistleblower and complainant information is disclosed only when authorized. | Partial | lib/legislature/register.ts (introduceBill, addText versions, referToCommittee, recordReport, proposeAmendment/decideAmendment, recordVote u | The requirement as stated is not built for this domain beyond the cited records | I8 |
+| FC12-13-08 | 590 | 13 | acceptance gate | Independent oversight: Findings cannot be silently changed or suppressed by the institution under review. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int |  | — |
+| FC12-13-09 | 591 | 13 | acceptance gate | Privacy: Voter, donor, whistleblower and complainant information is disclosed only when authorized. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int |  | — |
 | FC12-13-10 | 592 | 13 | acceptance gate | Public participation: Required accessible and alternative participation channels are available. | Partial | Public sites: npm run audit:sites (axe WCAG A/AA on every site, design and viewport), logical CSS and right-to-left, self-hosted fonts; cons | No form renderer for self-service, assisted and print channels with WCAG 2.2 AA tests, save-and-resume and check-your-answers (plan I1, I10) | I1 (+I10) |
 | FC12-13-11 | 593 | 13 | acceptance gate | AI governance: AI cannot independently certify results or make prohibited decisions affecting political rights. | Partial | AI is advisory only and off unless the nation opts in (SovereignProfile.aiAssistant); /api/ai/advisory refuses when off, callers fall back t | No test proves that no AI output can reach act(), a register change or a publication; no register of AI features (owner, permitted inputs, o | Throughout |
 | FC12-13-12 | 594 | 13 | acceptance gate | Production readiness: No simulated elections, invented votes, fictitious officials or sample results appear as live official records. | Met | lib/ops/mode.ts installationMode()/samplesAllowed(); tests lib/data/store/seed-mode.test.ts, lib/casework/sample-isolation.test.ts, lib/auth |  | — |
@@ -10230,7 +10230,7 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | CFG-DEM-009 | 515 | 11 | configuration | CFG-DEM-009 — Political party registration and deregistration rules | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde | The Political parties and campaign finance records and procedures do not exist, so there is nothing yet to configure | I11 |
 | CFG-DEM-010 | 516 | 11 | configuration | CFG-DEM-010 — Campaign donations, expenditure, limits and disclosure thresholds | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde | The Political parties and campaign finance records and procedures do not exist, so there is nothing yet to configure | I11 |
 
-##### Constitutional offices and independent institutions — Met 1, Partial 29, Not yet 15, Country decision 2
+##### Constitutional offices and independent institutions — Met 5, Partial 31, Not yet 9, Country decision 2
 
 | ID | Lines | Section | Cat. | Item | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|---|
@@ -10245,15 +10245,15 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | DEM-CON-009 | 149 | 2.4 | form | DEM-CON-009 — Resignation or vacancy notice — Vacancy and succession workflow | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Nomination, eligibility, hearing and recommendation kept apart from the decision; appointment instrument | I8 (+I1-catalogue) |
 | DEM-CON-010 | 150 | 2.4 | form | DEM-CON-010 — Removal or suspension proceeding — Lawful procedure and review record | Partial | lib/transitions/ (acting, delegation, conflict/recusal, emergency, caretaker, court rulings); tests lib/transitions/*.test.ts; emergencies r | Removal and suspension proceedings per office | I8 (+I1-catalogue) |
 | DEM-CON-011 | 151 | 2.4 | form | DEM-CON-011 — Independent commission inquiry — Inquiry mandate and findings | Not yet | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Procedure package, field contract and record for this form | I8 (+I1-catalogue) |
-| DEM-CON-012 | 152 | 2.4 | form | DEM-CON-012 — Ombudsman complaint — Complaint, jurisdiction and remedy workflow | Not yet | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Procedure package, field contract and record for this form | I8 (+I1-catalogue) |
-| DEM-CON-013 | 153 | 2.4 | form | DEM-CON-013 — Human rights complaint — Restricted complaint and review | Not yet | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Procedure package, field contract and record for this form | I8 (+I1-catalogue) |
-| DEM-CON-014 | 154 | 2.4 | form | DEM-CON-014 — Public audit finding — Finding, recommendation and response | Not yet | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Procedure package, field contract and record for this form | I8 (+I1-catalogue) |
+| DEM-CON-012 | 152 | 2.4 | form | DEM-CON-012 — Ombudsman complaint — Complaint, jurisdiction and remedy workflow | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved | I8 (+I1-catalogue) |
+| DEM-CON-013 | 153 | 2.4 | form | DEM-CON-013 — Human rights complaint — Restricted complaint and review | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved | I8 (+I1-catalogue) |
+| DEM-CON-014 | 154 | 2.4 | form | DEM-CON-014 — Public audit finding — Finding, recommendation and response | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved | I8 (+I1-catalogue) |
 | DEM-CON-015 | 155 | 2.4 | form | DEM-CON-015 — Independent regulator decision — Authorized regulatory decision | Not yet | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Procedure package, field contract and record for this form | I8 (+I1-catalogue) |
 | DEM-CON-016 | 156 | 2.4 | form | DEM-CON-016 — Independent institution annual report — Approved report and publication record | Not yet | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Procedure package, field contract and record for this form | I8 (+I1-catalogue) |
 | DEM-CON-017 | 157 | 2.4 | form | DEM-CON-017 — Public information request — Access assessment and disclosure decision | Not yet | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Procedure package, field contract and record for this form | I8 (+I1-catalogue) |
-| DEM-CON-018 | 158 | 2.4 | form | DEM-CON-018 — Personal data rights request — Authorized access, correction or other rights workflow | Not yet | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Procedure package, field contract and record for this form | I8 (+I1-catalogue) |
-| DEM-CON-019 | 159 | 2.4 | form | DEM-CON-019 — Protected disclosure to an independent body — Restricted disclosure and follow-up | Not yet | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Procedure package, field contract and record for this form | I8 (+I1-catalogue) |
-| DEM-CON-020 | 160 | 2.4 | form | DEM-CON-020 — Independent institution oversight response — Official response and corrective-action record | Not yet | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Procedure package, field contract and record for this form | I8 (+I1-catalogue) |
+| DEM-CON-018 | 158 | 2.4 | form | DEM-CON-018 — Personal data rights request — Authorized access, correction or other rights workflow | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved | I8 (+I1-catalogue) |
+| DEM-CON-019 | 159 | 2.4 | form | DEM-CON-019 — Protected disclosure to an independent body — Restricted disclosure and follow-up | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved | I8 (+I1-catalogue) |
+| DEM-CON-020 | 160 | 2.4 | form | DEM-CON-020 — Independent institution oversight response — Official response and corrective-action record | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int | Adoption by the nation: whether its law obliges a response, and how it is published | I8 (+I1-catalogue) |
 | FC12-2.4-01 | 161 | 2.4 | safeguard | CivicOS must not assume that a constitutional appointment is made by the executive, that a commission reports to a ministry, or that a public audit body can be instructed to change its findings. | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-2.4-02 | 161 | 2.4 | safeguard | Those powers must follow the nation's constitutional and statutory framework. | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-7.1-01 | 369-371 | 7.1 | workflow stage | 1. Establish the vacancy: Record the office, constitutional or statutory basis, term, appointing authority and applicable eligibility requirements. | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | The requirement as stated is not built for this domain beyond the cited records | I8 |
@@ -10272,17 +10272,17 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | FC12-7.2-07 | 399 | 7.2 | scope | Applicable judicial or other review mechanisms. | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-7.2-08 | 400 | 7.2 | scope | Prohibitions on unauthorized executive instruction or intervention. | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | The requirement as stated is not built for this domain beyond the cited records | I8 |
 | FC12-7.2-09 | 401 | 7.2 | safeguard | An independent institution's record owner must not be reassigned by a general government administrator without a lawful, explicitly authorized process. | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | The requirement as stated is not built for this domain beyond the cited records | I8 |
-| FC12-7.3-01 | 403 | 7.3 | safeguard | The investigation workflow should record the mandate, investigator, conflicts of interest, evidence, procedural steps, findings, recommendations, response from the institution concerned and closure status. | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | The requirement as stated is not built for this domain beyond the cited records | I8 |
-| FC12-7.3-02 | 405 | 7.3 | scope | A recommendation is not automatically a binding order. | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | The requirement as stated is not built for this domain beyond the cited records | I8 |
-| FC12-7.3-03 | 405 | 7.3 | safeguard | A finding should not be silently rewritten by the institution under investigation. | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | The requirement as stated is not built for this domain beyond the cited records | I8 |
+| FC12-7.3-01 | 403 | 7.3 | safeguard | The investigation workflow should record the mandate, investigator, conflicts of interest, evidence, procedural steps, findings, recommendations, response from the institution concerned and closure status. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int |  | — |
+| FC12-7.3-02 | 405 | 7.3 | scope | A recommendation is not automatically a binding order. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int |  | — |
+| FC12-7.3-03 | 405 | 7.3 | safeguard | A finding should not be silently rewritten by the institution under investigation. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int |  | — |
 | FC12-7.3-04 | 405 | 7.3 | safeguard | If an independent body's decision is appealed or judicially reviewed, the new proceeding must link to the original record and preserve the original outcome. | Partial | Registers built on the platform keep every version and change only through procedure effects (lib/casework/register-writes.test.ts (only the | This domain's register does not exist yet | I8 |
 | REG-DEM-011 | 437 | 9 | register | REG-DEM-011 — Constitutional appointments register — Office, nomination, recommendation, appointment and term | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | Nominations and recommendations | I8 |
 | REG-DEM-012 | 438 | 9 | register | REG-DEM-012 — Independent institution register — Establishing law, mandate, independence and reporting obligations | Met | lib/data/store/institutions.ts (standing, branch, basis, effectiveFrom, independence per dimension, prohibitions, records); test lib/data/st |  | — |
-| REG-DEM-015 | 441 | 9 | register | REG-DEM-015 — Public accountability findings register — Finding, responsible institution, response and follow-up | Partial | lib/nation/office-register.ts (/api/offices: offices as records, holders linked by one official and confirmed by another, acting flag, ended | The register as the catalogue defines it (owner in lib/data/register-owners.ts, one changing API, versioned events) | I8 |
+| REG-DEM-015 | 441 | 9 | register | REG-DEM-015 — Public accountability findings register — Finding, responsible institution, response and follow-up | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int |  | — |
 | CFG-DEM-011 | 517 | 11 | configuration | CFG-DEM-011 — Constitutional appointment, tenure and removal procedures | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde |  | — |
 | CFG-DEM-012 | 518 | 11 | configuration | CFG-DEM-012 — Independent institution mandates and protected access boundaries | Country decision | lib/data/store/institutions.ts (standing, branch, basis, effectiveFrom, independence per dimension, prohibitions, records); test lib/data/st |  | — |
 
-##### Public participation and information access — Partial 3, Not yet 28, Country decision 2
+##### Public participation and information access — Partial 4, Not yet 27, Country decision 2
 
 | ID | Lines | Section | Cat. | Item | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|---|
@@ -10294,7 +10294,7 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | DEM-PUB-006 | 169 | 2.5 | form | DEM-PUB-006 — Petition signature verification — Verified count or status under applicable rules | Not yet | absent: no module, register or procedure (audit A §3) | Procedure package, field contract and record for this form; no Public participation and information access records exist | I8 (+I1-catalogue) |
 | DEM-PUB-007 | 170 | 2.5 | form | DEM-PUB-007 — Government response to petition — Official response and publication | Not yet | absent: no module, register or procedure (audit A §3) | Procedure package, field contract and record for this form; no Public participation and information access records exist | I8 (+I1-catalogue) |
 | DEM-PUB-008 | 171 | 2.5 | form | DEM-PUB-008 — Public service complaint — Complaint, referral and resolution | Not yet | absent: no module, register or procedure (audit A §3) | Procedure package, field contract and record for this form; no Public participation and information access records exist | I8 (+I1-catalogue) |
-| DEM-PUB-009 | 172 | 2.5 | form | DEM-PUB-009 — Public integrity complaint — Restricted review and authorized referral | Not yet | absent: no module, register or procedure (audit A §3) | Procedure package, field contract and record for this form; no Public participation and information access records exist | I8 (+I1-catalogue) |
+| DEM-PUB-009 | 172 | 2.5 | form | DEM-PUB-009 — Public integrity complaint — Restricted review and authorized referral | Partial | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, int | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved | I8 (+I1-catalogue) |
 | DEM-PUB-010 | 173 | 2.5 | form | DEM-PUB-010 — Public institution performance report — Approved indicators and explanatory notes | Not yet | lib/twin/register.ts (observations: validFrom/validTo, recordedAt, method, quality, source run, record lineage), lib/twin/signal.ts SignalKi | Indicator definitions (plan I3) | I3 (+I1-catalogue) |
 | DEM-PUB-011 | 174 | 2.5 | form | DEM-PUB-011 — Freedom of information appeal — Independent or designated review | Not yet | absent: no module, register or procedure (audit A §3) | Procedure package, field contract and record for this form; no Public participation and information access records exist | I8 (+I1-catalogue) |
 | DEM-PUB-012 | 175 | 2.5 | form | DEM-PUB-012 — Open data publication request — Disclosure review and release record | Not yet | absent: no module, register or procedure (audit A §3) | Procedure package, field contract and record for this form; no Public participation and information access records exist | I8 (+I1-catalogue) |

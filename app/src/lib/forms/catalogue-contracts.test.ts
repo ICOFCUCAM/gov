@@ -3,8 +3,9 @@
 // medicines and medical devices regulation: HLT-MED-001 … 015, 017 … 020,
 // 023, 024; batch 3, taxpayer registration and account: the 29
 // taxpayer.* rows of Part 2 §2.6; batch 4, public-health programme forms:
-// HLT-PH-011, HLT-PH-014) to the documents they answer
-// (docs/FORMS_CONFORMANCE.md §8, §9, §10, §12). The test holds its
+// HLT-PH-011, HLT-PH-014; batch 7, independent oversight: DEM-CON-012, 013,
+// 014, 018, 019, 020 and DEM-PUB-009) to the documents they answer
+// (docs/FORMS_CONFORMANCE.md §8, §9, §10, §12, §15). The test holds its
 // own list of the catalogue lines each form must answer and reads the
 // documents themselves: every piece of every line (each table cell, list item
 // and sentence) is quoted verbatim by the contract and met by a field, a
@@ -19,7 +20,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
+import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, BATCH_7, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
 import { CANONICAL_LIBRARY } from './library/catalogue';
 import SPEC_TAXPAYER from './library/spec/taxpayer-registration-v1.json';
 import { SPEC_CLASSES } from './spec-import';
@@ -36,6 +37,7 @@ import { TAX_PROCEDURES } from '@/lib/tax/procedures';
 import { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
 import { PROGRAMME_PROCEDURES } from '@/lib/health/programmes/procedures';
 import { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
+import { INDEPENDENT_OVERSIGHT_PROCEDURES } from '@/lib/oversight/procedures';
 import { serviceDirectory } from '@/lib/exchange/services';
 import { AUTHORITIES } from '@/lib/nation/deployment';
 import { pagesOf } from '@/components/features/forms/answers';
@@ -48,6 +50,7 @@ const SRC = {
   B: 'docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md',
   C: 'docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md',
   D: 'docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md',
+  E: 'docs/forms-catalogue/PARTS-12-13.md',
 } as const;
 type Src = keyof typeof SRC;
 const DOC = Object.fromEntries(Object.entries(SRC).map(([k, p]) => [k, readFileSync(join(ROOT, p), 'utf8').split('\n')])) as Record<Src, string[]>;
@@ -70,9 +73,12 @@ const IDS_3 = [
 ];
 // Batch 4: public-health programme forms (the individual public-health forms stay excluded by the approved scope).
 const IDS_4 = ['HLT-PH-011', 'HLT-PH-014'];
-const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4];
-const batchOf = (id: string) => (id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : 1);
-const sourceOf = (id: string): Src => (batchOf(id) === 3 ? 'B' : 'A');
+// Batch 7: the Part 12 accountability forms the independent oversight procedures carry (plan I8).
+const IDS_7 = ['DEM-CON-012', 'DEM-CON-013', 'DEM-CON-014', 'DEM-CON-018', 'DEM-CON-019', 'DEM-CON-020', 'DEM-PUB-009'];
+const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4, ...IDS_7];
+const batchOf = (id: string) => (id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : IDS_7.includes(id) ? 7 : 1);
+const sourceOf = (id: string): Src => (batchOf(id) === 3 ? 'B' : batchOf(id) === 7 ? 'E' : 'A');
+const OVERSIGHT_SLOTS = ['ombudsman', 'humanRights', 'anticorruption', 'supremeAudit', 'dataProtection'];
 
 // ── The catalogue text each form answers (held here, apart from the contracts) ──
 // Every form: Part 1's universal rules, the three channels and minimisation, and the supplement's conventions and activation gates.
@@ -133,6 +139,21 @@ const TAX_FAMILY: Record<string, Partial<Record<Src, number[]>>[]> = {
   'taxpayer.registration.verification_record': [{ B: [3191, 3194] }],
   'taxpayer.registration.appeal_assessment': [{ B: [3191, 3193, 3062, 3063, 3070, 3076, 3078, 3223], D: [392, 410, 508] }],
   'taxpayer.registration.closure_record': [{ B: [3191, 3204] }],
+};
+
+// Every batch-7 form: Part 12's rules for independent institutions, their findings and protected identities (the archetypes'
+// standing, the non-negotiable principle, findings never overwritten, record ownership, investigations and findings, the
+// privacy safeguards, AI governance, CFG-DEM-012 and legal activation, the oversight and privacy gates).
+const OVERSIGHT: Partial<Record<Src, number[]>> = { E: [64, 66, 161, 193, 196, 197, 199, 401, 403, 405, 451, 478, 486, 488, 489, 500, 518, 529, 590, 591] };
+// Batch 7: each form's archetype line, register and the specification's operating specification for its body (Part 4 §A, §C).
+const EXTRA_7: Record<string, Partial<Record<Src, number[]>>> = {
+  'DEM-CON-012': { E: [57], D: [2798, 2800, ...range(3025, 3033), 3037, 3039] },
+  'DEM-CON-013': { E: [58], D: [2810, 2812, 3105, ...range(3109, 3112)] },
+  'DEM-CON-014': { E: [56, 441], D: [2794, ...range(2985, 2991), 3005] },
+  'DEM-CON-018': { E: [62, 521], D: [2806, ...range(3064, 3073), 3086] },
+  'DEM-CON-019': { E: [59], D: [2816, 2818, 3134, ...range(3138, 3145), 3147] },
+  'DEM-CON-020': { E: [441], D: [2989, 2990, 3005] },
+  'DEM-PUB-009': { E: [59, 176], D: [3134, 3147] },
 };
 
 const EXTRA: Record<string, Partial<Record<Src, number[]>>> = {
@@ -201,7 +222,9 @@ function rowLine(id: string): number {
 }
 
 function linesFor(id: string): [Src, number][] {
-  const sets = batchOf(id) === 3
+  const sets = batchOf(id) === 7
+    ? [COMMON, OVERSIGHT, EXTRA_7[id] ?? {}, { E: [rowLine(id)] }]
+    : batchOf(id) === 3
     ? [COMMON, TAX, ...(TAX_FAMILY[id] ?? []), TAX_OFFICER.includes(id) ? { B: [3205] } : {}, TAX_INTERNAL.includes(id) ? { B: [2710] } : {}, { B: [rowLine(id)] }]
     : [COMMON, COMMON_HEALTH, id.startsWith('HLT-FAC') ? FAMILY.FAC : id.startsWith('HLT-LIC') ? FAMILY.LIC : id.startsWith('HLT-MED') ? FAMILY.MED : FAMILY.PH, EXTRA[id] ?? {}, { A: [rowLine(id)] }];
   const out: [Src, number][] = [];
@@ -210,18 +233,19 @@ function linesFor(id: string): [Src, number][] {
 }
 
 const flat = (fs: ContractField[]): ContractField[] => fs.flatMap(f => [f, ...(f.items ? flat(f.items as ContractField[]) : [])]);
-const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES];
+const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES, ...INDEPENDENT_OVERSIGHT_PROCEDURES];
 const SERVICES = serviceDirectory().map(s => s.id);
 const applicantKeys = (f: CatalogueLibraryForm) => f.fields.filter(x => (x.audience ?? 'applicant') === 'applicant').map(x => x.key);
 /** No patient, clinical, treatment, diagnosis or individual health field: by key and by label. */
 const CLINICAL = /patient|clinical|clinician|diagnos|prescri|dispens|treatment|medication|symptom|medical record|health condition|care plan/i;
 
-describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account) and 4 (public-health programme forms)', () => {
-  it('holds exactly the 25 + 21 + 29 + 2 approved forms, one contract each, matched to the catalogue row it names', () => {
+describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account), 4 (public-health programme forms) and 7 (independent oversight)', () => {
+  it('holds exactly the 25 + 21 + 29 + 2 + 7 approved forms, one contract each, matched to the catalogue row it names', () => {
     expect(IDS_1.length).toBe(25);
     expect(IDS_2.length).toBe(21);
     expect(IDS_3.length).toBe(29);
     expect(IDS_4.length).toBe(2);
+    expect(IDS_7.length).toBe(7);
     expect(CATALOGUE_CONTRACTS.map(f => f.specId).sort()).toEqual([...IDS].sort());
     const files = readdirSync(join(process.cwd(), 'src/lib/forms/library/catalogue-contracts')).filter(f => f.endsWith('.json'));
     expect(files.sort()).toEqual(IDS.map(i => `${i}.json`).sort());
@@ -238,7 +262,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
   });
 
   it('carries no status anywhere: the register status is derived, never written', () => {
-    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4]) {
+    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_7]) {
       expect('status' in c, c.form_id).toBe(false);
       expect(JSON.stringify(c)).not.toMatch(/"(status|state|approved|approved_by|production)"\s*:/);
     }
@@ -394,7 +418,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
           if (f.exchange) expect(SERVICES).toContain(f.exchange);
         }
         // Authority from the deployment profile, never a ministry by name.
-        expect(batchOf(id) === 3 ? ['tax'] : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
+        expect(batchOf(id) === 3 ? ['tax'] : batchOf(id) === 7 ? OVERSIGHT_SLOTS : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
         expect(JSON.stringify(f.json)).not.toMatch(/Ministry of/);
       });
     });
@@ -754,5 +778,61 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
       expect(len && 'params' in len ? len.params : undefined, id).toEqual({ min: 20, max: 10000 });
     }
     expect(tax('taxpayer.registration.appeal_assessment').fields.find(x => x.key === 'appeal_assessment.not_disqualified')!.rules!.some(r => r.rule === 'registered' && r.name === 'must_be_true')).toBe(true);
+  });
+
+  // ── Batch 7: independent oversight (plan I8) ──
+  const ov = (id: string) => CATALOGUE_CONTRACTS.find(x => x.specId === id)!;
+  it('links each oversight form to its body\'s procedure by identity; each body a slot that ships empty', () => {
+    const linked: Record<string, [string, string, string?]> = {
+      'DEM-CON-012': ['ombudsman.complaint', 'received', 'register'], 'DEM-CON-013': ['human-rights.complaint', 'received', 'register'],
+      'DEM-CON-014': ['audit.engagement', 'fieldwork', 'record-finding'], 'DEM-CON-018': ['data-protection.rights-request', 'received', 'register'],
+      'DEM-CON-019': ['integrity.disclosure', 'received', 'register'], 'DEM-CON-020': ['audit.engagement', 'response'], 'DEM-PUB-009': ['integrity.disclosure', 'received', 'register'],
+    };
+    for (const id of IDS_7) {
+      const [key, stage, action] = linked[id]!;
+      expect(ov(id).procedure, id).toMatchObject({ key, stage, ...(action ? { action } : {}) });
+      expect(ov(id).batch).toBe(7);
+      // A slot of the deployment profile (optional for every body but data protection, which every installation names); none ships set.
+      expect(AUTHORITIES.find(a => a.key === ov(id).owner), id).toBeDefined();
+      if (ov(id).owner !== 'dataProtection') expect(AUTHORITIES.find(a => a.key === ov(id).owner), id).toMatchObject({ optional: true });
+      expect(ov(id).deviations.map(d => d.id), id).toEqual(expect.arrayContaining(['oversight-slot', 'recommendation-not-order']));
+    }
+    // The response answers every body's finding, never as a step of the body's case.
+    expect(ov('DEM-CON-020').procedure!.also).toEqual(['ombudsman.complaint', 'human-rights.complaint', 'integrity.disclosure', 'data-protection.rights-request']);
+    expect(ov('DEM-CON-020').procedure!.action).toBeUndefined();
+  });
+
+  it('keeps the person who raised a matter restricted and apart from the case, names no suspect, and writes no voter registration form', () => {
+    for (const id of ['DEM-CON-012', 'DEM-CON-013', 'DEM-CON-018', 'DEM-CON-019', 'DEM-PUB-009']) {
+      const f = ov(id);
+      const person = f.fields.filter(x => /^(complainant|discloser|requester)\./.test(x.key));
+      expect(person.length, id).toBeGreaterThanOrEqual(2);
+      for (const x of person) expect(x.personalDataClass, `${id} ${x.key}`).toBe('restricted');
+      expect(f.deviations.map(d => d.id), id).toContain('identity-kept-apart');
+      // The procedure the form feeds keeps no field about that person: it goes to the protected-identity record.
+      const p = INDEPENDENT_OVERSIGHT_PROCEDURES.find(x => x.key === f.procedure!.key)!;
+      expect(p.fields.map(x => x.key).filter(k => /name|contact|complainant|discloser|requester|raisedBy/i.test(k)), id).toEqual([]);
+    }
+    for (const id of IDS_7) for (const x of flat(ov(id).fields)) expect(x.key, `${id} ${x.key}`).not.toMatch(/suspect|accused|offender|voter|score|risk_rating/);
+    // Anonymity is the nation's decision; referrals carry the case reference only.
+    for (const id of ['DEM-CON-012', 'DEM-CON-019', 'DEM-PUB-009']) expect((ov(id).fields.find(x => /\.anonymous$/.test(x.key))!.rules ?? []).some(r => r.rule === 'registered' && r.name === 'configured_profile'), id).toBe(true);
+    for (const id of ['DEM-CON-019', 'DEM-PUB-009']) expect(ov(id).deviations.map(d => d.id), id).toEqual(expect.arrayContaining(['reference-only-referral', 'no-suspect']));
+    // Voter registration and the forms the scope holds for legal review stay unwritten.
+    for (const id of ['DEM-ELC-003', 'DEM-ELC-004', 'DEM-ELC-005', 'DEM-ELC-006']) {
+      expect(CATALOGUE_CONTRACTS.find(x => x.specId === id), id).toBeUndefined();
+      expect(scopeOf([id], []).status, id).toBe('legal_review');
+    }
+  });
+
+  it('records an audit finding by criteria, condition, cause, effect, evidence and recommendation; the response sits beside it', () => {
+    const f = ov('DEM-CON-014');
+    expect(f.fields.map(x => x.key)).toEqual(expect.arrayContaining(['finding.criteria', 'finding.condition', 'finding.cause', 'finding.effect', 'finding.evidence_items', 'finding.recommendation']));
+    for (const k of ['finding.criteria', 'finding.condition', 'finding.recommendation']) expect(f.fields.find(x => x.key === k)!.required, k).toBe(true);
+    expect(f.deviations.map(d => d.id)).toEqual(expect.arrayContaining(['response-beside', 'report-approval']));
+    const r = ov('DEM-CON-020');
+    expect(r.fields.find(x => x.key === 'response.institution')!.rules!.some(x => x.rule === 'registered' && x.name === 'actor_authorized_for_institution')).toBe(true);
+    expect(r.form.lists?.['civicos.oversight.response_positions']?.values.map(v => v.value)).toEqual(['accepted', 'partly-accepted', 'disputed']);
+    // The data-protection request: the authority never reads the records itself.
+    expect(ov('DEM-CON-018').deviations.map(d => d.id)).toContain('no-direct-read');
   });
 });

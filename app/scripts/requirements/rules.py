@@ -42,6 +42,11 @@ PREFILL = "reference procedures pre-fill deadline and appeal day counts (e.g. li
 
 EDITION = "lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, exchange answers not connected, a step needing another register pauses); tests lib/nation/edition.test.ts"
 PORTABLE = "lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log segments, trust list; sealed via key custody; two officials; verified offline by app/scripts/verify-institution-export.mjs; re-imported with ids unchanged); tests lib/portability/export.test.ts"
+# Independent oversight (plan I8)
+OVS = "lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.disclosure, audit.engagement, data-protection.rights-request, data-protection.investigation; decisions under proposed, unapproved mappings), lib/oversight/register.ts (findings by version with criteria, condition, cause, effect, evidence and recommendation; responses beside them; follow-up; evidence requests under an approved relationship; referrals by reference only); tests lib/oversight/oversight.test.ts, app/api/oversight/route.test.ts"
+PIDEV = "lib/oversight/protected-identity.ts (the person who raised a matter kept apart from the case: never in a list, search, case read or export; read only by the assigned or specifically authorised official with a purpose, every read and refusal in the access log); tests lib/oversight/oversight.test.ts (acceptance P4-06, P4-07)"
+AUDENG = "audit.engagement (approve-plan by two officials, notify, request-evidence under an audit or request-information relationship, record-finding, communicate, approve-report by two officials, publish, follow-up; the audited institution responds beside the finding: respondToFinding()); test lib/oversight/oversight.test.ts (acceptance P4-04)"
+DPEV = "data-protection.rights-request and .investigation (the controller asked only under an approved request-information relationship and answers; investigationAccess() reads the access log only for the records the case names, logged with the case; decide by two officials); test lib/oversight/oversight.test.ts (acceptance P4-05)"
 GATE = "lib/pilot/exit-gate.ts (computed from records: approved procedures, real completed cases, verifying seals with approved keys, mappings in force, audit chain, access-log reads, signed-in officials); tests lib/pilot/exit-gate.test.ts"
 RULES = []
 
@@ -94,7 +99,7 @@ R(0, None, r'principal gap|genuine operational systems', 'Partial', 'Audit A §3
 R(0, None, r'^1 — A1', 'Partial', 'Tax, customs operational; presidency, treasury, trade partial; procurement screens only; central bank absent (audit A §3)', 'See Part 1 rows', 'I5')
 R(0, None, r'^2 — A2', 'Partial', 'CRVS, education, immigration, professions operational; health partial; labour, social protection, agriculture, water screens only', 'See Part 2 rows', 'I6', 'I4')
 R(0, None, r'^3 — A3', 'Partial', 'Judiciary, mapping operational; police, emergency, land, local partial; corrections, transport, energy, environment screens only; prosecution, defence, housing, public works absent', 'See Part 3 rows', 'I7', 'I11')
-R(0, None, r'^4 — A4', 'Partial', 'Legislature operational; audit, data protection, statistics, regulators partial; electoral, ombudsman, human rights, anti-corruption, PSC absent', 'See Part 4 rows', 'I8', 'I11')
+R(0, None, r'^4 — A4', 'Partial', 'Legislature operational; public audit engagements, ombudsman and human rights complaints, protected disclosures and data-protection requests since plan I8 (' + OVS + '); statistics and regulators partial; electoral and PSC absent', 'See Part 4 rows', 'I8', 'I11')
 R(0, None, r'^5 — B and D', 'Partial', 'Kernel built and tested; institution export, migration manifest, event envelope missing', 'See Part 5 rows', 'I9')
 R(0, None, r'^6 — C, E and F', 'Partial', 'Console tokens and grounds exist; no workspace ground or component-state test', 'See Part 6 rows', 'I10')
 R(0, None, r'pre-approved in a universal package|legal forms, fees, deadlines', 'Country decision', 'Platform provides: laws [] and rules [] ship empty, procedures and permit mappings ship as unapproved drafts (audit A §2.6-2.8)', PREFILL + '; spec wants no pre-filled numbers', 'I1')
@@ -348,7 +353,7 @@ R(2, r'^C\.1$', r'^Form crvs', 'Partial', 'civil.birth package fields (person, p
 R(2, r'^C\.1$', r'sample_data_in_production', 'Met', MODE + '; sample cases refused in production', '', '—')
 R(2, r'^C\.1$', r'legal_basis|evidence_rules|approval_policy', 'Met', 'Citations required on decisions; documents from package; four-eyes platform minimum', '', '—')
 R(2, r'^C\.1$', r'request only the attributes it needs|Request identifier|Declared purpose|Attributes requested|Verification result and its meaning|Source register and source-record version|freshness|Audit reference', 'Partial', EXCH + ' (purpose, declared returns, receipt with digest, time)', 'Attributes requested vs returned, source-record version and freshness metadata in the response', 'I9')
-R(2, r'^C\.1$', r'^Independent privacy oversight', 'Partial', 'Data-protection authority reads the access log (roles.ts), access-watch findings', 'Investigation procedure scoping access (I8)', 'I8')
+R(2, r'^C\.1$', r'^Independent privacy oversight', 'Met', 'Data-protection authority reads the access log (roles.ts), access-watch findings; ' + DPEV, '', '—')
 R(2, r'^C\.1$', r'^Auditor', 'Met', ROLES + ' (auditors read with purpose, never change)', '', '—')
 R(2, r'^C\.1$', r'^(Registrar|Senior registrar|Credential officer|Records custodian|Identity verification service)', 'Partial', 'Officer/Can sign roles in the civil registration institution; exchange service returns only declared fields', 'Role scoping by task (senior registrar exceptions, credential officer)', 'I2')
 R(2, r'^C\.1$', r'Missing data must display as missing|denominator, reporting period', 'Partial', TWIN + '; missing shown as not connected (P2-13)', 'Indicator definitions with denominators', 'I3')
@@ -605,6 +610,15 @@ R(4, r'^intro$', r'.', 'Met', ROLES + '; ' + INST, '', '—')
 R(4, r'^A$', r'Additional archetypes|explicitly recorded', 'Met', 'Any institution can be recorded with standing and independence (institutions.ts)', '', '—')
 R(4, r'^A\.1$', r'.', 'Partial', 'lib/legislature/register.ts (bills, versions, amendments, votes, assent, publication; procedure approved by two officials)', 'Questions to government, petitions, committee hearings, budgets', 'Unassigned')
 R(4, r'^A\.2$', r'.', 'Lower priority', 'Plan §4 electoral results lower priority; slot electoral only', ABSENT, 'I11')
+R(4, r'^A\.3$', r'^Public expenditure', 'Met', AUDENG, '', '—')
+R(4, r'^A\.3$', r'^Maintains independent audit plans', 'Partial', AUDENG, 'Publication of the approved report on the office\'s public site and laying it before the legislature are recorded as a step, not carried out', 'I8')
+R(4, r'^A\.4$', r'.', 'Met', OVS + '; ' + PIDEV, '', '—')
+R(4, r'^A\.5$', r'^Independent oversight of personal-data', 'Met', DPEV, '', '—')
+R(4, r'^A\.5$', r'^Investigates complaints', 'Partial', DPEV, 'Audits of data practices (inspection programmes) and enforcement powers beyond a recommendation or order recorded with reasons', 'I8')
+R(4, r'^A\.6$', r'^Maintains protected complaints', 'Met', OVS + '; ' + PIDEV, '', '—')
+R(4, r'^A\.6$', r'^Human-rights monitoring', 'Partial', OVS, 'Monitoring visits, thematic inquiries and reports', 'I8')
+R(4, r'^A\.7$', r'^Separates allegations', 'Met', OVS + '; ' + PIDEV, '', '—')
+R(4, r'^A\.7$', r'^Corruption prevention', 'Partial', OVS + ' (disclosures, investigations, referrals by reference)', 'Prevention programmes (plan §4: lower priority)', 'I11', 'I8')
 R(4, r'^A\.(3|4|5|6|8|9|10)$', r'.', 'Partial', 'Slots exist (supremeAudit, ombudsman, dataProtection, humanRights, statistics); see C rows', 'Workflows', 'I8')
 R(4, r'^A\.7$', r'.', 'Lower priority', 'Plan §4 anti-corruption investigation lower priority', ABSENT, 'I11', 'I8')
 # B independence contract
@@ -636,20 +650,40 @@ R(4, r'^C\.1$', r'.', 'Partial', 'Legislature record exists', 'Indicator definit
 R(4, r'^C\.2$', r'.', 'Lower priority', 'Plan §4; absent (acceptance P4-03, P4-15 partial)', ABSENT, 'I11')
 # C.3 supreme audit
 R(4, r'^C\.3$', r'without becoming administrators', 'Met', 'Audit relationship: read listed records for a listed purpose, never a change (readRelationship())', '', '—')
-R(4, r'^C\.3$', r'^Evidence requests and submissions|^Evidence request:', 'Partial', 'request_information relationship reads, logged', 'Evidence request records with due date and status', 'I8')
-R(4, r'^C\.3$', r'.', 'Not yet', 'No audit-engagement procedure (audit A §3 partial: read path only; acceptance P4-04)', 'Audit engagement procedure and registers', 'I8')
+R(4, r'^C\.3$', r'^Evidence requests and submissions|^Evidence request:', 'Met', AUDENG + ' (requestEvidence(): entity, evidence, purpose, the relationship and version, due date the office sets, submissions, closure)', '', '—')
+R(4, r'^C\.3$', r'^Risk-based audit planning', 'Partial', AUDENG, 'An audit programme with the office\'s own risk assessment (officials\' reasons, never a score)', 'I8')
+R(4, r'^C\.3$', r'^(Working papers and audit tests|Audit test:|Evidence item:)', 'Partial', AUDENG + '; working papers as case documents with their hash; DEM-CON-014 contract (finding.audit_test, finding.evidence_items)', 'Audit tests and evidence items as structured records (custodian, audit use, reviewer)', 'I8')
+R(4, r'^C\.3$', r'^(Audit quality assurance)', 'Not yet', ABSENT, 'Quality review of engagements', 'I8')
+R(4, r'^C\.3$', r'^(Publication and legislative reporting|Audit report:|Publish or submit it as authorised)', 'Partial', AUDENG + ' (approve-report sealed; publish records how)', 'The report published through the office\'s Site editor and laid before the legislature as a legislative record; distribution list', 'I8')
+R(4, r'^C\.3$', r'^(Audit-plan completion|Evidence-request turnaround|Report review time|Recommendation follow-up|Repeat findings)', 'Partial', 'Records exist: engagements, evidence requests with dates, findings and follow-up (' + OVS + ')', 'Indicator definitions', 'I3')
+R(4, r'^C\.3$', r'.', 'Met', AUDENG, '', '—')
 # C.4 ombudsman
-R(4, r'^C\.4$', r'.', 'Not yet', ABSENT + ' (slot ombudsman)', 'Complaint procedure with protected identity', 'I8')
+R(4, r'^C\.4$', r'^Confidential interviews', 'Partial', OVS + ' (interview records as restricted documents of the case)', 'Interview scheduling and consent record', 'I8')
+R(4, r'^C\.4$', r'^Systemic-issue investigations', 'Not yet', 'Complaints only', 'An own-initiative (systemic) investigation procedure', 'I8')
+R(4, r'^C\.4$', r'^Public reporting and case archive', 'Partial', OVS + ' (cases and findings kept by version)', 'Public reports through the body\'s Site editor', 'I8')
+R(4, r'^C\.4$', r'^(Intake accessibility|Admissibility time|Case age|Recommendations answered|Overdue follow-up|Recurring systemic issues)', 'Partial', 'Records exist (' + OVS + ')', 'Indicator definitions', 'I3')
+R(4, r'^C\.4$', r'.', 'Met', OVS + '; ' + PIDEV, '', '—')
 # C.5 data protection
-R(4, r'^C\.5$', r'CivicOS access-log review|access logs or records through the authorised', 'Partial', 'Data-protection authority reads the access log (roles.ts), every read logged; access-watch findings (lib/records/access-watch.ts)', 'Investigation case scoping the read', 'I8')
+R(4, r'^C\.5$', r'CivicOS access-log review|access logs or records through the authorised', 'Met', 'Data-protection authority reads the access log (roles.ts), every read logged; access-watch findings (lib/records/access-watch.ts); ' + DPEV, '', '—')
 R(4, r'^C\.5$', r'distinct from the team that builds or operates', 'Met', 'Administrators do not read the access log; shortening needs confirmByOversight()', '', '—')
-R(4, r'^C\.5$', r'must not receive blanket access|Critical boundary|limited to the evidence', 'Partial', 'DPA reads access log metadata, never record content', 'Purpose-scoped investigation grants (acceptance P4-05)', 'I8')
+R(4, r'^C\.5$', r'must not receive blanket access|Critical boundary|limited to the evidence|purpose, scope and access event must be recorded', 'Met', 'DPA reads access log metadata, never record content; ' + DPEV, '', '—')
 R(4, r'^C\.5$', r'Data-protection impact assessments', 'Partial', 'DPIA template in evidence packs (lib/data/evidence.ts)', 'DPIA records per processing', 'I8')
-R(4, r'^C\.5$', r'.', 'Not yet', 'No privacy-investigation procedure, breach notifications, controller register', 'Privacy investigation procedure', 'I8')
+R(4, r'^C\.5$', r'^(Controller and processor registers|Data-breach notifications|Inspection and audit programmes|Guidance and public decisions|Cross-border cooperation|Breach-notification processing)', 'Not yet', ABSENT, 'Controller and processor register, breach notification form, inspection programme, guidance and public decisions, cross-border cooperation', 'I8')
+R(4, r'^C\.5$', r'^(Responsible controller and processor references|Data categories and purposes|Review or appeal status|Publication and redaction record|Corrective directions and enforcement)', 'Partial', DPEV + '; DEM-CON-018 contract', 'Processor references, structured data categories, appeal tracking, the publication and redaction record, enforcement powers beyond a recorded order', 'I8')
+R(4, r'^C\.5$', r'^(Complaint workload|Investigation age|Compliance with authorised corrective actions|Repeat access-control failures)', 'Partial', 'Records exist (' + DPEV + ')', 'Indicator definitions', 'I3')
+R(4, r'^C\.5$', r'.', 'Met', DPEV + '; ' + PIDEV, '', '—')
 # C.6 human rights
-R(4, r'^C\.6$', r'.', 'Not yet', ABSENT + ' (slot humanRights); no protected-identity field class (audit C 3.1 4.6)', 'Complaint procedure with protected identity', 'I8')
+R(4, r'^C\.6$', r'^(Monitoring and authorised visits|Thematic inquiries|Civil-society and stakeholder consultations)', 'Not yet', 'Complaints only', 'Monitoring visits, thematic inquiries and consultations as procedures of the institution', 'I8')
+R(4, r'^C\.6$', r'^(Public reports and parliamentary submissions|Provide an independent publication workflow)', 'Partial', OVS + '; the Site editor publishes per institution (proposed and published by its own officials)', 'Reports as records of the institution, published and submitted to the legislature', 'I8')
+R(4, r'^C\.6$', r'^(Complaint accessibility|Investigation workload|Recommendation follow-up|Systemic issues identified|Report publication)', 'Partial', 'Records exist (' + OVS + ')', 'Indicator definitions', 'I3')
+R(4, r'^C\.6$', r'They should inform the configuration', 'Country decision', 'The institution\'s powers are the nation\'s law (slot humanRights, shipped empty)', '', '—')
+R(4, r'^C\.6$', r'.', 'Met', OVS + '; ' + PIDEV, '', '—')
 # C.7 anti-corruption
-R(4, r'^C\.7$', r'(Protected disclosures|protected disclosure|Separate source identity|approved confidential channel|source protection|Restrict access to specifically|Monitor authorised protection)', 'Not yet', 'No protected-identity concept (grep whistleblow = 0; audit C S-1)', 'Protected disclosure intake with source separated (acceptance P4-07)', 'I8', 'I9')
+R(4, r'^C\.7$', r'^Source protection classification', 'Partial', PIDEV + '; DEM-CON-019 contract (disclosure.source_protection)', 'Source protection classification as a field of the procedure', 'I8')
+R(4, r'^C\.7$', r'(Protected disclosures|protected disclosure|Separate source identity|approved confidential channel|source protection|Restrict access to specifically|Monitor authorised protection)', 'Met', OVS + '; ' + PIDEV, '', '—')
+R(4, r'^C\.7$', r'^Referrals to prosecution', 'Partial', OVS + ' (a referral carries the case reference only)', 'A referral identifying a person to a prosecution needs legal review', 'I11', 'I8')
+R(4, r'^C\.7$', r'^(Where these functions are split|Procurement-integrity referrals|Investigative casework|Findings, orders or reports|Disclosure|Allegation|Evidence|Investigation|Finding|Referral|Authorised outcome|Assess jurisdiction|Preserve evidence|Conduct the authorised review|Record the outcome)$|^(Where these functions are split|Procurement-integrity referrals|Investigative casework|Findings, orders or reports|Assess jurisdiction|Preserve evidence|Conduct the authorised review|Record the outcome)', 'Met', OVS + '; ' + PIDEV, '', '—')
+R(4, r'^C\.7$', r'^(Disclosure processing|Case age|Protection incidents|Evidence completeness|Referral outcomes)$', 'Partial', 'Records exist (' + OVS + ')', 'Indicator definitions', 'I3')
 R(4, r'^C\.7$', r'Conflict-of-interest declarations|Asset or interest declarations', 'Partial', TRANS + ' (declaration of interest recuses at once)', 'Declarations register with verification', 'I8')
 R(4, r'^C\.7$', r'AI may identify patterns|flagged procurement transaction', 'Met', 'AI advisory only; access-watch findings are prompts, never conclusions', '', '—')
 R(4, r'^C\.7$', r'.', 'Lower priority', 'Plan §4: anti-corruption investigation lower priority', ABSENT, 'I11')
@@ -706,7 +740,7 @@ R(4, r'^F$', r'.', 'Not yet', 'No independent-institution readiness checklist', 
 R(4, r'^H$', r'^First:', 'Met', 'Constitutional phases 0-7', '', '—')
 R(4, r'^H$', r'^Second:', 'Met', 'Laws register, sealed decisions, site publication approvals, exchange', '', '—')
 R(4, r'^H$', r'^Third:', 'Partial', 'Legislature record built; statistics release absent', 'Statistical metadata', 'I8')
-R(4, r'^H$', r'^Fourth:', 'Not yet', 'Oversight workflows absent', '', 'I8')
+R(4, r'^H$', r'^Fourth:', 'Met', OVS + '; ' + PIDEV, 'Adoption by the nation (bodies named, procedures and mappings approved)', '—')
 R(4, r'^H$', r'^Fifth:', 'Lower priority', 'Electoral (I11); regulatory partially', '', 'I11', 'I8')
 R(4, r'^H$', r'^Sixth:', 'Partial', 'Institution data export tested: ' + PORTABLE, 'Institution-specific backups; configuration portability beyond procedures', 'I9')
 R(4, r'^H$', r'must survive shared hosting', 'Partial', ROLES + ' (shared authentication, documents, payments do not transfer authority)', 'Shared hosting keys are installation-wide (audit C K-1)', 'I9')

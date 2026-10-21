@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common) and \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common) and \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority) and \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -77,7 +77,14 @@
   "taxpayer.registration.assessment",
   "taxpayer.registration.verification_record",
   "taxpayer.registration.appeal_assessment",
-  "taxpayer.registration.closure_record"
+  "taxpayer.registration.closure_record",
+  "DEM-CON-012",
+  "DEM-CON-013",
+  "DEM-CON-014",
+  "DEM-CON-018",
+  "DEM-CON-019",
+  "DEM-CON-020",
+  "DEM-PUB-009"
  ],
  "groups": {
   "health": [
@@ -160,6 +167,15 @@
    "taxpayer.registration.verification_record",
    "taxpayer.registration.appeal_assessment",
    "taxpayer.registration.closure_record"
+  ],
+  "oversight": [
+   "DEM-CON-012",
+   "DEM-CON-013",
+   "DEM-CON-014",
+   "DEM-CON-018",
+   "DEM-CON-019",
+   "DEM-CON-020",
+   "DEM-PUB-009"
   ]
  },
  "items": [
@@ -1883,6 +1899,289 @@
     "platform": {
      "file": "app/src/lib/tax/register.ts",
      "how": "taxCounts(): counts only, never a taxpayer's record"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 64,
+   "quotes": [
+    "These are archetypes, not mandatory institutional arrangements.",
+    "The system must represent each institution's establishing law, constitutional standing, independence, powers, record ownership and authorized relationships explicitly."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/data/store/institutions.ts",
+     "how": "Each institution's establishing law, standing, independence per dimension and records owned are recorded on its register entry; relationships in the relationship register; nothing ships for a nation"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 66,
+   "quotes": [
+    "Non-negotiable principle: Executive administrators must not be able to modify legislative votes, change certified election results, suppress independent findings or access confidential constitutional-office records merely because they hold a national government administrator account."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Whole-government administrators reach no independent institution (reaches(), caseActRefusal(), caseReadRefusal()); the oversight bodies are independent slots (INDEPENDENT_SLOTS)"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 161,
+   "quotes": [
+    "CivicOS must not assume that a constitutional appointment is made by the executive, that a commission reports to a ministry, or that a public audit body can be instructed to change its findings.",
+    "Those powers must follow the nation's constitutional and statutory framework."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Each oversight body is the institution the nation names for its slot; no body reports to a ministry by default, and an audit finding changes only by the audit office's own new version"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 193,
+   "quotes": [
+    "Never overwrite a legislative text, electoral result, appointment decision or independent finding without preserving the earlier version and its status."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/register.ts",
+     "how": "A finding is corrected only by a new version, the earlier kept; an issued finding is never changed"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 196,
+   "quotes": [
+    "Record the authority responsible for certifying each result or decision."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/records/decisions.ts",
+     "how": "Every decision is sealed with its institution, officials, reasons, the authority mapping it rested on and the law cited"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 197,
+   "quotes": [
+    "Support corrections through linked, attributable events."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/register.ts",
+     "how": "Corrections, responses and follow-up are appended as numbered, attributed versions and events"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 199,
+   "quotes": [
+    "Prevent training and demonstration data from appearing in production elections or official government records."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/ops/mode.ts",
+     "how": "A production installation opens and moves no sample case, and sample records stay marked (samplesAllowed(), sampleMark())"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 401,
+   "quotes": [
+    "An independent institution's record owner must not be reassigned by a general government administrator without a lawful, explicitly authorized process."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/data/store/institutions.ts",
+     "how": "Who is responsible and an institution's terms change after setup only through policy-change.ts (cited, confirmed by a different official; an independent institution confirms its own)"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 403,
+   "quotes": [
+    "The investigation workflow should record the mandate, investigator, conflicts of interest, evidence, procedural steps, findings, recommendations, response from the institution concerned and closure status."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/procedures.ts",
+     "how": "The procedure records the mandate (admission), the investigator (assignee), evidence requests, steps, findings, recommendations, the institution's response and closure; a declared conflict of interest recuses at once (lib/transitions)"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 405,
+   "quotes": [
+    "A recommendation is not automatically a binding order.",
+    "A finding should not be silently rewritten by the institution under investigation.",
+    "If an independent body's decision is appealed or judicially reviewed, the new proceeding must link to the original record and preserve the original outcome."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/register.ts",
+     "how": "A recommendation is never an order; the institution concerned answers beside a finding and never changes it; a review is a new linked case, the original kept"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 451,
+   "quotes": [
+    "Keep independent institutions' records under their own configured authority."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "An independent body's cases are worked and read only by its own officials (caseActRefusal(), caseReadRefusal())"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 478,
+   "quotes": [
+    "independent_body.case.manage"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "independent_body.case.manage maps to caseActRefusal(): an official of the body itself; no whole-government role"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 486,
+   "quotes": [
+    "Protect whistleblower and complainant identities."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/protected-identity.ts",
+     "how": "The person who raised a matter is kept apart from the case, read only by the assigned or authorised official with a purpose"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 488,
+   "quotes": [
+    "Log access to restricted records and audit bulk exports."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/records/access-log.ts",
+     "how": "Every read of a case, of a protected identity, every refusal and every export is in the access log"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 489,
+   "quotes": [
+    "Keep independent review cases inaccessible to unauthorized staff of the institution under review."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "The institution under review is refused the body's cases and the protected identity; it sees only a finding sent to it"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 500,
+   "quotes": [
+    "Suppress, rewrite or reclassify an independent finding."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/register.ts",
+     "how": "No function lets AI or the institution concerned change a finding; corrections are the body's own versions"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 518,
+   "quotes": [
+    "CFG-DEM-012",
+    "Independent institution mandates and protected access boundaries"
+   ],
+   "met_by": {
+    "country_decision": "CFG-DEM-012"
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 529,
+   "quotes": [
+    "Where the governing law is uncertain, the relevant binding workflow must remain inactive until the competent institution confirms the legal position.",
+    "CivicOS must not infer constitutional powers from an institution's name or administrative location."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/permits/decisions.ts",
+     "how": "Every decision is classified under a proposed, unapproved authority mapping and refused in production until the nation approves it; no power is inferred from a name"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 590,
+   "quotes": [
+    "Independent oversight: Findings cannot be silently changed or suppressed by the institution under review."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/register.ts",
+     "how": "respondToFinding() appends beside the finding; its versions and stage are untouched (acceptance P4-04)"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 591,
+   "quotes": [
+    "Privacy: Voter, donor, whistleblower and complainant information is disclosed only when authorized."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/protected-identity.ts",
+     "how": "A whistleblower's or complainant's identity is never in a list, a search or an export, and no other institution reads it"
     }
    }
   }

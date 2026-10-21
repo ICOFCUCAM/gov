@@ -16,7 +16,7 @@ APP_DATA = 'app/src/lib/forms/data'
 SCOPE_SRC = 'docs/requirements/form-scope.json'
 REPORTED = {'listed forms, parts 14–22': 216, 'contracts, parts 14–22': 61, 'core contracts, parts 5–13': 72}
 # What each controlled batch of CivicOS's own contracts covers (owner's approvals, 21 October 2026).
-BATCH_LABEL = {1: 'health regulation', 2: 'medicines and medical devices regulation', 3: 'taxpayer registration and account', 4: 'public-health programme forms'}
+BATCH_LABEL = {1: 'health regulation', 2: 'medicines and medical devices regulation', 3: 'taxpayer registration and account', 4: 'public-health programme forms', 7: 'independent oversight and accountability forms'}
 GATES = [
     'The form owner and competent authority are verified.',
     'Legal references and their versions have been approved.',

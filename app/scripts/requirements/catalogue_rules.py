@@ -31,6 +31,7 @@ HEALTHEV = "lib/health/procedures.ts (facility and pharmacy licence, renewal, su
 PROFEV = "lib/professions/procedures.ts (prof.registration, prof.renewal, prof.fitness), lib/professions/register.ts (each profession kept by its regulator; public check by full name, rate-limited, harvest watch; professional.standing exchange); tests lib/professions/*.test.ts"
 EDUEV = "lib/education/procedures.ts (edu.inspection, edu.qualification, edu.qualification-correction, edu.qualification-revocation), schools as organisations with a standing in the schools register, aggregate returns, qualification.verify; tests lib/education/procedures.test.ts"
 ACCEV = "lib/organisations/procedures.ts org.accreditation (higher-education accreditation as a standing kept by the accrediting body)"
+OVSEV = KB.OVS + '; ' + KB.PIDEV
 TRANSEV = KB.TRANS + "; emergencies recorded as legal events cited from the laws register, confirmed by a different person, lapsing at expiry (lib/transitions/events.ts, state.ts)"
 INCID = "ministry incidents with recorded places (lib/data/incident-places.ts; test lib/data/incident-places.test.ts)"
 DELEG = "lib/records/delegations.ts (who may act for whom, for which procedures, until when; granted by the verifying official, revocable, expiring, audited without names); test lib/records/delegations.test.ts"
@@ -344,6 +345,10 @@ I(r'^CFG-DEM-00[123]$', 'Country decision', LEGEV + ' (stages, vote rules, assen
 I(r'^DEM-CON-00[67]$|^DEM-CON-009$', 'Partial', KB.OFFICES, 'Nomination, eligibility, hearing and recommendation kept apart from the decision; appointment instrument', 'I8')
 I(r'^DEM-CON-003$', 'Partial', TRANSEV + ' (a declared interest recuses at once, CaseFacts.recused)', 'Declaration as a record with review', 'I8')
 I(r'^DEM-CON-010$', 'Partial', TRANSEV + ' (impeachment stages run in order by the institution named for each)', 'Removal and suspension proceedings per office', 'I8')
+# Independent oversight (plan I8): the accountability forms of batch 7, linked to their procedures, and the findings register.
+I(r'^DEM-CON-01[2348]$|^DEM-CON-019$|^DEM-PUB-009$', 'Partial', OVSEV + '; library contract of batch 7 (app/src/lib/forms/library/catalogue-contracts/)', 'Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved', 'I8')
+I(r'^DEM-CON-020$', 'Partial', KB.OVS + ' (respondToFinding(): beside the finding, never changing it); library contract of batch 7', 'Adoption by the nation: whether its law obliges a response, and how it is published', 'I8')
+I(r'^REG-DEM-015$', 'Met', KB.OVS + ' (findings, the institution concerned, responses and follow-up; lib/oversight/register.ts)', '', '—')
 I(r'^REG-DEM-012$', 'Met', KB.INST + '; relationships ' + KB.RELS, '', '—')
 I(r'^REG-DEM-011$', 'Partial', KB.OFFICES, 'Nominations and recommendations', 'I8')
 I(r'^CFG-DEM-012$', 'Country decision', KB.INST + ' (terms through lib/law/policy-change.ts)', '', '—')
@@ -494,6 +499,8 @@ T(r'CAT-08-11:11', r'intelligence (content|source|collection)|raw intelligence|s
   CLASSRULE + '; ' + NOTHOLD, 'The installation\'s accreditation level and permitted data classes are not declared; until they are, CivicOS holds no classified content (plan I12)', 'I12', lr=True, forms=True)
 T(r'CAT-08-11:11', r'military (action|operations|targeting)|weapons|covert|operational command', 'Platform rule stricter', "Plan §4: anything operational is out of scope; CivicOS has no operational defence function", '', '—', forms=True)
 T(r'CAT-08-11:10', r'surveillance|interception|location tracking|facial recognition|biometric', 'Platform rule stricter', 'No surveillance, interception, location tracking or biometric function exists in lib/ (police is intake and referral only, CLAUDE.md); directions §15', '', '—', forms=True)
+T(r'CAT-12-13:12', r'^(Protect whistleblower and complainant identities|Keep independent review cases inaccessible|independent_body\.case\.manage|Privacy: Voter, donor, whistleblower|Independent oversight: Findings cannot)', 'Met', OVSEV, '', '—')
+T(r'CAT-12-13:12', r'^(The investigation workflow should record|A recommendation is not automatically|A finding should not be silently rewritten|Keep independent institutions\' records under)', 'Met', OVSEV, '', '—')
 T(r'CAT-12-13:12', r'online voting|electronic (voting|ballot)|ballot secrecy|marked ballot', 'Platform rule stricter', 'CivicOS records no vote of any voter and is no electronic voting system (plan §4: electoral results after legal review)', '', '—', forms=True)
 T(r'', r'risk score|credibility score|risk scoring', 'Platform rule stricter', 'CLAUDE.md: no risk score (immigration, customs: "never a score"); AI never makes a legally material decision; no risk score exists in lib/', '', '—', forms=True)
 # permissions
