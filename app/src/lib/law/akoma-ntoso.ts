@@ -113,8 +113,18 @@ export function readProvisionsCsv(text: string): ReadText | { error: string } {
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/** A version as an Akoma Ntoso act document (structure, numbers, headings and text). */
-export function toAkomaNtoso(inst: Pick<LegalInstrument, 'id' | 'title' | 'type'>, v: Pick<LegalVersion, 'language' | 'dates' | 'provisions'>): string {
+/**
+ * A version as an Akoma Ntoso act document (structure, numbers, headings and text), or, with `doc: 'bill'`,
+ * a bill as the legislature recorded it (lib/legislature/register.ts), with the steps of its life so far
+ * (introduction, readings, votes, assent, publication) as lifecycle events.
+ */
+export function toAkomaNtoso(inst: Pick<LegalInstrument, 'id' | 'title' | 'type'>, v: Pick<LegalVersion, 'language' | 'dates' | 'provisions'>, opts: { doc?: 'act' | 'bill'; lifecycle?: { date: string; name: string }[] } = {}): string {
+  const doc = opts.doc ?? 'act';
+  const events = (opts.lifecycle ?? []).filter(e => /^\d{4}-\d{2}-\d{2}$/.test(e.date));
+  const ref = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'event';
+  const lifecycle = events.length
+    ? `      <lifecycle source="#civicos">\n${events.map((e, i) => `        <eventRef eId="evt_${i + 1}" date="${esc(e.date)}" source="#civicos" refersTo="#${esc(ref(e.name))}"/>\n`).join('')}      </lifecycle>\n`
+    : '';
   const byParent = new Map<string | undefined, Provision[]>();
   for (const p of v.provisions) byParent.set(p.parent, [...(byParent.get(p.parent) ?? []), p]);
   const tag = (p: Provision) => {
@@ -129,17 +139,17 @@ export function toAkomaNtoso(inst: Pick<LegalInstrument, 'id' | 'title' | 'type'
   const lang = esc(v.language);
   return `<?xml version="1.0" encoding="UTF-8"?>
 <akomaNtoso xmlns="http://docs.oasis-open.org/legaldocml/ns/akn/3.0">
-  <act name="${esc(inst.type)}">
+  <${doc} name="${esc(inst.type)}">
     <meta>
       <identification source="#civicos">
         <FRBRWork><FRBRthis value="${esc(inst.id)}"/><FRBRuri value="${esc(inst.id)}"/><FRBRdate date="${esc(v.dates.adopted ?? v.dates.inForce)}" name="${v.dates.adopted ? 'adoption' : 'inForce'}"/><FRBRauthor href="#legislator"/><FRBRcountry value="${esc(inst.id.split('/')[2] ?? '')}"/></FRBRWork>
-        <FRBRExpression><FRBRthis value="${esc(inst.id)}/${lang}@${esc(v.dates.inForce)}"/><FRBRuri value="${esc(inst.id)}/${lang}@${esc(v.dates.inForce)}"/><FRBRdate date="${esc(v.dates.inForce)}" name="inForce"/><FRBRauthor href="#legislator"/><FRBRlanguage language="${lang}"/></FRBRExpression>
+        <FRBRExpression><FRBRthis value="${esc(inst.id)}/${lang}@${esc(v.dates.inForce)}"/><FRBRuri value="${esc(inst.id)}/${lang}@${esc(v.dates.inForce)}"/><FRBRdate date="${esc(v.dates.inForce)}" name="${doc === 'bill' ? 'version' : 'inForce'}"/><FRBRauthor href="#legislator"/><FRBRlanguage language="${lang}"/></FRBRExpression>
       </identification>
-    </meta>
+${lifecycle}    </meta>
     <preface><p><docTitle>${esc(inst.title)}</docTitle></p></preface>
     <body>
 ${(byParent.get(undefined) ?? []).map(p => unit(p, 3)).join('')}    </body>
-  </act>
+  </${doc}>
 </akomaNtoso>
 `;
 }

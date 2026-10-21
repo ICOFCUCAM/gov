@@ -124,12 +124,14 @@ export function isIndependentInstitution(id: string, now = new Date()): boolean 
  */
 export function institutionBounds(now = new Date()): Boundaries {
   const independent = new Set<string>(), judicial = new Set<string>();
-  const institutions: string[] = [];
+  const institutions: string[] = [], subnational: string[] = [];
   for (const m of db.ministries) {
     institutions.push(m.id);
     const t = termsOf(m, now);
     if (independentTerms(t)) independent.add(m.id);
     if (t.standing === 'judiciary') judicial.add(m.id);
+    // A regional or local government with its own powers (plan phase 7, audit K): outside central reach.
+    if (t.standing === 'subnational') subnational.push(m.id);
   }
   for (const k of INDEPENDENT_SLOTS) { const id = authorityFor(k); if (id) independent.add(id); }
   for (const k of JUDICIAL_SLOTS) { const id = authorityFor(k); if (id) { judicial.add(id); independent.add(id); } }
@@ -138,7 +140,11 @@ export function institutionBounds(now = new Date()): Boundaries {
   const audit = auditM && termsOf(auditM, now).standing === 'independent-constitutional' ? auditM.id : undefined;
   // The approved relationships in force today (plan phase 3), for the rules that read them.
   const relationships = relationshipGrants(now);
-  return { independent: [...independent], judicial: [...judicial], ...(audit ? { audit } : {}), institutions, ...(relationships.length ? { relationships } : {}) };
+  const legislature = authorityFor('legislature'), headOfState = authorityFor('headOfState');
+  return {
+    independent: [...independent], judicial: [...judicial], ...(audit ? { audit } : {}), institutions, ...(relationships.length ? { relationships } : {}),
+    ...(subnational.length ? { subnational } : {}), ...(legislature ? { legislature } : {}), ...(headOfState ? { headOfState } : {}),
+  };
 }
 
 /** The registered institutions a directive's targets name (id, slug or name), with their ids and names. */

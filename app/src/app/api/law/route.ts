@@ -27,13 +27,17 @@ export async function POST(req: NextRequest) {
   if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as RecordInput & { by?: string; format?: 'akoma-ntoso' | 'csv'; text?: string };
   const who = await caseScope();
-  let input: RecordInput = b;
+  // How a version entered is decided here, never by the request: typed in, or read from a file. A version from the
+  // legislature's record enters only through /api/legislature (lib/legislature/register.ts transmitToLaws()).
+  const typed: typeof b = { ...b };
+  delete typed.source;
+  let input: RecordInput = { ...typed, source: { kind: 'entered' } };
   if (b.format) {
     if (typeof b.text !== 'string') return NextResponse.json({ error: 'Send the file\'s text' }, { status: 422 });
     const read = b.format === 'akoma-ntoso' ? readAkomaNtoso(b.text) : readProvisionsCsv(b.text);
     if ('error' in read) return NextResponse.json(read, { status: 422 });
     const sha256 = createHash('sha256').update(b.text, 'utf8').digest('hex');
-    input = { ...b, provisions: read.provisions, instrument: { ...(read.work?.title ? { title: read.work.title } : {}), ...b.instrument }, source: { kind: b.format, sha256 } };
+    input = { ...typed, provisions: read.provisions, instrument: { ...(read.work?.title ? { title: read.work.title } : {}), ...b.instrument }, source: { kind: b.format, sha256 } };
   }
   const r = recordVersion(input, who?.label ?? b.by ?? 'Unverified official', who?.id);
   if ('error' in r) return NextResponse.json(r, { status: 422 });

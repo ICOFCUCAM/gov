@@ -34,7 +34,9 @@ import { POLICIES, take, tooMany, clientAddress, type Scope } from '@/lib/ops/ra
 // directives feed lists only signed, effective, rescinded or published ones.
 // The laws register's confirmed versions are public law (lib/law/register.ts);
 // recorded and withdrawn versions reach only signed-in officials.
-const PUBLIC_READ = [/^\/api\/public\/charters$/, /^\/api\/public\/accountability$/, /^\/api\/public\/directives$/, /^\/api\/auth\/official$/, /^\/api\/sovereign$/, /^\/api\/boundaries\/active$/, /^\/api\/exchange\/key$/, /^\/api\/map-pack\/districts$/,/^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/, /^\/api\/twin\/tiles\/facilities\.pmtiles$/, /^\/api\/law$/, /^\/api\/law\/(cite|export)$/, /^\/api\/registers$/, /^\/api\/registers\/check$/, /^\/api\/registers\/professionals$/, /^\/api\/courts\/cause-list$/];
+const PUBLIC_READ = [/^\/api\/public\/charters$/, /^\/api\/public\/accountability$/, /^\/api\/public\/directives$/, /^\/api\/auth\/official$/, /^\/api\/sovereign$/, /^\/api\/boundaries\/active$/, /^\/api\/exchange\/key$/, /^\/api\/map-pack\/districts$/,/^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/, /^\/api\/twin\/tiles\/facilities\.pmtiles$/, /^\/api\/law$/, /^\/api\/law\/(cite|export)$/, /^\/api\/registers$/, /^\/api\/registers\/check$/, /^\/api\/registers\/professionals$/, /^\/api\/courts\/cause-list$/,
+  // The legislature's bills as the chamber's procedure makes them public (lib/legislature/register.ts publicBill()); its officials read the full record.
+  /^\/api\/legislature\/bills(\/[^/]+(\/akn)?)?$/];
 // Public writes (email updates) and self-authenticating machine routes are
 // defined with the permission rules in lib/auth/roles.ts.
 const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/fonts\//, /^\/api\/health/, /^\/api\/auth\/citizen\/(start|callback)$/];
