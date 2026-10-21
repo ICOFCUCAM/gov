@@ -410,12 +410,15 @@ export function MinistryWorkspace({ id }: { id: string }) {
           { l: 'Status', v: readiness ? LIFECYCLE_LABEL[readiness.lifecycle] : (inst?.status ?? '—'), c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))', dot: true },
           { l: 'Readiness', v: readiness ? `${readiness.total}%` : '—', c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))' },
           { l: 'Situation', v: mode === 'CRISIS' ? 'Crisis' : mode === 'ESCALATION' ? 'Incident open' : 'Normal', c: modeTone, dot: true },
-          { l: 'Pressure from other ministries', v: cascadeSelf ? `${cascadeSelf.totalStress}${cascadeSelf.inheritedStress ? ` (+${cascadeSelf.inheritedStress})` : ''}` : '—', c: cascadeCrit ? 'rgb(var(--c-alert))' : cascadeStrain ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))', dot: cascadeCrit || cascadeStrain, sample: true },
+          // A cascade-model figure: a sample in demo and training, not connected in production.
+          installMode === 'production'
+            ? { l: 'Pressure from other ministries', v: 'Not connected', c: 'rgb(var(--c-ink-muted))', sample: true }
+            : { l: 'Pressure from other ministries', v: cascadeSelf ? `${cascadeSelf.totalStress}${cascadeSelf.inheritedStress ? ` (+${cascadeSelf.inheritedStress})` : ''}` : '—', c: cascadeCrit ? 'rgb(var(--c-alert))' : cascadeStrain ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))', dot: cascadeCrit || cascadeStrain, sample: true },
           { l: 'Active incidents', v: String(activeAlerts.length), c: activeAlerts.length ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
           { l: 'Queue', v: `${openQueue} open`, c: openQueue > 6 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink))' },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}{'sample' in s && s.sample ? <SignalTag kind="sample" source={`Cascade model over ${REFERENCE_MODEL.toLowerCase()}`} /> : null}</span>
+            <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}{'sample' in s && s.sample ? <SampleTag source={`Cascade model over ${REFERENCE_MODEL.toLowerCase()}`} /> : null}</span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: s.c }}>
               {s.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: s.c }} /> : null}
               {s.v}

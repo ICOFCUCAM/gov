@@ -367,7 +367,7 @@ export function PopulationAnalytics({ id, now }: { id: string; now: number }) {
               <span key={l} className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-[2px]" style={{ background: c }} />{l}</span>
             ))}
             <span className="ml-auto inline-flex items-center gap-1 font-semibold" style={{ color: INK }}>
-              National Avg {density.nationalAvg != null ? `${density.nationalAvg.toLocaleString('en')} /km²` : '—'}<SignalTag kind={density.kind} source={density.source} />
+              National Avg {density.kind === 'sample' && !samples ? 'Not connected' : density.nationalAvg != null ? `${density.nationalAvg.toLocaleString('en')} /km²` : '—'}<SignalTag kind={density.kind === 'sample' && !samples ? 'unavailable' : density.kind} source={density.source} />
             </span>
           </div>
         </Card>
