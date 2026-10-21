@@ -99,9 +99,25 @@ const APPROVER = { name: 'Demonstration registrar general', id: 'demo-registrar-
 
 export type DemoResult = { act: string; approved: string[]; present: string[] } | { error: string };
 
+/**
+ * A sample act an official can cite to name who is responsible on a demonstration installation whose
+ * setup is complete (that change goes through the country's change process, which cites the law). It
+ * designates nothing itself: the officials still choose and confirm each institution.
+ */
+export const DEMO_DESIGNATION_ACT_TITLE = 'Public Administration Act (sample for demonstration)';
+export function sampleDesignationAct(now = new Date()): { instrument: string; eId: string } | { error: string } {
+  if (!samplesAllowed()) return { error: 'A production installation holds no sample laws' };
+  const act = sampleAct(DEMO_DESIGNATION_ACT_TITLE, 'sample-0', [{ eId: 'sec_3', num: '3', text: 'The Government designates, by order, the institution responsible for each public register and power.' }], now);
+  return 'error' in act ? act : { instrument: act.instrument, eId: 'sec_3' };
+}
+
 export function loadDemonstration(by: string, now = new Date()): DemoResult {
   if (!samplesAllowed()) return { error: 'A production installation holds no sample laws or procedures' };
-  if (!authorityFor('civilRegistration')) return { error: 'Name the civil registration authority under Who is responsible first' };
+  if (!authorityFor('civilRegistration')) {
+    // Recorded so the officials can cite it when they name who is responsible; nothing is named here.
+    const basis = sampleDesignationAct(now);
+    return { error: `Name the civil registration authority under Who is responsible first${'error' in basis ? '' : ` (cite the sample ${DEMO_DESIGNATION_ACT_TITLE}, section 3, when proposing it)`}` };
+  }
   const today = now.toISOString().slice(0, 10);
   installReferenceProcedures(by);
   const approved: string[] = [], present: string[] = [];
