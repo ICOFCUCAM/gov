@@ -22,7 +22,7 @@
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
-import { nextNumber } from '@/lib/data/numbering';
+import { nextNumber, raiseCounter } from '@/lib/data/numbering';
 import { withDefaults } from '@/lib/data/defaults';
 
 export interface ImportAuthorisation {
@@ -49,6 +49,18 @@ const seed = (): Db => ({ imports: [], miaSeq: 0 });
 const g = globalThis as unknown as { __civicosMedicineImports?: Db };
 const db = (): Db => touch('__civicosMedicineImports', g.__civicosMedicineImports = withDefaults(g.__civicosMedicineImports ??= seed(), seed()));
 export function resetImports(): void { g.__civicosMedicineImports = undefined; }
+
+/** Every import authorisation as kept, for an institution's portable export (lib/portability/export.ts). Read only. */
+export const importRecords = (): ImportAuthorisation[] => db().imports.map(a => structuredClone(a));
+/** Put back import authorisations keeping their ids and numbers (lib/portability/import.ts only: the confirmed import of an institution's own export (two officials) into an installation that holds none of these records). */
+export function restoreImports(list: ImportAuthorisation[]): { restored: number } | { error: string } {
+  const d = db();
+  const clash = list.find(a => d.imports.some(x => x.id === a.id || x.number === a.number));
+  if (clash) return { error: `Import authorisation ${clash.number} is already in this installation` };
+  d.imports.push(...list.map(a => structuredClone(a)));
+  raiseCounter(d as unknown as Record<string, unknown>, 'miaSeq', list.map(a => a.number));
+  return { restored: list.length };
+}
 const clone = <T,>(x: T): T => structuredClone(x);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 

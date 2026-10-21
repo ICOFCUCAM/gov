@@ -38,6 +38,25 @@ export interface DeploymentProfile {
   identity?: { citizens?: { issuer: string; clientId: string; assurance?: string }; assisted: boolean };
   /** Decisions and certificates: signed by the platform (institution seals) or by the nation's qualified service. */
   signature?: { framework: 'platform' | 'national'; trustList?: string };
+  /**
+   * CivicOS Institutional Edition (spec Part 5 D; Health I4 standalone-and-pilot): this installation runs as
+   * the institutions named here standing alone. Every other institution is not connected: its modules do not
+   * run, its procedures open no case, and an exchange call to a service it owns answers "not connected"
+   * (never a guess). Recorded during setup, afterwards only through the change process (citing the law, a
+   * different official confirms; lib/data/store/sovereign.ts proposeEdition()). Never shipped set.
+   */
+  edition?: InstitutionalEdition;
+}
+
+/** One institution (or a few, e.g. the health institutions) installed standing alone. */
+export interface InstitutionalEdition {
+  kind: 'institutional';
+  /** Its name as the installation shows it (e.g. "Health regulation"); the nation chooses it. */
+  label: string;
+  /** The institutions it runs as (ids from the ministry registry). */
+  institutions: string[];
+  /** The modules it runs (their registers and procedures); every other module is off. */
+  modules: ModuleKey[];
 }
 
 /**
@@ -178,6 +197,15 @@ export function checkDeployment(d: unknown, institutions: string[]): DeploymentP
       out.identity = { assisted: i.assisted, citizens: { issuer: u.origin + u.pathname.replace(/\/+$/, ''), clientId: c.clientId.trim(), ...(typeof c.assurance === 'string' && c.assurance ? { assurance: c.assurance.slice(0, 100) } : {}) } };
     } else out.identity = { assisted: i.assisted };
   }
+  if (x.edition !== undefined) {
+    // null takes the edition away (setup only: afterwards through the change process).
+    if (x.edition === null) out.edition = undefined;
+    else {
+      const e = checkEdition(x.edition, institutions);
+      if ('error' in e) return e;
+      out.edition = e;
+    }
+  }
   if (x.signature !== undefined) {
     const s = x.signature as { framework?: unknown; trustList?: unknown } | null;
     if (!s || (s.framework !== 'platform' && s.framework !== 'national')) return { error: 'Signature framework must be platform or national' };
@@ -186,11 +214,41 @@ export function checkDeployment(d: unknown, institutions: string[]): DeploymentP
   return out;
 }
 
+/** Check an Institutional Edition against the institutions that exist: named, at least one institution, known modules. */
+export function checkEdition(v: unknown, institutions: string[]): InstitutionalEdition | { error: string } {
+  const e = v as { kind?: unknown; label?: unknown; institutions?: unknown; modules?: unknown } | null;
+  if (!e || typeof e !== 'object' || Array.isArray(e)) return { error: 'The Institutional Edition must be an object { label, institutions, modules }' };
+  if (e.kind !== undefined && e.kind !== 'institutional') return { error: 'The edition kind is institutional' };
+  const label = typeof e.label === 'string' ? e.label.trim().slice(0, 80) : '';
+  if (!label) return { error: 'Name the Institutional Edition (e.g. the institution or sector it runs as)' };
+  const ids = Array.isArray(e.institutions) ? [...new Set(e.institutions.filter((x): x is string => typeof x === 'string'))] : [];
+  if (!ids.length) return { error: 'An Institutional Edition runs as at least one institution' };
+  const unknown = ids.find(id => !institutions.includes(id));
+  if (unknown) return { error: `No institution ${unknown}` };
+  const mods = Array.isArray(e.modules) ? [...new Set(e.modules)] : [];
+  if (!mods.length) return { error: 'An Institutional Edition names the modules it runs' };
+  const bad = mods.find(m => !isModuleKey(m));
+  if (bad !== undefined) return { error: `Unknown module: ${String(bad)}` };
+  return { kind: 'institutional', label, institutions: ids.sort(), modules: (mods as ModuleKey[]).sort() };
+}
+
+/** The Institutional Edition this profile records, if any (none ships). */
+export const editionOf = (p: DeploymentProfile | undefined): InstitutionalEdition | undefined => (p?.edition?.kind === 'institutional' ? p.edition : undefined);
+
+/** Whether an institution is part of this installation: every one without an edition; with one, only those it names. */
+export function inEdition(p: DeploymentProfile | undefined, institution: string | undefined): boolean {
+  const e = editionOf(p);
+  return !e || (!!institution && e.institutions.includes(institution));
+}
+
 /** The institution legally responsible for a register in this profile, if the nation named one. */
 export const authorityIn = (p: DeploymentProfile | undefined, key: AuthorityKey): string | undefined => p?.authorities?.[key];
 
 /** Whether a module runs (enabled, default on for CivicOS's own modules once its authority is named). */
 export function moduleRuns(p: DeploymentProfile | undefined, key: ModuleKey): boolean {
+  // An Institutional Edition runs only the modules it names, and only for institutions it runs as.
+  const e = editionOf(p);
+  if (e && (!e.modules.includes(key) || !inEdition(p, authorityIn(p, MODULES.find(x => x.key === key)!.authority)))) return false;
   const m = p?.modules?.[key];
   if (m) return m.enabled;
   const auth = MODULES.find(x => x.key === key)!.authority;

@@ -36,6 +36,15 @@ const db = (): Db => {
   return d;
 };
 export function resetHealth(): void { g.__civicosHealth = undefined; }
+
+/** Put back capacity returns keeping their ids (lib/portability/import.ts only: the confirmed import of an institution's own export (two officials) into an installation that holds none of these records). */
+export function restoreCapacity(list: CapacityReturn[]): { restored: number } | { error: string } {
+  const d = db();
+  const clash = list.find(r => d.returns.some(x => x.id === r.id));
+  if (clash) return { error: `Capacity return ${clash.id} is already in this installation` };
+  d.returns.push(...list.map(r => structuredClone(r)));
+  return { restored: list.length };
+}
 const clone = <T,>(x: T): T => structuredClone(x);
 const PERIOD = /^\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$/;
 

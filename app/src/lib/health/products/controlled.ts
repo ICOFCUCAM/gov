@@ -26,7 +26,7 @@
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
-import { nextNumber } from '@/lib/data/numbering';
+import { nextNumber, raiseCounter } from '@/lib/data/numbering';
 import { withDefaults } from '@/lib/data/defaults';
 import { proposePolicy, confirmPolicy, withdrawPolicy, type PolicyChanges } from '@/lib/law/policy-change';
 
@@ -57,6 +57,18 @@ const seed = (): Db => ({ authorisations: [], cmaSeq: 0, limits: {}, adopted: { 
 const g = globalThis as unknown as { __civicosControlledMedicines?: Db };
 const db = (): Db => touch('__civicosControlledMedicines', g.__civicosControlledMedicines = withDefaults(g.__civicosControlledMedicines ??= seed(), seed()));
 export function resetControlled(): void { g.__civicosControlledMedicines = undefined; }
+
+/** Every controlled-medicine authorisation as kept, for an institution's portable export (lib/portability/export.ts). Read only. */
+export const controlledRecords = (): ControlledAuthorisation[] => db().authorisations.map(a => structuredClone(a));
+/** Put back controlled-medicine authorisations keeping their ids and numbers (lib/portability/import.ts only: the confirmed import of an institution's own export (two officials) into an installation that holds none of these records). */
+export function restoreControlled(list: ControlledAuthorisation[]): { restored: number } | { error: string } {
+  const d = db();
+  const clash = list.find(a => d.authorisations.some(x => x.id === a.id || x.number === a.number));
+  if (clash) return { error: `Controlled-medicine authorisation ${clash.number} is already in this installation` };
+  d.authorisations.push(...list.map(a => structuredClone(a)));
+  raiseCounter(d as unknown as Record<string, unknown>, 'cmaSeq', list.map(a => a.number));
+  return { restored: list.length };
+}
 const clone = <T,>(x: T): T => structuredClone(x);
 
 /** The limit in force for a schedule and unit (none until the nation adopts its limits). */

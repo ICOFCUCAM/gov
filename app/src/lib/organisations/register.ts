@@ -129,6 +129,8 @@ const db = (): Db => {
 export function resetOrganisations(): void { g.__civicosOrganisations = undefined; }
 /** The store itself, for the checked load (lib/organisations/import.ts) only. */
 export const organisationsDb = db;
+/** Every organisation record and the register types configured, as kept (an institution's portable export, lib/portability/export.ts). Read only. */
+export const organisationRecords = (): Organisation[] => db().orgs.map(o => structuredClone(o));
 export { nextNumber as nextOrganisationNumber };
 
 const clone = <T,>(x: T): T => structuredClone(x);

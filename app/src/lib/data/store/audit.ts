@@ -73,6 +73,36 @@ export function verifyChainEntries(entries: readonly AuditEntry[]): { ok: boolea
   return { ok: true, checked: entries.length };
 }
 
+/**
+ * A link of the chain whose content is left out (an institution's export
+ * carries another institution's entries only as their sequence and hashes,
+ * lib/portability/export.ts): it keeps the chain continuous without carrying
+ * what it recorded.
+ */
+export interface AuditLink { seq: number; prevHash: string | null; hash: string; alg?: string }
+export const isAuditEntry = (e: AuditEntry | AuditLink): e is AuditEntry => 'action' in e;
+
+/**
+ * Whether a segment of the chain holds (offline, no running server): every
+ * full entry's hash recomputed by the rule it was written with, every item
+ * linked to the one before by its previous hash, sequences without a gap. A
+ * link's own hash is taken as given (its content is not there), but the next
+ * item must chain from it, so nothing can be inserted, removed or reordered.
+ */
+export function verifyAuditSegment(items: readonly (AuditEntry | AuditLink)[]): { ok: boolean; checked: number; full: number; brokenAtSeq?: number } {
+  let prev: AuditEntry | AuditLink | undefined;
+  let full = 0;
+  const st = { prevHash: null as string | null, upgraded: false };
+  for (const e of items) {
+    if (prev && (e.seq !== prev.seq + 1 || (e.prevHash ?? null) !== prev.hash)) return { ok: false, checked: items.length, full, brokenAtSeq: e.seq };
+    st.prevHash = e.prevHash ?? null;
+    if (isAuditEntry(e)) { if (!checkEntry(e, st)) return { ok: false, checked: items.length, full, brokenAtSeq: e.seq }; full++; }
+    else { st.upgraded ||= e.alg === 'sha256-v2'; }
+    prev = e;
+  }
+  return { ok: true, checked: items.length, full };
+}
+
 /** The whole chain, newest first. For screens prefer listAuditPage(): the chain grows without end. */
 export function listAudit(): AuditEntry[] {
   return [...chain()].reverse();

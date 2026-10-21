@@ -4,7 +4,7 @@ _Generated from `docs/requirements/health-i4.json` by `python3 -I app/scripts/re
 
 Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21-HEALTH-INTEGRATION.md`): track I4 as a dependency, not a completed capability, and finish this register before Health is called the first complete institution. **Health is not complete.** This register lists what it depends on; a dependency is "built and proven" only where a named test in an existing file proves it (the test fails otherwise).
 
-**Summary:** 27 dependencies: 3 not built, 16 partial, 8 built and proven.
+**Summary:** 27 dependencies: 2 not built, 16 partial, 9 built and proven.
 
 | Dependency | Status | Owner slot | Requirement rows | Release gate |
 |---|---|---|---|---|
@@ -34,7 +34,7 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 | `health-access-and-audit`: Health access control, exchange contracts, audit and recovery | partial | `healthRegulation` | 54 (FC6-intro-01, FC6-intro-04, FC6-1-07, FC6-1-10 …) | FC6-12-02 and FC6-12-13 met for the health records |
 | `health-department-functions`: Department functions not yet represented (policy, logistics, budget, complaints, workforce counts) | not built | `healthRegulation` | 7 (S2-C.2-02, S2-C.2-06, S2-C.2-09, S2-C.2-11 …) | Each function has its record and procedure |
 | `integration-controls`: Form identity, procedure-link states and the exclusion boundary | built and proven | `healthRegulation` | 2 (FC6-intro-05, FC6-10-01) | The identity and link checks run in every publication |
-| `standalone-and-pilot`: Standalone Institutional Edition, portable export and the pilot exit gate | not built | `healthRegulation` | 21 (S0-intro-04, S1-1-01, S1-1.1-13, S1-13-10 …) | S6-I-11 exit gate |
+| `standalone-and-pilot`: Standalone Institutional Edition, portable export and the pilot exit gate | built and proven | `healthRegulation` | 21 (S0-intro-04, S1-1-01, S1-1.1-13, S1-13-10 …) | S6-I-11 exit gate |
 
 ## `product-register`: The regulated product register (Part 6 §5.2)
 
@@ -881,30 +881,46 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 ## `standalone-and-pilot`: Standalone Institutional Edition, portable export and the pilot exit gate
 
-**Status: not built.** Owner slot `healthRegulation`.
+**Status: built and proven.** Owner slot `healthRegulation`.
 
 **Requirement rows:** `S0-intro-04`, `S1-1-01`, `S1-1.1-13`, `S1-13-10`, `S2-B-03`, `S3-G-18`, `S5-D-02`, `S5-D-03`, `S5-L-01`, `S6-I-10`, `S6-I-11`, `S6-I-14`, `S6-I-15`, `S6-I-16`, `S6-I-17`, `S6-I-18`, `S6-I-19`, `S6-I-20`, `S6-I-21`, `S6-K-15`, `S6-L-06`
 
 **What exists:**
 
 - Installation modes, the deployment profile, backups and the constitutional profile (`app/src/lib/ops/mode.ts`, `app/src/lib/nation/deployment.ts`)
+- The Institutional Edition: recorded in the deployment profile (setup, afterwards proposed citing the law and confirmed by a different official through policy-change.ts; none ships); it names the institutions and modules it runs, and the registers and procedures follow from them; a procedure of an institution outside it opens no case, an exchange service another institution owns answers "not connected" (503, a receipt, no answer field), a step that needs another register (an education-register qualification) pauses with the reason (`app/src/lib/nation/edition.ts`, `app/src/lib/data/store/sovereign.ts`, `app/src/app/api/sovereign/edition/route.ts`, `app/src/lib/casework/engine.ts`, `app/src/lib/exchange/services.ts`, `app/src/lib/professions/register.ts`)
+- The portable export: one institution's registers, procedures, cases, sealed decisions (never re-sealed), documents and its audit-chain and access-log segments (other institutions' entries only as links: sequence and hashes) with the trust list, sealed through key custody like a backup, proposed by its administrator and confirmed by a different official who can sign there (never set going from whole-government scope for an independent institution), in the audit chain and the access log; re-imported into an empty installation by two administrators with every record identifier unchanged; verified offline (scripts/verify-institution-export.mjs runs the platform's own audit, access-log, seal and trust-list checks with no server) (`app/src/lib/portability/export.ts`, `app/src/lib/portability/verify.ts`, `app/src/lib/portability/import.ts`, `app/src/lib/portability/evidence.ts`, `app/src/lib/backup/archive.ts`, `app/scripts/verify-institution-export.mjs`, `app/src/app/api/org/ministries/[id]/export/route.ts`, `app/src/app/api/platform/institution-import/route.ts`)
+- The pilot exit gate (S6-I-11), computed from the records each time, never a status field: approved procedures in force, completed cases that are not samples per procedure, sealed decisions verifying against approved (never sample) seal keys, decisions under a mapping in force, the audit chain verifying, access-log reads of each case, the signed-in officials who acted; not met in a demonstration, with exactly what is missing; on the onboarding hub (track pilot) and the health regulation console (Pilot exit gate tab) (`app/src/lib/pilot/exit-gate.ts`, `app/src/app/api/pilot/exit-gate/route.ts`, `app/src/lib/onboarding/status.ts`, `app/src/components/features/PilotExitGate.tsx`)
 
 **What is missing:**
 
-- An Institutional Edition profile for the health institutions and its portable export
-- The pilot exit gate: authorised users complete the service with real records and verifiable audit evidence
+- The gate met in a production installation with the nation's own records: a deployment act (authorised officials completing real cases), never shipped or set by the platform
+- Certificates, recall-notice deliveries and capacity returns of organisations outside the institution's registers are not yet in the export (integration register 20.43)
+- Export and import exercised in memory, file and supabase modes; postgres mode is not yet exercised by a test (integration register 20.42)
+- Choosing the pilot (S6-I-14 to S6-I-21) and appeals run end to end (S2-B-03, S6-K-15) stay with their own rows
 
 **Access controls:**
 
-- As the installation
+- Export: proposed by an administrator of the institution, confirmed by a different official who can sign there; download by its administrators and signatories, logged as an export
+- Import: two administrators serving the whole government
+- Exit gate: administrators, auditors, the pilot institutions' officials and the whole government (read only)
 
 **Provenance:**
 
-- Record identity unchanged when federating later
+- Record identity unchanged when federating later: an import keeps every id, reference and number and the evidence the decisions verify against
+- Decisions are never re-sealed; documents are sealed again under the new installation's key only after each version's SHA-256 is checked
 
 **Tests:**
 
-- To write: Standalone test: the health services run without another institution online
+- `app/src/lib/nation/edition.test.ts` "runs facility licensing, professional registration and the medicines register end to end with no other institution present"
+- `app/src/lib/nation/edition.test.ts` "degrades explicitly: a service another institution owns answers "not connected", and a step that needs another register pauses"
+- `app/src/lib/nation/edition.test.ts` "is recorded in setup and names its institutions, modules, registers and procedures; nothing outside it runs"
+- `app/src/lib/nation/edition.test.ts` "changes after setup only through the change process: cited, confirmed by a different official, every version kept"
+- `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, sealed, and verifies with no running server"
+- `app/src/lib/portability/export.test.ts` "is proposed by an administrator of the institution and confirmed by a different official who can sign there; never from whole-government scope for an independent institution"
+- `app/src/lib/portability/export.test.ts` "goes back into an empty installation with every record identifier unchanged, and verifies there"
+- `app/src/lib/pilot/exit-gate.test.ts` "is not met in a demonstration where every completed case is a sample, and lists exactly what is missing"
+- `app/src/lib/pilot/exit-gate.test.ts` "is met in production only from records: an approved procedure, mapping and seal key, signed-in officials, a verifying chain and logged reads"
 
 **Release gate:** S6-I-11 exit gate
 

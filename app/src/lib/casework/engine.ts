@@ -13,6 +13,7 @@
 
 import { recordAudit } from '@/lib/data/store/audit';
 import { authorityFor, getSovereign, getMinistry, institutionBounds } from '@/lib/data/store';
+import { editionRefusal } from '@/lib/nation/edition';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
 import { dualControlRefusal, independenceOf } from '@/lib/data/dual-control';
@@ -34,6 +35,22 @@ interface CaseDb { cases: Case[]; seq: number }
 const g = globalThis as unknown as { __civicosCases?: CaseDb };
 const db = (): CaseDb => { const d = touch('__civicosCases', g.__civicosCases ??= { cases: [], seq: 0 }); d.seq ??= 0; return d; };
 export function resetCases(): void { g.__civicosCases = undefined; }
+
+/** Every case of one institution, as kept (no limit), for an institution's portable export (lib/portability/export.ts). Read only. */
+export const casesOf = (owner: string): Case[] => db().cases.filter(c => c.owner === owner).map(c => structuredClone(c));
+/**
+ * Put back an institution's cases keeping their ids, references and history
+ * (lib/portability/import.ts only: the confirmed import of an institution's own export (two officials) into an installation that holds none of these records). No step is added and nothing is decided: the cases stand as
+ * they stood in the export, and work continues through act().
+ */
+export function restoreCases(list: Case[]): { restored: number } | { error: string } {
+  const d = db();
+  const clash = list.find(c => d.cases.some(x => x.id === c.id || x.ref === c.ref));
+  if (clash) return { error: `Case ${clash.ref} is already in this installation` };
+  d.cases.push(...list.map(c => structuredClone(c)));
+  d.seq = Math.max(d.seq, ...list.map(c => Number(/-(\d+)$/.exec(c.ref)?.[1] ?? 0)));
+  return { restored: list.length };
+}
 
 /** Who is acting: the verified official (scope) or, without sign-in enforced, a declared name (no scope). */
 export interface Actor { id?: string; name: string; scope: (CaseScope & { id?: string }) | null; institution?: string }
@@ -218,6 +235,9 @@ export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case
   if (!pkg) return { error: `No approved version of the procedure ${input.procedure} applies today` };
   const owner = ownerInstitution(pkg.owner, authorityFor);
   if (!owner) return { error: `No institution is named as responsible for ${pkg.title} (Configuration → Who is responsible)` };
+  // An Institutional Edition runs only its own institutions' procedures (lib/nation/edition.ts).
+  const outside = editionRefusal(owner);
+  if (outside) return { error: outside };
   const source = input.source ?? 'entered';
   // Sample cases exist only in demo and training installations (lib/ops/mode.ts; step I0.1).
   if (source === 'sample' && !samplesAllowed()) return { error: 'A production installation opens no sample case' };

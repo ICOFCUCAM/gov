@@ -158,6 +158,9 @@
       "name": "permits"
     },
     {
+      "name": "pilot"
+    },
+    {
       "name": "platform"
     },
     {
@@ -28754,6 +28757,290 @@
         "x-source": "src/app/api/org/ministries/[id]/departments/route.ts"
       }
     },
+    "/api/org/ministries/{id}/export/{exportId}": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_export_exportId",
+        "summary": "GET /api/org/ministries/{id}/export/{exportId}",
+        "description": "/api/org/ministries/{id}/export/{exportId} — a confirmed export's sealed archive (lib/portability/export.ts). GET downloads it (the .cvx file, still sealed: it opens only with the key custody's key); GET ?check runs the offline verification (lib/portability/verify.ts) on it here and returns the report. Only the institution's administrators and officials who can sign there (exportDownloadRefusal()); every download is an export in the access log and an audit entry.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportReport"
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "ok": true,
+                      "export": "string",
+                      "institution": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "installation": "string",
+                      "createdAt": "2026-01-15T09:30:00.000Z",
+                      "checks": [
+                        "string"
+                      ],
+                      "problems": [
+                        "string"
+                      ],
+                      "notes": [
+                        "Text"
+                      ],
+                      "counts": {
+                        "key": 1
+                      },
+                      "decisions": [
+                        {
+                          "id": "ID-0001",
+                          "ok": true,
+                          "key": "string",
+                          "sealedAt": "2026-01-15T09:30:00.000Z",
+                          "timeFrom": "audit-chain"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/org/ministries/[id]/export/[exportId]/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/export": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_export",
+        "summary": "GET /api/org/ministries/{id}/export",
+        "description": "/api/org/ministries/{id}/export — one institution's portable export (Health I4 standalone-and-pilot; lib/portability/export.ts): its own registers, cases, sealed decisions, documents and its audit and access-log entries, sealed through key custody like a backup and verifiable offline (app/scripts/verify-institution-export.mjs). GET: its export proposals and exports, newest first. POST (officials whose scope reaches the institution; MINISTRY rule in lib/auth/roles.ts, checked again here): { op: 'propose' (default), reason } an administrator of the institution (the whole government's only when it is not independent: exportProposeRefusal()); { op: 'confirm', proposal } a different official who can sign there (exportConfirmRefusal(), dualControlRefusal()): the export is made, written to the backup target, logged in the access log and the audit chain; { op: 'withdraw', proposal, reason? }.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "institution": {
+                      "type": "string"
+                    },
+                    "exports": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ExportProposal"
+                      }
+                    }
+                  },
+                  "required": [
+                    "institution",
+                    "exports"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "institution": "string",
+                      "exports": [
+                        {
+                          "id": "ID-0001",
+                          "institution": "string",
+                          "reason": "Text",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z",
+                          "state": "confirmed"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/org/ministries/[id]/export/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_export",
+        "summary": "POST /api/org/ministries/{id}/export",
+        "description": "/api/org/ministries/{id}/export — one institution's portable export (Health I4 standalone-and-pilot; lib/portability/export.ts): its own registers, cases, sealed decisions, documents and its audit and access-log entries, sealed through key custody like a backup and verifiable offline (app/scripts/verify-institution-export.mjs). GET: its export proposals and exports, newest first. POST (officials whose scope reaches the institution; MINISTRY rule in lib/auth/roles.ts, checked again here): { op: 'propose' (default), reason } an administrator of the institution (the whole government's only when it is not independent: exportProposeRefusal()); { op: 'confirm', proposal } a different official who can sign there (exportConfirmRefusal(), dualControlRefusal()): the export is made, written to the backup target, logged in the access log and the audit chain; { op: 'withdraw', proposal, reason? }.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "reason": {},
+                  "proposal": {},
+                  "by": {}
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "reason": null,
+                    "proposal": null,
+                    "by": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object"
+                    },
+                    "exports": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ExportProposal"
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "exports"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {},
+                      "exports": [
+                        {
+                          "id": "ID-0001",
+                          "institution": "string",
+                          "reason": "Text",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z",
+                          "state": "confirmed"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "ministry",
+        "x-source": "src/app/api/org/ministries/[id]/export/route.ts"
+      }
+    },
     "/api/org/ministries/{id}/facilities/feed": {
       "get": {
         "tags": [
@@ -40364,6 +40651,99 @@
         "x-source": "src/app/api/permits/route.ts"
       }
     },
+    "/api/pilot/exit-gate": {
+      "get": {
+        "tags": [
+          "pilot"
+        ],
+        "operationId": "get_pilot_exit_gate",
+        "summary": "GET /api/pilot/exit-gate",
+        "description": "/api/pilot/exit-gate — the pilot's exit gate (spec Part 6 I, roadmap 05, S6-I-11; Health I4 standalone-and-pilot; lib/pilot/exit-gate.ts): whether authorised users completed the service with real records and verifiable audit evidence, computed from the records each time (never a stored status), with exactly what is missing. Read only; administrators, auditors, the pilot institutions' officials and the whole government (canSeePilotGate()).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PilotGate"
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "computedAt": "2026-01-15T09:30:00.000Z",
+                      "installation": "string",
+                      "scope": {
+                        "label": "Example",
+                        "from": "edition",
+                        "institutions": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example"
+                          }
+                        ]
+                      },
+                      "met": true,
+                      "items": [
+                        {
+                          "key": "string",
+                          "label": "Example",
+                          "met": true,
+                          "detail": "string",
+                          "missing": [
+                            "string"
+                          ]
+                        }
+                      ],
+                      "procedures": [
+                        {
+                          "key": "string",
+                          "title": "Example",
+                          "institution": "string",
+                          "completed": 1,
+                          "samples": 1,
+                          "decisions": {
+                            "total": 1,
+                            "verified": 1
+                          }
+                        }
+                      ],
+                      "officials": [
+                        {
+                          "name": "Example",
+                          "acts": 1
+                        }
+                      ],
+                      "missing": [
+                        "string"
+                      ],
+                      "note": "Text"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/pilot/exit-gate/route.ts"
+      }
+    },
     "/api/platform/backups/{id}/restore": {
       "post": {
         "tags": [
@@ -42470,6 +42850,185 @@
         ],
         "x-permission-rule": "admin",
         "x-source": "src/app/api/platform/deployments/route.ts"
+      }
+    },
+    "/api/platform/institution-import": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "get_platform_institution_import",
+        "summary": "GET /api/platform/institution-import",
+        "description": "/api/platform/institution-import — bring an institution's own export into this installation with every record identifier unchanged (Health I4 standalone-and-pilot; lib/portability/import.ts). ADMIN_ONLY (/api/platform), and both steps by administrators serving the whole government. GET: import proposals, newest first. POST { op: 'propose' (default), archive: <base64 of the .cvx file> }: the export is verified (every part, the audit and access-log segments, every seal) and must hold nothing already here; it waits for a second official. POST { op: 'confirm', proposal }: a different administrator; every record goes in with its own id, number and history, the evidence it carried is kept, one audit entry names both. POST { op: 'withdraw', proposal, reason? }.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "imports": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ImportProposal"
+                      }
+                    }
+                  },
+                  "required": [
+                    "imports"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "imports": [
+                        {
+                          "id": "ID-0001",
+                          "exportId": "ID-0001",
+                          "institution": "string",
+                          "institutionName": "Example",
+                          "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "archive": "string",
+                          "sizeBytes": 1,
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z",
+                          "state": "confirmed"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/platform/institution-import/route.ts"
+      },
+      "post": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "post_platform_institution_import",
+        "summary": "POST /api/platform/institution-import",
+        "description": "/api/platform/institution-import — bring an institution's own export into this installation with every record identifier unchanged (Health I4 standalone-and-pilot; lib/portability/import.ts). ADMIN_ONLY (/api/platform), and both steps by administrators serving the whole government. GET: import proposals, newest first. POST { op: 'propose' (default), archive: <base64 of the .cvx file> }: the export is verified (every part, the audit and access-log segments, every seal) and must hold nothing already here; it waits for a second official. POST { op: 'confirm', proposal }: a different administrator; every record goes in with its own id, number and history, the evidence it carried is kept, one audit entry names both. POST { op: 'withdraw', proposal, reason? }.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "archive": {},
+                  "proposal": {},
+                  "reason": {},
+                  "by": {}
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "archive": null,
+                    "proposal": null,
+                    "reason": null,
+                    "by": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object"
+                    },
+                    "imports": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ImportProposal"
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "imports"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {},
+                      "imports": [
+                        {
+                          "id": "ID-0001",
+                          "exportId": "ID-0001",
+                          "institution": "string",
+                          "institutionName": "Example",
+                          "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "archive": "string",
+                          "sizeBytes": 1,
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z",
+                          "state": "confirmed"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/platform/institution-import/route.ts"
       }
     },
     "/api/platform/lifecycle": {
@@ -61841,6 +62400,636 @@
         "x-source": "src/app/api/sovereign/classification/route.ts"
       }
     },
+    "/api/sovereign/edition": {
+      "get": {
+        "tags": [
+          "sovereign"
+        ],
+        "operationId": "get_sovereign_edition",
+        "summary": "GET /api/sovereign/edition",
+        "description": "/api/sovereign/edition — the Institutional Edition this installation runs as (spec Part 5 D; Health I4 standalone-and-pilot; lib/nation/edition.ts). During first-run setup it is saved with the deployment profile through /api/sovereign; afterwards a direct change there is refused and goes through here, the country's change process (lib/law/policy-change.ts). None ships. GET: the edition in force, what it names (institutions, modules, registers, procedures, what is not connected), a proposal waiting for its second official and every earlier version. POST (administrators, ADMIN_ONLY under /api/sovereign): { op: 'propose' (default), edition: { label, institutions, modules } | null, legalBasis: [{ instrument, eId }] } by an administrator serving the whole government; { op: 'confirm' } a different administrator adopts it; { op: 'withdraw', reason? }. Who acted comes from the sign-in; every step is audited.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "scope": {
+                      "$ref": "#/components/schemas/EditionScope"
+                    },
+                    "changes": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "type": "object",
+                              "properties": {
+                                "edition": {
+                                  "anyOf": [
+                                    {
+                                      "$ref": "#/components/schemas/InstitutionalEdition"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "edition"
+                              ]
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "type": "object",
+                                "properties": {
+                                  "edition": {
+                                    "anyOf": [
+                                      {
+                                        "$ref": "#/components/schemas/InstitutionalEdition"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "edition"
+                                ]
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    },
+                    "setupComplete": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "scope",
+                    "changes",
+                    "setupComplete"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "scope": {
+                        "edition": {
+                          "kind": "institutional",
+                          "label": "Example",
+                          "institutions": [
+                            "string"
+                          ],
+                          "modules": [
+                            "accreditation"
+                          ]
+                        },
+                        "institutions": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "slots": []
+                          }
+                        ],
+                        "modules": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "runs": true
+                          }
+                        ],
+                        "registers": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "slot": "anticorruption",
+                            "institution": "string"
+                          }
+                        ],
+                        "procedures": [
+                          {
+                            "key": "string",
+                            "title": "Example",
+                            "version": 1,
+                            "state": "string",
+                            "institution": "string"
+                          }
+                        ],
+                        "notConnected": [
+                          {
+                            "slot": "anticorruption",
+                            "label": "Example",
+                            "institution": "string",
+                            "name": "Example"
+                          }
+                        ]
+                      },
+                      "changes": {
+                        "pending": {
+                          "values": {
+                            "edition": {}
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      },
+                      "setupComplete": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/sovereign/edition/route.ts"
+      },
+      "post": {
+        "tags": [
+          "sovereign"
+        ],
+        "operationId": "post_sovereign_edition",
+        "summary": "POST /api/sovereign/edition",
+        "description": "/api/sovereign/edition — the Institutional Edition this installation runs as (spec Part 5 D; Health I4 standalone-and-pilot; lib/nation/edition.ts). During first-run setup it is saved with the deployment profile through /api/sovereign; afterwards a direct change there is refused and goes through here, the country's change process (lib/law/policy-change.ts). None ships. GET: the edition in force, what it names (institutions, modules, registers, procedures, what is not connected), a proposal waiting for its second official and every earlier version. POST (administrators, ADMIN_ONLY under /api/sovereign): { op: 'propose' (default), edition: { label, institutions, modules } | null, legalBasis: [{ instrument, eId }] } by an administrator serving the whole government; { op: 'confirm' } a different administrator adopts it; { op: 'withdraw', reason? }. Who acted comes from the sign-in; every step is audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "edition": {},
+                  "legalBasis": {},
+                  "reason": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "edition": null,
+                    "legalBasis": null,
+                    "reason": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object"
+                    },
+                    "scope": {
+                      "$ref": "#/components/schemas/EditionScope"
+                    },
+                    "changes": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "type": "object",
+                              "properties": {
+                                "edition": {
+                                  "anyOf": [
+                                    {
+                                      "$ref": "#/components/schemas/InstitutionalEdition"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "edition"
+                              ]
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "type": "object",
+                                "properties": {
+                                  "edition": {
+                                    "anyOf": [
+                                      {
+                                        "$ref": "#/components/schemas/InstitutionalEdition"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "edition"
+                                ]
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "scope",
+                    "changes"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {},
+                      "scope": {
+                        "edition": {
+                          "kind": "institutional",
+                          "label": "Example",
+                          "institutions": [
+                            "string"
+                          ],
+                          "modules": [
+                            "accreditation"
+                          ]
+                        },
+                        "institutions": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "slots": []
+                          }
+                        ],
+                        "modules": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "runs": true
+                          }
+                        ],
+                        "registers": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "slot": "anticorruption",
+                            "institution": "string"
+                          }
+                        ],
+                        "procedures": [
+                          {
+                            "key": "string",
+                            "title": "Example",
+                            "version": 1,
+                            "state": "string",
+                            "institution": "string"
+                          }
+                        ],
+                        "notConnected": [
+                          {
+                            "slot": "anticorruption",
+                            "label": "Example",
+                            "institution": "string",
+                            "name": "Example"
+                          }
+                        ]
+                      },
+                      "changes": {
+                        "pending": {
+                          "values": {
+                            "edition": {}
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/sovereign/edition/route.ts"
+      }
+    },
     "/api/sovereign/preset": {
       "post": {
         "tags": [
@@ -80398,6 +81587,9 @@
               "framework"
             ],
             "description": "Decisions and certificates: signed by the platform (institution seals) or by the nation's qualified service."
+          },
+          "edition": {
+            "$ref": "#/components/schemas/InstitutionalEdition"
           }
         }
       },
@@ -81617,6 +82809,251 @@
           "requireIdentityProvider"
         ]
       },
+      "EditionScope": {
+        "type": "object",
+        "properties": {
+          "edition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InstitutionalEdition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "institutions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "slots": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "anticorruption",
+                      "businessRegister",
+                      "centralBank",
+                      "civilRegistration",
+                      "constitutionalCourt",
+                      "controlledSubstances",
+                      "customs",
+                      "dataProtection",
+                      "education",
+                      "electoral",
+                      "headOfState",
+                      "healthRegulation",
+                      "higherEducationAccreditation",
+                      "humanRights",
+                      "identity",
+                      "immigration",
+                      "judiciary",
+                      "lawRegister",
+                      "legislature",
+                      "medicinesRegulation",
+                      "ombudsman",
+                      "police",
+                      "professionalRegulation",
+                      "publicHealth",
+                      "statistics",
+                      "supremeAudit",
+                      "tax",
+                      "trustServices"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "slots"
+              ]
+            }
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "runs": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "runs"
+              ]
+            }
+          },
+          "registers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "slot": {
+                  "type": "string",
+                  "enum": [
+                    "anticorruption",
+                    "businessRegister",
+                    "centralBank",
+                    "civilRegistration",
+                    "constitutionalCourt",
+                    "controlledSubstances",
+                    "customs",
+                    "dataProtection",
+                    "education",
+                    "electoral",
+                    "headOfState",
+                    "healthRegulation",
+                    "higherEducationAccreditation",
+                    "humanRights",
+                    "identity",
+                    "immigration",
+                    "judiciary",
+                    "lawRegister",
+                    "legislature",
+                    "medicinesRegulation",
+                    "ombudsman",
+                    "police",
+                    "professionalRegulation",
+                    "publicHealth",
+                    "statistics",
+                    "supremeAudit",
+                    "tax",
+                    "trustServices"
+                  ]
+                },
+                "institution": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "slot",
+                "institution"
+              ]
+            },
+            "description": "Registers whose legal owner is an institution of the edition."
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "number"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "institution": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "title",
+                "version",
+                "state",
+                "institution"
+              ]
+            },
+            "description": "Procedures (any version) whose responsible institution is part of the edition."
+          },
+          "notConnected": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slot": {
+                  "type": "string",
+                  "enum": [
+                    "anticorruption",
+                    "businessRegister",
+                    "centralBank",
+                    "civilRegistration",
+                    "constitutionalCourt",
+                    "controlledSubstances",
+                    "customs",
+                    "dataProtection",
+                    "education",
+                    "electoral",
+                    "headOfState",
+                    "healthRegulation",
+                    "higherEducationAccreditation",
+                    "humanRights",
+                    "identity",
+                    "immigration",
+                    "judiciary",
+                    "lawRegister",
+                    "legislature",
+                    "medicinesRegulation",
+                    "ombudsman",
+                    "police",
+                    "professionalRegulation",
+                    "publicHealth",
+                    "statistics",
+                    "supremeAudit",
+                    "tax",
+                    "trustServices"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                },
+                "institution": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "slot",
+                "label",
+                "institution",
+                "name"
+              ]
+            },
+            "description": "Responsibilities the nation named for an institution outside the edition: not connected here."
+          }
+        },
+        "required": [
+          "edition",
+          "institutions",
+          "modules",
+          "registers",
+          "procedures",
+          "notConnected"
+        ]
+      },
       "Envelope": {
         "description": "The envelope's form-level properties, kept on the form (FormSpec.envelope).",
         "type": "object",
@@ -82110,6 +83547,272 @@
           "status",
           "result",
           "receiptId"
+        ]
+      },
+      "ExportProposal": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "failed",
+              "lapsed",
+              "proposed",
+              "withdrawn"
+            ]
+          },
+          "confirmed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "independence": {
+                "type": "string",
+                "enum": [
+                  "accounts-only",
+                  "identity-provider",
+                  "unverified"
+                ]
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "independence"
+            ]
+          },
+          "withdrawn": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at"
+            ]
+          },
+          "problem": {
+            "type": "string"
+          },
+          "export": {
+            "$ref": "#/components/schemas/ExportRecord"
+          }
+        },
+        "required": [
+          "id",
+          "institution",
+          "reason",
+          "by",
+          "at",
+          "expiresAt",
+          "state"
+        ]
+      },
+      "ExportRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "archive": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "keyProvider": {
+            "type": "string"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "parts": {
+            "type": "number"
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "installation": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "dir",
+              "s3"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "institution",
+          "createdAt",
+          "archive",
+          "sizeBytes",
+          "sha256",
+          "keyProvider",
+          "digest",
+          "parts",
+          "counts",
+          "installation",
+          "target"
+        ]
+      },
+      "ExportReport": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "export": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "installation": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What was checked and held."
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What did not hold: any one makes the export unverified."
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Notes that do not fail it (sample keys of a demonstration, records sealed before key registration)."
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "ok": {
+                  "type": "boolean"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "sealedAt": {
+                  "type": "string"
+                },
+                "timeFrom": {
+                  "type": "string",
+                  "enum": [
+                    "audit-chain",
+                    "record"
+                  ]
+                },
+                "problem": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "ok",
+                "key",
+                "sealedAt",
+                "timeFrom"
+              ]
+            }
+          }
+        },
+        "required": [
+          "ok",
+          "export",
+          "institution",
+          "installation",
+          "createdAt",
+          "checks",
+          "problems",
+          "notes",
+          "counts",
+          "decisions"
         ]
       },
       "FabricPressure": {
@@ -85175,6 +86878,36 @@
           "detail"
         ]
       },
+      "GateItem": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "met": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "met",
+          "detail",
+          "missing"
+        ]
+      },
       "Geom": {
         "type": "object",
         "properties": {
@@ -86401,6 +88134,122 @@
           "note"
         ]
       },
+      "ImportProposal": {
+        "description": "An import of an institution's export into this installation (lib/portability/import.ts).",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "exportId": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "archive": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "failed",
+              "lapsed",
+              "proposed",
+              "withdrawn"
+            ]
+          },
+          "confirmed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "independence": {
+                "type": "string",
+                "enum": [
+                  "accounts-only",
+                  "identity-provider",
+                  "unverified"
+                ]
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "independence"
+            ]
+          },
+          "withdrawn": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at"
+            ]
+          },
+          "problem": {
+            "type": "string"
+          },
+          "restored": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "exportId",
+          "institution",
+          "institutionName",
+          "digest",
+          "archive",
+          "sizeBytes",
+          "by",
+          "at",
+          "expiresAt",
+          "state"
+        ]
+      },
       "Incident": {
         "type": "object",
         "properties": {
@@ -86938,6 +88787,55 @@
           "independence",
           "prohibitions",
           "records"
+        ]
+      },
+      "InstitutionalEdition": {
+        "description": "One institution (or a few, e.g. the health institutions) installed standing alone.",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "institutional"
+          },
+          "label": {
+            "type": "string",
+            "description": "Its name as the installation shows it (e.g. \"Health regulation\"); the nation chooses it."
+          },
+          "institutions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The institutions it runs as (ids from the ministry registry)."
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "accreditation",
+                "civil",
+                "courts",
+                "customs",
+                "education",
+                "health",
+                "immigration",
+                "law",
+                "licensing",
+                "organisations",
+                "police",
+                "professions",
+                "tax"
+              ]
+            },
+            "description": "The modules it runs (their registers and procedures); every other module is off."
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "institutions",
+          "modules"
         ]
       },
       "Intake": {
@@ -93989,6 +95887,112 @@
           "source"
         ]
       },
+      "PilotGate": {
+        "type": "object",
+        "properties": {
+          "computedAt": {
+            "type": "string"
+          },
+          "installation": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string",
+                "enum": [
+                  "edition",
+                  "health-slots"
+                ]
+              },
+              "institutions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "label",
+              "from",
+              "institutions"
+            ]
+          },
+          "met": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GateItem"
+            }
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcedureEvidence"
+            }
+          },
+          "officials": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "acts": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "name",
+                "acts"
+              ]
+            }
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Everything missing, in the order of the items."
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "computedAt",
+          "installation",
+          "scope",
+          "met",
+          "items",
+          "procedures",
+          "officials",
+          "missing",
+          "note"
+        ]
+      },
       "Place": {
         "type": "object",
         "properties": {
@@ -94413,6 +96417,54 @@
           "failedChecks",
           "failStreak",
           "degraded"
+        ]
+      },
+      "ProcedureEvidence": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "approved": {
+            "type": "number",
+            "description": "The approved version that applies today, if any."
+          },
+          "completed": {
+            "type": "number"
+          },
+          "samples": {
+            "type": "number",
+            "description": "Completed sample cases: shown, never counted."
+          },
+          "decisions": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number"
+              },
+              "verified": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "total",
+              "verified"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "institution",
+          "completed",
+          "samples",
+          "decisions"
         ]
       },
       "ProcedureLink": {

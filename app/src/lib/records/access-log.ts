@@ -89,6 +89,32 @@ export function recordAccess(input: Omit<AccessEntry, 'v' | 'id' | 'seq' | 'at' 
   return entry;
 }
 
+/** A link of the access log whose content is left out (an institution's export): sequence and hashes only. */
+export interface AccessLink { seq: number; prev: string; hash: string }
+export const isAccessEntry = (e: AccessEntry | AccessLink): e is AccessEntry => 'action' in e;
+
+/** Whether a segment of the access log holds (offline): full entries rehashed by their format, every item chained to the one before. */
+export function verifyAccessSegment(items: readonly (AccessEntry | AccessLink)[]): { ok: boolean; checked: number; full: number; brokenAt?: number } {
+  let prev: AccessEntry | AccessLink | undefined;
+  let full = 0;
+  for (const e of items) {
+    if (prev && (e.seq !== prev.seq + 1 || e.prev !== prev.hash)) return { ok: false, checked: items.length, full, brokenAt: e.seq };
+    if (isAccessEntry(e)) {
+      const { hash, ...rest } = e;
+      if (sha256Hex(body(rest)) !== hash) return { ok: false, checked: items.length, full, brokenAt: e.seq };
+      full++;
+    }
+    prev = e;
+  }
+  return { ok: true, checked: items.length, full };
+}
+
+/** The log as it stands, oldest first, with the hash its first kept entry chains from (an institution's export takes its segment from it). */
+export function accessLogChain(): { base: AccessDb['base']; entries: AccessEntry[] } {
+  const d = db();
+  return { base: { ...d.base }, entries: d.entries.map(e => structuredClone(e)) };
+}
+
 /** Recompute the chain: intact, or where it first breaks. */
 export function verifyAccessLog(): { ok: boolean; entries: number; brokenAt?: number } {
   const d = db();

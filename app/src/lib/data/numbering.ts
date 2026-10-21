@@ -12,6 +12,17 @@ export function legacyMax(seq: Record<string, number> | undefined, prefix = ''):
   return Object.entries(seq ?? {}).filter(([k]) => k.startsWith(prefix) || (!prefix && /^\d{4}$/.test(k))).reduce((m, [, v]) => Math.max(m, Number(v) || 0), 0);
 }
 
+/**
+ * Raise a counter so no number in `numbers` (PREFIX-YYYY-NNNNNN) is given
+ * again: an institution's records brought in from its own export keep their
+ * numbers (lib/portability/import.ts).
+ */
+export function raiseCounter(store: Record<string, unknown>, field: string, numbers: string[]): void {
+  if (!/Seq$/.test(field)) throw new Error(`A record counter is named …Seq (${field})`);
+  const top = numbers.reduce((m, n) => Math.max(m, Number(/-(\d+)$/.exec(n)?.[1] ?? 0)), 0);
+  store[field] = Math.max(Number(store[field]) || 0, top);
+}
+
 /** The next number: increments the store's counter field and formats it with the year. */
 export function nextNumber(store: Record<string, unknown>, field: string, prefix: string, now: Date): string {
   if (!/Seq$/.test(field)) throw new Error(`A record counter is named …Seq (${field})`);

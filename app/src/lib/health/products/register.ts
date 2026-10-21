@@ -37,7 +37,7 @@
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
-import { nextNumber } from '@/lib/data/numbering';
+import { nextNumber, raiseCounter } from '@/lib/data/numbering';
 import { withDefaults } from '@/lib/data/defaults';
 import { proposePolicy, confirmPolicy, withdrawPolicy, type PolicyChanges } from '@/lib/law/policy-change';
 import { getOrganisation, current as currentOrg } from '@/lib/organisations/register';
@@ -121,6 +121,21 @@ const seed = (): Db => ({ products: [], prdSeq: 0, maSeq: 0, mdrSeq: 0, disclosu
 const g = globalThis as unknown as { __civicosProducts?: Db };
 const db = (): Db => touch('__civicosProducts', g.__civicosProducts = withDefaults(g.__civicosProducts ??= seed(), seed()));
 export function resetProducts(): void { g.__civicosProducts = undefined; }
+
+/** Every product record as kept, for an institution's portable export (lib/portability/export.ts). Read only. */
+export const productRecords = (): ProductEntry[] => db().products.map(p => structuredClone(p));
+/** Put back product records keeping their ids and numbers (lib/portability/import.ts only: the confirmed import of an institution's own export (two officials) into an installation that holds none of these records). */
+export function restoreProducts(list: ProductEntry[]): { restored: number } | { error: string } {
+  const d = db();
+  const clash = list.find(p => d.products.some(x => x.id === p.id || x.number === p.number));
+  if (clash) return { error: `Product ${clash.number} is already in this installation's register` };
+  d.products.push(...list.map(p => structuredClone(p)));
+  const auth = (kind: ProductKind) => list.filter(p => p.kind === kind).flatMap(p => p.versions.map(v => v.attributes.authorisationNumber?.value)).filter((n): n is string => typeof n === 'string');
+  raiseCounter(d as unknown as Record<string, unknown>, 'prdSeq', list.map(p => p.number));
+  raiseCounter(d as unknown as Record<string, unknown>, 'maSeq', auth('medicine'));
+  raiseCounter(d as unknown as Record<string, unknown>, 'mdrSeq', auth('device'));
+  return { restored: list.length };
+}
 
 const clone = <T,>(x: T): T => structuredClone(x);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;

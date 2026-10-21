@@ -7,7 +7,11 @@
 // Read-only: nothing here changes a record.
 
 import { AUTHORITIES, REQUIRED_AUTHORITIES, HEALTH_SLOTS, provisionalOwner } from '@/lib/nation/deployment';
-import { authorityFor, getSetup, getSovereign, authorityChanges, classificationChanges } from '@/lib/data/store/sovereign';
+import { authorityFor, getSetup, getSovereign, authorityChanges, classificationChanges, editionChanges } from '@/lib/data/store/sovereign';
+import { currentEdition } from '@/lib/nation/edition';
+import { pilotExitGate } from '@/lib/pilot/exit-gate';
+import { listExports } from '@/lib/portability/export';
+import { listImports } from '@/lib/portability/import';
 import { waitingInstitutionTerms } from '@/lib/data/store/institutions';
 import { listRelationships, waitingRelationships } from '@/lib/data/store/relationships';
 import { waitingAccountChanges } from '@/lib/auth/account-changes';
@@ -293,6 +297,16 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       ] };
     }),
 
+    // The pilot's exit gate (Health I4 standalone-and-pilot; S6-I-11), computed from the records: never a stored status.
+    track({ key: 'pilot', title: 'Pilot: the health institutions', why: 'Whether authorised users completed the health services with real records and verifiable audit evidence (the pilot\'s exit gate), and whether the installation runs as an Institutional Edition. Evidence only: it never declares Health complete.', href: '/gov/health-regulation/pilot' }, () => {
+      const gate = pilotExitGate();
+      const e = currentEdition();
+      return { checks: [
+        { label: 'Institutional Edition (optional: only when the institutions stand alone)', done: true, href: '/gov/configuration/edition', detail: e ? `${e.label}: ${e.institutions.length} institution(s), modules ${e.modules.join(', ')}` : 'None recorded: every institution is connected' },
+        ...gate.items.map(i => ({ label: `Exit gate: ${i.label}`, done: i.met, href: '/gov/health-regulation/pilot', detail: (i.met ? i.detail : i.missing.join(' · ')).slice(0, 600) })),
+      ] };
+    }),
+
     track({ key: 'exchange', title: 'Data sharing', why: 'Other systems and institutions reach records only through approved services, for an approved purpose, agreed by the data\'s owners.', href: '/integrations', seeded: true }, () => {
       const ints = listIntegrations();
       for (const i of ints) if (i.pendingApproval) wait({ what: `Data sharing: ${i.name}`, proposedBy: i.pendingApproval.by, at: i.pendingApproval.at, href: '/integrations' });
@@ -390,6 +404,9 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const p of waitingProfileSteps()) wait({ what: p.what, proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
   safe(() => { for (const r of waitingReleases()) wait({ what: `Form release: ${r.key} version ${r.version} waiting for a second official`, proposedBy: r.by, at: r.at, href: '/gov/law/procedures/forms' }); });
   safe(() => { const p = constitutionOverview().process.changes.pending; if (p) wait({ what: 'Steps for changing the constitutional profile: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
+  safe(() => { const p = editionChanges().pending; if (p) wait({ what: 'Institutional Edition: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/edition' }); });
+  safe(() => { for (const x of listExports()) if (x.state === 'proposed') wait({ what: `Export of ${listMinistries().find(m => m.id === x.institution)?.name ?? x.institution}: waiting for an official who can sign there`, proposedBy: x.by, at: x.at, href: `/gov/configuration/edition?institution=${encodeURIComponent(x.institution)}#export` }); });
+  safe(() => { for (const x of listImports()) if (x.state === 'proposed') wait({ what: `Import of ${x.institutionName}'s export ${x.exportId}: waiting for a second administrator`, proposedBy: x.by, at: x.at, href: '/gov/configuration/edition#export' }); });
   safe(() => { const p = classificationChanges().pending; if (p) wait({ what: 'Classification of the state: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/offices' }); });
   safe(() => { for (const w of waitingLegislative()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: w.href }); });
   safe(() => {

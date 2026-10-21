@@ -35,7 +35,8 @@ import { verifyBytes } from '@/lib/crypto/signing-key';
 import type { Citation } from '@/lib/law/register';
 import { installationMode } from '@/lib/ops/mode';
 import { profileRef, type ProfileRef } from '@/lib/constitution/profile-state';
-import { sealKeyRefusal, sealStanding, registerSealHistory, type SealStanding } from '@/lib/keys/seal-register';
+import { sealKeyRefusal, sealStanding, trustListStanding, registerSealHistory, type SealStanding } from '@/lib/keys/seal-register';
+import type { AuditEntry } from '@/lib/api/types';
 
 export interface DecisionContent {
   /** What was decided: the case (and its procedure version) or the register record. */
@@ -76,6 +77,19 @@ interface DecisionDb { decisions: SignedDecision[] }
 const g = globalThis as unknown as { __civicosDecisions?: DecisionDb };
 const db = (): DecisionDb => touch('__civicosDecisions', g.__civicosDecisions ??= { decisions: [] });
 export function resetDecisions(): void { g.__civicosDecisions = undefined; }
+
+/**
+ * Put back sealed decisions exactly as sealed (lib/portability/import.ts only: the confirmed import of an institution's own export (two officials) into an installation that holds none of these records): never re-sealed or
+ * changed. They verify against the evidence the export carried (its audit
+ * segment and trust list, lib/portability/verify.ts).
+ */
+export function restoreDecisions(list: SignedDecision[]): { restored: number } | { error: string } {
+  const d = db();
+  const clash = list.find(x => d.decisions.some(y => y.id === x.id));
+  if (clash) return { error: `Decision ${clash.id} is already in this installation` };
+  d.decisions.push(...list.map(x => structuredClone(x)));
+  return { restored: list.length };
+}
 
 /** The bytes the seal covers. */
 export const decisionMaterial = (id: string, content: DecisionContent): string => canonicalJson({ type: 'civicos.decision', v: 1, id, content });
@@ -119,10 +133,15 @@ export const sealedAt = (d: Pick<SignedDecision, 'content' | 'seal'>): string =>
  */
 export function sealAuditTime(d: Pick<SignedDecision, 'id' | 'sha256' | 'seal'>): string | null {
   const e = firstAuditEntry('decision.seal', `Decision:${d.id}`);
-  if (!e || e.outcome !== 'ok') return null;
-  if (!e.detail?.includes(d.sha256.slice(0, 12)) || !e.detail.includes(`key ${d.seal.keyId}`)) return null;
-  if (e.alg === 'sha256-v2' && auditHashV2(e) !== e.hash) return null;
-  return e.at;
+  return e && sealEntryMatches(d, e) ? e.at : null;
+}
+
+/** Whether an audit entry is this decision's `decision.seal` entry: its resource, this record's hash and key, its own hash intact. */
+export function sealEntryMatches(d: Pick<SignedDecision, 'id' | 'sha256' | 'seal'>, e: Pick<AuditEntry, 'action' | 'resource' | 'outcome' | 'detail' | 'alg' | 'hash' | 'seq' | 'at' | 'actor' | 'prevHash'>): boolean {
+  if (e.action !== 'decision.seal' || e.resource !== `Decision:${d.id}` || e.outcome !== 'ok') return false;
+  if (!e.detail?.includes(d.sha256.slice(0, 12)) || !e.detail.includes(`key ${d.seal.keyId}`)) return false;
+  if (e.alg === 'sha256-v2' && auditHashV2(e) !== e.hash) return false;
+  return true;
 }
 
 /** The time the register judges a seal by: the audit entry's, else the record's own (then marked unaudited). */
@@ -143,6 +162,24 @@ export function verifyDecision(d: Pick<SignedDecision, 'id' | 'content' | 'sha25
   const k = sealStanding('decision', d.seal.publicKeyPem, t.at, t.audited);
   if (!k.trusted) return { ok: false, problem: k.note };
   return { ok: true };
+}
+
+/**
+ * The same check with no running server (an institution's export verified
+ * offline, lib/portability/verify.ts): the decision's `decision.seal` entry
+ * from the exported audit evidence and the trust list the export carries
+ * stand in for the live chain and the live seal key register.
+ */
+export function verifyDecisionOffline(d: Pick<SignedDecision, 'id' | 'content' | 'sha256' | 'seal'>, sealEntry: AuditEntry | undefined, trust: Parameters<typeof trustListStanding>[0]): { ok: boolean; problem?: string; key: SealStanding; sealedAt: string; timeFrom: 'audit-chain' | 'record' } {
+  const audited = !!sealEntry && sealEntryMatches(d, sealEntry);
+  const at = audited ? sealEntry!.at : sealedAt(d);
+  const key = trustListStanding(trust, 'decision', d.seal.publicKeyPem, at, audited);
+  const material = decisionMaterial(d.id, d.content);
+  const base = { key, sealedAt: at, timeFrom: audited ? 'audit-chain' as const : 'record' as const };
+  if (createHash('sha256').update(material, 'utf8').digest('hex') !== d.sha256) return { ok: false, problem: 'The record does not match its hash', ...base };
+  if (!verifyBytes(d.seal.publicKeyPem, material, d.seal.signature)) return { ok: false, problem: 'The seal does not verify', ...base };
+  if (!key.trusted) return { ok: false, problem: key.note, ...base };
+  return { ok: true, ...base };
 }
 
 /** The full check with what the register says about the seal's key (for /verify and the console). */

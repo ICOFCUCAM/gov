@@ -26,6 +26,7 @@ import type { AuthorityKey } from '@/lib/nation/deployment';
 import { integrationPurposes } from '@/lib/data/store/federation';
 import { purposeSlug } from './usage-policy';
 import { samplesAllowed } from '@/lib/ops/mode';
+import { slotConnection } from '@/lib/nation/edition';
 
 export interface Caller { kind: 'module' | 'integration'; id: string; name: string; institution?: string }
 export interface ServiceResult { status: number; result: string; data: Record<string, unknown> }
@@ -195,6 +196,10 @@ export async function callService(caller: Caller, serviceId: string, input: Reco
   const log = (status: number, result: string) => logExchange({ channel: 'service', feedId: `${caller.kind}:${caller.id}`, method: 'POST', path: `service:${serviceId}`, body: JSON.stringify({ purpose, input }), signature: 'absent', status, result: `${result} · purpose: ${purpose.slice(0, 120)}` });
   if (!s || s.kind !== 'query' || !s.handle) { const { receipt } = await log(404, 'no such query service'); return { status: 404, error: 'No such service', receipt }; }
   if (!purpose?.trim()) { const { receipt } = await log(400, 'no purpose stated'); return { status: 400, error: 'State the purpose of the request', receipt }; }
+  // An Institutional Edition answers only for its own institutions: a service owned by one that is not
+  // part of it is not connected, and says so (spec Part 5 D: never claim a check that was not performed).
+  const notConnected = slotConnection(s.owner);
+  if (notConnected) { const { receipt } = await log(503, 'not connected (Institutional Edition)'); return { status: 503, error: notConnected, data: { connected: 'no' }, receipt }; }
   // Purposes approved for this caller and service. Outside callers
   // (integrations) may state only a purpose two officials approved for them
   // and this service (lib/data/store/federation.ts). An integration approved

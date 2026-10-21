@@ -159,6 +159,20 @@ What has been built is locked. Work only upgrades it toward the vision in
   record leaves the regulator only through `publicProductView()`
   (`lib/health/products/public.ts`). Health is tracked in
   `docs/HEALTH_I4_DEPENDENCIES.md` and not called complete before it is.
+- Institutional Edition, portable export and the pilot gate (Health I4 standalone-and-pilot): an
+  installation runs as named institutions standing alone only through `DeploymentProfile.edition`
+  (recorded in setup, afterwards proposed citing the law and confirmed by a different official,
+  `/api/sovereign/edition`; none ships); outside it a procedure opens no case, `callService()`
+  answers "not connected" and a step needing another register pauses (`lib/nation/edition.ts`), never
+  a guess. An institution's export (`lib/portability/`) carries its own records only (other
+  institutions' audit and access-log entries as links: sequence and hashes), is sealed through key
+  custody like a backup, proposed by its administrator and confirmed by a different official who can
+  sign there (`exportProposeRefusal()`, `exportConfirmRefusal()`; never from whole-government scope
+  for an independent institution), is verified offline with the platform's own checks
+  (`app/scripts/verify-institution-export.mjs`) and is imported elsewhere by two administrators with
+  every identifier unchanged; decisions are never re-sealed. Its catalogue is in `KEPT_ON_RESTORE`.
+  The pilot exit gate (`lib/pilot/exit-gate.ts`) is computed from records each time, never a status
+  field; it is never met by samples and never declares an institution complete.
 - Every decision step is classified in `lib/permits/decisions.ts` (permit
   mapping, deployment-profile domain, or refused in production when
   unclassified); the case engine checks it when a decision is proposed and
