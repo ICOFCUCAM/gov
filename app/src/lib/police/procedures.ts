@@ -64,8 +64,8 @@ export const REFERENCE_INCIDENT: Ref = {
     { key: 'archive', label: 'Archive under the retention rules', from: ['closed'], to: 'archived', needs: { role: 'signatory' }, requires: { reasons: true } },
   ],
   deadlines: [
-    { key: 'triage', label: 'Triage within 1 working day', from: 'opened', days: 1, calendar: 'working', onLapse: 'escalate' },
-    { key: 'classify', label: 'Classify within 5 working days', from: 'triage', days: 5, calendar: 'working', onLapse: 'escalate' },
+    { key: 'triage', label: 'Triage within the time the law sets', from: 'opened', sampleDays: 1, calendar: 'working', onLapse: 'escalate' },
+    { key: 'classify', label: 'Classify within the time the law sets', from: 'triage', sampleDays: 5, calendar: 'working', onLapse: 'escalate' },
   ],
   notifications: [], retention: 'police-incident-report', sensitivity: 'restricted',
   tests: [

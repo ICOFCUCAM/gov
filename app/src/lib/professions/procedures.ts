@@ -101,8 +101,8 @@ export const REFERENCE_PROFESSIONAL_REGISTRATION: Ref = {
     { key: 'refuse', label: 'Refuse, with reasons', from: ['verification', 'pending-approval'], to: 'not-registered', decision: 'refuse', needs: { role: 'signatory' }, requires: { reasons: true } },
     { key: 'issue', label: 'Issue the certificate', from: ['registered'], to: 'certificate-issued', needs: { role: 'officer' }, effects: ['prof.issueCertificate'] },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 30 working days', from: 'opened', days: 30, calendar: 'working', onLapse: 'escalate' }],
-  appeal: { days: 30, body: 'the professional regulator\'s appeals body', suspensive: false },
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 30, calendar: 'working', onLapse: 'escalate' }],
+  appeal: { sampleDays: 30, body: 'the professional regulator\'s appeals body', suspensive: false },
   tests: [
     { name: 'registered', steps: [{ action: 'check', fields: { profession: 'nurse', personRef: 'P-1', name: 'A' }, documents: ['qualification-evidence', 'identity-evidence'], expect: 'verification' }, { action: 'verify', expect: 'pending-approval' }, { action: 'register', expect: 'registered' }, { action: 'issue', expect: 'certificate-issued' }] },
     { name: 'refused', steps: [{ action: 'check', fields: { profession: 'nurse', personRef: 'P-1', name: 'A' }, documents: ['qualification-evidence', 'identity-evidence'], expect: 'verification' }, { action: 'refuse', expect: 'not-registered' }] },
@@ -119,7 +119,7 @@ export const REFERENCE_PROFESSIONAL_RENEWAL: Ref = {
     decide('renew', 'Renew', 'renewed', 'prof.renew'),
     { key: 'refuse', label: 'Refuse, with reasons', from: ['pending-approval'], to: 'not-renewed', decision: 'refuse', needs: { role: 'signatory' }, requires: { reasons: true } },
   ],
-  deadlines: [], appeal: { days: 30, body: 'the professional regulator\'s appeals body', suspensive: false },
+  deadlines: [], appeal: { sampleDays: 30, body: 'the professional regulator\'s appeals body', suspensive: false },
   tests: [{ name: 'renewed', steps: [{ action: 'propose', fields: { professional: 'PRN-1' }, documents: ['renewal-evidence'], expect: 'pending-approval' }, { action: 'renew', expect: 'renewed' }] }],
 };
 
@@ -136,8 +136,8 @@ export const REFERENCE_PROFESSIONAL_FITNESS: Ref = {
     { key: 'reinstate', label: 'Reinstate', from: ['suspended'], to: 'reinstated', decision: 'reinstate', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['prof.reinstate'] },
     { key: 'close', label: 'Close without action', from: ['hearing', 'pending-approval'], to: 'closed', needs: { role: 'signatory' }, requires: { reasons: true } },
   ],
-  deadlines: [{ key: 'representations', label: 'Representations within 21 days of notice', from: 'hearing', days: 21, calendar: 'calendar', onLapse: 'notify' }],
-  appeal: { days: 30, body: 'the professional regulator\'s appeals body', suspensive: true },
+  deadlines: [{ key: 'representations', label: 'Representations within the time the law sets, from notice', from: 'hearing', sampleDays: 21, calendar: 'calendar', onLapse: 'notify' }],
+  appeal: { sampleDays: 30, body: 'the professional regulator\'s appeals body', suspensive: true },
   tests: [
     { name: 'suspended then reinstated', steps: [{ action: 'notify', fields: { professional: 'PRN-1' }, documents: ['grounds'], expect: 'hearing' }, { action: 'propose', expect: 'pending-approval' }, { action: 'suspend', expect: 'suspended' }, { action: 'reinstate', expect: 'reinstated' }] },
     { name: 'revoked', steps: [{ action: 'notify', fields: { professional: 'PRN-1' }, documents: ['grounds'], expect: 'hearing' }, { action: 'propose', expect: 'pending-approval' }, { action: 'revoke', expect: 'revoked' }] },

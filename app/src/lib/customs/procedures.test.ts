@@ -1,3 +1,4 @@
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { openCase, act, attach, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
 import { draftPackage, approvePackage, resetPackages } from '@/lib/casework/packages';
@@ -23,7 +24,7 @@ describe('customs declaration procedure', () => {
     vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 7).toString('base64'));
     [CUS, OTHER] = listMinistries().slice(0, 2).map(m => m.id) as [string, string];
     setSovereign({ deployment: { authorities: { customs: CUS } } }, 'Administrator');
-    for (const p of CUSTOMS_PROCEDURES) { const d = draftPackage(p, 'Author', 'a', registeredEffects()); if ('error' in d) throw new Error(d.error); const a = approvePackage(p.key, 1, 'Approver', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); if ('error' in a) throw new Error(a.error); }
+    for (const p of CUSTOMS_PROCEDURES) { const d = draftPackage(asNationSets(p), 'Author', 'a', registeredEffects()); if ('error' in d) throw new Error(d.error); const a = approvePackage(p.key, 1, 'Approver', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); if ('error' in a) throw new Error(a.error); }
   });
 
   async function lodged(extra: Record<string, unknown> = {}) {

@@ -60,11 +60,11 @@ export const SPEC_CLASSES: Record<string, { cls: PersonalDataClass; confidential
   restricted: { cls: 'restricted' },
   special: { cls: 'special' },
   sensitive: { cls: 'special' },
-  commercial: { cls: 'administrative', confidentiality: 'commercial' },
+  commercial: { cls: 'commercial', confidentiality: 'commercial' },
   commercial_confidential: { cls: 'restricted', confidentiality: 'commercial' },
   business_confidential_or_personal: { cls: 'restricted', confidentiality: 'commercial' },
-  tax_confidential: { cls: 'restricted', confidentiality: 'tax' },
-  financial: { cls: 'restricted', confidentiality: 'financial' },
+  tax_confidential: { cls: 'tax-confidential', confidentiality: 'tax' },
+  financial: { cls: 'financial', confidentiality: 'financial' },
 };
 
 // ── Validations ────────────────────────────────────────────────────────────────

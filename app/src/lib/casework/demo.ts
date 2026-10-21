@@ -13,7 +13,7 @@ import { recordAudit } from '@/lib/data/store/audit';
 import { recordVersion, confirmVersion, listInstruments } from '@/lib/law/register';
 import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
 import type { AuthorityKey } from '@/lib/nation/deployment';
-import { activePackage, approvePackage, draftPackage, listPackages } from '@/lib/casework/packages';
+import { activePackage, approvePackage, draftPackage, listPackages, withSampleDeadlines } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
 
 export const DEMO_ACT_TITLE = 'Civil Registration Act (sample for demonstration)';
@@ -137,7 +137,8 @@ export function loadDemonstration(by: string, now = new Date()): DemoResult {
       const cite = set.provisions[p.key];
       if (!cite) continue;
       const next = Math.max(0, ...listPackages({ key: p.key }).map(x => x.version)) + 1;
-      const d = draftPackage({ ...p, version: next, reference: false, citations: [{ instrument: act.instrument, eId: cite.eId, version: act.version, digest: act.digest, on: today }] }, DRAFTER.name, DRAFTER.id, registeredEffects(), now);
+      // Day counts: the reference's sample values, marked Sample (a demonstration installation only).
+      const d = draftPackage(withSampleDeadlines({ ...p, version: next, reference: false, citations: [{ instrument: act.instrument, eId: cite.eId, version: act.version, digest: act.digest, on: today }] }), DRAFTER.name, DRAFTER.id, registeredEffects(), now);
       if ('error' in d) return { error: `${p.title}: ${d.error}` };
       const a = approvePackage(p.key, next, APPROVER.name, APPROVER.id, today, registeredEffects(), now);
       if ('error' in a) return { error: `${p.title}: ${a.error}` };

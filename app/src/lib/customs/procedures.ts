@@ -182,8 +182,8 @@ export const REFERENCE_CUSTOMS_DECLARATION: Ref = {
     { key: 'refuse', label: 'Refuse release, with reasons', from: ['controls', 'awaiting-release'], to: 'release-refused', decision: 'refuse-release', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['customs.refuseRelease'] },
     { key: 'withdraw', label: 'Withdrawn by the declarant', from: ['lodged', 'checking'], to: 'withdrawn', needs: { role: 'officer' }, requires: { reasons: true } },
   ],
-  deadlines: [{ key: 'clear', label: 'Clear within 2 working days of controls', from: 'controls', days: 2, calendar: 'working', onLapse: 'escalate' }],
-  notifications: [], appeal: { days: 30, body: 'a review by the customs authority, then the customs appeals tribunal', suspensive: false },
+  deadlines: [{ key: 'clear', label: 'Clear within the time the law sets, from controls', from: 'controls', sampleDays: 2, calendar: 'working', onLapse: 'escalate' }],
+  notifications: [], appeal: { sampleDays: 30, body: 'a review by the customs authority, then the customs appeals tribunal', suspensive: false },
   retention: 'customs-record', sensitivity: 'restricted',
   tests: [
     { name: 'released on documents', steps: [

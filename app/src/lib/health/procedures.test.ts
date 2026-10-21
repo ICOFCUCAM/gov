@@ -1,3 +1,4 @@
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // A registered site: the facility register's own tests cover how one is published.
@@ -28,7 +29,7 @@ describe('health facility licensing', () => {
     [HR, EDU] = listMinistries().slice(0, 2).map(m => m.id) as [string, string];
     setSovereign({ deployment: { authorities: { healthRegulation: HR, education: EDU } } }, 'Administrator');
     for (const p of HEALTH_PROCEDURES) {
-      const d = draftPackage(p, 'Author', 'author', registeredEffects()); if ('error' in d) throw new Error(`${p.key}: ${d.error}`);
+      const d = draftPackage(asNationSets(p), 'Author', 'author', registeredEffects()); if ('error' in d) throw new Error(`${p.key}: ${d.error}`);
       const a = approvePackage(p.key, 1, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01')); if ('error' in a) throw new Error(`${p.key}: ${a.error}`);
     }
   });

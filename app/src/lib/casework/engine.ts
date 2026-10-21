@@ -141,7 +141,8 @@ interface Checked { values: Record<string, unknown>; verifications: Case['verifi
 
 function deadlinesFrom(pkg: CasePackage, stage: string, at: string): Case['deadlines'] {
   const cal = calendarOf(getSovereign().deployment);
-  return pkg.deadlines.filter(d => d.from === stage).map(d => ({ key: d.key, label: d.label, due: addDays(at, d.days, d.calendar, cal), ...(d.citation ? { citation: d.citation } : {}) }));
+  // An approved version has every day count set (approvePackage()); a deadline without one is never started.
+  return pkg.deadlines.filter(d => d.from === stage && d.days !== undefined).map(d => ({ key: d.key, label: d.label, due: addDays(at, d.days!, d.calendar, cal), ...(d.citation ? { citation: d.citation } : {}), ...(pkg.sampleDeadlines ? { sample: true as const } : {}) }));
 }
 
 function resolveCitations(list: { instrument?: string; eId?: string }[] | undefined, on: string): Citation[] | { error: string } {
@@ -257,6 +258,7 @@ export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case
     source, version: 1, openedAt: at,
     ...(intake.intake ? { intake: intake.intake } : {}),
     ...(input.checked?.verifications?.length ? { verifications: input.checked.verifications } : {}),
+    fieldSources: sourcesOf(fields, input.checked?.verifications ?? [], { at, by: actor.name, channel: input.channel }),
   };
   d.cases.push(c);
   audit(actor, 'case.open', c, `opened at ${stage}${input.referral ? ` · referred from ${input.referral.from}` : ''}${c.intake ? ` · ${c.intake.channel}, form ${c.intake.form.version}` : ''}`);
@@ -266,13 +268,24 @@ export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case
   return clone(c);
 }
 
+/** The declaration-text versions a submission is made under: the form's declaration and each declaration field's. */
+const declarationVersions = (pkg: CasePackage): string => [...(pkg.form?.declaration ? [`form@${pkg.form.declaration.version}`] : []), ...pkg.fields.filter(f => f.type === 'attestation' && f.attestation).map(f => `${f.key}@${f.attestation!.version}`)].join(', ');
+
+/** Where each answer came from: entered on a channel or at a step, or verified with a service (the latest result wins). */
+function sourcesOf(values: Record<string, unknown>, verifications: NonNullable<Case['verifications']>, who: { at: string; by: string; channel?: Channel | 'step' }): NonNullable<Case['fieldSources']> {
+  const out: NonNullable<Case['fieldSources']> = {};
+  for (const [k, v] of Object.entries(values)) if (v !== '' && v !== undefined) out[k] = { source: 'entered', at: who.at, by: who.by, ...(who.channel ? { channel: who.channel } : {}) };
+  for (const v of verifications) if (v.result === 'verified' && out[v.field]) out[v.field] = { source: 'verified', at: v.at, service: v.service };
+  return out;
+}
+
 /** How an application arrived, checked: who may use each channel, the declaration, the assisting official's record. */
 function intakeOf(pkg: CasePackage, input: OpenInput, actor: Actor, now: Date): { intake?: Intake } | Refusal {
   if (!input.channel) return {};
   if (!['self-service', 'assisted', 'paper'].includes(input.channel)) return { error: 'The channel is self-service, assisted or paper' };
   const at = now.toISOString();
   const who = { ...(actor.id ? { id: actor.id } : {}), name: actor.name };
-  const base: Intake = { channel: input.channel, at, form: { version: pkg.form?.version ?? `procedure-${pkg.version}`, ...(pkg.form?.declaration ? { declaration: pkg.form.declaration.version } : {}), ...(pkg.form?.evidencePolicy ? { evidencePolicy: pkg.form.evidencePolicy } : {}) }, ...(input.locale && /^[a-z]{2,3}$/.test(input.locale) ? { locale: input.locale } : {}) };
+  const base: Intake = { channel: input.channel, at, form: { version: pkg.form?.version ?? `procedure-${pkg.version}`, ...(declarationVersions(pkg) ? { declaration: declarationVersions(pkg) } : {}), ...(pkg.form?.evidencePolicy ? { evidencePolicy: pkg.form.evidencePolicy } : {}) }, ...(input.locale && /^[a-z]{2,3}$/.test(input.locale) ? { locale: input.locale } : {}) };
   if (input.channel === 'self-service' && actor.scope) return { error: 'An official records an application as assisted or from a paper form' };
   if (input.channel !== 'self-service' && !actor.scope && !samplesAllowed()) return { error: 'An assisted or paper application is recorded by a signed-in official' };
   const decl = pkg.form?.declaration;
@@ -454,6 +467,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   const from = c.stage;
   c.fields = merged;
   if (verifications.length) (c.verifications ??= []).push(...verifications);
+  c.fieldSources = { ...(c.fieldSources ?? {}), ...sourcesOf(fields, verifications, { at: now.toISOString(), by: (pending ? pending.by : by(actor)).name, channel: 'step' }) };
   c.stage = a.to;
   const step: Step = { seq: c.history.length + 1, action: a.key, from, to: a.to, by: decidedBy, ...(confirmedBy ? { confirmedBy } : {}), at, ...(reason ? { reason } : {}), ...(citations.length ? { citations } : {}), ...(decision ? { decision: decision.id } : {}), ...((pending?.idempotencyKey ?? input.idempotencyKey) ? { idempotencyKey: pending?.idempotencyKey ?? input.idempotencyKey } : {}), ...(pending?.idempotencyKey && input.idempotencyKey && input.idempotencyKey !== pending.idempotencyKey ? { confirmIdempotencyKey: input.idempotencyKey } : {}), ...(independence ? { independence } : {}) };
   c.history.push(step);
@@ -462,7 +476,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   c.deadlines.push(...deadlinesFrom(pkg, a.to, at));
   if (pkg.stages.find(s => s.key === a.to)?.terminal) {
     c.closedAt = at;
-    if (pkg.appeal && decision) c.deadlines.push({ key: 'appeal', label: `Appeal to ${pkg.appeal.body}`, due: addDays(at, pkg.appeal.days, 'calendar'), ...(pkg.appeal.citation ? { citation: pkg.appeal.citation } : {}) });
+    if (pkg.appeal?.days !== undefined && decision) c.deadlines.push({ key: 'appeal', label: `Appeal to ${pkg.appeal.body}`, due: addDays(at, pkg.appeal.days, 'calendar'), ...(pkg.appeal.citation ? { citation: pkg.appeal.citation } : {}), ...(pkg.sampleDeadlines ? { sample: true as const } : {}) });
   }
   c.version += 1;
   audit(actor, decision ? 'case.decide' : 'case.stage', c, `${a.key}: ${from} → ${a.to}${decision ? ` · decision ${decision.id} · ${decision.sha256.slice(0, 12)}` : ''}${confirmedBy ? ` · confirmed by ${confirmedBy.name}` : ''}`);

@@ -123,8 +123,8 @@ export const REFERENCE_QUALIFICATION: Ref = {
     { key: 'decline', label: 'Do not record, with reasons', from: ['verification', 'pending-approval'], to: 'not-recorded', decision: 'decline', needs: { role: 'signatory' }, requires: { reasons: true } },
     { key: 'issue', label: 'Issue the certificate', from: ['recorded'], to: 'certificate-issued', needs: { role: 'officer' }, effects: ['edu.issueAwardCertificate'] },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 20 working days', from: 'opened', days: 20, calendar: 'working', onLapse: 'escalate' }],
-  appeal: { days: 30, body: 'the education authority\'s review', suspensive: false },
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 20, calendar: 'working', onLapse: 'escalate' }],
+  appeal: { sampleDays: 30, body: 'the education authority\'s review', suspensive: false },
   retention: 'qualification-record', sensitivity: 'normal',
   tests: [
     { name: 'recorded', steps: [{ action: 'check', fields: { holderRef: 'P-1', holderName: 'A', title: 'Diploma', awardingBody: 'ORG-1', awardedOn: '2026-01-01' }, documents: ['award-evidence'], expect: 'verification' }, { action: 'verify', expect: 'pending-approval' }, { action: 'record', expect: 'recorded' }, { action: 'issue', expect: 'certificate-issued' }] },
@@ -144,7 +144,7 @@ export const REFERENCE_QUALIFICATION_CORRECTION: Ref = {
     { key: 'correct', label: 'Correct the record', from: ['pending-approval'], to: 'corrected', decision: 'correct', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['edu.correctAward'] },
     { key: 'decline', label: 'Do not correct, with reasons', from: ['pending-approval'], to: 'not-corrected', decision: 'decline', needs: { role: 'signatory' }, requires: { reasons: true } },
   ],
-  deadlines: [], appeal: { days: 30, body: 'the education authority\'s review', suspensive: false },
+  deadlines: [], appeal: { sampleDays: 30, body: 'the education authority\'s review', suspensive: false },
   retention: 'qualification-record', sensitivity: 'normal',
   tests: [{ name: 'corrected', steps: [{ action: 'propose', fields: { qualification: 'QUA-1' }, documents: ['correction-evidence'], expect: 'pending-approval' }, { action: 'correct', expect: 'corrected' }] }],
 };
@@ -160,8 +160,8 @@ export const REFERENCE_QUALIFICATION_REVOCATION: Ref = {
     { key: 'revoke', label: 'Revoke', from: ['pending-approval'], to: 'revoked', decision: 'revoke', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['edu.revokeAward'] },
     { key: 'close', label: 'Close without revocation', from: ['hearing', 'pending-approval'], to: 'closed', needs: { role: 'signatory' }, requires: { reasons: true } },
   ],
-  deadlines: [{ key: 'representations', label: 'Representations within 21 days of notice', from: 'hearing', days: 21, calendar: 'calendar', onLapse: 'notify' }],
-  appeal: { days: 30, body: 'the education appeals body', suspensive: true },
+  deadlines: [{ key: 'representations', label: 'Representations within the time the law sets, from notice', from: 'hearing', sampleDays: 21, calendar: 'calendar', onLapse: 'notify' }],
+  appeal: { sampleDays: 30, body: 'the education appeals body', suspensive: true },
   retention: 'qualification-record', sensitivity: 'normal',
   tests: [{ name: 'revoked', steps: [{ action: 'notify', fields: { qualification: 'QUA-1' }, documents: ['grounds'], expect: 'hearing' }, { action: 'propose', expect: 'pending-approval' }, { action: 'revoke', expect: 'revoked' }] }],
 };

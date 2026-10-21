@@ -157,7 +157,7 @@ export function evidence(o: BlockOptions & { evidenceClass: string; documentLabe
 /** A bank account for payments to the applicant (financial information). */
 export function bankAccount(o: BlockOptions): BlockResult {
   return { fields: [{
-    ...base(o, 'bank-account', 'Bank or mobile money account for payment'), type: 'group', personalDataClass: 'restricted', confidentiality: 'financial',
+    ...base(o, 'bank-account', 'Bank or mobile money account for payment'), type: 'group', personalDataClass: 'financial', confidentiality: 'financial',
     hint: o.hint ?? 'The account must be in the applicant\'s name.',
     items: [
       { key: 'holder', label: 'Account holder\'s name', type: 'text', required: true, rules: [{ rule: 'length', max: 200 }], personalDataClass: 'restricted' },

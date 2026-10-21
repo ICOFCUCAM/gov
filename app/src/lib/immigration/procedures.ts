@@ -89,7 +89,7 @@ const VALIDITY: CasePackage['fields'] = [
   { key: 'conditions', label: 'Conditions (one per line)', type: 'longtext' },
 ];
 const REFUSED_STAGE = { key: 'not-granted', label: 'Refused', terminal: true };
-const APPEAL = { days: 30, body: 'the immigration appeals tribunal', suspensive: false };
+const APPEAL = { sampleDays: 30, body: 'the immigration appeals tribunal', suspensive: false };
 
 export const REFERENCE_VISA: Ref = {
   key: 'immigration.visa', version: 1, owner: 'immigration', title: 'Visa application', refPrefix: 'VIA', reference: true, citations: [],
@@ -116,7 +116,7 @@ export const REFERENCE_VISA: Ref = {
     { key: 'refuse', label: 'Refuse, with reasons', from: ['pending-approval'], to: 'not-granted', decision: 'refuse', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['immigration.refuse'] },
     { key: 'issue', label: 'Issue the visa document', from: ['issued'], to: 'document-issued', needs: { role: 'officer' }, effects: ['immigration.issueDocument'] },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 15 working days', from: 'opened', days: 15, calendar: 'working', onLapse: 'escalate' }],
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 15, calendar: 'working', onLapse: 'escalate' }],
   notifications: [], appeal: APPEAL, retention: 'immigration-application', sensitivity: 'restricted',
   tests: [
     { name: 'granted', steps: [
@@ -160,7 +160,7 @@ export const REFERENCE_RESIDENCE_PERMIT: Ref = {
     { key: 'refuse', label: 'Refuse, with reasons', from: ['pending-approval'], to: 'not-granted', decision: 'refuse', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['immigration.refuse'] },
     { key: 'issue', label: 'Issue the permit document', from: ['issued'], to: 'document-issued', needs: { role: 'officer' }, effects: ['immigration.issueDocument'] },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 60 days', from: 'opened', days: 60, calendar: 'calendar', onLapse: 'escalate' }],
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 60, calendar: 'calendar', onLapse: 'escalate' }],
   retention: 'immigration-residence',
   tests: [
     { name: 'granted', steps: [
@@ -192,7 +192,7 @@ export const REFERENCE_EXTENSION: Ref = {
     { key: 'extend', label: 'Extend', from: ['pending-approval'], to: 'extended', decision: 'extend', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['immigration.extend'] },
     { key: 'refuse', label: 'Refuse, with reasons', from: ['pending-approval'], to: 'not-granted', decision: 'refuse', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true } },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 30 days', from: 'opened', days: 30, calendar: 'calendar', onLapse: 'escalate' }],
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 30, calendar: 'calendar', onLapse: 'escalate' }],
   notifications: [], appeal: APPEAL, retention: 'immigration-application', sensitivity: 'restricted',
   tests: [{ name: 'extended', steps: [{ action: 'assess', fields: { grant: 'VIS-1', newValidUntil: '2027-06-30' }, documents: ['extension-evidence'], expect: 'assessment' }, { action: 'propose', expect: 'pending-approval' }, { action: 'extend', expect: 'extended' }] }],
 };
@@ -208,7 +208,7 @@ export const REFERENCE_REVOCATION: Ref = {
     { key: 'revoke', label: 'Revoke', from: ['pending-approval'], to: 'revoked', decision: 'revoke', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['immigration.revoke'] },
     { key: 'close', label: 'Close without revocation', from: ['notice', 'pending-approval'], to: 'closed', needs: { role: 'signatory' }, requires: { reasons: true } },
   ],
-  deadlines: [{ key: 'representations', label: 'Representations within 14 days of notice', from: 'notice', days: 14, calendar: 'calendar', onLapse: 'notify' }],
+  deadlines: [{ key: 'representations', label: 'Representations within the time the law sets, from notice', from: 'notice', sampleDays: 14, calendar: 'calendar', onLapse: 'notify' }],
   notifications: [], appeal: { ...APPEAL, suspensive: true }, retention: 'immigration-application', sensitivity: 'restricted',
   tests: [
     { name: 'revoked after representations', steps: [{ action: 'notify', fields: { grant: 'VIS-1', grounds: 'x' }, documents: ['grounds-evidence'], expect: 'notice' }, { action: 'propose', expect: 'pending-approval' }, { action: 'revoke', expect: 'revoked' }] },

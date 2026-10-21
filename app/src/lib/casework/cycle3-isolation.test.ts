@@ -3,6 +3,7 @@
 // profile names for it. Officials of another institution, administrators,
 // whole-government officials and auditors cannot open or act on its cases,
 // and each domain's read rule refuses everyone else.
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { openCase, resetCases, registeredEffects, type Actor } from './engine';
 import { draftPackage, approvePackage, resetPackages } from './packages';
@@ -28,7 +29,7 @@ describe('cycle 3 domains are isolated from each other', () => {
     INST = Object.fromEntries(DOMAINS.map((d, i) => [d.authority, ids[i]!]));
     setSovereign({ deployment: { authorities: INST } }, 'Administrator');
     for (const d of DOMAINS) for (const p of d.packages) {
-      const r = draftPackage(p, 'Author', 'author', registeredEffects());
+      const r = draftPackage(asNationSets(p), 'Author', 'author', registeredEffects());
       if ('error' in r) throw new Error(`${p.key}: ${r.error}`);
       const a = approvePackage(p.key, 1, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
       if ('error' in a) throw new Error(`${p.key}: ${a.error}`);

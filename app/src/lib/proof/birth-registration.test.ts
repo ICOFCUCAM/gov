@@ -2,6 +2,7 @@
 // 17.2, design §12): a birth registration through every layer, in the nine
 // steps the directions name. Each step uses the platform's own APIs and
 // stores, nothing simulated.
+import { asNationSets, setNationDays } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { createHash } from 'node:crypto';
@@ -43,7 +44,8 @@ describe('proof: a birth registration through every layer', () => {
     law = { instrument: v.instrument.id, version: v.version.id, digest: v.version.digest };
     // The reference procedure, cited to the nation's law in its version 2 and approved by the authority.
     installReferenceProcedures('Administrator');
-    const v2 = draftPackage({ ...REFERENCE_BIRTH, version: 2, reference: false, citations: [{ instrument: law.instrument, eId: 'sec_12', version: law.version, digest: law.digest, on: '2026-01-01' }] }, 'Registrar general', 'rg', registeredEffects());
+    setNationDays();
+    const v2 = draftPackage({ ...asNationSets(REFERENCE_BIRTH), version: 2, reference: false, citations: [{ instrument: law.instrument, eId: 'sec_12', version: law.version, digest: law.digest, on: '2026-01-01' }] }, 'Registrar general', 'rg', registeredEffects());
     if ('error' in v2) throw new Error(v2.error);
     const ok = approvePackage('civil.birth', 2, 'Deputy registrar general', 'drg', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
     if ('error' in ok) throw new Error(ok.error);

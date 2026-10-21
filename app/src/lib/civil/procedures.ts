@@ -122,9 +122,9 @@ export const REFERENCE_BIRTH: Omit<CasePackage, 'state' | 'createdAt' | 'author'
     { key: 'reject', label: 'Reject', from: ['pending-approval', 'adjudication'], to: 'rejected', decision: 'reject', needs: { role: 'signatory' }, requires: { reasons: true } },
     { key: 'issue', label: 'Issue the certificate', from: ['registered'], to: 'certificate-issued', needs: { role: 'officer' }, effects: ['civil.issueCertificate'] },
   ],
-  deadlines: [{ key: 'register', label: 'Register within 30 days of notification', from: 'opened', days: 30, calendar: 'calendar', onLapse: 'escalate' }],
+  deadlines: [{ key: 'register', label: 'Register within the time the law sets, from notification', from: 'opened', sampleDays: 30, calendar: 'calendar', onLapse: 'escalate' }],
   notifications: [],
-  appeal: { days: 30, body: 'the civil registration appeals authority', suspensive: false },
+  appeal: { sampleDays: 30, body: 'the civil registration appeals authority', suspensive: false },
   retention: 'civil-register-permanent', sensitivity: 'restricted',
   tests: [
     { name: 'registered and certified', steps: [
@@ -179,8 +179,8 @@ export const REFERENCE_DEATH: typeof REFERENCE_BIRTH = {
   documents: [{ class: 'death-notification', label: 'Notification of death (medical or witness)', required: true }],
   stages: simpleStages('Registered'),
   actions: simpleActions('register', 'Register the death', 'civil.registerDeath', ['death-notification'], ['deceasedRegistration', 'deathDate']),
-  deadlines: [{ key: 'register', label: 'Register within 30 days of notification', from: 'opened', days: 30, calendar: 'calendar', onLapse: 'escalate' }],
-  notifications: [], appeal: { days: 30, body: 'the civil registration appeals authority', suspensive: false },
+  deadlines: [{ key: 'register', label: 'Register within the time the law sets, from notification', from: 'opened', sampleDays: 30, calendar: 'calendar', onLapse: 'escalate' }],
+  notifications: [], appeal: { sampleDays: 30, body: 'the civil registration appeals authority', suspensive: false },
   retention: 'civil-register-permanent', sensitivity: 'restricted',
   tests: simpleTests('register', { deceasedRegistration: 'BR-1', deathDate: '2026-01-01' }, ['death-notification']),
 };
@@ -199,7 +199,7 @@ export const REFERENCE_MARRIAGE: typeof REFERENCE_BIRTH = {
   documents: [{ class: 'marriage-record', label: 'Record of the ceremony or event', required: true }, { class: 'consent', label: 'Consent of both spouses', required: true }],
   stages: simpleStages('Registered'),
   actions: simpleActions('register', 'Register the marriage', 'civil.registerMarriage', ['marriage-record', 'consent'], ['spouseOneRegistration', 'spouseTwoRegistration', 'marriageDate', 'form']),
-  deadlines: [], notifications: [], appeal: { days: 30, body: 'the civil registration appeals authority', suspensive: false },
+  deadlines: [], notifications: [], appeal: { sampleDays: 30, body: 'the civil registration appeals authority', suspensive: false },
   retention: 'civil-register-permanent', sensitivity: 'restricted',
   tests: simpleTests('register', { spouseOneRegistration: 'BR-1', spouseTwoRegistration: 'BR-2', marriageDate: '2026-01-01', form: 'civil' }, ['marriage-record', 'consent']),
 };
@@ -217,7 +217,7 @@ export const REFERENCE_CORRECTION: typeof REFERENCE_BIRTH = {
   documents: [{ class: 'supporting-evidence', label: 'Evidence of the correct entry', required: true }],
   stages: simpleStages('Corrected'),
   actions: simpleActions('correct', 'Correct the record', 'civil.applyCorrection', ['supporting-evidence'], ['personRegistration', 'grounds']),
-  deadlines: [], notifications: [], appeal: { days: 30, body: 'the civil registration appeals authority', suspensive: false },
+  deadlines: [], notifications: [], appeal: { sampleDays: 30, body: 'the civil registration appeals authority', suspensive: false },
   retention: 'civil-register-permanent', sensitivity: 'restricted',
   tests: simpleTests('correct', { personRegistration: 'BR-1', grounds: 'Spelling' }, ['supporting-evidence']),
 };

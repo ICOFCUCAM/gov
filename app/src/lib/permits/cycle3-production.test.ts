@@ -3,6 +3,7 @@
 // professional decision takes effect until the country has approved the
 // authority mapping for that permit type; the proposed defaults are drafts
 // and govern nothing; no rate or tariff exists until one is approved.
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { openCase, act, attach, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
 import { draftPackage, approvePackage, resetPackages } from '@/lib/casework/packages';
@@ -28,7 +29,7 @@ describe('cycle 3 decisions in a production installation', () => {
     [EDU, HR, PRO] = listMinistries().slice(0, 3).map(m => m.id) as [string, string, string];
     setSovereign({ deployment: { authorities: { education: EDU, healthRegulation: HR, professionalRegulation: PRO } } }, 'Administrator');
     for (const p of [...EDUCATION_PROCEDURES, ...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES]) {
-      draftPackage(p, 'Author', 'author', registeredEffects());
+      draftPackage(asNationSets(p), 'Author', 'author', registeredEffects());
       const a = approvePackage(p.key, 1, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
       if ('error' in a) throw new Error(`${p.key}: ${a.error}`);
     }

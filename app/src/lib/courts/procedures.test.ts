@@ -1,3 +1,4 @@
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { openCase, act, attach, assign, getCase, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
 import { institutionBounds } from '@/lib/data/store/institutions';
@@ -19,7 +20,7 @@ describe('court case', () => {
     resetCases(); resetPackages(); resetDocuments(); resetDecisions(); resetHearings();
     [COURT, OTHER] = listMinistries().slice(0, 2).map(m => m.id) as [string, string];
     setSovereign({ deployment: { authorities: { judiciary: COURT } } }, 'Administrator');
-    for (const p of COURT_PROCEDURES) { draftPackage(p, 'Author', 'a', registeredEffects()); const a = approvePackage(p.key, 1, 'Chief registrar', 'cr', '2026-01-01', registeredEffects(), new Date('2026-01-01')); if ('error' in a) throw new Error(a.error); }
+    for (const p of COURT_PROCEDURES) { draftPackage(asNationSets(p), 'Author', 'a', registeredEffects()); const a = approvePackage(p.key, 1, 'Chief registrar', 'cr', '2026-01-01', registeredEffects(), new Date('2026-01-01')); if ('error' in a) throw new Error(a.error); }
   });
 
   it('runs from filing to a final judgment, lists hearings by number only, and stays isolated from other institutions', async () => {

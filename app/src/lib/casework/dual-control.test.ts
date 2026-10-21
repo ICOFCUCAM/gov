@@ -3,6 +3,7 @@
 // one person are one official; the decision says how independent the two
 // were; a proposal waiting for its second official lapses, stays on record,
 // and only a new, explicit proposal starts again.
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { openCase, act, attach, resetCases, registeredEffects, getCase, lapseProposals, type Actor } from './engine';
 import { draftPackage, approvePackage, resetPackages } from './packages';
@@ -43,7 +44,7 @@ describe('dual control (H) and proposals that lapse (I)', () => {
     // The nation's own version of the return procedure drops the second official for assessments; the platform keeps it.
     for (const p of [...TAX_PROCEDURES, ...CUSTOMS_PROCEDURES]) {
       const own = p.key === 'tax.return' ? { ...p, actions: p.actions.map(a => (a.key === 'assess' ? { ...a, needs: { role: 'signatory' as const } } : a)) } : p;
-      draftPackage(own, 'A', 'a', registeredEffects()); approvePackage(p.key, 1, 'B', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
+      draftPackage(asNationSets(own), 'A', 'a', registeredEffects()); approvePackage(p.key, 1, 'B', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
     }
     tin = (registerTaxpayer({ party: { kind: 'person', id: 'BR-1', name: 'T' }, taxTypes: ['income'] }, 'c', 'Officer') as { tin: string }).tin;
   });

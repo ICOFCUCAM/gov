@@ -100,7 +100,7 @@ export const REFERENCE_TAX_REGISTRATION: Ref = {
     { key: 'register', label: 'Register the taxpayer', from: ['pending-approval'], to: 'registered', decision: 'register', needs: { role: 'signatory' }, requires: { reasons: true }, effects: ['tax.register'] },
     { key: 'refuse', label: 'Refuse, with reasons', from: ['pending-approval'], to: 'not-registered', decision: 'refuse', needs: { role: 'signatory' }, requires: { reasons: true } },
   ],
-  deadlines: [], notifications: [], appeal: { days: 30, body: 'the tax appeals tribunal', suspensive: false },
+  deadlines: [], notifications: [], appeal: { sampleDays: 30, body: 'the tax appeals tribunal', suspensive: false },
   retention: 'tax-record', sensitivity: 'restricted',
   tests: [{ name: 'registered', steps: [{ action: 'verify', fields: { partyKind: 'person', partyRef: 'BR-1', partyName: 'A', taxTypes: 'income' }, documents: ['identity-evidence'], expect: 'verification' }, { action: 'propose', expect: 'pending-approval' }, { action: 'register', expect: 'registered' }] }],
 };
@@ -129,7 +129,7 @@ export const REFERENCE_TAX_RETURN: Ref = {
     { key: 'assess', label: 'Make the assessment', from: ['pending-approval'], to: 'assessed', decision: 'assess', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['tax.assess'] },
     { key: 'issue', label: 'Issue the notice and the bill', from: ['assessed'], to: 'notice-issued', needs: { role: 'officer' }, requires: { fields: ['dueDate'] }, effects: ['tax.issueNotice'] },
   ],
-  deadlines: [], notifications: [], appeal: { days: 30, body: 'an objection to the tax authority, then the tax appeals tribunal', suspensive: false },
+  deadlines: [], notifications: [], appeal: { sampleDays: 30, body: 'an objection to the tax authority, then the tax appeals tribunal', suspensive: false },
   retention: 'tax-record', sensitivity: 'restricted',
   tests: [
     { name: 'assessed and notified', steps: [
@@ -156,7 +156,7 @@ export const REFERENCE_TAX_OBJECTION: Ref = {
     { key: 'vary', label: 'Vary the assessment', from: ['pending-approval'], to: 'varied', decision: 'vary', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true, fields: ['variedMinor'] }, effects: ['tax.vary'] },
     { key: 'dismiss', label: 'Dismiss the objection', from: ['pending-approval'], to: 'dismissed', decision: 'dismiss', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true } },
   ],
-  deadlines: [], notifications: [], appeal: { days: 30, body: 'the tax appeals tribunal', suspensive: false },
+  deadlines: [], notifications: [], appeal: { sampleDays: 30, body: 'the tax appeals tribunal', suspensive: false },
   retention: 'tax-record', sensitivity: 'restricted',
   tests: [
     { name: 'varied', steps: [{ action: 'review', fields: { assessment: 'tax:ASM-1', grounds: 'x' }, documents: ['objection'], expect: 'review' }, { action: 'propose', expect: 'pending-approval' }, { action: 'vary', fields: { variedMinor: 1 }, expect: 'varied' }] },

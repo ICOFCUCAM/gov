@@ -51,7 +51,14 @@ export interface DeadlineSpec {
   label: string;
   /** Counted from the case reaching this stage ('opened' for opening). */
   from: string;
-  days: number;
+  /**
+   * The number of days, as the nation's law sets it: set by the nation when it
+   * approves its version of the procedure (a version cannot be approved with
+   * it unset). Reference procedures ship without it.
+   */
+  days?: number;
+  /** A demonstration value shipped with a reference procedure: used only by a demo or training installation, and then marked Sample. */
+  sampleDays?: number;
   calendar: 'calendar' | 'working';
   citation?: Citation;
   onLapse: 'escalate' | 'notify' | 'deemed-refusal' | 'deemed-approval';
@@ -82,7 +89,10 @@ export interface CasePackage {
   actions: ActionSpec[];
   deadlines: DeadlineSpec[];
   notifications: NotificationSpec[];
-  appeal?: { days: number; body: string; suspensive: boolean; citation?: Citation };
+  /** The appeal: its days as the nation's law sets them (unset in a reference procedure; sampleDays only for demonstrations). */
+  appeal?: { days?: number; sampleDays?: number; body: string; suspensive: boolean; citation?: Citation };
+  /** Its day counts were filled from the reference's sample values in a demo or training installation (shown marked Sample; never approved in production). */
+  sampleDeadlines?: true;
   retention: string;
   sensitivity: Sensitivity;
   migration?: { from: number; stageMap: Record<string, string> };
@@ -90,6 +100,8 @@ export interface CasePackage {
   activeFrom?: string;
   author: string;
   authorId?: string;
+  /** Officials who changed this draft after it was written (its form, day counts, evidence); none of them may approve it. */
+  editors?: { by: string; byId?: string; at: string; what: string }[];
   approvedBy?: string;
   approvedAt?: string;
   createdAt: string;
@@ -147,7 +159,8 @@ export interface Case {
   documents: string[];
   assignee?: { id: string; name: string };
   priority: 'routine' | 'priority' | 'urgent';
-  deadlines: { key: string; label: string; due: string; met?: string; lapsed?: string; citation?: Citation }[];
+  /** `sample`: counted with a demonstration day count (a demo or training installation), shown marked Sample. */
+  deadlines: { key: string; label: string; due: string; met?: string; lapsed?: string; citation?: Citation; sample?: true }[];
   /** Sealed decision ids (lib/records/decisions.ts). */
   decisions: string[];
   links: { kind: 'referral' | 'appeal' | 'related' | 'supersedes' | 'referred-from' | 'appeal-of'; case: string }[];
@@ -167,7 +180,12 @@ export interface Case {
   intake?: Intake;
   /** Answers checked with an exchange service: what the applicant entered stays distinct from what a register confirmed. */
   verifications?: Verification[];
+  /** Where each answer came from: entered (by whom, on which channel, when) or verified against a register or exchange service (which, when). */
+  fieldSources?: Record<string, FieldSource>;
 }
+
+/** Where an answer came from (spec Part 1 §11: a user-entered value is distinct from a verified one). */
+export interface FieldSource { source: 'entered' | 'verified'; at: string; by?: string; channel?: Channel | 'step'; service?: string }
 
 /** How an application arrived: its channel, the form, declaration and evidence-policy versions, and who assisted. */
 export interface Intake {

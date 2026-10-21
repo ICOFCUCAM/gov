@@ -1,3 +1,4 @@
+import { setNationDays } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { installReferenceProcedures } from './procedures';
 import { resetCivil, getEvent, searchPersons, getPerson, current } from './register';
@@ -35,11 +36,13 @@ describe('birth registration on the workflow foundation', () => {
     expect(installReferenceProcedures('Administrator').present).toContain('civil.birth');
     expect(runPackageTests(getPackage('civil.birth', 1)!)).toEqual({ ok: true, failures: [] });
     expect(openCase({ procedure: 'civil.birth' }, as('clerk'))).toHaveProperty('error');
+    setNationDays();
     expect(approvePackage('civil.birth', 1, 'Chief Registrar', 'chief', '2026-01-01', registeredEffects(), new Date('2026-01-01'))).toMatchObject({ state: 'approved' });
   });
 
   it('registers a birth four-eyes, seals the decision with its number, issues a certificate anyone can check', async () => {
     installReferenceProcedures('Administrator');
+    setNationDays();
     approvePackage('civil.birth', 1, 'Chief Registrar', 'chief', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
     const c = await registerOne();
     expect(await act(c.id, { action: 'verify' }, as('clerk'))).toMatchObject({ case: { stage: 'pending-approval' } });
@@ -59,6 +62,7 @@ describe('birth registration on the workflow foundation', () => {
 
   it('stops a possible duplicate at verification until it is adjudicated', async () => {
     installReferenceProcedures('Administrator');
+    setNationDays();
     approvePackage('civil.birth', 1, 'Chief Registrar', 'chief', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
     const first = await registerOne();
     await act(first.id, { action: 'verify' }, as('clerk'));
@@ -82,6 +86,7 @@ describe('the other civil procedures', () => {
 
   it('ship as drafts whose tests pass, and register deaths, marriages and corrections of persons in the register', async () => {
     expect(installReferenceProcedures('Administrator').drafted).toEqual(['civil.birth', 'civil.late-birth', 'civil.death', 'civil.marriage', 'civil.correction']);
+    setNationDays();
     for (const k of ['civil.birth', 'civil.late-birth', 'civil.death', 'civil.marriage', 'civil.correction']) {
       expect(runPackageTests(getPackage(k, 1)!), k).toEqual({ ok: true, failures: [] });
       approvePackage(k, 1, 'Chief Registrar', 'chief', '2026-01-01', registeredEffects(), new Date('2026-01-01'));

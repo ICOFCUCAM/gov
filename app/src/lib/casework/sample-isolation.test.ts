@@ -1,3 +1,4 @@
+import { asNationSets, setNationDays } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { openCase, act, attach, refer, resetCases, registeredEffects, type Actor } from './engine';
 import { approvePackage, draftPackage, resetPackages } from './packages';
@@ -33,9 +34,10 @@ beforeEach(() => {
   [CIVIL, REG] = listMinistries().slice(0, 2).map(m => m.id) as [string, string];
   setSovereign({ deployment: { authorities: { civilRegistration: CIVIL, businessRegister: REG } } }, 'test');
   installReferenceProcedures('Administrator');
+  setNationDays();
   approvePackage('civil.birth', 1, 'Chief Registrar', 'chief', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
   for (const p of ORGANISATION_PROCEDURES) {
-    const d = draftPackage(p, 'Author', 'author', registeredEffects());
+    const d = draftPackage(asNationSets(p), 'Author', 'author', registeredEffects());
     if ('error' in d) throw new Error(`${p.key}: ${d.error}`);
     approvePackage(p.key, 1, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
   }

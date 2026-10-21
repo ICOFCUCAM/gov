@@ -40,7 +40,7 @@ export function referralTemplate(institution: string, title: string): Omit<CaseP
       { key: 'report', label: 'Report back', from: ['working'], to: 'reported', needs: { role: 'officer' }, requires: { documents: ['referral-report'], reasons: true }, effects: ['referral.reportToOrigin'] },
       { key: 'decline', label: 'Decline, with reasons', from: ['received', 'working'], to: 'declined', needs: { role: 'signatory' }, requires: { reasons: true }, effects: ['referral.reportToOrigin'] },
     ],
-    deadlines: [{ key: 'report', label: 'Report back within 15 working days', from: 'opened', days: 15, calendar: 'working', onLapse: 'escalate' }],
+    deadlines: [{ key: 'report', label: 'Report back within the time the law sets', from: 'opened', sampleDays: 15, calendar: 'working', onLapse: 'escalate' }],
     notifications: [], retention: 'case-file-standard', sensitivity: 'normal',
     tests: [
       { name: 'reported', steps: [{ action: 'accept', fields: { request: 'Inspect the campus' }, expect: 'working' }, { action: 'report', expect: 'refused' }, { action: 'report', documents: ['referral-report'], expect: 'reported' }] },

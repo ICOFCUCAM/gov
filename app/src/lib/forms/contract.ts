@@ -28,29 +28,36 @@ import { translationProblem, type TranslationEntries } from '@/lib/public-sites/
 // ── Personal-data classes ─────────────────────────────────────────────────────
 /**
  * How a field's value is handled (the specification's `personal_data_class`):
- *   public          may be published (a registered name of an organisation)
- *   administrative  about the procedure, not a person (a kind, a register)
- *   personal        about a person: never in lists, events or exports
- *   restricted      identifiers, addresses, confidential tax, commercial or
- *                   financial information: as personal, shown only on the case
- *   special         special categories (health, beliefs, biometrics): as
- *                   restricted, and only in restricted or secret procedures
- * A secrecy the law attaches (commercial, tax, financial) is kept beside the
- * class as `confidentiality`, so "tax_confidential" stays tax-confidential.
+ *   public            may be published (a registered name of an organisation)
+ *   administrative    about the procedure, not a person (a kind, a register)
+ *   commercial        a business's information (a project, a consignment)
+ *   personal          about a person
+ *   financial         amounts, accounts, means
+ *   tax-confidential  under tax secrecy
+ *   restricted        identifiers, addresses, confidential commercial
+ *                     information: shown only on the case itself
+ *   special           special categories (health, beliefs, biometrics): only
+ *                     in restricted or secret procedures
+ * Every class but public and administrative stays out of lists, events and
+ * exports. A secrecy the law attaches (commercial, tax, financial) is also
+ * kept as `confidentiality`, so a restricted field can say which secrecy it is.
  */
-export type PersonalDataClass = 'public' | 'administrative' | 'personal' | 'restricted' | 'special';
+export type PersonalDataClass = 'public' | 'administrative' | 'commercial' | 'personal' | 'financial' | 'tax-confidential' | 'restricted' | 'special';
 export const DATA_CLASSES: { key: PersonalDataClass; label: string; meaning: string }[] = [
   { key: 'public', label: 'Public', meaning: 'May be published, for example a registered name.' },
   { key: 'administrative', label: 'Administrative', meaning: 'About the procedure, not about a person.' },
+  { key: 'commercial', label: 'Commercial', meaning: 'A business\'s information. Never shown in lists, events or exports.' },
   { key: 'personal', label: 'Personal', meaning: 'About a person. Never shown in lists, events or exports.' },
-  { key: 'restricted', label: 'Restricted', meaning: 'Identifiers, addresses, tax, commercial or financial information. Shown only on the case itself.' },
+  { key: 'financial', label: 'Financial', meaning: 'Amounts, accounts and means. Never shown in lists, events or exports.' },
+  { key: 'tax-confidential', label: 'Tax-confidential', meaning: 'Under tax secrecy. Read only by the tax authority.' },
+  { key: 'restricted', label: 'Restricted', meaning: 'Identifiers, addresses, confidential commercial information. Shown only on the case itself.' },
   { key: 'special', label: 'Special category', meaning: 'Health, beliefs, biometrics and similar. Only in restricted or secret procedures.' },
 ];
 const CLASS_KEYS = DATA_CLASSES.map(c => c.key) as string[];
 /** Classes that keep a value out of lists, events and exports. */
-export const PERSONAL_CLASSES: PersonalDataClass[] = ['personal', 'restricted', 'special'];
+export const PERSONAL_CLASSES: PersonalDataClass[] = ['commercial', 'personal', 'financial', 'tax-confidential', 'restricted', 'special'];
 /** How strictly a class is held (for the conformance check: never weaker than the specification). */
-export const CLASS_RANK: Record<PersonalDataClass, number> = { public: 0, administrative: 1, personal: 2, restricted: 3, special: 4 };
+export const CLASS_RANK: Record<PersonalDataClass, number> = { public: 0, administrative: 1, commercial: 2, personal: 3, financial: 4, 'tax-confidential': 4, restricted: 5, special: 6 };
 export type Confidentiality = 'commercial' | 'tax' | 'financial';
 export const CONFIDENTIALITY: { key: Confidentiality; label: string }[] = [
   { key: 'commercial', label: 'Commercially confidential' }, { key: 'tax', label: 'Tax secrecy' }, { key: 'financial', label: 'Financial information' },
@@ -172,6 +179,7 @@ export type NamedRule =
   | { rule: 'notBefore'; than: string }
   | { rule: 'mustBeTrue' }
   | { rule: 'minItems'; min: number }
+  | { rule: 'maxItems'; max: number }
   | { rule: 'existingRecord'; pendingProcedure?: string; active?: boolean }
   | { rule: 'unique' }
   | { rule: 'signature' }
@@ -184,7 +192,7 @@ export type RuleName = NamedRule['rule'] | 'required' | 'type' | 'values';
 export const RULE_LABEL: Record<RuleName, string> = {
   required: 'Required', type: 'Right kind of answer', values: 'From the approved list',
   length: 'Length', pattern: 'Pattern', range: 'Range', requiredWhen: 'Required when another answer is', notAfter: 'Not after', notBefore: 'Not before',
-  mustBeTrue: 'Must be confirmed', minItems: 'At least this many', existingRecord: 'Must point to an existing record', unique: 'Unique among open applications',
+  mustBeTrue: 'Must be confirmed', minItems: 'At least this many', maxItems: 'At most this many', existingRecord: 'Must point to an existing record', unique: 'Unique among open applications',
   signature: 'Signed by the applicant, who is identified', verifiedChannel: 'A verified contact channel', profile: 'Checked against the country\'s configuration',
   verifyWith: 'Checked with an exchange service, where the law allows',
 };
@@ -478,6 +486,7 @@ export function defaultMessage(f: Pick<ContractField, 'label' | 'type'>, rule: R
     case 'notBefore': return p.other ? `${label} must be on or after ${lcFirst(p.other)}` : `${label} must be today or in the future`;
     case 'mustBeTrue': return `Confirm ${lcFirst(label)}`;
     case 'minItems': return `Add at least ${p.min} to ${lcFirst(label)}`;
+    case 'maxItems': return `${label} can have at most ${p.max}`;
     case 'requiredWhen': return defaultMessage(f, 'required');
     case 'existingRecord': return `${label}: there is no record with that reference in the ${p.register ?? 'register'}`;
     case 'unique': return `${label}: an open application already uses this reference`;
@@ -768,6 +777,7 @@ export function checkAnswers(fields: ContractField[], input: Record<string, unkn
         }
         case 'mustBeTrue': if (v !== true) bad = { rule: 'mustBeTrue' }; break;
         case 'minItems': if (countOf(v) < r.min) bad = { rule: 'minItems', p: { min: r.min } }; break;
+        case 'maxItems': if (countOf(v) > r.max) bad = { rule: 'maxItems', p: { max: r.max } }; break;
         default: break;
       }
       if (bad) { errors.push({ field: f.key, rule: bad.rule, message: message(f, bad.rule, ctx, bad.p, prefix) }); break; }
@@ -843,6 +853,7 @@ export function fieldProblem(f: ContractField, keys: string[], classes: string[]
       case 'notAfter': case 'notBefore': if (!['date', 'dateRange', 'timestamp'].includes(f.type)) return bad('applies to dates'); if (r.than !== 'today' && !keys.includes(r.than)) return bad('compares with today or another date field'); break;
       case 'mustBeTrue': if (f.type !== 'boolean') return bad('applies to a yes-or-no question'); break;
       case 'minItems': if (!f.multiple || !Number.isInteger(r.min) || r.min < 1) return bad('applies to a list, from 1'); break;
+      case 'maxItems': if (!f.multiple || !Number.isInteger(r.max) || r.max < 1 || r.max > 1000) return bad('applies to a list, from 1 to 1000'); break;
       case 'existingRecord': if (f.type !== 'registryReference' && f.type !== 'party') return bad('applies to a register reference'); if (r.pendingProcedure !== undefined && !/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/.test(r.pendingProcedure)) return bad('names a procedure key'); break;
       case 'unique': if (!['text', 'identifierReference', 'registryReference'].includes(f.type)) return bad('applies to a reference'); break;
       case 'signature': if (f.type !== 'attestation') return bad('applies to a declaration'); break;
@@ -962,6 +973,7 @@ export function ruleText(f: ContractField, fields: ContractField[]): string[] {
       case 'notBefore': out.push(r.than === 'today' ? 'Not in the past' : `On or after ${label(r.than)}`); break;
       case 'mustBeTrue': out.push('Must be confirmed'); break;
       case 'minItems': out.push(`At least ${r.min}`); break;
+      case 'maxItems': out.push(`At most ${r.max}`); break;
       case 'existingRecord': out.push(`Must be ${r.active ? 'an active' : 'a'} record in the ${REFERENCE_REGISTERS.find(x => x.key === f.register)?.label ?? f.register ?? 'register'}${r.pendingProcedure ? `, or an application under ${r.pendingProcedure} still open` : ''}`); break;
       case 'unique': out.push('Not already used by an open application'); break;
       case 'signature': out.push('Confirmed by the applicant, signed in or identified at an office'); break;

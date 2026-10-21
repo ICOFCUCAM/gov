@@ -90,8 +90,8 @@ export const REFERENCE_COURT_CASE: Ref = {
     { key: 'archive', label: 'Archive', from: ['final', 'enforcement'], to: 'archived', needs: { role: 'officer' } },
   ],
   deadlines: [
-    { key: 'review', label: 'Registry review within 5 working days', from: 'opened', days: 5, calendar: 'working', onLapse: 'escalate' },
-    { key: 'appeal', label: 'Appeal period (30 days from judgment)', from: 'judgment', days: 30, calendar: 'calendar', onLapse: 'notify' },
+    { key: 'review', label: 'Registry review within the time the law sets', from: 'opened', sampleDays: 5, calendar: 'working', onLapse: 'escalate' },
+    { key: 'appeal', label: 'Appeal period (from judgment, as the law sets it)', from: 'judgment', sampleDays: 30, calendar: 'calendar', onLapse: 'notify' },
   ],
   notifications: [], retention: 'court-record', sensitivity: 'restricted',
   tests: [
