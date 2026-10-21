@@ -41,6 +41,7 @@ import { cite, type Citation } from '@/lib/law/register';
 import { dualControlRefusal, dualControlPendingHours } from '@/lib/data/dual-control';
 import { EXECUTIVE_OFFICE, INSTRUCTION_KINDS, type RelationshipGrant } from '@/lib/auth/roles';
 import { recordAudit } from './audit';
+import { frozenRefusal } from '@/lib/constitution/profile-state';
 import { getMinistry } from './ministries';
 import { isIndependentInstitution } from './institutions';
 
@@ -352,6 +353,9 @@ export function confirmRelationship(id: string, actor: { by: string; byId?: stri
   const p = r.changes.pending;
   if (!p) return { error: 'No change is waiting to be confirmed (a proposal lapses after the waiting period)' };
   if (actor.role && actor.role !== 'administrator' && actor.role !== 'signatory') return { error: 'An administrator or an official who can sign confirms a relationship' };
+  // A dispute over the constitutional profile freezes relationships (plan phase 5): no endorsement either.
+  const frozen = frozenRefusal(AUDIT);
+  if (frozen) return { error: frozen };
   const t = p.values;
   if (t.type === 'instruct' && isIndependentInstitution(t.to, now) && !ownSigners(t.to)) {
     return { error: `${nameOf(t.to)} is independent: an instruction to it is confirmed by an official who can sign there, and it has none yet` };
