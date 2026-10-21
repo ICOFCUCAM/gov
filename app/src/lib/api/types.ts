@@ -772,6 +772,8 @@ export interface FieldUnitStatus {
   total: number;
 }
 export interface MinistryFieldOps {
+  /** Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1). */
+  kind: 'sample';
   ministry: { id: string; name: string; archetype: ArchetypeKey };
   units: FieldUnitStatus[];
 }
@@ -1078,6 +1080,8 @@ export interface AnalyticSeries {
   goodWhenUp: boolean;
 }
 export interface MinistrySeries {
+  /** Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1). */
+  kind: 'sample';
   ministry: { id: string; name: string; archetype: ArchetypeKey };
   series: AnalyticSeries[];
 }

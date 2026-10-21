@@ -28299,6 +28299,7 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "kind": "sample",
                       "ministry": {
                         "id": "ID-0001",
                         "name": "Example",
@@ -31102,6 +31103,7 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "kind": "sample",
                       "ministry": {
                         "id": "ID-0001",
                         "name": "Example",
@@ -82578,6 +82580,11 @@
       "MinistryFieldOps": {
         "type": "object",
         "properties": {
+          "kind": {
+            "type": "string",
+            "const": "sample",
+            "description": "Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1)."
+          },
           "ministry": {
             "type": "object",
             "properties": {
@@ -82619,6 +82626,7 @@
           }
         },
         "required": [
+          "kind",
           "ministry",
           "units"
         ]
@@ -82933,6 +82941,11 @@
       "MinistrySeries": {
         "type": "object",
         "properties": {
+          "kind": {
+            "type": "string",
+            "const": "sample",
+            "description": "Generated figures (lib/twin/signal.ts kind): never a nation's own (step I0.1)."
+          },
           "ministry": {
             "type": "object",
             "properties": {
@@ -82974,6 +82987,7 @@
           }
         },
         "required": [
+          "kind",
           "ministry",
           "series"
         ]

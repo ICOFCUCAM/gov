@@ -450,6 +450,8 @@ export function fieldOpsFor(id: string): MinistryFieldOps | { error: string } {
   });
   return {
     ministry: { id: m.id, name: m.name, archetype: m.archetype },
+    // Generated (seeded) figures, marked wherever they are read.
+    kind: 'sample',
     units,
   };
 }
@@ -481,6 +483,8 @@ export function seriesFor(id: string): MinistrySeries | { error: string } {
   });
   return {
     ministry: { id: m.id, name: m.name, archetype: m.archetype },
+    // Generated (seeded) figures, marked wherever they are read.
+    kind: 'sample',
     series,
   };
 }
