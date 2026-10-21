@@ -24,8 +24,8 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | 3 | 55 | 146 | 271 | 23 | 2 | 85 | 582 |
 | 4 | 76 | 86 | 244 | 0 | 1 | 73 | 480 |
 | 5 | 50 | 191 | 57 | 0 | 18 | 0 | 316 |
-| 6 | 72 | 180 | 41 | 8 | 8 | 2 | 311 |
-| **All** | **431** | **966** | **1129** | **52** | **41** | **208** | **2827** |
+| 6 | 72 | 181 | 40 | 8 | 8 | 2 | 311 |
+| **All** | **431** | **967** | **1128** | **52** | **41** | **208** | **2827** |
 
 
 ### By plan step
@@ -34,19 +34,19 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 |---|---|---|---|---|---|---|---|
 | — | 431 | 0 | 0 | 39 | 4 | 0 | 474 |
 | I0.2 | 0 | 2 | 0 | 0 | 0 | 0 | 2 |
-| I1 | 0 | 59 | 15 | 0 | 3 | 0 | 77 |
+| I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 66 | 40 | 0 | 1 | 0 | 107 |
 | I3 | 0 | 136 | 26 | 0 | 0 | 0 | 162 |
 | I4 | 0 | 52 | 11 | 0 | 8 | 0 | 71 |
 | I5 | 0 | 59 | 272 | 0 | 8 | 2 | 341 |
-| I6 | 0 | 42 | 203 | 4 | 0 | 0 | 249 |
+| I6 | 0 | 43 | 203 | 4 | 0 | 0 | 250 |
 | I7 | 0 | 50 | 252 | 0 | 0 | 0 | 302 |
 | I8 | 0 | 60 | 234 | 0 | 0 | 0 | 294 |
 | I9 | 0 | 247 | 48 | 0 | 17 | 0 | 312 |
 | I10 | 0 | 147 | 23 | 6 | 0 | 2 | 178 |
 | I11 | 0 | 42 | 5 | 3 | 0 | 195 | 245 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
-| **All** | **431** | **966** | **1129** | **52** | **41** | **208** | **2827** |
+| **All** | **431** | **967** | **1128** | **52** | **41** | **208** | **2827** |
 
 
 ### By sector
@@ -127,8 +127,8 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Production, training, demo | 10 | 7 | 0 | 0 | 0 | 0 | 17 |
 | Roadmap | 23 | 7 | 6 | 0 | 8 | 0 | 44 |
 | Risks | 14 | 8 | 0 | 0 | 0 | 0 | 22 |
-| Launch checklist | 12 | 10 | 1 | 0 | 0 | 0 | 23 |
-| **All** | **431** | **966** | **1129** | **52** | **41** | **208** | **2827** |
+| Launch checklist | 12 | 11 | 0 | 0 | 0 | 0 | 23 |
+| **All** | **431** | **967** | **1128** | **52** | **41** | **208** | **2827** |
 
 
 ### By category
@@ -136,7 +136,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Category | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
 | KPI | 0 | 49 | 119 | 1 | 0 | 26 | 195 |
-| acceptance | 34 | 42 | 15 | 0 | 0 | 0 | 91 |
+| acceptance | 34 | 43 | 14 | 0 | 0 | 0 | 91 |
 | architecture | 67 | 148 | 51 | 0 | 25 | 0 | 291 |
 | department | 0 | 92 | 234 | 13 | 0 | 52 | 391 |
 | design | 15 | 130 | 33 | 8 | 0 | 2 | 188 |
@@ -151,7 +151,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | security | 41 | 39 | 3 | 0 | 1 | 0 | 84 |
 | service | 3 | 5 | 20 | 0 | 0 | 0 | 28 |
 | twin | 14 | 52 | 31 | 0 | 0 | 2 | 99 |
-| **All** | **431** | **966** | **1129** | **52** | **41** | **208** | **2827** |
+| **All** | **431** | **967** | **1128** | **52** | **41** | **208** | **2827** |
 
 
 ## Plan gaps closed by the revised plan
@@ -1536,7 +1536,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S2-G-20 | 2041 | acceptance | An agriculture subsidy payment can be reconciled with the authoritative payment service. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P2-09: None. (Related mechanism: `app/src/lib/data/store/payments-liability.test.ts`, for incoming bills only.) | There are no agriculture subsidy procedure or outgoing-payment reconciliation; agriculture panels are generated. | I6 |
 | S2-G-21 | 2042 | acceptance | A water inspection preserves the original finding when a later correction is made. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P2-10: None. (Generic: `app/src/lib/records/decisions.test.ts` "a correction supersedes".) | There is no water inspection procedure. | I6 |
 | S2-G-22 | 2043 | acceptance | A public professional-licence verification endpoint excludes restricted personal and disciplinary information. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P2-11: `app/src/app/api/registers/professionals/route.test.ts` "answers one person by full name … without the person  |  | — |
-| S2-G-23 | 2044 | acceptance | Offline field submissions synchronise without silently overwriting an authoritative record. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P2-12: None. | There is no offline field-capture channel or sync. The engine's version check ("refuses stale or repeated steps" in `engine.test.ts`) is a building bl | I6 (+I1) |
+| S2-G-23 | 2044 | acceptance | Offline field submissions synchronise without silently overwriting an authoritative record. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P2-12: None. | There is no offline field-capture channel or sync. The engine's version check ("refuses stale or repeated steps" in `engine.test.ts`) and the form's b | I6 |
 | S2-G-24 | 2045 | acceptance | The national twin shows source provenance and does not turn missing values into zero. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P2-13: `app/src/lib/twin/register.test.ts` "puts an observed population on the national snapshot, and leaves it not c |  | — |
 | S2-G-25 | 2046 | acceptance | Training and demo records remain clearly labelled and cannot contaminate production registers. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P2-14: `app/src/lib/data/store/seed-mode.test.ts` "creates no sample records in production"; `app/src/lib/casework/de |  | — |
 | S2-G-26 | 2047 | acceptance | A legally required second approval cannot be satisfied by the same person using a second account. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P2-15: `app/src/lib/casework/dual-control.test.ts` "…refuses two accounts of one person", "records when only the acco |  | — |
@@ -3488,7 +3488,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-J-21 | 4670 | risk | The AI service must be opt-in at the level specified by national policy and institution configuration. | Met | SovereignProfile.aiAssistant opt-in; /api/ai/advisory audited, behind the sovereignty gate, reads no records; aiLabel() | Institution-level opt-in (nation-level only) | — |
 | S6-J-22 | 4671 | risk | Sensitive data must not be sent to an external AI service unless the use, transfer and provider are specifically authorised. | Met | SovereignProfile.aiAssistant opt-in; /api/ai/advisory audited, behind the sovereignty gate, reads no records; aiLabel() | Institution-level opt-in (nation-level only) | — |
 
-### Launch checklist — Met 12, Partial 10, Not yet 1
+### Launch checklist — Met 12, Partial 11
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3513,8 +3513,8 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-K-19 | 4721 | acceptance | Export and exit process verified | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-16: `app/src/lib/updates/hosting-model.test.ts` "switching paths adds a migration plan with export and no-lock-in  | There is no verified institution export or exit (see P5-08). | I9 |
 | S6-K-20 | 4725 | acceptance | Keyboard and screen-reader testing completed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-17: `app/scripts/audit-console.mjs` (first Tab stop is the skip link; CI "console audit"); `app/scripts/audit-publ | Keyboard checks are automated (skip link only). No screen-reader testing is recorded, and institutional workspace screens are mostly outside the audit | I10 |
 | S6-K-21 | 4727 | acceptance | WCAG 2.2 AA assessment performed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-18: axe-core with `wcag22aa` tags in `app/scripts/audit-public-sites.mjs` and `app/scripts/audit-console.mjs` (CI) | This is an automated rule scan of the listed pages, not a WCAG 2.2 AA assessment of every screen. | I10 |
-| S6-K-22 | 4729 | acceptance | RTL and required languages reviewed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-19: `app/src/lib/public-sites/translation.test.ts` "is complete when every string is translated from its current t | Proven for public sites. Console and workspace RTL and per-language review are not tested. | I10 (+I1) |
-| S6-K-23 | 4731 | acceptance | Assisted and offline procedures tested where applicable | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P6-20: None. | There is no assisted-mode form or offline procedure (only `deployment.identity.assisted` configuration). | I1 (+I6) |
+| S6-K-22 | 4729 | acceptance | RTL and required languages reviewed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-19: `app/src/lib/public-sites/translation.test.ts` "is complete when every string is translated from its current t | Proven for public sites and for forms' translations as a publication gate. Console and workspace RTL are not tested. | I10 |
+| S6-K-23 | 4731 | acceptance | Assisted and offline procedures tested where applicable | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-20: Step I1: `app/src/lib/forms/contract.test.ts` "records an assisted application: who assisted, the identity evi | The assisted channel is proven (and refused where `deployment.identity.assisted` is off). Offline: a self-service draft is kept in the browser and res | I6 |
 
 ## Source 2: the forms catalogue (parts 1–13 and the supplement, parts 14–22)
 
