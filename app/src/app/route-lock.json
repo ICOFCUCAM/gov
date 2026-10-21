@@ -105,6 +105,7 @@
   "/gov/officers/[id]",
   "/gov/officers/bulk",
   "/gov/organisations",
+  "/gov/oversight",
   "/gov/playground",
   "/gov/posture",
   "/gov/regional",

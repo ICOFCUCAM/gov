@@ -78,6 +78,8 @@ const PAGES = [
   { path: '/gov/health-regulation/products', map: false, text: /medicines and medical devices/i },
   // Public-health programmes, complaints and workforce counts (Health I4).
   { path: '/gov/health-regulation/programmes', map: false, text: /public-health programmes and workforce/i },
+  // Independent oversight (plan I8): complaints, disclosures, audit engagements and data-protection requests; protected identities hidden.
+  { path: '/gov/oversight', map: false, text: /independent oversight/i },
   // The seal key register (lib/keys/seal-register.ts).
   { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
 ];

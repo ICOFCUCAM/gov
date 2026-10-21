@@ -22,7 +22,7 @@ import { roleOf, type CaseScope } from '@/lib/auth/roles';
 import { listAccess, recordAccess, type AccessEntry } from '@/lib/records/access-log';
 import { accessBy } from '@/lib/records/access-by';
 import { protectIdentity, type IdentityMarker } from './protected-identity';
-import { OVERSIGHT_PROCEDURES } from './procedures';
+import { INDEPENDENT_OVERSIGHT_PROCEDURES } from './procedures';
 import type { Case } from '@/lib/casework/types';
 
 const PROTECTED_ROLE: Record<string, 'complainant' | 'whistleblower' | 'data-subject'> = {
@@ -45,7 +45,7 @@ export interface ProtectedIntake {
 export function receiveProtected(input: ProtectedIntake, actor: Actor, now = new Date()): { case: Case; identity: IdentityMarker } | { error: string } {
   const role = PROTECTED_ROLE[input.procedure];
   if (!role) return { error: `Protected intake is for ${PROTECTED_INTAKE.join(', ')}` };
-  if (!OVERSIGHT_PROCEDURES.some(p => p.key === input.procedure)) return { error: 'Unknown oversight procedure' };
+  if (!INDEPENDENT_OVERSIGHT_PROCEDURES.some(p => p.key === input.procedure)) return { error: 'Unknown oversight procedure' };
   const id = input.identity ?? {};
   // Checked before the case opens, so a refusal leaves nothing behind.
   if (id.anonymous !== true && !(typeof id.name === 'string' && id.name.trim())) return { error: 'Give the person\'s name, or record that they asked to stay anonymous' };

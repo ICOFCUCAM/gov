@@ -52,7 +52,7 @@ export { CUSTOMS_PROCEDURES } from '@/lib/customs/procedures';
 export { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
 export { PROGRAMME_PROCEDURES } from '@/lib/health/programmes/procedures';
 export { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
-export { OVERSIGHT_PROCEDURES } from '@/lib/oversight/procedures';
+export { INDEPENDENT_OVERSIGHT_PROCEDURES } from '@/lib/oversight/procedures';
 
 /** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight) the installation does not have yet. */
 export function installReferenceProcedures(by: string): { drafted: string[]; present: string[] } {

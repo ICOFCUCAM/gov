@@ -93,6 +93,20 @@ describe('where setup stands', () => {
     setSovereign({ deployment: { authorities: {} } }, 'test');
   });
 
+  // Independent oversight (plan I8): optional bodies, a track only once one is named; its links exist.
+  it('shows the independent oversight track only once the nation names an oversight body', async () => {
+    const { setSovereign } = await import('@/lib/data/store/sovereign');
+    const { listMinistries } = await import('@/lib/data/store/ministries');
+    expect(onboardingStatus(env('demo')).tracks.some(t => t.key === 'oversight')).toBe(false);
+    const id = listMinistries().find(m => m.status === 'active')!.id;
+    setSovereign({ deployment: { authorities: { ombudsman: id } } }, 'test');
+    const t = onboardingStatus(env('demo')).tracks.find(x => x.key === 'oversight')!;
+    expect(t.checks.map(c => c.label)).toEqual(expect.arrayContaining([expect.stringMatching(/procedures approved/), expect.stringMatching(/permit authorities/), expect.stringMatching(/Relationships/)]));
+    expect(t.checks.find(c => /procedures approved/.test(c.label))).toMatchObject({ done: false, detail: '0 of 1 approved' });
+    for (const h of [t.href, ...t.checks.map(c => c.href)]) expect(locked.has(h.split('#')[0]!), h).toBe(true);
+    setSovereign({ deployment: { authorities: {} } }, 'test');
+  });
+
   it('says which tracks may be done only because of samples', () => {
     expect(onboardingStatus(env('demo')).tracks.find(t => t.key === 'exchange')!.samplesCounted).toBe(true);
   });

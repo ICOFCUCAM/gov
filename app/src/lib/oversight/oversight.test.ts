@@ -38,14 +38,14 @@ const { recordVersion: recordLaw, confirmVersion: confirmLaw, resetLaw } = await
 const { proposeRelationship, confirmRelationship, resetRelationships } = await import('@/lib/data/store/relationships');
 const { caseReadRefusal, caseActRefusal } = await import('@/lib/auth/roles');
 const { collectInstitution } = await import('@/lib/portability/export');
-const { OVERSIGHT_PROCEDURES, OVERSIGHT_PERMITS } = await import('./procedures');
+const { INDEPENDENT_OVERSIGHT_PROCEDURES, OVERSIGHT_PERMITS } = await import('./procedures');
 const { receiveProtected, investigationAccess } = await import('./intake');
 const { readProtectedIdentity, authoriseIdentityReader, identityMarkers, resetProtectedIdentities } = await import('./protected-identity');
 const { findingsOfCase, respondToFinding, submitEvidence, evidenceOfCase, referralsOfCase, controllerRequestsOfCase, answerControllerRequest, correctFinding, resetOversight, getFinding } = await import('./register');
 const casesRoute = await import('@/app/api/cases/route');
 const caseRoute = await import('@/app/api/cases/[id]/route');
 type Actor = import('@/lib/casework/engine').Actor;
-type Ref = (typeof OVERSIGHT_PROCEDURES)[number];
+type Ref = (typeof INDEPENDENT_OVERSIGHT_PROCEDURES)[number];
 
 let OMB = '', HRI = '', ACC = '', AUD = '', DPA = '', MIN = '', OTHER = '';
 const bounds = () => institutionBounds();
@@ -79,7 +79,7 @@ describe('independent oversight', () => {
     official = null;
     [OMB, HRI, ACC, AUD, DPA, MIN, OTHER] = listMinistries().slice(0, 7).map(m => m.id) as [string, string, string, string, string, string, string];
     setSovereign({ deployment: { authorities: { ombudsman: OMB, humanRights: HRI, anticorruption: ACC, supremeAudit: AUD, dataProtection: DPA } } }, 'Administrator');
-    for (const p of OVERSIGHT_PROCEDURES) {
+    for (const p of INDEPENDENT_OVERSIGHT_PROCEDURES) {
       const d = draftPackage(nation(p), 'Author', 'author', registeredEffects()); if ('error' in d) throw new Error(`${p.key}: ${d.error}`);
       const a = approvePackage(p.key, 1, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01')); if ('error' in a) throw new Error(`${p.key}: ${a.error}`);
     }
@@ -90,7 +90,7 @@ describe('independent oversight', () => {
   afterEach(() => { vi.unstubAllEnvs(); setSovereign({ deployment: { authorities: {} } }, 'test'); });
 
   it('ships drafts only: restricted, no suspect, no identity of the person who raised it, no AI, no day count; every decision classified under a proposed, unapproved mapping', () => {
-    for (const p of OVERSIGHT_PROCEDURES) {
+    for (const p of INDEPENDENT_OVERSIGHT_PROCEDURES) {
       expect(p.sensitivity, p.key).toBe('restricted');
       expect(p.reference, p.key).toBe(true);
       for (const f of p.fields) expect(`${f.key} ${f.label}`, `${p.key} ${f.key}`).not.toMatch(/suspect|accused|culprit|offender|score|rating|risk level/i);

@@ -487,11 +487,11 @@ export const REFERENCE_PRIVACY_INVESTIGATION: Ref = dataProtectionProcedure({
   ],
 });
 
-export const OVERSIGHT_PROCEDURES: Ref[] = [REFERENCE_OMBUDSMAN_COMPLAINT, REFERENCE_HUMAN_RIGHTS_COMPLAINT, REFERENCE_PROTECTED_DISCLOSURE, REFERENCE_AUDIT_ENGAGEMENT, REFERENCE_RIGHTS_REQUEST, REFERENCE_PRIVACY_INVESTIGATION];
+export const INDEPENDENT_OVERSIGHT_PROCEDURES: Ref[] = [REFERENCE_OMBUDSMAN_COMPLAINT, REFERENCE_HUMAN_RIGHTS_COMPLAINT, REFERENCE_PROTECTED_DISCLOSURE, REFERENCE_AUDIT_ENGAGEMENT, REFERENCE_RIGHTS_REQUEST, REFERENCE_PRIVACY_INVESTIGATION];
 
 export function installOversightProcedures(by: string): { drafted: string[]; present: string[] } {
   const drafted: string[] = [], present: string[] = [];
-  for (const p of OVERSIGHT_PROCEDURES) {
+  for (const p of INDEPENDENT_OVERSIGHT_PROCEDURES) {
     if (listPackages({ key: p.key }).length) { present.push(p.key); continue; }
     const d = draftPackage(p, by, undefined, registeredEffects());
     if (!('error' in d)) drafted.push(p.key);

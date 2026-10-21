@@ -38,6 +38,9 @@ import { noticeSubscribers } from '@/lib/health/products/notices';
 import { programmeCounts, interventionRules, interventionRuleChanges } from '@/lib/health/programmes/register';
 import { PROGRAMME_PROCEDURES, PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
 import { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
+import { INDEPENDENT_OVERSIGHT_PROCEDURES, OVERSIGHT_PERMITS } from '@/lib/oversight/procedures';
+import { OVERSIGHT_SLOTS, oversightCounts } from '@/lib/oversight/register';
+import { relationshipGrants } from '@/lib/data/store/relationships';
 import { smallCellRule, smallCellChanges } from '@/lib/health/small-cells';
 import { SITE_IDS } from '@/lib/public-sites';
 import { siteEditorial } from '@/lib/data/site-editorial';
@@ -410,6 +413,28 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'The procedure cites the standing orders (optional)', done: !active || active.basis.length > 0, href: '/gov/legislature/procedure', detail: active ? (active.basis.length ? active.basis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`).join('; ') : 'Record the standing orders in the laws register and cite them in the next version') : undefined },
         { label: 'Someone records assent where the procedure asks for it', done: !active?.assent.required || !!authorityFor('headOfState'), href: '/gov/configuration/responsible', detail: active?.assent.required && !authorityFor('headOfState') ? 'No head of state\'s office is named: the clerk records assent as communicated to the chamber' : undefined },
         { label: 'Published acts entered the laws register', done: unsent.length === 0, href: '/gov/legislature', detail: published.length ? `${published.length - unsent.length} of ${published.length}${unsent.length ? ` · not yet sent: ${unsent.slice(0, 4).map(b => b.number).join(', ')}` : ''}` : 'No act published yet' },
+      ] };
+    }));
+  }
+
+  // Independent oversight (plan I8): only when the nation names one of its oversight bodies (optional slots, none named by default).
+  const bodies = OVERSIGHT_SLOTS.map(b => ({ ...b, id: authorityFor(b.slot) })).filter(b => !!b.id);
+  if (bodies.length) {
+    tracks.push(track({ key: 'oversight', title: 'Independent oversight', why: 'Complaints, protected disclosures, audit engagements and data-protection requests, each worked only by the independent body the nation names; findings are recommendations with reasons, evidence is asked for only under an approved relationship, and the person who raised a matter is kept apart from the case. Only where the nation names its oversight bodies.', href: '/gov/oversight', seeded: true }, () => {
+      const mine = INDEPENDENT_OVERSIGHT_PROCEDURES.filter(p => bodies.some(b => p.key.startsWith(b.prefix)));
+      const approved = mine.filter(p => listPackages({ key: p.key, state: 'approved' }).length);
+      const types = [...new Set(Object.entries(OVERSIGHT_PERMITS).filter(([prefix]) => bodies.some(b => b.prefix === prefix)).map(([, t]) => t))];
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const grants = relationshipGrants().filter(g => bodies.some(b => b.id === g.from) && ['audit', 'request_information'].includes(g.type));
+      const signers = bodies.map(b => ({ b, n: listAccounts().filter(a => !a.disabled && a.institution === b.id && a.role === 'signatory').length }));
+      const c = oversightCounts();
+      return { checks: [
+        { label: 'Oversight bodies named (Who is responsible)', done: true, href: '/gov/configuration/responsible#who-is-responsible', detail: bodies.map(b => b.label).join(', ') },
+        { label: 'Two officials who can sign at each body (its own administrators manage its accounts)', done: signers.every(x => x.n >= 2), href: '/admin/officials', detail: signers.map(x => `${x.b.label}: ${x.n}`).join(' · ') },
+        { label: 'Their procedures approved (complaints, disclosures, audit engagements, data-protection requests and investigations)', done: approved.length === mine.length, href: '/gov/law/procedures', detail: `${approved.length} of ${mine.length} approved` },
+        { label: 'Who decides each body\'s findings and decisions approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        { label: 'Relationships that let a body ask for evidence or records (audit, request information), approved citing the law', done: grants.length > 0, href: '/gov/configuration/relationships', detail: grants.length ? `${grants.length} in force` : 'None: a body asks no institution for evidence until one is approved' },
+        { label: 'Findings issued through decided cases', done: c.issued > 0, href: '/gov/oversight', detail: `${c.findings} finding(s), ${c.issued} issued, ${c.responses} response(s)${c.samples ? ` (${c.samples} samples)` : ''}` },
       ] };
     }));
   }
