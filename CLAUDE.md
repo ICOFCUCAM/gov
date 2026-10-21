@@ -124,6 +124,15 @@ What has been built is locked. Work only upgrades it toward the vision in
   holders are organisations by number. Full records are read only under `canReadProduct()`
   (every read in the access log); lists, the public check, `product.status` and every other
   output carry `publicProductView()` under the classification two officials approve.
+  Import authorisations (`imports.ts`) and controlled-medicine authorisations (`controlled.ts`,
+  the `controlledSubstances` slot; never a named patient; quantity limits a country rule set,
+  shipped unset, production refuses without one) change only through their procedures'
+  decisions; customs learns only validity through `product.import-authorisation`, never the
+  file, and gains no power. Safety reports and device incidents are product-level signals
+  assessed by an officer with reasons (no score, no AI decision); reconsideration is never by
+  an official who made or confirmed the decision. A published recall or safety alert reaches
+  only integrations two officials approved for HX-005 (`notices.ts`, `product.safety-notice`):
+  the public view, recall class, reference and dates, every delivery recorded.
 - Customs (`lib/customs/`): duty only from the approved `customs.tariff` rule
   or entered with reasons; the control channel is an officer's choice with
   reasons, never a score; no seizure, penalty or detention powers. Others

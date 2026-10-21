@@ -81,7 +81,9 @@ describe('procedure-link states', () => {
 
   it('is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it', () => {
     const med = CATALOGUE_CONTRACTS.filter(f => f.batch === 2 && f.procedure);
-    expect(med).toHaveLength(14);
+    // 14 since the product register, 6 more since corrective action, import and controlled-medicine authorisation, safety intake and reconsideration.
+    expect(med).toHaveLength(20);
+    for (const id of ['HLT-MED-012', 'HLT-MED-013', 'HLT-MED-014', 'HLT-MED-015', 'HLT-MED-020', 'HLT-MED-023']) expect(med.map(f => f.specId), id).toContain(id);
     // Not installed: the procedure each names is not in the register yet.
     for (const f of med) expect(libraryPublicationOf(findLibraryForm(f.identity)!).procedure.state, f.identity).toBe('missing');
     installAll('Administrator');
@@ -92,11 +94,8 @@ describe('procedure-link states', () => {
       expect(pub.status, f.identity).not.toBe('approved');
       expect(pub.human.filter(g => g.applies && g.passed), f.identity).toEqual([]);
     }
-    // The forms no procedure fits stay missing, each with the stage it waits for.
-    for (const f of CATALOGUE_CONTRACTS.filter(x => x.batch === 2 && !x.procedure && x.specId !== 'HLT-MED-024')) {
-      expect(libraryPublicationOf(findLibraryForm(f.identity)!).procedure.state, f.identity).toBe('missing');
-      expect(f.awaits, f.identity).toMatch(/not built/);
-    }
+    // Every batch-2 form now names a procedure, except the product check, which the product.status service answers.
+    expect(CATALOGUE_CONTRACTS.filter(x => x.batch === 2 && !x.procedure).map(f => f.specId)).toEqual(['HLT-MED-024']);
   });
 
   it('moves draft → under review → approved only as the register changes', () => {

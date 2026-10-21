@@ -349,6 +349,74 @@ OVERRIDES['forms-without-procedures'] = dict(
                          T('app/src/lib/forms/procedure-link.test.ts', 'is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it')],
                planned=['Each procedure\'s own test (see the procedure-* dependencies)']),
     status='partial')
+# ── The second I4 step (21 October 2026): the six batch-2 forms that had no procedure, and HX-005 ──
+OT = f'{PR}/oversight.test.ts'
+NT = f'{PR}/notices.test.ts'
+LINK_DRAFT = T('app/src/lib/forms/procedure-link.test.ts', 'is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it')
+CLASSIFIED = T(OT, 'classifies every decision step under its own proposed, unapproved mapping, and refuses each in production until the nation approves one')
+OVERRIDES2 = {
+    'procedure-import-and-controlled': dict(
+        exists=[dict(what='The reference procedures medicines.import-authorisation (an importer holding the medicine-importers standing, an authorised product, a quantity, a point of entry from the nation\'s list, shipped empty; the import authorisation register written only by its decision; customs learns only whether an authorisation is valid through the exchange service product.import-authorisation, which ships no approved caller and adds no customs power) and medicines.controlled (kept by the controlledSubstances slot: an organisation, a product and a quantity within the limits the nation\'s controlled-substances law sets, a country rule set changed by two officials citing the law and shipped unset; production refuses a schedule no adopted limit covers; never a named patient); two-official decisions classified under proposed, unapproved mappings; HLT-MED-013 and 014 linked by identity (procedure link: draft once installed)',
+                     files=[f'{PR}/procedures.ts', f'{PR}/imports.ts', f'{PR}/controlled.ts', 'app/src/lib/exchange/services.ts', 'app/src/lib/permits/decisions.ts'])],
+        missing=['The nation\'s points of entry, controlled schedules and activities (configured lists, shipped empty), its controlled-quantity limits (two officials citing the law), validity periods and fees', 'The permit mappings medicine-import-authorisation and controlled-medicine-authorisation approved by the nation; the controlled-substances authority named', 'The product.import-authorisation service approved for customs, per purpose, by two officials', ADOPTION_LEFT],
+        tests=dict(existing=[T(OT, 'authorises an import for a licensed importer, an authorised product, a quantity and a point of entry; customs learns only whether it is valid'),
+                             T(OT, 'authorises controlled medicines for an organisation, a product and a quantity within the limits the nation adopts; never a named patient'),
+                             CLASSIFIED, LINK_DRAFT], planned=[]),
+        status='partial'),
+    'procedure-safety-intake': dict(
+        exists=[dict(what='The reference procedures medicines.safety-report and medicines.device-incident: product-level reports (no patient, clinical, reaction, outcome, age, sex or history field; the concern restricted with its hint; the reporter optional, restricted, never in a list, every case read in the access log), assessed by the assigned officer with reasons (never a score; no AI step), possible duplicates linked by an official and never merged; the assessment may refer the product to its own variation, suspension or recall case (the engine\'s referral, linked both ways) or lead to a safety alert decided by two officials and published as its own act, which HX-005 then sends; HLT-MED-015 and 020 linked by identity',
+                     files=[f'{PR}/procedures.ts', f'{PR}/register.ts', 'app/src/lib/casework/engine.ts', 'app/src/app/api/cases/[id]/route.ts'])],
+        missing=['The nation\'s concern, incident, setting and reporter kinds as approved lists, its reporting deadlines (unset)', 'The product-safety-assessment mapping approved by the nation (CFG-MED-003)', ADOPTION_LEFT],
+        tests=dict(existing=[T(OT, 'takes a %s about the product only, assessed by the assigned officer with reasons, and refers it to a recall case'),
+                             T(OT, 'links possible duplicates without merging them, and decides and publishes a safety alert with four eyes'),
+                             CLASSIFIED, LINK_DRAFT], planned=[]),
+        status='partial'),
+    'procedure-inspection': dict(
+        exists=[dict(what='HLT-MED-011 linked to the inspection step of the manufacturing licence (medicines.manufacturer); the reference procedure medicines.corrective-action (HLT-MED-012): a plan linked to a recorded inspection case of the medicines authority with its inspection report, revised and accepted by the regulator, whose acceptance starts the period the nation\'s rules set (a deadline shipped without its day count), progress recorded, completion verified and closed by two officials, or referred for enforcement',
+                     files=[f'{PR}/procedures.ts', f'{LIB}/HLT-MED-011.json', f'{LIB}/HLT-MED-012.json'])],
+        missing=['Inspections of authorisation applications (an inspection step in the authorisation procedures)', 'Inspection and safety-reporting authority (CFG-MED-003) from the nation: the good-practice-corrective-action mapping approved, the corrective-action period set', ADOPTION_LEFT],
+        tests=dict(existing=[T(f'{PR}/register-types.test.ts', 'are changed only by the medicines authority, through the licence procedures\' effects, after inspection of registered premises'),
+                             T(OT, 'tracks a corrective action plan to closure, linked to its inspection, against the period the nation sets'), CLASSIFIED, LINK_DRAFT], planned=[]),
+        status='partial'),
+    'procedure-reconsideration': dict(
+        exists=[dict(what='The reference procedure medicines.reconsideration: internal reconsideration of a decision of the medicines procedures of the same authority, reviewed by an assigned official and decided by two officials, none of whom made or confirmed the decision reconsidered (compared by person through dual control; a declared interest recuses); uphold or set aside, the original procedure deciding again; the request period read from the appeal deadline of the nation\'s version of the original procedure (none ships); an appeal to a court recorded by reference only, worked by the judiciary; HLT-MED-023 linked by identity',
+                     files=[f'{PR}/procedures.ts', 'app/src/lib/data/dual-control.ts', 'app/src/lib/permits/decisions.ts'])],
+        missing=['The nation\'s review routes, request period and fee (unset); where its law names a separate review body, the mapping medicines-decision-reconsideration approved for it', ADOPTION_LEFT],
+        tests=dict(existing=[T(OT, 'reconsiders a decision only by officials who neither made nor confirmed it; a court appeal stays with the judiciary, by reference'), CLASSIFIED, LINK_DRAFT], planned=[]),
+        status='partial'),
+    'exchange-hx-005': dict(
+        exists=[dict(what='The exchange service product.safety-notice (HX-005): when a recall or safety alert is decided by a sealed decision and its public notice published, one notice carrying only publicProductView() of the product, the kind, the recall class, the case reference, the decided and published dates and whether the holder\'s supply-chain notice is recorded is queued for each integration two officials approved for the service and a purpose (none ships); collected through callService() for an approved purpose, each delivery recorded with its purpose and exchange receipt; the recall procedure\'s supply-chain-notice document stays the holder\'s notice; HLT-MED-017\'s deviation no-recall-exchange removed',
+                     files=[f'{PR}/notices.ts', 'app/src/lib/exchange/services.ts', f'{PR}/procedures.ts', f'{LIB}/HLT-MED-017.json'])],
+        missing=['Each subscriber (institutions, facilities, pharmacies) approved with its purpose by two officials (the nation\'s act; none ships)', 'Push delivery to a subscriber\'s endpoint (today each subscriber collects its queued notices)'],
+        tests=dict(existing=[T(NT, 'is declared in the directory, owned by the medicines authority, ships with no approved subscriber, and HLT-MED-017 names it'),
+                             T(NT, 'reaches only subscribers two officials approved, only after the recall is decided and its notice published, each delivery recorded'),
+                             T(NT, 'never carries personal data, grounds, a completion, a report or an official in any payload: recalls and safety alerts')], planned=[]),
+        status='built and proven'),
+    'permit-mappings': dict(
+        exists=[dict(what='Proposed, unapproved mappings citing nothing: medicine-marketing-authorisation, medical-device-registration, product-recall, the manufacturing, import and wholesale licences, medicine-import-authorisation, good-practice-corrective-action, product-safety-assessment and medicines-decision-reconsideration (lead medicinesRegulation), controlled-medicine-authorisation (lead controlledSubstances); every product decision step classified in lib/permits/decisions.ts and refused in production until a mapping is approved; sealed decisions record the mapping version',
+                     files=['app/src/lib/permits/authority.ts', 'app/src/lib/permits/decisions.ts'])],
+        missing=['The nation approves each mapping (drafted by one administrator, approved by another, citing the law)'],
+        tests=dict(existing=[T(PT, 'ships unapproved mappings citing nothing, and refuses every product decision in production until one is approved'),
+                             T(PT, 'runs a recall from notification to verified completion, under the recall mapping'),
+                             T(PT, 'registers a medical device under the device registration mapping'), CLASSIFIED], planned=[]),
+        status='built and proven'),
+    'forms-without-procedures': dict(
+        exists=[dict(what='Each contract as a library draft naming the stage it is intended for; its procedure link computed from the package register (missing), failing the go-live gate; all 20 batch-2 contracts that need a procedure now name one (draft once installed); only HLT-MED-024 names none, answered by product.status',
+                     files=['app/src/lib/forms/procedure-link.ts', 'app/src/lib/forms/publication.ts', f'{PR}/procedures.ts'])],
+        missing=['The procedures named in the list below (forms_without_procedure in health-i4.json): batch 1\'s establishment approval, follow-up, variation, closure, complaints, good standing, amendment and interim restriction'],
+        tests=dict(existing=[T('app/src/lib/forms/procedure-link.test.ts', 'is missing for every form without a procedure (batch-2 forms no product procedure carries, batch-1 forms without one), and that fails the go-live gate'),
+                             T('app/src/lib/forms/procedure-link.test.ts', 'needs no procedure where an exchange service answers, but needs that service'), LINK_DRAFT],
+                   planned=['Each batch-1 procedure\'s own test']),
+        status='partial'),
+}
+OVERRIDES2['procedure-recall'] = dict(
+    exists=[dict(what='The reference procedure medicines.recall (a draft the nation adapts and a second official approves): notification, risk assessment, two-official decision with the recall class from the nation\'s classes (shipped empty), public notice, supply-chain notification (the holder\'s notice, a document of the case), completion verified; its effects on the product register; publishing the notice sends HX-005 to approved subscribers; no period, fee or outcome list typed; its contracts linked by identity (procedure link: draft once installed)',
+                 files=[f'{PR}/procedures.ts', f'{PR}/notices.ts', 'app/src/lib/casework/engine.ts', 'app/src/lib/permits/decisions.ts'])],
+    missing=[ADOPTION_LEFT],
+    tests=dict(existing=[T(PT, 'runs a recall from notification to verified completion, under the recall mapping'),
+                         T(NT, 'reaches only subscribers two officials approved, only after the recall is decided and its notice published, each delivery recorded'), LINK_DRAFT], planned=[]),
+    status='partial')
+OVERRIDES.update(OVERRIDES2)
 for d in DEPENDENCIES:
     d.update(OVERRIDES.get(d['id'], {}))
 

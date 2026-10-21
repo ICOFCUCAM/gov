@@ -20,6 +20,8 @@ import { verifyAward } from '@/lib/education/register';
 import { getProfessional, publicProfessional } from '@/lib/professions/register';
 import { getDeclaration } from '@/lib/customs/register';
 import { getProduct, publicProduct } from '@/lib/health/products/register';
+import { importAuthorisationValid } from '@/lib/health/products/imports';
+import { collectNotices, receiptDeliveries, SAFETY_NOTICE_SERVICE } from '@/lib/health/products/notices';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 import { integrationPurposes } from '@/lib/data/store/federation';
 import { purposeSlug } from './usage-policy';
@@ -39,7 +41,9 @@ export interface ServiceDef {
   returns: Record<string, string>;
   dataClass: 'public' | 'personal' | 'restricted';
   legalBasis?: string;
-  handle?: (input: Record<string, unknown>, caller: Caller) => ServiceResult;
+  handle?: (input: Record<string, unknown>, caller: Caller, purpose?: string) => ServiceResult;
+  /** Called with the call's receipt once it is logged (a service that records deliveries keeps the receipt with them). */
+  receipted?: (data: Record<string, unknown>, caller: Caller, receipt: string) => void;
   /** For events: the CloudEvents type subscribers receive. */
   eventType?: string;
 }
@@ -133,6 +137,38 @@ export const SERVICES: ServiceDef[] = [
     },
   },
   {
+    // Customs learns only whether an import authorisation is valid (HLT-MED-013, deviation customs-apart; Health I4
+    // procedure-import-and-controlled): never the importer, product, quantity or file. Customs keeps its own powers; this
+    // service adds none. No caller ships approved: two officials approve each integration and purpose.
+    id: 'product.import-authorisation', version: 1, kind: 'query', title: 'Is this medicines import authorisation valid?', owner: 'medicinesRegulation', scope: 'service:product.import-authorisation',
+    returns: { valid: 'yes or no', validUntil: 'YYYY-MM-DD, where the decision set one' }, dataClass: 'public',
+    legalBasis: 'The medicines law\'s provisions on import authorisations (named by the medicines authority when it approves the service for a caller)',
+    handle: input => {
+      const a = importAuthorisationValid(str(input.number), str(input.on) || undefined);
+      return { status: 200, result: a.valid ? 'valid' : 'not valid', data: a.valid ? { valid: 'yes', ...(a.validUntil ? { validUntil: a.validUntil } : {}) } : { valid: 'no' } };
+    },
+  },
+  {
+    // HX-005 (Part 6 §9.2): recall notices and safety alerts from the medicines authority to authorised health institutions
+    // (lib/health/products/notices.ts). Each notice carries only publicProductView() of the product, the kind, the recall
+    // class, the case reference and its dates; it is queued for each integration two officials approved for this service
+    // and a purpose, and collected here (each delivery recorded with its purpose and receipt). The holder's supply-chain
+    // notice stays a document of the recall case (medicines.recall, supply-chain-notice); the notice says whether it is
+    // recorded. No subscriber ships approved.
+    id: SAFETY_NOTICE_SERVICE, version: 1, kind: 'query', title: 'Recall notices and safety alerts for medicines and medical devices (HX-005)', owner: 'medicinesRegulation', scope: `service:${SAFETY_NOTICE_SERVICE}`,
+    returns: { notices: 'the notices issued since the last collection: notice number, kind (recall or safety_notice), the product as publicProductView() lets it out, recall class, the regulator\'s case reference, decided and published dates, whether the holder\'s supply-chain notice (the recall case\'s supply-chain-notice document) is recorded' }, dataClass: 'public',
+    legalBasis: 'The medicines law\'s provisions on recalls and safety notices (named by the medicines authority when it approves the service for a subscriber)',
+    handle: (_input, caller, purpose) => {
+      // Only an approved integration has notices queued for it; a module inside the installation reads the public register instead.
+      const notices = caller.kind === 'integration' && purpose ? collectNotices(caller.id, purpose) : [];
+      return { status: 200, result: `${notices.length} notice(s)`, data: { notices } };
+    },
+    receipted: (data, caller, receipt) => {
+      const list = Array.isArray(data.notices) ? (data.notices as { notice: string }[]).map(n => n.notice) : [];
+      if (caller.kind === 'integration' && list.length) receiptDeliveries(caller.id, list, receipt);
+    },
+  },
+  {
     id: 'immigration.status', version: 1, kind: 'query', title: 'Does this travel document hold a valid visa or residence permit on this date?', owner: 'immigration', scope: 'service:immigration.status',
     returns: { valid: 'yes or no', kind: 'visa or residence-permit', category: 'the category granted', validUntil: 'YYYY-MM-DD', conditions: 'conditions attached (e.g. no work)' }, dataClass: 'personal',
     legalBasis: 'The immigration law\'s provisions on checking status (named by the immigration authority when it approves the service for a caller)',
@@ -151,7 +187,7 @@ export const SERVICES: ServiceDef[] = [
   },
 ];
 
-export const serviceDirectory = () => SERVICES.map(({ handle: _h, ...s }) => s);
+export const serviceDirectory = () => SERVICES.map(({ handle: _h, receipted: _r, ...s }) => s);
 
 /** Call a service: the provider's rule, only its fields, a signed receipt for every call. */
 export async function callService(caller: Caller, serviceId: string, input: Record<string, unknown>, purpose: string): Promise<{ status: number; data?: Record<string, unknown>; error?: string; receipt: ExchangeReceipt }> {
@@ -181,9 +217,10 @@ export async function callService(caller: Caller, serviceId: string, input: Reco
       return { status: 403, error: `Purpose '${stated}' is not approved for this caller and ${serviceId} (approved: ${named})`, receipt };
     }
   }
-  const r = s.handle(input, caller);
+  const r = s.handle(input, caller, purposeSlug(purpose));
   // Only the fields the service defines.
   const data = Object.fromEntries(Object.entries(r.data).filter(([k]) => k in s.returns));
   const { receipt } = await log(r.status, r.result + note);
+  s.receipted?.(data, caller, receipt.id);
   return { status: r.status, data, receipt };
 }

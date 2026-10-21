@@ -4,7 +4,7 @@ _Generated from `docs/requirements/health-i4.json` by `python3 -I app/scripts/re
 
 Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21-HEALTH-INTEGRATION.md`): track I4 as a dependency, not a completed capability, and finish this register before Health is called the first complete institution. **Health is not complete.** This register lists what it depends on; a dependency is "built and proven" only where a named test in an existing file proves it (the test fails otherwise).
 
-**Summary:** 27 dependencies: 7 not built, 13 partial, 7 built and proven.
+**Summary:** 27 dependencies: 3 not built, 16 partial, 8 built and proven.
 
 | Dependency | Status | Owner slot | Requirement rows | Release gate |
 |---|---|---|---|---|
@@ -16,13 +16,13 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 | `procedure-suspension-withdrawal`: Product procedure: suspension and withdrawal | partial | `medicinesRegulation` | 1 (HLT-MED-009) | Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved) |
 | `procedure-recall`: Product procedure: recall | partial | `medicinesRegulation` | 4 (HLT-MED-017, HLT-MED-018, FC6-5.3-02, FC6-5.3-04) | Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved) |
 | `procedure-device-registration`: Product procedure: medical device registration | partial | `medicinesRegulation` | 2 (HLT-MED-019, CFG-MED-001) | Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved) |
-| `procedure-import-and-controlled`: Product procedure: import and controlled-medicine authorisation | not built | `medicinesRegulation` | 2 (HLT-MED-013, HLT-MED-014) | Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved) |
-| `procedure-safety-intake`: Product procedure: safety reports and device incidents (signals for assessment, never findings) | not built | `medicinesRegulation` | 3 (HLT-MED-015, HLT-MED-020, FC6-5.3-01) | Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved) |
+| `procedure-import-and-controlled`: Product procedure: import and controlled-medicine authorisation | partial | `medicinesRegulation` | 2 (HLT-MED-013, HLT-MED-014) | Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved) |
+| `procedure-safety-intake`: Product procedure: safety reports and device incidents (signals for assessment, never findings) | partial | `medicinesRegulation` | 3 (HLT-MED-015, HLT-MED-020, FC6-5.3-01) | Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved) |
 | `procedure-inspection`: Product procedure: good-practice inspection and corrective action | partial | `medicinesRegulation` | 3 (HLT-MED-011, HLT-MED-012, CFG-MED-003) | Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved) |
-| `procedure-reconsideration`: Product procedure: reconsideration or appeal | not built | `medicinesRegulation` | 1 (HLT-MED-023) | Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved) |
+| `procedure-reconsideration`: Product procedure: reconsideration or appeal | partial | `medicinesRegulation` | 1 (HLT-MED-023) | Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved) |
 | `register-types`: Organisations register types for manufacturers, importers and wholesalers | built and proven | `medicinesRegulation` | 2 (HLT-MED-010, FC6-5.2-04) | The register types exist with an approved permit mapping; HLT-MED-010 adopted in a procedure version |
 | `exchange-product-status`: Exchange service: product status | built and proven | `medicinesRegulation` | 4 (HLT-MED-024, FC6-12-10, FC6-9.2-01, FC6-9.2-02) | Declared in the service directory and in returns-contract.test.ts; HLT-MED-024's procedure-link gate passes (its exchange service exists) |
-| `exchange-hx-005`: Exchange service HX-005: recall notices and safety alerts | not built | `medicinesRegulation` | 3 (HX-005, FC6-5.3-02, FC6-9.2-01) | Service approved by two officials; deviation no-recall-exchange removed from HLT-MED-017 |
+| `exchange-hx-005`: Exchange service HX-005: recall notices and safety alerts | built and proven | `medicinesRegulation` | 3 (HX-005, FC6-5.3-02, FC6-9.2-01) | Service approved by two officials; deviation no-recall-exchange removed from HLT-MED-017 |
 | `health-slots`: The medicines, controlled-substances and public-health responsibility slots | built and proven | `medicinesRegulation` | 6 (FC6-1-05, FC6-1-02, FC6-5-02, S2-A.10-08 …) | In production, no form passes the competent-authority gate on a provisional owner |
 | `permit-mappings`: Permit authority mappings for product powers | built and proven | `medicinesRegulation` | 4 (CFG-MED-002, CFG-MED-003, FC6-11-02, FC6-5.2-09) | Every product decision step classified in lib/permits/decisions.ts |
 | `forms-without-procedures`: The batch-1 and batch-2 forms with no procedure link | partial | `healthRegulation` | 30 (HLT-FAC-001, HLT-FAC-004, HLT-FAC-006, HLT-FAC-007 …) | Procedure link approved for each (the go-live gate) |
@@ -239,7 +239,7 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 **What exists:**
 
-- The reference procedure medicines.recall (a draft the nation adapts and a second official approves): its stages, its two-official decision steps classified under the permit mapping, its effects on the product register; no period, fee or outcome list typed; its contracts linked by identity to their stages (procedure link: draft once installed) (`app/src/lib/health/products/procedures.ts`, `app/src/lib/casework/engine.ts`, `app/src/lib/permits/decisions.ts`)
+- The reference procedure medicines.recall (a draft the nation adapts and a second official approves): notification, risk assessment, two-official decision with the recall class from the nation's classes (shipped empty), public notice, supply-chain notification (the holder's notice, a document of the case), completion verified; its effects on the product register; publishing the notice sends HX-005 to approved subscribers; no period, fee or outcome list typed; its contracts linked by identity (procedure link: draft once installed) (`app/src/lib/health/products/procedures.ts`, `app/src/lib/health/products/notices.ts`, `app/src/lib/casework/engine.ts`, `app/src/lib/permits/decisions.ts`)
 
 **What is missing:**
 
@@ -258,6 +258,7 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 **Tests:**
 
 - `app/src/lib/health/products/procedures.test.ts` "runs a recall from notification to verified completion, under the recall mapping"
+- `app/src/lib/health/products/notices.test.ts` "reaches only subscribers two officials approved, only after the recall is decided and its notice published, each delivery recorded"
 - `app/src/lib/forms/procedure-link.test.ts` "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
 
 **Release gate:** Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)
@@ -295,18 +296,20 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 ## `procedure-import-and-controlled`: Product procedure: import and controlled-medicine authorisation
 
-**Status: not built.** Owner slot `medicinesRegulation`.
+**Status: partial.** Owner slot `medicinesRegulation`.
 
 **Requirement rows:** `HLT-MED-013`, `HLT-MED-014`
 
 **What exists:**
 
-- The contracts, as library drafts, each naming the stage it is intended for; the case engine, procedure packages and permit authority registry it will run on (`app/src/lib/forms/library/catalogue-contracts/HLT-MED-013.json`, `app/src/lib/forms/library/catalogue-contracts/HLT-MED-014.json`, `app/src/lib/casework/engine.ts`, `app/src/lib/permits/authority.ts`)
+- The reference procedures medicines.import-authorisation (an importer holding the medicine-importers standing, an authorised product, a quantity, a point of entry from the nation's list, shipped empty; the import authorisation register written only by its decision; customs learns only whether an authorisation is valid through the exchange service product.import-authorisation, which ships no approved caller and adds no customs power) and medicines.controlled (kept by the controlledSubstances slot: an organisation, a product and a quantity within the limits the nation's controlled-substances law sets, a country rule set changed by two officials citing the law and shipped unset; production refuses a schedule no adopted limit covers; never a named patient); two-official decisions classified under proposed, unapproved mappings; HLT-MED-013 and 014 linked by identity (procedure link: draft once installed) (`app/src/lib/health/products/procedures.ts`, `app/src/lib/health/products/imports.ts`, `app/src/lib/health/products/controlled.ts`, `app/src/lib/exchange/services.ts`, `app/src/lib/permits/decisions.ts`)
 
 **What is missing:**
 
-- The import and controlled-medicine authorisation procedure package (stages, decision steps under an approved permit mapping, effects on the product register), drafted by the medicines authority, tested and approved by a second official
-- Adoption of the contracts in that procedure version
+- The nation's points of entry, controlled schedules and activities (configured lists, shipped empty), its controlled-quantity limits (two officials citing the law), validity periods and fees
+- The permit mappings medicine-import-authorisation and controlled-medicine-authorisation approved by the nation; the controlled-substances authority named
+- The product.import-authorisation service approved for customs, per purpose, by two officials
+- Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)
 
 **Contracts that depend on it:** `FIELD-SERIES-PARTS-05-07:HLT-MED-013@1`, `FIELD-SERIES-PARTS-05-07:HLT-MED-014@1`
 
@@ -320,24 +323,28 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 **Tests:**
 
-- To write: Procedure test: runs import and controlled-medicine authorisation to a sealed decision with four eyes and writes the product register only through its effect
+- `app/src/lib/health/products/oversight.test.ts` "authorises an import for a licensed importer, an authorised product, a quantity and a point of entry; customs learns only whether it is valid"
+- `app/src/lib/health/products/oversight.test.ts` "authorises controlled medicines for an organisation, a product and a quantity within the limits the nation adopts; never a named patient"
+- `app/src/lib/health/products/oversight.test.ts` "classifies every decision step under its own proposed, unapproved mapping, and refuses each in production until the nation approves one"
+- `app/src/lib/forms/procedure-link.test.ts` "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
 
 **Release gate:** Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)
 
 ## `procedure-safety-intake`: Product procedure: safety reports and device incidents (signals for assessment, never findings)
 
-**Status: not built.** Owner slot `medicinesRegulation`.
+**Status: partial.** Owner slot `medicinesRegulation`.
 
 **Requirement rows:** `HLT-MED-015`, `HLT-MED-020`, `FC6-5.3-01`
 
 **What exists:**
 
-- The contracts, as library drafts, each naming the stage it is intended for; the case engine, procedure packages and permit authority registry it will run on (`app/src/lib/forms/library/catalogue-contracts/HLT-MED-015.json`, `app/src/lib/forms/library/catalogue-contracts/HLT-MED-020.json`, `app/src/lib/casework/engine.ts`, `app/src/lib/permits/authority.ts`)
+- The reference procedures medicines.safety-report and medicines.device-incident: product-level reports (no patient, clinical, reaction, outcome, age, sex or history field; the concern restricted with its hint; the reporter optional, restricted, never in a list, every case read in the access log), assessed by the assigned officer with reasons (never a score; no AI step), possible duplicates linked by an official and never merged; the assessment may refer the product to its own variation, suspension or recall case (the engine's referral, linked both ways) or lead to a safety alert decided by two officials and published as its own act, which HX-005 then sends; HLT-MED-015 and 020 linked by identity (`app/src/lib/health/products/procedures.ts`, `app/src/lib/health/products/register.ts`, `app/src/lib/casework/engine.ts`, `app/src/app/api/cases/[id]/route.ts`)
 
 **What is missing:**
 
-- The safety reports and device incidents (signals for assessment, never findings) procedure package (stages, decision steps under an approved permit mapping, effects on the product register), drafted by the medicines authority, tested and approved by a second official
-- Adoption of the contracts in that procedure version
+- The nation's concern, incident, setting and reporter kinds as approved lists, its reporting deadlines (unset)
+- The product-safety-assessment mapping approved by the nation (CFG-MED-003)
+- Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)
 
 **Contracts that depend on it:** `FIELD-SERIES-PARTS-05-07:HLT-MED-015@1`, `FIELD-SERIES-PARTS-05-07:HLT-MED-020@1`
 
@@ -351,7 +358,10 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 **Tests:**
 
-- To write: Procedure test: runs safety reports and device incidents (signals for assessment, never findings) to a sealed decision with four eyes and writes the product register only through its effect
+- `app/src/lib/health/products/oversight.test.ts` "takes a %s about the product only, assessed by the assigned officer with reasons, and refers it to a recall case"
+- `app/src/lib/health/products/oversight.test.ts` "links possible duplicates without merging them, and decides and publishes a safety alert with four eyes"
+- `app/src/lib/health/products/oversight.test.ts` "classifies every decision step under its own proposed, unapproved mapping, and refuses each in production until the nation approves one"
+- `app/src/lib/forms/procedure-link.test.ts` "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
 
 **Release gate:** Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)
 
@@ -363,12 +373,12 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 **What exists:**
 
-- HLT-MED-011 linked to the inspection step of the manufacturing licence (medicines.manufacturer: inspection of registered premises, inspection report); the case engine and permit registry (`app/src/lib/health/products/procedures.ts`, `app/src/lib/forms/library/catalogue-contracts/HLT-MED-011.json`, `app/src/lib/forms/library/catalogue-contracts/HLT-MED-012.json`)
+- HLT-MED-011 linked to the inspection step of the manufacturing licence (medicines.manufacturer); the reference procedure medicines.corrective-action (HLT-MED-012): a plan linked to a recorded inspection case of the medicines authority with its inspection report, revised and accepted by the regulator, whose acceptance starts the period the nation's rules set (a deadline shipped without its day count), progress recorded, completion verified and closed by two officials, or referred for enforcement (`app/src/lib/health/products/procedures.ts`, `app/src/lib/forms/library/catalogue-contracts/HLT-MED-011.json`, `app/src/lib/forms/library/catalogue-contracts/HLT-MED-012.json`)
 
 **What is missing:**
 
-- A corrective-action follow-up procedure (HLT-MED-012) and inspections of authorisation applications
-- Inspection and safety-reporting authority (CFG-MED-003) from the nation
+- Inspections of authorisation applications (an inspection step in the authorisation procedures)
+- Inspection and safety-reporting authority (CFG-MED-003) from the nation: the good-practice-corrective-action mapping approved, the corrective-action period set
 - Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)
 
 **Contracts that depend on it:** `FIELD-SERIES-PARTS-05-07:HLT-MED-011@1`, `FIELD-SERIES-PARTS-05-07:HLT-MED-012@1`
@@ -384,24 +394,26 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 **Tests:**
 
 - `app/src/lib/health/products/register-types.test.ts` "are changed only by the medicines authority, through the licence procedures' effects, after inspection of registered premises"
-- To write: Procedure test: corrective action tracked to closure
+- `app/src/lib/health/products/oversight.test.ts` "tracks a corrective action plan to closure, linked to its inspection, against the period the nation sets"
+- `app/src/lib/health/products/oversight.test.ts` "classifies every decision step under its own proposed, unapproved mapping, and refuses each in production until the nation approves one"
+- `app/src/lib/forms/procedure-link.test.ts` "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
 
 **Release gate:** Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)
 
 ## `procedure-reconsideration`: Product procedure: reconsideration or appeal
 
-**Status: not built.** Owner slot `medicinesRegulation`.
+**Status: partial.** Owner slot `medicinesRegulation`.
 
 **Requirement rows:** `HLT-MED-023`
 
 **What exists:**
 
-- The contracts, as library drafts, each naming the stage it is intended for; the case engine, procedure packages and permit authority registry it will run on (`app/src/lib/forms/library/catalogue-contracts/HLT-MED-023.json`, `app/src/lib/casework/engine.ts`, `app/src/lib/permits/authority.ts`)
+- The reference procedure medicines.reconsideration: internal reconsideration of a decision of the medicines procedures of the same authority, reviewed by an assigned official and decided by two officials, none of whom made or confirmed the decision reconsidered (compared by person through dual control; a declared interest recuses); uphold or set aside, the original procedure deciding again; the request period read from the appeal deadline of the nation's version of the original procedure (none ships); an appeal to a court recorded by reference only, worked by the judiciary; HLT-MED-023 linked by identity (`app/src/lib/health/products/procedures.ts`, `app/src/lib/data/dual-control.ts`, `app/src/lib/permits/decisions.ts`)
 
 **What is missing:**
 
-- The reconsideration or appeal procedure package (stages, decision steps under an approved permit mapping, effects on the product register), drafted by the medicines authority, tested and approved by a second official
-- Adoption of the contracts in that procedure version
+- The nation's review routes, request period and fee (unset); where its law names a separate review body, the mapping medicines-decision-reconsideration approved for it
+- Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)
 
 **Contracts that depend on it:** `FIELD-SERIES-PARTS-05-07:HLT-MED-023@1`
 
@@ -415,7 +427,9 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 **Tests:**
 
-- To write: Procedure test: runs reconsideration or appeal to a sealed decision with four eyes and writes the product register only through its effect
+- `app/src/lib/health/products/oversight.test.ts` "reconsiders a decision only by officials who neither made nor confirmed it; a court appeal stays with the judiciary, by reference"
+- `app/src/lib/health/products/oversight.test.ts` "classifies every decision step under its own proposed, unapproved mapping, and refuses each in production until the nation approves one"
+- `app/src/lib/forms/procedure-link.test.ts` "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
 
 **Release gate:** Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)
 
@@ -485,18 +499,18 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 ## `exchange-hx-005`: Exchange service HX-005: recall notices and safety alerts
 
-**Status: not built.** Owner slot `medicinesRegulation`.
+**Status: built and proven.** Owner slot `medicinesRegulation`.
 
 **Requirement rows:** `HX-005`, `FC6-5.3-02`, `FC6-9.2-01`
 
 **What exists:**
 
-- The exchange layer and the event outbox (events after a restore voided; consumers re-read) (`app/src/lib/exchange/services.ts`)
+- The exchange service product.safety-notice (HX-005): when a recall or safety alert is decided by a sealed decision and its public notice published, one notice carrying only publicProductView() of the product, the kind, the recall class, the case reference, the decided and published dates and whether the holder's supply-chain notice is recorded is queued for each integration two officials approved for the service and a purpose (none ships); collected through callService() for an approved purpose, each delivery recorded with its purpose and exchange receipt; the recall procedure's supply-chain-notice document stays the holder's notice; HLT-MED-017's deviation no-recall-exchange removed (`app/src/lib/health/products/notices.ts`, `app/src/lib/exchange/services.ts`, `app/src/lib/health/products/procedures.ts`, `app/src/lib/forms/library/catalogue-contracts/HLT-MED-017.json`)
 
 **What is missing:**
 
-- An event or notice service from the medicines authority to authorised health institutions for published recalls and safety alerts
-- Its approval by two officials, per recipient
+- Each subscriber (institutions, facilities, pharmacies) approved with its purpose by two officials (the nation's act; none ships)
+- Push delivery to a subscriber's endpoint (today each subscriber collects its queued notices)
 
 **Contracts that depend on it:** `FIELD-SERIES-PARTS-05-07:HLT-MED-017@1`, `FIELD-SERIES-PARTS-05-07:HLT-MED-018@1`, `FIELD-SERIES-PARTS-05-07:HLT-MED-015@1`
 
@@ -510,7 +524,9 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 **Tests:**
 
-- To write: Exchange test: a recall notice reaches only approved recipients and only after publication
+- `app/src/lib/health/products/notices.test.ts` "is declared in the directory, owned by the medicines authority, ships with no approved subscriber, and HLT-MED-017 names it"
+- `app/src/lib/health/products/notices.test.ts` "reaches only subscribers two officials approved, only after the recall is decided and its notice published, each delivery recorded"
+- `app/src/lib/health/products/notices.test.ts` "never carries personal data, grounds, a completion, a report or an official in any payload: recalls and safety alerts"
 
 **Release gate:** Service approved by two officials; deviation no-recall-exchange removed from HLT-MED-017
 
@@ -557,7 +573,7 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 **What exists:**
 
-- Proposed, unapproved mappings citing nothing: medicine-marketing-authorisation, medical-device-registration, product-recall, the manufacturing, import and wholesale licences and medicine-import-authorisation (lead medicinesRegulation), controlled-medicine-authorisation (lead controlledSubstances); every product decision step classified in lib/permits/decisions.ts and refused in production until a mapping is approved; sealed decisions record the mapping version (`app/src/lib/permits/authority.ts`, `app/src/lib/permits/decisions.ts`)
+- Proposed, unapproved mappings citing nothing: medicine-marketing-authorisation, medical-device-registration, product-recall, the manufacturing, import and wholesale licences, medicine-import-authorisation, good-practice-corrective-action, product-safety-assessment and medicines-decision-reconsideration (lead medicinesRegulation), controlled-medicine-authorisation (lead controlledSubstances); every product decision step classified in lib/permits/decisions.ts and refused in production until a mapping is approved; sealed decisions record the mapping version (`app/src/lib/permits/authority.ts`, `app/src/lib/permits/decisions.ts`)
 
 **What is missing:**
 
@@ -578,6 +594,7 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 - `app/src/lib/health/products/procedures.test.ts` "ships unapproved mappings citing nothing, and refuses every product decision in production until one is approved"
 - `app/src/lib/health/products/procedures.test.ts` "runs a recall from notification to verified completion, under the recall mapping"
 - `app/src/lib/health/products/procedures.test.ts` "registers a medical device under the device registration mapping"
+- `app/src/lib/health/products/oversight.test.ts` "classifies every decision step under its own proposed, unapproved mapping, and refuses each in production until the nation approves one"
 
 **Release gate:** Every product decision step classified in lib/permits/decisions.ts
 
@@ -589,11 +606,11 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 **What exists:**
 
-- Each contract as a library draft naming the stage it is intended for; its procedure link computed from the package register (missing), failing the go-live gate; 14 batch-2 contracts now linked to the product procedures (draft), 7 still without a fitting procedure (HLT-MED-012, 013, 014, 015, 020, 023 and HLT-MED-024, answered by product.status) (`app/src/lib/forms/procedure-link.ts`, `app/src/lib/forms/publication.ts`, `app/src/lib/health/products/procedures.ts`)
+- Each contract as a library draft naming the stage it is intended for; its procedure link computed from the package register (missing), failing the go-live gate; all 20 batch-2 contracts that need a procedure now name one (draft once installed); only HLT-MED-024 names none, answered by product.status (`app/src/lib/forms/procedure-link.ts`, `app/src/lib/forms/publication.ts`, `app/src/lib/health/products/procedures.ts`)
 
 **What is missing:**
 
-- The procedures named in the list below (forms_without_procedure in health-i4.json): corrective action, import and controlled-medicine authorisation, safety and incident intake, reconsideration; batch 1's establishment approval, follow-up, variation, closure, complaints, good standing, amendment and interim restriction
+- The procedures named in the list below (forms_without_procedure in health-i4.json): batch 1's establishment approval, follow-up, variation, closure, complaints, good standing, amendment and interim restriction
 
 **Access controls:**
 
@@ -608,7 +625,7 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 - `app/src/lib/forms/procedure-link.test.ts` "is missing for every form without a procedure (batch-2 forms no product procedure carries, batch-1 forms without one), and that fails the go-live gate"
 - `app/src/lib/forms/procedure-link.test.ts` "needs no procedure where an exchange service answers, but needs that service"
 - `app/src/lib/forms/procedure-link.test.ts` "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
-- To write: Each procedure's own test (see the procedure-* dependencies)
+- To write: Each batch-1 procedure's own test
 
 **Release gate:** Procedure link approved for each (the go-live gate)
 
@@ -893,7 +910,7 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 ## Forms with no procedure link
 
-19 library contracts name no procedure: 12 of batch 1 and 7 of batch 2. 3 need none (an exchange service and the public check answer them); every other one is `missing` and fails its go-live gate until its procedure exists (`lib/forms/procedure-link.ts`). The stage each is intended for:
+13 library contracts name no procedure: 12 of batch 1 and 1 of batch 2. 3 need none (an exchange service and the public check answer them); every other one is `missing` and fails its go-live gate until its procedure exists (`lib/forms/procedure-link.ts`). The stage each is intended for:
 
 | Form | Batch | Owner slot | Procedure required | Intended stage |
 |---|---|---|---|---|
@@ -908,18 +925,12 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-008@1` Complain about a health professional | 1 | `professionalRegulation` | yes | A conduct-complaint intake of the professions regulator that registers and routes the complaint: to a conduct investigation (HLT-LIC-009) and fitness-to-practise case (prof.fitness, document "grounds") or by referral to another institution (lib/casework/referral.ts); the intake is not built; the form waits in the library (plan step I4). |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-010@1` Review an interim restriction on a professional | 1 | `professionalRegulation` | yes | An interim-restriction review of the professions register, only once the nation's law provides interim restrictions and the permit authority registry maps the power: not built; the form waits in the library (plan step I4). |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-014@1` Check a health professional's registration | 1 | `professionalRegulation` | no (professional.standing) | Answered by the public check (/api/registers/professionals) and the professional.standing exchange service; no case is opened. |
-| `FIELD-SERIES-PARTS-05-07:HLT-MED-012@1` Submit a corrective action plan after a good-practice inspection | 2 | `medicinesRegulation` | yes | Follow-up of a good-practice inspection (HLT-MED-011) by the medicines regulator: a corrective-action follow-up procedure is not built; the form waits in the library (plan step I4). |
-| `FIELD-SERIES-PARTS-05-07:HLT-MED-013@1` Apply for authorisation to import medicines or medical devices | 2 | `medicinesRegulation` | yes | An import authorisation procedure of the medicines regulator, with customs informed through an exchange service (customs learns only the decision; the customs declaration stays with customs): not built; the form waits in the library (plan step I4). |
-| `FIELD-SERIES-PARTS-05-07:HLT-MED-014@1` Apply for a controlled medicine authorisation | 2 | `controlledSubstances` | yes | A controlled-medicine authorisation procedure of the authority the nation's controlled-substances law names, under an approved permit mapping: not built; the form waits in the library (plan step I4). |
-| `FIELD-SERIES-PARTS-05-07:HLT-MED-015@1` Report a safety concern about a medicine | 2 | `medicinesRegulation` | yes | A safety-report intake of the medicines regulator that registers the signal and assigns it for assessment, possibly leading to a review (HLT-MED-009) or a recall (HLT-MED-017): not built; the form waits in the library (plan step I4). |
-| `FIELD-SERIES-PARTS-05-07:HLT-MED-020@1` Report a medical device incident | 2 | `medicinesRegulation` | yes | A device incident intake of the medicines regulator that opens an investigation of the device, possibly leading to a review (HLT-MED-009) or a recall (HLT-MED-017): not built; the form waits in the library (plan step I4). |
-| `FIELD-SERIES-PARTS-05-07:HLT-MED-023@1` Ask for a medicines regulatory decision to be reconsidered | 2 | `medicinesRegulation` | yes | A reconsideration or appeal procedure of the medicines regulator or the body the law names (an appeal to a court is filed with the court and worked only by the judiciary): not built; the form waits in the library (plan step I4). |
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-024@1` Check a medicine's or device's authorisation | 2 | `medicinesRegulation` | no (product.status) | Answered by the public product check (/api/health-regulation/products, publicProductView()) and the product.status exchange service, called only by integrations two officials approve for a purpose; no case is opened. |
 | `FIELD-SERIES-PARTS-05-07:HLT-PH-015@1` Submit an aggregate public-health return | 1 | `publicHealth` | yes | A public-health aggregate return of the receiving authority, kept like the capacity returns (lib/health/register.ts: versioned, always marked reported, corrections as new versions): the programme returns are not built; the form waits in the library (plan step I4). |
 
 ## Linked contracts waiting for adoption (batches 1 and 2)
 
-27 contracts name a reference procedure. Each is linked, not adopted: the nation adopts it in a new procedure version a second official approves.
+33 contracts name a reference procedure. Each is linked, not adopted: the nation adopts it in a new procedure version a second official approves.
 
 | Form | Procedure | Stage | Step or document |
 |---|---|---|---|
@@ -947,9 +958,15 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-009@1` Open a review to suspend or withdraw a product authorisation | `medicines.suspension` | `opened` | notify · grounds |
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-010@1` Register a medicines or medical device manufacturing site | `medicines.manufacturer` | `submitted` | check |
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-011@1` Record a good-practice inspection | `medicines.manufacturer` | `inspection` | inspected · inspection-report |
+| `FIELD-SERIES-PARTS-05-07:HLT-MED-012@1` Submit a corrective action plan after a good-practice inspection | `medicines.corrective-action` | `submitted` | register · corrective-action-plan |
+| `FIELD-SERIES-PARTS-05-07:HLT-MED-013@1` Apply for authorisation to import medicines or medical devices | `medicines.import-authorisation` | `submitted` | register · application-form |
+| `FIELD-SERIES-PARTS-05-07:HLT-MED-014@1` Apply for a controlled medicine authorisation | `medicines.controlled` | `submitted` | register · application-form |
+| `FIELD-SERIES-PARTS-05-07:HLT-MED-015@1` Report a safety concern about a medicine | `medicines.safety-report` | `received` | register · report |
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-017@1` Notify a product recall | `medicines.recall` | `notified` | assess-risk · recall-notification |
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-018@1` Report that a recall is complete | `medicines.recall` | `supply-chain-notified` | report-completion · completion-report |
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-019@1` Register a medical device | `medicines.device-registration` | `submitted` | register-application · application-form |
+| `FIELD-SERIES-PARTS-05-07:HLT-MED-020@1` Report a medical device incident | `medicines.device-incident` | `received` | register · report |
+| `FIELD-SERIES-PARTS-05-07:HLT-MED-023@1` Ask for a medicines regulatory decision to be reconsidered | `medicines.reconsideration` | `received` | register · request-form |
 
 ## Acceptance rows for Health (`docs/INSTITUTIONAL_ACCEPTANCE.md` part 2)
 

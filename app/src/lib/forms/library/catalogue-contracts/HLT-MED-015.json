@@ -3,6 +3,8 @@
  "form_id": "HLT-MED-015",
  "record_type": "medicines.safety.report",
  "form_version": 1,
+ "procedure_package_id": "medicines.safety-report",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "CFG-MED-003: safety reporting, who must report and within what time, and the authority that assesses reports.",
@@ -26,8 +28,12 @@
   "owner": "medicinesRegulation",
   "filled_by": "Anyone: an authorisation holder, a health facility or pharmacy, a health professional, a supplier or a member of the public; online, at an office or on paper.",
   "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
-  "procedure": null,
-  "intended": "A safety-report intake of the medicines regulator that registers the signal and assigns it for assessment, possibly leading to a review (HLT-MED-009) or a recall (HLT-MED-017): not built; the form waits in the library (plan step I4).",
+  "procedure": {
+   "key": "medicines.safety-report",
+   "stage": "received",
+   "action": "register",
+   "document": "report"
+  },
   "lists": {
    "medicines.country.safety_concern_kinds": {
     "values": [
@@ -282,7 +288,8 @@
       "file": "app/src/lib/casework/engine.ts",
       "how": "Receiving a report changes no product status; a finding or decision is a step of a case by a signed-in official"
      },
-     "deviation": "product-level-only"
+     "deviation": "product-level-only",
+     "procedure": "assess"
     }
    },
    {
@@ -296,7 +303,8 @@
      "fields": [
       "report.linked_reports"
      ],
-     "deviation": "no-ai-finding"
+     "deviation": "no-ai-finding",
+     "procedure": "link-report"
     }
    },
    {

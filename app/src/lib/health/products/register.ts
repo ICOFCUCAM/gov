@@ -92,6 +92,8 @@ export interface ProductEnforcementRecord extends ProductEnforcement {
   by: string;
   /** A recall's completion, verified by the regulator (HLT-MED-018): restricted, never public. */
   completion?: { at: string; by: string; case: string; summary: string; documents: string[] };
+  /** A recall's class, as the decision set it from the nation's recall classes (medicines.country.recall_classes, shipped empty). */
+  recallClass?: string;
   sample?: true;
 }
 
@@ -285,13 +287,31 @@ export function changeProductState(number: string, input: { state: 'suspended' |
 }
 
 /** A recall ordered by decision: an enforcement record (the product's status does not change by it). */
-export function orderRecall(number: string, input: { grounds: string; sample?: true }, caseId: string, by: string, now = new Date()): ProductEntry | { error: string } {
+export function orderRecall(number: string, input: { grounds: string; recallClass?: string; sample?: true }, caseId: string, by: string, now = new Date()): ProductEntry | { error: string } {
   const p = find(number);
   if (!p) return { error: `No product ${number || '(none given)'} in the register` };
   if (['applied', 'refused'].includes(p.state)) return { error: `${p.number} was never authorised: there is nothing on the market to recall` };
   if (p.enforcement.some(e => e.kind === 'recall' && e.case === caseId)) return { error: 'This case has already ordered its recall' };
-  p.enforcement.push({ id: uuid7(), kind: 'recall', at: now.toISOString(), case: caseId, by, ...(input.grounds.trim() ? { grounds: input.grounds.trim().slice(0, 4000) } : {}), ...(input.sample ? { sample: true as const } : {}) });
-  recordAudit(by, 'product.recall', `Product:${p.number}`, 'ok', `case ${caseId}`);
+  const recallClass = input.recallClass?.trim().slice(0, 80);
+  p.enforcement.push({ id: uuid7(), kind: 'recall', at: now.toISOString(), case: caseId, by, ...(input.grounds.trim() ? { grounds: input.grounds.trim().slice(0, 4000) } : {}), ...(recallClass ? { recallClass } : {}), ...(input.sample ? { sample: true as const } : {}) });
+  recordAudit(by, 'product.recall', `Product:${p.number}`, 'ok', `case ${caseId}${recallClass ? ` · class ${recallClass}` : ''}`);
+  return clone(p);
+}
+
+/**
+ * A safety alert decided on a safety report or a device incident (HLT-MED-015,
+ * 020): an enforcement record of kind safety_notice (the product's status does
+ * not change by it). Its grounds are restricted; its public notice is
+ * published as its own act once the decision is sealed. The report that raised
+ * it, and whoever made it, are never on the product's record.
+ */
+export function issueSafetyAlert(number: string, input: { grounds: string; sample?: true }, caseId: string, by: string, now = new Date()): ProductEntry | { error: string } {
+  const p = find(number);
+  if (!p) return { error: `No product ${number || '(none given)'} in the register` };
+  if (['applied', 'refused'].includes(p.state)) return { error: `${p.number} was never authorised: a safety alert is about a product on the market` };
+  if (p.enforcement.some(e => e.kind === 'safety_notice' && e.case === caseId)) return { error: 'This case has already decided its safety alert' };
+  p.enforcement.push({ id: uuid7(), kind: 'safety_notice', at: now.toISOString(), case: caseId, by, ...(input.grounds.trim() ? { grounds: input.grounds.trim().slice(0, 4000) } : {}), ...(input.sample ? { sample: true as const } : {}) });
+  recordAudit(by, 'product.alert', `Product:${p.number}`, 'ok', `case ${caseId}`);
   return clone(p);
 }
 
@@ -355,6 +375,20 @@ export function expireProducts(now = new Date()): string[] {
   return out;
 }
 
+/**
+ * What a recall or safety alert notice of this case says (HX-005,
+ * lib/health/products/notices.ts): the product's public view, the kind, the
+ * recall class the decision set, and the dates it was decided and published.
+ * Only for an enforcement record both decided and published; never its
+ * grounds, its completion or who reported it.
+ */
+export function publishedNoticeOf(number: string, caseId: string): { product: PublicProductEntry; kind: 'recall' | 'safety_notice'; recallClass?: string; decidedOn: string; publishedOn: string } | undefined {
+  const p = find(number);
+  const e = p ? [...p.enforcement].reverse().find(x => x.case === caseId) : undefined;
+  if (!p || !e || (e.kind !== 'recall' && e.kind !== 'safety_notice') || !e.approvedBy || !e.publishedAt || !e.publicNotice) return undefined;
+  return { product: publicProduct(p), kind: e.kind, ...(e.recallClass ? { recallClass: e.recallClass } : {}), decidedOn: e.approvedBy.at.slice(0, 10), publishedOn: e.publishedAt.slice(0, 10) };
+}
+
 // ── The nation's public information classification: two officials, citing the law ──
 
 const DISCLOSURE_AUDIT = 'product.disclosure';
@@ -411,7 +445,7 @@ export function productRecord(p: ProductEntry): ProductRecord {
   const decidedWith = [...p.history].reverse().find(s => s.decision);
   if (decided && decidedWith) attributes.status = { value: decided.state, class: 'public', approvedBy: { decision: decidedWith.decision!, at: decidedWith.at } };
   else delete attributes.status;
-  return { productId: p.number, kind: p.kind, version: v.n, attributes, enforcement: p.enforcement.map(({ case: _c, by: _b, completion: _x, sample: _s, ...e }) => clone(e)) };
+  return { productId: p.number, kind: p.kind, version: v.n, attributes, enforcement: p.enforcement.map(({ case: _c, by: _b, completion: _x, sample: _s, recallClass: _k, ...e }) => clone(e)) };
 }
 
 export type PublicProductEntry = PublicProduct & { sample?: true };

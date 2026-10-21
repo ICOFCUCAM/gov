@@ -3,6 +3,8 @@
  "form_id": "HLT-MED-013",
  "record_type": "medicines.import.application",
  "form_version": 1,
+ "procedure_package_id": "medicines.import-authorisation",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "CFG-MED-003: import authorisation, the licence an importer needs, the exceptions for unauthorised products and the designated points of entry.",
@@ -26,8 +28,12 @@
   "owner": "medicinesRegulation",
   "filled_by": "The importer (a registered organisation) or someone acting for it.",
   "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
-  "procedure": null,
-  "intended": "An import authorisation procedure of the medicines regulator, with customs informed through an exchange service (customs learns only the decision; the customs declaration stays with customs): not built; the form waits in the library (plan step I4).",
+  "procedure": {
+   "key": "medicines.import-authorisation",
+   "stage": "submitted",
+   "action": "register",
+   "document": "application-form"
+  },
   "lists": {},
   "nation_values": [
    {
@@ -52,7 +58,7 @@
   "deviations": [
    {
     "id": "customs-apart",
-    "what": "The customs declaration is referenced, never copied: customs keeps it and learns only the regulator's decision through an exchange service (not built; customs.release answers the other way)",
+    "what": "The customs declaration is referenced, never copied: customs keeps it and learns only whether the import authorisation is valid (and until when) through the exchange service product.import-authorisation, approved per caller and purpose by two officials (none ships); customs.release answers the other way. No customs power is added",
     "why": "Institutions learn status only through an approved exchange service, never another's file.",
     "rule": "CLAUDE.md Customs: others learn only whether goods were released (customs.release)"
    },
@@ -224,7 +230,9 @@
       "import.lines",
       "import.authorisation_number"
      ],
-     "deviation": "customs-apart"
+     "deviation": "customs-apart",
+     "procedure": "authorise",
+     "exchange": "product.import-authorisation"
     }
    },
    {

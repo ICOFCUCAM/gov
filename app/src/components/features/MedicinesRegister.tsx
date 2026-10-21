@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
 import { SignalTag } from '@/components/ui/SignalTag';
+import { MedicinesOversight } from './MedicinesOversight';
 
 interface PublicProduct { productId: string; kind: 'medicine' | 'device'; fields: Record<string, unknown>; notices: { kind: string; at: string; notice: string }[]; source: { record: string; version: number; classificationVersion?: number }; sample?: true }
 interface Attribute { value: unknown; class: string; approvedBy?: { decision: string; at: string } }
@@ -94,7 +95,7 @@ export function MedicinesRegister() {
       <h1 className="text-xl font-semibold">Medicines and medical devices</h1>
       <p className="max-w-3xl text-sm text-ink-muted">
         The register of authorised medicines and devices, kept by the medicines authority the nation names under <Link className="underline" href="/gov/configuration/responsible">Who is responsible</Link>.
-        A product enters and changes only through decided <Link className="underline" href="/gov/work/cases/open">cases</Link> (marketing authorisation, variation, renewal, suspension and withdrawal, recall, device registration);
+        A product enters and changes only through decided <Link className="underline" href="/gov/work/cases/open">cases</Link> (marketing authorisation, variation, renewal, suspension and withdrawal, recall, device registration; safety alerts from assessed safety reports);
         its status comes only from a sealed decision. Holders are <Link className="underline" href="/gov/organisations">organisations</Link>; manufacturers, importers and wholesalers hold licences there.
         Everyone sees the public view below; patient data is never kept here.
       </p>
@@ -145,6 +146,8 @@ export function MedicinesRegister() {
           </div>
         ) : null}
       </Section>
+
+      <MedicinesOversight />
 
       <Section title="What the public check shows" meta="the nation's public information classification; administrators, two officials">
         <p className="text-sm text-ink-muted">Only attributes of the public class can be listed; the dossier, the assessment, composition, sites, findings and persons never leave the regulator. A change cites the law and applies when a different official confirms it.</p>
