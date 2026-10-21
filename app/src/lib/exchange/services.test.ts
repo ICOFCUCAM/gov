@@ -4,6 +4,10 @@ import { verifyReceipt, listExchanges, resetExchangeLog } from './log';
 import { registerEvent, resetCivil } from '@/lib/civil/register';
 import { registerIntegration, listIntegrations } from '@/lib/data/store';
 import { approveIntegration } from '@/lib/data/integration-approval.fixture';
+import { generateKeyPairSync } from 'node:crypto';
+
+/** A production installation answers exchanges only with its own exchange key (lib/keys/custody.ts developmentKeyRefusal). */
+const exchangeKeyPem = () => generateKeyPairSync('ed25519').privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
 
 let n = 0;
 /** An outside caller (an integration) approved by two officials for these purposes on this service. */
@@ -154,6 +158,7 @@ describe('purposes approved per caller and service', () => {
     Object.assign(listIntegrations().find(c => c.id === r.id)!, { status: 'approved', approvedBy: 'L. Petrov' });
     const caller = { kind: 'integration' as const, id: r.id, name: 'Old partner' };
     vi.stubEnv('CIVICOS_MODE', 'production');
+    vi.stubEnv('CIVICOS_EXCHANGE_KEY', exchangeKeyPem());
     expect(await callService(caller, 'person.verify', { registration: 'BR-1' }, 'check')).toMatchObject({ status: 403, error: expect.stringMatching(/No purposes are approved yet/) });
     expect(listExchanges({ channel: 'service' })[0]).toMatchObject({ status: 403, result: expect.stringContaining('purposes not yet approved') });
     for (const mode of ['demo', 'training']) {

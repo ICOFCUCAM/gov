@@ -22,7 +22,7 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { verifyBytes } from '@/lib/crypto/signing-key';
-import { signer } from '@/lib/keys/custody';
+import { signer, developmentKeyRefusal } from '@/lib/keys/custody';
 import { contentDigest } from './http-signatures';
 import { touch } from '@/lib/data/repo/track';
 
@@ -117,8 +117,14 @@ export interface ExchangeInput {
   result: string;
 }
 
-/** Record one exchange and sign its receipt. */
+/** No exchange is answered: this production installation has no exchange key (developmentKeyRefusal). */
+export class ExchangeKeyError extends Error {}
+
+/** Record one exchange and sign its receipt (throws ExchangeKeyError in production without an exchange key). */
 export async function logExchange(input: ExchangeInput, now = Date.now()): Promise<{ entry: ExchangeEntry; receipt: ExchangeReceipt }> {
+  // A production installation never answers an exchange with a receipt signed by a development key (step I0.1).
+  const refused = developmentKeyRefusal('exchange');
+  if (refused) throw new ExchangeKeyError(refused);
   const s = signer('exchange');
   // The key that will sign: known at once for a local key; for a remote one, asked of the provider first.
   const key = s.current() ?? await s.load();
@@ -220,7 +226,11 @@ export function listExchanges(filter: { channel?: ExchangeChannel; feedId?: stri
  * CivicOS-Receipt header).
  */
 export async function exchangeResponse(input: Omit<ExchangeInput, 'status' | 'result'> & { status: number; result: string }, json: Record<string, unknown>, headers: Record<string, string> = {}): Promise<NextResponse> {
-  const { receipt } = await logExchange(input);
+  let receipt: ExchangeReceipt;
+  try { ({ receipt } = await logExchange(input)); } catch (e) {
+    if (e instanceof ExchangeKeyError) return NextResponse.json({ error: e.message }, { status: 503 });
+    throw e;
+  }
   const res = NextResponse.json({ ...json, receipt }, { status: input.status, headers });
   res.headers.set(RECEIPT_HEADER, Buffer.from(JSON.stringify(receipt), 'utf8').toString('base64url'));
   return res;

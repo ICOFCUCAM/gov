@@ -70,7 +70,9 @@ export interface PlatformAnchor {
 export async function anchorPlatformHead(now = Date.now()): Promise<PlatformAnchor> {
   const h = auditHead();
   if (!h) return { head: null };
-  const head = await settledHead(signHead(h, now));
+  let first: SignedHead;
+  try { first = signHead(h, now); } catch (e) { return { head: null, error: (e as Error).message }; }
+  const head = await settledHead(first);
   if (head.pending) return { head, error: `the key provider has not signed head ${head.seq}: ${head.signError ?? 'no answer'}` };
   // With CIVICOS_TSA_URL the anchored head carries the nation's RFC 3161 time-stamp.
   await stampHead(head);

@@ -23,7 +23,7 @@
 // the entries it needs as arguments.
 
 import { verifyBytes } from '@/lib/crypto/signing-key';
-import { signer, type Signer } from '@/lib/keys/custody';
+import { signer, developmentKeyRefusal, type Signer } from '@/lib/keys/custody';
 import { logger } from '@/lib/ops/log';
 import { withSpanSync } from '@/lib/ops/trace';
 import { checkToken, timestamp, tsaConfig } from './tsa';
@@ -143,6 +143,9 @@ export function signHead(head: { seq: number; hash: string }, now = Date.now()):
   const last = lastSignedHead();
   if (last && last.seq === head.seq && last.hash === head.hash) return last;
   if (last && head.seq < last.seq) throw new Error(`Head ${head.seq} is older than the last signed head ${last.seq}`);
+  // A production installation never signs a head with a development key (step I0.1).
+  const refused = developmentKeyRefusal('audit');
+  if (refused) throw new Error(refused);
   const s = signer('audit');
   const at = new Date(now).toISOString();
   const payload = headPayload(head.seq, head.hash, at);
@@ -221,7 +224,11 @@ export function maybeSignHead(head: { seq: number; hash: string; action?: string
   });
 }
 
+let devRefusalLogged = false;
 function signHeadIfDue(head: { seq: number; hash: string }, now: number): SignedHead | null {
+  // In production without an audit key the chain is still kept and hashed; heads wait for the key (said once per process).
+  const refused = developmentKeyRefusal('audit');
+  if (refused) { if (!devRefusalLogged) { devRefusalLogged = true; logger.error('audit.sign_refused', { message: refused }); } return null; }
   const last = lastSignedHead();
   if (!last) return head.seq >= signEvery() ? signHead(head, now) : null;
   if (head.seq <= last.seq) return null;
