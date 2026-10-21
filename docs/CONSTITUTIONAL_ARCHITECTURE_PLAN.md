@@ -16,7 +16,7 @@ an unapproved draft; a production installation refuses it until approved).
 | Composable classification (§1.2) | One `stateForm` enum with presets; constitution templates per form (`lib/gov/constitution.ts`) | Form of state, form of government, territorial arrangement, legal traditions and recognised authority types are one value; no effective dates or legal sources on them |
 | Institution identity (§2.1) | Ministry registry (`/api/org`): name, archetype, status, departments; since phase 1 standing, branch, establishing law, effective date, independence per dimension, prohibitions, records owned, changed through the change process | Appointment, dismissal and funding are recorded facts, not enforced relationships (phase 3); powers and jurisdiction per institution |
 | Offices (§7.1 `offices`) | `lib/nation/offices.ts` titles; head of government from `executiveTitle` | Offices are titles, not records with powers, terms, acting and succession rules |
-| Powers and relationships (§3) | Who is responsible (`deployment.authorities`, 15 slots); permit authority mappings (`lib/permits/authority.ts`, two officials, cite law); procedures | Relationships between institutions are not records; directives are never checked against the target's independence |
+| Powers and relationships (§3) | Who is responsible (`deployment.authorities`, 15 slots); permit authority mappings (`lib/permits/authority.ts`, two officials, cite law); procedures; since phase 3 the relationship register (`lib/data/store/relationships.ts`), enforced for instructions and purpose-bound reads | Appointment, dismissal, funding and the other kinds are recorded, not yet enforced (phases 4, 6) |
 | Authorization (§5.2) | `roles.ts` (role and institution scope), `caseActRefusal`/`caseReadRefusal`, access log; since phase 2 whole-government scope stops at independent institutions, their accounts are their own, who is responsible changes by two officials citing the law | Office, purpose and relationship versions are not yet part of each decision (phases 3–4) |
 | Three kinds of administration (§5.3) | Administrator role; Update Center installation administrator | Platform operator, national commissioning authority and institution administrator are not distinct |
 | Workspaces per branch (§6) | Command Center for the executive; ministry workspaces; courts' cause list | Everyone is greeted as the head of government; no home for a speaker, clerk, chief justice, head of state or independent body |
@@ -107,6 +107,37 @@ scope, conditions, legal basis version, effective dates, approval rule, status. 
 independent body are refused unless an approved `instruct` relationship covers them; otherwise
 they become requests or referrals. A `request_information` relationship never implies reading
 all records or changing them.
+
+*Built (mechanism only, no values):* `lib/data/store/relationships.ts` (`__civicosRelationships`,
+register `relationships`, part of the institution register): each relationship has an id, from
+(a registered institution, or the executive office for an instruction), to, kind (the thirteen
+above), scope (record types — `cases`, `queue` or a procedure's key — or, for an instruction, the
+kinds of directive covered; purposes; territory), conditions, legal basis (laws-register citations
+resolved by `citeBasis()`), effective from/to and status (draft, approved, suspended, ended); every
+version is kept through `policy-change.ts` (adopted, lapsed, withdrawn; earlier adopted versions
+superseded). Proposed by an administrator of the whole government or of either end, citing the law;
+confirmed by a different official (`dualControlRefusal()`); when an end is independent and has
+officials who can sign, by one of them for each such end (the last adopts it), as for standing; an
+instruction to an independent institution is confirmed by that institution in every case. Suspending,
+ending and reinstating are new versions confirmed the same way. A relationship grants only while
+approved, within its dates, with both ends active and its cited provisions in force
+(`relationshipGrants()`, carried on `Boundaries.relationships` by `institutionBounds()`).
+Enforced in `roles.ts`: `directiveTargetRefusal()` — an instruction reaches an independent
+institution, or goes from one registered institution to another, only under an `instruct`
+relationship from the issuer covering its kind (checked at draft and at signing, so ending it stops
+a waiting draft); the executive office still instructs executive institutions (Phase 2 reach).
+`readRelationship()` — an `audit` or `request_information` relationship lets officials of the
+actor read the listed records of the target for a listed purpose (`caseReadRefusal()`,
+`canReadInstitution()` with `?purpose=`), never a court's case or a secret case, never a change or
+a decision (`caseActRefusal()`, `ministryPermission()` ignore it); the case, document and queue
+routes write each such read to the access log naming the relationship and version. The public audit
+office rule from Phase 2 is unchanged. API `/api/org/relationships` (ops propose, suspend, end,
+confirm, withdraw); screen National settings · Relationships (both directions per institution, the
+waiting proposals); onboarding lists waiting proposals and an optional check. No relationship ships
+in any mode. Tests: `lib/data/store/relationships.test.ts`, `lib/auth/negative-authorization.test.ts`.
+Not yet: appoint, dismiss, fund and the other kinds are recorded, not enforced (offices, phase 4;
+transitions, phase 6); territory and conditions are recorded, not checked; the access log names the
+relationship in its rule text, not yet with the office (§5.4, phase 4).
 
 **Phase 4 — offices and workspaces (§6; audit F, G, H) (U for the shell, C for titles and powers).**
 Offices as records (title per language, institution, powers, term, acting and succession rules);

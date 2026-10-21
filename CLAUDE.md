@@ -179,7 +179,21 @@ What has been built is locked. Work only upgrades it toward the vision in
   setup, presets are refused and who is responsible changes only through
   `/api/sovereign/authorities`. Directives from the whole government are
   issued by `executive-office`; an independent institution receives only a
-  request, communication or referral.
+  request, communication or referral, unless an approved `instruct`
+  relationship covers the instruction.
+- Relationships between institutions (appoint, fund, instruct, audit,
+  request information …) live in the relationship register
+  (`lib/data/store/relationships.ts`, part of the institution register),
+  changed only through `policy-change.ts` (an administrator cites the law, a
+  different official confirms, each independent end with its own signers
+  confirms; every version kept). None ships, in any mode. `roles.ts` reads the
+  approved ones in force from `Scope.bounds.relationships`: an instruction
+  reaches an independent institution, or one institution instructs another,
+  only under an `instruct` relationship (`directiveTargetRefusal()`); an
+  `audit`/`request_information` relationship grants a read of the listed
+  records for a listed purpose only (`readRelationship()`), logged with the
+  relationship and version, never a change, decision, secret case or a
+  court's case. A new cross-institution power reads this register.
 
 ## Entry flow
 
