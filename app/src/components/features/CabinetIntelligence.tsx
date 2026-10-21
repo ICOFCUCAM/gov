@@ -27,7 +27,7 @@ import type {
 import { aiLabel, formatMoney } from '@/lib/nation/registry';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
-import { GeneratedText, useGenerated, shownValue, NOT_CONNECTED } from '@/components/ui/Generated';
+import { GeneratedText, useGenerated, shownValue } from '@/components/ui/Generated';
 import { executivePosture } from '@/lib/gov/executive-posture';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { CONSOLE_NAV, locate } from '@/lib/nav/console-nav';
@@ -382,7 +382,7 @@ export function CabinetIntelligence() {
             {instr.map(t => !gen.show ? (
               <div key={t.l} data-generated="not-connected" className="rounded-[3px] border border-line bg-surface px-2 py-1.5">
                 <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</div>
-                <div className="mt-1 flex items-center gap-1 text-[11px] text-ink-muted">{NOT_CONNECTED}<SignalTag kind="unavailable" source={gen.src} /></div>
+                <div className="mt-1 flex items-center gap-1 text-[11px] text-ink-muted">—<SignalTag kind="unavailable" source={gen.src} /></div>
               </div>
             ) : (
               <div key={t.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5"

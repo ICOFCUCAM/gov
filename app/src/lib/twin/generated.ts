@@ -41,8 +41,11 @@ export function generatedPolicy(samples: boolean, kind: 'sample' | 'simulated' =
   return samples ? { show: true, kind, src } : { show: false, kind: 'unavailable', src: NOT_CONNECTED_REASON };
 }
 
-/** The value a screen prints for a generated figure under this policy. */
-export const shownValue = <T,>(p: GeneratedPolicy, value: T): T | typeof NOT_CONNECTED => (p.show ? value : NOT_CONNECTED);
+/** A dash: the value a screen prints for a generated figure it does not show (its marker says "Not connected"). */
+export const NOT_SHOWN = '—';
+
+/** The value a screen prints for a generated figure under this policy; shown beside its marker, so never the words twice. */
+export const shownValue = <T,>(p: GeneratedPolicy, value: T): T | typeof NOT_SHOWN => (p.show ? value : NOT_SHOWN);
 
 /** A tone for a generated figure: its own where shown, neutral where not connected. */
 export const shownTone = <T extends string>(p: GeneratedPolicy, tone: T | undefined): T | undefined => (p.show ? tone : undefined);

@@ -10,7 +10,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/gov', useRouter: () => ({ push() {}, refresh() {} }), useSearchParams: () => new URLSearchParams() }));
 
-import { generatedPolicy, isGenerated, shownValue, NOT_CONNECTED } from '@/lib/twin/generated';
+import { generatedPolicy, isGenerated, shownValue } from '@/lib/twin/generated';
 import { executivePosture } from '@/lib/gov/executive-posture';
 import { InstallationModeProvider } from '@/lib/ops/mode-context';
 import type { InstallationMode } from '@/lib/ops/mode';
@@ -31,7 +31,7 @@ describe('the rule for a generated figure', () => {
     expect(p.show).toBe(false);
     expect(p.kind).toBe('unavailable');
     expect(p.src).toMatch(/not shown on a production installation/);
-    expect(shownValue(p, '86/100')).toBe(NOT_CONNECTED);
+    expect(shownValue(p, '86/100')).toBe('—');
   });
   it('demo and training: shown, marked Sample (or Simulation), with its source', () => {
     expect(generatedPolicy(true)).toMatchObject({ show: true, kind: 'sample' });

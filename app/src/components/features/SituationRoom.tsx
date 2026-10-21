@@ -304,7 +304,7 @@ export function KpiCell({ d }: { d: Instr }) {
     return (
       <div data-generated="not-connected" className="relative overflow-hidden rounded-[3px] border border-line bg-surface px-2 py-1.5">
         <div className="truncate text-[8px] font-semibold uppercase tracking-[0.13em] text-ink-muted">{d.l}</div>
-        <div className="mt-1 flex items-center gap-1 text-[11px] text-ink-muted">{NOT_CONNECTED}<SignalTag kind="unavailable" source={gen.src} className="!text-[7px] !leading-none" /></div>
+        <div className="mt-1 flex items-center gap-1 text-[11px] text-ink-muted">—<SignalTag kind="unavailable" source={gen.src} className="!text-[7px] !leading-none" /></div>
       </div>
     );
   }

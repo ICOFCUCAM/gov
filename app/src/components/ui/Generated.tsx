@@ -21,7 +21,7 @@
 
 import * as React from 'react';
 import { useSamplesAllowed } from '@/lib/ops/mode-context';
-import { generatedPolicy, isGenerated, NOT_CONNECTED, NOT_CONNECTED_REASON, type GeneratedPolicy } from '@/lib/twin/generated';
+import { generatedPolicy, isGenerated, NOT_CONNECTED_REASON, type GeneratedPolicy } from '@/lib/twin/generated';
 import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 import { SignalTag } from './SignalTag';
 
@@ -114,7 +114,8 @@ export function GeneratedStrip({ kind = 'sample', source = REFERENCE_MODEL, what
 export function useTile(value: React.ReactNode, kind: SignalKind = 'sample', source?: string, tag?: React.ReactNode): { value: React.ReactNode; folded: boolean; marker: React.ReactNode } {
   const g = useGenerated(kind === 'simulated' ? 'simulated' : 'sample', source ?? REFERENCE_MODEL);
   const parent = useMarkedByParent();
-  if (isGenerated(kind) && !g.show) return { value: NOT_CONNECTED, folded: true, marker: <SignalTag kind="unavailable" source={g.src} /> };
+  // The marker says "Not connected"; the value is a dash, so the words are not said twice.
+  if (isGenerated(kind) && !g.show) return { value: '—', folded: true, marker: <SignalTag kind="unavailable" source={g.src} /> };
   if (tag !== undefined) return { value, folded: false, marker: tag };
   if (!isGenerated(kind)) return { value, folded: false, marker: <SignalTag kind={kind} source={source} /> };
   return { value, folded: false, marker: parent ? null : <SignalTag kind={g.kind} source={g.src} /> };
