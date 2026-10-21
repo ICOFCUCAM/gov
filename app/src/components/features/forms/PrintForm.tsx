@@ -58,7 +58,7 @@ export function PrintForm({ view }: { view: FormView }) {
             <h2 className="border-b border-ink/50 text-base font-bold">{i + 1}. {p.title}</h2>
             <div className="mt-2 space-y-3">
               {p.fields.map(f => (
-                <div key={f.key} className="break-inside-avoid">
+                <div key={f.key} id={`field-${f.key}`} className="break-inside-avoid">
                   <p className="text-sm font-semibold">{f.label}{f.required ? '' : ' (optional)'}</p>
                   {f.hint ? <p className="text-xs">{f.hint}</p> : null}
                   {f.ruleText.filter(r => r !== 'Required').length ? <p className="text-xs italic">{f.ruleText.filter(r => r !== 'Required').join(' · ')}</p> : null}
