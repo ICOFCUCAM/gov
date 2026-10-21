@@ -33,6 +33,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   `samplesAllowed()` first; `seed-mode.test.ts`), has no demo citizen, and
   agency apps show the Simulation notice; training and demo show a banner on
   every page. Unset in a production build it runs as production and warns.
+  In production a sample case neither opens nor moves (`openCase()`, `act()`;
+  effects mark what a sample case writes with `sampleMark()`), a demo or
+  training backup is not restored, `payBill()` refuses, probation never
+  passes on simulated health, and no development key signs
+  (`developmentKeyRefusal()`).
 - Progress is measured by legally valid services working end to end, not by
   screens. Each register and record type has one named owner; the twin
   derives from records and never creates authoritative facts.
