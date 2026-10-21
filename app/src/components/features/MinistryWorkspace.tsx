@@ -687,7 +687,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
               />
                           </SampleFold>
             </Section>
-            <Section title="Caseload concentration" meta={<>{`${totalCases} ${labels.cases.toLowerCase()}`} <SampleTag source={SEEDED_OPS} /></>}>
+            <Section title="Caseload concentration" meta={<>{installMode === 'production' ? labels.cases.toLowerCase() : `${totalCases} ${labels.cases.toLowerCase()}`} <SampleTag source={SEEDED_OPS} /></>}>
               <SampleFold what="Caseload concentration" source={SEEDED_OPS} marked>
               <FlowBars
                 segments={regions.map(r => ({
