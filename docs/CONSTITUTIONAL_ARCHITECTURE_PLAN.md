@@ -21,7 +21,7 @@ an unapproved draft; a production installation refuses it until approved).
 | Three kinds of administration (§5.3) | Administrator role; Update Center installation administrator | Platform operator, national commissioning authority and institution administrator are not distinct |
 | Workspaces per branch (§6) | Command Center for the executive; ministry workspaces; courts' cause list; since phase 4 greetings name the official, `/welcome` routes by standing, *My workspace* (§6.6 panels) | Public service panel; per-office pages for a speaker, clerk or chief justice beyond the institution workspace |
 | Configuration lifecycle (§7.4) | Country rule sets through `lib/law/policy-change.ts` (propose, confirm, cite, history); since phase 5 the constitutional profile as versions with the full lifecycle, disputes and freezing | The approval path is not modelled on a nation's amendment procedure beyond the named act; permit mappings, procedures and rules are not bundled |
-| Transitions and emergencies (§4) | Emergency suspension of mappings; crisis mode on screens | Elections, terms, acting offices, caretaker profiles, dissolution, impeachment stages, judicial-review effects, succession, devolution are not modelled |
+| Transitions and emergencies (§4) | Emergency suspension of mappings; crisis mode on screens; since phase 6 terms, acting offices, delegations, caretaker periods, dissolution, impeachment stages, courts' rulings, emergencies, succession, transfers of powers and recusal as recorded legal events (`lib/transitions/`) | Elections, coalitions, no-confidence votes and disputes between branches are not modelled; transferred powers are not yet applied to who is responsible |
 | Read access logged across branches (§5.4) | Access log, oversight confirmation, access watch; since phase 5 entries record the office acted under and the profile version | The relationship version that authorised a read is in the rule text, not a field |
 
 ## Phases
@@ -235,6 +235,37 @@ records, emergency declarations as time-limited legal statuses that never lift a
 controls, succession as a determined legal event, devolution and recentralisation as versioned
 competence allocations, conflict-of-interest declarations and recusal. Each ships as an
 unapproved draft procedure.
+
+*Built (mechanism only, nothing ships):* `lib/transitions/` (store `__civicosTransitions`, register `transitions`,
+`/api/constitution/transitions`, National settings → *Transitions*). Eleven kinds of recorded legal event: taking up
+office, acting appointment, delegation, succession, caretaker period, dissolution, impeachment (the seven stages of
+§4.6 as versions of one proceeding), a court's ruling on a law or decision, state of emergency, transfer of a power
+(devolution, recentralisation), declaration of interest. Each is recorded by one official citing the laws register and
+confirmed by a different person (`policy-change.ts`; never the person the record names); ending one early, a later
+impeachment stage and lifting a recusal are new versions confirmed the same way; every version kept, audited. Who
+records: the office's institution (acting, succession, taking up office), the delegator, the institution in a caretaker
+period, the dissolving institution under an approved `dissolve` relationship (the platform never assumes who may
+dissolve), the institution the nation names for each impeachment stage, a court's own officials, the declaring
+institutions the nation names, the declarant. The country's rules (caretaker restrictions as procedure, decision and
+directive keys; the institution per impeachment stage; who declares an emergency and its longest period) are a rule set
+through `policy-change.ts`; none ships, the guidance's caretaker list is shown as an unapproved reference draft.
+Enforced: recusal in `caseActRefusal()` (`CaseFacts.recused`, from the declaration on, lifted by two people); caretaker
+restrictions and courts' rulings in one place (`lib/transitions/restrictions.ts`) read by a case-engine decision guard
+(at proposal and confirmation; guards now receive the citations) and by directives (draft and signing) — only the kinds
+the nation listed, a warning while it listed none; a ruling that a provision is invalid or suspended refuses new
+decisions and directives citing it (a stayed one, read-down, interpretation or remittal does not), and decisions it
+touches are flagged for legal assessment, never changed; impeachment stages in order, none skipped, no outcome changes an
+account or holding; emergencies lapse at their expiry (computed), renewal is a new confirmed declaration, and nothing in
+the permission rules reads them (test: bounds, case rules, dual control and the access log are identical with one in
+force). Acting appointments and successions create their office holding once confirmed (ended with the event); a holding
+past its recorded term (years from its start) is no longer in force and is flagged on Offices, onboarding and the tab.
+Two profile parts: `competences` (allocations in force) and `transitionRules`; a dispute freezing offices, institutions,
+relationships, authorities or these parts freezes the transitions that touch them (a court's ruling, an emergency and a
+declaration of interest touch none). Onboarding: an optional *Transitions and emergencies* track and waiting items.
+Tests: `lib/transitions/transitions.test.ts`.
+Not yet: elections and certification (§4.1), coalitions and no-confidence votes (§4.3–4.4), disputes between branches
+as cases (§4.11), suspension of an independent body as its own procedure (§4.10); a transfer of a power is recorded, not
+yet applied to who is responsible or permit mappings; delegations grant no platform permission.
 
 **Phase 7 — legislative records and portability tests (§2.3, §8.4) (L for procedure).**
 The legislature's own bills and votes register (clerk as custodian) feeding the laws register

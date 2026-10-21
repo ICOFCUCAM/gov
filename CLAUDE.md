@@ -213,6 +213,14 @@ What has been built is locked. Work only upgrades it toward the vision in
   never the nation's executive title; `/welcome` routes by the institution's
   standing and the Command Center stays the executive's home. The shared
   workspace panels are `/gov/workspace` (`/api/workspace`), within `roles.ts`.
+- Transitions and emergencies (`lib/transitions/`, `/api/constitution/transitions`) are recorded legal
+  events: cited from the laws register, confirmed by a different person (never the one named), every
+  version kept; none and no rule ships. Their consequences live in one place
+  (`lib/transitions/restrictions.ts`): a caretaker period refuses only the kinds the nation's adopted
+  rules list; a court's ruling that a provision is invalid or suspended refuses new decisions citing it
+  and flags (never changes) earlier ones; a declared interest recuses at once (`CaseFacts.recused`).
+  An emergency lapses at expiry and nothing in `roles.ts` reads it; impeachment stages run in order by
+  the institution named for each; a holding past its recorded term is no longer in force.
 - Separation of powers is observed, never generated (`lib/gov/separation.ts`,
   `/api/constitution/separation`): each check reads a configuration fact and
   links to its record. The state's classification (`constitution.classification`,
