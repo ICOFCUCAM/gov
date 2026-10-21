@@ -114,12 +114,6 @@
     "rule": "CLAUDE.md Government operating model: lib/permits/authority.ts, powerRefusal(); never hardcode a power"
    },
    {
-    "id": "no-recall-exchange",
-    "what": "The safety alert or recall notice to authorised health institutions (exchange HX-005) has no exchange service yet: the holder's supply-chain notice is the notice until one is approved",
-    "why": "Exchange services are versioned contracts approved by two officials; none ships for recall notices.",
-    "rule": "CLAUDE.md Government operating model: exchange services answer only an approved integration for an approved purpose; Integration register"
-   },
-   {
     "id": "no-patient-data",
     "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
     "why": "Allowed scope only: records of products, of organisations (holders, manufacturers, importers) and of the regulator's decisions.",
@@ -337,7 +331,8 @@
      "fields": [
       "recall.supply_chain_notice"
      ],
-     "deviation": "no-recall-exchange"
+     "exchange": "product.safety-notice",
+     "procedure": "publish-notice"
     }
    },
    {
@@ -348,11 +343,11 @@
      "A connection between two institutions does not automatically authorize every possible data exchange between them."
     ],
     "met_by": {
-     "deviation": "no-recall-exchange",
      "platform": {
       "file": "app/src/lib/exchange/services.ts",
-      "how": "When one is approved it is a versioned contract with its purpose, fields and a logged receipt"
-     }
+      "how": "Exchange services are versioned contracts, called only by integrations two officials approved for a purpose; every call receipted in the exchange log"
+     },
+     "exchange": "product.safety-notice"
     }
    },
    {
@@ -362,7 +357,7 @@
      "Interoperability: Every cross-institution exchange has a versioned contract and explicit authority."
     ],
     "met_by": {
-     "deviation": "no-recall-exchange"
+     "exchange": "product.safety-notice"
     }
    },
    {

@@ -19478,7 +19478,7 @@
         ],
         "operationId": "get_health_regulation_products",
         "summary": "GET /api/health-regulation/products",
-        "description": "/api/health-regulation/products — the register of authorised medicines and medical devices (lib/health/products/register.ts). GET: anyone's list of decided products, each as publicProductView() under the nation's approved public information classification (?kind=, ?q= a register number, or a name where the classification publishes names); ?number= one product's public view; the classification in force and its waiting proposal; counts. ?number=…&full=1 is the full record (dossier versions, assessment, grounds, recall completions): the medicines authority's officials only (canReadProduct()), and every read, allowed or refused, goes to the access log; ?search=1 is the regulator's own list (numbers, names and states, applications included), logged as a search. POST (administrators): what the public check shows, by two officials citing the law: { op: 'propose-disclosure', fields, legalBasis: [{ instrument, eId }] }, then { op: 'confirm-disclosure' } by a different official, or { op: 'withdraw-disclosure' }. Products change only through decided cases (/api/cases).",
+        "description": "/api/health-regulation/products — the register of authorised medicines and medical devices (lib/health/products/register.ts). GET: anyone's list of decided products, each as publicProductView() under the nation's approved public information classification (?kind=, ?q= a register number, or a name where the classification publishes names); ?number= one product's public view; the classification in force and its waiting proposal; counts. ?number=…&full=1 is the full record (dossier versions, assessment, grounds, recall completions): the medicines authority's officials only (canReadProduct()), and every read, allowed or refused, goes to the access log; ?search=1 is the regulator's own list (numbers, names and states, applications included), logged as a search. ?view=oversight: the recall notices and safety alerts issued (HX-005, each as subscribers receive it: the public view only), the subscribers two officials approved for them (approved only, with their purposes), delivery counts, the controlled-medicine quantity limits in force and their waiting change, and counts of import and controlled-medicine authorisations. POST (administrators): what the public check shows, by two officials citing the law: { op: 'propose-disclosure', fields, legalBasis: [{ instrument, eId }] }, then { op: 'confirm-disclosure' } by a different official, or { op: 'withdraw-disclosure' }; the controlled-medicine quantity limits the same way: { op: 'propose-limits', limits: [{ schedule, unit, max }], legalBasis }, { op: 'confirm-limits' }, { op: 'withdraw-limits' }. Products and authorisations change only through decided cases (/api/cases).",
         "parameters": [
           {
             "name": "full",
@@ -19514,6 +19514,14 @@
           },
           {
             "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "view",
             "in": "query",
             "required": false,
             "schema": {
@@ -19939,6 +19947,264 @@
                     {
                       "type": "object",
                       "properties": {
+                        "notices": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/SafetyNoticePayload"
+                          }
+                        },
+                        "subscribers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "ownerOrg": {
+                                "type": "string"
+                              },
+                              "purposes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "approvedAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "ownerOrg",
+                              "purposes"
+                            ]
+                          }
+                        },
+                        "deliveries": {
+                          "type": "object",
+                          "properties": {
+                            "notices": {
+                              "type": "number"
+                            },
+                            "queued": {
+                              "type": "number"
+                            },
+                            "collected": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "notices",
+                            "queued",
+                            "collected"
+                          ]
+                        },
+                        "limits": {
+                          "type": "object",
+                          "properties": {
+                            "limits": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/ControlledLimit"
+                              }
+                            },
+                            "version": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "limits",
+                            "version"
+                          ]
+                        },
+                        "limitChanges": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "object",
+                              "properties": {
+                                "values": {
+                                  "$ref": "#/components/schemas/Limits"
+                                },
+                                "basis": {
+                                  "type": "array",
+                                  "items": {
+                                    "$ref": "#/components/schemas/Citation"
+                                  }
+                                },
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "confirmed": {
+                                  "type": "object",
+                                  "properties": {
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "independence": {
+                                      "type": "string",
+                                      "enum": [
+                                        "accounts-only",
+                                        "identity-provider",
+                                        "unverified"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "by",
+                                    "at",
+                                    "independence"
+                                  ]
+                                },
+                                "expiresAt": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "values",
+                                "basis",
+                                "by",
+                                "at",
+                                "expiresAt"
+                              ],
+                              "description": "A proposal waiting for its second official."
+                            },
+                            "history": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "values": {
+                                    "$ref": "#/components/schemas/Limits"
+                                  },
+                                  "basis": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/Citation"
+                                    }
+                                  },
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "confirmed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "by": {
+                                        "type": "string"
+                                      },
+                                      "byId": {
+                                        "type": "string"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "independence": {
+                                        "type": "string",
+                                        "enum": [
+                                          "accounts-only",
+                                          "identity-provider",
+                                          "unverified"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "by",
+                                      "at",
+                                      "independence"
+                                    ]
+                                  },
+                                  "outcome": {
+                                    "type": "string",
+                                    "enum": [
+                                      "adopted",
+                                      "lapsed",
+                                      "withdrawn"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "values",
+                                  "basis",
+                                  "by",
+                                  "at",
+                                  "outcome"
+                                ]
+                              },
+                              "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                            }
+                          }
+                        },
+                        "imports": {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "number"
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "samples"
+                          ]
+                        },
+                        "controlled": {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "number"
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "samples"
+                          ]
+                        },
+                        "controlledAuthorityNamed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "notices",
+                        "subscribers",
+                        "deliveries",
+                        "limits",
+                        "limitChanges",
+                        "imports",
+                        "controlled",
+                        "controlledAuthorityNamed"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
                         "products": {
                           "type": "array",
                           "items": {
@@ -20239,7 +20505,7 @@
         ],
         "operationId": "post_health_regulation_products",
         "summary": "POST /api/health-regulation/products",
-        "description": "/api/health-regulation/products — the register of authorised medicines and medical devices (lib/health/products/register.ts). GET: anyone's list of decided products, each as publicProductView() under the nation's approved public information classification (?kind=, ?q= a register number, or a name where the classification publishes names); ?number= one product's public view; the classification in force and its waiting proposal; counts. ?number=…&full=1 is the full record (dossier versions, assessment, grounds, recall completions): the medicines authority's officials only (canReadProduct()), and every read, allowed or refused, goes to the access log; ?search=1 is the regulator's own list (numbers, names and states, applications included), logged as a search. POST (administrators): what the public check shows, by two officials citing the law: { op: 'propose-disclosure', fields, legalBasis: [{ instrument, eId }] }, then { op: 'confirm-disclosure' } by a different official, or { op: 'withdraw-disclosure' }. Products change only through decided cases (/api/cases).",
+        "description": "/api/health-regulation/products — the register of authorised medicines and medical devices (lib/health/products/register.ts). GET: anyone's list of decided products, each as publicProductView() under the nation's approved public information classification (?kind=, ?q= a register number, or a name where the classification publishes names); ?number= one product's public view; the classification in force and its waiting proposal; counts. ?number=…&full=1 is the full record (dossier versions, assessment, grounds, recall completions): the medicines authority's officials only (canReadProduct()), and every read, allowed or refused, goes to the access log; ?search=1 is the regulator's own list (numbers, names and states, applications included), logged as a search. ?view=oversight: the recall notices and safety alerts issued (HX-005, each as subscribers receive it: the public view only), the subscribers two officials approved for them (approved only, with their purposes), delivery counts, the controlled-medicine quantity limits in force and their waiting change, and counts of import and controlled-medicine authorisations. POST (administrators): what the public check shows, by two officials citing the law: { op: 'propose-disclosure', fields, legalBasis: [{ instrument, eId }] }, then { op: 'confirm-disclosure' } by a different official, or { op: 'withdraw-disclosure' }; the controlled-medicine quantity limits the same way: { op: 'propose-limits', limits: [{ schedule, unit, max }], legalBasis }, { op: 'confirm-limits' }, { op: 'withdraw-limits' }. Products and authorisations change only through decided cases (/api/cases).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -20285,6 +20551,62 @@
                           "properties": {
                             "values": {
                               "$ref": "#/components/schemas/Disclosure"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Limits"
                             },
                             "basis": {
                               "type": "array",
@@ -20475,12 +20797,167 @@
                           "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
                         }
                       }
+                    },
+                    "limits": {
+                      "type": "object",
+                      "properties": {
+                        "limits": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ControlledLimit"
+                          }
+                        },
+                        "version": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "limits",
+                        "version"
+                      ]
+                    },
+                    "limitChanges": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Limits"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/Limits"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
                     }
                   },
                   "required": [
                     "result",
                     "classification",
-                    "changes"
+                    "changes",
+                    "limits",
+                    "limitChanges"
                   ]
                 },
                 "examples": {
@@ -20501,6 +20978,38 @@
                         "pending": {
                           "values": {
                             "fields": []
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      },
+                      "limits": {
+                        "limits": [
+                          {
+                            "schedule": "string",
+                            "unit": "string",
+                            "max": 1
+                          }
+                        ],
+                        "version": 1
+                      },
+                      "limitChanges": {
+                        "pending": {
+                          "values": {
+                            "limits": []
                           },
                           "basis": [
                             {}
@@ -77831,6 +78340,26 @@
           "entitled"
         ]
       },
+      "ControlledLimit": {
+        "description": "One limit of the nation's controlled-substances law: the most one authorisation may cover, for a schedule, in a unit.",
+        "type": "object",
+        "properties": {
+          "schedule": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "max": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "schedule",
+          "unit",
+          "max"
+        ]
+      },
       "CoordinationEdge": {
         "type": "object",
         "properties": {
@@ -88055,6 +88584,20 @@
           "level"
         ]
       },
+      "Limits": {
+        "type": "object",
+        "properties": {
+          "limits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ControlledLimit"
+            }
+          }
+        },
+        "required": [
+          "limits"
+        ]
+      },
       "LineDuty": {
         "type": "object",
         "properties": {
@@ -94011,6 +94554,10 @@
               "documents"
             ],
             "description": "A recall's completion, verified by the regulator (HLT-MED-018): restricted, never public."
+          },
+          "recallClass": {
+            "type": "string",
+            "description": "A recall's class, as the decision set it from the nation's recall classes (medicines.country.recall_classes, shipped empty)."
           },
           "sample": {
             "type": "boolean",
@@ -100752,6 +101299,156 @@
           "at",
           "kind",
           "ok"
+        ]
+      },
+      "SafetyNoticePayload": {
+        "description": "What a subscriber receives: nothing else exists in this type.",
+        "type": "object",
+        "properties": {
+          "notice": {
+            "type": "string",
+            "description": "The notice's own number (SN-…)."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "recall",
+              "safety_notice"
+            ]
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "properties": {
+                  "activeIngredients": {},
+                  "authorisationNumber": {},
+                  "authorisedOn": {},
+                  "conditions": {},
+                  "deviceClass": {},
+                  "deviceNomenclature": {},
+                  "dosageForm": {},
+                  "holder": {},
+                  "legalBasis": {},
+                  "legalSupplyCategory": {},
+                  "manufacturingSites": {},
+                  "name": {},
+                  "packagingAndLabelling": {},
+                  "route": {},
+                  "status": {},
+                  "strength": {},
+                  "therapeuticClass": {},
+                  "validUntil": {}
+                },
+                "description": "Only attributes both approved and marked publishable, each public."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "device",
+                  "medicine"
+                ]
+              },
+              "notices": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "recall",
+                        "safety_notice",
+                        "suspension",
+                        "withdrawal"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "notice": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "at",
+                    "notice"
+                  ]
+                },
+                "description": "Only enforcement records both approved and published: kind, date and the public notice."
+              },
+              "productId": {
+                "type": "string"
+              },
+              "source": {
+                "type": "object",
+                "properties": {
+                  "record": {
+                    "type": "string",
+                    "const": "regulator"
+                  },
+                  "version": {
+                    "type": "number"
+                  },
+                  "classificationVersion": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "record",
+                  "version"
+                ],
+                "description": "Where the answer comes from: the competent regulator's record, never an import, inventory or procurement record."
+              }
+            },
+            "required": [
+              "fields",
+              "kind",
+              "notices",
+              "productId",
+              "source"
+            ],
+            "description": "The product as publicProductView() lets it out."
+          },
+          "recallClass": {
+            "type": "string",
+            "description": "The recall class the decision set (the nation's classes); absent when none was set or for a safety alert."
+          },
+          "reference": {
+            "type": "string",
+            "description": "The regulator's case reference (no personal data)."
+          },
+          "decidedOn": {
+            "type": "string"
+          },
+          "publishedOn": {
+            "type": "string"
+          },
+          "supplyChainNotice": {
+            "type": "string",
+            "enum": [
+              "not applicable",
+              "not yet recorded",
+              "recorded"
+            ],
+            "description": "Whether the holder's supply-chain notification (the recall case's supply-chain-notice document) is recorded yet."
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "Issued from a sample case of a demonstration."
+          }
+        },
+        "required": [
+          "notice",
+          "kind",
+          "product",
+          "reference",
+          "decidedOn",
+          "publishedOn",
+          "supplyChainNotice"
         ]
       },
       "Scenario": {

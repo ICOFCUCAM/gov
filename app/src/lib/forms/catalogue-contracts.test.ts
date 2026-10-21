@@ -518,6 +518,9 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     'HLT-MED-005': 'medicines.authorisation', 'HLT-MED-006': 'medicines.authorisation', 'HLT-MED-007': 'medicines.renewal', 'HLT-MED-008': 'medicines.variation',
     'HLT-MED-009': 'medicines.suspension', 'HLT-MED-010': 'medicines.manufacturer', 'HLT-MED-011': 'medicines.manufacturer', 'HLT-MED-017': 'medicines.recall',
     'HLT-MED-018': 'medicines.recall', 'HLT-MED-019': 'medicines.device-registration',
+    // Health I4, second step: corrective action, import and controlled-medicine authorisation, safety and incident intake, reconsideration.
+    'HLT-MED-012': 'medicines.corrective-action', 'HLT-MED-013': 'medicines.import-authorisation', 'HLT-MED-014': 'medicines.controlled', 'HLT-MED-015': 'medicines.safety-report',
+    'HLT-MED-020': 'medicines.device-incident', 'HLT-MED-023': 'medicines.reconsideration',
   };
   it('takes authority from the deployment profile: the medicines slot, stood in for provisionally by the health regulator until the nation names it', () => {
     // The slots ship empty, like every slot (owner's direction 2026-10-21, health integration §3).
@@ -531,7 +534,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
       if (LINKED_2[id]) expect(f.procedure, id).toMatchObject({ key: LINKED_2[id] });
       else { expect(f.procedure, id).toBeNull(); expect(f.awaits ?? '', id).toMatch(/not built|no case is opened/); }
     }
-    expect(Object.keys(LINKED_2)).toHaveLength(14);
+    expect(Object.keys(LINKED_2)).toHaveLength(20);
   });
 
   it('keeps dossier content with the regulator and the public product check to what may be published', () => {

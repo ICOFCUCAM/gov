@@ -62,6 +62,9 @@ const PAGES = [
   { path: '/gov/law/procedures/forms/HLT-MED-017', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-MED-019', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-MED-024', map: false, text: /register status/i },
+  // Health I4, second step: forms now carried by their own procedures (procedure: draft once installed).
+  { path: '/gov/law/procedures/forms/HLT-MED-013', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-023', map: false, text: /register status/i },
   // Catalogue contracts, batch 3 (taxpayer registration and account).
   { path: '/gov/law/procedures/forms/taxpayer.registration.individual', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/taxpayer.registration.individual/print', map: false, text: /register status/i },

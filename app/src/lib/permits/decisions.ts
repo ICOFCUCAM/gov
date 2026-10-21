@@ -29,7 +29,7 @@ import { registerType } from '@/lib/organisations/register';
 import { registerOfCase } from '@/lib/organisations/procedures';
 import { getProfessional, profession } from '@/lib/professions/register';
 import { getProduct, productOfCase } from '@/lib/health/products/register';
-import { PRODUCT_PERMIT_TYPES } from '@/lib/health/products/procedures';
+import { PRODUCT_PERMIT_TYPES, PROCEDURE_PERMITS } from '@/lib/health/products/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -72,6 +72,9 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   // The register of medicines and medical devices (lib/health/products): a recall by the recall mapping, a device by
   // the device registration mapping, every other product decision by the marketing authorisation mapping.
   if (key.startsWith('medicines.')) {
+    // Corrective action, import and controlled-medicine authorisation, safety intake and reconsideration: each its own
+    // permit type (a controlled-medicine authorisation under the controlled-substances slot's mapping).
+    for (const [k, permitType] of Object.entries(PROCEDURE_PERMITS)) if (is(key, k)) return mapped(permitType);
     if (is(key, 'medicines.recall')) return mapped(PRODUCT_PERMIT_TYPES.recall);
     if (is(key, 'medicines.device-registration')) return mapped(PRODUCT_PERMIT_TYPES.device);
     const p = getProduct(str(c.fields.product)) ?? productOfCase(c.id);

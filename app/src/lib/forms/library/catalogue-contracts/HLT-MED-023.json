@@ -3,6 +3,8 @@
  "form_id": "HLT-MED-023",
  "record_type": "medicines.decision.review-request",
  "form_version": 1,
+ "procedure_package_id": "medicines.reconsideration",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "The review routes the law provides for medicines regulatory decisions, the bodies that hear them and the period to ask.",
@@ -27,8 +29,12 @@
   "owner": "medicinesRegulation",
   "filled_by": "The organisation the decision concerns, or someone acting for it.",
   "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
-  "procedure": null,
-  "intended": "A reconsideration or appeal procedure of the medicines regulator or the body the law names (an appeal to a court is filed with the court and worked only by the judiciary): not built; the form waits in the library (plan step I4).",
+  "procedure": {
+   "key": "medicines.reconsideration",
+   "stage": "received",
+   "action": "register",
+   "document": "request-form"
+  },
   "lists": {},
   "nation_values": [
    {
@@ -59,7 +65,7 @@
    },
    {
     "id": "reviewer-differs",
-    "what": "The reviewer is assigned in the review procedure (not built); the official who made the decision may not review it, and a declared interest recuses at once",
+    "what": "The reviewer is assigned in the review procedure (medicines.reconsideration); neither the reviewer nor either official of the two-official decision may be an official who made or confirmed the decision reconsidered (compared by person, as dual control does), and a declared interest recuses at once",
     "why": "A review by the decision-maker is no review.",
     "rule": "CLAUDE.md Transitions: a declared interest recuses at once (CaseFacts.recused); dual control compares people"
    },
@@ -231,7 +237,8 @@
       "appeal.grounds",
       "appeal.reviewer"
      ],
-     "deviation": "reviewer-differs"
+     "deviation": "reviewer-differs",
+     "procedure": "propose"
     }
    },
    {

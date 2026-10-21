@@ -86,6 +86,14 @@ const MORE_ACTS: { title: string; number: string; authority: AuthorityKey; provi
     'medicines.suspension': P('sec_15', '15', 'After notice and representations, an authorisation may be suspended, reinstated or withdrawn.'),
     'medicines.recall': P('sec_18', '18', 'The medicines authority may order the recall of a medicine or medical device that presents a risk.'),
     'medicines.device-registration': P('sec_20', '20', 'No medical device shall be placed on the market unless the medicines authority has registered it.'),
+    'medicines.import-authorisation': P('sec_24', '24', 'No consignment of medicines or medical devices shall be imported except by a licensed importer under an import authorisation of the medicines authority.'),
+    'medicines.safety-report': P('sec_30', '30', 'The medicines authority shall receive and assess reports of safety concerns about medicines and may issue safety alerts.'),
+    'medicines.device-incident': P('sec_31', '31', 'The medicines authority shall receive and assess reports of incidents involving medical devices.'),
+    'medicines.reconsideration': P('sec_40', '40', 'A person affected by a decision of the medicines authority may ask the authority to reconsider it; the reconsideration is made by officials who did not take the decision.'),
+    // Corrective action (medicines.corrective-action) is not approved here: its period is the nation's law, and no sample period ships.
+  } },
+  { title: 'Controlled Substances Act (sample for demonstration)', number: 'sample-12', authority: 'controlledSubstances', procedures: PRODUCT_PROCEDURES, provisions: {
+    'medicines.controlled': P('sec_8', '8', 'No person shall import, export, manufacture or distribute a controlled substance except under an authorisation, within the quantities the regulations set.'),
   } },
   { title: 'Customs Act (sample for demonstration)', number: 'sample-10', authority: 'customs', procedures: CUSTOMS_PROCEDURES, provisions: {
     'customs.declaration': P('sec_30', '30', 'Goods shall be declared to customs, may be examined, and are released once the duty assessed on them is paid.'),

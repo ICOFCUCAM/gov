@@ -28,7 +28,9 @@ import { registerTypes, listOrganisations } from '@/lib/organisations/register';
 import { professions, disclosureChanges } from '@/lib/professions/register';
 import { listIntegrations } from '@/lib/data/store/federation';
 import { productCounts, publicClassification, productDisclosureChanges } from '@/lib/health/products/register';
-import { PRODUCT_PROCEDURES, PRODUCT_PERMIT_TYPES } from '@/lib/health/products/procedures';
+import { PRODUCT_PROCEDURES, PRODUCT_PERMIT_TYPES, OVERSIGHT_PROCEDURES } from '@/lib/health/products/procedures';
+import { controlledLimits, controlledLimitChanges } from '@/lib/health/products/controlled';
+import { noticeSubscribers } from '@/lib/health/products/notices';
 import { SITE_IDS } from '@/lib/public-sites';
 import { siteEditorial } from '@/lib/data/site-editorial';
 import { listBoundaryVersions } from '@/lib/data/boundaries';
@@ -262,7 +264,15 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
     track({ key: 'products', title: 'Medicines and medical devices register', why: 'Authorised medicines and devices, recorded only by the medicines authority\'s decided cases; the public sees only what the nation\'s approved classification lists.', href: '/gov/health-regulation/products', seeded: true }, () => {
       const pending = productDisclosureChanges().pending;
       if (pending) wait({ what: 'What the public product check shows: a change waiting for a second official', proposedBy: pending.by, at: pending.at, href: '/gov/health-regulation/products' });
-      const keys = PRODUCT_PROCEDURES.filter(p => !p.key.startsWith('medicines.manufacturer') && !p.key.startsWith('medicines.importer') && !p.key.startsWith('medicines.wholesaler')).map(p => p.key);
+      const limitsPending = controlledLimitChanges().pending;
+      if (limitsPending) wait({ what: 'Controlled-medicine quantity limits: a change waiting for a second official', proposedBy: limitsPending.by, at: limitsPending.at, href: '/gov/health-regulation/products' });
+      const oversight = new Set(OVERSIGHT_PROCEDURES.map(p => p.key));
+      const keys = PRODUCT_PROCEDURES.filter(p => !oversight.has(p.key) && !p.key.startsWith('medicines.manufacturer') && !p.key.startsWith('medicines.importer') && !p.key.startsWith('medicines.wholesaler')).map(p => p.key);
+      const more = OVERSIGHT_PROCEDURES.map(p => p.key);
+      const moreApproved = more.filter(k => listPackages({ key: k, state: 'approved' }).length);
+      const service = (id: string) => listIntegrations().filter(i => i.status === 'approved' && i.approval && (i.purposes?.[id]?.length ?? 0) > 0).length;
+      const subscribers = noticeSubscribers().length, customs = service('product.import-authorisation');
+      const limits = controlledLimits();
       const approved = keys.filter(k => listPackages({ key: k, state: 'approved' }).length);
       const types = Object.values(PRODUCT_PERMIT_TYPES);
       const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
@@ -275,6 +285,11 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Who decides product powers approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
         { label: 'What the public product check shows, approved by two officials citing the law', done: cls.approved, href: '/gov/health-regulation/products', detail: cls.approved ? `Version ${cls.version}: ${cls.fields.join(', ') || 'no attribute'}` : 'Ships empty: the public sees only the number, kind and published notices' },
         { label: 'Products recorded through decided cases', done: c.total > 0, href: '/gov/health-regulation/products', detail: `${c.byKind.medicine} medicines · ${c.byKind.device} devices${c.samples ? ` (${c.samples} samples)` : ''}` },
+        { label: 'Oversight procedures approved (corrective action, import and controlled-medicine authorisation, safety reports, device incidents, reconsideration)', done: moreApproved.length === more.length, href: '/gov/law/procedures', detail: `${moreApproved.length} of ${more.length} approved; their lists (points of entry, schedules, report kinds) and periods are the nation's, none ship` },
+        { label: 'Controlled-substances authority named (Who is responsible)', done: !!authorityFor('controlledSubstances'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('controlledSubstances') ? undefined : 'Not named: nobody decides controlled-medicine authorisations until it is' },
+        { label: 'Controlled-medicine quantity limits adopted by two officials citing the law', done: limits.version > 0, href: '/gov/health-regulation/products', detail: limits.version ? `Version ${limits.version}: ${limits.limits.length} limit(s)` : 'Ship unset: production refuses a schedule no adopted limit covers' },
+        { label: 'Recall notices and safety alerts (HX-005): subscribers approved by two officials', done: subscribers > 0, href: '/integrations', detail: `${subscribers} approved subscriber(s); none ship. Each subscriber is approved for product.safety-notice with its purpose` },
+        { label: 'Import authorisation check for customs (product.import-authorisation) approved for a caller', done: customs > 0, href: '/integrations', detail: `${customs} approved caller(s); customs learns only whether an authorisation is valid` },
       ] };
     }),
 
