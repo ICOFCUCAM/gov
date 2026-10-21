@@ -175,7 +175,9 @@ export function isTerminal(kind: WorkKind, stage: string): boolean {
   return WORKFLOWS[kind].terminal.includes(stage) || actionsFor(kind, stage).length === 0;
 }
 
-const ASSIGNEES = ['K. Adamu', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Brennan', 'F. Abebe', 'N. Farah'];
+// Example work items name no person: an assignee here is a placeholder, never a real official.
+export const EXAMPLE_ASSIGNEES = ['Example officer A', 'Example officer B', 'Example officer C', 'Example officer D', 'Example officer E', 'Example officer F', 'Example officer G', 'Example officer H'];
+const ASSIGNEES = EXAMPLE_ASSIGNEES;
 
 /** Deterministic initial work set for a scope (stable across renders). */
 export function seedWorkItems(scope: string, kind: WorkKind, t: number, n = 12): WorkItem[] {
