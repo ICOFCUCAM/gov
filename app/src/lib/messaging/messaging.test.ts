@@ -35,7 +35,8 @@ const emailApi = (over: Record<string, unknown> = {}) => ok(saveProvider(INSTALL
 }, 'Admin', T0));
 const auditText = () => JSON.stringify(listAudit());
 
-beforeEach(() => { resetMessaging(); resetComms(); resetSiteSubscriptions(); applyNation({ locale: 'en' }); });
+// Real sends happen only in a production installation (plan I0.2; training and demo record them as simulated: simulation.test.ts).
+beforeEach(() => { resetMessaging(); resetComms(); resetSiteSubscriptions(); applyNation({ locale: 'en' }); alertOutbox(HOME_NATION); /* the sample officials, seeded in demo */ vi.stubEnv('CIVICOS_MODE', 'production'); });
 afterEach(() => vi.unstubAllEnvs());
 
 describe('the outbox', () => {

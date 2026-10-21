@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createHmac } from 'node:crypto';
 import { recordAudit, listAudit, subscribeWebhook, listWebhooks, rotateWebhookSecret, webhookSigningSecret } from '@/lib/data/store';
 import { resetOutbox, recentEvents, topicMatches, outboxDb, type CloudEvent } from './outbox';
@@ -7,10 +7,13 @@ import { deliverOutbox, signDelivery } from './deliver';
 const resolvePublic = async () => ['203.0.113.10'];
 
 describe('the CloudEvents outbox', () => {
+  // Webhooks are sent only by a production installation (plan I0.2; training and demo: simulation.test.ts).
   beforeEach(() => {
+    vi.stubEnv('CIVICOS_MODE', 'production');
     resetOutbox();
     for (const w of listWebhooks()) w.status = 'paused';
   });
+  afterEach(() => vi.unstubAllEnvs());
 
   it('writes a CloudEvent in the same step as the audit entry, for notable changes only', () => {
     recordAudit('Director', 'facility.publish', 'Facility:FAC-00012', 'ok', 'Health centre');

@@ -27453,44 +27453,17 @@
                             "passed": true
                           }
                         ],
-                        "goLiveEstimateDays": 1
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "$ref": "#/components/schemas/MunicipalityOnboardingResult"
-                    }
-                  },
-                  "required": [
-                    "result"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "result": {
-                        "id": "ID-0001",
-                        "name": "Example",
-                        "status": "blocked",
-                        "checks": [
+                        "recorded": false,
+                        "notDone": [
+                          "string"
+                        ],
+                        "next": [
                           {
                             "label": "Example",
-                            "passed": true
+                            "href": "https://example.gov/"
                           }
                         ],
-                        "goLiveEstimateDays": 1
+                        "goLiveEstimateDays": null
                       }
                     }
                   }
@@ -29468,7 +29441,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official"
+                  }
+                }
               }
             }
           }
@@ -29679,7 +29665,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official"
+                  }
+                }
               }
             }
           }
@@ -29776,12 +29775,99 @@
       }
     },
     "/api/org/ministries/{id}/departments/{deptId}": {
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_departments_deptId",
+        "summary": "POST /api/org/ministries/{id}/departments/{deptId}",
+        "description": "/api/org/ministries/{id}/departments/{deptId} — one department of an institution. A department is ended with a reason and kept, never deleted (plan I0.2). POST { op: 'end', reason } ends it (who acted comes from the sign-in). DELETE, the earlier way to remove one, keeps working as an end: it needs a reason (body { reason } or ?reason=) and ends the department instead of deleting it; without a reason it is refused with the way to end it.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "reason": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "ministry",
+        "x-source": "src/app/api/org/ministries/[id]/departments/[deptId]/route.ts"
+      },
       "delete": {
         "tags": [
           "org"
         ],
         "operationId": "delete_org_ministries_id_departments_deptId",
         "summary": "DELETE /api/org/ministries/{id}/departments/{deptId}",
+        "description": "/api/org/ministries/{id}/departments/{deptId} — one department of an institution. A department is ended with a reason and kept, never deleted (plan I0.2). POST { op: 'end', reason } ends it (who acted comes from the sign-in). DELETE, the earlier way to remove one, keeps working as an end: it needs a reason (body { reason } or ?reason=) and ends the department instead of deleting it; without a reason it is refused with the way to end it.",
         "parameters": [
           {
             "name": "id",
@@ -29806,67 +29892,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ministry": {
-                      "$ref": "#/components/schemas/Ministry"
-                    }
-                  },
-                  "required": [
-                    "ministry"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ministry": {
-                        "id": "ID-0001",
-                        "slug": "string",
-                        "name": "Example",
-                        "archetype": "AGRICULTURE",
-                        "status": "active",
-                        "mergedIntoId": "ID-0001",
-                        "createdAt": "2026-01-15T09:30:00.000Z",
-                        "activatedAt": "2026-01-15T09:30:00.000Z",
-                        "departments": [
-                          {
-                            "id": "ID-0001",
-                            "name": "Example"
-                          }
-                        ],
-                        "modules": [
-                          {
-                            "moduleKey": "string",
-                            "enabled": true
-                          }
-                        ],
-                        "standing": "customary-or-religious",
-                        "branch": "crown",
-                        "basis": [
-                          {
-                            "instrument": "string",
-                            "eId": "ID-0001",
-                            "version": "string",
-                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                            "on": "string"
-                          }
-                        ],
-                        "effectiveFrom": "2026-01-15",
-                        "independence": {},
-                        "prohibitions": [
-                          {
-                            "kind": "data-access",
-                            "text": "string"
-                          }
-                        ],
-                        "records": [
-                          "string"
-                        ],
-                        "terms": {}
-                      }
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -29917,6 +29943,9 @@
                 "properties": {
                   "name": {
                     "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
                   }
                 }
               },
@@ -29924,7 +29953,8 @@
                 "schema": {
                   "summary": "Generated from the schema",
                   "value": {
-                    "name": "Example"
+                    "name": "Example",
+                    "by": "A. Official"
                   }
                 }
               }
@@ -33421,6 +33451,9 @@
                 "properties": {
                   "targetId": {
                     "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
                   }
                 }
               },
@@ -33428,7 +33461,8 @@
                 "schema": {
                   "summary": "Generated from the schema",
                   "value": {
-                    "targetId": "ID-0001"
+                    "targetId": "ID-0001",
+                    "by": "A. Official"
                   }
                 }
               }
@@ -33555,6 +33589,9 @@
                   },
                   "enabled": {
                     "type": "boolean"
+                  },
+                  "by": {
+                    "type": "string"
                   }
                 }
               },
@@ -33563,7 +33600,8 @@
                   "summary": "Generated from the schema",
                   "value": {
                     "moduleKey": "string",
-                    "enabled": true
+                    "enabled": true,
+                    "by": "A. Official"
                   }
                 }
               }
@@ -35403,6 +35441,9 @@
                 "properties": {
                   "name": {
                     "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
                   }
                 }
               },
@@ -35410,7 +35451,8 @@
                 "schema": {
                   "summary": "Generated from the schema",
                   "value": {
-                    "name": "Example"
+                    "name": "Example",
+                    "by": "A. Official"
                   }
                 }
               }
@@ -43394,7 +43436,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official"
+                  }
+                }
               }
             }
           }
@@ -43678,6 +43733,9 @@
                   "payload": {
                     "type": "object",
                     "additionalProperties": {}
+                  },
+                  "by": {
+                    "type": "string"
                   }
                 }
               },
@@ -43685,7 +43743,8 @@
                 "schema": {
                   "summary": "Generated from the schema",
                   "value": {
-                    "payload": {}
+                    "payload": {},
+                    "by": "A. Official"
                   }
                 }
               }
@@ -72838,7 +72897,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official"
+                  }
+                }
               }
             }
           }
@@ -82129,6 +82201,7 @@
         ]
       },
       "Delivery": {
+        "description": "`simulated`: a training or demo installation recorded the delivery without sending it (plan I0.2).",
         "type": "object",
         "properties": {
           "webhookId": {
@@ -82148,6 +82221,9 @@
           },
           "detail": {
             "type": "string"
+          },
+          "simulated": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -82236,12 +82312,30 @@
         ]
       },
       "Department": {
+        "description": "A department of an institution. Departments are kept, never deleted: one that is ended carries `status: 'ended'` with who ended it, when and why (plan I0.2). Records saved before carry only id and name and read as active.",
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ended"
+            ],
+            "description": "Absent on records from before: active."
+          },
+          "endedAt": {
+            "type": "string"
+          },
+          "endedBy": {
+            "type": "string"
+          },
+          "endReason": {
             "type": "string"
           }
         },
@@ -93867,6 +93961,7 @@
         ]
       },
       "MunicipalityOnboardingResult": {
+        "description": "The answer to a municipal onboarding check. It says plainly what was done: the checks only. Nothing is stored and nothing is provisioned (`recorded` false); a regional or local government joins the institution register through the registry and its standing through the change process (`next`). Plan I0.2: it no longer answers \"provisioned\" with a go-live estimate while storing nothing (spec l.3578).",
         "type": "object",
         "properties": {
           "id": {
@@ -93879,8 +93974,9 @@
             "type": "string",
             "enum": [
               "blocked",
-              "provisioned"
-            ]
+              "checked"
+            ],
+            "description": "checked: every check passed; blocked: at least one did not. Neither means anything was provisioned."
           },
           "checks": {
             "type": "array",
@@ -93903,8 +93999,40 @@
               ]
             }
           },
+          "recorded": {
+            "type": "boolean",
+            "const": false,
+            "description": "Always false: this check stores no record."
+          },
+          "notDone": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What this step did not do, in plain words."
+          },
+          "next": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "href": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "href"
+              ]
+            },
+            "description": "Where each of those is done."
+          },
           "goLiveEstimateDays": {
-            "type": "number"
+            "type": "null",
+            "description": "No go-live date is estimated (kept for earlier readers; always null)."
           }
         },
         "required": [
@@ -93912,6 +94040,9 @@
           "name",
           "status",
           "checks",
+          "recorded",
+          "notDone",
+          "next",
           "goLiveEstimateDays"
         ]
       },

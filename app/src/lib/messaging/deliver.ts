@@ -14,6 +14,11 @@
 // The audit chain gets one entry per run that sent or failed anything (counts
 // only) and one per dead letter (its id and the scrubbed reason): never an
 // address or a message's text.
+//
+// A training or demo installation never sends a real message (spec Part 6 F,
+// plan I0.2): sendVia() records the send as simulated (no network, no
+// provider called) whenever samples are allowed (lib/ops/mode.ts), so a
+// provider connected to a demonstration cannot reach a real person.
 
 import { recordAudit } from '@/lib/data/store/audit';
 import { mdb, forget, RETRY_MINUTES, MAX_ATTEMPTS, DEAD_RETENTION_DAYS } from './outbox';
@@ -21,6 +26,7 @@ import { activeProviders, providerSecret, publicBase, privateNetworkAllowed } fr
 import { sendSmtp, type SmtpNet } from './adapters/smtp';
 import { sendHttp } from './adapters/http';
 import { scrub } from './privacy';
+import { installationMode, samplesAllowed, MODE_LABEL } from '@/lib/ops/mode';
 import type { SafeFetchOptions } from '@/lib/net/safe-fetch';
 import type { OutboundMessage, ProviderConfig, RenderedMessage, SendResult } from './types';
 
@@ -40,6 +46,8 @@ export interface DeliveryRun {
   waiting: { notConnected: number; noPublicAddress: number; rateLimited: number };
   expired: number;
   cleared: number;
+  /** Recorded as sent without sending: a training or demo installation (plan I0.2). */
+  simulated: number;
 }
 
 const iso = (t: number) => new Date(t).toISOString();
@@ -63,6 +71,8 @@ export function render(m: OutboundMessage, base: string | null): RenderedMessage
 
 /** Send one rendered message through one provider. */
 export async function sendVia(p: ProviderConfig, r: RenderedMessage, net: DeliveryNet = {}): Promise<SendResult> {
+  // Training and demo: recorded as simulated, nothing leaves the installation.
+  if (samplesAllowed()) return { ok: true, simulated: true };
   let secret: string | undefined;
   try { secret = providerSecret(p); } catch (e) { return { ok: false, permanent: false, error: scrub((e as Error).message) }; }
   const allowPrivate = privateNetworkAllowed();
@@ -97,7 +107,7 @@ export function deliverMessages(now = Date.now(), net: DeliveryNet = {}): Promis
 
 async function runOnce(now: number, net: DeliveryNet): Promise<DeliveryRun> {
   const db = mdb();
-  const out: DeliveryRun = { at: iso(now), attempted: 0, sent: 0, retrying: 0, dead: 0, waiting: { notConnected: 0, noPublicAddress: 0, rateLimited: 0 }, expired: 0, cleared: 0 };
+  const out: DeliveryRun = { at: iso(now), attempted: 0, sent: 0, retrying: 0, dead: 0, waiting: { notConnected: 0, noPublicAddress: 0, rateLimited: 0 }, expired: 0, cleared: 0, simulated: 0 };
   const dead = (m: OutboundMessage, reason: string) => {
     m.status = 'dead';
     m.lastError = scrub(reason);
@@ -133,7 +143,7 @@ async function runOnce(now: number, net: DeliveryNet): Promise<DeliveryRun> {
       if (!takeSlot(p, now)) continue;
       tried++;
       const res = await sendVia(p, r, net);
-      note(p, res.ok, res.ok ? 'sent' : res.error, now);
+      note(p, res.ok, res.ok ? (res.simulated ? `simulated (${MODE_LABEL[installationMode()].toLowerCase()}: nothing sent)` : 'sent') : res.error, now);
       if (res.ok) { result = res; m.providerId = p.id; break; }
       errors.push(res.error);
       result = res;
@@ -153,6 +163,7 @@ async function runOnce(now: number, net: DeliveryNet): Promise<DeliveryRun> {
       m.status = 'sent';
       m.sentAt = m.finishedAt = iso(now);
       if (result.id) m.providerMessageId = result.id;
+      if (result.simulated) { m.simulated = true; out.simulated++; }
       delete m.lastError;
       forget(m);
       out.sent++;
@@ -169,7 +180,7 @@ async function runOnce(now: number, net: DeliveryNet): Promise<DeliveryRun> {
 
   if (out.attempted || out.expired) {
     recordAudit('system (messaging)', 'messaging.deliver', 'Messaging:outbox', 'ok',
-      `${out.sent} sent · ${out.retrying} to retry · ${out.dead} dead · ${out.expired} expired · ${out.waiting.notConnected} waiting for a provider`);
+      `${out.sent} sent${out.simulated ? ` (${out.simulated} simulated: ${installationMode()} installation, nothing sent)` : ''} · ${out.retrying} to retry · ${out.dead} dead · ${out.expired} expired · ${out.waiting.notConnected} waiting for a provider`);
   }
   return out;
 }
@@ -191,7 +202,9 @@ export async function sendTest(nationId: string, providerId: string, to: string,
     headers: {},
   };
   const res = await sendVia(p, r, net);
-  note(p, res.ok, res.ok ? 'test sent' : res.error, now);
-  recordAudit(by, 'messaging.provider.test', `Messaging:${nationId}/${p.id}`, res.ok ? 'ok' : 'fail', res.ok ? `${p.channel} test sent` : res.error);
+  const sim = res.ok && res.simulated;
+  note(p, res.ok, res.ok ? (sim ? 'test simulated (nothing sent)' : 'test sent') : res.error, now);
+  recordAudit(by, 'messaging.provider.test', `Messaging:${nationId}/${p.id}`, res.ok ? 'ok' : 'fail', res.ok ? (sim ? `${p.channel} test recorded as simulated: ${installationMode()} installation, nothing sent` : `${p.channel} test sent`) : res.error);
+  if (sim) return { ok: true, detail: `Recorded as simulated: a ${MODE_LABEL[installationMode()].toLowerCase()} sends no real message` };
   return res.ok ? { ok: true, detail: `Sent${res.id ? ` (${res.id})` : ''}` } : { error: res.error, status: 502 };
 }

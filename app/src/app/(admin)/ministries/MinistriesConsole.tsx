@@ -20,6 +20,7 @@ export function MinistriesConsole() {
   const [archetypes, setArchetypes] = React.useState<Archetype[]>([]);
   const [ministries, setMinistries] = React.useState<Ministry[]>([]);
   const [selected, setSelected] = React.useState<string | null>(null);
+  const [ending, setEnding] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
   const [now, setNow] = React.useState(useRenderNow());
   // Generated health figures: Sample in demo and training, "Not connected" in production (lib/twin/generated.ts).
@@ -49,7 +50,7 @@ export function MinistriesConsole() {
 
   const active = ministries.filter(m => m.status === 'active');
   const current = ministries.find(m => m.id === selected) ?? null;
-  const deptCount = ministries.reduce((a, m) => a + (m.departments?.length ?? 0), 0);
+  const deptCount = ministries.reduce((a, m) => a + (m.departments?.filter(d => d.status !== 'ended').length ?? 0), 0);
   const moduleCount = ministries.reduce((a, m) => a + (m.modules?.filter(x => x.enabled).length ?? 0), 0);
   const reg = [
     { l: 'Institutions', v: String(ministries.length), c: 'rgb(var(--c-ink))' },
@@ -74,7 +75,8 @@ export function MinistriesConsole() {
       <Plain>
         Ministries are <strong>data, not code</strong>. Instantiate one from a
         sovereign archetype blueprint, then rename, merge, deactivate, add or
-        remove departments, and toggle modules — no platform rewrite. Every
+        end departments (an ended department is kept with its reason), and
+        toggle modules — no platform rewrite. Every
         ministry inherits the shared core (identity, audit, RBAC, workflows,
         notifications, observability, interoperability).
       </Plain>
@@ -216,10 +218,10 @@ export function MinistriesConsole() {
                         </ul>
                         {!r.deployable ? (
                           <p className="mt-1.5 text-[10px]" style={{ color: 'rgb(var(--c-warn))' }}>
-                            Blocking: {r.blocking.join(' · ')}. Activation gate requires ≥70% with governance, operational and deployment provisioned.
+                            Open items: {r.blocking.join(' · ')}. This score describes the structure only and does not gate activation; completeness is read per item, with its owner, date and next action.
                           </p>
                         ) : (
-                          <p className="mt-1.5 text-[10px] text-ink-muted">Validated for the national deployment directory.</p>
+                          <p className="mt-1.5 text-[10px] text-ink-muted">Structure complete. The score is for information; completeness is read per item.</p>
                         )}
                       </div>
                     );
@@ -238,7 +240,7 @@ export function MinistriesConsole() {
                         Activate institution
                       </Button>
                       <span className="text-[11px] text-ink-muted">
-                        Activation runs the readiness gate — it fails if the institution is not deployment-complete.
+                        The structure score is shown for information; it does not gate activation.
                       </span>
                     </div>
                   ) : null}
@@ -359,23 +361,45 @@ export function MinistriesConsole() {
                 <Card tight>
                   <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Departments</h3>
                   <ul className="mt-2 space-y-1">
-                    {current.departments.map(d => (
-                      <li key={d.id} className="flex items-center justify-between text-sm">
-                        <span>{d.name}</span>
-                        {current.status === 'active' ? (
-                          <button
-                            className="text-xs text-alert underline"
-                            onClick={() => guard(() => api.org.removeDepartment(current.id, d.id))}
+                    {current.departments.filter(d => d.status !== 'ended').map(d => (
+                      <li key={d.id} className="text-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <span>{d.name}</span>
+                          {current.status === 'active' ? (
+                            <button className="text-xs text-alert underline" onClick={() => setEnding(ending === d.id ? null : d.id)}>
+                              End department
+                            </button>
+                          ) : null}
+                        </div>
+                        {ending === d.id ? (
+                          <form
+                            className="mt-1 flex flex-wrap items-end gap-2"
+                            onSubmit={e => {
+                              e.preventDefault();
+                              const reason = String(new FormData(e.currentTarget).get('reason') ?? '');
+                              void guard(() => api.org.endDepartment(current.id, d.id, reason)).then(() => setEnding(null));
+                            }}
                           >
-                            remove
-                          </button>
+                            <TextField label="Reason it is ended (kept with the record)" name="reason" className="mb-0" required />
+                            <Button type="submit" variant="warn">End department</Button>
+                          </form>
                         ) : null}
                       </li>
                     ))}
-                    {current.departments.length === 0 ? (
-                      <li className="text-sm text-ink-muted">No departments.</li>
+                    {current.departments.filter(d => d.status !== 'ended').length === 0 ? (
+                      <li className="text-sm text-ink-muted">No departments in operation.</li>
                     ) : null}
                   </ul>
+                  {current.departments.some(d => d.status === 'ended') ? (
+                    <details className="mt-2 text-xs text-ink-muted">
+                      <summary className="cursor-pointer">Ended departments (kept)</summary>
+                      <ul className="mt-1 space-y-0.5">
+                        {current.departments.filter(d => d.status === 'ended').map(d => (
+                          <li key={d.id}>{d.name} · ended {d.endedAt?.slice(0, 10)} by {d.endedBy}: {d.endReason}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  ) : null}
                   {current.status === 'active' ? (
                     <form
                       className="mt-3 flex items-end gap-2"

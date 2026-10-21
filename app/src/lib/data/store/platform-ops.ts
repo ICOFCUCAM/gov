@@ -15,7 +15,7 @@ import type {
 } from '@/lib/api/types';
 import { db } from './state';
 import { uid, canonicalJson } from './shared';
-import { recordAudit } from './audit';
+import { recordAudit, UNVERIFIED_ACTOR } from './audit';
 
 /** Content address of a configuration bundle: `sha256:<hex>` over its canonical JSON. Bundles published before keep their earlier 32-bit hash. */
 export function configContentHash(payload: Record<string, unknown>): string {
@@ -38,6 +38,8 @@ export function createRelease(input: {
   version: string;
   notes: string;
   schemaMigration?: string;
+  /** Who acted: the verified official (routes pass it from the session). */
+  by?: string;
 }): Release | { error: string } {
   if (!/^\d+\.\d+\.\d+$/.test(input.version)) {
     return { error: 'version must be semver x.y.z' };
@@ -54,7 +56,7 @@ export function createRelease(input: {
     createdAt: new Date().toISOString(),
   };
   db.releases.unshift(r);
-  recordAudit('operator', 'release.create', `Release:${r.id}`, 'ok', input.version);
+  recordAudit(input.by || UNVERIFIED_ACTOR, 'release.create', `Release:${r.id}`, 'ok', input.version);
   return r;
 }
 export function promoteRelease(id: string, by: string): Release | { error: string } {
@@ -85,6 +87,7 @@ export function listDeployments(): Deployment[] {
 export function startDeployment(
   releaseId: string,
   strategy: DeployStrategy,
+  by = UNVERIFIED_ACTOR,
 ): Deployment | { error: string } {
   const rel = db.releases.find(r => r.id === releaseId);
   if (!rel) return { error: 'Release not found' };
@@ -98,7 +101,7 @@ export function startDeployment(
     startedAt: new Date().toISOString(),
   };
   db.deployments.unshift(d);
-  recordAudit('operator', 'deployment.start', `Deployment:${d.id}`, 'ok', `${rel.version}/${strategy}`);
+  recordAudit(by, 'deployment.start', `Deployment:${d.id}`, 'ok', `${rel.version}/${strategy}`);
   return d;
 }
 export function advanceDeployment(
@@ -202,7 +205,7 @@ export function syncBackupCatalogue(records: BackupRecord[]): void {
 export function listConfigs(): ConfigBundle[] {
   return [...db.configs].sort((a, b) => b.version - a.version);
 }
-export function publishConfig(payload: Record<string, unknown>): ConfigBundle {
+export function publishConfig(payload: Record<string, unknown>, by = UNVERIFIED_ACTOR): ConfigBundle {
   const last = db.configs[0];
   const c: ConfigBundle = {
     id: uid('CFG'),
@@ -213,7 +216,7 @@ export function publishConfig(payload: Record<string, unknown>): ConfigBundle {
     createdAt: new Date().toISOString(),
   };
   db.configs.unshift(c);
-  recordAudit('operator', 'config.publish', `Config:${c.id}`, 'ok', `v${c.version}`);
+  recordAudit(by, 'config.publish', `Config:${c.id}`, 'ok', `v${c.version}`);
   return c;
 }
 export function signConfig(id: string, by: string): ConfigBundle | { error: string } {
@@ -225,7 +228,7 @@ export function signConfig(id: string, by: string): ConfigBundle | { error: stri
   recordAudit(by, 'config.sign', `Config:${id}`, 'ok');
   return c;
 }
-export function applyConfig(id: string): ConfigBundle | { error: string } {
+export function applyConfig(id: string, by = UNVERIFIED_ACTOR): ConfigBundle | { error: string } {
   const c = db.configs.find(x => x.id === id);
   if (!c) return { error: 'Config not found' };
   if (c.state !== 'signed') return { error: 'Only SIGNED can be applied' };
@@ -233,7 +236,7 @@ export function applyConfig(id: string): ConfigBundle | { error: string } {
     if (x.state === 'applied') x.state = 'superseded';
   });
   c.state = 'applied';
-  recordAudit('operator', 'config.apply', `Config:${id}`, 'ok', `v${c.version}`);
+  recordAudit(by, 'config.apply', `Config:${id}`, 'ok', `v${c.version}`);
   return c;
 }
 export function configDrift(): ConfigDrift {

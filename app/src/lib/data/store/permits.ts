@@ -199,11 +199,22 @@ export function onboardMunicipality(
     },
   ];
   const allPassed = checks.every(c => c.passed);
+  // Honest about what happened (plan I0.2, spec l.3578): only the checks ran. Nothing is stored or provisioned.
   return {
     id: uid('MU'),
     name: input.name,
-    status: allPassed ? 'provisioned' : 'blocked',
+    status: allPassed ? 'checked' : 'blocked',
     checks,
-    goLiveEstimateDays: allPassed ? 14 : 0,
+    recorded: false,
+    notDone: [
+      'No institution record was created: this step only checks the request.',
+      'Nothing was provisioned and no go-live date is set.',
+      'Its standing as a regional or local government is not recorded until the change process adopts it.',
+    ],
+    next: [
+      { label: 'Create the institution in the registry', href: '/ministries' },
+      { label: 'Record its standing (regional or local government) through the change process', href: '/gov/configuration#who-is-responsible' },
+    ],
+    goLiveEstimateDays: null,
   };
 }

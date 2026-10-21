@@ -53,6 +53,6 @@ describe('POST /api/org/ministries', () => {
       headers: { 'content-type': 'application/json' },
     }) as never);
     expect(res.status).toBe(201);
-    expect(createMock).toHaveBeenCalledWith({ archetype: 'GENERIC', name: 'X', slug: 'x' });
+    expect(createMock).toHaveBeenCalledWith({ archetype: 'GENERIC', name: 'X', slug: 'x', by: 'Unverified official' });
   });
 });

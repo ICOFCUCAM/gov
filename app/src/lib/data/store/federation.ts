@@ -21,7 +21,7 @@ import type {
 } from '@/lib/api/types';
 import { db } from './state';
 import { uid } from './shared';
-import { recordAudit } from './audit';
+import { recordAudit, UNVERIFIED_ACTOR } from './audit';
 
 // ── Interoperability & federation (mirrors the backend contract) ──────
 const HOME_TENANT = 'home';
@@ -39,6 +39,8 @@ export function registerIntegration(input: {
   ownerOrg: string;
   contact: string;
   scopes: string[];
+  /** Who acted: the verified official (routes pass it from the session). */
+  by?: string;
 }): IntegrationRegistered | { error: string } {
   if (db.integrations.some(i => i.name === input.name)) {
     return { error: 'Name already registered' };
@@ -58,7 +60,7 @@ export function registerIntegration(input: {
   };
   db.integrations.unshift(client);
   db.integrationKeys[client.id] = sha256Hex(rawKey);
-  recordAudit('operator', 'integration.register', `Integration:${client.id}`, 'ok', `${input.name} · civ_${prefix}…`);
+  recordAudit(input.by || UNVERIFIED_ACTOR, 'integration.register', `Integration:${client.id}`, 'ok', `${input.name} · civ_${prefix}…`);
   return {
     id: client.id,
     status: client.status,
@@ -333,7 +335,7 @@ export function proposeGrant(input: {
   policy?: FederationGrant['policy'];
   by?: string;
 }): FederationGrant | { error: string } {
-  const by = input.by?.trim() || 'operator';
+  const by = input.by?.trim() || UNVERIFIED_ACTOR;
   const policyNote = input.policy ? `purposes ${input.policy.purposes.join(', ')}; keep ${input.policy.retentionDays} days; onward sharing ${input.policy.onwardSharing ? 'allowed' : 'not allowed'}` : undefined;
   if (input.toTenant === HOME_TENANT) {
     return { error: 'A tenant cannot federate with itself' };
@@ -426,6 +428,8 @@ export function listWebhooks(): WebhookSubscription[] {
 export function subscribeWebhook(input: {
   topic: string;
   url: string;
+  /** Who acted: the verified official (routes pass it from the session). */
+  by?: string;
 }): WebhookCreated {
   const secret = `whsec_${randomBytes(32).toString('base64url')}`;
   const sub: WebhookSubscription = {
@@ -438,7 +442,7 @@ export function subscribeWebhook(input: {
   };
   db.webhooks.unshift(sub);
   db.webhookSecrets[sub.id] = seal(secret, `webhook:${sub.id}`);
-  const head = recordAudit('operator', 'webhook.subscribe', `Webhook:${sub.id}`, 'ok', input.topic);
+  const head = recordAudit(input.by || UNVERIFIED_ACTOR, 'webhook.subscribe', `Webhook:${sub.id}`, 'ok', input.topic);
   // A new subscriber receives events from now on, not the history.
   advanceCursor(sub.id, head.seq);
   return {
@@ -483,10 +487,11 @@ export function noteWebhookDelivery(id: string, ok: boolean, detail: string, now
 export function setWebhookStatus(
   id: string,
   status: 'active' | 'paused' | 'disabled',
+  by = UNVERIFIED_ACTOR,
 ): WebhookSubscription | { error: string } {
   const w = db.webhooks.find(x => x.id === id);
   if (!w) return { error: 'Subscription not found' };
   w.status = status;
-  recordAudit('operator', `webhook.${status}`, `Webhook:${id}`, 'ok');
+  recordAudit(by, `webhook.${status}`, `Webhook:${id}`, 'ok');
   return w;
 }

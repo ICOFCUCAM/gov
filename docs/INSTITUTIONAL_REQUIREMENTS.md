@@ -24,16 +24,15 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | 3 | 57 | 144 | 271 | 23 | 2 | 85 | 582 |
 | 4 | 77 | 88 | 241 | 0 | 1 | 73 | 480 |
 | 5 | 66 | 189 | 43 | 0 | 18 | 0 | 316 |
-| 6 | 74 | 184 | 35 | 8 | 8 | 2 | 311 |
-| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
+| 6 | 76 | 182 | 35 | 8 | 8 | 2 | 311 |
+| **All** | **458** | **968** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 456 | 0 | 0 | 39 | 4 | 0 | 499 |
-| I0.2 | 0 | 2 | 0 | 0 | 0 | 0 | 2 |
+| — | 458 | 0 | 0 | 39 | 4 | 0 | 501 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 66 | 40 | 0 | 1 | 0 | 107 |
 | I3 | 0 | 136 | 26 | 0 | 0 | 0 | 162 |
@@ -46,7 +45,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | I10 | 0 | 147 | 23 | 6 | 0 | 2 | 178 |
 | I11 | 0 | 42 | 5 | 3 | 0 | 195 | 245 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
-| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
+| **All** | **458** | **968** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ### By sector
@@ -124,11 +123,11 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Design system | 2 | 39 | 19 | 7 | 0 | 2 | 69 |
 | Workspace shell and screens | 8 | 86 | 12 | 0 | 0 | 0 | 106 |
 | Accessibility and localisation | 3 | 26 | 0 | 1 | 0 | 0 | 30 |
-| Production, training, demo | 10 | 7 | 0 | 0 | 0 | 0 | 17 |
+| Production, training, demo | 12 | 5 | 0 | 0 | 0 | 0 | 17 |
 | Roadmap | 23 | 9 | 4 | 0 | 8 | 0 | 44 |
 | Risks | 14 | 8 | 0 | 0 | 0 | 0 | 22 |
 | Launch checklist | 14 | 9 | 0 | 0 | 0 | 0 | 23 |
-| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
+| **All** | **458** | **968** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ### By category
@@ -148,15 +147,15 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | register | 50 | 54 | 215 | 8 | 0 | 42 | 369 |
 | risk | 18 | 11 | 0 | 0 | 0 | 0 | 29 |
 | role | 10 | 40 | 0 | 1 | 0 | 4 | 55 |
-| security | 41 | 40 | 2 | 0 | 1 | 0 | 84 |
+| security | 43 | 38 | 2 | 0 | 1 | 0 | 84 |
 | service | 3 | 5 | 20 | 0 | 0 | 0 | 28 |
 | twin | 15 | 51 | 31 | 0 | 0 | 2 | 99 |
-| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
+| **All** | **458** | **968** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ## Plan gaps closed by the revised plan
 
-534 rows had no step under the first plan text; each now maps to a step of the revised plan (table below). Rows still without a step: 0.
+532 rows had no step under the first plan text; each now maps to a step of the revised plan (table below). Rows still without a step: 0.
 
 | Part | Sector | Rows | Revised step |
 |---|---|---|---|
@@ -197,7 +196,6 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | 5 | APIs and events | 22 | I9 |
 | 5 | Hosting | 22 | I9 |
 | 6 | Production, training, demo | 3 | Throughout |
-| 6 | Production, training, demo | 2 | I0.2 |
 
 ## Plan text weaker than the specification — resolution
 
@@ -227,12 +225,12 @@ The first plan text covered less than the specification in 16 places (found by t
 
 Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 
-1. **Readiness is a generated percentage that gates activation.** `lib/institution/readiness.ts:39-131` `scoreInstitution()` builds a weighted 0-100 score from archetype constants. Its "Audit integrity" dimension is fixed at 100 and "Cascade resilience" defaults to 90. `activateMinistry()` (`lib/data/store/ministries.ts:118-122`) refuses or allows activation on that score, and `/command`, `/ministries`, OpsCenter, NationalShell and MinistryWorkspace show it. This conflicts with the spec (l.2029, l.3378, l.4035) and plan §3.4 ("never stored as a separate score"). I0.2 stops it gating activation; I2 replaces it: keep the views, but derive each dimension from evidence and show "Not assessed" until a check exists.
-2. **Who acted is lost on institution-structure changes.** `lib/data/store/ministries.ts:104-177` audits create, rename, activate, deactivate, merge, department add and remove, and module set with the literal actor `'operator'`. So do `lib/data/store/federation.ts:61,441,490` (integration register, webhooks) and `lib/data/store/platform-ops.ts:57,101,216,236`. The routes check `adminOnly`, but the verified official's name never reaches the chain. This breaks CLAUDE.md "Who acted" and spec audit l.3862. Plan step I0.2.
-3. **Departments are deleted, not versioned.** `removeDepartment()` filters the record out (`ministries.ts:164-169`). Departments are edited directly by an administrator, with no history and no second official. Plan step I0.2 (ended with a reason and kept), then I2.
+1. **Readiness is a generated percentage that gates activation.** `lib/institution/readiness.ts:39-131` `scoreInstitution()` builds a weighted 0-100 score from archetype constants. Its "Audit integrity" dimension is fixed at 100 and "Cascade resilience" defaults to 90. `activateMinistry()` (`lib/data/store/ministries.ts:118-122`) refuses or allows activation on that score, and `/command`, `/ministries`, OpsCenter, NationalShell and MinistryWorkspace show it. This conflicts with the spec (l.2029, l.3378, l.4035) and plan §3.4 ("never stored as a separate score"). I0.2 stops it gating activation; I2 replaces it: keep the views, but derive each dimension from evidence and show "Not assessed" until a check exists. **Fixed in I0.2 (21 October 2026):** `activateMinistry()` records the score for information and refuses nothing on it (`lib/data/store.test.ts`).
+2. **Who acted is lost on institution-structure changes.** `lib/data/store/ministries.ts:104-177` audits create, rename, activate, deactivate, merge, department add and remove, and module set with the literal actor `'operator'`. So do `lib/data/store/federation.ts:61,441,490` (integration register, webhooks) and `lib/data/store/platform-ops.ts:57,101,216,236`. The routes check `adminOnly`, but the verified official's name never reaches the chain. This breaks CLAUDE.md "Who acted" and spec audit l.3862. Plan step I0.2. **Fixed in I0.2 (21 October 2026):** every such store takes who acted and the routes pass the signed-in official (`actingName()`, `lib/casework/actor.ts`); no store writes `'operator'` (`app/api/org/ministries/structure-actor.test.ts`).
+3. **Departments are deleted, not versioned.** `removeDepartment()` filters the record out (`ministries.ts:164-169`). Departments are edited directly by an administrator, with no history and no second official. Plan step I0.2 (ended with a reason and kept), then I2. **Fixed in I0.2 (21 October 2026):** `endDepartment()` ends a department with a reason and keeps it; the DELETE route ends it with the reason given and refuses without one; a merge ends the source's departments and keeps them (`lib/data/store.test.ts`, `structure-actor.test.ts`).
 4. **Reference procedures pre-fill statutory day counts.** See plan-weaker item 1. This breaks spec l.249 and l.1241 and CLAUDE.md "Never type a statutory … deadline into code". Fix in I1 by turning deadline and appeal periods into slots that need a cited value at approval.
-5. **Training and demo can send real notifications.** `lib/messaging/` and `lib/events/deliver.ts` never consult `installationMode()`/`samplesAllowed()`. The spec requires real notifications to be blocked in simulation modes and webhooks to enforce the boundary (l.4498, l.4501). Plan step I0.2.
-6. **Local government onboarding claims success it does not have.** `onboardMunicipality()` (`lib/data/store/permits.ts:158-197`) answers `status: 'provisioned'` with a go-live estimate and stores nothing. This breaks spec l.3578 ("must not claim that an external check succeeded"). Plan step I0.2.
+5. **Training and demo can send real notifications.** `lib/messaging/` and `lib/events/deliver.ts` never consult `installationMode()`/`samplesAllowed()`. The spec requires real notifications to be blocked in simulation modes and webhooks to enforce the boundary (l.4498, l.4501). Plan step I0.2. **Fixed in I0.2 (21 October 2026):** training and demo record every message, provider test and webhook delivery as simulated with no request made (`lib/messaging/simulation.test.ts`).
+6. **Local government onboarding claims success it does not have.** `onboardMunicipality()` (`lib/data/store/permits.ts:158-197`) answers `status: 'provisioned'` with a go-live estimate and stores nothing. This breaks spec l.3578 ("must not claim that an external check succeeded"). Plan step I0.2. **Fixed in I0.2 (21 October 2026):** it answers `checked` or `blocked` with `recorded: false`, what was not done and where it is done, and no go-live date (`app/api/municipalities/route.test.ts`).
 7. **Forms cannot mark protected identities or confidentiality classes.** `FieldSpec.personal` is a boolean (`lib/casework/types.ts:21`), there is no protected-identity class for parties, and a normal-sensitivity complaint lists the complainant's name (audit C S-1, high). I1 must add these before I8's complaint and disclosure procedures can exist.
 8. **The event outbox broadcasts too much.** CloudEvents carry the actor name and free-text detail to every subscriber, from a fixed source `/civicos/platform`, signed with HMAC only (audit C F-1). This breaks spec l.3736 ("only the information required"). It is a live privacy exposure as well as an I9 item.
 9. **Exchange services are bound to integrations, not to relationships.** Ending a relationship between institutions does not stop `callService()` (acceptance P5-05). This breaks spec l.3653 and l.4045 and belongs to I9.
@@ -3390,7 +3388,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-E-29 | 4466 | design | Human review of legal translations | Met | Translations through review (lib/public-sites/translation.ts); laws keep authoritative text |  | — |
 | S6-E-30 | 4468 | design | The language of the interface should not change the identity of the authoritative legal instrument or silently replace the official text with a machine translation. | Met | Translations through review (lib/public-sites/translation.ts); laws keep authoritative text |  | — |
 
-### Production, training, demo — Met 10, Partial 7
+### Production, training, demo — Met 12, Partial 5
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3400,13 +3398,13 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-F-04 | 4480-4484 | security | Training — Controlled simulation: Exercises use clearly labelled fictional records, simulated staff and test workflows. No training action may trigger a real permit, legal decision, payment or external notification. | Met | lib/ops/mode.ts installationMode()/samplesAllowed(); tests lib/data/store/seed-mode.test.ts, lib/casework/sample-isolation.test.ts, lib/auth/demo-cast |  | — |
 | S6-F-05 | 4486-4490 | security | Demo — Illustrative data: Shows proposed workflows and sample dashboards for evaluation. Every sample figure, simulated decision and fictional identity is labelled as such. | Met | lib/ops/mode.ts installationMode()/samplesAllowed(); tests lib/data/store/seed-mode.test.ts, lib/casework/sample-isolation.test.ts, lib/auth/demo-cast |  | — |
 | S6-F-06 | 4494 | security | Do not rely on a coloured banner alone. | Met | lib/ops/mode.ts installationMode()/samplesAllowed(); tests lib/data/store/seed-mode.test.ts, lib/casework/sample-isolation.test.ts, lib/auth/demo-cast |  | — |
-| S6-F-07 | 4494 | security | Environment mode should be enforced server-side and at integration boundaries. | Partial | lib/ops/mode.ts installationMode()/samplesAllowed(); tests lib/data/store/seed-mode.test.ts, lib/casework/sample-isolation.test.ts, lib/auth/demo-cast | Webhook and outbound delivery boundary per mode | Throughout |
+| S6-F-07 | 4494 | security | Environment mode should be enforced server-side and at integration boundaries. | Partial | lib/ops/mode.ts installationMode()/samplesAllowed(); tests lib/data/store/seed-mode.test.ts, lib/casework/sample-isolation.test.ts, lib/auth/demo-cast | Inbound exchange calls per mode (a demo installation answering a production caller), separate credentials per mode | Throughout |
 | S6-F-08 | 4496 | security | Separate production and non-production data stores and credentials. | Partial | Demo backup refused in production (backups-installation.test.ts) | Separate credentials per mode | Throughout |
 | S6-F-09 | 4497 | security | Prevent training or demo credentials from authenticating to production services. | Met | Demo cast refused at every sign-in in production (demo-cast.test.ts) |  | — |
-| S6-F-10 | 4498 | security | Block real payments, notifications, signatures and legal issuance in simulation modes. | Partial | payBill() simulated; development keys refused only in production (developmentKeyRefusal()) | lib/messaging and lib/events/deliver.ts do not check the installation mode: a training or demo installation with a provider or webhook connected sends | I0.2 |
+| S6-F-10 | 4498 | security | Block real payments, notifications, signatures and legal issuance in simulation modes. | Met | I0.2: payBill() records simulated receipts and refuses in production; notifications and webhooks recorded as simulated in training and demo, no reques |  | — |
 | S6-F-11 | 4499 | security | Label sample records at the data level and preserve that label through exports. | Partial | Sample register entries marked sample:true (sample-isolation.test.ts) | The institution export carries records as kept (sample markers included) and the installation mode in its manifest; no test asserts a sample marker th | I9 |
 | S6-F-12 | 4500 | security | Reject sample records when writing to production registers. | Met | payBill() refuses in production; sample cases refused; register entries marked sample (sample-isolation.test.ts) | Sample label preserved through exports (no institution export) | — |
-| S6-F-13 | 4501 | security | Ensure background jobs and webhooks also enforce the environment boundary. | Partial | Cron runs check samplesAllowed where they create data | Webhook delivery boundary per mode | I0.2 |
+| S6-F-13 | 4501 | security | Ensure background jobs and webhooks also enforce the environment boundary. | Met | I0.2: cron runs check samplesAllowed where they create data; the delivery jobs (deliver-messages, deliver-cloudevents, deliver-events) record every se |  | — |
 | S6-F-14 | 4502 | security | Require an authorised deployment process to change an environment's mode. | Partial | CIVICOS_MODE decided only in lib/ops/mode.ts from the environment | Recorded authorised mode change | Throughout |
 | S6-F-15 | 4503 | security | Keep demo identities and simulated officials separate from actual staff identities. | Met | Demo cast refused at every sign-in in production (demo-cast.test.ts) |  | — |
 | S6-F-16 | 4505 | security | Critical rule: a production dashboard must never silently fall back to demo data when a real integration fails. | Met | Production folds to Not connected (Generated.test.ts; lib/twin/read.test.ts) |  | — |

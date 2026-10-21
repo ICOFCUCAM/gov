@@ -10,6 +10,7 @@
 
 import { createHmac } from 'node:crypto';
 import { safeFetchText, type SafeFetchOptions } from '@/lib/net/safe-fetch';
+import { installationMode, samplesAllowed } from '@/lib/ops/mode';
 
 export const SUBSTRATE_WEBHOOK_TIMEOUT_MS = 5000;
 
@@ -21,7 +22,9 @@ export const substrateSignature = (secret: string, body: string): string =>
 /** POST `body` signed with `secret`; ok on a 2xx, otherwise the reason (for the operator's log, not for callers). */
 export async function postSubstrateWebhook(
   url: string, secret: string, body: string, headers: Record<string, string>, net: WebhookNet = {},
-): Promise<{ ok: boolean; detail: string }> {
+): Promise<{ ok: boolean; detail: string; simulated?: boolean }> {
+  // A training or demo installation never sends a webhook (plan I0.2): recorded as simulated, no request made.
+  if (samplesAllowed()) return { ok: true, detail: `simulated: ${installationMode()} installation, nothing sent`, simulated: true };
   try {
     await safeFetchText(url, {
       allow: () => true,

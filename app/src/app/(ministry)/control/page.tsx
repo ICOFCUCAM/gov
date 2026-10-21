@@ -89,7 +89,7 @@ export default async function MinistryControlPage(
                   <Pill tone={selected.status === 'active' ? 'ok' : 'warn'}>{selected.status}</Pill>
                 </div>
                 <p className="mt-1 text-sm text-ink-muted">
-                  Archetype {selected.archetype} · {selected.departments.length} departments ·{' '}
+                  Archetype {selected.archetype} · {selected.departments.filter(d => d.status !== 'ended').length} departments ·{' '}
                   {selected.modules.filter(m => m.enabled).length} active modules
                 </p>
               </Card>
@@ -116,7 +116,7 @@ export default async function MinistryControlPage(
                       <MetricStat label="Active modules" value={String(ops.modules.length)} tone="neutral" />
                       <MetricStat label="Queues past their time target" value={String(breaching)} tone={breaching === 0 ? 'ok' : 'alert'} />
                       <MetricStat label="Active alerts" value={String(activeAlerts.length)} tone={activeAlerts.length === 0 ? 'ok' : 'warn'} />
-                      <MetricStat label="Departments" value={String(selected.departments.length)} tone="neutral" />
+                      <MetricStat label="Departments" value={String(selected.departments.filter(d => d.status !== 'ended').length)} tone="neutral" />
                     </section>
 
                     <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
@@ -276,8 +276,8 @@ export default async function MinistryControlPage(
                 <Card tight>
                   <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Departments</h3>
                   <ul className="mt-2 space-y-1 text-sm">
-                    {selected.departments.map(d => <li key={d.id}>{d.name}</li>)}
-                    {selected.departments.length === 0 ? <li className="text-ink-muted">None configured.</li> : null}
+                    {selected.departments.filter(d => d.status !== 'ended').map(d => <li key={d.id}>{d.name}</li>)}
+                    {selected.departments.filter(d => d.status !== 'ended').length === 0 ? <li className="text-ink-muted">None configured.</li> : null}
                   </ul>
                 </Card>
                 <Card tight>

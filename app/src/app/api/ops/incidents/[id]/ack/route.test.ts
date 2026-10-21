@@ -29,13 +29,13 @@ describe('POST /api/ops/incidents/[id]/ack', () => {
     expect(ackMock).toHaveBeenCalledWith('i-1', 'NOC', 'eyes on');
   });
 
-  it('defaults the operator to "operator" when omitted', async () => {
+  it('records "Unverified official" when no one is signed in and no name is given (plan I0.2)', async () => {
     ackMock.mockReturnValue({ id: 'i-1' });
     await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({}),
       headers: { 'content-type': 'application/json' },
     }) as never, { params: Promise.resolve({ id: 'i-1' }) });
-    expect(ackMock).toHaveBeenCalledWith('i-1', 'operator', undefined);
+    expect(ackMock).toHaveBeenCalledWith('i-1', 'Unverified official', undefined);
   });
 
   it('tolerates invalid JSON bodies', async () => {
@@ -43,6 +43,6 @@ describe('POST /api/ops/incidents/[id]/ack', () => {
     const res = await POST(new Request('http://x', { method: 'POST', body: 'not json' }) as never,
       { params: Promise.resolve({ id: 'i-1' }) });
     expect(res.status).toBe(200);
-    expect(ackMock).toHaveBeenCalledWith('i-1', 'operator', undefined);
+    expect(ackMock).toHaveBeenCalledWith('i-1', 'Unverified official', undefined);
   });
 });

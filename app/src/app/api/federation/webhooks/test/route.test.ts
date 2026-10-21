@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const serverClientMock = vi.fn();
 const tokenScopedClientMock = vi.fn();
@@ -35,7 +35,10 @@ function webhookQuery(result: { data: unknown; error: unknown }) {
   return chain;
 }
 
+// Webhooks are sent only by a production installation (plan I0.2).
+afterEach(() => vi.unstubAllEnvs());
 beforeEach(() => {
+  vi.stubEnv('CIVICOS_MODE', 'production');
   serverClientMock.mockReset();
   tokenScopedClientMock.mockReset();
   tokenScopedClientMock.mockReturnValue(null);

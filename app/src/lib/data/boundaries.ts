@@ -32,7 +32,7 @@ import { createHash } from 'node:crypto';
 import { geoArea, geoCentroid, geoContains } from 'd3-geo';
 import { readBoundaryFile, type BoundaryFormat, type Feature } from '@/lib/geo/boundary-files';
 import { countVertices, needsSimplifying, simplifyFeatures, SIMPLIFY_TARGET_VERTICES, type Simplification } from '@/lib/geo/boundary-simplify';
-import { recordAudit } from '@/lib/data/store/audit';
+import { recordAudit, UNVERIFIED_ACTOR } from '@/lib/data/store/audit';
 import { boundaryRepo } from '@/lib/data/repo';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
@@ -395,7 +395,7 @@ export function withdrawBoundaries(id: string, by: string, reason?: string): Bou
   if (v.state === 'withdrawn') return { error: 'Already withdrawn' };
   const why = clean(reason, 400);
   if (v.state === 'published' && !why) return { error: 'Give the reason for withdrawing published boundaries' };
-  v.state = 'withdrawn'; v.withdrawnBy = by.trim() || 'operator'; v.withdrawnAt = now(); if (why) v.withdrawReason = why;
+  v.state = 'withdrawn'; v.withdrawnBy = by.trim() || UNVERIFIED_ACTOR; v.withdrawnAt = now(); if (why) v.withdrawReason = why;
   repo().save(v);
   recordAudit(v.withdrawnBy, 'boundary.withdraw', `Boundary:${v.id}`, 'ok', why || 'proposal withdrawn');
   return strip(v);

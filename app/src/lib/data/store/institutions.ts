@@ -326,9 +326,9 @@ export function confirmInstitutionTerms(id: string, actor: { by: string; byId?: 
         Object.assign(m, { standing: rest.standing, effectiveFrom: rest.effectiveFrom, independence: rest.independence, prohibitions: rest.prohibitions, records: rest.records, basis: v.basis });
         if (rest.branch) m.branch = rest.branch; else delete m.branch;
       }
-      if (change?.kind === 'rename') renameMinistry(id, change.name);
-      if (change?.kind === 'deactivate') deactivateMinistry(id);
-      if (change?.kind === 'merge') mergeMinistry(id, change.into);
+      if (change?.kind === 'rename') renameMinistry(id, change.name, actor.by);
+      if (change?.kind === 'deactivate') deactivateMinistry(id, actor.by);
+      if (change?.kind === 'merge') mergeMinistry(id, change.into, actor.by);
     },
   });
 }

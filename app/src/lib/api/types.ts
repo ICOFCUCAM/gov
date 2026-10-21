@@ -293,12 +293,28 @@ export interface MunicipalityOnboardingInput {
   constitutionalOfficerSignoff: boolean;
 }
 
+/**
+ * The answer to a municipal onboarding check. It says plainly what was done:
+ * the checks only. Nothing is stored and nothing is provisioned (`recorded`
+ * false); a regional or local government joins the institution register
+ * through the registry and its standing through the change process
+ * (`next`). Plan I0.2: it no longer answers "provisioned" with a go-live
+ * estimate while storing nothing (spec l.3578).
+ */
 export interface MunicipalityOnboardingResult {
   id: string;
   name: string;
-  status: 'provisioned' | 'blocked';
+  /** checked: every check passed; blocked: at least one did not. Neither means anything was provisioned. */
+  status: 'checked' | 'blocked';
   checks: { label: string; passed: boolean; detail?: string }[];
-  goLiveEstimateDays: number;
+  /** Always false: this check stores no record. */
+  recorded: false;
+  /** What this step did not do, in plain words. */
+  notDone: string[];
+  /** Where each of those is done. */
+  next: { label: string; href: string }[];
+  /** No go-live date is estimated (kept for earlier readers; always null). */
+  goLiveEstimateDays: null;
 }
 
 // Generic envelope
@@ -533,7 +549,20 @@ export interface Archetype {
 
 export type MinistryStatus = 'active' | 'merged' | 'deactivated';
 
-export interface Department { id: string; name: string; }
+/**
+ * A department of an institution. Departments are kept, never deleted: one
+ * that is ended carries `status: 'ended'` with who ended it, when and why
+ * (plan I0.2). Records saved before carry only id and name and read as active.
+ */
+export interface Department {
+  id: string;
+  name: string;
+  /** Absent on records from before: active. */
+  status?: 'active' | 'ended';
+  endedAt?: ISODate;
+  endedBy?: string;
+  endReason?: string;
+}
 export interface ModuleActivation { moduleKey: string; enabled: boolean; }
 
 export interface Ministry {
