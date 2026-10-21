@@ -4,7 +4,7 @@
 // keeps its id as its key, its type, requiredness, every validation rule by
 // its registered name and parameters (lib/forms/rules.ts; an unregistered
 // name fails closed), its values source verbatim, its personal-data class,
-// its evidence kinds and conditions, its label, hint and error text in every
+// its evidence kinds and conditions, the secrecy it is under, its label, hint and error text in every
 // language (English as the source; other languages as reviewed
 // translations), its accessibility requirements and its country decision.
 // Reusable field groups (`group_id`, `version`) load the same way and keep
@@ -16,7 +16,8 @@
 
 import {
   fieldProblem, formProblem,
-  type ContractDocument, type ContractField, type FormSpec, type NamedRule, type NoticeType, type PersonalDataClass,
+  type ContractDocument, type ContractField, type FormSpec, type NamedRule, type NoticeType, type PersonalDataClass, type Confidentiality,
+  CONFIDENTIALITY,
 } from './contract';
 import { isRegisteredRule, RULE_REGISTRY } from './rules';
 import type { TranslationEntries } from '@/lib/public-sites/translation';
@@ -40,6 +41,8 @@ export interface CanonicalField {
   items?: CanonicalField[];
   /** The page of the self-service form the question is asked on (presentation only). */
   section?: Record<string, string>;
+  /** Which secrecy a restricted value is under (commercial, tax or financial): kept on the field, never a grant of access. */
+  confidentiality?: Confidentiality;
 }
 /**
  * A reusable field group used by a form (field series Part 1 §1.1: "A form
@@ -158,12 +161,14 @@ export function canonicalField(f: CanonicalField, group?: { id: string; version:
   const en = (m?: Record<string, string>) => m?.en ?? (m ? Object.values(m)[0] : undefined);
   const cls = ['public', 'administrative', 'personal', 'restricted', 'special'].includes(f.personal_data_class) ? (f.personal_data_class as PersonalDataClass) : 'restricted';
   if (cls !== f.personal_data_class) notes.push({ field: f.id, kind: 'not-expressed', note: `Class ${f.personal_data_class} is not known: held as restricted` });
+  if (f.confidentiality !== undefined && !CONFIDENTIALITY.some(c => c.key === f.confidentiality)) notes.push({ field: f.id, kind: 'problem', note: `Confidentiality ${String(f.confidentiality)} is not commercial, tax or financial` });
   const field: ContractField = {
     key: f.id, label: en(f.label) ?? f.id, ...(base as { type: string }),
     ...(f.required ? { required: true } : {}),
     ...(en(f.hint) ? { hint: en(f.hint) } : {}),
     ...(f.error_text?.en && Object.keys(f.error_text.en).length ? { errors: { ...f.error_text.en } } : {}),
     personalDataClass: cls,
+    ...(f.confidentiality ? { confidentiality: f.confidentiality } : {}),
     ...(rules.length ? { rules } : {}),
     ...(src ? { valuesSourceId: src } : {}),
     ...(f.evidence?.length ? { evidenceRules: f.evidence.map(e => ({ ...e })) } : {}),
