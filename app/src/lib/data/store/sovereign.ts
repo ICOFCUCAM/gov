@@ -11,9 +11,10 @@ import type {
   CabinetOverview,
   SovereignPreset,
   PlatformSetup,
+  StateClassification,
 } from '@/lib/api/types';
 import { db } from './state';
-import { citizen, REGIONS } from './shared';
+import { citizen, REGIONS, canonicalJson } from './shared';
 import { recordAudit, verifyAuditChain } from './audit';
 
 // ── Sovereign profile + cabinet (global-state neutrality) ────────────
@@ -49,6 +50,17 @@ export function setSovereign(
     const c = checkClassification(patch.constitution.classification);
     if ('error' in c) return c;
     patch = { ...patch, constitution: { ...patch.constitution, classification: c } };
+  }
+  // Once setup is complete the classification changes only through its own change process (plan phase 5):
+  // a constitution sent without it keeps the recorded one; resending the same one is not a change.
+  if (db.setup && patch.constitution !== undefined && patch.constitution !== null) {
+    const current = db.sovereign.constitution?.classification;
+    if (!('classification' in patch.constitution) || patch.constitution.classification === undefined) {
+      const { classification: _drop, ...rest } = patch.constitution;
+      patch = { ...patch, constitution: { ...rest, ...(current ? { classification: current } : {}) } };
+    } else if (canonicalJson(patch.constitution.classification ?? null) !== canonicalJson(current ?? null)) {
+      return { error: CLASSIFICATION_AFTER_SETUP };
+    }
   }
   if (patch.timeZone) {
     try { new Intl.DateTimeFormat('en', { timeZone: patch.timeZone }); } catch { return { error: 'Unknown time zone' }; }
@@ -162,6 +174,59 @@ export function confirmAuthorities(actor: { by: string; byId?: string }, now = n
     },
   });
 }
+
+// ── The classification, after setup (plan phase 5; guidance §1.2, §7.4) ────
+// During first-run setup the classification is saved through /api/sovereign
+// as before. Once setup is complete it changes only through the change
+// process: one administrator proposes it (or a return to the classification
+// derived from the form of state, `null`) citing the laws register; a
+// different official confirms; every version kept. A dispute over the
+// constitutional profile freezes it (lib/constitution/profile-state.ts).
+
+/** Why a direct change to the classification is refused once setup is complete. */
+export const CLASSIFICATION_AFTER_SETUP = 'Setup is complete: the classification of the state now changes only through the change process. Propose it citing the law (Offices → Classification of the state); a different official confirms it.';
+const CLASS_AUDIT = 'constitution.classification';
+type ClassValues = { classification: StateClassification | null };
+const describeClassification = (v: ClassValues) => v.classification
+  ? `${[...v.classification.stateForms, ...v.classification.governmentForms, ...v.classification.territorialArrangements].join(', ') || 'no forms listed'}${v.classification.style ? ` · style ${v.classification.style}` : ''}${v.classification.effectiveFrom ? ` from ${v.classification.effectiveFrom}` : ''}`
+  : 'derived from the form of state (no recorded classification)';
+
+/** Changes to the classification: the waiting proposal and every earlier version. Read only. */
+export function classificationChanges() {
+  return structuredClone(db.classificationChanges ?? {});
+}
+
+/** Propose a classification (`null`: return to the one derived from the form of state), citing the law. */
+export function proposeClassification(input: { classification?: unknown; legalBasis?: unknown }, actor: { by: string; byId?: string }, now = new Date()) {
+  if (!db.setup) return { error: 'Setup is still running: record the classification in setup (it is saved directly until setup is complete)' };
+  let next: StateClassification | null = null;
+  if (input.classification !== null) {
+    const c = checkClassification(input.classification);
+    if ('error' in c) return c;
+    next = c;
+  }
+  const current: ClassValues = { classification: db.sovereign.constitution?.classification ?? null };
+  return proposePolicy(db.classificationChanges ??= {}, current, { classification: next }, input.legalBasis, {
+    by: actor.by, ...(actor.byId ? { byId: actor.byId } : {}), now, pendingHours: dualControlPendingHours(), audit: CLASS_AUDIT,
+    context: 'Classification of the state', describe: describeClassification,
+    check: v => (canonicalJson(v.classification) === canonicalJson(current.classification) ? 'This proposal changes nothing' : null),
+  });
+}
+
+/** A different official confirms the waiting classification: the profile records it. */
+export function confirmClassification(actor: { by: string; byId?: string }, now = new Date()) {
+  return confirmPolicy(db.classificationChanges ??= {}, {
+    by: actor.by, ...(actor.byId ? { byId: actor.byId } : {}), now, audit: CLASS_AUDIT, describe: describeClassification,
+    adopt: (v: PolicyVersion<ClassValues>) => {
+      const { classification: _old, ...rest } = db.sovereign.constitution ?? {};
+      db.sovereign = { ...db.sovereign, constitution: { ...rest, ...(v.values.classification ? { classification: structuredClone(v.values.classification) } : {}) } };
+      applyNation({ ...db.sovereign, configured: !!db.setup });
+    },
+  });
+}
+
+export const withdrawClassification = (by: string, reason?: string) => withdrawPolicy(db.classificationChanges ??= {}, { by, ...(reason ? { reason } : {}), audit: CLASS_AUDIT });
+export const lapseClassification = (now = new Date()) => lapsePolicy(db.classificationChanges ??= {}, now, CLASS_AUDIT);
 
 export const withdrawAuthorities = (by: string, reason?: string) => withdrawPolicy(db.authorityChanges, { by, ...(reason ? { reason } : {}), audit: AUTH_AUDIT });
 export const lapseAuthorities = (now = new Date()) => lapsePolicy(db.authorityChanges, now, AUTH_AUDIT);

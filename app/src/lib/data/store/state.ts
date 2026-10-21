@@ -25,6 +25,7 @@ import type {
   MinistryIncident,
   SovereignProfile,
   PlatformSetup,
+  StateClassification,
 } from '@/lib/api/types';
 import { hash, citizen } from './shared';
 import { samplesAllowed } from '@/lib/ops/mode';
@@ -189,7 +190,9 @@ export function seed() {
   const webhookSecrets: Record<string, string> = {};
   // Changes to who is responsible once setup is complete (two officials, citing the law; lib/data/store/sovereign.ts).
   const authorityChanges: PolicyChanges<{ authorities: Partial<Record<AuthorityKey, string>> }> = {};
-  return { setup, authorityChanges, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, integrationKeys, webhookSecrets, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
+  // Changes to the state's classification once setup is complete (plan phase 5; lib/data/store/sovereign.ts).
+  const classificationChanges: PolicyChanges<{ classification: StateClassification | null }> = {};
+  return { setup, authorityChanges, classificationChanges, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, integrationKeys, webhookSecrets, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
 }
 
 // A store restored from a saved snapshot (lib/data/persist.ts) keeps its data; fields added to the
