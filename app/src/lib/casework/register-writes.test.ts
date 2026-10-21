@@ -74,6 +74,11 @@ const REGISTERS: Register[] = [
     reads: ['PROGRAMME_STATE_LABEL', 'REPORTING_PERIODS', 'COUNT_BASES', 'BASIS_LABEL', 'COUNT_QUALITY', 'checkTerms', 'interventionRule', 'checkEntries', 'getProgramme', 'listProgrammes',
       'programmeOfCase', 'termsOf', 'listInterventions', 'interventionOfCase', 'interventionRules', 'interventionRuleChanges', 'getReturn', 'returnOfCase', 'publishedReturn',
       'listPublishedReturns', 'programmeCounts'] },
+  { module: 'lib/oversight/register.ts', store: '__civicosOversight', procedures: 'lib/oversight/procedures.ts',
+    changes: ['resetOversight', 'recordFinding', 'correctFinding', 'advanceFindings', 'recordFollowUp', 'requestEvidence', 'closeEvidenceRequest', 'recordReferral', 'askController',
+      'respondToFinding', 'submitEvidence', 'answerControllerRequest'],
+    reads: ['OVERSIGHT_SLOTS', 'FINDING_STAGE_LABEL', 'POSITIONS', 'FOLLOW_UP_STATES', 'REFERRAL_KINDS', 'REQUEST_KINDS', 'ANSWER_OUTCOMES', 'checkFinding', 'getFinding', 'findingsOfCase',
+      'evidenceOfCase', 'referralsOfCase', 'controllerRequestsOfCase', 'getEvidenceRequest', 'getControllerRequest', 'oversightView', 'oversightCounts'] },
   { module: 'lib/courts/hearings.ts', store: '__civicosHearings', procedures: 'lib/courts/procedures.ts',
     changes: ['resetHearings', 'scheduleHearing', 'concludeHearing'],
     reads: ['causeList', 'hearingsOf'] },
@@ -108,6 +113,11 @@ const EXCEPTIONS: { file: string; fn: string; why: string }[] = [
   { file: 'app/api/health-regulation/programmes/route.ts', fn: 'proposeInterventionRules', why: 'the intervention authority rules, a country rule set (CFG-PH-003): proposed citing the law, confirmed by a different official; records no intervention' },
   { file: 'app/api/health-regulation/programmes/route.ts', fn: 'confirmInterventionRules', why: 'the intervention authority rules, a country rule set (CFG-PH-003): proposed citing the law, confirmed by a different official; records no intervention' },
   { file: 'app/api/health-regulation/programmes/route.ts', fn: 'withdrawInterventionRules', why: 'withdraws a waiting rules proposal' },
+  // Independent oversight (plan I8): what the institution a record concerns adds beside the body's record, checked against it; the finding,
+  // the request and the body's case are never changed by it.
+  { file: 'app/api/oversight/route.ts', fn: 'respondToFinding', why: 'the management response of the institution a finding concerns, appended beside the finding; the finding, its versions and stage are untouched (P4-04)' },
+  { file: 'app/api/oversight/route.ts', fn: 'submitEvidence', why: 'evidence the institution asked submits to the body\'s request under an approved relationship; the request is the body\'s' },
+  { file: 'app/api/oversight/route.ts', fn: 'answerControllerRequest', why: 'the controller\'s answer to the data-protection authority: what it did with a person\'s request about its records; the authority never reads them' },
   { file: 'lib/organisations/import.ts', fn: 'organisationsDb', why: 'the checked load of an existing register: proposed by one official of the keeping authority, confirmed by a different one, under the approved mapping in production' },
   { file: 'lib/organisations/import.ts', fn: 'nextOrganisationNumber', why: 'numbers the organisations a confirmed load enters' },
   // An institution's own records coming back from its portable export (Health I4 standalone-and-pilot): nothing is decided;

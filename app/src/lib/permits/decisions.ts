@@ -31,6 +31,7 @@ import { getProfessional, profession } from '@/lib/professions/register';
 import { getProduct, productOfCase } from '@/lib/health/products/register';
 import { PRODUCT_PERMIT_TYPES, PROCEDURE_PERMITS } from '@/lib/health/products/procedures';
 import { PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
+import { OVERSIGHT_PERMITS } from '@/lib/oversight/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -84,6 +85,9 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   // Public-health programmes (lib/health/programmes): establishment and change, interventions and risk communications, each
   // under its own permit type (lead: the publicHealth slot).
   if (key.startsWith('public-health.')) for (const [k, permitType] of Object.entries(PROGRAMME_PERMITS)) if (is(key, k)) return mapped(permitType);
+  // Independent oversight (plan I8, lib/oversight): admissibility, issued findings and recommendations, approved audit reports and the
+  // data-protection authority's decisions, each family under its own permit type (lead: the body's slot). Proposed, unapproved.
+  for (const [prefix, permitType] of Object.entries(OVERSIGHT_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);
 }

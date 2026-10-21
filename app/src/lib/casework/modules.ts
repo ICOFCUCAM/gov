@@ -16,6 +16,7 @@ import '@/lib/customs/procedures';
 import '@/lib/health/products/procedures';
 import '@/lib/health/programmes/procedures';
 import '@/lib/health/complaints/procedures';
+import '@/lib/oversight/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
 import '@/lib/permits/decisions';
 // Publication gates: a form takes submissions in production only once its release is approved (lib/forms/publication.ts).
@@ -37,6 +38,7 @@ import { installCustomsProcedures } from '@/lib/customs/procedures';
 import { installProductProcedures } from '@/lib/health/products/procedures';
 import { installProgrammeProcedures } from '@/lib/health/programmes/procedures';
 import { installComplaintProcedures } from '@/lib/health/complaints/procedures';
+import { installOversightProcedures } from '@/lib/oversight/procedures';
 export { REFERENCE_PROCEDURES } from '@/lib/civil/procedures';
 export { ORGANISATION_PROCEDURES } from '@/lib/organisations/procedures';
 export { IMMIGRATION_PROCEDURES } from '@/lib/immigration/procedures';
@@ -50,9 +52,10 @@ export { CUSTOMS_PROCEDURES } from '@/lib/customs/procedures';
 export { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
 export { PROGRAMME_PROCEDURES } from '@/lib/health/programmes/procedures';
 export { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
+export { OVERSIGHT_PROCEDURES } from '@/lib/oversight/procedures';
 
-/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints) the installation does not have yet. */
+/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight) the installation does not have yet. */
 export function installReferenceProcedures(by: string): { drafted: string[]; present: string[] } {
-  const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by), installProductProcedures(by), installProgrammeProcedures(by), installComplaintProcedures(by)];
+  const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by), installProductProcedures(by), installProgrammeProcedures(by), installComplaintProcedures(by), installOversightProcedures(by)];
   return { drafted: all.flatMap(x => x.drafted), present: all.flatMap(x => x.present) };
 }

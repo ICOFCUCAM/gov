@@ -103,10 +103,15 @@ export const REQUIRED_AUTHORITIES = AUTHORITIES.filter(a => !a.optional);
  * Slots whose named institution stands outside whole-government reach in
  * lib/auth/roles.ts whatever its recorded standing (the judiciary and data
  * protection as before; the legislature, head of state and a constitutional
- * court by their nature). Other bodies are independent only when their
- * recorded standing says so (lib/data/store/institutions.ts).
+ * court by their nature; since plan step I8 the oversight bodies, the public
+ * audit office, the ombudsman, the human rights institution and the
+ * anti-corruption commission, whose records are their own: lib/oversight).
+ * Other bodies are independent only when their recorded standing says so
+ * (lib/data/store/institutions.ts). The public audit office's power to read
+ * another independent body's case still needs its recorded standing
+ * (institutionBounds().audit).
  */
-export const INDEPENDENT_SLOTS: AuthorityKey[] = ['judiciary', 'dataProtection', 'legislature', 'headOfState', 'constitutionalCourt'];
+export const INDEPENDENT_SLOTS: AuthorityKey[] = ['judiciary', 'dataProtection', 'legislature', 'headOfState', 'constitutionalCourt', 'supremeAudit', 'ombudsman', 'humanRights', 'anticorruption'];
 /** Slots whose named institution is a court: its cases are closed to every other institution. */
 export const JUDICIAL_SLOTS: AuthorityKey[] = ['judiciary', 'constitutionalCourt'];
 export const isAuthorityKey = (v: unknown): v is AuthorityKey => AUTHORITIES.some(a => a.key === v);

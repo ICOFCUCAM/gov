@@ -303,6 +303,10 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/education$/,                      // institutional returns: canRecordEducationReturn() in the route
   /^\/api\/health-regulation$/,              // capacity returns: canRecordHealthReturn() in the route
   /^\/api\/rules$/,                          // operational rules: canManageRule() in the route
+  // Independent oversight (plan I8, lib/oversight): intake with the protected identity kept apart, reading it (the assigned or authorised
+  // official, logged), and what the institution concerned adds beside the body's record (a response, evidence, a controller's answer);
+  // each checked against the record in lib/oversight. Cases themselves move only through /api/cases.
+  /^\/api\/oversight$/,
   /^\/api\/access-log\/retention$/,          // oversight confirmation of shortening the access log: canConfirmAccessLogRetention() in the route
   /^\/api\/case-packages(\/|$)/,              // procedures: drafted by the responsible institution, approved by one who can sign there (route)
   /^\/api\/documents\/verify$/,               // checks a document code (no change)
