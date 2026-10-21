@@ -181,7 +181,7 @@ What has been built is locked. Work only upgrades it toward the vision in
   items, mapping to the code and build order:
   `docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md`. Its implementation starts only
   after the constitutional phases are complete and integrated.
-- The complete form system (ChatGPT, 13 parts; received so far: parts 8–11 in
+- The complete form system (ChatGPT, 13 parts, all received, in
   `docs/forms-catalogue/`) is kept verbatim and binding (owner, 21 October 2026):
   never summarise the owner's documents; every catalogue item (form, register,
   configuration, exchange, safeguard, acceptance gate) is a row of the
