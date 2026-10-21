@@ -9,7 +9,8 @@ import { asNationSets, setNationDays } from '@/lib/casework/testkit';
 import { setSovereign, listMinistries, listAudit } from '@/lib/data/store';
 import { recordVersion, confirmVersion, resetLaw } from '@/lib/law/register';
 import { installReferenceProcedures, REFERENCE_BIRTH } from '@/lib/civil/procedures';
-import { draftPackage, approvePackage, editDraft, getPackage, resetPackages } from '@/lib/casework/packages';
+import { draftPackage, approvePackage, editDraft, getPackage, listPackages, resetPackages } from '@/lib/casework/packages';
+import { installReferenceProcedures as installAll } from '@/lib/casework/modules';
 import { registeredEffects, resetCases, submitForm, type Actor } from '@/lib/casework/engine';
 import { publicationOf, recordApproval, resetPublication, submissionRefusal, contractDigest, type Official } from './publication';
 import { GET, POST } from '@/app/api/case-packages/route';
@@ -59,6 +60,16 @@ describe('form publication gates', () => {
     setNationDays();
   });
   afterEach(() => { vi.unstubAllEnvs(); });
+
+  it('reads the gates of every reference procedure, each a draft that shows its real status', () => {
+    installAll('Administrator');
+    const all = listPackages();
+    expect(all.length).toBeGreaterThan(20);
+    for (const p of all) {
+      const s = publicationOf(p, new Date(), registeredEffects());
+      expect(['contract_draft', 'blocked', 'under_review'], `${p.key}@${p.version}`).toContain(s.status);
+    }
+  });
 
   it('keeps the checks the platform verifies apart from the approvals a person gives', () => {
     draftV2();

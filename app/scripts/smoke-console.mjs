@@ -41,6 +41,10 @@ const PAGES = [
   { path: '/gov/legislature', map: false, text: /bills and votes/i },
   // Plan phase 6: transitions and emergencies.
   { path: '/gov/configuration/transitions', map: false, text: /record a legal event/i },
+  // Plan step I1: the form designer, one form in its channels (a library form: present on a fresh server), the printed form.
+  { path: '/gov/law/procedures/forms', map: false, text: /forms/i },
+  { path: '/gov/law/procedures/forms/taxpayer-registration-v1', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer-registration-v1/print', map: false, text: /register status/i },
 ];
 const VIEWPORTS = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 

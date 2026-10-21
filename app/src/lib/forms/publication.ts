@@ -102,6 +102,8 @@ export function contractDigest(p: Pick<CasePackage, 'key' | 'version' | 'title' 
 }
 
 const today = (now = new Date()) => now.toISOString().slice(0, 10);
+/** Procedures whose decisions are classified from the case (its register or profession, lib/permits/decisions.ts): checked when decided. */
+const CASE_CLASSIFIED = ['prof.', 'org.', 'edu.school', 'health.facility', 'health.pharmacy'];
 const flat = (fields: ContractField[]): ContractField[] => fields.flatMap(f => [f, ...(f.items ? flat(f.items as ContractField[]) : [])]);
 const CLASS_KEYS = DATA_CLASSES.map(c => c.key);
 
@@ -136,10 +138,12 @@ function automaticGates(p: CasePackage, now: Date, effects?: string[]): Gate[] {
   const authority: string[] = [];
   const owner = ownerInstitution(p.owner, authorityFor);
   if (!owner) authority.push('Who is responsible does not name the institution for this procedure yet');
-  const stub = { fields: {}, procedure: p.key } as unknown as Case;
+  // A case of this procedure with no answers yet: decisions whose authority depends on the case (a register, a profession) are classified when decided.
+  const stub = { id: 'publication-check', fields: {}, procedure: p.key, package: { key: p.key, version: p.version }, history: [], links: [] } as unknown as Case;
   for (const a of p.actions.filter(x => x.decision)) {
-    const c = classifyDecision(stub, a, p);
-    if (!c) { if (!p.key.startsWith('prof.') && !p.key.startsWith('org.')) authority.push(`${a.label}: the platform cannot say which authority this decision rests on`); continue; }
+    let c: ReturnType<typeof classifyDecision>;
+    try { c = classifyDecision(stub, a, p); } catch { c = null; }
+    if (!c) { if (!CASE_CLASSIFIED.some(x => p.key.startsWith(x))) authority.push(`${a.label}: the platform cannot say which authority this decision rests on`); continue; }
     if (c.kind === 'mapping' && !mappingInForce(c.permitType, on)) authority.push(`${a.label}: no approved mapping of ${c.permitType} is in force`);
     if (c.kind === 'deployment' && isAuthorityKey(c.authority) && !authorityFor(c.authority)) authority.push(`${a.label}: who is responsible does not name ${c.authority}`);
   }
