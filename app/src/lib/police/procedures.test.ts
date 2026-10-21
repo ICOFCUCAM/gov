@@ -36,4 +36,25 @@ describe('police incident intake', () => {
     expect(await act(c.id, { action: 'close', reason: 'Insurance report only; no line of enquiry' }, off('sup', 'signatory'))).toMatchObject({ case: { stage: 'closed' } });
     expect(await act(c.id, { action: 'reopen', reason: 'Footage handed in' }, off('sup', 'signatory'))).toMatchObject({ case: { stage: 'triage' } });
   });
+
+  // P3-03 (docs/INSTITUTIONAL_ACCEPTANCE.md): an allegation stays an allegation: the police case carries no suspect,
+  // finding or judicial outcome, and its only decisions are to open an investigation or take no further action.
+  it('cannot carry a suspect, a finding or a judicial outcome', async () => {
+    const forbidden = /suspect|finding|guilt|verdict|convict|offender|accused|culprit|sentence|judgment|outcome/i;
+    for (const p of POLICE_PROCEDURES) {
+      for (const f of p.fields) expect(`${f.key} ${f.label}`, f.key).not.toMatch(/suspect|guilt|verdict|convict|offender|accused|culprit|sentence|judgment|outcome/i);
+      expect(p.fields.filter(f => /finding/i.test(f.key))).toEqual([]);
+      for (const a of p.actions) if (a.decision) expect(['open-investigation', 'no-further-action'], `${p.key}:${a.key}`).toContain(a.decision);
+      for (const st of p.stages) expect(st.key, st.key).not.toMatch(forbidden);
+    }
+    // A field the procedure does not declare is refused, at opening and at any step.
+    const report = { occurredOn: '2026-10-19', place: 'Market Street', account: 'Someone took my bicycle.' };
+    for (const field of ['suspect', 'finding', 'verdict', 'guilty']) {
+      expect(openCase({ procedure: 'police.incident', source: 'citizen', fields: { ...report, [field]: 'Named Person' } }, { name: 'Citizen', scope: null }), field).toMatchObject({ error: expect.stringMatching(/no field/) });
+    }
+    const c = openCase({ procedure: 'police.incident', source: 'citizen', fields: report }, { name: 'Citizen', scope: null }) as { id: string };
+    assign(c.id, { id: 'o1', name: 'Officer o1' }, off('sup', 'signatory'));
+    expect(await act(c.id, { action: 'triage', fields: { finding: 'Named Person did it' } }, off('o1'))).toMatchObject({ error: expect.stringMatching(/no field finding/) });
+    expect(await act(c.id, { action: 'triage', fields: { suspect: 'Named Person' } }, off('o1'))).toMatchObject({ error: expect.stringMatching(/no field suspect/) });
+  });
 });

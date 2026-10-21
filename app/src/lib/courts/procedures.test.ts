@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { openCase, act, attach, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
+import { openCase, act, attach, assign, getCase, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
+import { institutionBounds } from '@/lib/data/store/institutions';
 import { draftPackage, approvePackage, resetPackages } from '@/lib/casework/packages';
 import { addDocument, resetDocuments } from '@/lib/records/documents';
 import { resetDecisions } from '@/lib/records/decisions';
@@ -44,5 +45,25 @@ describe('court case', () => {
     expect(j.case.deadlines.find(d => d.key === 'appeal')).toBeTruthy();
     await step(c.id, 'make-final', court('clerk', 'signatory'));
     expect((await step(c.id, 'archive', court('clerk', 'signatory'))).case.stage).toBe('archived');
+  });
+
+  // P3-01 (docs/INSTITUTIONAL_ACCEPTANCE.md): no executive or whole-government administrator assigns, reassigns or decides a court's case.
+  it('refuses an executive or whole-government administrator assigning, reassigning or deciding a court case', async () => {
+    const c = openCase({ procedure: 'court.case', fields: { caseType: 'civil', claimant: 'Private Claimant', respondent: 'Private Respondent', summary: 'Unpaid invoice' } }, court('clerk', 'signatory')) as { id: string };
+    expect(getCase(c.id)!.assignee).toMatchObject({ id: 'clerk' });
+    const bounds = institutionBounds();
+    expect(bounds.judicial).toContain(COURT);
+    const wholeGovernment: Actor = { id: 'wg-admin', name: 'Government administrator', scope: { id: 'wg-admin', role: 'administrator', bounds } };
+    const executive: Actor = { id: 'ex-admin', name: 'Executive administrator', scope: { id: 'ex-admin', role: 'administrator', institution: OTHER, bounds } };
+    const executiveSigner: Actor = { id: 'ex-sign', name: 'Executive signatory', scope: { id: 'ex-sign', role: 'signatory', institution: OTHER, bounds } };
+    for (const who of [wholeGovernment, executive, executiveSigner]) {
+      expect(assign(c.id, { id: who.id!, name: who.name }, who), who.name).toHaveProperty('error');
+      expect(assign(c.id, { id: 'friendly-judge', name: 'Friendly judge' }, who), who.name).toHaveProperty('error');
+      expect(await act(c.id, { action: 'review' }, who), who.name).toHaveProperty('error');
+    }
+    // The assignment and the case are as the court left them.
+    expect(getCase(c.id)).toMatchObject({ assignee: { id: 'clerk' }, stage: 'filed' });
+    // The court's own registry still assigns.
+    expect(assign(c.id, { id: 'judge', name: 'Court judge' }, court('clerk', 'signatory'))).toMatchObject({ assignee: { id: 'judge' } });
   });
 });

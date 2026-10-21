@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { callService, serviceDirectory } from './services';
 import { verifyReceipt, listExchanges, resetExchangeLog } from './log';
 import { registerEvent, resetCivil } from '@/lib/civil/register';
-import { registerIntegration, listIntegrations } from '@/lib/data/store';
+import { registerIntegration, listIntegrations, setIntegrationStatus } from '@/lib/data/store';
 import { approveIntegration } from '@/lib/data/integration-approval.fixture';
 import { generateKeyPairSync } from 'node:crypto';
 
@@ -38,6 +38,44 @@ describe('exchange services', () => {
   it('lists every service with its owner, scope and the fields it returns', () => {
     expect(serviceDirectory().map(s => [s.id, s.kind, s.scope])).toEqual([['person.verify', 'query', 'service:person.verify'], ['organisation.standing', 'query', 'service:organisation.standing'], ['taxpayer.status', 'query', 'service:taxpayer.status'], ['qualification.verify', 'query', 'service:qualification.verify'], ['professional.standing', 'query', 'service:professional.standing'], ['customs.release', 'query', 'service:customs.release'], ['immigration.status', 'query', 'service:immigration.status'], ['civil.birth.registered', 'event', 'events:civil']]);
   });
+});
+
+// P2-02 and P5-05 (docs/INSTITUTIONAL_ACCEPTANCE.md).
+describe('the exchange log names the caller and purpose; a suspended or revoked integration is refused, earlier entries kept', () => {
+  beforeEach(() => { resetCivil(); resetExchangeLog(); });
+
+  it('records the calling institution and the stated purpose on each exchange (P2-02)', async () => {
+    registerEvent({ kind: 'birth', date: '2026-09-01', place: { region: 'North' }, case: 'c1', child: { given: 'Amara', family: 'Okafor', sex: 'female' } }, 'R');
+    const caller = outside('Identity authority', 'person.verify', ['issuing-a-national-identity-card']);
+    const r = await callService(caller, 'person.verify', { registration: 'BR-2026-000001', family: 'Okafor' }, 'Issuing a national identity card');
+    expect(r.status).toBe(200);
+    const [entry] = listExchanges({ channel: 'service' });
+    expect(entry).toMatchObject({ feedId: `integration:${caller.id}`, path: 'service:person.verify', status: 200, receiptId: r.receipt.id });
+    expect(entry!.result).toContain('purpose: Issuing a national identity card');
+    // The signed receipt carries the same caller and purpose.
+    expect(r.receipt).toMatchObject({ feedId: `integration:${caller.id}`, result: expect.stringContaining('purpose: Issuing a national identity card') });
+    expect(verifyReceipt(r.receipt)).toBe(true);
+  });
+
+  for (const status of ['suspended', 'revoked'] as const) {
+    it(`refuses new exchanges once the integration is ${status}, and keeps the earlier entries and receipts intact (P5-05)`, async () => {
+      registerEvent({ kind: 'birth', date: '2026-09-01', place: { region: 'North' }, case: 'c1', child: { given: 'Amara', family: 'Okafor', sex: 'female' } }, 'R');
+      const caller = outside('Labour inspectorate', 'person.verify', ['right-to-work-check']);
+      const before = await callService(caller, 'person.verify', { registration: 'BR-2026-000001', family: 'Okafor' }, 'Right-to-work check');
+      expect(before.status).toBe(200);
+      const kept = structuredClone(listExchanges({ channel: 'service' }));
+      expect(setIntegrationStatus(caller.id, status, 'Administrator')).not.toHaveProperty('error');
+      const after = await callService(caller, 'person.verify', { registration: 'BR-2026-000001', family: 'Okafor' }, 'Right-to-work check');
+      expect(after).toMatchObject({ status: 403, error: expect.stringMatching(/not an approved integration/) });
+      expect(after.data).toBeUndefined();
+      const now = listExchanges({ channel: 'service' });
+      // The refusal is logged as a new entry; the earlier entry is unchanged and its receipt still verifies.
+      expect(now).toHaveLength(kept.length + 1);
+      expect(now[0]).toMatchObject({ feedId: `integration:${caller.id}`, status: 403 });
+      expect(now.slice(1)).toEqual(kept);
+      expect(verifyReceipt(before.receipt)).toBe(true);
+    });
+  }
 });
 
 describe('immigration.status', () => {
