@@ -1,2 +1,5 @@
 node_modules/
 .claude/worktrees/
+
+# Python bytecode from the requirements scripts
+__pycache__/
