@@ -65105,7 +65105,7 @@
         ],
         "operationId": "get_tax",
         "summary": "GET /api/tax",
-        "description": "GET /api/tax — the tax register (lib/tax/register.ts) for the tax authority's officials and auditors with a purpose (tax secrecy): ?tin= opens a taxpayer with returns, assessments and accounts; ?party= finds by register reference; with neither, counts only. Every search and read, allowed or refused, is written to the access log. Changes happen only through decided tax cases (/api/cases).",
+        "description": "GET /api/tax — the tax register (lib/tax/register.ts) for the tax authority's officials and auditors with a purpose (tax secrecy): ?tin= opens a taxpayer with returns, assessments, accounts, refunds and payment arrangements; ?party= finds by register reference; with neither, counts only. Every search and read, allowed or refused, is written to the access log. Changes happen only through decided tax cases (/api/cases).",
         "parameters": [
           {
             "name": "party",
@@ -65162,12 +65162,40 @@
                               "additionalProperties": {
                                 "type": "number"
                               }
+                            },
+                            "refunds": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "plans": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "disclosures": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "rulings": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
                             }
                           },
                           "required": [
                             "taxpayers",
                             "returns",
-                            "assessments"
+                            "assessments",
+                            "refunds",
+                            "plans",
+                            "disclosures",
+                            "rulings"
                           ]
                         },
                         "taxpayers": {
@@ -65205,12 +65233,40 @@
                               "additionalProperties": {
                                 "type": "number"
                               }
+                            },
+                            "refunds": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "plans": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "disclosures": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "rulings": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
                             }
                           },
                           "required": [
                             "taxpayers",
                             "returns",
-                            "assessments"
+                            "assessments",
+                            "refunds",
+                            "plans",
+                            "disclosures",
+                            "rulings"
                           ]
                         },
                         "taxpayers": {
@@ -65228,6 +65284,18 @@
                                 "type": "array",
                                 "items": {
                                   "$ref": "#/components/schemas/Assessment"
+                                }
+                              },
+                              "refunds": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Refund"
+                                }
+                              },
+                              "plans": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/PaymentPlan"
                                 }
                               },
                               "accounts": {
@@ -65271,7 +65339,8 @@
                                 "type": "string",
                                 "enum": [
                                   "active",
-                                  "deregistered"
+                                  "deregistered",
+                                  "suspended"
                                 ]
                               },
                               "registeredAt": {
@@ -65279,6 +65348,21 @@
                               },
                               "case": {
                                 "type": "string"
+                              },
+                              "office": {
+                                "type": "string",
+                                "description": "The responsible tax office, where the nation assigns one (a transfer changes it)."
+                              },
+                              "details": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "description": "Contact and address details as last amended (restricted, tax secrecy)."
+                              },
+                              "version": {
+                                "type": "number",
+                                "description": "The registration's version: each decided amendment makes a new one, the earlier state kept in history."
                               },
                               "history": {
                                 "type": "array",
@@ -65296,6 +65380,9 @@
                                     },
                                     "case": {
                                       "type": "string"
+                                    },
+                                    "before": {
+                                      "$ref": "#/components/schemas/RegistrationState"
                                     }
                                   },
                                   "required": [
@@ -65309,6 +65396,8 @@
                             "required": [
                               "returns",
                               "assessments",
+                              "refunds",
+                              "plans",
                               "accounts",
                               "id",
                               "tin",
@@ -65342,6 +65431,18 @@
                         },
                         "assessments": {
                           "key": 1
+                        },
+                        "refunds": {
+                          "key": 1
+                        },
+                        "plans": {
+                          "key": 1
+                        },
+                        "disclosures": {
+                          "key": 1
+                        },
+                        "rulings": {
+                          "key": 1
                         }
                       },
                       "taxpayers": [
@@ -65370,6 +65471,87 @@
           }
         ],
         "x-source": "src/app/api/tax/route.ts"
+      }
+    },
+    "/api/tax/services": {
+      "get": {
+        "tags": [
+          "tax"
+        ],
+        "operationId": "get_tax_services",
+        "summary": "GET /api/tax/services",
+        "description": "GET /api/tax/services — the tax services (plan step I5, forms batch 6): each tax procedure with its state in this installation's package register (not installed, draft, approved), the permit type each decision rests on and whether its mapping is approved, its periods (set by the nation or not), and the catalogue forms it carries by identity with their procedure-link state; the forms still waiting for a procedure, with why. Configuration only: no taxpayer, return, assessment, balance or refund is read here (the tax register is /api/tax, under canReadTax(), every read in the access log). Nothing is changed here: procedures are drafted and approved at /api/case-packages, mappings at /api/permit-authorities.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxServicesView"
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "procedures": [
+                        {
+                          "key": "string",
+                          "title": "Example",
+                          "state": "approved",
+                          "stages": 1,
+                          "decisions": [
+                            {}
+                          ],
+                          "periods": [
+                            {}
+                          ],
+                          "forms": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "waiting": [
+                        {
+                          "identity": "string",
+                          "specId": "ID-0001",
+                          "title": "Example",
+                          "batch": 1,
+                          "why": "string"
+                        }
+                      ],
+                      "counts": {
+                        "forms": 1,
+                        "linked": 1,
+                        "waiting": 1,
+                        "procedures": 1,
+                        "approved": 1,
+                        "mappingsApproved": 1,
+                        "permitTypes": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/tax/services/route.ts"
       }
     },
     "/api/trust/keys": {
@@ -74771,6 +74953,15 @@
           },
           "decision": {
             "type": "string"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "compliance",
+              "disclosure",
+              "return"
+            ],
+            "description": "Where the assessment came from: a return, a compliance review or a voluntary disclosure (absent: a return)."
           },
           "state": {
             "type": "string",
@@ -89844,6 +90035,32 @@
           "installedAt"
         ]
       },
+      "Instalment": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "due": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "type": "number"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "bill": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "due",
+          "amountMinor",
+          "reference"
+        ]
+      },
       "InstitutionProhibition": {
         "description": "Something the law forbids (guidance §7.2.5).",
         "type": "object",
@@ -96964,6 +97181,169 @@
           "state"
         ]
       },
+      "PaymentPlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "taxpayer": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "liabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The assessments (tax:ASM-…) the arrangement covers: every amount traces to an approved liability."
+          },
+          "currency": {
+            "type": "string"
+          },
+          "instalments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Instalment"
+            }
+          },
+          "interest": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "entered"
+                  },
+                  "amountMinor": {
+                    "type": "number"
+                  },
+                  "reasons": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "amountMinor",
+                  "reasons"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "none"
+                  },
+                  "reasons": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reasons"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "rule"
+                  },
+                  "rule": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  },
+                  "digest": {
+                    "type": "string"
+                  },
+                  "amountMinor": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "rule",
+                  "version",
+                  "digest",
+                  "amountMinor"
+                ]
+              }
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "cancelled",
+              "completed",
+              "defaulted",
+              "varied"
+            ]
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "what": {
+                  "type": "string"
+                },
+                "case": {
+                  "type": "string"
+                },
+                "reasons": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "at",
+                "by",
+                "what",
+                "case",
+                "reasons"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "taxpayer",
+          "taxType",
+          "liabilities",
+          "currency",
+          "instalments",
+          "state",
+          "case",
+          "at",
+          "by",
+          "history"
+        ]
+      },
       "PaymentReceipt": {
         "type": "object",
         "properties": {
@@ -103458,6 +103838,201 @@
           "lagMs"
         ]
       },
+      "Refund": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "description": "The reference the payout carries: tax-refund:<id>."
+          },
+          "taxpayer": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "claimedMinor": {
+            "type": "number"
+          },
+          "approvedMinor": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "credit": {
+            "type": "string",
+            "enum": [
+              "existing-credit",
+              "new-entitlement"
+            ],
+            "description": "existing-credit: paid from a credit the account already shows; new-entitlement: the decision credits the account."
+          },
+          "interest": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "entered"
+                  },
+                  "amountMinor": {
+                    "type": "number"
+                  },
+                  "reasons": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "amountMinor",
+                  "reasons"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "none"
+                  },
+                  "reasons": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reasons"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "rule"
+                  },
+                  "rule": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  },
+                  "digest": {
+                    "type": "string"
+                  },
+                  "amountMinor": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "rule",
+                  "version",
+                  "digest",
+                  "amountMinor"
+                ]
+              }
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "instructed",
+              "paid",
+              "refused"
+            ]
+          },
+          "reasons": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "instruction": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "case": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "case"
+            ]
+          },
+          "payout": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "railReference": {
+                "type": "string"
+              },
+              "amountMinor": {
+                "type": "number"
+              },
+              "paidAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "railReference",
+              "amountMinor",
+              "paidAt"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "taxpayer",
+          "taxType",
+          "claimedMinor",
+          "approvedMinor",
+          "currency",
+          "basis",
+          "credit",
+          "state",
+          "reasons",
+          "case",
+          "at",
+          "by"
+        ]
+      },
       "RegionReporting": {
         "type": "object",
         "properties": {
@@ -103786,6 +104361,39 @@
         "required": [
           "id",
           "response"
+        ]
+      },
+      "RegistrationState": {
+        "description": "What an amendment can change, kept as it was before each change.",
+        "type": "object",
+        "properties": {
+          "taxTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "deregistered",
+              "suspended"
+            ]
+          },
+          "office": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "taxTypes",
+          "state"
         ]
       },
       "RelationshipGrant": {
@@ -112842,6 +113450,15 @@
                 },
                 "reason": {
                   "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "amended",
+                    "late",
+                    "nil",
+                    "periodic"
+                  ]
                 }
               },
               "required": [
@@ -112872,6 +113489,224 @@
           "period",
           "versions",
           "state"
+        ]
+      },
+      "TaxServiceForm": {
+        "type": "object",
+        "properties": {
+          "identity": {
+            "type": "string"
+          },
+          "specId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "batch": {
+            "type": "number"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "draft",
+              "missing",
+              "under_review"
+            ]
+          }
+        },
+        "required": [
+          "identity",
+          "specId",
+          "title",
+          "batch",
+          "stage",
+          "link"
+        ]
+      },
+      "TaxServiceProcedure": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "draft",
+              "not-installed"
+            ],
+            "description": "Where the procedure stands in this installation: not installed, a draft, approved (in force)."
+          },
+          "version": {
+            "type": "number"
+          },
+          "stages": {
+            "type": "number"
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "step": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "permitType": {
+                  "anyOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "mapping": {
+                  "type": "string",
+                  "enum": [
+                    "approved",
+                    "draft",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "step",
+                "label",
+                "permitType",
+                "mapping"
+              ]
+            }
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "set": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "label",
+                "set"
+              ]
+            }
+          },
+          "forms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxServiceForm"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "state",
+          "stages",
+          "decisions",
+          "periods",
+          "forms"
+        ]
+      },
+      "TaxServicesView": {
+        "type": "object",
+        "properties": {
+          "procedures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxServiceProcedure"
+            }
+          },
+          "waiting": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "identity": {
+                  "type": "string"
+                },
+                "specId": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "batch": {
+                  "type": "number"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "identity",
+                "specId",
+                "title",
+                "batch",
+                "why"
+              ]
+            }
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "forms": {
+                "type": "number"
+              },
+              "linked": {
+                "type": "number"
+              },
+              "waiting": {
+                "type": "number"
+              },
+              "procedures": {
+                "type": "number"
+              },
+              "approved": {
+                "type": "number"
+              },
+              "mappingsApproved": {
+                "type": "number"
+              },
+              "permitTypes": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "forms",
+              "linked",
+              "waiting",
+              "procedures",
+              "approved",
+              "mappingsApproved",
+              "permitTypes"
+            ]
+          }
+        },
+        "required": [
+          "procedures",
+          "waiting",
+          "counts"
         ]
       },
       "TaxpayerRef": {

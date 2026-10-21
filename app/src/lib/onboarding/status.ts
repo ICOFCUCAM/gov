@@ -38,6 +38,7 @@ import { noticeSubscribers } from '@/lib/health/products/notices';
 import { programmeCounts, interventionRules, interventionRuleChanges } from '@/lib/health/programmes/register';
 import { PROGRAMME_PROCEDURES, PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
 import { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
+import { taxServicesView } from '@/lib/tax/services-view';
 import { smallCellRule, smallCellChanges } from '@/lib/health/small-cells';
 import { SITE_IDS } from '@/lib/public-sites';
 import { siteEditorial } from '@/lib/data/site-editorial';
@@ -333,6 +334,21 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Small-cell rule for health aggregates adopted by two officials citing the law', done: !!cells, href: '/gov/health-regulation/programmes', detail: cells ? `Version ${cells.version}: threshold ${cells.threshold}` : 'Ships unset: no programme figure or workforce count is published until it is adopted' },
         { label: 'Programmes established through decided cases', done: c.programmes.established > 0, href: '/gov/health-regulation/programmes', detail: `${c.programmes.established} established · ${c.returns} return(s)${c.samples ? ` (${c.samples} samples)` : ''}` },
         { label: 'Complaint procedures approved (facility and pharmacy complaints, professional conduct complaints)', done: complaintsApproved.length === complaints.length, href: '/gov/law/procedures', detail: `${complaintsApproved.length} of ${complaints.length} approved` },
+      ] };
+    }),
+
+    // Tax services (plan step I5, forms batch 6): the tax administration, its procedures, who decides each power, its rules, and the forms adopted.
+    track({ key: 'tax', title: 'Tax services', why: 'Registration, returns and assessments, amendments, objections, refunds, payment arrangements, voluntary disclosure, rulings and compliance reviews, each run by the tax administration under procedures its officials approve; rates, interest, penalties and periods only from the nation\'s approved rules.', href: '/gov/tax/services' }, () => {
+      const v = taxServicesView();
+      const forms = v.procedures.flatMap(p => p.forms);
+      const adopted = forms.filter(f => f.link === 'approved').length;
+      const rules = listRules().filter(r => r.key.startsWith('tax.') && r.state === 'approved').length;
+      return { checks: [
+        { label: 'Tax administration named (Who is responsible)', done: !!authorityFor('tax'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('tax') ? undefined : 'Not named: nobody keeps the tax register until it is' },
+        { label: 'Tax procedures approved (registration, returns, objections, amendments, refunds, arrangements, disclosure, rulings, compliance)', done: v.counts.approved === v.counts.procedures, href: '/gov/law/procedures', detail: `${v.counts.approved} of ${v.counts.procedures} approved` },
+        { label: 'Who decides each tax power approved (permit authorities)', done: v.counts.mappingsApproved === v.counts.permitTypes, href: '/gov/law/permit-authorities', detail: `${v.counts.mappingsApproved} of ${v.counts.permitTypes} mappings approved; the proposals ship unapproved` },
+        { label: 'Tax rates, interest and penalties approved as rules citing the law', done: rules > 0, href: '/gov/law/rules', detail: rules ? `${rules} approved tax rule version(s)` : 'None ship: assessments are entered with reasons, and a production installation refuses interest or a penalty without its rule' },
+        { label: 'Tax-service forms adopted in approved procedure versions', done: forms.length > 0 && adopted === forms.length, href: '/gov/tax/services', detail: `${adopted} of ${forms.length} forms carried by a procedure adopted; ${v.counts.waiting} wait for a procedure` },
       ] };
     }),
 
