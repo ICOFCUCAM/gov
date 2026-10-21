@@ -106,12 +106,28 @@ export function AuditView() {
   const [official, setOfficial] = useOfficial();
   const [note, setNote] = React.useState<string | null>(null);
 
+  // Reading the chain's entries is limited to auditors and the data-protection authority's officials
+  // (GET /api/audit, canReadAuditChain() in lib/auth/roles.ts). A refused official sees the refusal, the
+  // page stops asking for the entries, and the chain's verification (public) keeps refreshing.
+  const [refused, setRefused] = React.useState<string | null>(null);
+  const refusedRef = React.useRef(false);
   const load = React.useCallback(async () => {
-    const [page, v] = await Promise.all([api.audit.list({ limit: PAGE }), api.audit.verify().catch(() => null)]);
-    setEvents(page.events);
-    setTotal(page.total);
-    // Until older pages are read, the cursor follows the newest page.
-    if (!olderLoaded.current) setNextBefore(page.nextBefore);
+    const verifyP = api.audit.verify().catch(() => null);
+    if (!refusedRef.current) {
+      const res = await fetch(`/api/audit?limit=${PAGE}`, { cache: 'no-store' }).catch(() => null);
+      if (res && (res.status === 401 || res.status === 403)) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        refusedRef.current = true;
+        setRefused(body.error ?? (res.status === 401 ? 'Sign in as an official to read the audit chain.' : 'This account may not read the audit chain.'));
+      } else if (res && res.ok) {
+        const page = (await res.json()) as { events: AuditEntry[]; total: number; nextBefore?: number };
+        setEvents(page.events);
+        setTotal(page.total);
+        // Until older pages are read, the cursor follows the newest page.
+        if (!olderLoaded.current) setNextBefore(page.nextBefore);
+      }
+    }
+    const v = await verifyP;
     if (v) setVerify(v);
   }, []);
 
@@ -161,10 +177,10 @@ export function AuditView() {
   // Every headline figure is read from the audit chain and its verification; none is generated.
   const tele: TeleFig[] = [
     { l: 'Chain integrity', v: verify ? (intact ? 'INTACT' : 'BROKEN') : '—', sub: intact ? 'tamper-evident' : 'investigate', t: tone, kind: 'record', src: CHAIN_SRC },
-    { l: 'Events recorded', v: String(Math.max(total, evs.length)), sub: `+${evs.filter(e => now - Date.parse(e.at) < 86_400_000).length} / 24h`, t: 'ok', kind: 'record', src: CHAIN_SRC },
+    { l: 'Events recorded', v: refused ? '—' : String(Math.max(total, evs.length)), sub: refused ? 'entries not readable by this account' : `+${evs.filter(e => now - Date.parse(e.at) < 86_400_000).length} / 24h`, t: 'ok', kind: refused ? 'unavailable' : 'record', src: CHAIN_SRC },
     { l: 'Verified links', v: String(verify?.checked ?? 0), sub: 'hash continuity', t: 'ok', kind: 'record', src: CHAIN_SRC },
-    { l: 'Non-ok outcomes', v: String(denied), sub: denied ? 'review queue' : 'clean', t: denied ? 'warn' : 'ok', kind: 'record', src: CHAIN_SRC },
-    { l: 'Watch findings · 30 days', v: String(findings.length), sub: partial ? `in the newest ${evs.length} entries · a prompt, never a conclusion` : 'a prompt, never a conclusion', t: findings.length ? 'warn' : 'ok', kind: 'record', src: 'Findings the access watches raised on the audit chain (lib/records/access-watch.ts)' },
+    { l: 'Non-ok outcomes', v: refused ? '—' : String(denied), sub: refused ? 'entries not readable by this account' : denied ? 'review queue' : 'clean', t: denied ? 'warn' : 'ok', kind: refused ? 'unavailable' : 'record', src: CHAIN_SRC },
+    { l: 'Watch findings · 30 days', v: refused ? '—' : String(findings.length), sub: refused ? 'entries not readable by this account' : partial ? `in the newest ${evs.length} entries · a prompt, never a conclusion` : 'a prompt, never a conclusion', t: findings.length ? 'warn' : 'ok', kind: refused ? 'unavailable' : 'record', src: 'Findings the access watches raised on the audit chain (lib/records/access-watch.ts)' },
     { l: 'Attestation', v: !verify ? '—' : !intact ? 'BROKEN' : verify.complete === false ? 'CATCHING UP' : 'CURRENT', sub: verify ? `verified ${ago(verify.verifiedAt, now)}${verify.fullCheckAt ? ` · full check ${ago(verify.fullCheckAt, now)}` : ''}` : 'not verified yet', t: !verify ? 'neutral' : intact ? 'ok' : 'alert', kind: 'record', src: 'The chain\'s verification (GET /api/audit/verify)' },
   ];
 
@@ -208,7 +224,7 @@ export function AuditView() {
         <Panel signal="record" title="Anomaly signals" meta="access watches · last 30 days" bodyClass="!p-1.5">
           {/* What the access watches raised on the audit chain: a prompt to look, never a conclusion. */}
           <div className="mb-1.5 grid grid-cols-1 gap-1">
-            {findings.length === 0 ? <p className="text-[10px] text-ink-muted">No finding raised{partial ? ` in the newest ${evs.length} entries` : ''}.</p> : findings.slice(0, 6).map(f => (
+            {refused ? <p className="text-[10px] text-ink-muted">Read by auditors and the data-protection authority only.</p> : findings.length === 0 ? <p className="text-[10px] text-ink-muted">No finding raised{partial ? ` in the newest ${evs.length} entries` : ''}.</p> : findings.slice(0, 6).map(f => (
               <div key={f.id} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
                 <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{WATCH_FINDING_ACTIONS[f.action]} · {f.resource}</span>
                 <span className="shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">#{f.seq} · {new Date(f.at).toLocaleString()}</span>
@@ -274,7 +290,12 @@ export function AuditView() {
         }
         bodyClass="overflow-auto !p-0"
       >
-        {events === null ? (
+        {refused ? (
+          <div role="status" className="space-y-1 p-3 text-xs text-ink-soft">
+            <p><strong>The chain&apos;s entries are not shown to this account.</strong> {refused}</p>
+            <p className="text-ink-muted">Who acted, on which record, is read only by auditors and the officials of the data-protection authority, so that those who run the platform do not oversee themselves. The chain&apos;s verification above stays open to every official.</p>
+          </div>
+        ) : events === null ? (
           <p className="p-3 text-xs text-ink-muted">Replaying hash chain…</p>
         ) : events.length === 0 ? (
           <EmptyState title="No audit events yet" hint="State-changing actions (decisions, payments, escalations) are hash-chained here as they occur." />
