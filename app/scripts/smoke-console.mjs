@@ -37,6 +37,7 @@ const PAGES = [
   // Plan phase 4: the shared workspace shell and the offices of state.
   { path: '/gov/workspace', map: false, text: /my authority/i },
   { path: '/gov/configuration/offices', map: false, text: /offices of state/i },
+  { path: '/gov/configuration/constitution', map: false, text: /constitutional profile/i },
 ];
 const VIEWPORTS = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 
