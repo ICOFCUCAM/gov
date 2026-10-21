@@ -95,7 +95,7 @@ def library_contracts(repo):
                 keys += [f"{x['id']}.{i['id']}" for i in x.get('items') or []]
         cat = c.get('catalogue') or {}
         out.append(dict(path=f'{LIBRARY}/{f}', source=cat.get('source'), id=cat.get('id'), form_id=c.get('form_id'), fields=keys,
-                        batch=1, title=(c.get('library') or {}).get('title', '')))
+                        batch=cat.get('batch', 1), title=(c.get('library') or {}).get('title', '')))
     return out
 FORM_STATUSES = ['catalogued', 'contract_missing', 'contract_draft', 'under_review', 'blocked', 'excluded', 'approved', 'production']
 # field keys a contract may not carry outside an excluded or legal-review form (CLAUDE.md health, education, police rules)

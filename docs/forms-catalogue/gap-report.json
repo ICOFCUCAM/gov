@@ -8,31 +8,52 @@
   "docs/forms-catalogue/PARTS-12-13.md": "c801d41e56eb3da005de09ce8d6618565d592d32b6aaf4a9eef0830e9323b8f3",
   "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md": "c878eb6ca87bb07bab04adc3281d57c19424d7cf1aeef4617760b66f25c40d04",
   "docs/requirements/form-scope.json": "f97b483076bde3403784c6921f69b1b5540422f3059de2bf280665617d519a16",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-001.json": "7c561dea0cddcff19124717f86b70ab949dfa517f1dabebdd5f0c16b47eeb51c",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-002.json": "74c2a2a126722b75f871a9f80c7c5747ead01b0854520cb8dfdb5dc282f7828e",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-003.json": "a9599bffb0635934ab79c18af7c5f7d7aa6e68f8a3482215e492bdb2deb7196b",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-004.json": "6ebe32b778d489eef508f29211bca0275e51396f6c8aa655209a0db0718c6673",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-005.json": "2711f2611fdee38a35ca64a99e5624b86bd8b4b370e498cb20ca4650c080473e",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-006.json": "a5e3f5e813629e4a0bc4ef5468b7f77498b288ccb17006996057dd00d4ce96e3",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-007.json": "06e30944efcbdf0177bbc4c45bdb2889c5db7c36d959c286a9ecfca150582972",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-008.json": "f1d6a6dd211b428017ca78895992731589d05491b10af0e4f8ae657b997ce4ff",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-009.json": "2a1547e726e32b812efc036df23a74e7de11ffa94d4de7c1d5a034a4df08945b",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-010.json": "112e8ab0223fafa0d17761415eda1900fafed692e2e2917ff31fc54817ed4d2e",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-001.json": "05bac31ada7c901b8f04e1f38124ad3f504216edef6d6734b47642a15b05c951",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-002.json": "cf008555c6e7455f60b1a93a268c33f6a508eb550e31a1d876ed38116229a54a",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-003.json": "7ee19b74cc5d5d36bd249769cd2be9d3701122b406e90de9a26d4f7233a35b97",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-004.json": "69919aecd56789ae1fa55fad0d68a5416f6e5808d2243363b7411766d8a90ab0",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-005.json": "6847461f083739c7c1c7ef9895d71f59e69cf2fc293c64519fcbc2a9104d3f0b",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-006.json": "0cdc5366959f01af6d514bc3482746caf0ff748c8ecea16b970d58bb7341ea84",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-007.json": "dae6eef2c05ed9e944bd527516b255a4cce2dcc66d31e089dca53ddba0a23710",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-008.json": "ad315ba1e7491aa15fde61da67ea37543047d48ccf22cce2d5c8375ff3a58eaf",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-009.json": "04b393a382172d87ff0828ea38f6399eb35bbf299f241daa0282a255143988d5",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-010.json": "3366fa4b5ff87c65a3105821f136f38aae7ddb83ca00db054650851b77e9e658",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-011.json": "fa95976b9e6824254d91ee7964ea118c63ff3c54c7e2ff99f74c5c47ff119814",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-012.json": "28acc0743bbc7f30735b9df34d8a4b70e9dae21beee7daaa00b708a87c09e829",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-013.json": "343d2b8b57d479fdb6304bc5268703dc06ea63cf238afa37b249f95d8521244c",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-014.json": "9a9bbb5e01cccc98e5c641a93493e1c6ba679dcaf6cd69dc4109790fc2f578b7",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-PH-015.json": "bf96559bd837aed08ef49e73d05dc5b00d1e2250e4e0375518bff3ab5fdac9e6"
+  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-001.json": "d95b517d3cd56d6c90044128beb122ecd971ff9cfd797f051d055d782c3edaf9",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-002.json": "9c24ce4dd7c24abc7f447a3978f8c176cf032b62b2d6e2f9717d628f9087934d",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-003.json": "f7fb7f822e294bb5c2bcd0b2d91e9170d70e8c227b9584f1dd8d5dde407ad47c",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-004.json": "f9d185fb7cc6cad1affe117c28c1c0bc984e13d12865d56c011351654c40aab8",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-005.json": "d9629a2cb353d38be4c4ae0d431a33b464a6f90e22bc764cd0437b99a2a0148a",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-006.json": "0029088be30aa2addbcdb9bd70f5fca46d5b025c10f0ce536d5f18bffa3668b0",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-007.json": "dfa1c06d3556b41363fda927e5115bf35993b9ddc5e5da6935ef30a3c9efd9dc",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-008.json": "59261b0fce85de124adb6736c2da885f634d780cabf7e413673ac56ec16cf3c6",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-009.json": "5a7bc63d0309ab5dc9119539d0227cf15a93e9e92a2e282efadda5d7fb8f681e",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-010.json": "3853be81fd3c91443f3c8b8aae1bba1ee08b6461d6247c02d2a33296d4ee29f4",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-001.json": "12802cad510c25460aa08ddfc22b76a037fa010bad09314de4387c4d99343474",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-002.json": "f11424df14c8cf9ee94fd5815adbea2d37e7415217f268b11ae99dd77756149f",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-003.json": "2f867bde06b69a426513cabfa8a42133c51c27cc85c037abd26a2366ec905eb7",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-004.json": "fd22a51210230b00f99b72c4d3300c8565fde84aef43b2900cd49b9d0505e054",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-005.json": "1e4df977454fac46d708fe134cc8a8634f70eb810c1da9fb1d4b928b7bb97558",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-006.json": "8fc0e7c2018b8643ab3b78b8e40d41ba3c37179da22fbd5aeda4ed1914aa55dd",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-007.json": "e0fee920b42cea33ef598063a147ad798b00f27732fb098a2f6d29d53057f741",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-008.json": "4d7c9a353f5b5169f29188a1cf112fb1b1e74dc2bf3cc21807d6b17f6cf98cac",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-009.json": "b19ebaf2bb5003fba7f3ccea85beb10ec3fc6fdfc40eb1e6fa5ca0c144470762",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-010.json": "2a0fb7a9465d6f792df04e3d4a2f4123095970b1b79c5147cf6c255665fe812c",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-011.json": "fc72ac1c75b9dd95e9dfe23bc5f200884f4d0b7d24c0fbaf3ef885b053ac1ea7",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-012.json": "a98f5ab0265da453a42cc014982ae629d2b206cdf0c11bb3b3b964a1fd56cc80",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-013.json": "05b0efc8245dcb2702248a0082b3addee974cd80b25a28aa86c9a8f5470ef32f",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-014.json": "ec647aa1fe5858a4113cd05cbe9279abb83c154814c81c9e9e4aedf244363712",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-001.json": "aa0998cb526e21f01f18f1926a777d216490ff2f3cde4aec46b26a258faaea9d",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-002.json": "f939e662944d92e978e1be6da50630b0e25e29d8c254de0980d374e2f4b64d84",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-003.json": "f3dfc4545cb3aa290c837d858c8dce8498ae2f334fc3dd3b668a8072c098b1ba",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-004.json": "9e25c629ee926b6a0fc211278eaa5d1517e49d93cf0219bb4a2a3d7d56ddba23",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-005.json": "48132a1a62e008fd5cdca4451b8afb638a36a33c2bfc2e01bdd450a3b270e8d3",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-006.json": "8a575795e54525c552dea462c1037b556efd2f0513a346533ca5b826cd94c4fb",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-007.json": "cf320d602142a98d4f61bb73b5010ea6d3024c5a11f7ef296a4e585d18c50a5f",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-008.json": "e123ab900fc0c19d46eba01c1dacb9d73b7746d22c9ef37b575a7226d61ebdab",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-009.json": "68600bda55db55a73314a62dfc60e713d839aefdd45bc647d05868c45e7bfe72",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-010.json": "b3e8ea7ed3107a81e6b20bc742682a3a09e08a0ea1480214134211620c1164ac",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-011.json": "ed50f69d8b7b9687b7ac8ab61f05748fddf7ba34cd28720370cdfec0d03e8d4d",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-012.json": "23f0e9684526b47904245d2e57c35cad52c3ac4ece472398cdcb7e37227d32e0",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-013.json": "e7c8fe044859c0d9a49ea1197f003a4d94876eda4c6ed6f9605989dd7bb45e80",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-014.json": "057543c8c0685670c057b0c49a02aaf7357e7a22670d28038b17212185db6d6d",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-015.json": "b0384a726055083273e9413390ac62492d406325d5a3c938f34695d0ee0b45c4",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-017.json": "597e62be9d9f0f43043834bc806a706baf17cfbbb78168b0969a76caf745f7e1",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-018.json": "dcb85f16696b7607775bbd46f2f0d2183b71a4a2010d59b5574a2dd377d5fed2",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-019.json": "fdf02a0c526668c2c257c28dd92de0dc606204e899367b6a264d3069df1f0271",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-020.json": "b915109804b9d46dda2eb2782ad1b73232fdcbf13c1c4cb4efd516f81cf410bb",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-023.json": "86dc58f14192f9af63f8aa8611f3c4228fe6ba68cf73d71f39181531e953f283",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-024.json": "fdb7a61cbbc691193af0b53e5b17ff4b98a605ade43f94e7220c0bba9095d65d",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-PH-015.json": "ec55fa8cb494c4f07f09c9040e6a8eaf51e3ae4b3cc620e31d65c3d3e180a2e4"
  },
  "reported": {
   "listed forms, parts 14–22": 216,
@@ -79,8 +100,8 @@
   "Part 13 (supplement, Stage B contracts)": 10
  },
  "form_status": {
-  "contract_missing": 1698,
-  "contract_draft": 154,
+  "contract_missing": 1677,
+  "contract_draft": 175,
   "under_review": 91,
   "excluded": 128,
   "blocked": 1
@@ -102,10 +123,10 @@
    "LAB-EMP-001"
   ]
  },
- "forms_without_contract": 1902,
+ "forms_without_contract": 1881,
  "library_contracts": {
-  "total": 25,
-  "matched_to_one_form": 25,
+  "total": 46,
+  "matched_to_one_form": 46,
   "unmatched_or_ambiguous": [],
   "batches": [
    {
@@ -315,6 +336,182 @@
     "form_status": {
      "contract_draft": 25
     }
+   },
+   {
+    "batch": 2,
+    "contracts": [
+     {
+      "id": "HLT-MED-001",
+      "row": "HLT-MED-001",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-001.json",
+      "fields": 48,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-002",
+      "row": "HLT-MED-002",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-002.json",
+      "fields": 26,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-003",
+      "row": "HLT-MED-003",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-003.json",
+      "fields": 17,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-004",
+      "row": "HLT-MED-004",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-004.json",
+      "fields": 12,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-005",
+      "row": "HLT-MED-005",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-005.json",
+      "fields": 23,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-006",
+      "row": "HLT-MED-006",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-006.json",
+      "fields": 17,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-007",
+      "row": "HLT-MED-007",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-007.json",
+      "fields": 26,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-008",
+      "row": "HLT-MED-008",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-008.json",
+      "fields": 32,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-009",
+      "row": "HLT-MED-009",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-009.json",
+      "fields": 13,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-010",
+      "row": "HLT-MED-010",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-010.json",
+      "fields": 35,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-011",
+      "row": "HLT-MED-011",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-011.json",
+      "fields": 20,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-012",
+      "row": "HLT-MED-012",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-012.json",
+      "fields": 24,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-013",
+      "row": "HLT-MED-013",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-013.json",
+      "fields": 36,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-014",
+      "row": "HLT-MED-014",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-014.json",
+      "fields": 33,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-015",
+      "row": "HLT-MED-015",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-015.json",
+      "fields": 25,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-017",
+      "row": "HLT-MED-017",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-017.json",
+      "fields": 41,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-018",
+      "row": "HLT-MED-018",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-018.json",
+      "fields": 31,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-019",
+      "row": "HLT-MED-019",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-019.json",
+      "fields": 40,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-020",
+      "row": "HLT-MED-020",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-020.json",
+      "fields": 26,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-023",
+      "row": "HLT-MED-023",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-023.json",
+      "fields": 29,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HLT-MED-024",
+      "row": "HLT-MED-024",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-024.json",
+      "fields": 6,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     }
+    ],
+    "form_status": {
+     "contract_draft": 21
+    }
    }
   ],
   "form_status_without_library": {
@@ -324,7 +521,27 @@
    "excluded": 128,
    "blocked": 1
   },
-  "forms_without_contract_without_library": 1927
+  "forms_without_contract_without_library": 1927,
+  "form_status_after_batch": {
+   "1": {
+    "contract_missing": 1698,
+    "contract_draft": 154,
+    "under_review": 91,
+    "excluded": 128,
+    "blocked": 1
+   },
+   "2": {
+    "contract_missing": 1677,
+    "contract_draft": 175,
+    "under_review": 91,
+    "excluded": 128,
+    "blocked": 1
+   }
+  },
+  "forms_without_contract_after_batch": {
+   "1": 1902,
+   "2": 1881
+  }
  },
  "incomplete_contracts": [
   {

@@ -52,8 +52,8 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | Status | Forms |
 |---|---|
 | catalogued | 0 |
-| contract_missing | 1698 |
-| contract_draft | 154 |
+| contract_missing | 1677 |
+| contract_draft | 175 |
 | under_review | 91 |
 | blocked | 1 |
 | excluded | 128 |
@@ -69,7 +69,8 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 
 ## Contracts CivicOS wrote (form library, controlled batches)
 
-25 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 25 matched to exactly one registered form (by source file and catalogue ID), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
+46 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 46 matched to exactly one registered form (by source file and catalogue ID), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
+
 
 **Batch 1** (health regulation, owner approved 21 October 2026): 25 contracts added; form status contract_draft 25.
 
@@ -101,23 +102,49 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | HLT-LIC-014 | HLT-LIC-014 | 7 | contract_draft | allowed |
 | HLT-PH-015 | HLT-PH-015 | 22 | contract_draft | allowed |
 
-**Totals beside the earlier ones** (the register without the library's contracts, and with them):
+**Batch 2** (medicines and medical devices regulation, owner approved 21 October 2026): 21 contracts added; form status contract_draft 21.
 
-| Status | Before (without the library) | Now |
-|---|---|---|
-| catalogued | 0 | 0 |
-| contract_missing | 1723 | 1698 |
-| contract_draft | 129 | 154 |
-| under_review | 91 | 91 |
-| blocked | 1 | 1 |
-| excluded | 128 | 128 |
-| approved | 0 | 0 |
-| production | 0 | 0 |
-| forms without a contract | 1927 | 1902 |
+| Form | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|
+| HLT-MED-001 | HLT-MED-001 | 48 | contract_draft | allowed |
+| HLT-MED-002 | HLT-MED-002 | 26 | contract_draft | allowed |
+| HLT-MED-003 | HLT-MED-003 | 17 | contract_draft | allowed |
+| HLT-MED-004 | HLT-MED-004 | 12 | contract_draft | allowed |
+| HLT-MED-005 | HLT-MED-005 | 23 | contract_draft | allowed |
+| HLT-MED-006 | HLT-MED-006 | 17 | contract_draft | allowed |
+| HLT-MED-007 | HLT-MED-007 | 26 | contract_draft | allowed |
+| HLT-MED-008 | HLT-MED-008 | 32 | contract_draft | allowed |
+| HLT-MED-009 | HLT-MED-009 | 13 | contract_draft | allowed |
+| HLT-MED-010 | HLT-MED-010 | 35 | contract_draft | allowed |
+| HLT-MED-011 | HLT-MED-011 | 20 | contract_draft | allowed |
+| HLT-MED-012 | HLT-MED-012 | 24 | contract_draft | allowed |
+| HLT-MED-013 | HLT-MED-013 | 36 | contract_draft | allowed |
+| HLT-MED-014 | HLT-MED-014 | 33 | contract_draft | allowed |
+| HLT-MED-015 | HLT-MED-015 | 25 | contract_draft | allowed |
+| HLT-MED-017 | HLT-MED-017 | 41 | contract_draft | allowed |
+| HLT-MED-018 | HLT-MED-018 | 31 | contract_draft | allowed |
+| HLT-MED-019 | HLT-MED-019 | 40 | contract_draft | allowed |
+| HLT-MED-020 | HLT-MED-020 | 26 | contract_draft | allowed |
+| HLT-MED-023 | HLT-MED-023 | 29 | contract_draft | allowed |
+| HLT-MED-024 | HLT-MED-024 | 6 | contract_draft | allowed |
+
+**Totals beside the earlier ones** (the register without the library's contracts, after each batch, and now):
+
+| Status | Before (without the library) | After batch 1 | After batch 2 | Now |
+|---|---|---|---|---|
+| catalogued | 0 | 0 | 0 | 0 |
+| contract_missing | 1723 | 1698 | 1677 | 1677 |
+| contract_draft | 129 | 154 | 175 | 175 |
+| under_review | 91 | 91 | 91 | 91 |
+| blocked | 1 | 1 | 1 | 1 |
+| excluded | 128 | 128 | 128 | 128 |
+| approved | 0 | 0 | 0 | 0 |
+| production | 0 | 0 | 0 | 0 |
+| forms without a contract | 1927 | 1902 | 1881 | 1881 |
 
 ## Forms with no contract
 
-1902 forms have no field contract (`contract: not yet given` in the register). By part:
+1881 forms have no field contract (`contract: not yet given` in the register). By part:
 
 | Part | Forms without a contract |
 |---|---|
@@ -125,7 +152,7 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | Part 3 | 361 |
 | Part 4 | 116 |
 | Part 5 | 136 |
-| Part 6 | 116 |
+| Part 6 | 95 |
 | Part 7 | 152 |
 | Part 8 | 202 |
 | Part 9 | 76 |

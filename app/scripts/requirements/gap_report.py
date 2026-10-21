@@ -11,6 +11,8 @@ import catalogue as C
 OUT_MD = 'docs/forms-catalogue/GAP-REPORT.md'
 OUT_JSON = 'docs/forms-catalogue/gap-report.json'
 REPORTED = {'listed forms, parts 14–22': 216, 'contracts, parts 14–22': 61, 'core contracts, parts 5–13': 72}
+# What each controlled batch of CivicOS's own contracts covers (owner's approvals, 21 October 2026).
+BATCH_LABEL = {1: 'health regulation', 2: 'medicines and medical devices regulation'}
 GATES = [
     'The form owner and competent authority are verified.',
     'Legal references and their versions have been approved.',
@@ -113,8 +115,12 @@ def build(repo, rows, checks):
         b['contracts'].append(dict(id=c['id'], row=c['matches'][0] if r else None, file=c['path'], fields=len(c['fields']), form_status=r['form_status'] if r else None, scope=(r or {}).get('scope', 'allowed')))
         if r:
             b['form_status'][r['form_status']] += 1
-    # the register as it stood before CivicOS's contracts: the same forms, without the library (a library contract is the only thing that moved them)
-    before = collections.Counter('contract_missing' if o['contract'] == C.LIBRARY_GIVEN and o['form_status'] in ('contract_draft', 'blocked') else o['form_status'] for o in forms)
+    # the register as it stood before CivicOS's contracts: the same forms, without the library (a library contract is the only thing that moved them),
+    # and after each batch in turn
+    moved = lambda o, upto: o['contract'] == C.LIBRARY_GIVEN and o['form_status'] in ('contract_draft', 'blocked') and batch_of.get(o['id'], 0) > upto
+    batch_of = {c['matches'][0]: c['batch'] for c in lib if len(c['matches']) == 1}
+    before = collections.Counter('contract_missing' if moved(o, 0) else o['form_status'] for o in forms)
+    after_batch = {b: collections.Counter('contract_missing' if moved(o, b) else o['form_status'] for o in forms) for b in sorted(batches)}
     incomplete = []
     for c in cs:
         if (c['source'], c['id']) in non_form:
@@ -161,7 +167,9 @@ def build(repo, rows, checks):
         forms_without_contract=len(no_contract),
         library_contracts=dict(total=len(lib), matched_to_one_form=len(lib) - len(lib_bad), unmatched_or_ambiguous=lib_bad,
                                batches=[dict(b, form_status=dict(b['form_status'])) for b in batches.values()],
-                               form_status_without_library=dict(before), forms_without_contract_without_library=len(no_contract) + sum(1 for o in forms if o['contract'] == C.LIBRARY_GIVEN)),
+                               form_status_without_library=dict(before), forms_without_contract_without_library=len(no_contract) + sum(1 for o in forms if o['contract'] == C.LIBRARY_GIVEN),
+                               form_status_after_batch={str(b): dict(v) for b, v in after_batch.items()},
+                               forms_without_contract_after_batch={str(b): len(no_contract) + sum(1 for o in forms if o['contract'] == C.LIBRARY_GIVEN and batch_of.get(o['id'], 0) > b) for b in after_batch}),
         incomplete_contracts=incomplete,
         duplicate_ids=dup_ids, same_title_different_ids=same_form,
         scope_violations=viol,
@@ -211,16 +219,17 @@ def write(repo, rows, checks):
               f'{lc["matched_to_one_form"]} matched to exactly one registered form (by source file and catalogue ID), {len(lc["unmatched_or_ambiguous"])} unmatched or ambiguous. '
               'Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.\n')
     for b in lc['batches']:
-        md.append(f'**Batch {b["batch"]}** (health regulation, owner approved 21 October 2026): {len(b["contracts"])} contracts added; form status '
+        md.append(f'\n**Batch {b["batch"]}** ({BATCH_LABEL.get(b["batch"], "controlled batch")}, owner approved 21 October 2026): {len(b["contracts"])} contracts added; form status '
                   + ', '.join(f'{k} {v}' for k, v in sorted(b['form_status'].items())) + '.\n')
         md.append('| Form | Register row | Fields | Form status | Scope |\n|---|---|---|---|---|')
         for x in b['contracts']:
             md.append(f'| {x["id"]} | {x["row"] or "—"} | {x["fields"]} | {x["form_status"] or "—"} | {x["scope"]} |')
-    md.append('\n**Totals beside the earlier ones** (the register without the library\'s contracts, and with them):\n')
-    md.append('| Status | Before (without the library) | Now |\n|---|---|---|')
+    md.append('\n**Totals beside the earlier ones** (the register without the library\'s contracts, after each batch, and now):\n')
+    bs = list(lc['form_status_after_batch'])
+    md.append('| Status | Before (without the library) | ' + ' | '.join(f'After batch {b}' for b in bs) + ' | Now |\n|---|---|' + '---|' * len(bs) + '---|')
     for s in C.FORM_STATUSES:
-        md.append(f'| {s} | {lc["form_status_without_library"].get(s, 0)} | {rep["form_status"].get(s, 0)} |')
-    md.append(f'| forms without a contract | {lc["forms_without_contract_without_library"]} | {rep["forms_without_contract"]} |')
+        md.append(f'| {s} | {lc["form_status_without_library"].get(s, 0)} | ' + ''.join(f'{lc["form_status_after_batch"][b].get(s, 0)} | ' for b in bs) + f'{rep["form_status"].get(s, 0)} |')
+    md.append(f'| forms without a contract | {lc["forms_without_contract_without_library"]} | ' + ''.join(f'{lc["forms_without_contract_after_batch"][b]} | ' for b in bs) + f'{rep["forms_without_contract"]} |')
     md.append(f'\n## Forms with no contract\n\n{rep["forms_without_contract"]} forms have no field contract (`contract: not yet given` in the register). By part:\n')
     cnt = collections.Counter(C.part_label(o) for o in no_contract)
     md.append('| Part | Forms without a contract |\n|---|---|')

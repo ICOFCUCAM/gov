@@ -13,7 +13,8 @@ listed form is not a complete contract, and a complete contract is not a form
 safe to deploy. Every form below is a **draft**. None is approved or in
 production. Contracts the catalogue does not give are written only in
 controlled batches the owner approves, after the verified gap report
-(`docs/forms-catalogue/GAP-REPORT.md`): batch 1, health regulation, is §8.
+(`docs/forms-catalogue/GAP-REPORT.md`): batch 1, health regulation, is §8;
+batch 2, medicines and medical devices regulation, is §9.
 
 ## 1. One contract, three sources
 
@@ -325,3 +326,158 @@ questions in all three channels, and a register status of contract draft.
 matches exactly one registered form and none is in an excluded or
 legal-review scope. The generated gap report shows the batch and the totals
 before and after it (contract_missing 1723 → 1698, contract_draft 129 → 154).
+
+## 9. Catalogue contracts, batch 2: medicines and medical devices regulation (21 October 2026)
+
+The owner approved the second controlled batch: the medicines regulator's
+forms of Part 6 §5, from allowed scope only. 21 catalogue forms that were
+`contract_missing` now have a CivicOS contract (`contract: given (CivicOS
+library)`, `form_status: contract_draft`). HLT-MED-016 (adverse drug reaction
+report), HLT-MED-021 and HLT-MED-022 (clinical trials) are excluded by
+`docs/requirements/form-scope.json` and have none. The format, loader, gates
+and test are batch 1's (§8); what is new is the contracts, nine binding rules,
+a `batch` number in each contract's `catalogue` block and the scope read by
+source (below).
+
+| Catalogue form | Title | Fields (and questions in repeatable groups) | Belongs to | Deviations (besides the six every batch-2 form shares) |
+|---|---|---|---|---|
+| HLT-MED-001 | Marketing authorisation application | 34 (+14) | library; intended: a marketing authorisation procedure on a product register (I4) | — |
+| HLT-MED-002 | Authorisation dossier submission | 23 (+3) | library; intended: a dossier-version step of the authorisation, variation and renewal procedures (I4) | — |
+| HLT-MED-003 | Technical assessment record | 13 (+4) | library; intended: their assessment stage (I4) | assessor-from-sign-in |
+| HLT-MED-004 | Additional information request | 9 (+3) | library; intended: their request step (I4) | stage-b-id |
+| HLT-MED-005 | Applicant response | 20 (+3) | library; intended: their response step, linked to the request (I4) | — |
+| HLT-MED-006 | Marketing authorisation decision | 17 | library; intended: the decision step, sealed by the case engine (I4) | decision-in-engine, no-new-power |
+| HLT-MED-007 | Product authorisation renewal | 26 | library; intended: a renewal procedure (I4) | aggregate-safety |
+| HLT-MED-008 | Product variation application | 29 (+3) | library; intended: a variation procedure (I4) | — |
+| HLT-MED-009 | Product suspension or withdrawal review | 13 | library; intended: a suspension and withdrawal procedure under an approved permit mapping (I4) | no-new-power, decision-in-engine |
+| HLT-MED-010 | Manufacturing site registration | 31 (+4) | library; intended: a standing in an organisations register the nation adds for manufacturers (I4) | no-manufacturer-register |
+| HLT-MED-011 | Good-practice inspection | 16 (+4) | library; intended: an inspection step for registered sites and applications (I4) | inspector-from-sign-in, no-score |
+| HLT-MED-012 | Inspection corrective action plan | 17 (+7) | library; intended: corrective-action follow-up of HLT-MED-011 (I4) | deadlines-assigned |
+| HLT-MED-013 | Medicine import authorisation | 30 (+6) | library; intended: an import authorisation procedure, customs told the decision by an exchange service (I4) | customs-apart |
+| HLT-MED-014 | Controlled medicine authorisation | 29 (+4) | library; intended: the procedure of the authority the controlled-substances law names (I4) | no-named-person, controlled-authority |
+| HLT-MED-015 | Medicine safety report | 25 | library; intended: a safety-report intake assigning each report for assessment (I4) | product-level-only, no-ai-finding |
+| HLT-MED-017 | Product recall notification | 33 (+8) | library; intended: a recall procedure (signal, risk, decision, notices, completion) (I4) | no-ai-finding, no-new-power, no-recall-exchange |
+| HLT-MED-018 | Recall completion report | 24 (+7) | library; intended: the completion step of the recall (I4) | — |
+| HLT-MED-019 | Medical device registration | 33 (+7) | library; intended: a device registration procedure on the product register (I4) | — |
+| HLT-MED-020 | Medical device safety incident | 26 | library; intended: a device incident intake opening an investigation (I4) | product-level-only, no-ai-finding |
+| HLT-MED-023 | Regulatory appeal or reconsideration | 29 | library; intended: a reconsideration or appeal procedure of the body the law names (an appeal to a court is filed with the court) (I4) | no-new-power, court-appeal, reviewer-differs |
+| HLT-MED-024 | Regulatory product-status verification | 6 | library; intended: a public product check and a product-status exchange service; no case (I4) | no-case, no-product-service |
+
+**Sources answered.** Each contract quotes and meets, piece by piece: its row
+of Part 6 §5.1; Part 6 §1 (the medicines regulator's boundary), §5's
+introduction and the closing rule of §5.2 (status only from the regulator's
+record), the regulatory-authority validation, CFG-MED-001 … 003, the
+regulatory-integrity gate and deliverable 4; the lines of §5.2 (the regulated
+product record), §5.3 (safety and recall), HX-005 and the exchange rule and
+gate that concern it; and the passages every form of both batches shares
+(§8). The specification has no medicines archetype: its health supply-item
+register (product identifier, lot or batch, quantity, expiry) and its
+sector-regulator archetype (controls, the enforcement workflow, appeals and
+review outcomes) are applied where they fit. The supplement's Stage B
+HLT-MED-004 (a medicine authorisation or dispensing record on a named patient)
+is a different form, excluded; HLT-MED-004 here is the field series'
+additional information request.
+
+**Two forms, one ID.** The register already kept them apart (`HLT-MED-004`
+is Part 6, allowed; `HLT-MED-004@P6` is Stage B, excluded). The binding scope
+list is keyed by ID, so `lib/forms/scope.ts` now reads a form's entry against
+the catalogue document it names (`FormSpec.catalogueSource`, set by the loader
+for every catalogue contract; `formScope()`, used by the drafting refusal in
+`lib/casework/packages.ts` and by the publication gates). A bare
+`HLT-MED-004` stays excluded, as `scope.test.ts` holds, and a form naming the
+supplement as its source is excluded under it.
+
+**Product and organisation records only.** Applicants, holders,
+manufacturers, importers and recall notifiers are organisations in the
+register of organisations (a register reference, never a second identity).
+The only persons are whoever acts for the organisation
+(`core.representation`), the professional responsible for batch release or
+for controlled medicines (a reference to the professional register,
+personal) and, in the safety and incident reports, an optional reporter
+(restricted). Commercially confidential content (dossier, composition,
+assessment and inspection findings, site master file, technical
+documentation, grounds, reconciliations) is restricted and read only at the
+regulator. Only product and device names are public in an application; the
+public product check (HLT-MED-024) answers only what the product's public
+information classification allows (HLT-MED-006 `decision.public_disclosure`,
+shipped empty).
+
+**Safety and incident reports (HLT-MED-015, 020).** About the product, never
+a person: name, strength and form, batch, expiry and manufacturer as on the
+pack, the kind of problem (quality defect, suspected falsified, labelling,
+storage or supply; for devices malfunction, deterioration, labelling, a
+problem in use, suspected falsified) and the concern in restricted free text,
+with the hint "Do not give anyone's name, identity or medical details". There
+is no reaction, outcome, harm, age, sex or history field; an individual's
+reaction to a medicine is HLT-MED-016, which the scope excludes (deviation
+`product-level-only`). A report is a signal for assessment, never a finding;
+possible duplicates are linked by an official, never merged
+(`no-ai-finding`).
+
+**Controlled medicines (HLT-MED-014).** An organisation, a schedule, products
+and quantities, a period, the licensed premises and the responsible
+professional; never a patient (`no-named-person`). The quantities are checked
+by the binding rule `controlled_quantity_limit_from_rule` against the limits
+the nation sets under its controlled-substances law (unset).
+
+**Nothing a law decides is typed.** Fees only through `core.payment`
+(`derived_from_approved_rule`; no fee rule ships). Assessment times, response
+periods, validity periods, renewal windows, corrective-action periods, recall
+timelines and completion deadlines, reporting deadlines, appeal periods and
+the controlled quantity limits are named in each contract's `nation_values`
+with no value. Nine binding rules were registered for them
+(`lib/forms/rules.ts`): `classification_value_from_configured_standard`,
+`information_response_period_from_rule`, `authorisation_validity_from_rule`,
+`product_renewal_window_from_rule`,
+`inspection_corrective_action_period_from_rule`, `recall_timeline_from_rule`,
+`safety_report_deadline_from_rule`, `controlled_quantity_limit_from_rule`,
+`review_request_period_from_rule`.
+
+**Classifications are the nation's.** Each is a configured values source with
+no values; its country decision names the standard expected: dosage forms and
+routes (EDQM Standard Terms), therapeutic classification (WHO ATC), device
+risk classes (IMDRF), device nomenclature (GMDN), controlled-substance
+schedules (the Single Convention and the Convention on Psychotropic
+Substances as national law adopts them), good-practice standards (WHO texts
+or PIC/S), dossier format (the ICH Common Technical Document); product
+categories and legal supply categories from the nation's law. Lists that
+would be a power or a route ship empty as well: application kinds,
+authorisation outcomes, variation categories, enforcement measures,
+deficiency grades, recall classes, points of entry, review routes and what
+the public check shows. Descriptive lists (manufacturing activities,
+inspection types, finding results, report stages, variation kinds, review
+triggers, concern and incident kinds, reporter kinds, recall levels,
+recipient kinds, disposal methods, device kinds) ship as proposed values.
+
+**Authority.** The deployment profile has no medicines-regulator slot, so
+every batch-2 form is owned by the `healthRegulation` slot (labelled "Health
+facility regulation") and carries the deviation `medicines-authority-slot`;
+each power comes from the permit authority mapping for the product type, of
+which none ships. Integration register 20.9.
+
+**Deviations every batch-2 form shares.** The four of §8 (`no-patient-data`,
+here citing product, organisation and decision records as the allowed scope;
+`minimisation`; `evidence-requirement`; `scanning`) and:
+
+| Id | What | Why (binding rule) |
+|---|---|---|
+| medicines-authority-slot | The health regulator slot stands for the medicines regulator | Who is responsible comes only from the deployment profile and the permit authority registry (CLAUDE.md Government operating model) |
+| no-product-register | The regulated product record (Part 6 §5.2) is not on the platform: product references are recorded as given, their check as not performed, and a status is never inferred from an import, inventory or procurement record | Status comes only from the competent regulator's record; integration register 20.5, 20.9 |
+
+**Procedures.** No reference procedure of the medicines regulator exists, so
+every batch-2 contract waits in the library with the stage it is intended for
+(plan step I4: "medicines and devices regulation as administrative records");
+none was invented, and no decision power ships.
+
+**Tests.** `app/src/lib/forms/catalogue-contracts.test.ts` now holds both
+batches: for batch 2 its own list of the lines each form answers, the same
+checks per form as batch 1, and six more: no contract for HLT-MED-016, 021 and
+022, and the two HLT-MED-004s apart; the safety and incident reports
+product-level only (no person or party question; no reaction, outcome, harm,
+age, sex or history word in any key; the concern restricted, with its hint);
+controlled medicines for an organisation, a product and a quantity; no
+classification, power or period shipped, each classification naming its
+standard; the authority slot; dossier content restricted and the public check
+limited to public fields. The generated gap report shows each batch and the
+totals before the library, after each batch and now (contract_missing
+1723 → 1698 → 1677, contract_draft 129 → 154 → 175).
