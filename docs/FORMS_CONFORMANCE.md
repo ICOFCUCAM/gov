@@ -875,3 +875,75 @@ is installed and is adopted only in a version a second official approves.
 | Two-official approval and the links by identity | `catalogue-contracts.test.ts` "approves a risk communication by two officials, and links each public-health form…" |
 | Procedure-link states of the linked forms | `procedure-link.test.ts` "is draft for the public-health forms and the complaint forms…" |
 | Binding scope for public health | `lib/health/programmes/scope.test.ts` |
+
+
+## 15. Catalogue contracts, batch 7: independent oversight (21 October 2026)
+
+The owner approved the part 12 accountability forms the independent oversight
+procedures carry (plan step I8, `lib/oversight/procedures.ts`). Seven forms
+of `docs/forms-catalogue/PARTS-12-13.md`, which were `contract_missing`, now
+have a CivicOS contract (`contract: given (CivicOS library)`, `form_status:
+contract_draft`), with `batch: 7` in their `catalogue` block. The format,
+loader, gates and test are batch 1's (§8): the conformance test holds the
+lines each form answers (Part 1's shared rules and the supplement's
+conventions and gates, as for every batch; Part 12's rules for independent
+institutions in the shared group `oversight`: lines 64, 66, 161, 193, 196,
+197, 199, 401, 403, 405, 451, 478, 486, 488, 489, 500, 518 (CFG-DEM-012),
+529, 590 and 591; each form's archetype line and the specification's
+operating specification for its body, Part 4 §A and §C) and its own row of
+§2.4 or §2.5.
+
+| Catalogue form | Title | Fields | Belongs to | Deviations (besides the five every oversight form shares) |
+|---|---|---|---|---|
+| DEM-CON-012 | Ombudsman complaint | 20 and the declaration | `ombudsman.complaint`, stage `received`, step `register`, document `complaint` | identity-kept-apart, reference-only-referral, no-ai-finding, anonymity-country |
+| DEM-CON-013 | Human rights complaint | 21 and the declaration | `human-rights.complaint`, stage `received`, step `register`, document `complaint` | identity-kept-apart, reference-only-referral, no-ai-finding, anonymity-country, witness-reference |
+| DEM-CON-014 | Public audit finding | 13 | `audit.engagement`, stage `fieldwork`, step `record-finding`, document `working-paper` | response-beside, report-approval, no-ai-finding |
+| DEM-CON-018 | Personal data rights request | 15 and the declaration | `data-protection.rights-request`, stage `received`, step `register`, document `request` | identity-kept-apart, no-direct-read, processor-register, no-ai-finding |
+| DEM-CON-019 | Protected disclosure to an independent body | 19 and the declaration | `integrity.disclosure`, stage `received`, step `register`, document `disclosure` | identity-kept-apart, reference-only-referral, no-suspect, no-ai-finding, anonymity-country, declarations-elsewhere |
+| DEM-CON-020 | Independent institution oversight response | 9 and the declaration | `audit.engagement`, stage `response` (also the other bodies' cases); not a step of the body's case | response-beside, not-a-step |
+| DEM-PUB-009 | Public integrity complaint | 14 and the declaration | `integrity.disclosure`, stage `received`, step `register`, document `disclosure` | identity-kept-apart, reference-only-referral, no-suspect, no-ai-finding, anonymity-country, no-digital-identity |
+
+The five deviations every oversight form shares are `minimisation`,
+`evidence-requirement` and `scanning` (as every batch) and
+`oversight-slot` (the body is the institution the nation names for its slot,
+shipped empty, independent once named) and `recommendation-not-order` (a
+finding is a recommendation with reasons, never an order or an automatic
+decision).
+
+**The person who raised it is kept apart.** The answers about the
+complainant, the person making a disclosure or the data subject (whether
+anonymous, name, contact, consent to share, protection needs) are restricted,
+and the procedures carry none of them: intake (`receiveProtected()`) puts them
+in the protected-identity record (`lib/oversight/protected-identity.ts`), read
+only by the assigned or specifically authorised official with a purpose, every
+read logged; never in a list, a search, a case read or an export (acceptance
+P4-06, P4-07). Whether anonymous submissions are accepted is the nation's
+(`configured_profile`, binding). A protected witness is recorded the same way
+(role `witness`).
+
+**A finding stays the body's.** DEM-CON-014 records criteria, condition,
+cause, effect, evidence and the recommendation; the audited institution's
+response is its own form (DEM-CON-020), recorded beside the finding and never
+changing it; only the audit office corrects its finding, as a new version, and
+never once issued (P4-04). The report's approval and publication are steps of
+the engagement by two officials, never a status field.
+
+**No suspect, no score, a reference only.** No field names a person as a
+suspect or records guilt; what is alleged is restricted free text. A referral
+carries the case reference only (prosecution referrals identifying a person:
+legal review, plan I11). Voter registration (DEM-ELC-003 … 006) and every
+other form the scope holds for legal review are not written.
+
+**The data-protection authority never reads the records.** DEM-CON-018's
+request goes to the controller under an approved request-information
+relationship; the authority reads the access log only for the records its case
+names (P4-05). Processor references, data categories, breach notifications and
+DPIA records are not built (`processor-register`, integration register 20.88).
+
+| Check | Where |
+|---|---|
+| Each contract quotes and meets every piece of its lines; typed, classed, registered rules only; nothing a law decides set; three channels; contract draft | `catalogue-contracts.test.ts` (per form) |
+| Links by identity; each body a slot | `catalogue-contracts.test.ts` "links each oversight form to its body's procedure by identity…" |
+| The person kept apart and restricted; no suspect; no voter registration form | `catalogue-contracts.test.ts` "keeps the person who raised a matter restricted and apart from the case…" |
+| Audit finding and the response beside it | `catalogue-contracts.test.ts` "records an audit finding by criteria, condition, cause, effect, evidence and recommendation…" |
+| The procedures behind them | `lib/oversight/oversight.test.ts`, `app/api/oversight/route.test.ts` |
