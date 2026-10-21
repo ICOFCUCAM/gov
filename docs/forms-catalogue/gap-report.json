@@ -53,7 +53,36 @@
   "app/src/lib/forms/library/catalogue-contracts/HLT-MED-020.json": "b915109804b9d46dda2eb2782ad1b73232fdcbf13c1c4cb4efd516f81cf410bb",
   "app/src/lib/forms/library/catalogue-contracts/HLT-MED-023.json": "86dc58f14192f9af63f8aa8611f3c4228fe6ba68cf73d71f39181531e953f283",
   "app/src/lib/forms/library/catalogue-contracts/HLT-MED-024.json": "fdb7a61cbbc691193af0b53e5b17ff4b98a605ade43f94e7220c0bba9095d65d",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-PH-015.json": "ec55fa8cb494c4f07f09c9040e6a8eaf51e3ae4b3cc620e31d65c3d3e180a2e4"
+  "app/src/lib/forms/library/catalogue-contracts/HLT-PH-015.json": "ec55fa8cb494c4f07f09c9040e6a8eaf51e3ae4b3cc620e31d65c3d3e180a2e4",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.account.statement.json": "e47d047f62d7958127cb8d3552bb45cd44a2b7ed1dd95190ba552a33004e962a",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.certificate.request.json": "dd038fafdcb2108e97bd77bdd186b96f9fca274b46d8e2c2a5f857a34ccf344d",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.details.change.json": "28c17c3fe272d295fb207f124924b8193ec8089ef9357f411919471dff697048",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.obligation.add.json": "3007e95f21276fc624a87f6e2851590184d1019d4dd6ad1ac5263a5fa09611a4",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.obligation.cancel.json": "251b1777db9d6f8826c59743e0d79fba0cc1b0144061841f5e9936f65519af33",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.amend.json": "ebfbdaf92c917923c14f2fd5ce871e74ea72f98c33bd59f63946540bee9bd305",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.appeal.json": "4ae108e17327fe93d2dc06225df69a3e6a5dbda8fe5190bc8c07c9b7ffaf5a08",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.appeal_assessment.json": "7c6570fa7c00f02444367c1b834830d52a1bfb5d3edd13df2dc25aed64551633",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.assessment.json": "64dd9e6bf7dac04b802e88408431f0341fc7eaf28999bdd97a2360c13b36cc8d",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.branch.json": "197a08448a526678309440176274ffcc7bb43761bf5424ae034bd8b64d93d8d2",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.closure_record.json": "c54d72f08a7f7f1f3332c05050f5111e2b48a5e1a4892916ffed34b405d1d54b",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.decision.json": "d3c667002603d8ef3cf61b73d6691f814abfc47af33875c55df610b8d8489999",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.decision_record.json": "81d89aac1ea41e5f5c3d6664eb54369d342769798aea8d8dfdd52bffe2d5c87e",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.duplicate.json": "768a86b13da015462b5368648fe15d74a06d8ab68a72e8437aba732a3d00993a",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.further_information.json": "8ad60684aac157f8e27db8e6acf2ac8d76ed690e603aa075aede6b045a7c1a78",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.further_information@P2.json": "d041c94933cfe0619f718e396575e731f97f34cbd76677f96dafbe5b536ebfe6",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.individual.json": "c3f3c676421bbabeb36e2855ab275e143776c2a0695850e94e42f1aea837f9ca",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.inspection.json": "7d7417e3668ac12e6a04a3f313263826e5c744b44e268ffe15120f52f1fe069a",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.inspection_checklist.json": "97f04be4b3d27a8c34897e592138249f64937ed7a8f3d80648ed09491915c561",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.nonresident.json": "6d53274789d92abaf9e6b1b323e13fd8a5e6d5b95e2ae35f9591de1400224fed",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.objection.json": "92afbcad9bbf2a9d32c89fe6948fd2cbcb839eda0c34db29aef2beccaecdb678",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.public_entity.json": "461827a0a08a6ea8b43c974cdb151a8dd19f6f642367546b96b372f683077ed8",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.reactivate_request.json": "2e2c056acda1f5e5f3b92db180096cb0119c0924ce4932144be096e870b6ac7b",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.referral.json": "e27941bf1b74f72ab6674d1f502f6dd20da676e8b077d16a713afe502b3778a9",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.referral_record.json": "932307bf824df19aeaf8b8abfcf3640ed45c4fd0e6e240982f4fb5ca0a19f2d0",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.suspend_request.json": "65aa392cfc4828b4495e30751016a3dfbaba8db9ef1ca83e9baae645155a5dd4",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.transfer.json": "3c2a2061858ea351ff3cdb07a447ef3ef3868e867af999ed0b094a91d2623d8c",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.verification_record.json": "88dc7023651c47543c9fc052b3ffe25cc11fc506394262a66cd4c7ebe87a873b",
+  "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.withdraw.json": "87ef89e291716b65ef8845feb858ba6391f36a6b7549e8df53c0367f2b67d9f3"
  },
  "reported": {
   "listed forms, parts 14–22": 216,
@@ -100,8 +129,8 @@
   "Part 13 (supplement, Stage B contracts)": 10
  },
  "form_status": {
-  "contract_missing": 1677,
-  "contract_draft": 175,
+  "contract_missing": 1648,
+  "contract_draft": 204,
   "under_review": 91,
   "excluded": 128,
   "blocked": 1
@@ -123,10 +152,10 @@
    "LAB-EMP-001"
   ]
  },
- "forms_without_contract": 1881,
+ "forms_without_contract": 1852,
  "library_contracts": {
-  "total": 46,
-  "matched_to_one_form": 46,
+  "total": 75,
+  "matched_to_one_form": 75,
   "unmatched_or_ambiguous": [],
   "batches": [
    {
@@ -512,6 +541,246 @@
     "form_status": {
      "contract_draft": 21
     }
+   },
+   {
+    "batch": 3,
+    "contracts": [
+     {
+      "id": "taxpayer.account.statement",
+      "row": "taxpayer.account.statement",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.account.statement.json",
+      "fields": 10,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.certificate.request",
+      "row": "taxpayer.certificate.request",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.certificate.request.json",
+      "fields": 15,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.details.change",
+      "row": "taxpayer.details.change",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.details.change.json",
+      "fields": 16,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.obligation.add",
+      "row": "taxpayer.obligation.add",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.obligation.add.json",
+      "fields": 16,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.obligation.cancel",
+      "row": "taxpayer.obligation.cancel",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.obligation.cancel.json",
+      "fields": 17,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.amend",
+      "row": "taxpayer.registration.amend",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.amend.json",
+      "fields": 19,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.appeal",
+      "row": "taxpayer.registration.appeal",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.appeal.json",
+      "fields": 20,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.appeal_assessment",
+      "row": "taxpayer.registration.appeal_assessment",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.appeal_assessment.json",
+      "fields": 14,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.assessment",
+      "row": "taxpayer.registration.assessment",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.assessment.json",
+      "fields": 10,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.branch",
+      "row": "taxpayer.registration.branch",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.branch.json",
+      "fields": 23,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.closure_record",
+      "row": "taxpayer.registration.closure_record",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.closure_record.json",
+      "fields": 7,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.decision",
+      "row": "taxpayer.registration.decision",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.decision.json",
+      "fields": 12,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.decision_record",
+      "row": "taxpayer.registration.decision_record",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.decision_record.json",
+      "fields": 10,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.duplicate",
+      "row": "taxpayer.registration.duplicate",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.duplicate.json",
+      "fields": 16,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.further_information",
+      "row": "taxpayer.registration.further_information",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.further_information.json",
+      "fields": 13,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.further_information",
+      "row": "taxpayer.registration.further_information@P2",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.further_information@P2.json",
+      "fields": 12,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.individual",
+      "row": "taxpayer.registration.individual",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.individual.json",
+      "fields": 23,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.inspection",
+      "row": "taxpayer.registration.inspection",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.inspection.json",
+      "fields": 13,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.inspection_checklist",
+      "row": "taxpayer.registration.inspection_checklist",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.inspection_checklist.json",
+      "fields": 14,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.nonresident",
+      "row": "taxpayer.registration.nonresident",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.nonresident.json",
+      "fields": 26,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.objection",
+      "row": "taxpayer.registration.objection",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.objection.json",
+      "fields": 18,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.public_entity",
+      "row": "taxpayer.registration.public_entity",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.public_entity.json",
+      "fields": 15,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.reactivate_request",
+      "row": "taxpayer.registration.reactivate_request",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.reactivate_request.json",
+      "fields": 16,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.referral",
+      "row": "taxpayer.registration.referral",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.referral.json",
+      "fields": 11,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.referral_record",
+      "row": "taxpayer.registration.referral_record",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.referral_record.json",
+      "fields": 11,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.suspend_request",
+      "row": "taxpayer.registration.suspend_request",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.suspend_request.json",
+      "fields": 16,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.transfer",
+      "row": "taxpayer.registration.transfer",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.transfer.json",
+      "fields": 17,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.verification_record",
+      "row": "taxpayer.registration.verification_record",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.verification_record.json",
+      "fields": 9,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "taxpayer.registration.withdraw",
+      "row": "taxpayer.registration.withdraw",
+      "file": "app/src/lib/forms/library/catalogue-contracts/taxpayer.registration.withdraw.json",
+      "fields": 9,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     }
+    ],
+    "form_status": {
+     "contract_draft": 29
+    }
    }
   ],
   "form_status_without_library": {
@@ -536,11 +805,19 @@
     "under_review": 91,
     "excluded": 128,
     "blocked": 1
+   },
+   "3": {
+    "contract_missing": 1648,
+    "contract_draft": 204,
+    "under_review": 91,
+    "excluded": 128,
+    "blocked": 1
    }
   },
   "forms_without_contract_after_batch": {
    "1": 1902,
-   "2": 1881
+   "2": 1881,
+   "3": 1852
   }
  },
  "incomplete_contracts": [

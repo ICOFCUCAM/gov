@@ -481,3 +481,141 @@ standard; the authority slot; dossier content restricted and the public check
 limited to public fields. The generated gap report shows each batch and the
 totals before the library, after each batch and now (contract_missing
 1723 → 1698 → 1677, contract_draft 129 → 154 → 175).
+
+## 10. Catalogue contracts, batch 3: taxpayer registration and account (21 October 2026)
+
+The owner approved the third controlled batch: the 29 register rows whose ID
+starts with `taxpayer.` and that were `contract_missing`, from the field
+series Part 2 §2.6 Department A (`FIELD-SERIES-PARTS-01-02.md`): 21 of the 22
+forms of its service table (the business registration has the catalogue's own
+contract, `library/canonical/forms/taxpayer.registration.business.json`) and
+its 8 internal forms. All 29 now read `contract: given (CivicOS library)`,
+`form_status: contract_draft`. The format, loader, gates and test are batches
+1 and 2's (§8, §9); what is new is below.
+
+| Catalogue form | Title | Fields (and questions in repeatable groups) | Belongs to | Deviations (besides the six every batch-3 form shares) |
+|---|---|---|---|---|
+| taxpayer.registration.individual | Register as an individual taxpayer | 23 | `tax.registration` · submitted (document `identity-evidence`) | spec-form, business-fields, representation-own-fields, declaration-group, tin-assigned, procedure-form, spec-tax-lists |
+| taxpayer.registration.public_entity | Register a public entity for tax administration | 15 | `tax.registration` · submitted | spec-form, business-fields, public-entity-register, declaration-group, tin-assigned, procedure-form, spec-tax-lists |
+| taxpayer.registration.nonresident | Register a non-resident taxpayer | 26 | `tax.registration` · submitted (document `identity-evidence`) | spec-form, business-fields, representation-own-fields, declaration-group, tin-assigned, procedure-form, spec-tax-lists |
+| taxpayer.registration.branch | Register a branch or permanent establishment | 23 | `tax.registration` · submitted | spec-form, representation-own-fields, declaration-group, tin-assigned, procedure-form, spec-tax-lists |
+| taxpayer.registration.amend | Amend a taxpayer registration | 16 (+3) | library; intended: a registration amendment procedure (I5) | amendment-not-built, representation-own-fields, declaration-group |
+| taxpayer.details.change | Change taxpayer contact or address details | 16 | library; intended: its change-of-details step (I5) | amendment-not-built, representation-own-fields, declaration-group |
+| taxpayer.obligation.add | Register for an additional tax obligation | 16 | library; intended: its obligation step (I5) | amendment-not-built, representation-own-fields, declaration-group, spec-tax-lists |
+| taxpayer.obligation.cancel | Request cancellation of a tax obligation | 17 | library; intended: its cancellation review (I5) | amendment-not-built, representation-own-fields, declaration-group |
+| taxpayer.registration.transfer | Request transfer to another responsible tax office | 17 | library; intended: its transfer step (I5) | amendment-not-built, representation-own-fields, declaration-group |
+| taxpayer.certificate.request | Request a taxpayer registration certificate | 15 | library; intended: a certificate from the tax register; `taxpayer.status` (I5) | status-only, representation-own-fields, fee-group |
+| taxpayer.account.statement | Request a tax account statement | 10 | library; intended: a statement drawn from `account()` (I5) | statement-from-ledger, representation-own-fields |
+| taxpayer.registration.duplicate | Request a replacement registration certificate | 16 | library; intended: a replacement certificate; `taxpayer.status` (I5) | status-only, representation-own-fields, fee-group |
+| taxpayer.registration.suspend_request | Request suspension where national law permits it | 16 | library; intended: a suspension step, only where the law provides one (I5) | amendment-not-built, representation-own-fields, declaration-group |
+| taxpayer.registration.reactivate_request | Request reactivation of a suspended registration | 16 | library; intended: a reactivation step (I5) | amendment-not-built, representation-own-fields, declaration-group |
+| taxpayer.registration.objection | Object to a registration decision | 18 | library; intended: an objection procedure for registration decisions (`tax.objection` is for assessments) (I5) | registration-dispute-not-built, no-amount, representation-own-fields, declaration-group |
+| taxpayer.registration.appeal | Appeal an eligible registration decision | 20 | library; intended: an appeal to the body the law names (I5) | registration-dispute-not-built, court-appeal, no-amount, representation-own-fields, declaration-group |
+| taxpayer.registration.withdraw | Withdraw a pending registration application | 9 | library; intended: a withdrawal step of `tax.registration` (I5) | withdrawal-not-built, representation-own-fields |
+| taxpayer.registration.decision | Record the registration decision | 12 | `tax.registration` · pending-approval · `register` | decision-in-engine, tin-assigned |
+| taxpayer.registration.decision_record | Registration decision record | 10 | `tax.registration` · pending-approval · `register` | decision-in-engine |
+| taxpayer.registration.inspection | Record a registration verification or inspection | 10 (+3) | `tax.registration` · verification · `verify` | no-score, observations-only, inspector-from-sign-in |
+| taxpayer.registration.inspection_checklist | Registration inspection checklist | 11 (+3) | `tax.registration` · verification · `verify` | no-score, observations-only, inspector-from-sign-in |
+| taxpayer.registration.further_information | Request further registration information | 9 (+4) | library; intended: a request step of `tax.registration` (I5) | two-rows, no-request-procedure |
+| taxpayer.registration.further_information@P2 | Record a request for missing or inconsistent information | 9 (+3) | library; intended: its internal record (I5) | two-rows, no-request-procedure |
+| taxpayer.registration.referral | Refer a registration matter to an authorized unit | 11 | library; intended: a referral case (`lib/casework/referral.ts`) (I5) | referral-case |
+| taxpayer.registration.referral_record | Refer a registration case to a specialist unit | 11 | library; intended: a referral to a configured specialist unit (I5) | referral-case |
+| taxpayer.registration.assessment | Assess a registration application | 10 | `tax.registration` · verification · `propose` | no-score, decision-in-engine |
+| taxpayer.registration.verification_record | Record a register lookup | 9 | `tax.registration` · verification · `verify` | — |
+| taxpayer.registration.appeal_assessment | Assess an objection or appeal | 14 | library; intended: the admissibility stage of a registration dispute (I5) | registration-dispute-not-built, no-amount |
+| taxpayer.registration.closure_record | Close a registration case | 7 | library; intended: a closure step for withdrawn or disposed cases (I5) | closure-in-engine |
+
+**Sources answered.** Each contract quotes and meets, piece by piece: its row
+(service table or internal-form list); §2.6's opening rules (a configured
+catalogue per tax type; nothing tax-related hard-coded); the business
+contract's country decisions and the decision-record rule; the officer-only
+fields and the §2.7 internal fields and universal control where they apply;
+Department D's compliance rule and inspection safeguard for the inspection
+forms; Department E's dispute fields, country decisions and appeal-deadline
+rule for the objection, appeal and appeal assessment;
+`country.tax.registration`, `country.tax.disputes`,
+`country.tax.compliance_powers` and the retention record of §2.8 with its
+versioning rule; the §2.9 gates (institutional authority, procedure lifecycle,
+legal decision trail, separation of duties, access restrictions,
+accessibility, no fabricated data; financial integrity for the statement, tax
+configuration for an added obligation); the specification's tax authority
+mandate, departments, service catalogue, decision controls and registration
+form; and Part 1's shared rules and the supplement's envelope and gates (as in
+§8). `shared/common-items.json` now marks the Part 6 items `"for": "health"`
+and the tax ones `"for": "tax"`.
+
+**Tax secrecy.** Every field a batch-3 form defines is `restricted` with
+`confidentiality: "tax"` (the canonical loader now reads a field's
+`confidentiality` in place), stricter than the business contract's
+administrative and personal classes and never weaker than the specification's
+form. Every form carries the policies `access.read_rule` (`canReadTax()`,
+every read in the access log) and `access.others` (status only through
+`taxpayer.status`). The only field groups used are `core.declaration_signature`
+(the versioned declaration and signature, standing for the business contract's
+`taxpayer.declaration`) and, for the two certificate forms, `core.payment`;
+representation is asked as the business contract's own fields, not through
+`core.representation`, whose classes a form cannot raise. Certificates state
+only what `taxpayer.status` returns (`status-only`); the statement is drawn
+from the account's recorded entries (`statement-from-ledger`).
+
+**Identity from the registers.** A business is a reference to the
+organisations register, a public entity to the institution register, an
+individual to the civil register (optional where the law allows registration
+without it); the taxpayer identification number is set by the register when
+the registration is decided (`tin-assigned`, officer-only). Later forms point
+to the taxpayer's account in the tax register.
+
+**Nothing a law decides is typed.** Nine binding rules (`lib/forms/rules.ts`):
+`registration_obligation_from_rule` (thresholds and obligation triggers),
+`obligation_effective_date_from_rule`,
+`obligation_cancellation_allowed_by_rule`, `suspension_allowed_by_rule`,
+`withdrawal_allowed_by_rule`, `tax_office_assignment_from_rule`,
+`tax_information_response_period_from_rule`, `dispute_period_from_rule`,
+`certificate_validity_from_rule`, beside the existing
+`obligations_available_for_taxpayer_type` and
+`date_allowed_by_registration_rule`. Each value is named in `nation_values`
+(`tax.registration.threshold`, `tax.registration.deadline`,
+`tax.certificate.fee` …), none set. Taxpayer categories, obligations (IMF
+GFSM 2014 classification expected for statistics), activity codes (ISIC
+Rev. 4), establishment kinds (Article 5 of the OECD or UN Model Tax
+Convention as adopted), registration bases, grounds, offices, remedies,
+routes, specialist units and lookup purposes ship empty (`spec-tax-lists`).
+
+**Two rows, one ID.** The catalogue names
+`taxpayer.registration.further_information` twice in one document (line 2543,
+the formal request the applicant receives; line 2714, the officer's internal
+record). The first contract keeps the catalogue ID as its form ID; the second
+takes its register row ID, `taxpayer.registration.further_information@P2`.
+Both name their line, and `app/scripts/requirements/catalogue.py` and
+`requirements.test.ts` match a contract by line where the catalogue repeats an
+ID in one file (`two-rows`).
+
+**Procedures.** Ten forms link to `tax.registration` and its stages and steps
+(submitted; verification · `verify` / `propose`; pending-approval ·
+`register`). No amendment, deregistration, certificate, registration-dispute,
+withdrawal, request, referral or closure procedure exists, so the other
+nineteen wait in the library with the stage they are intended for; none was
+invented, and `tax.objection` (assessments) is not stretched to registration
+decisions. Inspection and assessment forms record an officer's findings with
+reasons, never a score (`no-score`, `observations-only`).
+
+**Deviations every batch-3 form shares.**
+
+| Id | What | Why (binding rule) |
+|---|---|---|
+| tax-secrecy-class | Every field restricted, under tax secrecy, read only under `canReadTax()` | CLAUDE.md Tax |
+| no-tax-values | No rate, threshold, trigger, deadline or fee typed; lists ship empty | CLAUDE.md: rates only from `lib/law/rules.ts` |
+| config-impact | No impact assessment of a configuration change on forms and open packages (§2.8) | Integration register 20.11 |
+| minimisation, evidence-requirement, scanning | As in §8 | As in §8 |
+
+**Tests.** `catalogue-contracts.test.ts` holds batch 3's own line lists (the
+Part 6 common lines now apply to batches 1 and 2 only), the same checks per
+form, and eight more: the two further-information rows apart; every field
+under tax secrecy with the read rule; no tax value or list shipped, each list
+naming its decision and standard; identity only through the registers and the
+TIN from the register; consistency with the business contract and the
+specification's form; the procedure links; certificates and statements
+limited to the exchange and the ledger; findings without scores and dispute
+grounds of 20–10,000 characters. The gap report shows batch 3 beside 1 and 2
+(contract_missing 1723 → 1698 → 1677 → 1648, contract_draft
+129 → 154 → 175 → 204).

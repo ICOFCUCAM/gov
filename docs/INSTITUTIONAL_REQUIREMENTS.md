@@ -3526,9 +3526,9 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 
 *Platform rule stricter* means CivicOS will not hold the item at all (cited rule); the row says what it holds instead. Rows with basis `domain` are assessed at the level of their domain (no item-specific rule): the status is the domain's state and the step the domain's step; a contract and its fields follow the form they define. Every catalogue form carries `I1-catalogue` in `also_steps`: its field contract designed in the form library at or above the catalogue's standard, beside the sector step that builds its procedure. Steps I12 and I13 were added to the plan for the catalogue (plan §5).
 
-**Self-check.** Content lines not accounted for: 0. Headings (parts, sections, sub-sections) without a row: none. Catalogue IDs without a row: 0. Rows without a step: 0. Forms: 2072, with their own JSON contract: 145, with a contract CivicOS wrote (form library): 46, contract not yet given: 1881.
+**Self-check.** Content lines not accounted for: 0. Headings (parts, sections, sub-sections) without a row: none. Catalogue IDs without a row: 0. Rows without a step: 0. Forms: 2072, with their own JSON contract: 145, with a contract CivicOS wrote (form library): 75, contract not yet given: 1852.
 
-**Form status.** catalogued 0, contract_missing 1677, contract_draft 175, under_review 91, blocked 1, excluded 128, approved 0, production 0.
+**Form status.** catalogued 0, contract_missing 1648, contract_draft 204, under_review 91, blocked 1, excluded 128, approved 0, production 0.
 
 **Inputs.** All 13 parts and the supplement received. The topics the 13 parts left out are now catalogued by the supplement (table below); the earlier gap rows became the supplement's rows. Still missing from the received text: the field contract of every form listed only in a table (`contract: not yet given`).
 
