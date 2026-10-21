@@ -24,6 +24,7 @@ import { ORG_KINDS, registerTypes, getOrganisation } from '@/lib/organisations/r
 import { getPerson, current as personCurrent } from '@/lib/civil/register';
 import { getTaxpayer } from '@/lib/tax/register';
 import { getProfessional, professions } from '@/lib/professions/register';
+import { productByReference } from '@/lib/health/products/register';
 import { getMinistry, listMinistries, institutionBounds } from '@/lib/data/store';
 import { locales } from '@/lib/i18n/config';
 import { STANDARD_SOURCES } from './library/catalogue';
@@ -120,6 +121,8 @@ function existsNow(register: string | undefined, ref: string, active = false): b
     case 'taxpayer': { const t = getTaxpayer(ref); return !!t && (!active || t.state === 'active'); }
     case 'professional': return !!getProfessional(ref);
     case 'institution': return !!getMinistry(ref);
+    // Active: authorised now. Only decided records answer (an application under assessment is not on the public register).
+    case 'product': { const p = productByReference(ref); return !!p && (!active || p.state === 'authorised'); }
     default: return null;
   }
 }

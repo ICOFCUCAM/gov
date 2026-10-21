@@ -28,24 +28,18 @@
    ],
    "exists": [
     {
-     "what": "References to authorised products are typed as a register the platform does not hold: recorded as given, check recorded as not performed; a binding rule blocks publication in production",
+     "what": "The register of medicines and medical devices: product records by version (every change a new version, status history, enforcement record), holder an organisation of the organisations register by its number, authorisation number, conditions and validity as the decision states, the attribute classes and the decision that approved each; written only by the product procedures' effects; full records read only by the medicines authority under canReadProduct(), every read in the access log; everyone else publicProductView(); in the register owners with owner slot medicinesRegulation; the forms' references to medicines.registry.products read it (decided records only)",
      "files": [
-      "app/src/lib/forms/contract.ts",
-      "app/src/lib/forms/rules.ts"
-     ]
-    },
-    {
-     "what": "The shape of a product record and the one public view of it (publicProductView())",
-     "files": [
-      "app/src/lib/health/products/public.ts"
+      "app/src/lib/health/products/register.ts",
+      "app/src/lib/health/products/procedures.ts",
+      "app/src/app/api/health-regulation/products/route.ts",
+      "app/src/lib/data/register-owners.ts",
+      "app/src/lib/auth/roles.ts",
+      "app/src/lib/forms/server.ts"
      ]
     }
    ],
-   "missing": [
-    "The register itself: a store holding product records by version, its one changing API, its entry in the register owners with its legal authority (medicinesRegulation)",
-    "Its effects, written only by the procedures below (no direct write route)",
-    "Status shown anywhere: today none is, by rule"
-   ],
+   "missing": [],
    "owner": "medicinesRegulation",
    "contracts": [
     "FIELD-SERIES-PARTS-05-07:HLT-MED-001@1",
@@ -80,14 +74,32 @@
     "Every change is a new version written by a procedure effect, with the sealed decision, the law version and the mapping version; earlier versions kept"
    ],
    "tests": {
-    "existing": [],
-    "planned": [
-     "Register-writes test: no file but the product procedures' effects writes the register (lib/casework/register-writes.test.ts extended)",
-     "Product register test: versions kept, status only from a sealed decision, no status from an import or inventory record"
-    ]
+    "existing": [
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "runs marketing authorisation to a sealed decision with four eyes and writes the product register only through its effect"
+     },
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "keeps every version and takes a status only from a sealed decision: an application shows nothing, an import or inventory record cannot set one"
+     },
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "answers the forms' product references from the register: a decided product by its number or authorisation number, never an application"
+     },
+     {
+      "file": "app/src/lib/casework/register-writes.test.ts",
+      "name": "lets only the procedure module (and the listed exceptions) import a changing function"
+     },
+     {
+      "file": "app/src/app/api/health-regulation/products/products-privacy.test.ts",
+      "name": "gives the full record to the medicines authority's officials only, and writes every read, allowed or refused, to the access log"
+     }
+    ],
+    "planned": []
    },
    "gate": "Joins lib/data/register-owners.ts with its owner and legal authority; the binding rule on medicines.registry.products stops failing; the batch-2 forms' gates pass in production",
-   "status": "not built"
+   "status": "built and proven"
   },
   {
    "id": "public-product-view",
@@ -99,16 +111,16 @@
    ],
    "exists": [
     {
-     "what": "publicProductView(): only attributes recorded by an approved decision, listed in the nation's approved public information classification and of the public class; never the dossier, the assessment, findings or persons; enforcement only as approved and published notices",
+     "what": "publicProductView(): only attributes recorded by an approved decision, listed in the nation's approved public information classification and of the public class; never the dossier, the assessment, findings or persons; enforcement only as approved and published notices; every output of the product register (lists, the one-product answer, the product.status service) passes through it; the classification ships empty and changes only by two officials citing the law",
      "files": [
       "app/src/lib/health/products/public.ts",
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-024.json"
+      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-024.json",
+      "app/src/lib/health/products/register.ts"
      ]
     }
    ],
    "missing": [
-    "The register it reads and the public check and exchange service that call it (product-register, exchange-product-status)",
-    "The nation's public information classification (HLT-MED-006 decision.public_disclosure ships empty), approved by two officials"
+    "The nation's public information classification (ships empty): proposed citing the law and confirmed by a different official"
    ],
    "owner": "medicinesRegulation",
    "contracts": [
@@ -138,11 +150,13 @@
      {
       "file": "app/src/lib/health/products/public.test.ts",
       "name": "is the rule HLT-MED-024 names, and the I4 register and integration register point to it"
+     },
+     {
+      "file": "app/src/app/api/health-regulation/products/products-privacy.test.ts",
+      "name": "never carries confidential, restricted, personal or unpublished content in lists, the public answer, a refused full read, the exchange, the twin, the setup hub or the audit chain"
      }
     ],
-    "planned": [
-     "Once the register exists: a scan of the public check, lists, exports and the exchange service like app/api/parcels/parcels-privacy.test.ts"
-    ]
+    "planned": []
    },
    "gate": "Every output of the product register passes through publicProductView() (a scan test, as for parcels)",
    "status": "built and proven"
@@ -161,22 +175,16 @@
    ],
    "exists": [
     {
-     "what": "The contracts, as library drafts, each naming the stage it is intended for; the case engine, procedure packages and permit authority registry it will run on",
+     "what": "The reference procedure medicines.authorisation (a draft the nation adapts and a second official approves): its stages, its two-official decision steps classified under the permit mapping, its effects on the product register; no period, fee or outcome list typed; its contracts linked by identity to their stages (procedure link: draft once installed)",
      "files": [
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-001.json",
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-002.json",
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-003.json",
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-004.json",
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-005.json",
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-006.json",
+      "app/src/lib/health/products/procedures.ts",
       "app/src/lib/casework/engine.ts",
-      "app/src/lib/permits/authority.ts"
+      "app/src/lib/permits/decisions.ts"
      ]
     }
    ],
    "missing": [
-    "The marketing authorisation procedure package (stages, decision steps under an approved permit mapping, effects on the product register), drafted by the medicines authority, tested and approved by a second official",
-    "Adoption of the contracts in that procedure version"
+    "Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)"
    ],
    "owner": "medicinesRegulation",
    "contracts": [
@@ -194,13 +202,20 @@
     "Each decision sealed with the law version, the mapping version and the rule versions it used; a status change is an act with evidence, time and reason"
    ],
    "tests": {
-    "existing": [],
-    "planned": [
-     "Procedure test: runs marketing authorisation to a sealed decision with four eyes and writes the product register only through its effect"
-    ]
+    "existing": [
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "runs marketing authorisation to a sealed decision with four eyes and writes the product register only through its effect"
+     },
+     {
+      "file": "app/src/lib/forms/procedure-link.test.ts",
+      "name": "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
+     }
+    ],
+    "planned": []
    },
    "gate": "Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)",
-   "status": "not built"
+   "status": "partial"
   },
   {
    "id": "procedure-variation",
@@ -210,17 +225,16 @@
    ],
    "exists": [
     {
-     "what": "The contracts, as library drafts, each naming the stage it is intended for; the case engine, procedure packages and permit authority registry it will run on",
+     "what": "The reference procedure medicines.variation (a draft the nation adapts and a second official approves): its stages, its two-official decision steps classified under the permit mapping, its effects on the product register; no period, fee or outcome list typed; its contracts linked by identity to their stages (procedure link: draft once installed)",
      "files": [
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-008.json",
+      "app/src/lib/health/products/procedures.ts",
       "app/src/lib/casework/engine.ts",
-      "app/src/lib/permits/authority.ts"
+      "app/src/lib/permits/decisions.ts"
      ]
     }
    ],
    "missing": [
-    "The variation procedure package (stages, decision steps under an approved permit mapping, effects on the product register), drafted by the medicines authority, tested and approved by a second official",
-    "Adoption of the contracts in that procedure version"
+    "Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)"
    ],
    "owner": "medicinesRegulation",
    "contracts": [
@@ -233,13 +247,20 @@
     "Each decision sealed with the law version, the mapping version and the rule versions it used; a status change is an act with evidence, time and reason"
    ],
    "tests": {
-    "existing": [],
-    "planned": [
-     "Procedure test: runs variation to a sealed decision with four eyes and writes the product register only through its effect"
-    ]
+    "existing": [
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "runs a variation, a renewal, a suspension with its published notice, reinstatement and withdrawal"
+     },
+     {
+      "file": "app/src/lib/forms/procedure-link.test.ts",
+      "name": "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
+     }
+    ],
+    "planned": []
    },
    "gate": "Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)",
-   "status": "not built"
+   "status": "partial"
   },
   {
    "id": "procedure-renewal",
@@ -249,17 +270,16 @@
    ],
    "exists": [
     {
-     "what": "The contracts, as library drafts, each naming the stage it is intended for; the case engine, procedure packages and permit authority registry it will run on",
+     "what": "The reference procedure medicines.renewal (a draft the nation adapts and a second official approves): its stages, its two-official decision steps classified under the permit mapping, its effects on the product register; no period, fee or outcome list typed; its contracts linked by identity to their stages (procedure link: draft once installed)",
      "files": [
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-007.json",
+      "app/src/lib/health/products/procedures.ts",
       "app/src/lib/casework/engine.ts",
-      "app/src/lib/permits/authority.ts"
+      "app/src/lib/permits/decisions.ts"
      ]
     }
    ],
    "missing": [
-    "The renewal procedure package (stages, decision steps under an approved permit mapping, effects on the product register), drafted by the medicines authority, tested and approved by a second official",
-    "Adoption of the contracts in that procedure version"
+    "Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)"
    ],
    "owner": "medicinesRegulation",
    "contracts": [
@@ -272,13 +292,20 @@
     "Each decision sealed with the law version, the mapping version and the rule versions it used; a status change is an act with evidence, time and reason"
    ],
    "tests": {
-    "existing": [],
-    "planned": [
-     "Procedure test: runs renewal to a sealed decision with four eyes and writes the product register only through its effect"
-    ]
+    "existing": [
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "runs a variation, a renewal, a suspension with its published notice, reinstatement and withdrawal"
+     },
+     {
+      "file": "app/src/lib/forms/procedure-link.test.ts",
+      "name": "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
+     }
+    ],
+    "planned": []
    },
    "gate": "Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)",
-   "status": "not built"
+   "status": "partial"
   },
   {
    "id": "procedure-suspension-withdrawal",
@@ -288,17 +315,16 @@
    ],
    "exists": [
     {
-     "what": "The contracts, as library drafts, each naming the stage it is intended for; the case engine, procedure packages and permit authority registry it will run on",
+     "what": "The reference procedure medicines.suspension (a draft the nation adapts and a second official approves): its stages, its two-official decision steps classified under the permit mapping, its effects on the product register; no period, fee or outcome list typed; its contracts linked by identity to their stages (procedure link: draft once installed)",
      "files": [
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-009.json",
+      "app/src/lib/health/products/procedures.ts",
       "app/src/lib/casework/engine.ts",
-      "app/src/lib/permits/authority.ts"
+      "app/src/lib/permits/decisions.ts"
      ]
     }
    ],
    "missing": [
-    "The suspension and withdrawal procedure package (stages, decision steps under an approved permit mapping, effects on the product register), drafted by the medicines authority, tested and approved by a second official",
-    "Adoption of the contracts in that procedure version"
+    "Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)"
    ],
    "owner": "medicinesRegulation",
    "contracts": [
@@ -311,13 +337,20 @@
     "Each decision sealed with the law version, the mapping version and the rule versions it used; a status change is an act with evidence, time and reason"
    ],
    "tests": {
-    "existing": [],
-    "planned": [
-     "Procedure test: runs suspension and withdrawal to a sealed decision with four eyes and writes the product register only through its effect"
-    ]
+    "existing": [
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "runs a variation, a renewal, a suspension with its published notice, reinstatement and withdrawal"
+     },
+     {
+      "file": "app/src/lib/forms/procedure-link.test.ts",
+      "name": "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
+     }
+    ],
+    "planned": []
    },
    "gate": "Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)",
-   "status": "not built"
+   "status": "partial"
   },
   {
    "id": "procedure-recall",
@@ -330,18 +363,16 @@
    ],
    "exists": [
     {
-     "what": "The contracts, as library drafts, each naming the stage it is intended for; the case engine, procedure packages and permit authority registry it will run on",
+     "what": "The reference procedure medicines.recall (a draft the nation adapts and a second official approves): its stages, its two-official decision steps classified under the permit mapping, its effects on the product register; no period, fee or outcome list typed; its contracts linked by identity to their stages (procedure link: draft once installed)",
      "files": [
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-017.json",
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-018.json",
+      "app/src/lib/health/products/procedures.ts",
       "app/src/lib/casework/engine.ts",
-      "app/src/lib/permits/authority.ts"
+      "app/src/lib/permits/decisions.ts"
      ]
     }
    ],
    "missing": [
-    "The recall procedure package (stages, decision steps under an approved permit mapping, effects on the product register), drafted by the medicines authority, tested and approved by a second official",
-    "Adoption of the contracts in that procedure version"
+    "Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)"
    ],
    "owner": "medicinesRegulation",
    "contracts": [
@@ -355,13 +386,20 @@
     "Each decision sealed with the law version, the mapping version and the rule versions it used; a status change is an act with evidence, time and reason"
    ],
    "tests": {
-    "existing": [],
-    "planned": [
-     "Procedure test: runs recall to a sealed decision with four eyes and writes the product register only through its effect"
-    ]
+    "existing": [
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "runs a recall from notification to verified completion, under the recall mapping"
+     },
+     {
+      "file": "app/src/lib/forms/procedure-link.test.ts",
+      "name": "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
+     }
+    ],
+    "planned": []
    },
    "gate": "Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)",
-   "status": "not built"
+   "status": "partial"
   },
   {
    "id": "procedure-device-registration",
@@ -372,17 +410,16 @@
    ],
    "exists": [
     {
-     "what": "The contracts, as library drafts, each naming the stage it is intended for; the case engine, procedure packages and permit authority registry it will run on",
+     "what": "The reference procedure medicines.device-registration (a draft the nation adapts and a second official approves): its stages, its two-official decision steps classified under the permit mapping, its effects on the product register; no period, fee or outcome list typed; its contracts linked by identity to their stages (procedure link: draft once installed)",
      "files": [
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-019.json",
+      "app/src/lib/health/products/procedures.ts",
       "app/src/lib/casework/engine.ts",
-      "app/src/lib/permits/authority.ts"
+      "app/src/lib/permits/decisions.ts"
      ]
     }
    ],
    "missing": [
-    "The medical device registration procedure package (stages, decision steps under an approved permit mapping, effects on the product register), drafted by the medicines authority, tested and approved by a second official",
-    "Adoption of the contracts in that procedure version"
+    "Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)"
    ],
    "owner": "medicinesRegulation",
    "contracts": [
@@ -395,13 +432,20 @@
     "Each decision sealed with the law version, the mapping version and the rule versions it used; a status change is an act with evidence, time and reason"
    ],
    "tests": {
-    "existing": [],
-    "planned": [
-     "Procedure test: runs medical device registration to a sealed decision with four eyes and writes the product register only through its effect"
-    ]
+    "existing": [
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "registers a medical device under the device registration mapping"
+     },
+     {
+      "file": "app/src/lib/forms/procedure-link.test.ts",
+      "name": "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
+     }
+    ],
+    "planned": []
    },
    "gate": "Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)",
-   "status": "not built"
+   "status": "partial"
   },
   {
    "id": "procedure-import-and-controlled",
@@ -498,18 +542,18 @@
    ],
    "exists": [
     {
-     "what": "The contracts, as library drafts, each naming the stage it is intended for; the case engine, procedure packages and permit authority registry it will run on",
+     "what": "HLT-MED-011 linked to the inspection step of the manufacturing licence (medicines.manufacturer: inspection of registered premises, inspection report); the case engine and permit registry",
      "files": [
+      "app/src/lib/health/products/procedures.ts",
       "app/src/lib/forms/library/catalogue-contracts/HLT-MED-011.json",
-      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-012.json",
-      "app/src/lib/casework/engine.ts",
-      "app/src/lib/permits/authority.ts"
+      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-012.json"
      ]
     }
    ],
    "missing": [
-    "The good-practice inspection and corrective action procedure package (stages, decision steps under an approved permit mapping, effects on the product register), drafted by the medicines authority, tested and approved by a second official",
-    "Adoption of the contracts in that procedure version"
+    "A corrective-action follow-up procedure (HLT-MED-012) and inspections of authorisation applications",
+    "Inspection and safety-reporting authority (CFG-MED-003) from the nation",
+    "Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)"
    ],
    "owner": "medicinesRegulation",
    "contracts": [
@@ -523,13 +567,18 @@
     "Each decision sealed with the law version, the mapping version and the rule versions it used; a status change is an act with evidence, time and reason"
    ],
    "tests": {
-    "existing": [],
+    "existing": [
+     {
+      "file": "app/src/lib/health/products/register-types.test.ts",
+      "name": "are changed only by the medicines authority, through the licence procedures' effects, after inspection of registered premises"
+     }
+    ],
     "planned": [
-     "Procedure test: runs good-practice inspection and corrective action to a sealed decision with four eyes and writes the product register only through its effect"
+     "Procedure test: corrective action tracked to closure"
     ]
    },
    "gate": "Procedure approved by a second official; each adopted form passes every publication gate in production (procedure link approved)",
-   "status": "not built"
+   "status": "partial"
   },
   {
    "id": "procedure-reconsideration",
@@ -579,17 +628,15 @@
    ],
    "exists": [
     {
-     "what": "The organisations register and its register types (health-facilities, pharmacies), changed only through organisation procedure effects; an administrator can add a register type",
+     "what": "Register types medicine-manufacturers, medicine-importers and medicine-wholesalers kept by the medicinesRegulation slot, each with a proposed (unapproved) permit type; their licence, renewal, suspension and revocation procedures (medicines.manufacturer, medicines.importer, medicines.wholesaler) change standings only through the organisation procedures' effects; HLT-MED-010 and HLT-MED-011 linked to the manufacturing licence",
      "files": [
       "app/src/lib/organisations/register.ts",
-      "app/src/lib/organisations/procedures.ts"
+      "app/src/lib/organisations/procedures.ts",
+      "app/src/lib/health/products/procedures.ts"
      ]
     }
    ],
-   "missing": [
-    "Register types for medicines manufacturers (sites), importers and wholesalers kept by medicinesRegulation, each with its permit type",
-    "The manufacturing-site registration procedure (HLT-MED-010) on that type"
-   ],
+   "missing": [],
    "owner": "medicinesRegulation",
    "contracts": [
     "FIELD-SERIES-PARTS-05-07:HLT-MED-010@1",
@@ -604,16 +651,18 @@
    "tests": {
     "existing": [
      {
-      "file": "app/src/lib/organisations/register.test.ts",
-      "name": "keeps every version, links sites and lets an administrator add a register type"
+      "file": "app/src/lib/health/products/register-types.test.ts",
+      "name": "are kept by the medicines authority slot, each with its own permit type, open to the public check"
+     },
+     {
+      "file": "app/src/lib/health/products/register-types.test.ts",
+      "name": "are changed only by the medicines authority, through the licence procedures' effects, after inspection of registered premises"
      }
     ],
-    "planned": [
-     "Register-type test: manufacturer, importer and wholesaler standings kept by the medicines authority only"
-    ]
+    "planned": []
    },
    "gate": "The register types exist with an approved permit mapping; HLT-MED-010 adopted in a procedure version",
-   "status": "not built"
+   "status": "built and proven"
   },
   {
    "id": "exchange-product-status",
@@ -626,16 +675,16 @@
    ],
    "exists": [
     {
-     "what": "Exchange services answer an outside caller only for a purpose approved for it, each integration approved by two officials; the shape the service may return (publicProductView())",
+     "what": "product.status in the service directory (owner medicinesRegulation, scope service:product.status): answers only publicProductView() of a decided record through callService(), for a purpose two officials approved for the caller (proposeIntegrationApproval / confirmIntegrationApproval); no caller ships approved; HLT-MED-024 names it",
      "files": [
       "app/src/lib/exchange/services.ts",
-      "app/src/lib/health/products/public.ts"
+      "app/src/lib/health/products/register.ts",
+      "app/src/lib/forms/library/catalogue-contracts/HLT-MED-024.json"
      ]
     }
    ],
    "missing": [
-    "A product.status service (versioned contract, purpose, permitted fields) reading the product register",
-    "Its approval for each caller by two officials"
+    "Its approval for each caller and purpose by two officials (the nation's act; none ships)"
    ],
    "owner": "medicinesRegulation",
    "contracts": [
@@ -648,13 +697,28 @@
     "Each answer from the regulator's record with a signed receipt (as the other services)"
    ],
    "tests": {
-    "existing": [],
-    "planned": [
-     "Service test: refuses a purpose not approved for it; returns only declared fields (lib/exchange/returns-contract.test.ts extended)"
-    ]
+    "existing": [
+     {
+      "file": "app/src/lib/health/products/exchange.test.ts",
+      "name": "is declared in the directory, owned by the medicines authority, returning only the public view's fields"
+     },
+     {
+      "file": "app/src/lib/health/products/exchange.test.ts",
+      "name": "ships no approved caller, and answers an outside caller only for a purpose two officials approved for it"
+     },
+     {
+      "file": "app/src/lib/health/products/exchange.test.ts",
+      "name": "is the service HLT-MED-024 names, so its form needs no procedure and finds its service"
+     },
+     {
+      "file": "app/src/lib/forms/procedure-link.test.ts",
+      "name": "needs no procedure where an exchange service answers, but needs that service"
+     }
+    ],
+    "planned": []
    },
    "gate": "Declared in the service directory and in returns-contract.test.ts; HLT-MED-024's procedure-link gate passes (its exchange service exists)",
-   "status": "not built"
+   "status": "built and proven"
   },
   {
    "id": "exchange-hx-005",
@@ -793,7 +857,7 @@
    ],
    "exists": [
     {
-     "what": "The permit authority registry: drafted by one administrator, approved by another, citing the law; a production installation refuses a power no approved mapping covers",
+     "what": "Proposed, unapproved mappings citing nothing: medicine-marketing-authorisation, medical-device-registration, product-recall, the manufacturing, import and wholesale licences and medicine-import-authorisation (lead medicinesRegulation), controlled-medicine-authorisation (lead controlledSubstances); every product decision step classified in lib/permits/decisions.ts and refused in production until a mapping is approved; sealed decisions record the mapping version",
      "files": [
       "app/src/lib/permits/authority.ts",
       "app/src/lib/permits/decisions.ts"
@@ -801,8 +865,7 @@
     }
    ],
    "missing": [
-    "Proposed (unapproved) mappings for marketing authorisation, variation, renewal, suspension and withdrawal, recall, device registration, import and controlled-medicine authorisation, naming the new slots",
-    "The procedure family classification of each decision step"
+    "The nation approves each mapping (drafted by one administrator, approved by another, citing the law)"
    ],
    "owner": "medicinesRegulation",
    "contracts": [
@@ -822,13 +885,24 @@
     "Every mapping version kept, citing the law; sealed decisions record the mapping version"
    ],
    "tests": {
-    "existing": [],
-    "planned": [
-     "Mapping test: product decisions refused in production until a mapping is approved (as lib/permits/cycle3-production.test.ts)"
-    ]
+    "existing": [
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "ships unapproved mappings citing nothing, and refuses every product decision in production until one is approved"
+     },
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "runs a recall from notification to verified completion, under the recall mapping"
+     },
+     {
+      "file": "app/src/lib/health/products/procedures.test.ts",
+      "name": "registers a medical device under the device registration mapping"
+     }
+    ],
+    "planned": []
    },
    "gate": "Every product decision step classified in lib/permits/decisions.ts",
-   "status": "not built"
+   "status": "built and proven"
   },
   {
    "id": "forms-without-procedures",
@@ -867,15 +941,16 @@
    ],
    "exists": [
     {
-     "what": "Each contract as a library draft naming the stage it is intended for; its procedure link computed from the package register (missing), failing the go-live gate",
+     "what": "Each contract as a library draft naming the stage it is intended for; its procedure link computed from the package register (missing), failing the go-live gate; 14 batch-2 contracts now linked to the product procedures (draft), 7 still without a fitting procedure (HLT-MED-012, 013, 014, 015, 020, 023 and HLT-MED-024, answered by product.status)",
      "files": [
       "app/src/lib/forms/procedure-link.ts",
-      "app/src/lib/forms/publication.ts"
+      "app/src/lib/forms/publication.ts",
+      "app/src/lib/health/products/procedures.ts"
      ]
     }
    ],
    "missing": [
-    "The procedures named in the list below (forms_without_procedure in health-i4.json)"
+    "The procedures named in the list below (forms_without_procedure in health-i4.json): corrective action, import and controlled-medicine authorisation, safety and incident intake, reconsideration; batch 1's establishment approval, follow-up, variation, closure, complaints, good standing, amendment and interim restriction"
    ],
    "owner": "healthRegulation",
    "contracts": [],
@@ -889,11 +964,15 @@
     "existing": [
      {
       "file": "app/src/lib/forms/procedure-link.test.ts",
-      "name": "is missing for every batch-2 form and every batch-1 form without a procedure, and that fails the go-live gate"
+      "name": "is missing for every form without a procedure (batch-2 forms no product procedure carries, batch-1 forms without one), and that fails the go-live gate"
      },
      {
       "file": "app/src/lib/forms/procedure-link.test.ts",
       "name": "needs no procedure where an exchange service answers, but needs that service"
+     },
+     {
+      "file": "app/src/lib/forms/procedure-link.test.ts",
+      "name": "is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it"
      }
     ],
     "planned": [
@@ -901,7 +980,7 @@
     ]
    },
    "gate": "Procedure link approved for each (the go-live gate)",
-   "status": "not built"
+   "status": "partial"
   },
   {
    "id": "batch-1-adoption",
@@ -1571,116 +1650,6 @@
    "link": "missing"
   },
   {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-001@1",
-   "batch": 2,
-   "title": "Apply for a marketing authorisation for a medicine",
-   "owner": "medicinesRegulation",
-   "stage": "A marketing authorisation procedure of the medicines regulator (registration, dossier versions HLT-MED-002, assessment HLT-MED-003, requests and responses HLT-MED-004/005, decision HLT-MED-006) on a product register: not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-002@1",
-   "batch": 2,
-   "title": "Submit a version of an authorisation dossier",
-   "owner": "medicinesRegulation",
-   "stage": "A step of the marketing authorisation, variation and renewal procedures of the medicines regulator that records a dossier version against the application: not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-003@1",
-   "batch": 2,
-   "title": "Record a technical assessment of a medicine",
-   "owner": "medicinesRegulation",
-   "stage": "The assessment stage of the marketing authorisation, variation and renewal procedures of the medicines regulator: not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-004@1",
-   "batch": 2,
-   "title": "Ask an applicant for more information",
-   "owner": "medicinesRegulation",
-   "stage": "A request step of the marketing authorisation, variation and renewal procedures of the medicines regulator, sent to the applicant as a notice of the case: not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-005@1",
-   "batch": 2,
-   "title": "Answer a request for more information",
-   "owner": "medicinesRegulation",
-   "stage": "A response step of the marketing authorisation, variation and renewal procedures of the medicines regulator, linked to the request: not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-006@1",
-   "batch": 2,
-   "title": "Record a marketing authorisation decision",
-   "owner": "medicinesRegulation",
-   "stage": "The decision step of the marketing authorisation procedure of the medicines regulator, sealed by the case engine and written to a product register: not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-007@1",
-   "batch": 2,
-   "title": "Renew a marketing authorisation",
-   "owner": "medicinesRegulation",
-   "stage": "A renewal procedure of the medicines regulator on the product register (review, then a decision under the approved permit mapping): not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-008@1",
-   "batch": 2,
-   "title": "Apply to vary a marketing authorisation",
-   "owner": "medicinesRegulation",
-   "stage": "A variation procedure of the medicines regulator on the product register (assessment, then a decision under the approved permit mapping): not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-009@1",
-   "batch": 2,
-   "title": "Open a review to suspend or withdraw a product authorisation",
-   "owner": "medicinesRegulation",
-   "stage": "A suspension and withdrawal procedure of the medicines regulator on the product register, under an approved permit mapping: not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-010@1",
-   "batch": 2,
-   "title": "Register a medicines or medical device manufacturing site",
-   "owner": "medicinesRegulation",
-   "stage": "Registration of a manufacturing site as a standing in an organisations register the nation adds for manufacturers (lib/organisations/register.ts register types, lib/organisations/procedures.ts effects) under an approved permit mapping: not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-011@1",
-   "batch": 2,
-   "title": "Record a good-practice inspection",
-   "owner": "medicinesRegulation",
-   "stage": "An inspection step of the medicines regulator for registered sites and authorisation applications: not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
    "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-012@1",
    "batch": 2,
    "title": "Submit a corrective action plan after a good-practice inspection",
@@ -1721,36 +1690,6 @@
    "link": "missing"
   },
   {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-017@1",
-   "batch": 2,
-   "title": "Notify a product recall",
-   "owner": "medicinesRegulation",
-   "stage": "A recall procedure of the medicines regulator (signal, risk assessment, authorised decision, public notice, supply-chain notification, completion HLT-MED-018): not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-018@1",
-   "batch": 2,
-   "title": "Report that a recall is complete",
-   "owner": "medicinesRegulation",
-   "stage": "The completion step of a recall procedure of the medicines regulator (HLT-MED-017): not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
-   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-019@1",
-   "batch": 2,
-   "title": "Register a medical device",
-   "owner": "medicinesRegulation",
-   "stage": "A device registration procedure of the medicines regulator on the product register (assessment, then a decision under the approved permit mapping): not built; the form waits in the library (plan step I4).",
-   "procedure_required": true,
-   "answered_by": null,
-   "link": "missing"
-  },
-  {
    "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-020@1",
    "batch": 2,
    "title": "Report a medical device incident",
@@ -1775,9 +1714,9 @@
    "batch": 2,
    "title": "Check a medicine's or device's authorisation",
    "owner": "medicinesRegulation",
-   "stage": "A public product check and a product-status exchange service of the medicines regulator, answered from the product register; no case is opened. Not built: the form waits in the library (plan step I4).",
+   "stage": "Answered by the public product check (/api/health-regulation/products, publicProductView()) and the product.status exchange service, called only by integrations two officials approve for a purpose; no case is opened.",
    "procedure_required": false,
-   "answered_by": null,
+   "answered_by": "product.status",
    "link": "missing"
   },
   {
@@ -1896,6 +1835,130 @@
    "procedure": "prof.fitness",
    "stage": "suspended",
    "step": "reinstate",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-001@1",
+   "title": "Apply for a marketing authorisation for a medicine",
+   "procedure": "medicines.authorisation",
+   "stage": "submitted",
+   "step": "register",
+   "document": "application-form",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-002@1",
+   "title": "Submit a version of an authorisation dossier",
+   "procedure": "medicines.authorisation",
+   "stage": "dossier",
+   "step": "record-dossier",
+   "document": "dossier",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-003@1",
+   "title": "Record a technical assessment of a medicine",
+   "procedure": "medicines.authorisation",
+   "stage": "assessment",
+   "step": "assess",
+   "document": "assessment-report",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-004@1",
+   "title": "Ask an applicant for more information",
+   "procedure": "medicines.authorisation",
+   "stage": "assessment",
+   "step": "request-information",
+   "document": "information-request",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-005@1",
+   "title": "Answer a request for more information",
+   "procedure": "medicines.authorisation",
+   "stage": "information-requested",
+   "step": "record-response",
+   "document": "applicant-response",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-006@1",
+   "title": "Record a marketing authorisation decision",
+   "procedure": "medicines.authorisation",
+   "stage": "pending-approval",
+   "step": "authorise",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-007@1",
+   "title": "Renew a marketing authorisation",
+   "procedure": "medicines.renewal",
+   "stage": "submitted",
+   "step": "register",
+   "document": "application-form",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-008@1",
+   "title": "Apply to vary a marketing authorisation",
+   "procedure": "medicines.variation",
+   "stage": "submitted",
+   "step": "register",
+   "document": "application-form",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-009@1",
+   "title": "Open a review to suspend or withdraw a product authorisation",
+   "procedure": "medicines.suspension",
+   "stage": "opened",
+   "step": "notify",
+   "document": "grounds",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-010@1",
+   "title": "Register a medicines or medical device manufacturing site",
+   "procedure": "medicines.manufacturer",
+   "stage": "submitted",
+   "step": "check",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-011@1",
+   "title": "Record a good-practice inspection",
+   "procedure": "medicines.manufacturer",
+   "stage": "inspection",
+   "step": "inspected",
+   "document": "inspection-report",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-017@1",
+   "title": "Notify a product recall",
+   "procedure": "medicines.recall",
+   "stage": "notified",
+   "step": "assess-risk",
+   "document": "recall-notification",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-018@1",
+   "title": "Report that a recall is complete",
+   "procedure": "medicines.recall",
+   "stage": "supply-chain-notified",
+   "step": "report-completion",
+   "document": "completion-report",
+   "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
+  },
+  {
+   "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-019@1",
+   "title": "Register a medical device",
+   "procedure": "medicines.device-registration",
+   "stage": "submitted",
+   "step": "register-application",
+   "document": "application-form",
    "link": "draft once the procedure is in the register; approved only when a version carrying the contract is approved"
   }
  ],

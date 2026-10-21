@@ -13,7 +13,7 @@
 //   - a register's store key is used outside its own module;
 //   - a register module is imported whole (`* as`) or re-exported;
 //   - an effect is registered anywhere but a procedure module or the engine;
-//   - a procedure module exports a function other than its installer (an
+//   - a procedure module (lib/<domain>/procedures.ts or lib/<domain>/<register>/procedures.ts) exports a function other than its installer (an
 //     effect reachable without `act()`).
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -57,6 +57,11 @@ const REGISTERS: Register[] = [
   { module: 'lib/health/register.ts', store: '__civicosHealth', procedures: 'lib/health/procedures.ts',
     changes: ['resetHealth', 'recordCapacity'],
     reads: ['CAPACITY_METRICS', 'capacityOf', 'allCapacity', 'healthCounts'] },
+  { module: 'lib/health/products/register.ts', store: '__civicosProducts', procedures: 'lib/health/products/procedures.ts',
+    changes: ['resetProducts', 'applyForProduct', 'recordDossier', 'recordAssessment', 'decideProduct', 'varyProduct', 'renewProduct', 'changeProductState', 'orderRecall',
+      'publishProductNotice', 'completeRecall', 'attachProductDecision', 'expireProducts', 'proposeProductDisclosure', 'confirmProductDisclosure', 'withdrawProductDisclosure'],
+    reads: ['PRODUCT_STATES', 'STATE_LABEL', 'ATTRIBUTE_CLASS', 'APPLICATION_KEYS', 'VARIABLE_KEYS', 'PUBLISHABLE_ATTRIBUTES', 'publicClassification', 'productDisclosureChanges',
+      'getProduct', 'productByReference', 'productOfCase', 'productRecord', 'publicProduct', 'listPublicProducts', 'productCounts', 'findProducts'] },
   { module: 'lib/courts/hearings.ts', store: '__civicosHearings', procedures: 'lib/courts/procedures.ts',
     changes: ['resetHearings', 'scheduleHearing', 'concludeHearing'],
     reads: ['causeList', 'hearingsOf'] },
@@ -81,12 +86,16 @@ const EXCEPTIONS: { file: string; fn: string; why: string }[] = [
   { file: 'app/api/cron/case-deadlines/route.ts', fn: 'reconcileCustomsPayments', why: 'settles receipts against bills once each; changes no duty or release' },
   { file: 'app/api/education/route.ts', fn: 'recordReturn', why: 'an institution\'s aggregate return (counts only); no record of a person' },
   { file: 'app/api/health-regulation/route.ts', fn: 'recordCapacity', why: 'a facility\'s aggregate capacity return (counts only); no record of a person' },
+  { file: 'app/api/cron/case-deadlines/route.ts', fn: 'expireProducts', why: 'applies the validity end date a decision already set' },
+  { file: 'app/api/health-regulation/products/route.ts', fn: 'proposeProductDisclosure', why: 'what the public product check shows: proposed citing the law, confirmed by a different official; records no product' },
+  { file: 'app/api/health-regulation/products/route.ts', fn: 'confirmProductDisclosure', why: 'what the public product check shows: proposed citing the law, confirmed by a different official; records no product' },
+  { file: 'app/api/health-regulation/products/route.ts', fn: 'withdrawProductDisclosure', why: 'withdraws a waiting classification proposal' },
   { file: 'lib/organisations/import.ts', fn: 'organisationsDb', why: 'the checked load of an existing register: proposed by one official of the keeping authority, confirmed by a different one, under the approved mapping in production' },
   { file: 'lib/organisations/import.ts', fn: 'nextOrganisationNumber', why: 'numbers the organisations a confirmed load enters' },
 ];
 
 /** Files that may register an effect with the engine. */
-const EFFECT_REGISTRARS = /^lib\/([a-z]+\/procedures\.ts|casework\/(engine|referral|types)\.ts)$/;
+const EFFECT_REGISTRARS = /^lib\/([a-z]+(\/[a-z]+)?\/procedures\.ts|casework\/(engine|referral|types)\.ts)$/;
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -166,7 +175,7 @@ describe('case-governed registers change only through the case engine', () => {
   it('registers effects only from procedure modules and the engine, and procedure modules export no effect', () => {
     const registrars = FILES.filter(f => /\bregisterEffect\s*\(/.test(f.text)).map(f => f.path);
     expect(registrars.filter(p => !EFFECT_REGISTRARS.test(p))).toEqual([]);
-    for (const f of FILES.filter(x => /^lib\/[a-z]+\/procedures\.ts$/.test(x.path))) {
+    for (const f of FILES.filter(x => /^lib\/[a-z]+(\/[a-z]+)?\/procedures\.ts$/.test(x.path))) {
       const fns = [...f.text.matchAll(/^export\s+(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]!);
       // An installer drafts the reference packages; registerOfCase only reads which register a case concerns.
       expect(fns.filter(n => !/^install[A-Z]\w*Procedures$/.test(n) && n !== 'registerOfCase' && n !== 'sectorProcedures'), f.path).toEqual([]);

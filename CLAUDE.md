@@ -117,6 +117,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   are on the professions register, each profession kept by its regulator.
   Public, administrative and clinical data stay apart: no patient or clinical
   field anywhere, no national patient record; returns are aggregates.
+- Medicines and devices (`lib/health/products/`): the product register is kept for the
+  `medicinesRegulation` slot (`lib/data/register-owners.ts`) and changes only through the
+  effects of its procedures (`procedures.ts`: authorisation, variation, renewal, suspension
+  and withdrawal, recall, device registration; drafts, no period, fee or outcome typed);
+  holders are organisations by number. Full records are read only under `canReadProduct()`
+  (every read in the access log); lists, the public check, `product.status` and every other
+  output carry `publicProductView()` under the classification two officials approve.
 - Customs (`lib/customs/`): duty only from the approved `customs.tariff` rule
   or entered with reasons; the control channel is an officer's choice with
   reasons, never a score; no seizure, penalty or detention powers. Others

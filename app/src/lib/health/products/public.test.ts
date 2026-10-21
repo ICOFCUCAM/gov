@@ -100,6 +100,6 @@ describe('the public product check: approved, publishable information only', () 
     const contract = JSON.parse(readFileSync(join(process.cwd(), 'src/lib/forms/library/catalogue-contracts/HLT-MED-024.json'), 'utf8')) as { library: { policies: Record<string, string> } };
     expect(contract.library.policies['answer.public_view']).toMatch(/publicProductView\(\).*lib\/health\/products\/public\.ts/);
     expect(existsSync(join(root, 'docs/HEALTH_I4_DEPENDENCIES.md'))).toBe(true);
-    expect(readFileSync(join(root, 'docs/INTEGRATION_REGISTER.md'), 'utf8')).toMatch(/publicProductView\(\)[\s\S]*rule built, register and exchange not built/i);
+    expect(readFileSync(join(root, 'docs/INTEGRATION_REGISTER.md'), 'utf8')).toMatch(/publicProductView\(\)[\s\S]*Rule built; since 20\.17 and 20\.20 the register and the exchange read through it/);
   });
 });

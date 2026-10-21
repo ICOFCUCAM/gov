@@ -40,7 +40,7 @@ export const CONSOLE_NAV: NavSection[] = [
         tab('Escalations', '/gov/escalations', 'Escalation Floor'), tab('Constitutional review', '/gov/constitutional', 'Constitutional desk')] },
     { key: 'civil', icon: '❦', label: 'Registers', href: '/gov/civil',
       purpose: 'The people registered and their births, deaths and marriages, the organisations registered, licensed or accredited, the visas and permits granted, schools\' inspections, qualifications and returns, and regulated health professionals and facilities\' capacity, all recorded through decided cases.',
-      tabs: [tab('Civil registry', '/gov/civil'), tab('Organisations', '/gov/organisations'), tab('Visas and permits', '/gov/immigration'), tab('Education', '/gov/education'), tab('Health regulation', '/gov/health-regulation')] },
+      tabs: [tab('Civil registry', '/gov/civil'), tab('Organisations', '/gov/organisations'), tab('Visas and permits', '/gov/immigration'), tab('Education', '/gov/education'), tab('Health regulation', '/gov/health-regulation'), tab('Medicines and devices', '/gov/health-regulation/products')] },
     { key: 'law', icon: '¶', label: 'Laws', href: '/gov/law',
       purpose: 'The nation\'s laws as versioned texts that decisions cite, and the procedures that apply them.',
       tabs: [tab('Laws', '/gov/law'), tab('Procedures', '/gov/law/procedures'), tab('Forms', '/gov/law/procedures/forms'), tab('Permit authorities', '/gov/law/permit-authorities'), tab('Rates and tariffs', '/gov/law/rules'), tab('How laws relate', '/gov/law/relations')] },

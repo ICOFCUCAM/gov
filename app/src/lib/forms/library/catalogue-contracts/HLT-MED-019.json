@@ -3,6 +3,8 @@
  "form_id": "HLT-MED-019",
  "record_type": "medicines.device.registration",
  "form_version": 1,
+ "procedure_package_id": "medicines.device-registration",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "CFG-MED-001: device classification rules and nomenclature; CFG-MED-002: the device registration procedure and the conformity evidence accepted.",
@@ -25,8 +27,12 @@
   "owner": "medicinesRegulation",
   "filled_by": "The manufacturer or its authorised representative (a registered organisation), or someone acting for it.",
   "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
-  "procedure": null,
-  "intended": "A device registration procedure of the medicines regulator on the product register (assessment, then a decision under the approved permit mapping): not built; the form waits in the library (plan step I4).",
+  "procedure": {
+   "key": "medicines.device-registration",
+   "stage": "submitted",
+   "action": "register-application",
+   "document": "application-form"
+  },
   "lists": {
    "medicines.country.device_kinds": {
     "values": [
@@ -118,7 +124,7 @@
    },
    {
     "id": "no-product-register",
-    "what": "The regulated product record (Part 6 §5.2) is not on the platform yet: a reference to an authorised product is recorded as given and its check recorded as not performed, a product's status is shown nowhere until the regulator's product register exists, and it is never inferred from an import, inventory or procurement record",
+    "what": "The regulated product record (Part 6 §5.2) is kept in the platform's register of medicines and medical devices (lib/health/products/register.ts), written only by the product procedures' effects and read in full only by the medicines authority; a reference to an authorised product in this form is still recorded as given and its check recorded as not performed until the form's reference check reads that register, and a status is never inferred from an import, inventory or procurement record",
     "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
     "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
    },

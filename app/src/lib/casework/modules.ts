@@ -13,6 +13,7 @@ import '@/lib/education/procedures';
 import '@/lib/professions/procedures';
 import '@/lib/health/procedures';
 import '@/lib/customs/procedures';
+import '@/lib/health/products/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
 import '@/lib/permits/decisions';
 // Publication gates: a form takes submissions in production only once its release is approved (lib/forms/publication.ts).
@@ -31,6 +32,7 @@ import { installEducationProcedures } from '@/lib/education/procedures';
 import { installProfessionProcedures } from '@/lib/professions/procedures';
 import { installHealthProcedures } from '@/lib/health/procedures';
 import { installCustomsProcedures } from '@/lib/customs/procedures';
+import { installProductProcedures } from '@/lib/health/products/procedures';
 export { REFERENCE_PROCEDURES } from '@/lib/civil/procedures';
 export { ORGANISATION_PROCEDURES } from '@/lib/organisations/procedures';
 export { IMMIGRATION_PROCEDURES } from '@/lib/immigration/procedures';
@@ -41,9 +43,10 @@ export { EDUCATION_PROCEDURES } from '@/lib/education/procedures';
 export { PROFESSION_PROCEDURES } from '@/lib/professions/procedures';
 export { HEALTH_PROCEDURES } from '@/lib/health/procedures';
 export { CUSTOMS_PROCEDURES } from '@/lib/customs/procedures';
+export { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
 
-/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs) the installation does not have yet. */
+/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices) the installation does not have yet. */
 export function installReferenceProcedures(by: string): { drafted: string[]; present: string[] } {
-  const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by)];
+  const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by), installProductProcedures(by)];
   return { drafted: all.flatMap(x => x.drafted), present: all.flatMap(x => x.present) };
 }

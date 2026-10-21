@@ -144,7 +144,7 @@
    },
    {
     "id": "no-product-register",
-    "what": "The regulated product record (Part 6 §5.2) is not on the platform yet: a reference to an authorised product is recorded as given and its check recorded as not performed, a product's status is shown nowhere until the regulator's product register exists, and it is never inferred from an import, inventory or procurement record",
+    "what": "The regulated product record (Part 6 §5.2) is kept in the platform's register of medicines and medical devices (lib/health/products/register.ts), written only by the product procedures' effects and read in full only by the medicines authority; a reference to an authorised product in this form is still recorded as given and its check recorded as not performed until the form's reference check reads that register, and a status is never inferred from an import, inventory or procurement record",
     "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
     "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
    },

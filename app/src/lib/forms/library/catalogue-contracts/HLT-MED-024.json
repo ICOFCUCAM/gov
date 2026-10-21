@@ -28,7 +28,7 @@
   "filled_by": "Anyone (a public check), or an institution through a product-status exchange service for an approved purpose.",
   "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
   "procedure": null,
-  "intended": "A public product check and a product-status exchange service of the medicines regulator, answered from the product register; no case is opened. Not built: the form waits in the library (plan step I4).",
+  "intended": "Answered by the public product check (/api/health-regulation/products, publicProductView()) and the product.status exchange service, called only by integrations two officials approve for a purpose; no case is opened.",
   "lists": {
    "civicos.verification.requester_kinds": {
     "values": [
@@ -56,12 +56,6 @@
     "rule": "CLAUDE.md Organisations and Government operating model: the twin and checks never create authoritative facts"
    },
    {
-    "id": "no-product-service",
-    "what": "No product-status exchange service exists yet (lib/exchange/services.ts has none for products): when one is approved it is a versioned contract with its purpose and permitted fields, called only by approved integrations",
-    "why": "An exchange service needs the product register it reads and an approval by two officials.",
-    "rule": "CLAUDE.md Government operating model: exchange services and their approval; Integration register"
-   },
-   {
     "id": "no-patient-data",
     "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
     "why": "Allowed scope only: records of products, of organisations (holders, manufacturers, importers) and of the regulator's decisions.",
@@ -75,7 +69,7 @@
    },
    {
     "id": "no-product-register",
-    "what": "The regulated product record (Part 6 §5.2) is not on the platform yet: a reference to an authorised product is recorded as given and its check recorded as not performed, a product's status is shown nowhere until the regulator's product register exists, and it is never inferred from an import, inventory or procurement record",
+    "what": "The regulated product record (Part 6 §5.2) is kept in the platform's register of medicines and medical devices (lib/health/products/register.ts), written only by the product procedures' effects and read in full only by the medicines authority; a reference to an authorised product in this form is still recorded as given and its check recorded as not performed until the form's reference check reads that register, and a status is never inferred from an import, inventory or procurement record",
     "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
     "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
    },
@@ -250,11 +244,11 @@
      "A connection between two institutions does not automatically authorize every possible data exchange between them."
     ],
     "met_by": {
-     "deviation": "no-product-service",
      "platform": {
       "file": "app/src/lib/exchange/services.ts",
       "how": "Exchange services are versioned, called only by approved integrations for an approved purpose, logged"
-     }
+     },
+     "exchange": "product.status"
     }
    },
    {
@@ -264,7 +258,7 @@
      "Interoperability: Every cross-institution exchange has a versioned contract and explicit authority."
     ],
     "met_by": {
-     "deviation": "no-product-service"
+     "exchange": "product.status"
     }
    },
    {
@@ -297,7 +291,8 @@
      }
     }
    }
-  ]
+  ],
+  "exchange": "product.status"
  },
  "fields": [
   {

@@ -32,6 +32,7 @@ import { ruleInForce } from '@/lib/law/rules';
 import { HEALTH_PROCEDURES } from '@/lib/health/procedures';
 import { PROFESSION_PROCEDURES } from '@/lib/professions/procedures';
 import { TAX_PROCEDURES } from '@/lib/tax/procedures';
+import { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
 import { serviceDirectory } from '@/lib/exchange/services';
 import { AUTHORITIES } from '@/lib/nation/deployment';
 import { pagesOf } from '@/components/features/forms/answers';
@@ -204,7 +205,7 @@ function linesFor(id: string): [Src, number][] {
 }
 
 const flat = (fs: ContractField[]): ContractField[] => fs.flatMap(f => [f, ...(f.items ? flat(f.items as ContractField[]) : [])]);
-const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES];
+const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES];
 const SERVICES = serviceDirectory().map(s => s.id);
 const applicantKeys = (f: CatalogueLibraryForm) => f.fields.filter(x => (x.audience ?? 'applicant') === 'applicant').map(x => x.key);
 /** No patient, clinical, treatment, diagnosis or individual health field: by key and by label. */
@@ -511,6 +512,13 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     expect(med('HLT-MED-006').fields.find(x => x.key === 'decision.expiry')!.rules!.some(r => r.rule === 'registered' && r.name === 'authorisation_validity_from_rule')).toBe(true);
   });
 
+  /** The batch-2 contracts the product procedures carry (lib/health/products/procedures.ts), by the procedure each names. */
+  const LINKED_2: Record<string, string> = {
+    'HLT-MED-001': 'medicines.authorisation', 'HLT-MED-002': 'medicines.authorisation', 'HLT-MED-003': 'medicines.authorisation', 'HLT-MED-004': 'medicines.authorisation',
+    'HLT-MED-005': 'medicines.authorisation', 'HLT-MED-006': 'medicines.authorisation', 'HLT-MED-007': 'medicines.renewal', 'HLT-MED-008': 'medicines.variation',
+    'HLT-MED-009': 'medicines.suspension', 'HLT-MED-010': 'medicines.manufacturer', 'HLT-MED-011': 'medicines.manufacturer', 'HLT-MED-017': 'medicines.recall',
+    'HLT-MED-018': 'medicines.recall', 'HLT-MED-019': 'medicines.device-registration',
+  };
   it('takes authority from the deployment profile: the medicines slot, stood in for provisionally by the health regulator until the nation names it', () => {
     // The slots ship empty, like every slot (owner's direction 2026-10-21, health integration §3).
     for (const k of ['medicinesRegulation', 'controlledSubstances', 'publicHealth']) expect(AUTHORITIES.find(a => a.key === k), k).toMatchObject({ optional: true });
@@ -519,8 +527,11 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
       expect(f.owner, id).toBe(id === 'HLT-MED-014' ? 'controlledSubstances' : 'medicinesRegulation');
       expect(f.authorityNote ?? '', id).toMatch(/ships empty.*provisional owner.*never proof of legal competence/);
       expect(f.deviations.map(d => d.id), id).toContain('medicines-authority-slot');
-      expect(f.procedure, id).toBeNull();
+      // Adopted into the product procedures by identity (Health I4); the rest wait with the reason no procedure fits.
+      if (LINKED_2[id]) expect(f.procedure, id).toMatchObject({ key: LINKED_2[id] });
+      else { expect(f.procedure, id).toBeNull(); expect(f.awaits ?? '', id).toMatch(/not built|no case is opened/); }
     }
+    expect(Object.keys(LINKED_2)).toHaveLength(14);
   });
 
   it('keeps dossier content with the regulator and the public product check to what may be published', () => {

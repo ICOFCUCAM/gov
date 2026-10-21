@@ -390,6 +390,15 @@ export const PROPOSED_DEFAULTS: { permitType: string; title: string; lead: strin
   { permitType: 'tax-assessment', title: 'Tax assessment and its variation', lead: 'tax', note: 'Assessments and decisions on objections; the law may give some taxes to another body (local rates, social contributions).' },
   { permitType: 'customs-clearance', title: 'Customs duty assessment and release of goods', lead: 'customs', note: 'Duty assessment, release and refusal of release; other regulators\' import conditions are referred, not decided here.' },
   { permitType: 'qualification-record', title: 'Record of qualifications', lead: 'education', note: 'An examinations council or qualifications authority may keep this record instead of the education ministry.' },
+  // Medicines and medical devices (Health I4, permit-mappings): proposals naming the medicines and controlled-substances slots, citing nothing until the nation approves its own.
+  { permitType: 'medicine-marketing-authorisation', title: 'Marketing authorisation of a medicine (and its variation, renewal, suspension and withdrawal)', lead: 'medicinesRegulation', note: 'The medicines regulator the law names; separate from pharmacy premises licensing and professional registration.' },
+  { permitType: 'medical-device-registration', title: 'Registration of a medical device', lead: 'medicinesRegulation', note: 'Some nations give devices to a separate regulator or a conformity-assessment body.' },
+  { permitType: 'product-recall', title: 'Recall of a medicine or medical device', lead: 'medicinesRegulation', note: 'The law may oblige the holder to recall and give the regulator the power to order it; a safety signal is assessed, never a finding by itself.' },
+  { permitType: 'medicine-manufacturing-licence', title: 'Licence to manufacture medicines or medical devices', lead: 'medicinesRegulation', note: 'Good-practice inspection of the site precedes the licence.' },
+  { permitType: 'medicine-import-licence', title: 'Licence to import medicines or medical devices', lead: 'medicinesRegulation', note: 'The licence of the importer; each consignment\'s import authorisation is a separate permit type.' },
+  { permitType: 'medicine-wholesale-licence', title: 'Licence to distribute medicines wholesale', lead: 'medicinesRegulation', note: 'Distinct from a pharmacy\'s retail licence.' },
+  { permitType: 'medicine-import-authorisation', title: 'Authorisation to import a consignment of medicines', lead: 'medicinesRegulation', note: 'Customs learns only the decision (customs.release); no procedure ships yet (HLT-MED-013).' },
+  { permitType: 'controlled-medicine-authorisation', title: 'Authorisation to handle controlled medicines', lead: 'controlledSubstances', note: 'The authority the controlled-substances law names; the medicines regulator where the law gives it the power. No procedure ships yet (HLT-MED-014).' },
 ];
 
 /** Draft the proposed defaults the installation does not have yet (none governs anything until a nation approves its own version). */

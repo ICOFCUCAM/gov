@@ -99,6 +99,10 @@ export const REFERENCE_TYPES: Omit<RegisterType, 'createdBy' | 'createdAt'>[] = 
   { key: 'schools', title: 'Registered schools', kind: 'registration', authority: 'education', orgKinds: ['school', 'college'], publicCheck: true, reference: true, permitType: 'school-registration' },
   { key: 'health-facilities', title: 'Licensed health facilities', kind: 'licence', authority: 'healthRegulation', orgKinds: ['hospital', 'clinic'], publicCheck: true, reference: true, permitType: 'health-facility-licence' },
   { key: 'pharmacies', title: 'Licensed pharmacies', kind: 'licence', authority: 'healthRegulation', orgKinds: ['pharmacy'], publicCheck: true, reference: true, permitType: 'pharmacy-licence' },
+  // Medicines regulation (Health I4, register-types): kept by the medicines authority the nation names; until then nobody keeps them (provisional owners never decide in production).
+  { key: 'medicine-manufacturers', title: 'Licensed manufacturers of medicines and medical devices', kind: 'licence', authority: 'medicinesRegulation', orgKinds: ['company', 'partnership', 'cooperative', 'other'], publicCheck: true, reference: true, permitType: 'medicine-manufacturing-licence' },
+  { key: 'medicine-importers', title: 'Licensed importers of medicines and medical devices', kind: 'licence', authority: 'medicinesRegulation', orgKinds: ['company', 'partnership', 'cooperative', 'pharmacy', 'other'], publicCheck: true, reference: true, permitType: 'medicine-import-licence' },
+  { key: 'medicine-wholesalers', title: 'Licensed wholesalers of medicines and medical devices', kind: 'licence', authority: 'medicinesRegulation', orgKinds: ['company', 'partnership', 'cooperative', 'pharmacy', 'other'], publicCheck: true, reference: true, permitType: 'medicine-wholesale-licence' },
 ];
 
 /** A checked row held on a proposed load until a second official confirms it. */

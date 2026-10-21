@@ -43,7 +43,7 @@ describe('procedure-link states', () => {
     setNationDays();
   });
 
-  it('is missing for every batch-2 form and every batch-1 form without a procedure, and that fails the go-live gate', () => {
+  it('is missing for every form without a procedure (batch-2 forms no product procedure carries, batch-1 forms without one), and that fails the go-live gate', () => {
     for (const f of CATALOGUE_CONTRACTS.filter(x => !x.procedure)) {
       const pub = libraryPublicationOf(found(f.specId));
       expect(pub.procedure.state, f.identity).toBe('missing');
@@ -60,10 +60,12 @@ describe('procedure-link states', () => {
       expect(pub.automatic.find(g => g.id === 'procedure-link')!.passed, id).toBe(true);
     }
     expect(serviceIds()).toContain('organisation.standing');
-    // The product check has no service yet: it cannot go live.
+    // The product check is answered by the product.status service (Health I4): its gate finds the service; a form naming a service that does not exist cannot go live.
+    expect(serviceIds()).toContain('product.status');
     const product = libraryPublicationOf(found('HLT-MED-024'));
-    expect(product.procedure).toMatchObject({ required: false, exchange: { id: null, exists: false } });
-    expect(product.automatic.find(g => g.id === 'procedure-link')).toMatchObject({ passed: false });
+    expect(product.procedure).toMatchObject({ required: false, exchange: { id: 'product.status', exists: true } });
+    expect(product.automatic.find(g => g.id === 'procedure-link')).toMatchObject({ passed: true });
+    expect(procedureLink({ identity: lib('HLT-MED-024').identity, procedure: null, deviations: [{ id: 'no-case' }] }, { services: [], packages: [] })).toMatchObject({ state: 'missing', exchange: { id: null, exists: false } });
   });
 
   it('is draft for a linked batch-1 form once its reference procedure is in the register, until a version carries the contract', () => {
@@ -74,6 +76,26 @@ describe('procedure-link states', () => {
       const l = procedureLink({ identity: f.identity, procedure: f.procedure });
       expect(l.state, f.identity).toBe('draft');
       expect(l.detail).toMatch(/no version of it carries this contract yet/);
+    }
+  });
+
+  it('is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it', () => {
+    const med = CATALOGUE_CONTRACTS.filter(f => f.batch === 2 && f.procedure);
+    expect(med).toHaveLength(14);
+    // Not installed: the procedure each names is not in the register yet.
+    for (const f of med) expect(libraryPublicationOf(findLibraryForm(f.identity)!).procedure.state, f.identity).toBe('missing');
+    installAll('Administrator');
+    for (const f of med) {
+      const pub = libraryPublicationOf(findLibraryForm(f.identity)!);
+      expect(pub.procedure, f.identity).toMatchObject({ state: 'draft' });
+      expect(procedureLink({ identity: f.identity, procedure: f.procedure }), f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
+      expect(pub.status, f.identity).not.toBe('approved');
+      expect(pub.human.filter(g => g.applies && g.passed), f.identity).toEqual([]);
+    }
+    // The forms no procedure fits stay missing, each with the stage it waits for.
+    for (const f of CATALOGUE_CONTRACTS.filter(x => x.batch === 2 && !x.procedure && x.specId !== 'HLT-MED-024')) {
+      expect(libraryPublicationOf(findLibraryForm(f.identity)!).procedure.state, f.identity).toBe('missing');
+      expect(f.awaits, f.identity).toMatch(/not built/);
     }
   });
 

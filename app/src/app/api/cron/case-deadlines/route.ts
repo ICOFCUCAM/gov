@@ -16,6 +16,7 @@ import { expireGrants } from '@/lib/immigration/register';
 import { watchAccess } from '@/lib/records/access-watch';
 import { reconcileTaxPayments } from '@/lib/tax/register';
 import { lapseRegistrations } from '@/lib/professions/register';
+import { expireProducts } from '@/lib/health/products/register';
 import { reconcileCustomsPayments } from '@/lib/customs/register';
 import { raiseSuspensionAlerts, lapseSuspensionPolicy } from '@/lib/permits/authority';
 import { lapseDualControlPolicy } from '@/lib/casework/dual-control-policy';
@@ -32,6 +33,7 @@ async function runJob(req: Request) {
   const access = watchAccess();
   const tax = reconcileTaxPayments(listReceipts());
   const professionals = lapseRegistrations();
+  const products = expireProducts();
   const customs = reconcileCustomsPayments(listReceipts());
   const suspensions = raiseSuspensionAlerts();
   const proposals = lapseProposals();
@@ -39,7 +41,7 @@ async function runJob(req: Request) {
   lapseDualControlPolicy(); lapseSuspensionPolicy(); lapseClassification(); lapseProcess();
   // Constitutional profiles approved for a date that has come (plan phase 5): activated with their recorded approvals.
   const profilesActivated = activateDue();
-  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length, proposalsLapsed: proposals.length, profilesActivated });
+  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, productsLapsed: products.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length, proposalsLapsed: proposals.length, profilesActivated });
 }
 
 // Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).

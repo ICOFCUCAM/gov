@@ -265,6 +265,93 @@ DEPENDENCIES = [
         gate='S6-I-11 exit gate', status='not built'),
 ]
 
+# ── The first I4 dependencies built (21 October 2026): the product register, its procedures, product.status ──
+# Each override names the tests that prove it; health-i4.test.ts fails a "built and proven" claim without them.
+PR = 'app/src/lib/health/products'
+PT = f'{PR}/procedures.test.ts'
+PRIV = 'app/src/app/api/health-regulation/products/products-privacy.test.ts'
+PRODUCT_FILES = [f'{PR}/register.ts', f'{PR}/procedures.ts', 'app/src/app/api/health-regulation/products/route.ts']
+ADOPTION_LEFT = 'Adoption of the linked contracts in a version of the procedure the nation drafts, tested and approved by a second official (the link reads draft until then; nothing is approved by the platform)'
+OVERRIDES = {
+    'product-register': dict(
+        exists=[dict(what='The register of medicines and medical devices: product records by version (every change a new version, status history, enforcement record), holder an organisation of the organisations register by its number, authorisation number, conditions and validity as the decision states, the attribute classes and the decision that approved each; written only by the product procedures\' effects; full records read only by the medicines authority under canReadProduct(), every read in the access log; everyone else publicProductView(); in the register owners with owner slot medicinesRegulation; the forms\' references to medicines.registry.products read it (decided records only)',
+                     files=PRODUCT_FILES + ['app/src/lib/data/register-owners.ts', 'app/src/lib/auth/roles.ts', 'app/src/lib/forms/server.ts'])],
+        missing=[],
+        tests=dict(existing=[T(PT, 'runs marketing authorisation to a sealed decision with four eyes and writes the product register only through its effect'),
+                             T(PT, 'keeps every version and takes a status only from a sealed decision: an application shows nothing, an import or inventory record cannot set one'),
+                             T(PT, 'answers the forms\' product references from the register: a decided product by its number or authorisation number, never an application'),
+                             T('app/src/lib/casework/register-writes.test.ts', 'lets only the procedure module (and the listed exceptions) import a changing function'),
+                             T(PRIV, 'gives the full record to the medicines authority\'s officials only, and writes every read, allowed or refused, to the access log')], planned=[]),
+        status='built and proven'),
+    'public-product-view': dict(
+        exists=[dict(what='publicProductView(): only attributes recorded by an approved decision, listed in the nation\'s approved public information classification and of the public class; never the dossier, the assessment, findings or persons; enforcement only as approved and published notices; every output of the product register (lists, the one-product answer, the product.status service) passes through it; the classification ships empty and changes only by two officials citing the law',
+                     files=['app/src/lib/health/products/public.ts', f'{LIB}/HLT-MED-024.json', f'{PR}/register.ts'])],
+        missing=['The nation\'s public information classification (ships empty): proposed citing the law and confirmed by a different official'],
+        tests=dict(existing=[T('app/src/lib/health/products/public.test.ts', 'never carries dossier content, personal data or unpublished enforcement records: %s'),
+                             T('app/src/lib/health/products/public.test.ts', 'returns an attribute only when it is approved, public and listed'),
+                             T('app/src/lib/health/products/public.test.ts', 'returns no attribute until the nation approves a classification that lists it'),
+                             T('app/src/lib/health/products/public.test.ts', 'is the rule HLT-MED-024 names, and the I4 register and integration register point to it'),
+                             T(PRIV, 'never carries confidential, restricted, personal or unpublished content in lists, the public answer, a refused full read, the exchange, the twin, the setup hub or the audit chain')], planned=[]),
+        status='built and proven'),
+    'register-types': dict(
+        exists=[dict(what='Register types medicine-manufacturers, medicine-importers and medicine-wholesalers kept by the medicinesRegulation slot, each with a proposed (unapproved) permit type; their licence, renewal, suspension and revocation procedures (medicines.manufacturer, medicines.importer, medicines.wholesaler) change standings only through the organisation procedures\' effects; HLT-MED-010 and HLT-MED-011 linked to the manufacturing licence',
+                     files=['app/src/lib/organisations/register.ts', 'app/src/lib/organisations/procedures.ts', f'{PR}/procedures.ts'])],
+        missing=[],
+        tests=dict(existing=[T(f'{PR}/register-types.test.ts', 'are kept by the medicines authority slot, each with its own permit type, open to the public check'),
+                             T(f'{PR}/register-types.test.ts', 'are changed only by the medicines authority, through the licence procedures\' effects, after inspection of registered premises')], planned=[]),
+        status='built and proven'),
+    'exchange-product-status': dict(
+        exists=[dict(what='product.status in the service directory (owner medicinesRegulation, scope service:product.status): answers only publicProductView() of a decided record through callService(), for a purpose two officials approved for the caller (proposeIntegrationApproval / confirmIntegrationApproval); no caller ships approved; HLT-MED-024 names it',
+                     files=['app/src/lib/exchange/services.ts', f'{PR}/register.ts', f'{LIB}/HLT-MED-024.json'])],
+        missing=['Its approval for each caller and purpose by two officials (the nation\'s act; none ships)'],
+        tests=dict(existing=[T(f'{PR}/exchange.test.ts', 'is declared in the directory, owned by the medicines authority, returning only the public view\'s fields'),
+                             T(f'{PR}/exchange.test.ts', 'ships no approved caller, and answers an outside caller only for a purpose two officials approved for it'),
+                             T(f'{PR}/exchange.test.ts', 'is the service HLT-MED-024 names, so its form needs no procedure and finds its service'),
+                             T('app/src/lib/forms/procedure-link.test.ts', 'needs no procedure where an exchange service answers, but needs that service')], planned=[]),
+        status='built and proven'),
+    'permit-mappings': dict(
+        exists=[dict(what='Proposed, unapproved mappings citing nothing: medicine-marketing-authorisation, medical-device-registration, product-recall, the manufacturing, import and wholesale licences and medicine-import-authorisation (lead medicinesRegulation), controlled-medicine-authorisation (lead controlledSubstances); every product decision step classified in lib/permits/decisions.ts and refused in production until a mapping is approved; sealed decisions record the mapping version',
+                     files=['app/src/lib/permits/authority.ts', 'app/src/lib/permits/decisions.ts'])],
+        missing=['The nation approves each mapping (drafted by one administrator, approved by another, citing the law)'],
+        tests=dict(existing=[T(PT, 'ships unapproved mappings citing nothing, and refuses every product decision in production until one is approved'),
+                             T(PT, 'runs a recall from notification to verified completion, under the recall mapping'),
+                             T(PT, 'registers a medical device under the device registration mapping')], planned=[]),
+        status='built and proven'),
+}
+PROCEDURE_TESTS = {
+    'marketing-authorisation': [T(PT, 'runs marketing authorisation to a sealed decision with four eyes and writes the product register only through its effect')],
+    'variation': [T(PT, 'runs a variation, a renewal, a suspension with its published notice, reinstatement and withdrawal')],
+    'renewal': [T(PT, 'runs a variation, a renewal, a suspension with its published notice, reinstatement and withdrawal')],
+    'suspension-withdrawal': [T(PT, 'runs a variation, a renewal, a suspension with its published notice, reinstatement and withdrawal')],
+    'recall': [T(PT, 'runs a recall from notification to verified completion, under the recall mapping')],
+    'device-registration': [T(PT, 'registers a medical device under the device registration mapping')],
+}
+PROCEDURE_KEYS = {'marketing-authorisation': 'medicines.authorisation', 'variation': 'medicines.variation', 'renewal': 'medicines.renewal', 'suspension-withdrawal': 'medicines.suspension', 'recall': 'medicines.recall', 'device-registration': 'medicines.device-registration'}
+for k, tests in PROCEDURE_TESTS.items():
+    OVERRIDES[f'procedure-{k}'] = dict(
+        exists=[dict(what=f'The reference procedure {PROCEDURE_KEYS[k]} (a draft the nation adapts and a second official approves): its stages, its two-official decision steps classified under the permit mapping, its effects on the product register; no period, fee or outcome list typed; its contracts linked by identity to their stages (procedure link: draft once installed)',
+                     files=[f'{PR}/procedures.ts', 'app/src/lib/casework/engine.ts', 'app/src/lib/permits/decisions.ts'])],
+        missing=[ADOPTION_LEFT],
+        tests=dict(existing=tests + [T('app/src/lib/forms/procedure-link.test.ts', 'is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it')], planned=[]),
+        status='partial')
+OVERRIDES['procedure-inspection'] = dict(
+    exists=[dict(what='HLT-MED-011 linked to the inspection step of the manufacturing licence (medicines.manufacturer: inspection of registered premises, inspection report); the case engine and permit registry',
+                 files=[f'{PR}/procedures.ts', f'{LIB}/HLT-MED-011.json', f'{LIB}/HLT-MED-012.json'])],
+    missing=['A corrective-action follow-up procedure (HLT-MED-012) and inspections of authorisation applications', 'Inspection and safety-reporting authority (CFG-MED-003) from the nation', ADOPTION_LEFT],
+    tests=dict(existing=[T(f'{PR}/register-types.test.ts', 'are changed only by the medicines authority, through the licence procedures\' effects, after inspection of registered premises')], planned=['Procedure test: corrective action tracked to closure']),
+    status='partial')
+OVERRIDES['forms-without-procedures'] = dict(
+    exists=[dict(what='Each contract as a library draft naming the stage it is intended for; its procedure link computed from the package register (missing), failing the go-live gate; 14 batch-2 contracts now linked to the product procedures (draft), 7 still without a fitting procedure (HLT-MED-012, 013, 014, 015, 020, 023 and HLT-MED-024, answered by product.status)',
+                 files=['app/src/lib/forms/procedure-link.ts', 'app/src/lib/forms/publication.ts', f'{PR}/procedures.ts'])],
+    missing=['The procedures named in the list below (forms_without_procedure in health-i4.json): corrective action, import and controlled-medicine authorisation, safety and incident intake, reconsideration; batch 1\'s establishment approval, follow-up, variation, closure, complaints, good standing, amendment and interim restriction'],
+    tests=dict(existing=[T('app/src/lib/forms/procedure-link.test.ts', 'is missing for every form without a procedure (batch-2 forms no product procedure carries, batch-1 forms without one), and that fails the go-live gate'),
+                         T('app/src/lib/forms/procedure-link.test.ts', 'needs no procedure where an exchange service answers, but needs that service'),
+                         T('app/src/lib/forms/procedure-link.test.ts', 'is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it')],
+               planned=['Each procedure\'s own test (see the procedure-* dependencies)']),
+    status='partial')
+for d in DEPENDENCIES:
+    d.update(OVERRIDES.get(d['id'], {}))
+
 ACCEPTANCE = [
     dict(id='P2-03', row='S2-G-14', item='A health-facility licensing case cannot be approved by an account lacking the configured legal authority.', register_status='Proven', status='built and proven',
          tests=[T('app/src/lib/health/procedures.test.ts', 'refuses premises that are not published registered sites, and the education authority cannot license a clinic'),
@@ -347,7 +434,7 @@ def render(reg):
     for x in f:
         md.append(f'| `{x["identity"]}` {x["title"]} | {x["batch"]} | `{x["owner"]}` | {"yes" if x["procedure_required"] else "no (" + str(x["answered_by"] or "a service not built") + ")"} | {x["stage"]} |')
     a = reg['adoption']
-    md += ['', '## Linked batch-1 contracts waiting for adoption', '',
+    md += ['', '## Linked contracts waiting for adoption (batches 1 and 2)', '',
            f'{len(a)} contracts name a reference procedure. Each is linked, not adopted: the nation adopts it in a new procedure version a second official approves.', '',
            '| Form | Procedure | Stage | Step or document |', '|---|---|---|---|']
     for x in a:

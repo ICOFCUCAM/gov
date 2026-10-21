@@ -465,10 +465,54 @@ here citing product, organisation and decision records as the allowed scope;
 | medicines-authority-slot | The medicines-regulator slot ships empty; until the nation names it the health regulator stands in as a provisional owner (§11) | Who is responsible comes only from the deployment profile and the permit authority registry (CLAUDE.md Government operating model) |
 | no-product-register | The regulated product record (Part 6 §5.2) is not on the platform: product references are recorded as given, their check as not performed, and a status is never inferred from an import, inventory or procurement record | Status comes only from the competent regulator's record; integration register 20.5, 20.9 |
 
-**Procedures.** No reference procedure of the medicines regulator exists, so
-every batch-2 contract waits in the library with the stage it is intended for
-(plan step I4: "medicines and devices regulation as administrative records");
-none was invented, and no decision power ships.
+**Procedures.** When batch 2 was written no reference procedure of the
+medicines regulator existed, so every contract waited in the library with the
+stage it is intended for (plan step I4: "medicines and devices regulation as
+administrative records"); none was invented, and no decision power ships.
+
+**Adopted into the product procedures (Health I4, 21 October 2026).** The
+register of medicines and medical devices (`lib/health/products/register.ts`)
+and its reference procedures (`lib/health/products/procedures.ts`, drafts the
+nation adapts and a second official approves) now carry 14 of the contracts,
+each linked by its identity to its stage, step and document, as the batch-1
+contracts are linked to the facility and professions procedures; the link
+reads `draft` once the procedures are installed and is never approved by the
+platform:
+
+| Contract | Procedure | Stage · step · document |
+|---|---|---|
+| HLT-MED-001 | `medicines.authorisation` | submitted · register · application-form |
+| HLT-MED-002 | `medicines.authorisation` (also variation, renewal, device registration) | dossier · record-dossier · dossier |
+| HLT-MED-003 | `medicines.authorisation` (also …) | assessment · assess · assessment-report |
+| HLT-MED-004 | `medicines.authorisation` (also …) | assessment · request-information · information-request |
+| HLT-MED-005 | `medicines.authorisation` (also …) | information-requested · record-response · applicant-response |
+| HLT-MED-006 | `medicines.authorisation` | pending-approval · authorise |
+| HLT-MED-007 | `medicines.renewal` | submitted · register · application-form |
+| HLT-MED-008 | `medicines.variation` | submitted · register · application-form |
+| HLT-MED-009 | `medicines.suspension` | opened · notify · grounds |
+| HLT-MED-010 | `medicines.manufacturer` (organisations register type `medicine-manufacturers`) | submitted · check |
+| HLT-MED-011 | `medicines.manufacturer` | inspection · inspected · inspection-report |
+| HLT-MED-017 | `medicines.recall` | notified · assess-risk · recall-notification |
+| HLT-MED-018 | `medicines.recall` | supply-chain-notified · report-completion · completion-report |
+| HLT-MED-019 | `medicines.device-registration` | submitted · register-application · application-form |
+
+HLT-MED-024 is answered by the public product check and the `product.status`
+exchange service (`library.exchange`; deviation `no-product-service` removed,
+its catalogue passages met by the service). Six contracts have no fitting
+procedure and stay `missing`, each naming the stage it waits for: HLT-MED-012
+(corrective action), 013 (import authorisation), 014 (controlled medicines,
+the `controlledSubstances` slot), 015 and 020 (safety and incident intake) and
+023 (reconsideration). The deviation `no-product-register` now says the
+register exists and the forms' product references read it (decided records
+only); `no-manufacturer-register` says the reference register types exist with
+unapproved permit types. The procedures type no period, fee or outcome list;
+every decision step is classified under a proposed, unapproved permit mapping
+and refused in production until the nation approves one. Integration register
+20.17–20.23; tests `lib/health/products/procedures.test.ts`,
+`register-types.test.ts`, `exchange.test.ts`,
+`app/api/health-regulation/products/products-privacy.test.ts` and
+`lib/forms/procedure-link.test.ts` ("is draft for each batch-2 form the
+product procedures carry …").
 
 **Tests.** `app/src/lib/forms/catalogue-contracts.test.ts` now holds both
 batches: for batch 2 its own list of the lines each form answers, the same
@@ -669,7 +713,7 @@ status field and never set through the API. A version carries a contract when
 its form names the contract's identity. A required procedure that is missing
 fails the automatic gate `procedure-link`; a form answered by an exchange
 service and the public check (deviation `no-case`) needs that service instead
-(HLT-FAC-010 and HLT-LIC-014 have theirs; HLT-MED-024 has none yet). The state
+(HLT-FAC-010 and HLT-LIC-014 have theirs; HLT-MED-024 has `product.status` since the product register, §9). The state
 shows on the publication panel and the library details
 (`procedure-link.test.ts`).
 
@@ -687,7 +731,7 @@ confirmation on a provisional owner. It is never proof of legal competence
 (`lib/nation/health-slots.test.ts`). This replaces the stand-in described in
 §8 and §9.
 
-**The public product view.** There is no product register yet. The rule the
+**The public product view.** When this was written there was no product register (it exists since, §9). The rule the
 public product check, lists, exports, the twin and the product-status
 exchange service must meet is built: `publicProductView()` in
 `lib/health/products/public.ts` returns only attributes recorded by an

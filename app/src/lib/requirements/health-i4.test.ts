@@ -92,7 +92,8 @@ describe('the Health I4 requirements and dependency register', () => {
     const health = CATALOGUE_CONTRACTS.filter(f => f.specId.startsWith('HLT-'));
     const none = health.filter(f => !f.procedure);
     expect(REG.forms_without_procedure.map(x => x.identity).sort()).toEqual(none.map(f => f.identity).sort());
-    expect(REG.forms_without_procedure.filter(x => x.batch === 2)).toHaveLength(21);
+    // Batch 2: 14 contracts are linked to the product procedures (Health I4); 7 have no fitting procedure, HLT-MED-024 answered by product.status.
+    expect(REG.forms_without_procedure.filter(x => x.batch === 2)).toHaveLength(7);
     expect(REG.forms_without_procedure.filter(x => x.batch === 1)).toHaveLength(12);
     for (const x of REG.forms_without_procedure) {
       const f = none.find(y => y.identity === x.identity)!;

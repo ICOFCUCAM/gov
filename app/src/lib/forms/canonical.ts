@@ -107,6 +107,7 @@ const REGISTRY_SOURCES: Record<string, string> = {
   'civicos.registry.approved_legal_authorities': 'law',
   'civicos.registry.professionals': 'professional',
   'civicos.registry.sites': 'site',
+  'medicines.registry.products': 'product',
 };
 /** Rules whose field is answered by an official, or set by the platform. */
 const OFFICER_RULES = new Set(Object.entries(RULE_REGISTRY).filter(([, r]) => r.scope === 'officer').map(([k]) => k));

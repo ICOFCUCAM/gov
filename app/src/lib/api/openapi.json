@@ -19471,6 +19471,1075 @@
         "x-source": "src/app/api/federation/webhooks/test/route.ts"
       }
     },
+    "/api/health-regulation/products": {
+      "get": {
+        "tags": [
+          "health-regulation"
+        ],
+        "operationId": "get_health_regulation_products",
+        "summary": "GET /api/health-regulation/products",
+        "description": "/api/health-regulation/products — the register of authorised medicines and medical devices (lib/health/products/register.ts). GET: anyone's list of decided products, each as publicProductView() under the nation's approved public information classification (?kind=, ?q= a register number, or a name where the classification publishes names); ?number= one product's public view; the classification in force and its waiting proposal; counts. ?number=…&full=1 is the full record (dossier versions, assessment, grounds, recall completions): the medicines authority's officials only (canReadProduct()), and every read, allowed or refused, goes to the access log; ?search=1 is the regulator's own list (numbers, names and states, applications included), logged as a search. POST (administrators): what the public check shows, by two officials citing the law: { op: 'propose-disclosure', fields, legalBasis: [{ instrument, eId }] }, then { op: 'confirm-disclosure' } by a different official, or { op: 'withdraw-disclosure' }. Products change only through decided cases (/api/cases).",
+        "parameters": [
+          {
+            "name": "full",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "products": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "number": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "device",
+                                  "medicine"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "applied",
+                                  "authorised",
+                                  "lapsed",
+                                  "refused",
+                                  "suspended",
+                                  "withdrawn"
+                                ]
+                              },
+                              "holder": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "sample": {
+                                "type": "boolean",
+                                "const": true
+                              }
+                            },
+                            "required": [
+                              "number",
+                              "kind",
+                              "state",
+                              "holder"
+                            ]
+                          }
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "applied": {
+                              "type": "string"
+                            },
+                            "authorised": {
+                              "type": "string"
+                            },
+                            "lapsed": {
+                              "type": "string"
+                            },
+                            "refused": {
+                              "type": "string"
+                            },
+                            "suspended": {
+                              "type": "string"
+                            },
+                            "withdrawn": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "applied",
+                            "authorised",
+                            "lapsed",
+                            "refused",
+                            "suspended",
+                            "withdrawn"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "products",
+                        "labels"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "product": {
+                          "$ref": "#/components/schemas/ProductEntry"
+                        },
+                        "record": {
+                          "$ref": "#/components/schemas/ProductRecord"
+                        },
+                        "public": {
+                          "$ref": "#/components/schemas/PublicProductEntry"
+                        },
+                        "classes": {
+                          "type": "object",
+                          "properties": {
+                            "activeIngredients": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "assessmentReport": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "authorisationNumber": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "authorisedOn": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "composition": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "conditions": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "contactPerson": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "deviceClass": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "deviceNomenclature": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "dosageForm": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "dossier": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "holder": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "inspectionFindings": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "legalBasis": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "legalSupplyCategory": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "manufacturingSites": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "name": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "packagingAndLabelling": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "qualifiedPerson": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "route": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "strength": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "therapeuticClass": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            },
+                            "validUntil": {
+                              "type": "string",
+                              "enum": [
+                                "administrative",
+                                "commercial_confidential",
+                                "personal",
+                                "public",
+                                "restricted"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "activeIngredients",
+                            "assessmentReport",
+                            "authorisationNumber",
+                            "authorisedOn",
+                            "composition",
+                            "conditions",
+                            "contactPerson",
+                            "deviceClass",
+                            "deviceNomenclature",
+                            "dosageForm",
+                            "dossier",
+                            "holder",
+                            "inspectionFindings",
+                            "legalBasis",
+                            "legalSupplyCategory",
+                            "manufacturingSites",
+                            "name",
+                            "packagingAndLabelling",
+                            "qualifiedPerson",
+                            "route",
+                            "status",
+                            "strength",
+                            "therapeuticClass",
+                            "validUntil"
+                          ]
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "applied": {
+                              "type": "string"
+                            },
+                            "authorised": {
+                              "type": "string"
+                            },
+                            "lapsed": {
+                              "type": "string"
+                            },
+                            "refused": {
+                              "type": "string"
+                            },
+                            "suspended": {
+                              "type": "string"
+                            },
+                            "withdrawn": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "applied",
+                            "authorised",
+                            "lapsed",
+                            "refused",
+                            "suspended",
+                            "withdrawn"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "product",
+                        "record",
+                        "public",
+                        "classes",
+                        "labels"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "products": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/PublicProductEntry"
+                          }
+                        },
+                        "classification": {
+                          "$ref": "#/components/schemas/PublicClassification"
+                        },
+                        "changes": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "object",
+                              "properties": {
+                                "values": {
+                                  "$ref": "#/components/schemas/Disclosure"
+                                },
+                                "basis": {
+                                  "type": "array",
+                                  "items": {
+                                    "$ref": "#/components/schemas/Citation"
+                                  }
+                                },
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "confirmed": {
+                                  "type": "object",
+                                  "properties": {
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "independence": {
+                                      "type": "string",
+                                      "enum": [
+                                        "accounts-only",
+                                        "identity-provider",
+                                        "unverified"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "by",
+                                    "at",
+                                    "independence"
+                                  ]
+                                },
+                                "expiresAt": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "values",
+                                "basis",
+                                "by",
+                                "at",
+                                "expiresAt"
+                              ],
+                              "description": "A proposal waiting for its second official."
+                            },
+                            "history": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "values": {
+                                    "$ref": "#/components/schemas/Disclosure"
+                                  },
+                                  "basis": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/Citation"
+                                    }
+                                  },
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "confirmed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "by": {
+                                        "type": "string"
+                                      },
+                                      "byId": {
+                                        "type": "string"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "independence": {
+                                        "type": "string",
+                                        "enum": [
+                                          "accounts-only",
+                                          "identity-provider",
+                                          "unverified"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "by",
+                                      "at",
+                                      "independence"
+                                    ]
+                                  },
+                                  "outcome": {
+                                    "type": "string",
+                                    "enum": [
+                                      "adopted",
+                                      "lapsed",
+                                      "withdrawn"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "values",
+                                  "basis",
+                                  "by",
+                                  "at",
+                                  "outcome"
+                                ]
+                              },
+                              "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                            }
+                          }
+                        },
+                        "publishable": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "activeIngredients",
+                              "assessmentReport",
+                              "authorisationNumber",
+                              "authorisedOn",
+                              "composition",
+                              "conditions",
+                              "contactPerson",
+                              "deviceClass",
+                              "deviceNomenclature",
+                              "dosageForm",
+                              "dossier",
+                              "holder",
+                              "inspectionFindings",
+                              "legalBasis",
+                              "legalSupplyCategory",
+                              "manufacturingSites",
+                              "name",
+                              "packagingAndLabelling",
+                              "qualifiedPerson",
+                              "route",
+                              "status",
+                              "strength",
+                              "therapeuticClass",
+                              "validUntil"
+                            ]
+                          }
+                        },
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "number"
+                            },
+                            "byState": {
+                              "type": "object",
+                              "properties": {
+                                "applied": {
+                                  "type": "number"
+                                },
+                                "authorised": {
+                                  "type": "number"
+                                },
+                                "lapsed": {
+                                  "type": "number"
+                                },
+                                "refused": {
+                                  "type": "number"
+                                },
+                                "suspended": {
+                                  "type": "number"
+                                },
+                                "withdrawn": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "applied",
+                                "authorised",
+                                "lapsed",
+                                "refused",
+                                "suspended",
+                                "withdrawn"
+                              ]
+                            },
+                            "byKind": {
+                              "type": "object",
+                              "properties": {
+                                "device": {
+                                  "type": "number"
+                                },
+                                "medicine": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "device",
+                                "medicine"
+                              ]
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "byState",
+                            "byKind",
+                            "samples"
+                          ]
+                        },
+                        "authorityNamed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "products",
+                        "classification",
+                        "changes",
+                        "publishable",
+                        "counts",
+                        "authorityNamed"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "products": [
+                        {
+                          "number": "string",
+                          "kind": "device",
+                          "state": "applied",
+                          "holder": "string"
+                        }
+                      ],
+                      "labels": {
+                        "applied": "string",
+                        "authorised": "string",
+                        "lapsed": "string",
+                        "refused": "string",
+                        "suspended": "string",
+                        "withdrawn": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/health-regulation/products/route.ts"
+      },
+      "post": {
+        "tags": [
+          "health-regulation"
+        ],
+        "operationId": "post_health_regulation_products",
+        "summary": "POST /api/health-regulation/products",
+        "description": "/api/health-regulation/products — the register of authorised medicines and medical devices (lib/health/products/register.ts). GET: anyone's list of decided products, each as publicProductView() under the nation's approved public information classification (?kind=, ?q= a register number, or a name where the classification publishes names); ?number= one product's public view; the classification in force and its waiting proposal; counts. ?number=…&full=1 is the full record (dossier versions, assessment, grounds, recall completions): the medicines authority's officials only (canReadProduct()), and every read, allowed or refused, goes to the access log; ?search=1 is the regulator's own list (numbers, names and states, applications included), logged as a search. POST (administrators): what the public check shows, by two officials citing the law: { op: 'propose-disclosure', fields, legalBasis: [{ instrument, eId }] }, then { op: 'confirm-disclosure' } by a different official, or { op: 'withdraw-disclosure' }. Products change only through decided cases (/api/cases).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ok": {
+                              "type": "boolean",
+                              "const": true
+                            }
+                          },
+                          "required": [
+                            "ok"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Disclosure"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at"
+                          ]
+                        }
+                      ]
+                    },
+                    "classification": {
+                      "$ref": "#/components/schemas/PublicClassification"
+                    },
+                    "changes": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Disclosure"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/Disclosure"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "classification",
+                    "changes"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {
+                        "ok": true
+                      },
+                      "classification": {
+                        "fields": [
+                          "activeIngredients"
+                        ],
+                        "approved": true,
+                        "version": 1
+                      },
+                      "changes": {
+                        "pending": {
+                          "values": {
+                            "fields": []
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/health-regulation/products/route.ts"
+      }
+    },
     "/api/health-regulation": {
       "get": {
         "tags": [
@@ -42560,7 +43629,7 @@
                                 "type": "object",
                                 "properties": {
                                   "values": {
-                                    "$ref": "#/components/schemas/Disclosure"
+                                    "$ref": "#/components/schemas/Disclosure_professions_register"
                                   },
                                   "basis": {
                                     "type": "array",
@@ -42623,7 +43692,7 @@
                                   "type": "object",
                                   "properties": {
                                     "values": {
-                                      "$ref": "#/components/schemas/Disclosure"
+                                      "$ref": "#/components/schemas/Disclosure_professions_register"
                                     },
                                     "basis": {
                                       "type": "array",
@@ -42841,7 +43910,7 @@
                           "type": "object",
                           "properties": {
                             "values": {
-                              "$ref": "#/components/schemas/Disclosure"
+                              "$ref": "#/components/schemas/Disclosure_professions_register"
                             },
                             "basis": {
                               "type": "array",
@@ -42902,7 +43971,7 @@
                           "type": "object",
                           "properties": {
                             "values": {
-                              "$ref": "#/components/schemas/Disclosure"
+                              "$ref": "#/components/schemas/Disclosure_professions_register"
                             },
                             "basis": {
                               "type": "array",
@@ -42965,7 +44034,7 @@
                             "type": "object",
                             "properties": {
                               "values": {
-                                "$ref": "#/components/schemas/Disclosure"
+                                "$ref": "#/components/schemas/Disclosure_professions_register"
                               },
                               "basis": {
                                 "type": "array",
@@ -79141,6 +80210,46 @@
       "Disclosure": {
         "type": "object",
         "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "activeIngredients",
+                "assessmentReport",
+                "authorisationNumber",
+                "authorisedOn",
+                "composition",
+                "conditions",
+                "contactPerson",
+                "deviceClass",
+                "deviceNomenclature",
+                "dosageForm",
+                "dossier",
+                "holder",
+                "inspectionFindings",
+                "legalBasis",
+                "legalSupplyCategory",
+                "manufacturingSites",
+                "name",
+                "packagingAndLabelling",
+                "qualifiedPerson",
+                "route",
+                "status",
+                "strength",
+                "therapeuticClass",
+                "validUntil"
+              ]
+            }
+          }
+        },
+        "required": [
+          "fields"
+        ]
+      },
+      "Disclosure_professions_register": {
+        "type": "object",
+        "properties": {
           "publicFields": {
             "type": "array",
             "items": {
@@ -92791,6 +93900,2116 @@
           "stage"
         ]
       },
+      "ProductEnforcement": {
+        "description": "An enforcement or safety record on a product: a suspension, withdrawal, recall or safety notice.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "recall",
+              "safety_notice",
+              "suspension",
+              "withdrawal"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "approvedBy": {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "decision",
+              "at"
+            ],
+            "description": "Decided by an authorised official (the case engine's sealed decision)."
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "Published by the regulator (a notice released for the public), with when."
+          },
+          "publicNotice": {
+            "type": "string",
+            "description": "The wording released to the public."
+          },
+          "grounds": {
+            "type": "string",
+            "description": "The grounds, evidence and reporters: restricted, never public."
+          },
+          "reporters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "contact": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "at"
+        ]
+      },
+      "ProductEnforcementRecord": {
+        "description": "An enforcement record as the register keeps it: the public shape plus the case it came from and a recall's completion.",
+        "type": "object",
+        "properties": {
+          "case": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "completion": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "case": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "case",
+              "summary",
+              "documents"
+            ],
+            "description": "A recall's completion, verified by the regulator (HLT-MED-018): restricted, never public."
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "recall",
+              "safety_notice",
+              "suspension",
+              "withdrawal"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "approvedBy": {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "decision",
+              "at"
+            ],
+            "description": "Decided by an authorised official (the case engine's sealed decision)."
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "Published by the regulator (a notice released for the public), with when."
+          },
+          "publicNotice": {
+            "type": "string",
+            "description": "The wording released to the public."
+          },
+          "grounds": {
+            "type": "string",
+            "description": "The grounds, evidence and reporters: restricted, never public."
+          },
+          "reporters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "contact": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        },
+        "required": [
+          "case",
+          "by",
+          "id",
+          "kind",
+          "at"
+        ]
+      },
+      "ProductEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "description": "The register number: PRD-YYYY-NNNNNN."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "device",
+              "medicine"
+            ]
+          },
+          "holder": {
+            "type": "string",
+            "description": "The holder: an organisation of the organisations register, by its register number (never a second identity)."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "authorised",
+              "lapsed",
+              "refused",
+              "suspended",
+              "withdrawn"
+            ]
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductVersion"
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductStep"
+            }
+          },
+          "enforcement": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductEnforcementRecord"
+            }
+          },
+          "case": {
+            "type": "string",
+            "description": "The case that registered the application."
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "Registered by a sample case in a demo or training run (lib/casework/engine.ts sampleMark)."
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "kind",
+          "holder",
+          "state",
+          "versions",
+          "history",
+          "enforcement",
+          "case",
+          "createdAt"
+        ]
+      },
+      "ProductRecord": {
+        "description": "A product as the regulator's register will keep it (no register is built yet).",
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "device",
+              "medicine"
+            ]
+          },
+          "version": {
+            "type": "number",
+            "description": "The record's version (every change a new version, earlier ones kept)."
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "activeIngredients": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "assessmentReport": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "authorisationNumber": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "authorisedOn": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "composition": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "conditions": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "contactPerson": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "deviceClass": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "deviceNomenclature": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "dosageForm": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "dossier": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "holder": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "inspectionFindings": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "legalBasis": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "legalSupplyCategory": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "manufacturingSites": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "name": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "packagingAndLabelling": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "qualifiedPerson": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "route": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "status": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "strength": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "therapeuticClass": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "validUntil": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              }
+            }
+          },
+          "enforcement": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductEnforcement"
+            }
+          }
+        },
+        "required": [
+          "productId",
+          "kind",
+          "version",
+          "attributes",
+          "enforcement"
+        ]
+      },
+      "ProductStep": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "authorised",
+              "lapsed",
+              "refused",
+              "suspended",
+              "withdrawn"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string",
+            "description": "The case that made the step (empty for the validity job)."
+          },
+          "decision": {
+            "type": "string",
+            "description": "The sealed decision of that case, attached once sealed."
+          },
+          "version": {
+            "type": "number",
+            "description": "The record version the step left."
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true,
+            "description": "Made by a sample case in a demo or training run."
+          }
+        },
+        "required": [
+          "state",
+          "at",
+          "by",
+          "reason",
+          "case",
+          "version"
+        ]
+      },
+      "ProductVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "activeIngredients": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "assessmentReport": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "authorisationNumber": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "authorisedOn": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "composition": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "conditions": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "contactPerson": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "deviceClass": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "deviceNomenclature": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "dosageForm": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "dossier": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "holder": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "inspectionFindings": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "legalBasis": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "legalSupplyCategory": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "manufacturingSites": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "name": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "packagingAndLabelling": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "qualifiedPerson": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "route": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "status": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "strength": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "therapeuticClass": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              },
+              "validUntil": {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "class": {
+                    "type": "string",
+                    "enum": [
+                      "administrative",
+                      "commercial_confidential",
+                      "personal",
+                      "public",
+                      "restricted"
+                    ]
+                  },
+                  "approvedBy": {
+                    "type": "object",
+                    "properties": {
+                      "decision": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "decision",
+                      "at"
+                    ],
+                    "description": "The approved decision that recorded it (a sealed decision of the regulator); absent for a draft or an applicant's claim."
+                  }
+                },
+                "required": [
+                  "value",
+                  "class"
+                ]
+              }
+            }
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "attributes",
+          "at",
+          "by",
+          "reason",
+          "case"
+        ]
+      },
       "Profession": {
         "type": "object",
         "properties": {
@@ -94157,6 +97376,54 @@
           "reports"
         ]
       },
+      "PublicClassification": {
+        "description": "The nation's public information classification (Part 6 §5.2 \"public information classification and permitted disclosures\"; HLT-MED-006 `decision.public_disclosure`): which attributes may be published. Ships empty and unapproved; approved by two officials when it exists.",
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "activeIngredients",
+                "assessmentReport",
+                "authorisationNumber",
+                "authorisedOn",
+                "composition",
+                "conditions",
+                "contactPerson",
+                "deviceClass",
+                "deviceNomenclature",
+                "dosageForm",
+                "dossier",
+                "holder",
+                "inspectionFindings",
+                "legalBasis",
+                "legalSupplyCategory",
+                "manufacturingSites",
+                "name",
+                "packagingAndLabelling",
+                "qualifiedPerson",
+                "route",
+                "status",
+                "strength",
+                "therapeuticClass",
+                "validUntil"
+              ]
+            }
+          },
+          "approved": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "fields",
+          "approved"
+        ]
+      },
       "PublicOrganisation": {
         "type": "object",
         "properties": {
@@ -94370,6 +97637,105 @@
           "recordedAt",
           "version",
           "overlaps"
+        ]
+      },
+      "PublicProductEntry": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "device",
+              "medicine"
+            ]
+          },
+          "fields": {
+            "type": "object",
+            "properties": {
+              "activeIngredients": {},
+              "authorisationNumber": {},
+              "authorisedOn": {},
+              "conditions": {},
+              "deviceClass": {},
+              "deviceNomenclature": {},
+              "dosageForm": {},
+              "holder": {},
+              "legalBasis": {},
+              "legalSupplyCategory": {},
+              "manufacturingSites": {},
+              "name": {},
+              "packagingAndLabelling": {},
+              "route": {},
+              "status": {},
+              "strength": {},
+              "therapeuticClass": {},
+              "validUntil": {}
+            },
+            "description": "Only attributes both approved and marked publishable, each public."
+          },
+          "notices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "recall",
+                    "safety_notice",
+                    "suspension",
+                    "withdrawal"
+                  ]
+                },
+                "at": {
+                  "type": "string"
+                },
+                "notice": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "at",
+                "notice"
+              ]
+            },
+            "description": "Only enforcement records both approved and published: kind, date and the public notice."
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "record": {
+                "type": "string",
+                "const": "regulator"
+              },
+              "version": {
+                "type": "number"
+              },
+              "classificationVersion": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "record",
+              "version"
+            ],
+            "description": "Where the answer comes from: the competent regulator's record, never an import, inventory or procurement record."
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "productId",
+          "kind",
+          "fields",
+          "notices",
+          "source"
         ]
       },
       "PublicProfessional": {

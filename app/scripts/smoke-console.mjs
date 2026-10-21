@@ -71,6 +71,8 @@ const PAGES = [
   { path: '/gov/law/procedures/forms/taxpayer.certificate.request', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/taxpayer.registration.decision', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/taxpayer.registration.further_information@P2', map: false, text: /register status/i },
+  // The register of medicines and medical devices (Health I4): its public view and the regulator's full record.
+  { path: '/gov/health-regulation/products', map: false, text: /medicines and medical devices/i },
   // The seal key register (lib/keys/seal-register.ts).
   { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
 ];

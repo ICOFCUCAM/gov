@@ -27,6 +27,8 @@ import { listRules } from '@/lib/law/rules';
 import { registerTypes, listOrganisations } from '@/lib/organisations/register';
 import { professions, disclosureChanges } from '@/lib/professions/register';
 import { listIntegrations } from '@/lib/data/store/federation';
+import { productCounts, publicClassification, productDisclosureChanges } from '@/lib/health/products/register';
+import { PRODUCT_PROCEDURES, PRODUCT_PERMIT_TYPES } from '@/lib/health/products/procedures';
 import { SITE_IDS } from '@/lib/public-sites';
 import { siteEditorial } from '@/lib/data/site-editorial';
 import { listBoundaryVersions } from '@/lib/data/boundaries';
@@ -253,6 +255,26 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Register types defined by the nation', done: types.length > 0, href: '/gov/organisations', detail: `${n(types.length, 'register type')} of its own · ${registerTypes().length - types.length} platform references` },
         { label: 'Organisations entered (through cases or a confirmed load)', done: listOrganisations({ limit: 1 }).length > 0, href: '/gov/organisations' },
         { label: 'Professions defined by the nation', done: ps.length > 0, href: '/gov/health-regulation', detail: `${n(ps.length, 'profession')} of its own · ${professions().length - ps.length} platform references` },
+      ] };
+    }),
+
+    // The register of medicines and medical devices (Health I4): the nation's own body, procedures, mappings and public classification.
+    track({ key: 'products', title: 'Medicines and medical devices register', why: 'Authorised medicines and devices, recorded only by the medicines authority\'s decided cases; the public sees only what the nation\'s approved classification lists.', href: '/gov/health-regulation/products', seeded: true }, () => {
+      const pending = productDisclosureChanges().pending;
+      if (pending) wait({ what: 'What the public product check shows: a change waiting for a second official', proposedBy: pending.by, at: pending.at, href: '/gov/health-regulation/products' });
+      const keys = PRODUCT_PROCEDURES.filter(p => !p.key.startsWith('medicines.manufacturer') && !p.key.startsWith('medicines.importer') && !p.key.startsWith('medicines.wholesaler')).map(p => p.key);
+      const approved = keys.filter(k => listPackages({ key: k, state: 'approved' }).length);
+      const types = Object.values(PRODUCT_PERMIT_TYPES);
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const c = productCounts();
+      const own = provisionalOwner('medicinesRegulation', authorityFor);
+      const cls = publicClassification();
+      return { checks: [
+        { label: 'Medicines authority named (Who is responsible)', done: !!authorityFor('medicinesRegulation'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('medicinesRegulation') ? undefined : (own.provisional ?? 'Not named') },
+        { label: 'Product procedures approved (marketing authorisation, variation, renewal, suspension and withdrawal, recall, device registration)', done: approved.length === keys.length, href: '/gov/law/procedures', detail: `${approved.length} of ${keys.length} approved` },
+        { label: 'Who decides product powers approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        { label: 'What the public product check shows, approved by two officials citing the law', done: cls.approved, href: '/gov/health-regulation/products', detail: cls.approved ? `Version ${cls.version}: ${cls.fields.join(', ') || 'no attribute'}` : 'Ships empty: the public sees only the number, kind and published notices' },
+        { label: 'Products recorded through decided cases', done: c.total > 0, href: '/gov/health-regulation/products', detail: `${c.byKind.medicine} medicines · ${c.byKind.device} devices${c.samples ? ` (${c.samples} samples)` : ''}` },
       ] };
     }),
 

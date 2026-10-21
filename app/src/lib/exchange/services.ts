@@ -19,6 +19,7 @@ import { getTaxpayer, findTaxpayers } from '@/lib/tax/register';
 import { verifyAward } from '@/lib/education/register';
 import { getProfessional, publicProfessional } from '@/lib/professions/register';
 import { getDeclaration } from '@/lib/customs/register';
+import { getProduct, publicProduct } from '@/lib/health/products/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 import { integrationPurposes } from '@/lib/data/store/federation';
 import { purposeSlug } from './usage-policy';
@@ -114,6 +115,21 @@ export const SERVICES: ServiceDef[] = [
       const d = getDeclaration(str(input.number));
       if (!d) return { status: 200, result: 'unknown', data: { released: 'no' } };
       return { status: 200, result: d.state, data: { released: d.state === 'released' ? 'yes' : 'no', state: d.state, ...(d.state === 'released' && d.release ? { releasedOn: d.release.at.slice(0, 10) } : {}) } };
+    },
+  },
+  {
+    // The product check (HLT-MED-024; Health I4 exchange-product-status): only what publicProductView() lets out under the nation's
+    // approved public information classification (shipped empty), and only decided records; never the dossier, the assessment, the
+    // grounds, persons or an unpublished enforcement record. No caller ships approved: two officials approve each integration and purpose.
+    id: 'product.status', version: 1, kind: 'query', title: 'What is the authorised status of this medicine or medical device?', owner: 'medicinesRegulation', scope: 'service:product.status',
+    returns: { productId: 'the register number (PRD-…)', kind: 'medicine or device', fields: 'the attributes the nation\'s approved public information classification lists, each approved by a decision', notices: 'published notices (kind, date, wording)', source: 'the regulator\'s record and version, and the classification version' }, dataClass: 'public',
+    legalBasis: 'The medicines law\'s provisions on the public register (named by the medicines authority when it approves the service for a caller)',
+    handle: input => {
+      const p = getProduct(str(input.number));
+      // An application under assessment, a refusal or an unknown number answer the same: not authorised, nothing else.
+      if (!p || !p.history.some(s => s.decision) || p.state === 'refused') return { status: 200, result: 'not on the register', data: {} };
+      const { sample: _s, ...view } = publicProduct(p);
+      return { status: 200, result: 'on the register', data: view as unknown as Record<string, unknown> };
     },
   },
   {

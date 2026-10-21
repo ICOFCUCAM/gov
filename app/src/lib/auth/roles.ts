@@ -237,6 +237,8 @@ const ADMIN_ONLY: RegExp[] = [
   // The register types of the organisations register (which authority keeps which register).
   /^\/api\/organisations\/types$/,
   /^\/api\/professions\/types$/,
+  // What the public product check shows (the nation's public information classification): proposed citing the law, confirmed by a different official.
+  /^\/api\/health-regulation\/products$/,
   /^\/api\/dual-control$/,
   // Which authority the law designates for each permit and licence type (four-eyes in the route).
   /^\/api\/permit-authorities$/,
@@ -977,6 +979,22 @@ export function canReadCustoms(s: Scope, authority: string | undefined, purpose?
   if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read customs declarations';
   if (authority && s.institution === authority) return null;
   return 'Customs declarations are read by the customs authority; other institutions check release through the exchange (customs.release)';
+}
+
+/**
+ * A full record of the register of medicines and medical devices
+ * (lib/health/products/register.ts: dossier versions, the assessment,
+ * composition, sites, grounds of enforcement, recall completions): the
+ * officials of the medicines authority the nation named (`medicinesRegulation`)
+ * only. Nobody else, not the whole government, an administrator elsewhere or a
+ * provisional stand-in: they see publicProductView(). Every read is logged by
+ * the route.
+ */
+export function canReadProduct(s: Scope, authority: string | undefined): string | null {
+  if (authority && s.institution === authority && roleOf(s) !== 'administrator') return null;
+  return authority
+    ? 'Full product records are read by the medicines authority\'s officials; everyone else sees the public product check (publicProductView) or the product.status exchange'
+    : 'No medicines authority is named under Who is responsible: nobody reads full product records until the nation names it';
 }
 
 /** Visas and residence permits (lib/immigration/register.ts): the immigration authority's officials; auditors with a purpose. Never the whole government by default (directions 15.1). */
