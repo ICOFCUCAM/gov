@@ -441,6 +441,33 @@
    }
   },
   {
+   "id": "tax_refund.from_return",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Does the refund arise from a return you filed?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The claim"
+   }
+  },
+  {
    "id": "tax_refund.return_ref",
    "type": "registry_reference",
    "required": false,
@@ -467,33 +494,6 @@
     "en": {
      "required_if": "Enter the return the refund arises from.",
      "reference_exists": "There is no record with that reference."
-    }
-   },
-   "country_decision": null,
-   "confidentiality": "tax",
-   "section": {
-    "en": "The claim"
-   }
-  },
-  {
-   "id": "tax_refund.from_return",
-   "type": "boolean",
-   "required": true,
-   "validation": [
-    {
-     "rule": "required",
-     "params": {}
-    }
-   ],
-   "values_source": null,
-   "personal_data_class": "restricted",
-   "evidence": [],
-   "label": {
-    "en": "Does the refund arise from a return you filed?"
-   },
-   "error_text": {
-    "en": {
-     "required": "Select an answer."
     }
    },
    "country_decision": null,
