@@ -22,6 +22,9 @@ describe('one owner per register', () => {
     expect(none.find(r => r.id === 'identity')).toMatchObject({ named: false });
     expect(none.find(r => r.id === 'nation')).toMatchObject({ named: true, legal: { kind: 'installation' } });
     expect(legalOwners({ identity: 'min-interior' }).find(r => r.id === 'identity')).toMatchObject({ named: true, institution: 'min-interior' });
+    // Delegations cover every procedure: each institution answers for its own, not the business register (baseline audit §3.5).
+    expect(REGISTER_OWNERS.find(r => r.id === 'delegations')!.legal).toMatchObject({ kind: 'institution' });
+    expect(legalOwners({ businessRegister: 'min-trade' }).find(r => r.id === 'delegations')).not.toMatchObject({ institution: 'min-trade' });
   });
 
   it('every store the platform keeps belongs to exactly one register', () => {
