@@ -13,18 +13,29 @@ import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { dualControlRefusal } from '@/lib/data/dual-control';
 import { isAuthorityKey, type AuthorityKey } from '@/lib/nation/deployment';
+import { withDefaults } from '@/lib/data/defaults';
+import { fieldClass, fieldProblem, formProblem, PERSONAL_CLASSES } from '@/lib/forms/contract';
 import type { CasePackage, ActionSpec, FieldSpec, PackageTest } from './types';
 
 interface PackageDb { packages: CasePackage[] }
 const g = globalThis as unknown as { __civicosCasePackages?: PackageDb };
-const db = (): PackageDb => touch('__civicosCasePackages', g.__civicosCasePackages ??= { packages: [] });
+/**
+ * A field saved before the form contract gains its personal-data class from
+ * its `personal` flag; a field written with a class gains the `personal` flag
+ * that readers before the contract use. Never overwrites a saved value.
+ */
+const fieldDefaults = (f: FieldSpec): void => { withDefaults(f as unknown as Record<string, unknown>, { personalDataClass: fieldClass(f), personal: PERSONAL_CLASSES.includes(fieldClass(f)) }); };
+const db = (): PackageDb => {
+  const d = touch('__civicosCasePackages', g.__civicosCasePackages ??= { packages: [] });
+  for (const p of d.packages) for (const f of p.fields ?? []) if (f.personalDataClass === undefined || f.personal === undefined) fieldDefaults(f);
+  return d;
+};
 export function resetPackages(): void { g.__civicosCasePackages = undefined; }
 
 const KEY = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 /** Field keys are names a form and its data use: camelCase. */
 const FIELD_KEY = /^[a-z][A-Za-z0-9]{0,40}$/;
-const FIELD_TYPES = ['text', 'longtext', 'date', 'number', 'choice', 'boolean', 'person', 'organisation', 'place'];
 
 /** Check a procedure's structure: every stage, action, field, document and deadline must fit together. */
 export function checkPackage(p: Partial<CasePackage>, effects: string[] = []): string | null {
@@ -39,13 +50,18 @@ export function checkPackage(p: Partial<CasePackage>, effects: string[] = []): s
   if (sk.size !== stages.length || stages.some(s => !KEY.test(s.key))) return 'Stage keys must be distinct lowercase words';
   if (!stages.some(s => s.terminal)) return 'At least one stage ends the case';
   const fk = new Set<string>();
+  const dk = new Set((p.documents ?? []).map(d => d.class));
+  const keys = (p.fields ?? []).map(f => f.key);
   for (const f of p.fields ?? []) {
     if (!FIELD_KEY.test(f.key) || fk.has(f.key)) return `Field ${f.key}: keys must be distinct names in camelCase`;
-    if (!FIELD_TYPES.includes(f.type)) return `Field ${f.key}: unknown type ${f.type}`;
     if (f.type === 'choice' && !f.options?.length) return `Field ${f.key}: a choice needs its options`;
+    // The form contract (lib/forms/contract.ts): type, class, approved lists, named rules, wording.
+    const problem = fieldProblem(f, keys, [...dk]);
+    if (problem) return problem;
     fk.add(f.key);
   }
-  const dk = new Set((p.documents ?? []).map(d => d.class));
+  const formWhy = formProblem(p.form, p.fields ?? [], p.documents ?? [], p.sensitivity ?? 'normal');
+  if (formWhy) return formWhy;
   const ak = new Set<string>();
   for (const a of p.actions ?? []) {
     if (!KEY.test(a.key) || ak.has(a.key)) return `Action ${a.key}: keys must be distinct lowercase words`;

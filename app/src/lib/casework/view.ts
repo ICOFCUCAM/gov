@@ -6,12 +6,13 @@
 // by the route.
 
 import { getPackage } from './packages';
+import { isPersonalField } from '@/lib/forms/contract';
 import type { Case } from './types';
 
-/** A case for a list: no field the procedure marks personal, no parties' names when restricted. */
+/** A case for a list: no field whose personal-data class is personal, restricted or special (lib/forms/contract.ts), no parties' names when restricted, no verification results. */
 export function listView(c: Case): Case {
   const pkg = getPackage(c.package.key, c.package.version);
-  const personal = new Set((pkg?.fields ?? []).filter(f => f.personal).map(f => f.key));
+  const personal = new Set((pkg?.fields ?? []).filter(isPersonalField).map(f => f.key));
   const fields = Object.fromEntries(Object.entries(c.fields).filter(([k]) => !personal.has(k)));
   const hide = c.sensitivity !== 'normal';
   return {
@@ -19,5 +20,6 @@ export function listView(c: Case): Case {
     subject: hide ? c.subject.map(p => ({ kind: p.kind, name: '(restricted)' })) : c.subject.map(p => ({ ...p })),
     ...(c.applicant ? { applicant: hide ? { kind: c.applicant.kind, name: '(restricted)' } : c.applicant } : {}),
     history: [], // a list shows the stage and deadlines, not the steps
+    ...(c.verifications ? { verifications: [] } : {}),
   };
 }

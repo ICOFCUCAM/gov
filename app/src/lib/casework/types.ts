@@ -8,21 +8,30 @@ import type { Citation } from '@/lib/law/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 import type { Sensitivity } from '@/lib/auth/roles';
 
-export type FieldType = 'text' | 'longtext' | 'date' | 'number' | 'choice' | 'boolean' | 'person' | 'organisation' | 'place';
+import type { ContractField, ContractDocument, FormFieldType, FormSpec, Channel } from '@/lib/forms/contract';
 
-export interface FieldSpec {
-  key: string;
-  label: string;
+/**
+ * A field's type. The first nine are the types every procedure used before
+ * the form contract (lib/forms/contract.ts); the contract adds typed
+ * references, approved lists, money, evidence, addresses and positions.
+ */
+export type FieldType = FormFieldType;
+
+/**
+ * A field of a procedure, which is also its form (lib/forms/contract.ts,
+ * plan §3.1): type, personal-data class (`personal` kept, derived, for
+ * packages before the contract), named validation rules, plain-language
+ * label, hint and error text (translated through the review), who answers
+ * it. Versioned with the procedure package.
+ */
+export interface FieldSpec extends ContractField {
   type: FieldType;
-  required?: boolean;
-  /** For choice. */
-  options?: string[];
-  /** Personal data: shown only to those who may read the case, never in lists or events. */
-  personal?: boolean;
-  max?: number;
 }
 
-export interface DocumentSpec { class: string; label: string; required: boolean; citation?: Citation }
+/** Evidence a procedure asks for, with the provision of law (and its version) that requires it. */
+export type DocumentSpec = ContractDocument;
+
+export type { FormSpec, Channel };
 
 export interface ActionSpec {
   key: string;
@@ -67,6 +76,8 @@ export interface CasePackage {
   authority?: { permitType: string };
   fields: FieldSpec[];
   documents: DocumentSpec[];
+  /** The form's own version, intro, declaration, evidence policy and translations (the form contract). Packages before it have none and work as before. */
+  form?: FormSpec;
   stages: { key: string; label: string; terminal?: boolean }[];
   actions: ActionSpec[];
   deadlines: DeadlineSpec[];
@@ -152,4 +163,33 @@ export interface Case {
   closedAt?: string;
   /** Set when the nation's retention rule removed the personal fields and names (lib/data/retention.ts). */
   anonymisedAt?: string;
+  /** How the application arrived, under which form version (submitted forms only; spec Part 1 §11). */
+  intake?: Intake;
+  /** Answers checked with an exchange service: what the applicant entered stays distinct from what a register confirmed. */
+  verifications?: Verification[];
+}
+
+/** How an application arrived: its channel, the form, declaration and evidence-policy versions, and who assisted. */
+export interface Intake {
+  channel: Channel;
+  at: string;
+  form: { version: string; declaration?: string; evidencePolicy?: string };
+  /** The applicant confirmed the declaration of this version (self-service and assisted; on paper, the signed form). */
+  declaration?: { version: string; confirmedAt: string };
+  locale?: string;
+  /** Assisted at an office: the official who assisted, where, and the kind of identity evidence they saw (never its number). */
+  assisted?: { by: { id?: string; name: string }; servicePoint?: string; identityEvidence: string };
+  /** Transcribed from a paper form by this official. */
+  paper?: { by: { id?: string; name: string }; receivedOn?: string };
+}
+
+/** The result of checking one answer with an exchange service (lib/exchange/services.ts). */
+export interface Verification {
+  field: string;
+  service: string;
+  result: 'verified' | 'not-matched' | 'unknown' | 'not-performed';
+  /** Why it was not performed, in words (no provision of law in force allows it, the service did not answer). */
+  note?: string;
+  at: string;
+  receipt?: string;
 }

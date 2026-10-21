@@ -24,7 +24,9 @@ import { recordDecision, type SignedDecision } from '@/lib/records/decisions';
 import { getDocument } from '@/lib/records/documents';
 import { activePackage, getPackage, ownerInstitution } from './packages';
 import { addDays, lapsed } from './calendar';
-import type { Case, CasePackage, ActionSpec, FieldSpec, Party, Step } from './types';
+import type { Case, CasePackage, ActionSpec, Party, Step, Channel, Intake } from './types';
+import { serverCheck, serviceCheck, needsServiceCheck } from '@/lib/forms/server';
+import { isPersonalField, shown, type FieldError } from '@/lib/forms/contract';
 import { queueMirror } from '@/lib/db/mirror';
 import { recusedOn } from '@/lib/transitions/state';
 
@@ -112,23 +114,30 @@ const today = (now: Date) => now.toISOString().slice(0, 10);
 const clone = <T,>(x: T): T => structuredClone(x);
 const by = (a: Actor) => ({ ...(a.id ? { id: a.id } : {}), name: a.name, ...(a.scope?.institution ?? a.institution ? { institution: a.scope?.institution ?? a.institution } : {}) });
 
-function checkFields(spec: FieldSpec[], input: Record<string, unknown> | undefined): { values: Record<string, unknown> } | { error: string } {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(input ?? {})) {
-    const f = spec.find(x => x.key === k);
-    if (!f) return { error: `This procedure has no field ${k}` };
-    if (v === null || v === '') { out[k] = ''; continue; }
-    switch (f.type) {
-      case 'number': if (typeof v !== 'number' || !Number.isFinite(v)) return { error: `${f.label} must be a number` }; break;
-      case 'boolean': if (typeof v !== 'boolean') return { error: `${f.label} must be yes or no` }; break;
-      case 'date': if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return { error: `${f.label} must be a date (YYYY-MM-DD)` }; break;
-      case 'choice': if (!f.options?.includes(String(v))) return { error: `${f.label} must be one of ${f.options?.join(', ')}` }; break;
-      default: if (typeof v !== 'string' || v.length > (f.max ?? (f.type === 'longtext' ? 20_000 : 500))) return { error: `${f.label} must be text (at most ${f.max ?? (f.type === 'longtext' ? 20_000 : 500)} characters)` };
-    }
-    out[k] = v;
-  }
-  return { values: out };
+/** A refusal, with the answers it concerns (a form shows each beside its field and in its error summary). */
+export type Refusal = { error: string; fieldErrors?: FieldError[] };
+
+/**
+ * Check answers against the procedure's fields (lib/forms/contract.ts): the
+ * same functions and messages the browser uses, with the approved lists,
+ * register references and unique references resolved here. `submit` is an
+ * applicant's form under a procedure with a form: what is required applies.
+ */
+function checkFields(pkg: CasePackage, input: Record<string, unknown> | undefined, opts: { submit?: boolean; existing?: Record<string, unknown>; locale?: string; on?: string; except?: string } = {}): { values: Record<string, unknown> } | Refusal {
+  const r = serverCheck({
+    pkg, input, mode: opts.submit ? 'submit' : 'partial', ...(opts.existing ? { existing: opts.existing } : {}), ...(opts.locale ? { locale: opts.locale } : {}), ...(opts.on ? { on: opts.on } : {}),
+    pending: (ref, procedure) => db().cases.some(c => !c.closedAt && c.package.key === procedure && c.ref === ref),
+    taken: (field, value) => db().cases.some(c => !c.closedAt && c.id !== opts.except && c.package.key === pkg.key && c.fields[field] === value),
+  });
+  if (r.errors.length) return { error: r.errors[0]!.message, fieldErrors: r.errors };
+  // A conditional question not asked keeps no answer.
+  if (opts.submit) for (const f of pkg.fields) if (!shown(f, { ...(opts.existing ?? {}), ...r.values }) && f.key in r.values) delete r.values[f.key];
+  return { values: r.values };
 }
+
+/** Answers checked by serviceCheck() for one opening (never made by a caller: openCase() refuses positions and checked identifiers without it). */
+const CHECKED = new WeakSet<object>();
+interface Checked { values: Record<string, unknown>; verifications: Case['verifications'] }
 
 function deadlinesFrom(pkg: CasePackage, stage: string, at: string): Case['deadlines'] {
   const cal = calendarOf(getSovereign().deployment);
@@ -181,9 +190,25 @@ export interface OpenInput {
   idempotencyKey?: string;
   /** Opened by another institution's official (a referral): the owner's rules are not applied to the opener. */
   referral?: { from: string };
+  /**
+   * An applicant's form (lib/forms/contract.ts): self-service (the applicant,
+   * signed in), assisted (an official at an office, who records the identity
+   * evidence seen) or paper (an official transcribing a paper form). What the
+   * procedure's form requires then applies, and the case keeps the form,
+   * declaration and evidence-policy versions it was submitted under.
+   */
+  channel?: Channel;
+  /** The applicant confirmed the form's declaration of this version. */
+  declaration?: { version: string };
+  assisted?: { servicePoint?: string; identityEvidence: string };
+  paper?: { receivedOn?: string };
+  /** The language the applicant used. */
+  locale?: string;
+  /** Set by submitForm() only. */
+  checked?: Checked;
 }
 
-export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case | { error: string } {
+export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case | Refusal {
   const pkg = activePackage(input.procedure, today(now));
   if (!pkg) return { error: `No approved version of the procedure ${input.procedure} applies today` };
   const owner = ownerInstitution(pkg.owner, authorityFor);
@@ -201,9 +226,20 @@ export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case
     const seen = db().cases.find(c => c.owner === owner && c.package.key === pkg.key && c.history[0]?.idempotencyKey === input.idempotencyKey);
     if (seen) return clone(seen);
   }
-  const checked = checkFields(pkg.fields, input.fields);
+  // The applicant's channel and what it records (spec Part 1 §11).
+  const intake = intakeOf(pkg, input, actor, now);
+  if ('error' in intake) return intake;
+  const submit = !!input.channel && !!pkg.form;
+  const checked = checkFields(pkg, input.fields, { submit, ...(input.locale ? { locale: input.locale } : {}), on: today(now) });
   if ('error' in checked) return checked;
-  const fields = checked.values;
+  let fields = checked.values;
+  // Positions, checked identifiers and other answers that wait on another system come through submitForm().
+  if (needsServiceCheck(pkg.fields, fields)) {
+    if (!input.checked || !CHECKED.has(input.checked)) return { error: 'This form has answers the platform checks with other registers: send it through the form check (submitForm)' };
+    fields = { ...fields, ...input.checked.values };
+  }
+  // A confidentiality request holds the case as restricted (never lowers it).
+  const raised = pkg.fields.some(f => f.raisesSensitivity && fields[f.key] === true);
   const d = db();
   d.seq += 1;
   const at = now.toISOString();
@@ -216,13 +252,74 @@ export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case
     // The official of the responsible institution who opens a case is assigned to it (restricted cases need an assignee).
     ...(actor.scope?.id && actor.scope.institution === owner ? { assignee: { id: actor.scope.id, name: actor.name } } : {}),
     deadlines: [...deadlinesFrom(pkg, 'opened', at), ...deadlinesFrom(pkg, stage, at)],
-    decisions: [], links: input.referral ? [{ kind: 'referred-from', case: input.referral.from }] : [], sensitivity: pkg.sensitivity,
+    decisions: [], links: input.referral ? [{ kind: 'referred-from', case: input.referral.from }] : [], sensitivity: raised && pkg.sensitivity === 'normal' ? 'restricted' : pkg.sensitivity,
     history: [{ seq: 1, action: 'open', from: '', to: stage, by: by(actor), at, ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}) }],
     source, version: 1, openedAt: at,
+    ...(intake.intake ? { intake: intake.intake } : {}),
+    ...(input.checked?.verifications?.length ? { verifications: input.checked.verifications } : {}),
   };
   d.cases.push(c);
-  audit(actor, 'case.open', c, `opened at ${stage}${input.referral ? ` · referred from ${input.referral.from}` : ''}`);
+  audit(actor, 'case.open', c, `opened at ${stage}${input.referral ? ` · referred from ${input.referral.from}` : ''}${c.intake ? ` · ${c.intake.channel}, form ${c.intake.form.version}` : ''}`);
+  // An application taken at an office names who assisted, where, and the kind of identity evidence seen (never its number or the applicant).
+  if (c.intake?.assisted) recordAudit(actor.name, 'case.open.assisted', `Case:${c.ref}`, 'ok', `${c.package.key}@${c.package.version} · form ${c.intake.form.version} · assisted by ${c.intake.assisted.by.name}${c.intake.assisted.servicePoint ? ` at ${c.intake.assisted.servicePoint}` : ''} · identity evidence seen: ${c.intake.assisted.identityEvidence}`);
+  if (c.intake?.paper) recordAudit(actor.name, 'case.open.paper', `Case:${c.ref}`, 'ok', `${c.package.key}@${c.package.version} · paper form ${c.intake.form.version} transcribed by ${c.intake.paper.by.name}`);
   return clone(c);
+}
+
+/** How an application arrived, checked: who may use each channel, the declaration, the assisting official's record. */
+function intakeOf(pkg: CasePackage, input: OpenInput, actor: Actor, now: Date): { intake?: Intake } | Refusal {
+  if (!input.channel) return {};
+  if (!['self-service', 'assisted', 'paper'].includes(input.channel)) return { error: 'The channel is self-service, assisted or paper' };
+  const at = now.toISOString();
+  const who = { ...(actor.id ? { id: actor.id } : {}), name: actor.name };
+  const base: Intake = { channel: input.channel, at, form: { version: pkg.form?.version ?? `procedure-${pkg.version}`, ...(pkg.form?.declaration ? { declaration: pkg.form.declaration.version } : {}), ...(pkg.form?.evidencePolicy ? { evidencePolicy: pkg.form.evidencePolicy } : {}) }, ...(input.locale && /^[a-z]{2,3}$/.test(input.locale) ? { locale: input.locale } : {}) };
+  if (input.channel === 'self-service' && actor.scope) return { error: 'An official records an application as assisted or from a paper form' };
+  if (input.channel !== 'self-service' && !actor.scope && !samplesAllowed()) return { error: 'An assisted or paper application is recorded by a signed-in official' };
+  const decl = pkg.form?.declaration;
+  if (decl) {
+    if (input.declaration?.version !== decl.version) return { error: input.declaration ? 'The declaration has changed since it was read: read it again and confirm it' : 'Confirm the declaration', fieldErrors: [{ field: 'declaration', rule: 'required', message: input.declaration ? 'The declaration has changed since it was read: read it again and confirm it' : 'Confirm the declaration' }] };
+    base.declaration = { version: decl.version, confirmedAt: at };
+  }
+  if (input.channel === 'assisted') {
+    // The nation decides whether offices take applications for people (Configuration → identity).
+    if (getSovereign().deployment?.identity?.assisted === false) return { error: 'The nation has not enabled assisted applications at offices (Configuration → identity)' };
+    const seen = String(input.assisted?.identityEvidence ?? '').trim().slice(0, 120);
+    const kinds = pkg.form?.identityEvidence;
+    if (!seen) return { error: 'Record the identity evidence you saw', fieldErrors: [{ field: 'identityEvidence', rule: 'required', message: 'Record the identity evidence you saw' }] };
+    if (kinds?.length && !kinds.some(k => k.key === seen)) return { error: `The identity evidence is one of: ${kinds.map(k => k.label).join(', ')}` };
+    const label = kinds?.find(k => k.key === seen)?.label ?? seen;
+    base.assisted = { by: who, identityEvidence: label, ...(input.assisted?.servicePoint?.trim() ? { servicePoint: input.assisted.servicePoint.trim().slice(0, 120) } : {}) };
+  }
+  if (input.channel === 'paper') {
+    const on = input.paper?.receivedOn;
+    if (on !== undefined && on !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(on)) return { error: 'The date the paper form was received is a date (YYYY-MM-DD)' };
+    base.paper = { by: who, ...(on ? { receivedOn: on } : {}) };
+  }
+  return { intake: base };
+}
+
+/**
+ * Submit an applicant's form: the answers that wait on another system
+ * (positions read against the nation's map, references into registers read
+ * here, identifiers checked with an exchange service where the law allows,
+ * the signed declaration) are checked first, then the case opens under the
+ * procedure in force with what openCase() checks. Routes that take a form
+ * (POST /api/cases, the citizen's applications) call this.
+ */
+export async function submitForm(input: OpenInput, actor: Actor, now = new Date()): Promise<Case | Refusal> {
+  const pkg = activePackage(input.procedure, today(now));
+  if (!pkg) return { error: `No approved version of the procedure ${input.procedure} applies today` };
+  const pre = checkFields(pkg, input.fields, { submit: !!input.channel && !!pkg.form, ...(input.locale ? { locale: input.locale } : {}), on: today(now) });
+  if ('error' in pre) return pre;
+  if (!needsServiceCheck(pkg.fields, pre.values)) return openCase(input, actor, now);
+  const owner = ownerInstitution(pkg.owner, authorityFor) ?? '';
+  // Who signs a declaration: the signed-in applicant (self-service), or the applicant identified by the official at an office or on a signed paper form.
+  const identified = input.channel === 'self-service' ? !!actor.id : !!actor.scope || (!!input.channel && samplesAllowed());
+  const r = await serviceCheck(pkg.fields, pre.values, { procedure: pkg.key, institution: owner, signer: { identified, name: actor.name } }, today(now));
+  if (r.errors.length) return { error: r.errors[0]!.message, fieldErrors: r.errors };
+  const checked: Checked = { values: r.values, verifications: r.verifications };
+  CHECKED.add(checked);
+  return openCase({ ...input, checked }, actor, now);
 }
 
 // ── Acting ────────────────────────────────────────────────────────────────────
@@ -236,7 +333,7 @@ export interface ActInput {
   idempotencyKey?: string;
 }
 
-export type ActResult = { case: Case; pending?: boolean; decision?: SignedDecision } | { error: string };
+export type ActResult = { case: Case; pending?: boolean; decision?: SignedDecision } | Refusal;
 
 export async function act(caseId: string, input: ActInput, actor: Actor, now = new Date()): Promise<ActResult> {
   const c = db().cases.find(x => x.id === caseId);
@@ -266,9 +363,19 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   if (c.pending && !pending) return { error: `${pkg.actions.find(x => x.key === c.pending!.action)?.label ?? c.pending.action} is waiting for a second official: confirm or cancel it first` };
 
   // What the step carries: fields merged, reasons, citations of the law in force today.
-  const checked = checkFields(pkg.fields, pending ? pending.fields : input.fields);
+  const checked = checkFields(pkg, pending ? pending.fields : input.fields, { existing: c.fields, on: today(now), except: c.id });
   if ('error' in checked) return checked;
-  const fields = checked.values;
+  let fields = checked.values;
+  // Answers that wait on another system (a position, a register read here, a checked identifier), as at opening.
+  let verifications: NonNullable<Case['verifications']> = [];
+  if (!pending && needsServiceCheck(pkg.fields, fields)) {
+    const r = await serviceCheck(pkg.fields, fields, { procedure: pkg.key, institution: c.owner, signer: { identified: !!actor.scope || !!actor.id, name: actor.name } }, today(now));
+    if (r.errors.length) return { error: r.errors[0]!.message, fieldErrors: r.errors };
+    fields = r.values;
+    verifications = r.verifications;
+  }
+  // A confirmation carries the answers exactly as they were checked when proposed.
+  if (pending?.fields) fields = { ...pending.fields };
   const merged = { ...c.fields, ...fields };
   for (const f of a.requires?.fields ?? []) if (merged[f] === undefined || merged[f] === '') return { error: `${pkg.fields.find(x => x.key === f)?.label ?? f} is needed first` };
   const classes = new Set(c.documents.map(id => getDocument(id)?.class).filter(Boolean));
@@ -297,6 +404,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   // Four-eyes: the first official proposes; a different one confirms.
   const fourEyes = twoOfficials(c, a, pkg);
   if (fourEyes && !pending) {
+    if (verifications.length) (c.verifications ??= []).push(...verifications);
     c.pending = { action: a.key, by: by(actor), at: now.toISOString(), expiresAt: new Date(now.getTime() + pendingHours() * 3_600_000).toISOString(), ...(reason ? { reason } : {}), citations, fields, ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}) };
     c.version += 1;
     audit(actor, 'case.propose', c, `${a.key} proposed; a second official confirms`);
@@ -345,6 +453,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   const at = now.toISOString();
   const from = c.stage;
   c.fields = merged;
+  if (verifications.length) (c.verifications ??= []).push(...verifications);
   c.stage = a.to;
   const step: Step = { seq: c.history.length + 1, action: a.key, from, to: a.to, by: decidedBy, ...(confirmedBy ? { confirmedBy } : {}), at, ...(reason ? { reason } : {}), ...(citations.length ? { citations } : {}), ...(decision ? { decision: decision.id } : {}), ...((pending?.idempotencyKey ?? input.idempotencyKey) ? { idempotencyKey: pending?.idempotencyKey ?? input.idempotencyKey } : {}), ...(pending?.idempotencyKey && input.idempotencyKey && input.idempotencyKey !== pending.idempotencyKey ? { confirmIdempotencyKey: input.idempotencyKey } : {}), ...(independence ? { independence } : {}) };
   c.history.push(step);
@@ -484,7 +593,7 @@ export function anonymiseClosedCases(before: string, now = new Date()): number {
     if (!c.closedAt || c.closedAt >= before || c.anonymisedAt || c.legalHold || c.source === 'sample') continue;
     const pkg = getPackage(c.package.key, c.package.version);
     if (!pkg || /-permanent$/.test(pkg.retention)) continue;
-    const personal = new Set(pkg.fields.filter(f => f.personal).map(f => f.key));
+    const personal = new Set(pkg.fields.filter(isPersonalField).map(f => f.key));
     for (const k of Object.keys(c.fields)) if (personal.has(k)) c.fields[k] = '';
     c.subject = c.subject.map(p => ({ kind: p.kind, name: '(removed under the retention rule)' }));
     if (c.applicant) c.applicant = { kind: c.applicant.kind, name: '(removed under the retention rule)' };
