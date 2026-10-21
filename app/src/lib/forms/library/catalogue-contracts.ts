@@ -20,6 +20,23 @@
 // read for scope against Part 6 (form.catalogueSource), never the
 // supplement's excluded Stage B form of the same ID.
 //
+// Batch 3 (owner approved): taxpayer registration and account maintenance,
+// the field series Part 2 §2.6 Department A (docs/forms-catalogue/
+// FIELD-SERIES-PARTS-01-02.md): 21 of the 22 forms of its service table
+// (all but the business registration, whose contract is the catalogue's own,
+// ./canonical/forms) and its 8 internal forms, 29 in all. Every field is restricted and
+// under tax secrecy (confidentiality tax), read only under canReadTax();
+// others learn status only through the taxpayer.status exchange service, and
+// the certificates state only what it returns. A business is the
+// organisations register's, an institution the institution register's, a
+// person the civil register's; the taxpayer identification number is the
+// register's. No rate, threshold, trigger, deadline or fee is typed: each is a
+// binding rule and a named nation value; tax types, taxpayer categories and
+// obligations ship empty. The catalogue names
+// taxpayer.registration.further_information twice (the service table and the
+// internal forms): the second contract takes the register row ID
+// (…@P2) as its form ID, and each names its line.
+//
 // Each contract is a JSON file in the canonical format
 // (civicos.form-contract.v1, lib/forms/canonical.ts; never a second format),
 // with two blocks of its own beside the fields: `catalogue` names the one
@@ -90,6 +107,35 @@ import med019 from './catalogue-contracts/HLT-MED-019.json';
 import med020 from './catalogue-contracts/HLT-MED-020.json';
 import med023 from './catalogue-contracts/HLT-MED-023.json';
 import med024 from './catalogue-contracts/HLT-MED-024.json';
+import txIndividual from './catalogue-contracts/taxpayer.registration.individual.json';
+import txPublicEntity from './catalogue-contracts/taxpayer.registration.public_entity.json';
+import txNonresident from './catalogue-contracts/taxpayer.registration.nonresident.json';
+import txBranch from './catalogue-contracts/taxpayer.registration.branch.json';
+import txAmend from './catalogue-contracts/taxpayer.registration.amend.json';
+import txDetailsChange from './catalogue-contracts/taxpayer.details.change.json';
+import txObligationAdd from './catalogue-contracts/taxpayer.obligation.add.json';
+import txObligationCancel from './catalogue-contracts/taxpayer.obligation.cancel.json';
+import txTransfer from './catalogue-contracts/taxpayer.registration.transfer.json';
+import txCertificateRequest from './catalogue-contracts/taxpayer.certificate.request.json';
+import txAccountStatement from './catalogue-contracts/taxpayer.account.statement.json';
+import txDuplicate from './catalogue-contracts/taxpayer.registration.duplicate.json';
+import txSuspendRequest from './catalogue-contracts/taxpayer.registration.suspend_request.json';
+import txReactivateRequest from './catalogue-contracts/taxpayer.registration.reactivate_request.json';
+import txObjection from './catalogue-contracts/taxpayer.registration.objection.json';
+import txAppeal from './catalogue-contracts/taxpayer.registration.appeal.json';
+import txWithdraw from './catalogue-contracts/taxpayer.registration.withdraw.json';
+import txDecision from './catalogue-contracts/taxpayer.registration.decision.json';
+import txDecisionRecord from './catalogue-contracts/taxpayer.registration.decision_record.json';
+import txInspection from './catalogue-contracts/taxpayer.registration.inspection.json';
+import txInspectionChecklist from './catalogue-contracts/taxpayer.registration.inspection_checklist.json';
+import txFurtherInformation from './catalogue-contracts/taxpayer.registration.further_information.json';
+import txFurtherInformationP2 from './catalogue-contracts/taxpayer.registration.further_information@P2.json';
+import txReferral from './catalogue-contracts/taxpayer.registration.referral.json';
+import txReferralRecord from './catalogue-contracts/taxpayer.registration.referral_record.json';
+import txAssessment from './catalogue-contracts/taxpayer.registration.assessment.json';
+import txVerificationRecord from './catalogue-contracts/taxpayer.registration.verification_record.json';
+import txAppealAssessment from './catalogue-contracts/taxpayer.registration.appeal_assessment.json';
+import txClosureRecord from './catalogue-contracts/taxpayer.registration.closure_record.json';
 
 /** What meets a catalogue passage: fields of the contract, a documented deviation, a platform rule (with the file that enforces it), a country decision, a step of the linked procedure, an exchange service or a policy of the form. */
 export interface MetBy {
@@ -157,7 +203,14 @@ export const BATCH_1 = [fac001, fac002, fac003, fac004, fac005, fac006, fac007, 
   lic001, lic002, lic003, lic004, lic005, lic006, lic007, lic008, lic009, lic010, lic011, lic012, lic013, lic014, ph015] as unknown as CatalogueContractJson[];
 /** Batch 2: medicines and medical devices regulation (owner approved, 21 October 2026). */
 export const BATCH_2 = [med001, med002, med003, med004, med005, med006, med007, med008, med009, med010, med011, med012, med013, med014, med015, med017, med018, med019, med020, med023, med024] as unknown as CatalogueContractJson[];
-export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; items: CatalogueItem[] });
+/** Batch 3: taxpayer registration and account (owner approved, 21 October 2026). */
+export const BATCH_3 = [txIndividual, txPublicEntity, txNonresident, txBranch, txAmend, txDetailsChange, txObligationAdd, txObligationCancel, txTransfer, txCertificateRequest, txAccountStatement, txDuplicate, txSuspendRequest, txReactivateRequest, txObjection, txAppeal, txWithdraw, txDecision, txDecisionRecord, txInspection, txInspectionChecklist, txFurtherInformation, txFurtherInformationP2, txReferral, txReferralRecord, txAssessment, txVerificationRecord, txAppealAssessment, txClosureRecord] as unknown as CatalogueContractJson[];
+/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3). */
+export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; groups: Record<string, string[]>; items: (CatalogueItem & { for?: string })[] });
+/** The shared items that apply to one contract. */
+export const commonItemsFor = (formId: string): CatalogueItem[] => (COMMON_ITEMS.applies_to.includes(formId) ? COMMON_ITEMS.items.filter(i => !i.for || COMMON_ITEMS.groups[i.for]?.includes(formId)).map(({ for: _for, ...i }) => i) : []);
+/** Who the standard notices name, by the deployment-profile slot that owns the form. */
+const INSTITUTION: Record<string, string> = { professionalRegulation: 'The professional regulator', tax: 'The tax authority', publicHealth: 'The public-health authority' };
 
 function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
   const { definition, notes } = importCanonicalForm(c, { title: c.library.title, groups: fieldGroup });
@@ -170,7 +223,7 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
     catalogueSource: c.catalogue.source,
     ...(Object.keys(l.lists).length ? { lists: structuredClone(l.lists) } : {}),
     ...(l.policies ? { policies: { ...l.policies } } : {}),
-    notices: standardNotices({ institution: l.owner === 'professionalRegulation' ? 'The professional regulator' : l.owner === 'publicHealth' ? 'The public-health authority' : batch === 2 ? 'The medicines regulator' : 'The health regulator' }),
+    notices: standardNotices({ institution: INSTITUTION[l.owner] ?? (batch === 2 ? 'The medicines regulator' : 'The health regulator') }),
     channels: CHANNELS(l.filled_by),
     identityEvidence: IDENTITY_EVIDENCE,
   };
@@ -181,13 +234,13 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
     owner: l.owner, filledBy: l.filled_by, ...(l.authority ? { authorityNote: l.authority } : {}),
     procedure: l.procedure ? { ...l.procedure } : null, ...(l.exchange ? { exchange: l.exchange } : {}), ...(l.intended ? { awaits: l.intended } : {}),
     nationValues: l.nation_values.map(v => ({ ...v })), deviations: l.deviations.map(d => ({ ...d })),
-    items: [...l.catalogue_items, ...(COMMON_ITEMS.applies_to.includes(c.form_id) ? COMMON_ITEMS.items : [])],
+    items: [...l.catalogue_items, ...commonItemsFor(c.form_id)],
     notes, json: c,
   };
 }
 
 /** Every catalogue contract CivicOS has written, as library drafts. */
-export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2))];
+export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3))];
 
 /**
  * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without

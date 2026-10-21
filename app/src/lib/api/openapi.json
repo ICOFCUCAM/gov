@@ -5895,6 +5895,66 @@
                     {
                       "type": "object",
                       "properties": {
+                        "entry": {
+                          "type": "object",
+                          "properties": {
+                            "contract": {
+                              "type": "boolean",
+                              "const": false
+                            },
+                            "draftable": {
+                              "type": "boolean"
+                            },
+                            "note": {
+                              "type": "string"
+                            },
+                            "identity": {
+                              "type": "string"
+                            },
+                            "catalogue": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "type": "string"
+                            },
+                            "formId": {
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "scope": {
+                              "type": "string",
+                              "enum": [
+                                "allowed",
+                                "excluded",
+                                "requires_legal_review"
+                              ],
+                              "description": "The approved scope of this entry (docs/requirements/form-scope.json), where the register lists it."
+                            },
+                            "rule": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "contract",
+                            "draftable",
+                            "note",
+                            "identity",
+                            "catalogue",
+                            "source",
+                            "formId",
+                            "title"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "entry"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
                         "library": {
                           "type": "object",
                           "properties": {
@@ -5915,6 +5975,9 @@
                                 },
                                 "line": {
                                   "type": "number"
+                                },
+                                "batch": {
+                                  "type": "number"
                                 }
                               },
                               "required": [
@@ -5922,8 +5985,12 @@
                                 "id",
                                 "part",
                                 "section",
-                                "line"
+                                "line",
+                                "batch"
                               ]
+                            },
+                            "catalogueId": {
+                              "type": "string"
                             },
                             "procedure": {
                               "anyOf": [
@@ -5966,7 +6033,13 @@
                             "specId": {
                               "type": "string"
                             },
+                            "identity": {
+                              "type": "string"
+                            },
                             "owner": {
+                              "type": "string"
+                            },
+                            "ownerLabel": {
                               "type": "string"
                             },
                             "awaits": {
@@ -5993,14 +6066,195 @@
                               "items": {
                                 "$ref": "#/components/schemas/Deviation"
                               }
+                            },
+                            "ownerResolution": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "actingLabel": {
+                                      "type": "string"
+                                    },
+                                    "institution": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "actingLabel": {
+                                      "type": "string"
+                                    },
+                                    "slot": {
+                                      "type": "string",
+                                      "enum": [
+                                        "anticorruption",
+                                        "businessRegister",
+                                        "centralBank",
+                                        "civilRegistration",
+                                        "constitutionalCourt",
+                                        "controlledSubstances",
+                                        "customs",
+                                        "dataProtection",
+                                        "education",
+                                        "electoral",
+                                        "headOfState",
+                                        "healthRegulation",
+                                        "higherEducationAccreditation",
+                                        "humanRights",
+                                        "identity",
+                                        "immigration",
+                                        "judiciary",
+                                        "lawRegister",
+                                        "legislature",
+                                        "medicinesRegulation",
+                                        "ombudsman",
+                                        "police",
+                                        "professionalRegulation",
+                                        "publicHealth",
+                                        "statistics",
+                                        "supremeAudit",
+                                        "tax",
+                                        "trustServices"
+                                      ],
+                                      "description": "The slot the form or procedure names."
+                                    },
+                                    "actingSlot": {
+                                      "type": "string",
+                                      "enum": [
+                                        "anticorruption",
+                                        "businessRegister",
+                                        "centralBank",
+                                        "civilRegistration",
+                                        "constitutionalCourt",
+                                        "controlledSubstances",
+                                        "customs",
+                                        "dataProtection",
+                                        "education",
+                                        "electoral",
+                                        "headOfState",
+                                        "healthRegulation",
+                                        "higherEducationAccreditation",
+                                        "humanRights",
+                                        "identity",
+                                        "immigration",
+                                        "judiciary",
+                                        "lawRegister",
+                                        "legislature",
+                                        "medicinesRegulation",
+                                        "ombudsman",
+                                        "police",
+                                        "professionalRegulation",
+                                        "publicHealth",
+                                        "statistics",
+                                        "supremeAudit",
+                                        "tax",
+                                        "trustServices"
+                                      ],
+                                      "description": "The slot whose institution acts (the slot itself, or the stand-in)."
+                                    },
+                                    "institution": {
+                                      "type": "string"
+                                    },
+                                    "provisional": {
+                                      "type": "string",
+                                      "description": "Set when the slot is empty and a stand-in acts: what the nation has not named, in plain words."
+                                    }
+                                  },
+                                  "required": [
+                                    "slot",
+                                    "actingSlot"
+                                  ]
+                                }
+                              ]
+                            },
+                            "procedureLink": {
+                              "type": "object",
+                              "properties": {
+                                "exchange": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "anyOf": [
+                                        {
+                                          "type": "null"
+                                        },
+                                        {
+                                          "type": "string"
+                                        }
+                                      ]
+                                    },
+                                    "exists": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "exists"
+                                  ]
+                                },
+                                "carriedBy": {
+                                  "type": "object",
+                                  "properties": {
+                                    "key": {
+                                      "type": "string"
+                                    },
+                                    "version": {
+                                      "type": "number"
+                                    },
+                                    "state": {
+                                      "type": "string",
+                                      "enum": [
+                                        "approved",
+                                        "draft",
+                                        "superseded"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "key",
+                                    "version",
+                                    "state"
+                                  ]
+                                },
+                                "state": {
+                                  "type": "string",
+                                  "enum": [
+                                    "approved",
+                                    "draft",
+                                    "missing",
+                                    "under_review"
+                                  ]
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "required": {
+                                  "type": "boolean"
+                                },
+                                "detail": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "state",
+                                "label",
+                                "required",
+                                "detail"
+                              ]
                             }
                           },
                           "required": [
                             "specId",
+                            "identity",
                             "owner",
+                            "ownerLabel",
                             "awaits",
                             "notes",
-                            "deviations"
+                            "deviations",
+                            "ownerResolution",
+                            "procedureLink"
                           ]
                         },
                         "form": {
@@ -6350,12 +6604,56 @@
                     {
                       "type": "object",
                       "properties": {
+                        "duplicates": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "candidates": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "scope": {
+                                      "type": "string",
+                                      "enum": [
+                                        "allowed",
+                                        "excluded",
+                                        "requires_legal_review"
+                                      ]
+                                    },
+                                    "identity": {
+                                      "type": "string"
+                                    },
+                                    "title": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "identity",
+                                    "title"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "candidates"
+                            ]
+                          }
+                        },
                         "forms": {
                           "type": "array",
                           "items": {
                             "type": "object",
                             "properties": {
                               "key": {
+                                "type": "string"
+                              },
+                              "identity": {
                                 "type": "string"
                               },
                               "specId": {
@@ -6366,6 +6664,96 @@
                               },
                               "owner": {
                                 "type": "string"
+                              },
+                              "ownerResolution": {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/components/schemas/OwnerResolution"
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "institution": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                ]
+                              },
+                              "procedureLink": {
+                                "type": "object",
+                                "properties": {
+                                  "carriedBy": {
+                                    "type": "object",
+                                    "properties": {
+                                      "key": {
+                                        "type": "string"
+                                      },
+                                      "version": {
+                                        "type": "number"
+                                      },
+                                      "state": {
+                                        "type": "string",
+                                        "enum": [
+                                          "approved",
+                                          "draft",
+                                          "superseded"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "key",
+                                      "version",
+                                      "state"
+                                    ],
+                                    "description": "The version that carries the contract (the furthest along), where one does."
+                                  },
+                                  "detail": {
+                                    "type": "string",
+                                    "description": "In plain words."
+                                  },
+                                  "exchange": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "anyOf": [
+                                          {
+                                            "type": "null"
+                                          },
+                                          {
+                                            "type": "string"
+                                          }
+                                        ]
+                                      },
+                                      "exists": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "exists"
+                                    ],
+                                    "description": "For a form answered by an exchange service: the service and whether it exists."
+                                  },
+                                  "required": {
+                                    "type": "boolean",
+                                    "description": "Whether the form needs a procedure to go live (false for a form answered by an exchange service and the public check)."
+                                  },
+                                  "state": {
+                                    "type": "string",
+                                    "enum": [
+                                      "approved",
+                                      "draft",
+                                      "missing",
+                                      "under_review"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "detail",
+                                  "required",
+                                  "state"
+                                ]
                               },
                               "attachesTo": {
                                 "anyOf": [
@@ -6427,9 +6815,12 @@
                             },
                             "required": [
                               "key",
+                              "identity",
                               "specId",
                               "title",
                               "owner",
+                              "ownerResolution",
+                              "procedureLink",
                               "attachesTo",
                               "awaits",
                               "fields",
@@ -6443,6 +6834,7 @@
                         }
                       },
                       "required": [
+                        "duplicates",
                         "forms"
                       ]
                     },
@@ -6755,6 +7147,16 @@
                         "status": "approved",
                         "scope": {
                           "status": "allowed"
+                        },
+                        "identity": "string",
+                        "procedure": {
+                          "detail": "string",
+                          "required": true,
+                          "state": "approved"
+                        },
+                        "owner": {
+                          "slot": "anticorruption",
+                          "actingSlot": "anticorruption"
                         },
                         "automatic": [
                           {
@@ -15270,6 +15672,7 @@
                               "centralBank",
                               "civilRegistration",
                               "constitutionalCourt",
+                              "controlledSubstances",
                               "customs",
                               "dataProtection",
                               "education",
@@ -15283,9 +15686,11 @@
                               "judiciary",
                               "lawRegister",
                               "legislature",
+                              "medicinesRegulation",
                               "ombudsman",
                               "police",
                               "professionalRegulation",
+                              "publicHealth",
                               "statistics",
                               "supremeAudit",
                               "tax",
@@ -40840,6 +41245,7 @@
                                       "centralBank",
                                       "civilRegistration",
                                       "constitutionalCourt",
+                                      "controlledSubstances",
                                       "customs",
                                       "dataProtection",
                                       "education",
@@ -40853,9 +41259,11 @@
                                       "judiciary",
                                       "lawRegister",
                                       "legislature",
+                                      "medicinesRegulation",
                                       "ombudsman",
                                       "police",
                                       "professionalRegulation",
+                                      "publicHealth",
                                       "statistics",
                                       "supremeAudit",
                                       "tax",
@@ -57387,6 +57795,7 @@
                             "centralBank",
                             "civilRegistration",
                             "constitutionalCourt",
+                            "controlledSubstances",
                             "customs",
                             "dataProtection",
                             "education",
@@ -57400,9 +57809,11 @@
                             "judiciary",
                             "lawRegister",
                             "legislature",
+                            "medicinesRegulation",
                             "ombudsman",
                             "police",
                             "professionalRegulation",
+                            "publicHealth",
                             "statistics",
                             "supremeAudit",
                             "tax",
@@ -58089,6 +58500,9 @@
                         "constitutionalCourt": {
                           "type": "string"
                         },
+                        "controlledSubstances": {
+                          "type": "string"
+                        },
                         "customs": {
                           "type": "string"
                         },
@@ -58128,6 +58542,9 @@
                         "legislature": {
                           "type": "string"
                         },
+                        "medicinesRegulation": {
+                          "type": "string"
+                        },
                         "ombudsman": {
                           "type": "string"
                         },
@@ -58135,6 +58552,9 @@
                           "type": "string"
                         },
                         "professionalRegulation": {
+                          "type": "string"
+                        },
+                        "publicHealth": {
                           "type": "string"
                         },
                         "statistics": {
@@ -58178,6 +58598,9 @@
                                     "constitutionalCourt": {
                                       "type": "string"
                                     },
+                                    "controlledSubstances": {
+                                      "type": "string"
+                                    },
                                     "customs": {
                                       "type": "string"
                                     },
@@ -58217,6 +58640,9 @@
                                     "legislature": {
                                       "type": "string"
                                     },
+                                    "medicinesRegulation": {
+                                      "type": "string"
+                                    },
                                     "ombudsman": {
                                       "type": "string"
                                     },
@@ -58224,6 +58650,9 @@
                                       "type": "string"
                                     },
                                     "professionalRegulation": {
+                                      "type": "string"
+                                    },
+                                    "publicHealth": {
                                       "type": "string"
                                     },
                                     "statistics": {
@@ -58326,6 +58755,9 @@
                                       "constitutionalCourt": {
                                         "type": "string"
                                       },
+                                      "controlledSubstances": {
+                                        "type": "string"
+                                      },
                                       "customs": {
                                         "type": "string"
                                       },
@@ -58365,6 +58797,9 @@
                                       "legislature": {
                                         "type": "string"
                                       },
+                                      "medicinesRegulation": {
+                                        "type": "string"
+                                      },
                                       "ombudsman": {
                                         "type": "string"
                                       },
@@ -58372,6 +58807,9 @@
                                         "type": "string"
                                       },
                                       "professionalRegulation": {
+                                        "type": "string"
+                                      },
+                                      "publicHealth": {
                                         "type": "string"
                                       },
                                       "statistics": {
@@ -58476,6 +58914,7 @@
                         "centralBank": "string",
                         "civilRegistration": "string",
                         "constitutionalCourt": "string",
+                        "controlledSubstances": "string",
                         "customs": "string",
                         "dataProtection": "string",
                         "education": "string",
@@ -58489,9 +58928,11 @@
                         "judiciary": "string",
                         "lawRegister": "string",
                         "legislature": "string",
+                        "medicinesRegulation": "string",
                         "ombudsman": "string",
                         "police": "string",
                         "professionalRegulation": "string",
+                        "publicHealth": "string",
                         "statistics": "string",
                         "supremeAudit": "string",
                         "tax": "string",
@@ -58616,6 +59057,9 @@
                         "constitutionalCourt": {
                           "type": "string"
                         },
+                        "controlledSubstances": {
+                          "type": "string"
+                        },
                         "customs": {
                           "type": "string"
                         },
@@ -58655,6 +59099,9 @@
                         "legislature": {
                           "type": "string"
                         },
+                        "medicinesRegulation": {
+                          "type": "string"
+                        },
                         "ombudsman": {
                           "type": "string"
                         },
@@ -58662,6 +59109,9 @@
                           "type": "string"
                         },
                         "professionalRegulation": {
+                          "type": "string"
+                        },
+                        "publicHealth": {
                           "type": "string"
                         },
                         "statistics": {
@@ -58705,6 +59155,9 @@
                                     "constitutionalCourt": {
                                       "type": "string"
                                     },
+                                    "controlledSubstances": {
+                                      "type": "string"
+                                    },
                                     "customs": {
                                       "type": "string"
                                     },
@@ -58744,6 +59197,9 @@
                                     "legislature": {
                                       "type": "string"
                                     },
+                                    "medicinesRegulation": {
+                                      "type": "string"
+                                    },
                                     "ombudsman": {
                                       "type": "string"
                                     },
@@ -58751,6 +59207,9 @@
                                       "type": "string"
                                     },
                                     "professionalRegulation": {
+                                      "type": "string"
+                                    },
+                                    "publicHealth": {
                                       "type": "string"
                                     },
                                     "statistics": {
@@ -58853,6 +59312,9 @@
                                       "constitutionalCourt": {
                                         "type": "string"
                                       },
+                                      "controlledSubstances": {
+                                        "type": "string"
+                                      },
                                       "customs": {
                                         "type": "string"
                                       },
@@ -58892,6 +59354,9 @@
                                       "legislature": {
                                         "type": "string"
                                       },
+                                      "medicinesRegulation": {
+                                        "type": "string"
+                                      },
                                       "ombudsman": {
                                         "type": "string"
                                       },
@@ -58899,6 +59364,9 @@
                                         "type": "string"
                                       },
                                       "professionalRegulation": {
+                                        "type": "string"
+                                      },
+                                      "publicHealth": {
                                         "type": "string"
                                       },
                                       "statistics": {
@@ -59001,6 +59469,7 @@
                         "centralBank": "string",
                         "civilRegistration": "string",
                         "constitutionalCourt": "string",
+                        "controlledSubstances": "string",
                         "customs": "string",
                         "dataProtection": "string",
                         "education": "string",
@@ -59014,9 +59483,11 @@
                         "judiciary": "string",
                         "lawRegister": "string",
                         "legislature": "string",
+                        "medicinesRegulation": "string",
                         "ombudsman": "string",
                         "police": "string",
                         "professionalRegulation": "string",
+                        "publicHealth": "string",
                         "statistics": "string",
                         "supremeAudit": "string",
                         "tax": "string",
@@ -77917,6 +78388,9 @@
               "constitutionalCourt": {
                 "type": "string"
               },
+              "controlledSubstances": {
+                "type": "string"
+              },
               "customs": {
                 "type": "string"
               },
@@ -77956,6 +78430,9 @@
               "legislature": {
                 "type": "string"
               },
+              "medicinesRegulation": {
+                "type": "string"
+              },
               "ombudsman": {
                 "type": "string"
               },
@@ -77963,6 +78440,9 @@
                 "type": "string"
               },
               "professionalRegulation": {
+                "type": "string"
+              },
+              "publicHealth": {
                 "type": "string"
               },
               "statistics": {
@@ -82888,6 +83368,10 @@
             },
             "description": "The catalogue identifiers this form answers (field series, e.g. CIV-BTH-002)."
           },
+          "catalogueSource": {
+            "type": "string",
+            "description": "The catalogue document those identifiers come from, where the catalogue reuses an ID for different forms (lib/forms/scope.ts reads the scope of that document's entry)."
+          },
           "envelope": {
             "$ref": "#/components/schemas/Envelope"
           }
@@ -83036,6 +83520,12 @@
               "note",
               "outcome"
             ]
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -90726,6 +91216,91 @@
           "error"
         ]
       },
+      "OwnerResolution": {
+        "description": "Who owns what a slot names: the institution named for it, or, where it is empty, a recorded provisional stand-in.",
+        "type": "object",
+        "properties": {
+          "slot": {
+            "type": "string",
+            "enum": [
+              "anticorruption",
+              "businessRegister",
+              "centralBank",
+              "civilRegistration",
+              "constitutionalCourt",
+              "controlledSubstances",
+              "customs",
+              "dataProtection",
+              "education",
+              "electoral",
+              "headOfState",
+              "healthRegulation",
+              "higherEducationAccreditation",
+              "humanRights",
+              "identity",
+              "immigration",
+              "judiciary",
+              "lawRegister",
+              "legislature",
+              "medicinesRegulation",
+              "ombudsman",
+              "police",
+              "professionalRegulation",
+              "publicHealth",
+              "statistics",
+              "supremeAudit",
+              "tax",
+              "trustServices"
+            ],
+            "description": "The slot the form or procedure names."
+          },
+          "actingSlot": {
+            "type": "string",
+            "enum": [
+              "anticorruption",
+              "businessRegister",
+              "centralBank",
+              "civilRegistration",
+              "constitutionalCourt",
+              "controlledSubstances",
+              "customs",
+              "dataProtection",
+              "education",
+              "electoral",
+              "headOfState",
+              "healthRegulation",
+              "higherEducationAccreditation",
+              "humanRights",
+              "identity",
+              "immigration",
+              "judiciary",
+              "lawRegister",
+              "legislature",
+              "medicinesRegulation",
+              "ombudsman",
+              "police",
+              "professionalRegulation",
+              "publicHealth",
+              "statistics",
+              "supremeAudit",
+              "tax",
+              "trustServices"
+            ],
+            "description": "The slot whose institution acts (the slot itself, or the stand-in)."
+          },
+          "institution": {
+            "type": "string"
+          },
+          "provisional": {
+            "type": "string",
+            "description": "Set when the slot is empty and a stand-in acts: what the nation has not named, in plain words."
+          }
+        },
+        "required": [
+          "slot",
+          "actingSlot"
+        ]
+      },
       "PackEvent": {
         "type": "object",
         "properties": {
@@ -93866,6 +94441,102 @@
           "scope": {
             "$ref": "#/components/schemas/ScopeFinding"
           },
+          "identity": {
+            "type": "string",
+            "description": "The form's identity: what approvals are recorded under."
+          },
+          "procedure": {
+            "type": "object",
+            "properties": {
+              "carriedBy": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "approved",
+                      "draft",
+                      "superseded"
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "version",
+                  "state"
+                ],
+                "description": "The version that carries the contract (the furthest along), where one does."
+              },
+              "detail": {
+                "type": "string",
+                "description": "In plain words."
+              },
+              "exchange": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "exists": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "exists"
+                ],
+                "description": "For a form answered by an exchange service: the service and whether it exists."
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether the form needs a procedure to go live (false for a form answered by an exchange service and the public check)."
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "approved",
+                  "draft",
+                  "missing",
+                  "under_review"
+                ]
+              }
+            },
+            "required": [
+              "detail",
+              "required",
+              "state"
+            ],
+            "description": "The link to the procedure that carries it (missing, draft, under review, approved), computed from the package register."
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OwnerResolution"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "institution": {
+                    "type": "string"
+                  }
+                }
+              }
+            ],
+            "description": "Who owns it: the institution named for its slot, or a provisional stand-in (never proof of legal competence)."
+          },
           "automatic": {
             "type": "array",
             "items": {
@@ -93921,6 +94592,9 @@
           "title",
           "status",
           "scope",
+          "identity",
+          "procedure",
+          "owner",
           "automatic",
           "human",
           "blockers"
@@ -93934,6 +94608,10 @@
           },
           "version": {
             "type": "number"
+          },
+          "form": {
+            "type": "string",
+            "description": "The identity of the form the act was given on (lib/forms/identity.ts: catalogue + form ID + version, or PROCEDURE:key@version for a procedure's own form). An act counts only for that identity and the contract hash below; acts recorded before identities were kept take the identity of the version they were given on (db())."
           },
           "kind": {
             "type": "string",
@@ -94035,6 +94713,7 @@
         "required": [
           "key",
           "version",
+          "form",
           "kind",
           "outcome",
           "by",
@@ -95148,6 +95827,7 @@
                       "centralBank",
                       "civilRegistration",
                       "constitutionalCourt",
+                      "controlledSubstances",
                       "customs",
                       "dataProtection",
                       "education",
@@ -95161,9 +95841,11 @@
                       "judiciary",
                       "lawRegister",
                       "legislature",
+                      "medicinesRegulation",
                       "ombudsman",
                       "police",
                       "professionalRegulation",
+                      "publicHealth",
                       "statistics",
                       "supremeAudit",
                       "tax",
@@ -97178,6 +97860,7 @@
                   "centralBank",
                   "civilRegistration",
                   "constitutionalCourt",
+                  "controlledSubstances",
                   "customs",
                   "dataProtection",
                   "education",
@@ -97191,9 +97874,11 @@
                   "judiciary",
                   "lawRegister",
                   "legislature",
+                  "medicinesRegulation",
                   "ombudsman",
                   "police",
                   "professionalRegulation",
+                  "publicHealth",
                   "statistics",
                   "supremeAudit",
                   "tax",
@@ -97355,6 +98040,7 @@
               "centralBank",
               "civilRegistration",
               "constitutionalCourt",
+              "controlledSubstances",
               "customs",
               "dataProtection",
               "education",
@@ -97368,9 +98054,11 @@
               "judiciary",
               "lawRegister",
               "legislature",
+              "medicinesRegulation",
               "ombudsman",
               "police",
               "professionalRegulation",
+              "publicHealth",
               "statistics",
               "supremeAudit",
               "tax",
@@ -97563,6 +98251,7 @@
               "centralBank",
               "civilRegistration",
               "constitutionalCourt",
+              "controlledSubstances",
               "customs",
               "dataProtection",
               "education",
@@ -97576,9 +98265,11 @@
               "judiciary",
               "lawRegister",
               "legislature",
+              "medicinesRegulation",
               "ombudsman",
               "police",
               "professionalRegulation",
+              "publicHealth",
               "statistics",
               "supremeAudit",
               "tax",
@@ -98797,6 +99488,7 @@
                   "centralBank",
                   "civilRegistration",
                   "constitutionalCourt",
+                  "controlledSubstances",
                   "customs",
                   "dataProtection",
                   "education",
@@ -98810,9 +99502,11 @@
                   "judiciary",
                   "lawRegister",
                   "legislature",
+                  "medicinesRegulation",
                   "ombudsman",
                   "police",
                   "professionalRegulation",
+                  "publicHealth",
                   "statistics",
                   "supremeAudit",
                   "tax",

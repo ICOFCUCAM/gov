@@ -50,7 +50,9 @@ export function formIdentity(x: FormIdentity | { source: string; formId: string;
   return `${catalogue}:${x.formId}${v}`;
 }
 
-const IDENTITY = /^([A-Za-z0-9][A-Za-z0-9_-]*):([A-Za-z0-9][A-Za-z0-9._-]*)(?:@([0-9][0-9A-Za-z.-]*))?$/;
+// A form ID may itself carry `@P<part>` (a library contract for the second row of an ID the catalogue repeats in one document,
+// e.g. taxpayer.registration.further_information@P2): the version is the last `@` followed by a digit.
+const IDENTITY = /^([A-Za-z0-9][A-Za-z0-9_-]*):([A-Za-z0-9][A-Za-z0-9._@-]*?)(?:@([0-9][0-9A-Za-z.-]*))?$/;
 
 /** Read a written identity; null when the text is not one (a bare ID, a procedure key). */
 export function parseFormIdentity(s: string): FormIdentity | null {

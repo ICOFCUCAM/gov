@@ -12,7 +12,7 @@ OUT_MD = 'docs/forms-catalogue/GAP-REPORT.md'
 OUT_JSON = 'docs/forms-catalogue/gap-report.json'
 REPORTED = {'listed forms, parts 14–22': 216, 'contracts, parts 14–22': 61, 'core contracts, parts 5–13': 72}
 # What each controlled batch of CivicOS's own contracts covers (owner's approvals, 21 October 2026).
-BATCH_LABEL = {1: 'health regulation', 2: 'medicines and medical devices regulation'}
+BATCH_LABEL = {1: 'health regulation', 2: 'medicines and medical devices regulation', 3: 'taxpayer registration and account'}
 GATES = [
     'The form owner and competent authority are verified.',
     'Legal references and their versions have been approved.',
@@ -217,7 +217,7 @@ def write(repo, rows, checks):
         md.append('- Forms with more than one contract (the shared standard\'s example and the part\'s own): ' + ', '.join(f'`{x}`' for x in c['forms_with_more_than_one']))
     lc = rep['library_contracts']
     md.append(f'\n## Contracts CivicOS wrote (form library, controlled batches)\n\n{lc["total"]} contracts in `app/src/lib/forms/library/catalogue-contracts/`, '
-              f'{lc["matched_to_one_form"]} matched to exactly one registered form (by source file and catalogue ID), {len(lc["unmatched_or_ambiguous"])} unmatched or ambiguous. '
+              f'{lc["matched_to_one_form"]} matched to exactly one registered form (by source file and catalogue ID, and by line where the catalogue repeats an ID in one file), {len(lc["unmatched_or_ambiguous"])} unmatched or ambiguous. '
               'Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.\n')
     for b in lc['batches']:
         md.append(f'\n**Batch {b["batch"]}** ({BATCH_LABEL.get(b["batch"], "controlled batch")}, owner approved 21 October 2026): {len(b["contracts"])} contracts added; form status '

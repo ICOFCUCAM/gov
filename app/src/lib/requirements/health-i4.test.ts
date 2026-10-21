@@ -89,7 +89,8 @@ describe('the Health I4 requirements and dependency register', () => {
   });
 
   it('lists every contract with no procedure link and the stage it is intended for, and each reads missing until its procedure exists', () => {
-    const none = CATALOGUE_CONTRACTS.filter(f => !f.procedure);
+    const health = CATALOGUE_CONTRACTS.filter(f => f.specId.startsWith('HLT-'));
+    const none = health.filter(f => !f.procedure);
     expect(REG.forms_without_procedure.map(x => x.identity).sort()).toEqual(none.map(f => f.identity).sort());
     expect(REG.forms_without_procedure.filter(x => x.batch === 2)).toHaveLength(21);
     expect(REG.forms_without_procedure.filter(x => x.batch === 1)).toHaveLength(12);
@@ -100,7 +101,7 @@ describe('the Health I4 requirements and dependency register', () => {
       expect(x.procedure_required, x.identity).toBe(!f.deviations.some(d => d.id === 'no-case'));
       expect(procedureLink({ identity: f.identity, procedure: null, deviations: f.deviations }, { packages: [] }).state).toBe(x.link);
     }
-    const linked = CATALOGUE_CONTRACTS.filter(f => f.procedure);
+    const linked = health.filter(f => f.procedure);
     expect(REG.adoption.map(x => `${x.identity} ${x.procedure} ${x.stage}`).sort()).toEqual(linked.map(f => `${f.identity} ${f.procedure!.key} ${f.procedure!.stage}`).sort());
   });
 

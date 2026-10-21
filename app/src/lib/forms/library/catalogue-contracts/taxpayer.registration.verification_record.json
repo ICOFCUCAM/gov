@@ -1,0 +1,455 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "taxpayer.registration.verification_record",
+ "record_type": "taxpayer.registration_lookup",
+ "form_version": 1,
+ "procedure_package_id": "tax.registration",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "country.tax.registration: taxpayer categories, registration identifiers, tax obligations and registration procedures (approved by the authorized tax and legal authority).",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for these records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "taxpayer.registration.verification_record",
+  "part": 2,
+  "section": "2.6",
+  "line": 2712,
+  "batch": 3
+ },
+ "library": {
+  "title": "Record a register lookup",
+  "intro": "The record of an authorised lookup in another register through an approved exchange service: which service, for which approved purpose, what was looked up and what it answered.",
+  "owner": "tax",
+  "filled_by": "An official of the tax authority, signed in.",
+  "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
+  "procedure": {
+   "key": "tax.registration",
+   "stage": "verification",
+   "action": "verify"
+  },
+  "lists": {
+   "tax.registration.lookup_results": {
+    "values": [
+     {
+      "value": "matched",
+      "label": "Matched"
+     },
+     {
+      "value": "not-matched",
+      "label": "Not matched"
+     },
+     {
+      "value": "partly-matched",
+      "label": "Partly matched"
+     },
+     {
+      "value": "not-available",
+      "label": "Service not available"
+     }
+    ],
+    "proposed": true
+   },
+   "tax.registration.lookup_services": {
+    "values": [
+     {
+      "value": "person.verify",
+      "label": "Civil register: does this birth registration match?"
+     },
+     {
+      "value": "organisation.standing",
+      "label": "Organisations register: is this organisation registered?"
+     },
+     {
+      "value": "immigration.status",
+      "label": "Immigration: does this document hold a valid permit?"
+     },
+     {
+      "value": "taxpayer.status",
+      "label": "Tax register: is this party already registered?"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "policies": {
+   "access.read_rule": "canReadTax() in lib/auth/roles.ts: the tax authority's officials and auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only registration status, through the taxpayer.status exchange service, for an approved purpose"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "tax-secrecy-class",
+    "what": "Every field of the form is restricted and marked tax secrecy (confidentiality tax), stricter than the catalogue's administrative and personal classes where it gives them; the case is restricted and read only under canReadTax() (the tax authority's officials, auditors with a purpose), every read in the access log; other institutions learn status only through the taxpayer.status exchange service",
+    "why": "Tax records are confidential: a class label alone grants no access, and nothing about a taxpayer leaves the tax authority except through an approved exchange for an approved purpose.",
+    "rule": "CLAUDE.md Tax: lib/tax/ is read by the tax authority only (canReadTax(), every read in the access log); others use the taxpayer.status exchange service"
+   },
+   {
+    "id": "no-tax-values",
+    "what": "No rate, threshold, penalty, interest, deadline, registration threshold, obligation trigger or fee is typed: each is a named nation value checked by a binding rule (recorded as not performed and a publication blocker until the nation approves it); tax types, taxpayer categories and obligations are nation lists that ship empty, naming the standard expected",
+    "why": "The field series Part 2 §2.6: tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, retention and appeal rights come from approved national rules, never universal constants.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2712,
+    "quotes": [
+     "taxpayer.registration.verification_record — record an authorized register lookup and its result."
+    ],
+    "met_by": {
+     "fields": [
+      "verification.service",
+      "verification.result"
+     ],
+     "exchange": "organisation.standing",
+     "procedure": "verify"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3191,
+    "quotes": [
+     "case_ref: identifier_reference, required; source is the owning institution's authorized case registry."
+    ],
+    "met_by": {
+     "fields": [
+      "verification.case_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3194,
+    "quotes": [
+     "evidence_refs: registry_reference, conditional according to the procedure."
+    ],
+    "met_by": {
+     "fields": [
+      "verification.exchange_ref",
+      "verification.answer"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3205,
+    "quotes": [
+     "Universal control: these records must be bound to the actual service-specific procedure package.",
+     "A generic internal form cannot be used to bypass the case's approved stages, skip mandatory legal review or issue a decision that the officer is not authorized to make."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "Each record is made at a step of the procedure package its case runs under; it cannot move the case past a stage, skip a review or decide what the official may not (caseActRefusal())"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2710,
+    "quotes": [
+     "The following forms are available only to authorized tax officers and reviewers:"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Officials of the tax authority only: caseActRefusal() refuses anyone else, and administrators and whole-government officials get no domain authority"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "verification.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Case reference"
+   },
+   "hint": {
+    "en": "The registration case this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter case reference.",
+     "case_exists_and_is_open": "There is no open case with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The lookup"
+   }
+  },
+  {
+   "id": "verification.service",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "purpose_authorized_for_relationship",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registration.lookup_services",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Exchange service used"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select exchange service used.",
+     "value_in_source": "Choose one of the listed values for exchange service used."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The lookup"
+   }
+  },
+  {
+   "id": "verification.purpose",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.country.approved.lookup_purposes",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Approved purpose"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select approved purpose.",
+     "value_in_source": "Choose one of the listed values for approved purpose."
+    }
+   },
+   "country_decision": "country.tax.registration: the purposes approved for the tax authority on each exchange service (approved by two officials, proposeIntegrationApproval(); none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The lookup"
+   }
+  },
+  {
+   "id": "verification.query_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What was looked up"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter what was looked up."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The lookup"
+   }
+  },
+  {
+   "id": "verification.result",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registration.lookup_results",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Result"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select result.",
+     "value_in_source": "Choose one of the listed values for result."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The lookup"
+   }
+  },
+  {
+   "id": "verification.answer",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What the service answered"
+   },
+   "hint": {
+    "en": "As it answered; nothing inferred."
+   },
+   "error_text": {
+    "en": {
+     "length": "What the service answered must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The lookup"
+   }
+  },
+  {
+   "id": "verification.exchange_ref",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Exchange log entry"
+   },
+   "hint": {
+    "en": "The call as the exchange layer recorded it."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "verification.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded by"
+   },
+   "hint": {
+    "en": "The signed-in official who records this; never typed in."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "verification.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  }
+ ]
+}

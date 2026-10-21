@@ -284,6 +284,8 @@ def forms_without_procedure(repo):
         if not f.endswith('.json'):
             continue
         c = json.load(open(os.path.join(d, f), encoding='utf-8'))
+        if not c['form_id'].startswith('HLT-'):
+            continue
         lib = c['library']
         if lib.get('procedure'):
             continue
@@ -301,6 +303,8 @@ def adoption(repo):
         if not f.endswith('.json'):
             continue
         c = json.load(open(os.path.join(d, f), encoding='utf-8'))
+        if not c['form_id'].startswith('HLT-'):
+            continue
         p = c['library'].get('procedure')
         if p:
             out.append(dict(identity=f'{c["catalogue"]["source"].split("/")[-1][:-3]}:{c["form_id"]}@{c["form_version"]}', title=c['library']['title'],

@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages every contract of batches 1 and 2 answers the same way (Part 6 common, Part 1 shared rules, the supplement's conventions and gates), with how each is met. Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common) and \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -46,10 +46,121 @@
   "HLT-MED-019",
   "HLT-MED-020",
   "HLT-MED-023",
-  "HLT-MED-024"
+  "HLT-MED-024",
+  "taxpayer.registration.individual",
+  "taxpayer.registration.public_entity",
+  "taxpayer.registration.nonresident",
+  "taxpayer.registration.branch",
+  "taxpayer.registration.amend",
+  "taxpayer.details.change",
+  "taxpayer.obligation.add",
+  "taxpayer.obligation.cancel",
+  "taxpayer.registration.transfer",
+  "taxpayer.certificate.request",
+  "taxpayer.account.statement",
+  "taxpayer.registration.duplicate",
+  "taxpayer.registration.suspend_request",
+  "taxpayer.registration.reactivate_request",
+  "taxpayer.registration.objection",
+  "taxpayer.registration.appeal",
+  "taxpayer.registration.withdraw",
+  "taxpayer.registration.decision",
+  "taxpayer.registration.decision_record",
+  "taxpayer.registration.inspection",
+  "taxpayer.registration.inspection_checklist",
+  "taxpayer.registration.further_information",
+  "taxpayer.registration.further_information@P2",
+  "taxpayer.registration.referral",
+  "taxpayer.registration.referral_record",
+  "taxpayer.registration.assessment",
+  "taxpayer.registration.verification_record",
+  "taxpayer.registration.appeal_assessment",
+  "taxpayer.registration.closure_record"
  ],
+ "groups": {
+  "health": [
+   "HLT-FAC-001",
+   "HLT-FAC-002",
+   "HLT-FAC-003",
+   "HLT-FAC-004",
+   "HLT-FAC-005",
+   "HLT-FAC-006",
+   "HLT-FAC-007",
+   "HLT-FAC-008",
+   "HLT-FAC-009",
+   "HLT-FAC-010",
+   "HLT-LIC-001",
+   "HLT-LIC-002",
+   "HLT-LIC-003",
+   "HLT-LIC-004",
+   "HLT-LIC-005",
+   "HLT-LIC-006",
+   "HLT-LIC-007",
+   "HLT-LIC-008",
+   "HLT-LIC-009",
+   "HLT-LIC-010",
+   "HLT-LIC-011",
+   "HLT-LIC-012",
+   "HLT-LIC-013",
+   "HLT-LIC-014",
+   "HLT-PH-015",
+   "HLT-MED-001",
+   "HLT-MED-002",
+   "HLT-MED-003",
+   "HLT-MED-004",
+   "HLT-MED-005",
+   "HLT-MED-006",
+   "HLT-MED-007",
+   "HLT-MED-008",
+   "HLT-MED-009",
+   "HLT-MED-010",
+   "HLT-MED-011",
+   "HLT-MED-012",
+   "HLT-MED-013",
+   "HLT-MED-014",
+   "HLT-MED-015",
+   "HLT-MED-017",
+   "HLT-MED-018",
+   "HLT-MED-019",
+   "HLT-MED-020",
+   "HLT-MED-023",
+   "HLT-MED-024"
+  ],
+  "tax": [
+   "taxpayer.registration.individual",
+   "taxpayer.registration.public_entity",
+   "taxpayer.registration.nonresident",
+   "taxpayer.registration.branch",
+   "taxpayer.registration.amend",
+   "taxpayer.details.change",
+   "taxpayer.obligation.add",
+   "taxpayer.obligation.cancel",
+   "taxpayer.registration.transfer",
+   "taxpayer.certificate.request",
+   "taxpayer.account.statement",
+   "taxpayer.registration.duplicate",
+   "taxpayer.registration.suspend_request",
+   "taxpayer.registration.reactivate_request",
+   "taxpayer.registration.objection",
+   "taxpayer.registration.appeal",
+   "taxpayer.registration.withdraw",
+   "taxpayer.registration.decision",
+   "taxpayer.registration.decision_record",
+   "taxpayer.registration.inspection",
+   "taxpayer.registration.inspection_checklist",
+   "taxpayer.registration.further_information",
+   "taxpayer.registration.further_information@P2",
+   "taxpayer.registration.referral",
+   "taxpayer.registration.referral_record",
+   "taxpayer.registration.assessment",
+   "taxpayer.registration.verification_record",
+   "taxpayer.registration.appeal_assessment",
+   "taxpayer.registration.closure_record"
+  ]
+ },
  "items": [
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 496,
    "quotes": [
@@ -65,6 +176,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 498,
    "quotes": [
@@ -80,6 +192,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 509,
    "quotes": [
@@ -95,6 +208,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 786,
    "quotes": [
@@ -108,6 +222,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 787,
    "quotes": [
@@ -121,6 +236,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 788,
    "quotes": [
@@ -134,6 +250,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 789,
    "quotes": [
@@ -147,6 +264,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 790,
    "quotes": [
@@ -160,6 +278,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 791,
    "quotes": [
@@ -170,6 +289,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 792,
    "quotes": [
@@ -180,6 +300,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 793,
    "quotes": [
@@ -193,6 +314,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 794,
    "quotes": [
@@ -204,6 +326,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 809,
    "quotes": [
@@ -218,6 +341,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 811,
    "quotes": [
@@ -231,6 +355,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 812,
    "quotes": [
@@ -244,6 +369,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 813,
    "quotes": [
@@ -257,6 +383,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 814,
    "quotes": [
@@ -270,6 +397,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 815,
    "quotes": [
@@ -283,6 +411,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 816,
    "quotes": [
@@ -296,6 +425,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 817,
    "quotes": [
@@ -309,6 +439,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 818,
    "quotes": [
@@ -322,6 +453,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 819,
    "quotes": [
@@ -335,6 +467,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 820,
    "quotes": [
@@ -348,6 +481,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 821,
    "quotes": [
@@ -361,6 +495,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 822,
    "quotes": [
@@ -374,6 +509,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 823,
    "quotes": [
@@ -387,6 +523,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 824,
    "quotes": [
@@ -400,6 +537,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 825,
    "quotes": [
@@ -413,6 +551,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 841,
    "quotes": [
@@ -427,6 +566,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 850,
    "quotes": [
@@ -442,6 +582,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 851,
    "quotes": [
@@ -457,6 +598,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 855,
    "quotes": [
@@ -472,6 +614,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 870,
    "quotes": [
@@ -483,6 +626,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 873,
    "quotes": [
@@ -497,6 +641,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 875,
    "quotes": [
@@ -510,6 +655,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 876,
    "quotes": [
@@ -523,6 +669,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 885,
    "quotes": [
@@ -536,6 +683,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 886,
    "quotes": [
@@ -549,6 +697,7 @@
    }
   },
   {
+   "for": "health",
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "line": 887,
    "quotes": [
@@ -1380,6 +1529,356 @@
     "platform": {
      "file": "app/src/lib/forms/publication.ts",
      "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2517,
+   "quotes": [
+    "The Revenue/Tax Authority must have a separate configured service catalogue for each tax type that the country actually administers.",
+    "CivicOS must not assume that every nation has VAT, corporate income tax, personal income tax, property tax, excise, withholding tax or a particular taxpayer identifier."
+   ],
+   "met_by": {
+    "country_decision": "country.tax.registration",
+    "deviation": "no-tax-values"
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2519,
+   "quotes": [
+    "Tax is a legally consequential domain.",
+    "Tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, records-retention periods and appeal rights must come from approved national rules.",
+    "They must never be hard-coded as universal CivicOS constants."
+   ],
+   "met_by": {
+    "deviation": "no-tax-values",
+    "platform": {
+     "file": "app/src/lib/law/rules.ts",
+     "how": "Rates, thresholds, deadlines and fees only from approved, cited, tested rule versions; calculate() refuses without one"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2700,
+   "quotes": [
+    "\"Taxpayer categories and authoritative business registration records.\""
+   ],
+   "met_by": {
+    "country_decision": "country.tax.registration"
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2701,
+   "quotes": [
+    "\"Tax obligations available to each taxpayer type.\""
+   ],
+   "met_by": {
+    "country_decision": "country.tax.registration"
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2702,
+   "quotes": [
+    "\"Registration timing, filing start dates and accepted business identifiers.\""
+   ],
+   "met_by": {
+    "country_decision": "country.tax.registration"
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2703,
+   "quotes": [
+    "\"Representation requirements, evidence and declaration wording.\""
+   ],
+   "met_by": {
+    "country_decision": "country.tax.registration"
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2704,
+   "quotes": [
+    "\"Taxpayer confidentiality, retention and appeal rules.\""
+   ],
+   "met_by": {
+    "country_decision": "country.exec.finance.retention",
+    "deviation": "tax-secrecy-class"
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2730,
+   "quotes": [
+    "A tax officer must not create a new taxpayer record by bypassing the approved registration workflow.",
+    "The decision record must show whether the outcome was approved, refused, returned for information or otherwise disposed of under a lawful rule."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/procedures.ts",
+     "how": "A taxpayer is recorded only by the effect tax.register of a decided tax.registration case (registerTaxpayer; register-writes.test.ts holds that no other file writes the register); the sealed decision records the outcome, approved or refused, with reasons"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3219,
+   "quotes": [
+    "country.tax.registration",
+    "Taxpayer categories, registration identifiers, tax obligations and registration procedures",
+    "Authorized tax/legal authority"
+   ],
+   "met_by": {
+    "country_decision": "country.tax.registration"
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3225,
+   "quotes": [
+    "country.exec.finance.retention",
+    "Retention schedules, confidentiality, publication, disclosure and access restrictions for all records in this part",
+    "Records owner and authorized legal/privacy reviewers"
+   ],
+   "met_by": {
+    "country_decision": "country.exec.finance.retention",
+    "platform": {
+     "file": "app/src/lib/data/retention.ts",
+     "how": "Retention rules confirmed by two officials; disclosure only through the exchange layer"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3226,
+   "quotes": [
+    "Each configuration record must itself be versioned, reviewed by a different authorized official from its proposer where required, and linked to the applicable law version.",
+    "Changing a configuration must trigger an impact assessment for the affected forms and open procedure packages."
+   ],
+   "met_by": {
+    "deviation": "config-impact",
+    "platform": {
+     "file": "app/src/lib/law/policy-change.ts",
+     "how": "Country rule sets are versions citing the laws register, proposed by one official and confirmed by a different one; every version kept"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3231,
+   "quotes": [
+    "Every form is owned by a configured institution and bound to a verified authority record."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Owned by the tax slot of the deployment profile (authorityFor('tax')); the authority gate resolves it before publication"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3236,
+   "quotes": [
+    "Every activated service has its applicable intake, assessment, evidence, decision, notification, correction, review and closure stages."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+     "how": "Batch 3 holds the intake, assessment, verification, further-information, decision, referral, review and closure forms of taxpayer registration; a service is activated only by a procedure version carrying them, approved by two officials"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3251,
+   "quotes": [
+    "Every legally material decision records the authority, rule version, decision-maker, reasons where required, evidence and timestamp."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The sealed decision records the authority, the law and rule versions, the decision-maker, the reasons, the evidence and the time"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3256,
+   "quotes": [
+    "The system enforces the configured separation between proposing, reviewing, approving, executing and reconciling."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/dual-control-policy.ts",
+     "how": "Two officials at the platform minimum whatever a procedure says; the proposer never approves"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3261,
+   "quotes": [
+    "Taxpayer information, confidential Cabinet papers, debt records and payment details are accessible only for authorized purposes."
+   ],
+   "met_by": {
+    "deviation": "tax-secrecy-class",
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "canReadTax(): the tax authority's officials, auditors with a purpose; every read in the access log"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3266,
+   "quotes": [
+    "All published forms pass the required language, right-to-left, keyboard, screen-reader, mobile and assisted-channel tests."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "One definition renders self-service, assisted and print; accessibility and localisation are a publication gate"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3271,
+   "quotes": [
+    "Production reports use sourced records; estimates and modelled figures are explicitly identified; missing integrations are not represented as live data."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+     "how": "A library draft: no taxpayer, account, balance or certificate is shown as real; sample records carry the Sample marker"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 376,
+   "quotes": [
+    "The tax authority administers taxes established by law.",
+    "It may be a department within a ministry, a semi-autonomous revenue authority or a statutory agency.",
+    "Its legal powers may include registration, assessment, collection, audit, refund processing, objections and referrals to courts or other enforcement bodies."
+   ],
+   "met_by": {
+    "country_decision": "country.tax.registration",
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Whatever form the tax administration takes, the nation names it once under Who is responsible (slot tax); its powers come from its law"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 378,
+   "quotes": [
+    "CivicOS must separate the tax-policy authority from the tax-administration authority when they are different institutions."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Only the tax administration slot (tax) owns these forms; a tax-policy institution named apart has no power over a taxpayer's record"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 380,
+   "quotes": [
+    "A minister or treasury officer must not change an individual's liability by editing a tax record outside the legally authorized tax procedure."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/register.ts",
+     "how": "Tax records change only through the effects of decided cases; no route writes them directly and no other file imports a changing function (register-writes.test.ts)"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 387,
+   "quotes": [
+    "Registration and Accounts",
+    "Taxpayer identifiers, entity links, tax types and account status"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/register.ts",
+     "how": "The register gives the taxpayer identification number, links the taxpayer to the person or organisation register, and keeps the tax types and the account's state"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 509,
+   "quotes": [
+    "Amendments never overwrite the original return or assessment."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/register.ts",
+     "how": "Returns keep every version; an assessment is varied by a posted adjustment, never overwritten; a taxpayer's history is kept"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 510,
+   "quotes": [
+    "Read access to tax records is restricted to authorized tax personnel and legally authorized disclosures."
+   ],
+   "met_by": {
+    "deviation": "tax-secrecy-class",
+    "exchange": "taxpayer.status",
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "canReadTax(): authorised tax personnel and auditors with a purpose; others through the taxpayer.status exchange for an approved purpose"
+    }
+   }
+  },
+  {
+   "for": "tax",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 511,
+   "quotes": [
+    "The national twin receives approved aggregate figures, not individual returns."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/register.ts",
+     "how": "taxCounts(): counts only, never a taxpayer's record"
     }
    }
   }

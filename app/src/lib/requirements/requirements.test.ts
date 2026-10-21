@@ -259,12 +259,16 @@ describe('forms register (owner\'s direction 2026-10-21)', () => {
     expect(LIB_FILES.length).toBeGreaterThanOrEqual(25);
     const bad: string[] = [];
     for (const f of LIB_FILES) {
-      const c = JSON.parse(fs.readFileSync(path.join(ROOT, LIB_DIR, f), 'utf8')) as { form_id: string; catalogue?: { source: string; id: string }; fields: { id?: string; use_group?: string; items?: { id: string }[] }[] };
+      const c = JSON.parse(fs.readFileSync(path.join(ROOT, LIB_DIR, f), 'utf8')) as { form_id: string; catalogue?: { source: string; id: string; line?: number }; fields: { id?: string; use_group?: string; items?: { id: string }[] }[] };
       if (!c.catalogue) { bad.push(`${f}: names no register row`); continue; }
-      const rows = FORMS.filter(r => r.source === c.catalogue!.source && r.catalogue_id === c.catalogue!.id);
+      let rows = FORMS.filter(r => r.source === c.catalogue!.source && r.catalogue_id === c.catalogue!.id);
+      // An ID the catalogue repeats in one document (taxpayer.registration.further_information): the row is the one at the line the contract names.
+      if (rows.length > 1) rows = rows.filter(r => String(r.lines).split(',').some(x => { const [a, b] = x.trim().split('-').map(Number); return c.catalogue!.line! >= a! && c.catalogue!.line! <= (b ?? a)!; }));
       if (rows.length !== 1) { bad.push(`${f}: ${rows.length} register rows`); continue; }
       const r = rows[0]!;
-      if (c.form_id !== c.catalogue.id) bad.push(`${f}: form_id ${c.form_id} is not its catalogue ID`);
+      // The form ID is the catalogue ID, or, where the catalogue repeats it, the register row's own ID (a form ID is never reused).
+      if (c.form_id !== c.catalogue.id && c.form_id !== r.id) bad.push(`${f}: form_id ${c.form_id} is neither its catalogue ID nor its register row`);
+      if (c.form_id !== c.catalogue.id && FORMS.filter(x => x.source === c.catalogue!.source && x.catalogue_id === c.catalogue!.id).length < 2) bad.push(`${f}: a register row ID as form_id only for a repeated catalogue ID`);
       if (r.contract !== 'given (CivicOS library)') bad.push(`${r.id}: contract ${r.contract}`);
       if (r.form_status !== 'contract_draft' && r.form_status !== 'blocked') bad.push(`${r.id}: form status ${r.form_status}`);
       const scope = SCOPE.forms.find(e => e.source === r.source && e.id === r.catalogue_id);

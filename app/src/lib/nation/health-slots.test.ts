@@ -58,7 +58,7 @@ describe('health responsibility slots', () => {
   });
 
   it('name the batch-2 forms and the public-health return; batch 1 keeps the health and professional regulators', () => {
-    for (const f of CATALOGUE_CONTRACTS) {
+    for (const f of CATALOGUE_CONTRACTS.filter(x => x.specId.startsWith('HLT-'))) {
       if (f.batch === 2) expect(f.owner, f.specId).toBe(f.specId === 'HLT-MED-014' ? 'controlledSubstances' : 'medicinesRegulation');
       else if (f.specId === 'HLT-PH-015') expect(f.owner).toBe('publicHealth');
       else expect(['healthRegulation', 'professionalRegulation'], f.specId).toContain(f.owner);

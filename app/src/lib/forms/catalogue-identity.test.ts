@@ -77,7 +77,7 @@ describe('form identity: catalogue + form ID + version', () => {
 
   it('matches every library contract to exactly one register row by its identity (the register keeps the same identity)', () => {
     for (const f of CATALOGUE_CONTRACTS) {
-      const rows = ROWS.filter(r => r.source === f.catalogue.source && r.catalogue_id === f.specId);
+      const rows = ROWS.filter(r => r.source === f.catalogue.source && (r as Row & { form_identity?: string }).form_identity === f.identity);
       expect(rows.length, f.identity).toBe(1);
       expect((rows[0] as Row & { form_identity?: string }).form_identity, f.identity).toBe(f.identity);
     }
