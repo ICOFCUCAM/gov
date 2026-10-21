@@ -75,7 +75,7 @@ export const CONSOLE_NAV: NavSection[] = [
   { label: 'National data', items: [
     { key: 'twin', icon: '◬', label: 'National data', href: '/gov/twin',
       purpose: 'The facts the government relies on, where each comes from and what was known when.',
-      tabs: [tab('National data', '/gov/twin', 'National Twin'), tab('Sensor and system feeds', '/gov/telemetry', 'Telemetry Wall'),
+      tabs: [tab('National data', '/gov/twin', 'National Twin'), tab('Indicators', '/gov/twin/indicators'), tab('Sensor and system feeds', '/gov/telemetry', 'Telemetry Wall'),
         tab('Messages between institutions', '/gov/federation', 'Federation Stream'), tab('Activity across government', '/gov/global', 'Global feed'),
         tab('Sites', '/gov/sites'), tab('Capture a site', '/gov/sites/capture'), tab('Boundaries', '/gov/sites/boundaries'),
         tab('Land parcels', '/gov/sites/parcels'), tab('Sources that disagree', '/gov/twin/conflicts')] },

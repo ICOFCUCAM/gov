@@ -14,52 +14,34 @@
 //
 // Used by the public-health programme returns (lib/health/programmes) and the
 // workforce counts from the professions register (lib/professions/workforce.ts).
-// Held in platform state.
+// Since plan step I3 the rule's mechanics are the platform's
+// (lib/data/small-cells.ts, shared with the indicator register); this rule set
+// keeps its own key, audit name and versions. Held in platform state.
 
-import { touch } from '@/lib/data/repo/track';
-import { withDefaults } from '@/lib/data/defaults';
-import { proposePolicy, confirmPolicy, withdrawPolicy, type PolicyChanges } from '@/lib/law/policy-change';
+import { smallCellRuleSet, type Cell } from '@/lib/data/small-cells';
 
-type Rule = { threshold: number };
-type Db = { changes: PolicyChanges<Rule>; adopted: { threshold: number; version: number } | null };
-const seed = (): Db => ({ changes: {}, adopted: null });
-const g = globalThis as unknown as { __civicosHealthSmallCells?: Db };
-const db = (): Db => touch('__civicosHealthSmallCells', g.__civicosHealthSmallCells = withDefaults(g.__civicosHealthSmallCells ??= seed(), seed()));
-export function resetSmallCells(): void { g.__civicosHealthSmallCells = undefined; }
-const clone = <T,>(x: T): T => structuredClone(x);
+export type { Cell };
 
-/** A cell as it may leave the keeping authority: its value, or why it is held back. */
-export type Cell = { value: number } | { suppressed: 'below-threshold' | 'no-threshold' } | { missing: true };
+const set = smallCellRuleSet('__civicosHealthSmallCells', 'health.small-cells', 'Small-cell rule for health aggregates');
+
+export function resetSmallCells(): void { set.reset(); }
 
 /** The threshold in force, with its version (null until two officials adopt one). */
-export const smallCellRule = (): { threshold: number; version: number } | null => (db().adopted ? clone(db().adopted!) : null);
+export const smallCellRule = (): { threshold: number; version: number } | null => set.rule();
 /** The waiting proposal and earlier versions. */
-export const smallCellChanges = (): PolicyChanges<Rule> => clone(db().changes);
+export const smallCellChanges = () => set.changes();
 
 /** Apply the rule to one count (undefined: nothing was reported, which is never a zero). */
 export function protect(value: number | undefined | null, rule = smallCellRule()): Cell {
-  if (value === undefined || value === null) return { missing: true };
-  if (!rule) return { suppressed: 'no-threshold' };
-  if (value > 0 && value < rule.threshold) return { suppressed: 'below-threshold' };
-  return { value };
+  return set.protect(value, rule);
 }
-
-const AUDIT = 'health.small-cells';
-const check = (v: Rule): string | null => (Number.isInteger(v.threshold) && v.threshold >= 1 && v.threshold <= 1000 ? null : 'The threshold is a whole number from 1 to 1000, as the nation\'s rule sets it');
-const describe = (v: Rule) => `counts above zero and below ${v.threshold} are suppressed before publication or exchange`;
 
 /** One administrator proposes the threshold the nation's statistics or data-protection rules set, citing the law; a different official confirms. */
 export function proposeSmallCellRule(threshold: unknown, legalBasis: unknown, by: string, byId?: string, now = new Date(), pendingHours = 24) {
-  return proposePolicy(db().changes, { threshold: db().adopted?.threshold ?? 0 }, { threshold: Number(threshold) }, legalBasis, {
-    by, ...(byId ? { byId } : {}), now, pendingHours, audit: AUDIT, context: 'Small-cell rule for health aggregates', check, describe,
-  });
+  return set.propose(threshold, legalBasis, by, byId, now, pendingHours);
 }
 /** A different official confirms: the rule applies to every published view from now. */
 export function confirmSmallCellRule(by: string, byId?: string, now = new Date(), requireIdentityBinding = false) {
-  const d = db();
-  return confirmPolicy(d.changes, {
-    by, ...(byId ? { byId } : {}), now, audit: AUDIT, requireIdentityBinding, describe,
-    adopt: v => { d.adopted = { threshold: v.values.threshold, version: (d.adopted?.version ?? 0) + 1 }; },
-  });
+  return set.confirm(by, byId, now, requireIdentityBinding);
 }
-export const withdrawSmallCellRule = (by: string, reason?: string) => withdrawPolicy(db().changes, { by, ...(reason ? { reason } : {}), audit: AUDIT });
+export const withdrawSmallCellRule = (by: string, reason?: string) => set.withdraw(by, reason);

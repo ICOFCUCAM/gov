@@ -45,6 +45,8 @@ import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { RegisterRecords } from '@/apps/_shared/RegisterRecords';
 import { useInstallationMode } from '@/lib/ops/mode-context';
 import { SampleFold, SampleTag } from '@/components/ui/SampleFold';
+import { InstitutionIndicatorSeries, InstitutionIndicatorStrip, IndicatorBreakdown } from '@/components/features/indicators/InstitutionIndicators';
+import { EarlierGenerated } from '@/components/features/indicators/EarlierGenerated';
 
 const EXAMPLE_CASE = 'An example case from the platform. Load this institution\'s own cases under My work › Load cases.';
 
@@ -87,6 +89,13 @@ const PRIMARY: Tab[] = ['command', 'approvals', 'incidents', 'escalations', 'reg
 // reference model.
 const SEEDED_OPS = 'Ministry operations model (lib/data/store/ministries.ts): generated per institution, no record behind it';
 const MODEL_OPS = `Institution model · ${REFERENCE_MODEL}`;
+
+// Record-computed panels (plan step I3): the institution's indicators under the indicator register's
+// definitions, computed from its cases (lib/indicators). Each value carries its marker, its definition's
+// approval state, period and coverage; with no approved procedure it is "Not connected", never zero.
+const INDICATORS = 'Computed from this institution\'s cases under the indicator register (lib/indicators)';
+const SERVICE_IDS = ['casework.past_deadline', 'casework.decided_on_time', 'casework.decisions_citing_law', 'casework.referrals_unresolved'];
+const SERIES_IDS = ['casework.cases_opened', 'casework.cases_decided', 'casework.backlog', 'casework.days_to_decision'];
 
 const NAME_FIRST = 'Name the acting official first (under "Needs you now"): every action is recorded under a person.';
 
@@ -564,8 +573,9 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 <p className="mt-1.5 text-[10px] text-ink-soft">▸ <span style={{ color: TONE.warn }}>{aiHeadline ? 'AI advisory' : 'Advisory'}:</span> {aiHeadline ?? op.aiAdvisory}</p>
                               </SampleFold>
               </Section>
-              <Section title="Service figures" meta={<SampleTag source={MODEL_OPS} />}>
-                <SampleFold what="Service figures" source={MODEL_OPS} marked>
+              <Section title="Service figures" meta={<span title={INDICATORS}>from the records · this month</span>}>
+                <InstitutionIndicatorStrip institution={id} ids={SERVICE_IDS} className="xl:!grid-cols-4" />
+                <EarlierGenerated what="Service figures" source={MODEL_OPS}>
                 <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
                   {serviceReadings(id, (archetype || 'GENERIC') as ArchetypeKey, now / 4000).map(r => (
                     <div key={r.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
@@ -575,7 +585,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                     </div>
                   ))}
                 </div>
-                              </SampleFold>
+                              </EarlierGenerated>
               </Section>
               <Section title="Institutional ecosystem" meta={<>{`${fab.layers.length} layers · 3 tiers · ${fab.dependencies.length} dependencies`} <SampleTag source={MODEL_OPS} /></>}>
                 <SampleFold what="Institutional ecosystem" source={MODEL_OPS} marked>
@@ -643,8 +653,9 @@ export function MinistryWorkspace({ id }: { id: string }) {
               </>
             );
           })()}
-          <Section title="Command indicators" meta={<>last 12 periods <SampleTag source={SEEDED_OPS} /></>}>
-            <SampleFold what="Command indicators" source={SEEDED_OPS} marked>
+          <Section title="Command indicators" meta={<span title={INDICATORS}>last 12 months · from the records</span>}>
+            <InstitutionIndicatorSeries institution={id} ids={SERIES_IDS} />
+            <EarlierGenerated what="Command indicators" source={SEEDED_OPS}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {series.map(s => (
                 <Sparkbars
@@ -658,7 +669,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 />
               ))}
             </div>
-                      </SampleFold>
+                      </EarlierGenerated>
           </Section>
           <Section title="Regional status" meta={<>darker tile = more open cases <SampleTag source={SEEDED_OPS} /></>}>
             <SampleFold what="Regional status" source={SEEDED_OPS} marked>
@@ -674,8 +685,9 @@ export function MinistryWorkspace({ id }: { id: string }) {
                       </SampleFold>
           </Section>
           <div className="grid gap-5 lg:grid-cols-2">
-            <Section title="On time" meta={<>target 95% <SampleTag source={SEEDED_OPS} /></>}>
-              <SampleFold what="On time" source={SEEDED_OPS} marked>
+            <Section title="On time" meta={<span title={INDICATORS}>decided before a deadline passed · by procedure · this month</span>}>
+              <IndicatorBreakdown institution={id} id="casework.decided_on_time" empty="No case decided this month." />
+              <EarlierGenerated what="On time" source={SEEDED_OPS}>
               <SLAMonitor
                 rows={regions.map(r => ({
                   label: r.region,
@@ -685,10 +697,11 @@ export function MinistryWorkspace({ id }: { id: string }) {
                   target: 95,
                 }))}
               />
-                          </SampleFold>
+                          </EarlierGenerated>
             </Section>
-            <Section title="Caseload concentration" meta={<>{installMode === 'production' ? labels.cases.toLowerCase() : `${totalCases} ${labels.cases.toLowerCase()}`} <SampleTag source={SEEDED_OPS} /></>}>
-              <SampleFold what="Caseload concentration" source={SEEDED_OPS} marked>
+            <Section title="Caseload concentration" meta={<span title={INDICATORS}>open cases by procedure · end of this month</span>}>
+              <IndicatorBreakdown institution={id} id="casework.backlog" empty="No open case." />
+              <EarlierGenerated what={`Caseload concentration (${installMode === 'production' ? labels.cases.toLowerCase() : `${totalCases} ${labels.cases.toLowerCase()}`})`} source={SEEDED_OPS}>
               <FlowBars
                 segments={regions.map(r => ({
                   label: r.region,
@@ -696,7 +709,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                   tone: r.status,
                 }))}
               />
-                          </SampleFold>
+                          </EarlierGenerated>
             </Section>
           </div>
           {activeAlerts.length > 0 ? (

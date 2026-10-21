@@ -3,7 +3,8 @@
 // address, and telemetry streams (their complete days since the last run, as
 // daily aggregates; lib/twin/stream.ts). Manual and uploaded sources are never
 // fetched here. Then the platform's own registers' counts (the civil
-// register's births, deaths and marriages, lib/civil/twin.ts), when they changed.
+// register's births, deaths and marriages, lib/civil/twin.ts), when they changed,
+// and the values of approved indicator definitions (lib/indicators/twin.ts).
 //
 // Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only),
 // like every /api/cron/* worker.
@@ -19,6 +20,7 @@ import { publishEducationReturns } from '@/lib/education/twin';
 import { publishHealthCapacity } from '@/lib/health/twin';
 import { publishProgrammeReturns } from '@/lib/health/programmes/twin';
 import { publishWorkforceCounts } from '@/lib/professions/workforce';
+import { publishIndicators } from '@/lib/indicators/twin';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +38,9 @@ async function runJob(req: Request) {
   const health = await publishHealthCapacity('scheduler');
   const programmes = await publishProgrammeReturns('scheduler');
   const workforce = await publishWorkforceCounts('scheduler');
-  return NextResponse.json({ ok: true, runs, civil, organisations, cases, education, health, programmes, workforce });
+  // Approved indicator definitions' values, computed from the records (lib/indicators/twin.ts).
+  const indicators = await publishIndicators('scheduler');
+  return NextResponse.json({ ok: true, runs, civil, organisations, cases, education, health, programmes, workforce, indicators });
 }
 
 // Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).

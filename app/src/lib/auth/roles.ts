@@ -303,6 +303,7 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/education$/,                      // institutional returns: canRecordEducationReturn() in the route
   /^\/api\/health-regulation$/,              // capacity returns: canRecordHealthReturn() in the route
   /^\/api\/rules$/,                          // operational rules: canManageRule() in the route
+  /^\/api\/indicators$/,                     // indicator definitions: indicatorDraftRefusal() / indicatorApproveRefusal() in the store; the small-cell rule adminOnly() in the route
   /^\/api\/access-log\/retention$/,          // oversight confirmation of shortening the access log: canConfirmAccessLogRetention() in the route
   /^\/api\/case-packages(\/|$)/,              // procedures: drafted by the responsible institution, approved by one who can sign there (route)
   /^\/api\/documents\/verify$/,               // checks a document code (no change)
@@ -867,6 +868,29 @@ export function canManageRule(s: Scope, owner: string | undefined, approve: bool
   if (roleOf(s) === 'auditor') return 'Auditors can read rules but not change them';
   if (!owner || s.institution !== owner) return 'Rules are drafted and approved by the authority that owns them (named under Who is responsible)';
   if (approve && roleOf(s) !== 'signatory') return 'Approving a rule needs an official who can sign for the authority';
+  return null;
+}
+
+/**
+ * Indicator definitions (lib/indicators/register.ts, plan step I3): drafted by
+ * an official of the institution that owns the definition, or by a
+ * whole-government official where that institution is within reach (never
+ * into an independent or subnational one); a definition each institution keeps
+ * for its own records may be drafted by any official who is not an auditor.
+ * Approved only by an official who can sign at the institution the approval is
+ * for (administrators and whole-government officials have no say in what an
+ * institution's figures mean).
+ */
+export function indicatorDraftRefusal(s: Scope, owner: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors can read indicator definitions but not change them';
+  if (owner === undefined) return null;
+  if (!owner) return 'No institution is named as responsible for this indicator (Configuration → Who is responsible)';
+  return reaches(s, owner) ? null : 'An indicator is drafted by officials of the institution that owns it';
+}
+export function indicatorApproveRefusal(s: Scope, institution: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors can read indicator definitions but not approve them';
+  if (!institution || s.institution !== institution) return 'An indicator is approved by an official of the institution whose figures it defines';
+  if (roleOf(s) !== 'signatory') return 'Approving an indicator needs an official who can sign for the institution';
   return null;
 }
 

@@ -127,6 +127,8 @@
   "/gov/treasury",
   "/gov/twin",
   "/gov/twin/conflicts",
+  "/gov/twin/indicators",
+  "/gov/twin/indicators/[id]",
   "/gov/watchlist",
   "/gov/webhooks",
   "/gov/witnesses",

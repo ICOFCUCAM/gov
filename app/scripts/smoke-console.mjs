@@ -80,6 +80,9 @@ const PAGES = [
   { path: '/gov/health-regulation/programmes', map: false, text: /public-health programmes and workforce/i },
   // The seal key register (lib/keys/seal-register.ts).
   { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
+  // Plan step I3: the indicator register and one definition with its versions.
+  { path: '/gov/twin/indicators', map: false, text: /indicator register/i },
+  { path: '/gov/twin/indicators/civil.births_registered', map: false, text: /versions and approvals/i },
 ];
 const VIEWPORTS = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 
