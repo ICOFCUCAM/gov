@@ -52,8 +52,8 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | Status | Forms |
 |---|---|
 | catalogued | 0 |
-| contract_missing | 1723 |
-| contract_draft | 129 |
+| contract_missing | 1698 |
+| contract_draft | 154 |
 | under_review | 91 |
 | blocked | 1 |
 | excluded | 128 |
@@ -67,9 +67,57 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 - Not a form: `example.service.application` (FIELD-SERIES-PARTS-01-02.md): Part 1 §1.1 canonical field-contract shape: the text calls its identities 'schema illustrations, not usable production identities'
 - Forms with more than one contract (the shared standard's example and the part's own): `LAB-EMP-001`
 
+## Contracts CivicOS wrote (form library, controlled batches)
+
+25 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 25 matched to exactly one registered form (by source file and catalogue ID), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
+
+**Batch 1** (health regulation, owner approved 21 October 2026): 25 contracts added; form status contract_draft 25.
+
+| Form | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|
+| HLT-FAC-001 | HLT-FAC-001 | 34 | contract_draft | allowed |
+| HLT-FAC-002 | HLT-FAC-002 | 33 | contract_draft | allowed |
+| HLT-FAC-003 | HLT-FAC-003 | 20 | contract_draft | allowed |
+| HLT-FAC-004 | HLT-FAC-004 | 22 | contract_draft | allowed |
+| HLT-FAC-005 | HLT-FAC-005 | 31 | contract_draft | allowed |
+| HLT-FAC-006 | HLT-FAC-006 | 31 | contract_draft | allowed |
+| HLT-FAC-007 | HLT-FAC-007 | 21 | contract_draft | allowed |
+| HLT-FAC-008 | HLT-FAC-008 | 9 | contract_draft | allowed |
+| HLT-FAC-009 | HLT-FAC-009 | 18 | contract_draft | allowed |
+| HLT-FAC-010 | HLT-FAC-010 | 6 | contract_draft | allowed |
+| HLT-LIC-001 | HLT-LIC-001 | 32 | contract_draft | allowed |
+| HLT-LIC-002 | HLT-LIC-002 | 12 | contract_draft | allowed |
+| HLT-LIC-003 | HLT-LIC-003 | 13 | contract_draft | allowed |
+| HLT-LIC-004 | HLT-LIC-004 | 24 | contract_draft | allowed |
+| HLT-LIC-005 | HLT-LIC-005 | 29 | contract_draft | allowed |
+| HLT-LIC-006 | HLT-LIC-006 | 17 | contract_draft | allowed |
+| HLT-LIC-007 | HLT-LIC-007 | 22 | contract_draft | allowed |
+| HLT-LIC-008 | HLT-LIC-008 | 21 | contract_draft | allowed |
+| HLT-LIC-009 | HLT-LIC-009 | 11 | contract_draft | allowed |
+| HLT-LIC-010 | HLT-LIC-010 | 9 | contract_draft | allowed |
+| HLT-LIC-011 | HLT-LIC-011 | 15 | contract_draft | allowed |
+| HLT-LIC-012 | HLT-LIC-012 | 8 | contract_draft | allowed |
+| HLT-LIC-013 | HLT-LIC-013 | 25 | contract_draft | allowed |
+| HLT-LIC-014 | HLT-LIC-014 | 7 | contract_draft | allowed |
+| HLT-PH-015 | HLT-PH-015 | 22 | contract_draft | allowed |
+
+**Totals beside the earlier ones** (the register without the library's contracts, and with them):
+
+| Status | Before (without the library) | Now |
+|---|---|---|
+| catalogued | 0 | 0 |
+| contract_missing | 1723 | 1698 |
+| contract_draft | 129 | 154 |
+| under_review | 91 | 91 |
+| blocked | 1 | 1 |
+| excluded | 128 | 128 |
+| approved | 0 | 0 |
+| production | 0 | 0 |
+| forms without a contract | 1927 | 1902 |
+
 ## Forms with no contract
 
-1927 forms have no field contract of their own (`contract: not yet given` in the register). By part:
+1902 forms have no field contract (`contract: not yet given` in the register). By part:
 
 | Part | Forms without a contract |
 |---|---|
@@ -77,7 +125,7 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | Part 3 | 361 |
 | Part 4 | 116 |
 | Part 5 | 136 |
-| Part 6 | 141 |
+| Part 6 | 116 |
 | Part 7 | 152 |
 | Part 8 | 202 |
 | Part 9 | 76 |

@@ -4,7 +4,7 @@ build(repo) -> (rows, checks, markdown). Each row: id (the catalogue ID itself w
 otherwise FC<part>-<section>-<nn>), source file and line numbers, part and section path, sector, category,
 the text verbatim, status, evidence, missing, step and also_steps (catalogue_rules.py).
 """
-import collections, os, re
+import collections, json, os, re
 import parse_catalogue as P
 import catalogue_rules as CR
 
@@ -65,6 +65,38 @@ def category(r):
 
 
 SCOPE = 'docs/requirements/form-scope.json'
+# CivicOS's own field contracts for catalogue forms whose text gives none, written in controlled batches (owner's direction 2026-10-21):
+# canonical civicos.form-contract.v1 JSON, each naming the one register row it answers (`catalogue`: source file and catalogue ID).
+LIBRARY = 'app/src/lib/forms/library/catalogue-contracts'
+GROUPS = 'app/src/lib/forms/library/canonical/groups'
+LIBRARY_GIVEN = 'given (CivicOS library)'
+CONTRACT_GIVEN = ('given', LIBRARY_GIVEN)
+
+
+def library_contracts(repo):
+    """The form library's catalogue contracts: path, the register row they name (source, id), batch and every field key (a field group's fields
+    as the form uses them, a repeatable group's questions as key.question)."""
+    d = os.path.join(repo, LIBRARY)
+    groups = {}
+    for f in os.listdir(os.path.join(repo, GROUPS)):
+        g = json.load(open(os.path.join(repo, GROUPS, f), encoding='utf-8'))
+        groups[(g['group_id'], g['version'])] = [x['id'] for x in g.get('fields', [])]
+    out = []
+    for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
+        if not f.endswith('.json'):
+            continue
+        c = json.load(open(os.path.join(d, f), encoding='utf-8'))
+        keys = []
+        for x in c.get('fields', []):
+            if 'use_group' in x:
+                keys += x.get('only') or groups.get((x['use_group'], x.get('version', 1)), [])
+            else:
+                keys.append(x['id'])
+                keys += [f"{x['id']}.{i['id']}" for i in x.get('items') or []]
+        cat = c.get('catalogue') or {}
+        out.append(dict(path=f'{LIBRARY}/{f}', source=cat.get('source'), id=cat.get('id'), form_id=c.get('form_id'), fields=keys,
+                        batch=1, title=(c.get('library') or {}).get('title', '')))
+    return out
 FORM_STATUSES = ['catalogued', 'contract_missing', 'contract_draft', 'under_review', 'blocked', 'excluded', 'approved', 'production']
 # field keys a contract may not carry outside an excluded or legal-review form (CLAUDE.md health, education, police rules)
 PROHIBITED_FIELD = re.compile(r'patient|clinical|diagnos|prescri|dispens|suspect|biometric|intelligence_product', re.I)
@@ -86,6 +118,9 @@ def apply_scope(rows, checks, repo):
     for o in rows:
         if o['kind'] == 'contract-field' and o.get('contract_id'):
             fields_of[(o['source'], o['contract_id'])].append(o)
+    # the library's own contracts are held to the same scope, field by field
+    for c in checks.get('library', []):
+        fields_of[(c['source'], c['id'])] += [{'field_id': k} for k in c['fields']]
     checks['scope_mismatch'] = []
     for o in rows:
         if o['category'] != 'form':
@@ -112,7 +147,7 @@ def apply_scope(rows, checks, repo):
                 fs = 'blocked'
                 flag = 'excluded_pending_scope_review'
                 o['blocked_by'] = 'Its contract carries fields outside the approved scope (' + ', '.join(bad) + '): the contract is excluded pending scope review and cannot pass validation'
-            elif o['contract'] == 'given':
+            elif o['contract'] in CONTRACT_GIVEN:
                 fs = 'contract_draft'
             else:
                 fs = 'contract_missing'
@@ -203,6 +238,14 @@ def build(repo):
         if o['category'] == 'form':
             cid = o['catalogue_id']
             o['contract'] = 'given' if ((o['source'], cid) in given or (cid in given_ids and cid not in checks['collisions'])) else 'not yet given'
+    # a form whose text gives no contract and whose contract CivicOS wrote (the form library): matched by source and ID to exactly one row
+    checks['library'] = library_contracts(repo)
+    for c in checks['library']:
+        match = [o for o in rows if o['category'] == 'form' and o['source'] == c['source'] and o['catalogue_id'] == c['id']]
+        c['matches'] = [o['id'] for o in match]
+        if len(match) == 1 and match[0]['contract'] != 'given':
+            match[0]['contract'] = LIBRARY_GIVEN
+            match[0]['contract_file'] = c['path']
     apply_scope(rows, checks, repo)
     # a contract and its fields follow the form they define (same file): its sector, step and, where CivicOS will not hold the form or
     # holds it only after legal review, its status; otherwise a field is Partial when the form is built (the field itself is not verified)
@@ -289,7 +332,8 @@ def markdown(rows, checks):
               'cites its CLAUDE.md or plan rule): excluded (flag `excluded_pending_scope_review`) > under_review (flag `requires_legal_review`) > blocked (its contract '
               'carries a field outside the approved scope) > contract_draft (a JSON contract was given; none has passed validation) > contract_missing. Nothing in '
               'the catalogue is approved or in production, and no status is ever set by hand to approved: a missing contract is never an empty, approved or complete '
-              'form. Every form row also carries `contract`: `given` or `not yet given`. Verified counts, contract matching, incomplete contracts, duplicate IDs, '
+              'form. Every form row also carries `contract`: `given` (the text gives its contract), `given (CivicOS library)` (the text gives none; CivicOS wrote one '
+              'in a controlled batch, `contract_file` names it, held to the same scope) or `not yet given`. Verified counts, contract matching, incomplete contracts, duplicate IDs, '
               'scope violations and gates: `docs/forms-catalogue/GAP-REPORT.md` (generated).\n')
     md.append('*Platform rule stricter* means CivicOS will not hold the item at all (cited rule); the row says what it holds instead. Rows with basis `domain` are '
               'assessed at the level of their domain (no item-specific rule): the status is the domain\'s state and the step the domain\'s step; a contract and its '
@@ -299,8 +343,8 @@ def markdown(rows, checks):
     md.append(f"**Self-check.** Content lines not accounted for: {len(checks['unaccounted'])}. Headings (parts, sections, sub-sections) without a row: "
               + ('none' if not checks['zero'] else ', '.join(f'{s} part {p} {i}' for s, l, p, i, t in checks['zero']))
               + f". Catalogue IDs without a row: {len(checks['ids_missing'])}. Rows without a step: {sum(1 for o in rows if o['step'] == 'Unassigned')}. "
-              f"Forms: {len(forms)}, with their own JSON contract: {sum(1 for o in forms if o['contract'] == 'given')}, contract not yet given: "
-              f"{sum(1 for o in forms if o['contract'] != 'given')}.\n")
+              f"Forms: {len(forms)}, with their own JSON contract: {sum(1 for o in forms if o['contract'] == 'given')}, with a contract CivicOS wrote (form library): "
+              f"{sum(1 for o in forms if o['contract'] == LIBRARY_GIVEN)}, contract not yet given: {sum(1 for o in forms if o['contract'] not in CONTRACT_GIVEN)}.\n")
     fc = collections.Counter(o['form_status'] for o in forms)
     md.append('**Form status.** ' + ', '.join(f'{k} {fc.get(k, 0)}' for k in FORM_STATUSES) + '.\n')
     md.append('**Inputs.** All 13 parts and the supplement received. The topics the 13 parts left out are now catalogued by the supplement (table below); the earlier '

@@ -11,8 +11,9 @@ The owner's direction of 21 October 2026
 (`docs/forms-catalogue/DIRECTION-2026-10-21-REGISTER-FIRST.md`) governs: a
 listed form is not a complete contract, and a complete contract is not a form
 safe to deploy. Every form below is a **draft**. None is approved or in
-production; no new batch of contracts is generated before the verified gap
-report.
+production. Contracts the catalogue does not give are written only in
+controlled batches the owner approves, after the verified gap report
+(`docs/forms-catalogue/GAP-REPORT.md`): batch 1, health regulation, is §8.
 
 ## 1. One contract, three sources
 
@@ -21,6 +22,7 @@ report.
 | Specification, Parts 1–6 (`docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md`) | The 16 JSON form contracts, word for word | `app/src/lib/forms/library/spec/*.json`, overlays in `library/definitions.ts` | Library drafts; 8 attach to reference procedures (drafts) |
 | Field series Parts 1–4 (`docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md`, `-03-04.md`) | The 16 canonical field groups and the 10 complete `civicos.form-contract.v1` contracts of Parts 2 and 3 | `library/canonical/groups/*.json`, `library/canonical/forms/*.json`, loaded by `lib/forms/canonical.ts` | Library drafts |
 | Supplement, contract envelope 1.0.0 (`docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md` §1) | Every property of the envelope, mapped onto the same contract (`FormSpec.envelope`, `ContractField.ui`) | `lib/forms/envelope.ts` | The mapping is tested on the envelope example and on every domain block; the supplement's contracts are **not** loaded as a batch (owner's direction §4) |
+| CivicOS's own catalogue contracts (forms the catalogue lists without a contract), controlled batches | Batch 1: 25 health regulation contracts in the canonical format, each naming its one register row | `library/catalogue-contracts/*.json`, loaded by `library/catalogue-contracts.ts` through `lib/forms/canonical.ts` | Library drafts; register status `contract_draft` (§8) |
 
 There is one format. The canonical `civicos.form-contract.v1` and the
 envelope map onto the form contract in `lib/forms/contract.ts`; nothing keeps a
@@ -180,11 +182,146 @@ submitted under.
 - The supplement's 133 domain contracts (Parts 14–22 and baseline contracts
   for Parts 5–13) are mapped and tested, not loaded: the owner's direction
   asks for the verified gap report first.
-- Part 3's other catalogue entries and Parts 5–7 forms beyond those above wait
-  for their sector steps; Parts 5–7 add nothing that touches I1's forms except
-  the binding exclusions in §5.
+- Part 3's other catalogue entries and Parts 5–7 forms beyond those above and
+  batch 1 (§8) wait for their sector steps and later batches; Parts 5–7 add
+  nothing that touches I1's forms except the binding exclusions in §5.
 - Offline submission: a self-service draft is kept in the browser and resumed;
   there is no offline sync of field captures (acceptance P2-12, I6).
 - Cryptographic signatures of declarations, contact verification, malware
   scanning of citizen uploads and citizen uploads themselves are integration
   points (integration register §20).
+- Batch 1's eleven forms with no procedure yet (establishment approval,
+  corrective-action plans, variations, closures, facility concerns, category
+  and scope amendments, good-standing certificates, conduct complaints,
+  interim-restriction reviews, the public-health aggregate return) wait for
+  their procedures in plan step I4; the stage each is intended for is named
+  in its contract.
+
+## 8. Catalogue contracts, batch 1: health regulation (21 October 2026)
+
+The owner approved one controlled batch: the health regulator's own forms,
+from allowed scope only. 25 catalogue forms that were `contract_missing` in
+the register now have a CivicOS contract (`contract: given (CivicOS
+library)`, `form_status: contract_draft`):
+
+| Catalogue form | Title | Fields (and questions in repeatable groups) | Belongs to | Deviations (besides the four every form shares) |
+|---|---|---|---|---|
+| HLT-FAC-001 | Apply to establish a health facility | 30 (+4) | library; intended: an establishment approval before `health.facility` (I4) | spec-operator, spec-decision-establishment |
+| HLT-FAC-002 | Apply for a health facility licence | 29 (+4) | `health.facility` · submitted | spec-operator, procedure-form |
+| HLT-FAC-003 | Record a health facility inspection | 13 (+7) | `health.facility` · inspection · `inspected` (document `inspection-report`) | inspector-from-sign-in, no-score |
+| HLT-FAC-004 | Submit a corrective action plan | 17 (+5) | library; intended: corrective-action follow-up of an inspection (I4) | deadlines-assigned |
+| HLT-FAC-005 | Renew a health facility licence | 27 (+4) | `health.facility-renewal` · submitted (document `renewal-evidence`) | — |
+| HLT-FAC-006 | Vary services or capacity | 28 (+3) | library; intended: a variation of the standing (I4) | stage-b-id |
+| HLT-FAC-007 | Facility closure notification | 21 | library; intended: closure or surrender of the standing (I4) | — |
+| HLT-FAC-008 | Suspension or revocation review | 9 | `health.facility-suspension` (and `-revocation`) · opened · `notify` (document `grounds`) | no-new-power |
+| HLT-FAC-009 | Facility complaint or safety concern | 18 | library; intended: a complaint intake that refers (`lib/casework/referral.ts`) or opens grounds (I4) | free-text-only, independent-oversight |
+| HLT-FAC-010 | Facility licence verification | 6 | the public check and the `organisation.standing` exchange service; no case | no-case |
+| HLT-LIC-001 | Initial professional registration | 26 (+6) | `prof.registration` · submitted | spec-person, no-health-declaration, procedure-form |
+| HLT-LIC-002 | Qualification verification | 12 | `prof.registration` · verification · `verify`; `qualification.verify` | — |
+| HLT-LIC-003 | Professional licence issuance | 13 | `prof.registration` · pending-approval · `register` | decision-in-engine |
+| HLT-LIC-004 | Licence renewal | 24 | `prof.renewal` · submitted (document `renewal-evidence`) | — |
+| HLT-LIC-005 | Scope or category amendment | 23 (+6) | library; intended: an amendment of the standing (I4) | — |
+| HLT-LIC-006 | Continuing education record | 11 (+6) | `prof.renewal` · submitted (document `renewal-evidence`) | — |
+| HLT-LIC-007 | Good-standing certificate request | 22 | library; intended: a certificate from the register (I4) | — |
+| HLT-LIC-008 | Professional conduct complaint | 21 | library; intended: a complaint intake routing to an investigation or referral (I4) | free-text-only, independent-oversight |
+| HLT-LIC-009 | Professional conduct investigation | 9 (+2) | `prof.fitness` · opened (document `grounds`) | — |
+| HLT-LIC-010 | Interim restriction review | 9 | library; only where the nation's law provides interim restrictions (I4) | no-interim-power |
+| HLT-LIC-011 | Disciplinary decision | 12 (+3) | `prof.fitness` · pending-approval · `suspend` | decision-in-engine, no-outcomes-shipped |
+| HLT-LIC-012 | Suspension or revocation review | 8 | `prof.fitness` · opened · `notify` (document `grounds`) | — |
+| HLT-LIC-013 | Restoration request | 25 | `prof.fitness` · suspended · `reinstate` | restoration-scope |
+| HLT-LIC-014 | Professional register verification | 7 | the public check and the `professional.standing` exchange service; no case | no-case |
+| HLT-PH-015 | Public-health aggregate data submission | 18 (+4) | library; intended: aggregate returns kept like the capacity returns (`lib/health/register.ts`) (I4) | aggregate-only, statistics-exchange, receiving-authority |
+
+**Format.** Each is a JSON file in the canonical format
+(`civicos.form-contract.v1`), loaded by `lib/forms/canonical.ts`, which this
+batch extended in place: a form uses a field group by id and version
+(`{"use_group": "core.contact", "version": 1, "only": [...]}`, Part 1 §1.1),
+and a field may be repeatable (`multiple`), a date range, a timestamp, a
+quantity or a group of simple questions (`items`). Two blocks sit beside the
+fields: `catalogue` (the source file, catalogue ID and line: the one register
+row the contract answers, so the reused ID HLT-FAC-006 matches the field
+series' row only) and `library` (title, introduction, owner from the
+deployment profile, who completes it, the linked procedure or the intended
+stage, proposed lists, the nation's values, deviations and the catalogue
+passages answered; the passages every contract answers the same way are in
+`library/catalogue-contracts/shared/common-items.json`). No contract carries
+a status: its register status comes from `lib/forms/publication.ts`
+(`libraryPublication()`: a library form is read as the draft procedure it
+would be, so it is a contract draft until a procedure version carrying it is
+drafted, tested, approved by a second official and passes every gate).
+Approvals are recorded only on that procedure; the form page shows a library
+form's gates read-only.
+
+**Linked procedures.** Where a reference procedure exists, the contract names
+it, the stage, the step and the document it supplies, and the test checks each
+exists. It is linked, not attached: the reference procedures keep the
+specification's forms they carry today, and a nation adopts a batch contract
+in a new procedure version that a different official approves. Where none
+exists the contract waits in the library with the stage it is intended for;
+no procedure and no decision power was invented for it.
+
+**Authority.** Facility forms belong to `healthRegulation`, professional forms
+to `professionalRegulation` (each profession's register kept by the regulator
+the professions register names, under the approved permit mapping), never a
+ministry by name. HLT-PH-015 uses the `healthRegulation` slot until the
+deployment profile names a public-health authority (integration register
+20.8).
+
+**Values the nation's law decides.** Fees come only from the field group
+`core.payment` (`derived_from_approved_rule`, set by the platform; no fee
+rule ships). Day counts, licence and registration periods, renewal windows,
+corrective-action periods, the continuing-education requirement, reporting
+deadlines and the small-cell suppression threshold are named in each
+contract's `nation_values` with the decision they need and no value; the
+checks that need them are `binding` rules, recorded as not performed and a
+publication blocker in production. Five binding rules were registered for
+them (`lib/forms/rules.ts`): `corrective_action_period_from_rule`,
+`renewal_window_from_rule`, `continuing_education_requirement_from_rule`,
+`reporting_period_from_programme`, `small_cell_suppression_from_policy`.
+Lists that describe (facility types, services, inspection types) ship as
+proposed values to be checked against the law; lists that would be a power
+(disciplinary outcomes, what the public register shows of them, reporting
+programmes, indicators) ship empty.
+
+**Personal data and scope.** Every field has a type and a class. A
+complainant's identity and the detail of a complaint or concern are
+restricted; conduct investigation, interim restriction and disciplinary
+records, and the grounds of an enforcement review, are restricted to the
+regulator. A professional's person reference is personal and never on the
+public register; the public check shows the profession's `publicFields`
+only. There is no patient, clinical, treatment, diagnosis or individual
+health field: a concern about care is restricted free text, never structured;
+no declaration about an applicant's health is asked; the public-health return
+is counts by area (the nation's regions) and period, each count marked
+counted, estimated, incomplete or not available, a correction kept as a new
+version and small cells protected by the nation's threshold before any
+publication or exchange.
+
+**Deviations every batch-1 form shares.**
+
+| Id | What | Why (binding rule) |
+|---|---|---|
+| no-patient-data | Patient consent, emergency clinical access and a shared patient reference (Part 6 §1, §9.1) do not arise | No patient or clinical field anywhere (CLAUDE.md Health; owner's direction §1) |
+| minimisation | The seven minimisation answers per field (Part 1 §1.6) are given with the nation's procedure package and recorded in the data and privacy review | Question 2 is the nation's law; the human gate "privacy" holds publication |
+| evidence-requirement | Evidence items name their kind and condition; the `civicos.evidence-requirement.v1` record tying each to a provision is made with the nation's package | Part 1 §1.4; the evidence gate does not pass until then |
+| scanning | Scanning, OCR, USSD/SMS and offline field capture (Part 1 §1.5) are not on the platform: an official transcribes a paper form | Integration register 20.6, 20.7 |
+
+Form-specific deviations are listed in each contract with the rule that
+requires them (`library.deviations`) and shown on the form page.
+
+**Tests.** `app/src/lib/forms/catalogue-contracts.test.ts` holds its own list
+of the catalogue lines each form answers (its row; Part 6 §1, §4, §6, §9–§12
+as they apply; Part 1 §1.3, §1.5, §1.6; the supplement's conventions,
+activation gates and Stage B HLT-FAC-006 and HLT-INS-007 contracts; the
+specification's health facility register, licence workflow and form, and its
+professional licensing records, workflow, form and public verification) and
+checks every cell, list item and sentence is quoted verbatim and met by a
+field, a deviation, a country decision, a linked procedure step, an exchange
+service, a form policy or a platform rule whose file exists. For each form it
+also checks types, classes and registered rules, the scope, that nothing a
+law decides is set (no number outside a rule's own bounds), the same
+questions in all three channels, and a register status of contract draft.
+`app/src/lib/requirements/requirements.test.ts` checks each library contract
+matches exactly one registered form and none is in an excluded or
+legal-review scope. The generated gap report shows the batch and the totals
+before and after it (contract_missing 1723 → 1698, contract_draft 129 → 154).

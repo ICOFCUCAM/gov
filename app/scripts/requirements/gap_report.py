@@ -101,7 +101,20 @@ def build(repo, rows, checks):
             p = where.get((m['source'], m['line']), 0)
             stage['parts 14–22' if p >= 14 else ('parts 5–13' if p >= 5 else 'shared standard')] += 1
     # 3. forms without a contract; incomplete contracts; duplicates
-    no_contract = [o for o in forms if o['contract'] != 'given']
+    no_contract = [o for o in forms if o['contract'] not in C.CONTRACT_GIVEN]
+    # CivicOS's own contracts (the form library, controlled batches): each matched to exactly one registered form, none in an excluded or legal-review scope
+    lib = checks.get('library', [])
+    lib_bad = [dict(path=c['path'], id=c['id'], matches=c['matches']) for c in lib if len(c['matches']) != 1]
+    row_of = {o['id']: o for o in forms}
+    batches = collections.OrderedDict()
+    for c in lib:
+        b = batches.setdefault(c['batch'], dict(batch=c['batch'], contracts=[], form_status=collections.Counter()))
+        r = row_of.get(c['matches'][0]) if len(c['matches']) == 1 else None
+        b['contracts'].append(dict(id=c['id'], row=c['matches'][0] if r else None, file=c['path'], fields=len(c['fields']), form_status=r['form_status'] if r else None, scope=(r or {}).get('scope', 'allowed')))
+        if r:
+            b['form_status'][r['form_status']] += 1
+    # the register as it stood before CivicOS's contracts: the same forms, without the library (a library contract is the only thing that moved them)
+    before = collections.Counter('contract_missing' if o['contract'] == C.LIBRARY_GIVEN and o['form_status'] in ('contract_draft', 'blocked') else o['form_status'] for o in forms)
     incomplete = []
     for c in cs:
         if (c['source'], c['id']) in non_form:
@@ -122,7 +135,7 @@ def build(repo, rows, checks):
     # 4. scope
     viol = []
     for o in forms:
-        if o['form_status'] in ('excluded', 'under_review') and o['contract'] == 'given':
+        if o['form_status'] in ('excluded', 'under_review') and o['contract'] in C.CONTRACT_GIVEN:
             viol.append(dict(id=o['id'], source=o['source'], form_status=o['form_status'], flag=o.get('scope_flag'), why='a contract was given for a form outside the approved scope'))
         if o['form_status'] == 'blocked':
             viol.append(dict(id=o['id'], source=o['source'], form_status='blocked', flag=o.get('scope_flag'), why=o.get('blocked_by')))
@@ -136,7 +149,7 @@ def build(repo, rows, checks):
     }
     rep = dict(
         generated_by='app/scripts/requirements/extract.py (gap_report.py)',
-        sources={rel: sha(os.path.join(repo, rel)) for rel, _ in C.FILES} | {C.SCOPE: sha(os.path.join(repo, C.SCOPE))},
+        sources={rel: sha(os.path.join(repo, rel)) for rel, _ in C.FILES} | {C.SCOPE: sha(os.path.join(repo, C.SCOPE))} | {c['path']: sha(os.path.join(repo, c['path'])) for c in lib},
         reported=REPORTED, verified=verified,
         unique_form_ids=len(ids), form_rows=len(forms), forms_by_part=dict(by_part),
         form_status=dict(fs),
@@ -146,6 +159,9 @@ def build(repo, rows, checks):
                        ambiguous=[dict(source=c['source'], line=c['line'], id=c['id'], candidates=c['match']) for c in ambiguous],
                        forms_with_more_than_one=[k for k, v in form_contracts.items() if v > 1]),
         forms_without_contract=len(no_contract),
+        library_contracts=dict(total=len(lib), matched_to_one_form=len(lib) - len(lib_bad), unmatched_or_ambiguous=lib_bad,
+                               batches=[dict(b, form_status=dict(b['form_status'])) for b in batches.values()],
+                               form_status_without_library=dict(before), forms_without_contract_without_library=len(no_contract) + sum(1 for o in forms if o['contract'] == C.LIBRARY_GIVEN)),
         incomplete_contracts=incomplete,
         duplicate_ids=dup_ids, same_title_different_ids=same_form,
         scope_violations=viol,
@@ -190,7 +206,22 @@ def write(repo, rows, checks):
         md.append(f'- Ambiguous: `{x["id"]}` ({x["source"].split("/")[-1]} line {x["line"]}): {", ".join(x["candidates"])}')
     if c['forms_with_more_than_one']:
         md.append('- Forms with more than one contract (the shared standard\'s example and the part\'s own): ' + ', '.join(f'`{x}`' for x in c['forms_with_more_than_one']))
-    md.append(f'\n## Forms with no contract\n\n{rep["forms_without_contract"]} forms have no field contract of their own (`contract: not yet given` in the register). By part:\n')
+    lc = rep['library_contracts']
+    md.append(f'\n## Contracts CivicOS wrote (form library, controlled batches)\n\n{lc["total"]} contracts in `app/src/lib/forms/library/catalogue-contracts/`, '
+              f'{lc["matched_to_one_form"]} matched to exactly one registered form (by source file and catalogue ID), {len(lc["unmatched_or_ambiguous"])} unmatched or ambiguous. '
+              'Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.\n')
+    for b in lc['batches']:
+        md.append(f'**Batch {b["batch"]}** (health regulation, owner approved 21 October 2026): {len(b["contracts"])} contracts added; form status '
+                  + ', '.join(f'{k} {v}' for k, v in sorted(b['form_status'].items())) + '.\n')
+        md.append('| Form | Register row | Fields | Form status | Scope |\n|---|---|---|---|---|')
+        for x in b['contracts']:
+            md.append(f'| {x["id"]} | {x["row"] or "—"} | {x["fields"]} | {x["form_status"] or "—"} | {x["scope"]} |')
+    md.append('\n**Totals beside the earlier ones** (the register without the library\'s contracts, and with them):\n')
+    md.append('| Status | Before (without the library) | Now |\n|---|---|---|')
+    for s in C.FORM_STATUSES:
+        md.append(f'| {s} | {lc["form_status_without_library"].get(s, 0)} | {rep["form_status"].get(s, 0)} |')
+    md.append(f'| forms without a contract | {lc["forms_without_contract_without_library"]} | {rep["forms_without_contract"]} |')
+    md.append(f'\n## Forms with no contract\n\n{rep["forms_without_contract"]} forms have no field contract (`contract: not yet given` in the register). By part:\n')
     cnt = collections.Counter(C.part_label(o) for o in no_contract)
     md.append('| Part | Forms without a contract |\n|---|---|')
     for k, v in cnt.items():
