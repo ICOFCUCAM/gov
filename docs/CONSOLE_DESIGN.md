@@ -58,6 +58,23 @@ before connecting sources:
   outside the fold and folds only its generated panels (the interior record
   screens, `/health-ecosystem`, the ministry workspace).
 
+Generated figures in production (step I0.1, October 2026): one rule,
+`lib/twin/generated.ts`, read by every console surface through
+`components/ui/Generated.tsx`. In demo and training a generated figure is
+shown with its marker (Sample, or Simulation for scenarios); in production it
+is not shown: `Panel signal="sample" | "simulated"` keeps its title and folds
+its figures under "Not connected" (rendered only when an official opens it,
+then marked Simulation), headline tiles go through `useTile()`, strips through
+`GeneratedStrip`, single values through `GeneratedText`. The executive posture
+(`executivePosture().generated`) and the agency apps' `SimulatedView` follow
+the same rule. Records, observations and official statements are never
+folded; where a register exists the screen reads it (bills and hearings on the
+branch screens, the audit chain's verification and the access watches'
+findings on /audit, the operations overview and incident register on /ops,
+the ministry registry, the twin's population). A panel whose inputs are
+generated is Sample, never Modelled. `components/ui/Generated.test.ts` checks
+the rule and scans the console files for untagged panels and tiles.
+
 Next: a durable store (register 1.1), then the twin core on the substrate
 (entities, sources, time-stamped observations) and the first connector
 (statistics office). Register §16 tracks each item.
