@@ -30,7 +30,6 @@ import { randomUUID } from 'node:crypto';
 import { proposePolicy, confirmPolicy, withdrawPolicy, lapsePolicy, type PolicyVersion } from '@/lib/law/policy-change';
 import { getInstrument, type Citation } from '@/lib/law/register';
 import { dualControlPendingHours, independenceOf } from '@/lib/data/dual-control';
-import { recordAudit } from '@/lib/data/store/audit';
 import { getMinistry, listMinistries } from '@/lib/data/store/ministries';
 import { getSovereign } from '@/lib/data/store/sovereign';
 import { institutionBounds } from '@/lib/data/store/institutions';
@@ -518,7 +517,11 @@ function checkRules(v: TransitionRulesValues): string | null {
 }
 const describeRules = (v: TransitionRulesValues) =>
   `caretaker restricts ${v.caretakerProcedures.length + v.caretakerDecisions.length + v.caretakerDirectives.length} kind(s) · impeachment stages named ${v.impeachmentStages.filter(Boolean).length}/7 · emergency ${v.emergencyMaxDays ? `at most ${v.emergencyMaxDays} days` : 'no maximum set'}, declared by ${v.emergencyDeclarers.map(nameOf).join(', ') || 'nobody named'}`;
-const rulesValues = (): TransitionRulesValues => { const { adopted: _a, changes: _c, ...v } = transitionsDb().rules; return structuredClone(v); };
+const rulesValues = (): TransitionRulesValues => {
+  const r = transitionsDb().rules;
+  return structuredClone({ caretakerProcedures: r.caretakerProcedures, caretakerDecisions: r.caretakerDecisions, caretakerDirectives: r.caretakerDirectives,
+    impeachmentStages: r.impeachmentStages, emergencyMaxDays: r.emergencyMaxDays, emergencyDeclarers: r.emergencyDeclarers });
+};
 
 /** An administrator proposes the country's rules for transitions, citing the law; values left out are kept. */
 export function proposeTransitionRules(input: TransitionInput, actor: TransitionActor, now = new Date()) {

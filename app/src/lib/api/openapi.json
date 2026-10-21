@@ -8089,11 +8089,13 @@
                         "enum": [
                           "authorities",
                           "classification",
+                          "competences",
                           "dualControl",
                           "institutions",
                           "offices",
                           "relationships",
-                          "suspension"
+                          "suspension",
+                          "transitionRules"
                         ]
                       },
                       "description": "Parts changed through their own process since the profile in force was approved (draft a new version to approve them together)."
@@ -8108,11 +8110,13 @@
                             "enum": [
                               "authorities",
                               "classification",
+                              "competences",
                               "dualControl",
                               "institutions",
                               "offices",
                               "relationships",
-                              "suspension"
+                              "suspension",
+                              "transitionRules"
                             ]
                           },
                           "profile": {
@@ -8368,6 +8372,9 @@
                             "classification": {
                               "type": "string"
                             },
+                            "competences": {
+                              "type": "string"
+                            },
                             "dualControl": {
                               "type": "string"
                             },
@@ -8382,16 +8389,21 @@
                             },
                             "suspension": {
                               "type": "string"
+                            },
+                            "transitionRules": {
+                              "type": "string"
                             }
                           },
                           "required": [
                             "authorities",
                             "classification",
+                            "competences",
                             "dualControl",
                             "institutions",
                             "offices",
                             "relationships",
-                            "suspension"
+                            "suspension",
+                            "transitionRules"
                           ]
                         }
                       },
@@ -8521,11 +8533,13 @@
                         "parts": {
                           "authorities": "string",
                           "classification": "string",
+                          "competences": "string",
                           "dualControl": "string",
                           "institutions": "string",
                           "offices": "string",
                           "relationships": "string",
-                          "suspension": "string"
+                          "suspension": "string",
+                          "transitionRules": "string"
                         }
                       }
                     }
@@ -8675,11 +8689,13 @@
                         "enum": [
                           "authorities",
                           "classification",
+                          "competences",
                           "dualControl",
                           "institutions",
                           "offices",
                           "relationships",
-                          "suspension"
+                          "suspension",
+                          "transitionRules"
                         ]
                       },
                       "description": "Parts changed through their own process since the profile in force was approved (draft a new version to approve them together)."
@@ -8694,11 +8710,13 @@
                             "enum": [
                               "authorities",
                               "classification",
+                              "competences",
                               "dualControl",
                               "institutions",
                               "offices",
                               "relationships",
-                              "suspension"
+                              "suspension",
+                              "transitionRules"
                             ]
                           },
                           "profile": {
@@ -8954,6 +8972,9 @@
                             "classification": {
                               "type": "string"
                             },
+                            "competences": {
+                              "type": "string"
+                            },
                             "dualControl": {
                               "type": "string"
                             },
@@ -8968,16 +8989,21 @@
                             },
                             "suspension": {
                               "type": "string"
+                            },
+                            "transitionRules": {
+                              "type": "string"
                             }
                           },
                           "required": [
                             "authorities",
                             "classification",
+                            "competences",
                             "dualControl",
                             "institutions",
                             "offices",
                             "relationships",
-                            "suspension"
+                            "suspension",
+                            "transitionRules"
                           ]
                         }
                       },
@@ -9104,11 +9130,13 @@
                         "parts": {
                           "authorities": "string",
                           "classification": "string",
+                          "competences": "string",
                           "dualControl": "string",
                           "institutions": "string",
                           "offices": "string",
                           "relationships": "string",
-                          "suspension": "string"
+                          "suspension": "string",
+                          "transitionRules": "string"
                         }
                       },
                       "result": {}
@@ -9213,6 +9241,853 @@
           }
         ],
         "x-source": "src/app/api/constitution/separation/route.ts"
+      }
+    },
+    "/api/constitution/transitions": {
+      "get": {
+        "tags": [
+          "constitution"
+        ],
+        "operationId": "get_constitution_transitions",
+        "summary": "GET /api/constitution/transitions",
+        "description": "/api/constitution/transitions — transitions and emergencies as recorded legal events (lib/transitions; plan phase 6; guidance §4): taking up office, acting appointments, delegations, successions, caretaker periods, dissolutions, the seven stages of impeachment, courts' rulings on a law or decision, states of emergency, transfers of powers between national and regional institutions, and declarations of conflicts of interest. Each is recorded by one official citing the laws register and confirmed by a different person; every version is kept. The platform records the nation's legal events; it never decides one. GET: every transition with its versions, what is in force (caretaker periods, emergencies, rulings, transferred powers), the country's rules, warnings (nothing the nation has not set is ever restricted), decisions flagged by a ruling, holdings past their term. POST { op } (OFFICIAL_WORK in lib/auth/roles.ts; who may take each step is checked in lib/transitions/events.ts): 'propose' { kind, effectiveFrom?, effectiveTo?, institution?, actingInstitution?, office?, person?, delegator?, powers?, regions?, competence?, direction?, target?, decisions?, effect?, finality?, reference?, cases?, interest?, renews?, trigger?, suspensions?, arrangements?, reason?, legalBasis: [{ instrument, eId }] }; 'advance' { id, stage, outcome, effectiveFrom?, reason?, reference?, legalBasis } the next impeachment stage, in order; 'end' { id, reason, effectiveTo?, legalBasis } ends it early (revoke, lift, discontinue): a new version; 'confirm' { id } a different person (never the person the record names); 'withdraw' { id, reason? } the proposer or an administrator (never a declaration of interest); 'rules-propose' { caretakerProcedures?, caretakerDecisions?, caretakerDirectives?, impeachmentStages?, emergencyMaxDays?, emergencyDeclarers?, legalBasis } an administrator; 'rules-confirm' a different administrator; 'rules-withdraw' { reason? }. Who acted comes from the sign-in; every step is audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "transition": {
+                          "$ref": "#/components/schemas/TransitionView"
+                        }
+                      },
+                      "required": [
+                        "transition"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "notice": {
+                          "type": "string"
+                        },
+                        "kinds": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "enum": [
+                                  "acting",
+                                  "assumption",
+                                  "caretaker",
+                                  "competence",
+                                  "conflict",
+                                  "delegation",
+                                  "dissolution",
+                                  "emergency",
+                                  "impeachment",
+                                  "judicial-review",
+                                  "succession"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "means": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "means"
+                            ]
+                          }
+                        },
+                        "stages": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "stage": {
+                                "type": "number"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "outcomes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "stage",
+                              "label",
+                              "outcomes"
+                            ]
+                          }
+                        },
+                        "effects": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "enum": [
+                                  "interpretation",
+                                  "invalid",
+                                  "read-down",
+                                  "remittal",
+                                  "suspended"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "blocks": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "blocks"
+                            ]
+                          }
+                        },
+                        "closingOutcomes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "transitions": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/TransitionView"
+                          }
+                        },
+                        "inForce": {
+                          "type": "object",
+                          "properties": {
+                            "caretaker": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "to": {
+                                    "type": "string"
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "ref": {
+                                    "type": "string"
+                                  },
+                                  "institution": {
+                                    "type": "string"
+                                  },
+                                  "from": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "id",
+                                  "ref",
+                                  "institution",
+                                  "from"
+                                ]
+                              }
+                            },
+                            "emergencies": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "ref": {
+                                    "type": "string"
+                                  },
+                                  "declaredBy": {
+                                    "type": "string"
+                                  },
+                                  "regions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "from": {
+                                    "type": "string"
+                                  },
+                                  "expires": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "ref",
+                                  "declaredBy",
+                                  "regions",
+                                  "from",
+                                  "expires"
+                                ]
+                              }
+                            },
+                            "rulings": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "ref": {
+                                    "type": "string"
+                                  },
+                                  "court": {
+                                    "type": "string"
+                                  },
+                                  "effect": {
+                                    "type": "string",
+                                    "enum": [
+                                      "interpretation",
+                                      "invalid",
+                                      "read-down",
+                                      "remittal",
+                                      "suspended"
+                                    ]
+                                  },
+                                  "target": {
+                                    "anyOf": [
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "instrument": {
+                                            "type": "string"
+                                          },
+                                          "eId": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "instrument"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "from": {
+                                    "type": "string"
+                                  },
+                                  "finality": {
+                                    "type": "string",
+                                    "enum": [
+                                      "final",
+                                      "stayed",
+                                      "under-appeal"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "ref",
+                                  "court",
+                                  "target",
+                                  "from",
+                                  "finality"
+                                ]
+                              }
+                            },
+                            "competences": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "holderName": {
+                                    "type": "string"
+                                  },
+                                  "previousName": {
+                                    "type": "string"
+                                  },
+                                  "competence": {
+                                    "type": "string"
+                                  },
+                                  "holder": {
+                                    "type": "string"
+                                  },
+                                  "previous": {
+                                    "type": "string"
+                                  },
+                                  "regions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "from": {
+                                    "type": "string"
+                                  },
+                                  "event": {
+                                    "type": "string"
+                                  },
+                                  "ref": {
+                                    "type": "string"
+                                  },
+                                  "direction": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "holderName",
+                                  "previousName",
+                                  "competence",
+                                  "holder",
+                                  "regions",
+                                  "from",
+                                  "event",
+                                  "ref"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "caretaker",
+                            "emergencies",
+                            "rulings",
+                            "competences"
+                          ]
+                        },
+                        "rules": {
+                          "type": "object",
+                          "properties": {
+                            "adopted": {
+                              "type": "boolean"
+                            },
+                            "changes": {
+                              "type": "object",
+                              "properties": {
+                                "pending": {
+                                  "type": "object",
+                                  "properties": {
+                                    "values": {
+                                      "$ref": "#/components/schemas/TransitionRulesValues"
+                                    },
+                                    "basis": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "#/components/schemas/Citation"
+                                      }
+                                    },
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "confirmed": {
+                                      "type": "object",
+                                      "properties": {
+                                        "by": {
+                                          "type": "string"
+                                        },
+                                        "byId": {
+                                          "type": "string"
+                                        },
+                                        "at": {
+                                          "type": "string"
+                                        },
+                                        "independence": {
+                                          "type": "string",
+                                          "enum": [
+                                            "accounts-only",
+                                            "identity-provider",
+                                            "unverified"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "by",
+                                        "at",
+                                        "independence"
+                                      ]
+                                    },
+                                    "expiresAt": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "values",
+                                    "basis",
+                                    "by",
+                                    "at",
+                                    "expiresAt"
+                                  ],
+                                  "description": "A proposal waiting for its second official."
+                                },
+                                "history": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "values": {
+                                        "$ref": "#/components/schemas/TransitionRulesValues"
+                                      },
+                                      "basis": {
+                                        "type": "array",
+                                        "items": {
+                                          "$ref": "#/components/schemas/Citation"
+                                        }
+                                      },
+                                      "by": {
+                                        "type": "string"
+                                      },
+                                      "byId": {
+                                        "type": "string"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "confirmed": {
+                                        "type": "object",
+                                        "properties": {
+                                          "by": {
+                                            "type": "string"
+                                          },
+                                          "byId": {
+                                            "type": "string"
+                                          },
+                                          "at": {
+                                            "type": "string"
+                                          },
+                                          "independence": {
+                                            "type": "string",
+                                            "enum": [
+                                              "accounts-only",
+                                              "identity-provider",
+                                              "unverified"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "by",
+                                          "at",
+                                          "independence"
+                                        ]
+                                      },
+                                      "outcome": {
+                                        "type": "string",
+                                        "enum": [
+                                          "adopted",
+                                          "lapsed",
+                                          "withdrawn"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "values",
+                                      "basis",
+                                      "by",
+                                      "at",
+                                      "outcome"
+                                    ]
+                                  },
+                                  "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                                }
+                              }
+                            },
+                            "caretakerProcedures": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "Caretaker restrictions the nation's law or convention supports: procedure keys (or families, `procurement`) whose decisions are refused …"
+                            },
+                            "caretakerDecisions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "… decision keys (`appoint`, `award`) refused under any procedure …"
+                            },
+                            "caretakerDirectives": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "… and kinds of directive (`policy`, `budget`) a caretaker issuer may not sign."
+                            },
+                            "impeachmentStages": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "The institution that records each of the seven impeachment stages ('' where the nation has named none)."
+                            },
+                            "emergencyMaxDays": {
+                              "type": "number",
+                              "description": "The longest an emergency declaration may run before it must be renewed (days); 0 while the nation has set none."
+                            },
+                            "emergencyDeclarers": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "The institutions that may declare an emergency (`executive-office` for the whole government); empty: not named."
+                            }
+                          },
+                          "required": [
+                            "adopted",
+                            "changes",
+                            "caretakerProcedures",
+                            "caretakerDecisions",
+                            "caretakerDirectives",
+                            "impeachmentStages",
+                            "emergencyMaxDays",
+                            "emergencyDeclarers"
+                          ]
+                        },
+                        "reference": {
+                          "type": "object",
+                          "properties": {
+                            "caretaker": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "note": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "caretaker",
+                            "note"
+                          ]
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "flagged": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "decision": {
+                                "type": "string"
+                              },
+                              "subject": {
+                                "type": "string"
+                              },
+                              "institution": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "ruling": {
+                                "type": "string"
+                              },
+                              "effect": {
+                                "type": "string",
+                                "enum": [
+                                  "interpretation",
+                                  "invalid",
+                                  "read-down",
+                                  "remittal",
+                                  "suspended"
+                                ]
+                              },
+                              "madeBeforeEffect": {
+                                "type": "boolean"
+                              },
+                              "citation": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "decision",
+                              "subject",
+                              "institution",
+                              "at",
+                              "ruling",
+                              "effect",
+                              "madeBeforeEffect"
+                            ]
+                          }
+                        },
+                        "pastTerm": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "officeId": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "holderName": {
+                                "type": "string"
+                              },
+                              "from": {
+                                "type": "string"
+                              },
+                              "termEnded": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "officeId",
+                              "title",
+                              "holderName",
+                              "from",
+                              "termEnded"
+                            ]
+                          }
+                        },
+                        "regions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "institutions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          }
+                        },
+                        "emptyRules": {
+                          "$ref": "#/components/schemas/TransitionRulesValues"
+                        }
+                      },
+                      "required": [
+                        "notice",
+                        "kinds",
+                        "stages",
+                        "effects",
+                        "closingOutcomes",
+                        "transitions",
+                        "inForce",
+                        "rules",
+                        "reference",
+                        "warnings",
+                        "flagged",
+                        "pastTerm",
+                        "regions",
+                        "institutions",
+                        "emptyRules"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "transition": {
+                        "id": "ID-0001",
+                        "ref": "string",
+                        "kind": "acting",
+                        "kindLabel": "string",
+                        "status": "closed",
+                        "terms": {
+                          "kind": "acting",
+                          "status": "ended",
+                          "effectiveFrom": "2026-01-15"
+                        },
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "pending": {
+                          "values": {
+                            "kind": "acting",
+                            "status": "ended",
+                            "effectiveFrom": "2026-01-15"
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "string"
+                          }
+                        ],
+                        "names": {},
+                        "stageLabel": "string",
+                        "next": {
+                          "stage": 1,
+                          "label": "Example"
+                        },
+                        "holding": "string",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "createdBy": "A. Official"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/constitution/transitions/route.ts"
+      },
+      "post": {
+        "tags": [
+          "constitution"
+        ],
+        "operationId": "post_constitution_transitions",
+        "summary": "POST /api/constitution/transitions",
+        "description": "/api/constitution/transitions — transitions and emergencies as recorded legal events (lib/transitions; plan phase 6; guidance §4): taking up office, acting appointments, delegations, successions, caretaker periods, dissolutions, the seven stages of impeachment, courts' rulings on a law or decision, states of emergency, transfers of powers between national and regional institutions, and declarations of conflicts of interest. Each is recorded by one official citing the laws register and confirmed by a different person; every version is kept. The platform records the nation's legal events; it never decides one. GET: every transition with its versions, what is in force (caretaker periods, emergencies, rulings, transferred powers), the country's rules, warnings (nothing the nation has not set is ever restricted), decisions flagged by a ruling, holdings past their term. POST { op } (OFFICIAL_WORK in lib/auth/roles.ts; who may take each step is checked in lib/transitions/events.ts): 'propose' { kind, effectiveFrom?, effectiveTo?, institution?, actingInstitution?, office?, person?, delegator?, powers?, regions?, competence?, direction?, target?, decisions?, effect?, finality?, reference?, cases?, interest?, renews?, trigger?, suspensions?, arrangements?, reason?, legalBasis: [{ instrument, eId }] }; 'advance' { id, stage, outcome, effectiveFrom?, reason?, reference?, legalBasis } the next impeachment stage, in order; 'end' { id, reason, effectiveTo?, legalBasis } ends it early (revoke, lift, discontinue): a new version; 'confirm' { id } a different person (never the person the record names); 'withdraw' { id, reason? } the proposer or an administrator (never a declaration of interest); 'rules-propose' { caretakerProcedures?, caretakerDecisions?, caretakerDirectives?, impeachmentStages?, emergencyMaxDays?, emergencyDeclarers?, legalBasis } an administrator; 'rules-confirm' a different administrator; 'rules-withdraw' { reason? }. Who acted comes from the sign-in; every step is audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/constitution/transitions/route.ts"
       }
     },
     "/api/courts/cause-list": {
@@ -72163,11 +73038,13 @@
               "enum": [
                 "authorities",
                 "classification",
+                "competences",
                 "dualControl",
                 "institutions",
                 "offices",
                 "relationships",
-                "suspension"
+                "suspension",
+                "transitionRules"
               ]
             },
             "description": "The parts that differ from the previous profile (all of them for the first)."
@@ -80595,11 +81472,13 @@
             "enum": [
               "authorities",
               "classification",
+              "competences",
               "dualControl",
               "institutions",
               "offices",
               "relationships",
-              "suspension"
+              "suspension",
+              "transitionRules"
             ]
           },
           "label": {
@@ -82411,6 +83290,21 @@
           "goLiveEstimateDays"
         ]
       },
+      "NamedPerson": {
+        "description": "A person a transition names: an official account where there is one, and the name as recorded.",
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
       "NationInstall": {
         "type": "object",
         "properties": {
@@ -83256,6 +84150,10 @@
           },
           "endReason": {
             "type": "string"
+          },
+          "event": {
+            "type": "string",
+            "description": "The recorded transition (acting appointment or succession, lib/transitions) this holding carries out."
           }
         },
         "required": [
@@ -85155,11 +86053,13 @@
             "enum": [
               "authorities",
               "classification",
+              "competences",
               "dualControl",
               "institutions",
               "offices",
               "relationships",
-              "suspension"
+              "suspension",
+              "transitionRules"
             ]
           },
           "label": {
@@ -86263,11 +87163,13 @@
               "enum": [
                 "authorities",
                 "classification",
+                "competences",
                 "dualControl",
                 "institutions",
                 "offices",
                 "relationships",
-                "suspension"
+                "suspension",
+                "transitionRules"
               ]
             },
             "description": "The parts it touches, frozen until resolved."
@@ -97569,6 +98471,474 @@
           "href",
           "state",
           "checks"
+        ]
+      },
+      "TransitionRulesValues": {
+        "description": "The country's own rules for transitions (a rule set changed through policy-change.ts; none ships).",
+        "type": "object",
+        "properties": {
+          "caretakerProcedures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Caretaker restrictions the nation's law or convention supports: procedure keys (or families, `procurement`) whose decisions are refused …"
+          },
+          "caretakerDecisions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "… decision keys (`appoint`, `award`) refused under any procedure …"
+          },
+          "caretakerDirectives": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "… and kinds of directive (`policy`, `budget`) a caretaker issuer may not sign."
+          },
+          "impeachmentStages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The institution that records each of the seven impeachment stages ('' where the nation has named none)."
+          },
+          "emergencyMaxDays": {
+            "type": "number",
+            "description": "The longest an emergency declaration may run before it must be renewed (days); 0 while the nation has set none."
+          },
+          "emergencyDeclarers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The institutions that may declare an emergency (`executive-office` for the whole government); empty: not named."
+          }
+        },
+        "required": [
+          "caretakerProcedures",
+          "caretakerDecisions",
+          "caretakerDirectives",
+          "impeachmentStages",
+          "emergencyMaxDays",
+          "emergencyDeclarers"
+        ]
+      },
+      "TransitionTerms": {
+        "description": "What a version of a transition says. A type alias so withDefaults() and policy-change take it as a plain record.",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "acting",
+              "assumption",
+              "caretaker",
+              "competence",
+              "conflict",
+              "delegation",
+              "dissolution",
+              "emergency",
+              "impeachment",
+              "judicial-review",
+              "succession"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ended",
+              "recorded"
+            ],
+            "description": "recorded: in force between its dates; ended: ended early (revoked, lifted), with a reason."
+          },
+          "effectiveFrom": {
+            "type": "string"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "description": "Last day it applies (inclusive): an acting appointment's or delegation's end, an emergency's expiry."
+          },
+          "institution": {
+            "type": "string",
+            "description": "The institution concerned: the caretaker government (or `executive-office`), the dissolved body, a competence's previous holder."
+          },
+          "actingInstitution": {
+            "type": "string",
+            "description": "The institution that acts: dissolves, determines a succession, declares an emergency, the court, a competence's new holder."
+          },
+          "office": {
+            "type": "string"
+          },
+          "person": {
+            "$ref": "#/components/schemas/NamedPerson"
+          },
+          "delegator": {
+            "$ref": "#/components/schemas/NamedPerson"
+          },
+          "powers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Delegated powers; an emergency's exceptional powers (as the declaration words them; never a platform permission)."
+          },
+          "regions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Regions from the nation's list; empty means the whole territory."
+          },
+          "competence": {
+            "type": "string",
+            "description": "A competence: the power or service affected (a register, a procedure family, a service)."
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "devolution",
+              "recentralisation",
+              "transfer"
+            ]
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "instrument": {
+                "type": "string"
+              },
+              "eId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "instrument"
+            ],
+            "description": "Judicial review: the provision ruled on (eId absent: the whole instrument) and decisions ruled on directly."
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "effect": {
+            "type": "string",
+            "enum": [
+              "interpretation",
+              "invalid",
+              "read-down",
+              "remittal",
+              "suspended"
+            ]
+          },
+          "finality": {
+            "type": "string",
+            "enum": [
+              "final",
+              "stayed",
+              "under-appeal"
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "description": "The court's case reference; a dissolution's or succession's instrument; a conflict's reference."
+          },
+          "cases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Conflict of interest: the case ids or references the declarant steps aside from, and the interest declared."
+          },
+          "interest": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "number",
+            "description": "Impeachment: the stage this version records, and its outcome."
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "renews": {
+            "type": "string",
+            "description": "Emergency: the declaration it renews, the trigger the law recognises, the permit types whose authority mapping is suspended under it."
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "suspensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "arrangements": {
+            "type": "string",
+            "description": "Transfers of records, assets, staff; election deadline after a dissolution; oversight and reporting; reasons."
+          },
+          "reason": {
+            "type": "string"
+          },
+          "endReason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "status",
+          "effectiveFrom"
+        ]
+      },
+      "TransitionView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "acting",
+              "assumption",
+              "caretaker",
+              "competence",
+              "conflict",
+              "delegation",
+              "dissolution",
+              "emergency",
+              "impeachment",
+              "judicial-review",
+              "succession"
+            ]
+          },
+          "kindLabel": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "closed",
+              "ended",
+              "expired",
+              "in-force",
+              "lapsed",
+              "scheduled",
+              "waiting",
+              "withdrawn"
+            ]
+          },
+          "terms": {
+            "$ref": "#/components/schemas/TransitionTerms"
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "pending": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "$ref": "#/components/schemas/TransitionTerms"
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    }
+                  },
+                  "by": {
+                    "type": "string"
+                  },
+                  "byId": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  },
+                  "confirmed": {
+                    "type": "object",
+                    "properties": {
+                      "by": {
+                        "type": "string"
+                      },
+                      "byId": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      },
+                      "independence": {
+                        "type": "string",
+                        "enum": [
+                          "accounts-only",
+                          "identity-provider",
+                          "unverified"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "by",
+                      "at",
+                      "independence"
+                    ]
+                  },
+                  "expiresAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "values",
+                  "basis",
+                  "by",
+                  "at",
+                  "expiresAt"
+                ]
+              }
+            ]
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "values": {
+                  "$ref": "#/components/schemas/TransitionTerms"
+                },
+                "basis": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Citation"
+                  }
+                },
+                "by": {
+                  "type": "string"
+                },
+                "byId": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "confirmed": {
+                  "type": "object",
+                  "properties": {
+                    "by": {
+                      "type": "string"
+                    },
+                    "byId": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "independence": {
+                      "type": "string",
+                      "enum": [
+                        "accounts-only",
+                        "identity-provider",
+                        "unverified"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "by",
+                    "at",
+                    "independence"
+                  ]
+                },
+                "outcome": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "values",
+                "basis",
+                "by",
+                "at",
+                "outcome"
+              ]
+            }
+          },
+          "names": {
+            "type": "object",
+            "properties": {
+              "institution": {
+                "type": "string"
+              },
+              "actingInstitution": {
+                "type": "string"
+              },
+              "office": {
+                "type": "string"
+              },
+              "home": {
+                "type": "string"
+              }
+            }
+          },
+          "stageLabel": {
+            "type": "string"
+          },
+          "next": {
+            "type": "object",
+            "properties": {
+              "stage": {
+                "type": "number"
+              },
+              "label": {
+                "type": "string"
+              },
+              "institution": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "stage",
+              "label"
+            ],
+            "description": "Impeachment: the next stage open, and who records it."
+          },
+          "holding": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "kind",
+          "kindLabel",
+          "status",
+          "terms",
+          "basis",
+          "pending",
+          "history",
+          "names",
+          "createdAt",
+          "createdBy"
         ]
       },
       "TranslationEntries": {

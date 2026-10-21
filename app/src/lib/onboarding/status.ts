@@ -14,6 +14,7 @@ import { waitingAccountChanges } from '@/lib/auth/account-changes';
 import { listOffices, waitingOffices, waitingHoldings } from '@/lib/nation/office-register';
 import { constitutionOverview, waitingProfileSteps } from '@/lib/constitution/profile';
 import { activeProcedure, listBills, waitingLegislative, legislatureName } from '@/lib/legislature/register';
+import { transitionsOverview, waitingTransitions } from '@/lib/transitions/events';
 import { listMinistries } from '@/lib/data/store/ministries';
 import { listAccounts, twoStepPolicy } from '@/lib/auth/officials';
 import { listInstruments } from '@/lib/law/register';
@@ -135,6 +136,19 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'No part changed since the active profile was approved', done: !!o.inForce && o.drift.length === 0, href: '/gov/configuration/constitution',
           detail: !o.inForce ? 'No active profile yet' : o.drift.length ? `Changed since: ${o.drift.map(k => o.labels.parts[k]).join(', ')} (draft a new version)` : undefined },
         { label: 'No part frozen by a dispute', done: o.frozen.length === 0, href: '/gov/configuration/constitution', detail: o.frozen.length ? o.frozen.map(f => `${o.labels.parts[f.part]} (version ${f.version})`).join(', ') : undefined },
+      ] };
+    }),
+
+    // Transitions and emergencies (plan phase 6): optional; the checks flag what the nation has left unset, never invent it.
+    track({ key: 'transitions', title: 'Transitions and emergencies', why: 'Acting appointments, delegations, caretaker periods, courts\' rulings, states of emergency, transfers of powers and declarations of interest, recorded as the nation\'s legal events. Optional until the nation needs them; nothing is restricted that the nation has not adopted.', href: '/gov/configuration/transitions' }, () => {
+      const o = transitionsOverview();
+      const caretakerUnset = o.inForce.caretaker.length > 0 && !(o.rules.caretakerProcedures.length + o.rules.caretakerDecisions.length + o.rules.caretakerDirectives.length);
+      return { checks: [
+        { label: 'Rules for transitions adopted (optional: needed before an impeachment stage or an emergency is recorded)', done: o.rules.adopted, href: '/gov/configuration/transitions',
+          detail: o.rules.adopted ? `${o.rules.impeachmentStages.filter(Boolean).length} of 7 impeachment stages named · ${o.rules.emergencyDeclarers.length} emergency declarer(s)` : 'None adopted' },
+        { label: 'No caretaker period without the nation\'s restrictions', done: !caretakerUnset, href: '/gov/configuration/transitions', detail: caretakerUnset ? 'A caretaker period is in force and restricts nothing until the nation adopts its restrictions' : undefined },
+        { label: 'No office held past its recorded term', done: o.pastTerm.length === 0, href: '/gov/configuration/offices', detail: o.pastTerm.length ? o.pastTerm.slice(0, 4).map(h => `${h.holderName} (${h.title}, ended ${h.termEnded})`).join(', ') : undefined },
+        { label: 'Decisions touched by a court\'s ruling assessed', done: o.flagged.length === 0, href: '/gov/configuration/transitions', detail: o.flagged.length ? `${o.flagged.length} decision(s) flagged for legal assessment (flagged, never changed)` : undefined },
       ] };
     }),
 
@@ -318,6 +332,7 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       if (v.state === 'recorded' && v.source.kind === 'legislature') wait({ what: `${i.title}: enacted text from the legislature waiting for the law-register authority to confirm`, proposedBy: v.recordedBy, at: v.at, href: '/gov/law' });
     }
   });
+  safe(() => { for (const t of waitingTransitions()) wait({ what: `${t.what} — waiting for a second official`, proposedBy: t.by, at: t.at, href: '/gov/configuration/transitions' }); });
   safe(() => { for (const h of waitingHoldings()) wait({ what: `${h.holderName} to hold an office — waiting for a second official`, proposedBy: h.proposedBy, at: h.proposedAt, href: '/gov/configuration/offices' }); });
 
   waiting.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''));

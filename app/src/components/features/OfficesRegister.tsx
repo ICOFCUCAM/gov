@@ -42,9 +42,14 @@ export function OfficesRegister() {
   const [form, setForm] = React.useState({ title: '', kind: 'head-of-state', institution: '', powers: '', termYears: '', acting: '', succession: '', effectiveFrom: '', instrument: '', eId: '' });
   const [link, setLink] = React.useState({ officeId: '', accountId: '', from: '', acting: false, reason: '' });
 
+  // Transitions touching each office (plan phase 6): acting appointments, delegations, successions, taking up office,
+  // impeachment proceedings, and holdings past their recorded term (/api/constitution/transitions).
+  const [events, setEvents] = React.useState<{ transitions: { id: string; ref: string; kindLabel: string; status: string; terms: { office?: string; person?: { name: string }; effectiveFrom: string; effectiveTo?: string }; stageLabel?: string }[]; pastTerm: { officeId: string; holderName: string; termEnded: string }[] } | null>(null);
   const load = React.useCallback(async () => {
     const r = await fetch('/api/offices', { cache: 'no-store' });
     if (r.ok) setData((await r.json()) as Data);
+    const t = await fetch('/api/constitution/transitions', { cache: 'no-store' }).catch(() => null);
+    if (t?.ok) setEvents(await t.json());
   }, []);
   React.useEffect(() => {
     void load();
@@ -107,7 +112,11 @@ export function OfficesRegister() {
                 </p>
               ) : null}
               {o.basis?.length ? <p className="mt-1 text-xs text-ink-muted">Legal basis: {o.basis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`).join('; ')}</p> : null}
-              <p className="mt-1 text-xs text-ink-muted">Held by: {o.holders.length ? o.holders.map(h => `${h.acting ? 'acting ' : ''}${h.name} since ${h.from}`).join('; ') : 'nobody linked'}</p>
+              <p className="mt-1 text-xs text-ink-muted">Held by: {o.holders.length ? o.holders.map(h => `${h.acting ? 'acting ' : ''}${h.name} since ${h.from}${h.to ? ` until ${h.to}` : ''}`).join('; ') : 'nobody linked'}</p>
+              {events?.pastTerm.filter(h => h.officeId === o.id).map(h => <p key={h.holderName} className="mt-1 text-xs text-warn">{h.holderName}&apos;s term ended on {h.termEnded}: no longer in force. Record what the law says follows (Transitions).</p>)}
+              {events?.transitions.filter(t => t.terms.office === o.id && ['waiting', 'scheduled', 'in-force'].includes(t.status)).length ? (
+                <p className="mt-1 text-xs text-ink-muted">Transitions: {events.transitions.filter(t => t.terms.office === o.id && ['waiting', 'scheduled', 'in-force'].includes(t.status)).map(t => `${t.ref} ${t.kindLabel}${t.terms.person ? ` · ${t.terms.person.name}` : ''}${t.stageLabel ? ` · ${t.stageLabel}` : ''} · ${t.terms.effectiveFrom}${t.terms.effectiveTo ? ` to ${t.terms.effectiveTo}` : ''}${t.status === 'waiting' ? ' (waiting for a second official)' : ''}`).join('; ')} · <a className="underline" href="/gov/configuration/transitions">Transitions</a></p>
+              ) : null}
               {o.changes?.pending ? (
                 <div className="mt-2 rounded border border-line p-2">
                   <p className="text-xs"><strong>Waiting for a second official:</strong> {o.changes.pending.values.title} from {o.changes.pending.values.effectiveFrom} · proposed by {o.changes.pending.by} · basis {cites(o.changes.pending)}{o.confirmBy ? ` · confirmed by ${o.confirmBy.name}` : ''}</p>
