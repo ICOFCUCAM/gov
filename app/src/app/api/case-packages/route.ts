@@ -23,14 +23,18 @@
 // a procedure's form as it renders; ?contract=1 what a form may use (types,
 // classes, named rules, patterns, approved lists, building blocks, exchange
 // services); ?library=1 the form library (the specification's sixteen forms,
-// with what the loader reported and every deviation). A document's citation
+// the field series' contracts and the catalogue contracts CivicOS wrote in
+// batches, each with what the loader reported, every deviation and its
+// register status from the publication gates; ?form= and ?publication= answer
+// for a library form too, a contract draft no procedure carries yet, whose
+// approvals are recorded only on the procedure that carries it). A document's citation
 // may be sent as { instrument, eId }: it is cited from the laws register here.
 import { NextRequest, NextResponse } from 'next/server';
 import { caseActRefusal } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
 import { listPackages, draftPackage, approvePackage, getPackage, ownerInstitution, runPackageTests, editDraft, activePackage, unsetDays, type DraftChanges } from '@/lib/casework/packages';
 import { formView, valueSnapshot } from '@/lib/forms/server';
-import { SPEC_LIBRARY } from '@/lib/forms/library/definitions';
+import { findLibraryForm, libraryForms, libraryInfo } from '@/lib/forms/page-data';
 import { BLOCKS } from '@/lib/forms/blocks';
 import { DATA_CLASSES, CONFIDENTIALITY, FIELD_TYPES, TYPE_LABEL, PATTERNS, PROFILES, RULE_LABEL, VALUE_REGISTERS, REFERENCE_REGISTERS, LOCATION_KINDS, CONTACT_METHODS } from '@/lib/forms/contract';
 import { serviceDirectory } from '@/lib/exchange/services';
@@ -44,8 +48,7 @@ import { installReferenceProcedures } from '@/lib/casework/modules';
 import { adminOnly } from '@/lib/auth/roles';
 import { loadDemonstration } from '@/lib/casework/demo';
 import { draftReferralProcedure } from '@/lib/casework/referral';
-import { publicationOf, recordApproval, approvalsOf, STATUS_LABEL, APPROVAL_LABEL, type ActInput } from '@/lib/forms/publication';
-import { scopeOf, formIds } from '@/lib/forms/scope';
+import { publicationOf, libraryPublication, recordApproval, approvalsOf, STATUS_LABEL, APPROVAL_LABEL, type ActInput } from '@/lib/forms/publication';
 import { envelopeOf } from '@/lib/forms/envelope';
 
 export const dynamic = 'force-dynamic';
@@ -69,7 +72,13 @@ export function GET(req: NextRequest) {
   const pubKey = q.get('publication');
   if (pubKey) {
     const p = getPackage(pubKey, Number(q.get('version')));
-    if (!p) return NextResponse.json({ error: 'No such procedure version' }, { status: 404 });
+    if (!p) {
+      // A library form no procedure carries yet: its gates as they stand (a contract draft); approvals are recorded on the procedure that carries it.
+      const lib = findLibraryForm(pubKey);
+      if (!lib) return NextResponse.json({ error: 'No such procedure version' }, { status: 404 });
+      const pub = libraryPublication(lib.def, lib.waitsFor);
+      return NextResponse.json({ publication: pub, statusLabel: STATUS_LABEL[pub.status], approvalLabels: APPROVAL_LABEL, approvals: [], library: true });
+    }
     const pub = publicationOf(p, new Date(), registeredEffects());
     const legalReviewed = pub.human.find(h => h.id === 'legal-review')?.passed ?? false;
     // Checks the platform verifies (automatic) and approvals only a person gives (human), kept apart.
@@ -79,10 +88,10 @@ export function GET(req: NextRequest) {
   if (formKey) {
     const version = Number(q.get('version'));
     const p = version ? getPackage(formKey, version) : activePackage(formKey) ?? listPackages({ key: formKey }).sort((a, b) => b.version - a.version)[0];
-    const lib = !p ? SPEC_LIBRARY.find(f => f.key === formKey || f.specId === formKey) : undefined;
-    if (!p && !lib) return NextResponse.json({ error: 'No such procedure or library form' }, { status: 404 });
-    const src = p ?? { ...lib!, version: 1, state: 'draft', library: true };
-    return NextResponse.json({ form: formView(src, q.get('locale') ?? undefined), unsetDays: p ? unsetDays(p) : [], ...(lib ? { library: { specId: lib.specId, owner: lib.owner, awaits: lib.awaits ?? null, notes: lib.notes, deviations: lib.deviations } } : {}) });
+    const found = !p ? findLibraryForm(formKey) : undefined;
+    if (!p && !found) return NextResponse.json({ error: 'No such procedure or library form' }, { status: 404 });
+    const src = p ?? { ...found!.def, version: 1, state: 'draft', library: true };
+    return NextResponse.json({ form: formView(src, q.get('locale') ?? undefined), unsetDays: p ? unsetDays(p) : [], ...(found ? { library: libraryInfo(found) } : {}) });
   }
   if (q.get('contract')) {
     return NextResponse.json({
@@ -95,8 +104,15 @@ export function GET(req: NextRequest) {
     });
   }
   if (q.get('library')) {
-    // A library form is a contract draft until a procedure carries it and its gates pass; its scope is shown as it stands.
-    return NextResponse.json({ forms: SPEC_LIBRARY.map(f => { const scope = scopeOf(formIds(f.key, f.form), f.fields); return { key: f.key, specId: f.specId, title: f.title, owner: f.owner, attachesTo: f.attachesTo ?? null, awaits: f.awaits ?? null, fields: f.fields.length, notes: f.notes, deviations: f.deviations, status: scope.status === 'excluded' ? 'excluded' : 'contract_draft', scope }; }) });
+    // A library form is a contract draft until a procedure carries it and its gates pass: its status comes from the publication gates, its scope as it stands.
+    return NextResponse.json({ forms: libraryForms().map(({ def: f, waitsFor, catalogue: c }) => {
+      const pub = libraryPublication(f, waitsFor);
+      return {
+        key: f.key, specId: f.specId, title: f.title, owner: f.owner, attachesTo: 'attachesTo' in f ? f.attachesTo ?? null : c?.procedure?.key ?? null, awaits: waitsFor,
+        fields: f.fields.length, notes: f.notes, deviations: 'deviations' in f ? f.deviations : [], status: pub.status, scope: pub.scope,
+        source: c ? `catalogue batch ${c.batch}` : 'source' in f ? 'field series' : 'specification',
+      };
+    }) });
   }
   const key = q.get('key') ?? undefined;
   const effects = registeredEffects();

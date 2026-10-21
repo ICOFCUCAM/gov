@@ -137,9 +137,9 @@ export function FormField(p: FieldProps) {
       );
     }
     case 'address':
-      return <Frame f={f} id={id} error={error} legend><AddressInputs id={id} value={value as Partial<Address>} regions={p.regions} onChange={onChange} disabled={disabled} /></Frame>;
+      return <Frame f={f} id={id} error={error} legend><AddressInputs id={id} value={(value ?? {}) as Partial<Address>} regions={p.regions} onChange={onChange} disabled={disabled} /></Frame>;
     case 'point':
-      return <Frame f={f} id={id} error={error} legend><PointInputs id={id} value={value as Partial<{ lng: number; lat: number }>} onChange={onChange} disabled={disabled} /></Frame>;
+      return <Frame f={f} id={id} error={error} legend><PointInputs id={id} value={(value ?? {}) as Partial<{ lng: number; lat: number }>} onChange={onChange} disabled={disabled} /></Frame>;
     case 'location': {
       const l = (value ?? {}) as Partial<Location>;
       const kinds = LOCATION_KINDS.filter(k => (f.locationKinds ?? ['region', 'site', 'point', 'address', 'described']).includes(k.key));

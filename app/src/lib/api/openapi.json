@@ -5709,7 +5709,7 @@
         ],
         "operationId": "get_case_packages",
         "summary": "GET /api/case-packages",
-        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only); { op: 'load-demonstration' } loads the demonstration set (a sample act and the civil procedures approved under it; administrators, demo and training installations only, lib/casework/demo.ts); { op: 'draft-referral', institution } drafts that institution's referral procedure from the template (its own officials or administrators; lib/casework/referral.ts); { op: 'edit', key, version, changes } changes a draft in place (its form, evidence, day counts, citations: officials of the responsible institution; whoever changes it cannot approve it; lib/casework/packages.ts editDraft()). Publication (lib/forms/publication.ts): GET ?publication=<key>&version= gives the version's gates, the automatic checks and the human approvals apart, the register status they give and the acts recorded; POST { op: 'approval', key, version, approval: { kind, outcome?, note?, citation?, rollbackPlan?, releaseNotes?, environment? } } records one approval as an act of the signed-in official (never a status sent in the request). The form contract (lib/forms): GET ?form=<key>[&version=][&locale=] gives a procedure's form as it renders; ?contract=1 what a form may use (types, classes, named rules, patterns, approved lists, building blocks, exchange services); ?library=1 the form library (the specification's sixteen forms, with what the loader reported and every deviation). A document's citation may be sent as { instrument, eId }: it is cited from the laws register here.",
+        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only); { op: 'load-demonstration' } loads the demonstration set (a sample act and the civil procedures approved under it; administrators, demo and training installations only, lib/casework/demo.ts); { op: 'draft-referral', institution } drafts that institution's referral procedure from the template (its own officials or administrators; lib/casework/referral.ts); { op: 'edit', key, version, changes } changes a draft in place (its form, evidence, day counts, citations: officials of the responsible institution; whoever changes it cannot approve it; lib/casework/packages.ts editDraft()). Publication (lib/forms/publication.ts): GET ?publication=<key>&version= gives the version's gates, the automatic checks and the human approvals apart, the register status they give and the acts recorded; POST { op: 'approval', key, version, approval: { kind, outcome?, note?, citation?, rollbackPlan?, releaseNotes?, environment? } } records one approval as an act of the signed-in official (never a status sent in the request). The form contract (lib/forms): GET ?form=<key>[&version=][&locale=] gives a procedure's form as it renders; ?contract=1 what a form may use (types, classes, named rules, patterns, approved lists, building blocks, exchange services); ?library=1 the form library (the specification's sixteen forms, the field series' contracts and the catalogue contracts CivicOS wrote in batches, each with what the loader reported, every deviation and its register status from the publication gates; ?form= and ?publication= answer for a library form too, a contract draft no procedure carries yet, whose approvals are recorded only on the procedure that carries it). A document's citation may be sent as { instrument, eId }: it is cited from the laws register here.",
         "parameters": [
           {
             "name": "contract",
@@ -5818,6 +5818,65 @@
                         "approvals": {
                           "type": "array",
                           "items": {
+                            "not": {}
+                          }
+                        },
+                        "library": {
+                          "type": "boolean",
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "publication",
+                        "statusLabel",
+                        "approvalLabels",
+                        "approvals",
+                        "library"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "publication": {
+                          "$ref": "#/components/schemas/Publication"
+                        },
+                        "statusLabel": {
+                          "type": "string"
+                        },
+                        "approvalLabels": {
+                          "type": "object",
+                          "properties": {
+                            "authority": {
+                              "type": "string"
+                            },
+                            "legal-review": {
+                              "type": "string"
+                            },
+                            "privacy": {
+                              "type": "string"
+                            },
+                            "release-approval": {
+                              "type": "string"
+                            },
+                            "release-proposal": {
+                              "type": "string"
+                            },
+                            "scope-review": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "authority",
+                            "legal-review",
+                            "privacy",
+                            "release-approval",
+                            "release-proposal",
+                            "scope-review"
+                          ]
+                        },
+                        "approvals": {
+                          "type": "array",
+                          "items": {
                             "$ref": "#/components/schemas/PublicationAct"
                           }
                         },
@@ -5839,13 +5898,44 @@
                         "library": {
                           "type": "object",
                           "properties": {
-                            "specId": {
-                              "type": "string"
+                            "catalogue": {
+                              "type": "object",
+                              "properties": {
+                                "source": {
+                                  "type": "string"
+                                },
+                                "id": {
+                                  "type": "string"
+                                },
+                                "part": {
+                                  "type": "number"
+                                },
+                                "section": {
+                                  "type": "string"
+                                },
+                                "line": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "source",
+                                "id",
+                                "part",
+                                "section",
+                                "line"
+                              ]
                             },
-                            "owner": {
-                              "type": "string"
+                            "procedure": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/components/schemas/ProcedureLink"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
-                            "awaits": {
+                            "exchange": {
                               "anyOf": [
                                 {
                                   "type": "null"
@@ -5855,11 +5945,48 @@
                                 }
                               ]
                             },
-                            "notes": {
+                            "filledBy": {
+                              "type": "string"
+                            },
+                            "nationValues": {
                               "type": "array",
                               "items": {
-                                "$ref": "#/components/schemas/ImportNote"
+                                "$ref": "#/components/schemas/NationValue"
                               }
+                            },
+                            "countryDecisions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "items": {
+                              "type": "number"
+                            },
+                            "specId": {
+                              "type": "string"
+                            },
+                            "owner": {
+                              "type": "string"
+                            },
+                            "awaits": {
+                              "type": "string"
+                            },
+                            "notes": {
+                              "anyOf": [
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "$ref": "#/components/schemas/CanonicalNote"
+                                  }
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "$ref": "#/components/schemas/ImportNote"
+                                  }
+                                }
+                              ]
                             },
                             "deviations": {
                               "type": "array",
@@ -6251,23 +6378,26 @@
                                 ]
                               },
                               "awaits": {
-                                "anyOf": [
-                                  {
-                                    "type": "null"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
+                                "type": "string"
                               },
                               "fields": {
                                 "type": "number"
                               },
                               "notes": {
-                                "type": "array",
-                                "items": {
-                                  "$ref": "#/components/schemas/ImportNote"
-                                }
+                                "anyOf": [
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/CanonicalNote"
+                                    }
+                                  },
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/ImportNote"
+                                    }
+                                  }
+                                ]
                               },
                               "deviations": {
                                 "type": "array",
@@ -6276,10 +6406,23 @@
                                 }
                               },
                               "status": {
-                                "type": "string"
+                                "type": "string",
+                                "enum": [
+                                  "approved",
+                                  "blocked",
+                                  "catalogued",
+                                  "contract_draft",
+                                  "contract_missing",
+                                  "excluded",
+                                  "production",
+                                  "under_review"
+                                ]
                               },
                               "scope": {
                                 "$ref": "#/components/schemas/ScopeFinding"
+                              },
+                              "source": {
+                                "type": "string"
                               }
                             },
                             "required": [
@@ -6293,7 +6436,8 @@
                               "notes",
                               "deviations",
                               "status",
-                              "scope"
+                              "scope",
+                              "source"
                             ]
                           }
                         }
@@ -6651,43 +6795,9 @@
                         "scope-review": "string"
                       },
                       "approvals": [
-                        {
-                          "key": "string",
-                          "version": 1,
-                          "kind": "authority",
-                          "outcome": "approved",
-                          "by": "A. Official",
-                          "byId": "ID-0001",
-                          "at": "2026-01-15T09:30:00.000Z",
-                          "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                          "note": "Text"
-                        }
+                        null
                       ],
-                      "envelope": {
-                        "contractVersion": "1.0.0",
-                        "title": "Example",
-                        "domain": "string",
-                        "formType": "string",
-                        "countryProfile": "string",
-                        "owningInstitutionId": "ID-0001",
-                        "competentAuthorityRuleId": "ID-0001",
-                        "legalBasis": [
-                          {
-                            "instrumentId": "ID-0001",
-                            "versionId": "ID-0001",
-                            "provision": "string",
-                            "verificationStatus": "string"
-                          }
-                        ],
-                        "applicability": {
-                          "key": true
-                        },
-                        "workflow": {},
-                        "decision": {},
-                        "privacy": {},
-                        "audit": {},
-                        "accessibility": {}
-                      }
+                      "library": true
                     }
                   }
                 }
@@ -6718,7 +6828,7 @@
         ],
         "operationId": "post_case_packages",
         "summary": "POST /api/case-packages",
-        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only); { op: 'load-demonstration' } loads the demonstration set (a sample act and the civil procedures approved under it; administrators, demo and training installations only, lib/casework/demo.ts); { op: 'draft-referral', institution } drafts that institution's referral procedure from the template (its own officials or administrators; lib/casework/referral.ts); { op: 'edit', key, version, changes } changes a draft in place (its form, evidence, day counts, citations: officials of the responsible institution; whoever changes it cannot approve it; lib/casework/packages.ts editDraft()). Publication (lib/forms/publication.ts): GET ?publication=<key>&version= gives the version's gates, the automatic checks and the human approvals apart, the register status they give and the acts recorded; POST { op: 'approval', key, version, approval: { kind, outcome?, note?, citation?, rollbackPlan?, releaseNotes?, environment? } } records one approval as an act of the signed-in official (never a status sent in the request). The form contract (lib/forms): GET ?form=<key>[&version=][&locale=] gives a procedure's form as it renders; ?contract=1 what a form may use (types, classes, named rules, patterns, approved lists, building blocks, exchange services); ?library=1 the form library (the specification's sixteen forms, with what the loader reported and every deviation). A document's citation may be sent as { instrument, eId }: it is cited from the laws register here.",
+        "description": "/api/case-packages — the nation's procedures (lib/casework/packages.ts, design §6.3). GET: every version with its state. POST { op: 'draft', package } writes a draft (officials of the responsible institution); { op: 'approve', key, version, activeFrom? } approves it (an official who can sign there, different from its author, once its tests pass); { op: 'install-references' } drafts the reference procedures CivicOS ships that the installation does not have yet (administrators; drafts only); { op: 'load-demonstration' } loads the demonstration set (a sample act and the civil procedures approved under it; administrators, demo and training installations only, lib/casework/demo.ts); { op: 'draft-referral', institution } drafts that institution's referral procedure from the template (its own officials or administrators; lib/casework/referral.ts); { op: 'edit', key, version, changes } changes a draft in place (its form, evidence, day counts, citations: officials of the responsible institution; whoever changes it cannot approve it; lib/casework/packages.ts editDraft()). Publication (lib/forms/publication.ts): GET ?publication=<key>&version= gives the version's gates, the automatic checks and the human approvals apart, the register status they give and the acts recorded; POST { op: 'approval', key, version, approval: { kind, outcome?, note?, citation?, rollbackPlan?, releaseNotes?, environment? } } records one approval as an act of the signed-in official (never a status sent in the request). The form contract (lib/forms): GET ?form=<key>[&version=][&locale=] gives a procedure's form as it renders; ?contract=1 what a form may use (types, classes, named rules, patterns, approved lists, building blocks, exchange services); ?library=1 the form library (the specification's sixteen forms, the field series' contracts and the catalogue contracts CivicOS wrote in batches, each with what the loader reported, every deviation and its register status from the publication gates; ?form= and ?publication= answer for a library form too, a contract draft no procedure carries yet, whose approvals are recorded only on the procedure that carries it). A document's citation may be sent as { instrument, eId }: it is cited from the laws register here.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -72764,6 +72874,29 @@
           "state"
         ]
       },
+      "CanonicalNote": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "binding",
+              "not-expressed",
+              "problem"
+            ]
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "note"
+        ]
+      },
       "CapacityReturn": {
         "type": "object",
         "properties": {
@@ -88534,6 +88667,42 @@
           "securedByRef"
         ]
       },
+      "NationValue": {
+        "description": "A value the nation's law decides: named, never set (a fee rule, a day count, a period, a threshold, an amount of continuing education).",
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "days",
+              "fee",
+              "hours",
+              "period",
+              "threshold"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "procedure",
+              "rule",
+              "setting"
+            ]
+          },
+          "decision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "source",
+          "decision"
+        ]
+      },
       "NationalConstitution": {
         "description": "A nation's own constitutional facts. Anything left out falls back to the template for its form of state (lib/gov/constitution.ts).",
         "type": "object",
@@ -92017,6 +92186,34 @@
           "failedChecks",
           "failStreak",
           "degraded"
+        ]
+      },
+      "ProcedureLink": {
+        "description": "The reference procedure (and stage, step and document) a form belongs to.",
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "document": {
+            "type": "string"
+          },
+          "also": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "stage"
         ]
       },
       "Profession": {

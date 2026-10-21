@@ -14,7 +14,7 @@ import { RefusalText } from '@/components/ui/RefusalText';
 
 interface Gate { id: string; label: string; kind: 'automatic' | 'human'; passed: boolean; applies: boolean; detail: string[]; act?: { by: string; at: string; outcome: string; note: string } }
 interface Publication { status: string; scope: { status: string; reason?: string }; automatic: Gate[]; human: Gate[]; blockers: string[]; pendingRelease?: { by: string; at: string; rollbackPlan?: string; releaseNotes?: string }; warning?: string }
-interface Answer { publication: Publication; statusLabel: string; approvalLabels: Record<string, string>; approvals: { kind: string; outcome: string; by: string; at: string; note: string }[] }
+interface Answer { publication: Publication; statusLabel: string; approvalLabels: Record<string, string>; approvals: { kind: string; outcome: string; by: string; at: string; note: string }[]; library?: boolean }
 
 const KINDS = ['legal-review', 'authority', 'privacy', 'scope-review', 'release-proposal', 'release-approval'] as const;
 const input = 'mt-1 block w-full min-h-tap rounded-sm border border-line bg-surface px-2 py-1 text-sm text-ink focus-ring';
@@ -77,7 +77,8 @@ export function PublicationPanel({ pkgKey, version }: { pkgKey: string; version:
         <GateList gates={p.human} title="Approvals by officials" meta={`${p.human.filter(g => g.applies && g.passed).length} of ${p.human.filter(g => g.applies).length} given`} />
       </div>
       {p.pendingRelease ? <p role="status" className="text-sm">Release proposed by {p.pendingRelease.by} on {p.pendingRelease.at.slice(0, 10)}, waiting for a second official. Rollback plan: {p.pendingRelease.rollbackPlan}</p> : null}
-      {p.scope.status !== 'excluded' ? (
+      {data.library ? <p role="note" className="text-sm text-ink-muted">A library form: approvals are recorded on the version of the procedure that carries it, once that version is drafted, tested and approved by a second official. Nothing can be approved here.</p> : null}
+      {p.scope.status !== 'excluded' && !data.library ? (
         <Section title="Record an approval" meta="as the signed-in official">
           <div className="grid gap-3 md:grid-cols-2">
             <label className="text-sm">Approval

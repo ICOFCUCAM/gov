@@ -1,0 +1,474 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-FAC-010",
+ "record_type": "health.facility.verification.request",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-HX-001: the institutions and purposes approved for the organisation.standing exchange service.",
+  "What the public check shows about a health facility (the register type's publication rules).",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records.",
+  "CFG-LIC-002: facility licensing, inspection and enforcement procedures."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-FAC-010",
+  "part": 6,
+  "section": "6.2",
+  "line": 722
+ },
+ "library": {
+  "title": "Check a health facility's licence",
+  "intro": "Check whether a health facility is licensed. Give its registration number and its name as you know it. The answer shows only what the law makes public: the name, the register, the standing and when it ends.",
+  "owner": "healthRegulation",
+  "filled_by": "Anyone (the public check), or an institution through the organisation.standing exchange service for an approved purpose.",
+  "procedure": null,
+  "exchange": "organisation.standing",
+  "intended": "Answered by the public check (/registers) and the organisation.standing exchange service; no case is opened.",
+  "lists": {
+   "health.country.facility_services": {
+    "values": [
+     {
+      "value": "outpatient",
+      "label": "Outpatient care"
+     },
+     {
+      "value": "inpatient",
+      "label": "Inpatient care"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity and delivery"
+     },
+     {
+      "value": "emergency",
+      "label": "Emergency care"
+     },
+     {
+      "value": "surgery",
+      "label": "Surgery"
+     },
+     {
+      "value": "laboratory",
+      "label": "Laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging"
+     },
+     {
+      "value": "pharmacy",
+      "label": "Pharmacy"
+     },
+     {
+      "value": "immunisation",
+      "label": "Immunisation"
+     },
+     {
+      "value": "dental",
+      "label": "Dental"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.capacity_measures": {
+    "values": [
+     {
+      "value": "beds-total",
+      "label": "Beds (all)"
+     },
+     {
+      "value": "beds-intensive-care",
+      "label": "Intensive-care beds"
+     },
+     {
+      "value": "consulting-rooms",
+      "label": "Consulting rooms"
+     },
+     {
+      "value": "operating-theatres",
+      "label": "Operating theatres"
+     }
+    ],
+    "proposed": true
+   },
+   "civicos.verification.requester_kinds": {
+    "values": [
+     {
+      "value": "public",
+      "label": "A member of the public"
+     },
+     {
+      "value": "institution",
+      "label": "An institution, for an approved purpose"
+     }
+    ]
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "no-case",
+    "what": "A status response, not a case: the public check and the exchange service answer at once and log the request",
+    "why": "A verification decides nothing; the register is the authoritative record.",
+    "rule": "CLAUDE.md Organisations: the public check (/registers) carries publicOrganisation()"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 866,
+    "quotes": [
+     "CFG-LIC-002",
+     "Facility licensing, inspection, and enforcement procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 807,
+    "quotes": [
+     "Each exchange must have a versioned contract, authenticated sender and recipient, documented purpose, permitted field list, and auditable receipt.",
+     "A connection between two institutions does not automatically authorize every possible data exchange between them."
+    ],
+    "met_by": {
+     "exchange": "organisation.standing"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 884,
+    "quotes": [
+     "Interoperability: Every cross-institution exchange has a versioned contract and explicit authority."
+    ],
+    "met_by": {
+     "exchange": "organisation.standing"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 722,
+    "quotes": [
+     "HLT-FAC-010",
+     "Facility licence verification",
+     "Status response issued"
+    ],
+    "met_by": {
+     "fields": [
+      "check.answer"
+     ],
+     "exchange": "organisation.standing",
+     "deviation": "no-case"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1323,
+    "quotes": [
+     "Health facility",
+     "Unique facility ID, name, type, location, operator, authorised services, operational status, verification date"
+    ],
+    "met_by": {
+     "fields": [
+      "check.number",
+      "check.name"
+     ],
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Only publicOrganisation() is answered"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1341,
+    "quotes": [
+     "Register updated and the public-facing licence status published only to the extent legally permitted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/app/api/registers/check",
+      "how": "The public check shows the published standing only"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "check.number",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Facility registration number"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the facility registration number."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The facility"
+   }
+  },
+  {
+   "id": "check.name",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "public",
+   "evidence": [],
+   "label": {
+    "en": "Name of the facility"
+   },
+   "hint": {
+    "en": "The answer is given only when the name matches the register."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the name of the facility.",
+     "length": "Name of the facility must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The facility"
+   }
+  },
+  {
+   "id": "check.requester_kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.verification.requester_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Who is asking?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The check"
+   }
+  },
+  {
+   "id": "check.institution",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "check.requester_kind",
+      "equals": "institution"
+     }
+    },
+    {
+     "rule": "actor_authorized_for_exchange",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Your institution"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter your institution."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The check"
+   }
+  },
+  {
+   "id": "check.purpose",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "check.requester_kind",
+      "equals": "institution"
+     }
+    },
+    {
+     "rule": "purpose_authorized_for_relationship",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.verification.purposes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Purpose of the check"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select the purpose of the check."
+    }
+   },
+   "country_decision": "CFG-HX-001: the purposes approved for each institution that calls the exchange service.",
+   "section": {
+    "en": "The check"
+   }
+  },
+  {
+   "id": "check.answer",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "public",
+   "evidence": [],
+   "label": {
+    "en": "Answer"
+   },
+   "hint": {
+    "en": "Given by the platform from the register: only what publicOrganisation() shows."
+   },
+   "country_decision": null
+  }
+ ]
+}

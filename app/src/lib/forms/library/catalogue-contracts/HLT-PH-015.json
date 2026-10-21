@@ -1,0 +1,877 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-PH-015",
+ "record_type": "health.public-health.aggregate-return",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-PH-001: notifiable conditions, reporting deadlines and authorised sources; the reporting programmes and their periods (none ship).",
+  "CFG-HLT-001: the institution that receives public-health aggregate returns (the deployment profile has no public-health slot yet; the health regulator receives capacity returns today).",
+  "CFG-DAT-001: the small-cell suppression threshold and the disclosure rules for aggregates (shipped unset).",
+  "CFG-HX-001: the exchange that passes aggregates to the authorised statistics service."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-PH-015",
+  "part": 6,
+  "section": "4.1",
+  "line": 618
+ },
+ "library": {
+  "title": "Submit an aggregate public-health return",
+  "intro": "Submit counts for an approved public-health reporting programme, by area and period. Counts only: never a person, a name, an identifier or anything about an individual. Say which counts are estimated or incomplete; a missing count is never read as zero. Small numbers are protected before anything is published, by the rule the nation sets.",
+  "owner": "healthRegulation",
+  "filled_by": "A licensed facility or another reporter the programme authorises, online, at an office or on paper.",
+  "procedure": null,
+  "intended": "A public-health aggregate return of the receiving authority, kept like the capacity returns (lib/health/register.ts: versioned, always marked reported, corrections as new versions): the programme returns are not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "civicos.aggregate.count_status": {
+    "values": [
+     {
+      "value": "reported",
+      "label": "Counted"
+     },
+     {
+      "value": "estimated",
+      "label": "Estimated"
+     },
+     {
+      "value": "incomplete",
+      "label": "Incomplete"
+     },
+     {
+      "value": "not-available",
+      "label": "Not available"
+     }
+    ]
+   },
+   "civicos.aggregate.completeness": {
+    "values": [
+     {
+      "value": "complete",
+      "label": "Complete for the period"
+     },
+     {
+      "value": "partial",
+      "label": "Partial: some sources have not reported"
+     }
+    ]
+   }
+  },
+  "nation_values": [
+   {
+    "key": "health.public-health.reporting-deadline",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The reporting deadline of each programme."
+   },
+   {
+    "key": "health.public-health.small-cell-threshold",
+    "kind": "threshold",
+    "source": "setting",
+    "decision": "The count below which a cell is suppressed before publication or exchange."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "aggregate-only",
+    "what": "Aggregate counts only: no case, suspected or confirmed case, individual report, outbreak investigation or determination",
+    "why": "Approved aggregate public-health statistics are in scope; individual public-health records are not.",
+    "rule": "Owner's direction 2026-10-21 §1; CLAUDE.md Health: returns are aggregates"
+   },
+   {
+    "id": "statistics-exchange",
+    "what": "Passing aggregates to the statistics service is an exchange the nation approves (CFG-HX-001); none ships",
+    "why": "Exchange services answer only for an approved purpose.",
+    "rule": "CLAUDE.md Government operating model: exchange services (callService())"
+   },
+   {
+    "id": "receiving-authority",
+    "what": "Owner: the health regulator slot (healthRegulation) until the deployment profile names a public-health authority",
+    "why": "Authority comes only from the deployment profile; it has no public-health slot yet (integration register 20.8).",
+    "rule": "CLAUDE.md Government operating model: authorityFor(), never a ministry by name"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 502,
+    "quotes": [
+     "Public-health authority",
+     "Disease surveillance, prevention, and legally authorized public-health response",
+     "Collect and disclose only information authorized for the specific purpose"
+    ],
+    "met_by": {
+     "fields": [
+      "return.counts_only"
+     ],
+     "platform": {
+      "file": "app/src/lib/exchange/services.ts",
+      "how": "Aggregates only; disclosure only through an approved exchange for an approved purpose"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 601,
+    "quotes": [
+     "Public-health workflows may require data from hospitals, laboratories, clinicians, and other authorized sources.",
+     "They must distinguish an initial report, a suspected case, a confirmed case, a statistical aggregate, and a public-health determination."
+    ],
+    "met_by": {
+     "deviation": "aggregate-only",
+     "fields": [
+      "return.counts"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 626,
+    "quotes": [
+     "Reporting source",
+     "Facility or authorized reporter, with receipt time"
+    ],
+    "met_by": {
+     "fields": [
+      "return.reporter",
+      "return.received_at"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 633,
+    "quotes": [
+     "Data provenance",
+     "Origin, transformation history, verification status, and correction links"
+    ],
+    "met_by": {
+     "fields": [
+      "return.method",
+      "return.validation",
+      "return.corrects"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 634,
+    "quotes": [
+     "Disclosure history",
+     "Recipient, legal purpose, data scope, and transfer reference"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/exchange/log.ts",
+      "how": "Every disclosure goes through the exchange log with recipient, purpose and scope"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 642,
+    "quotes": [
+     "Prefer aggregated or de-identified data where it meets the purpose."
+    ],
+    "met_by": {
+     "fields": [
+      "return.counts",
+      "return.counts_only"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 643,
+    "quotes": [
+     "Label estimates, modelled values, and incomplete reports explicitly."
+    ],
+    "met_by": {
+     "fields": [
+      "return.counts",
+      "return.completeness"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 644,
+    "quotes": [
+     "Do not interpret a missing report as proof that no case exists."
+    ],
+    "met_by": {
+     "fields": [
+      "return.counts",
+      "return.completeness"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 645,
+    "quotes": [
+     "Apply small-cell disclosure protections where necessary."
+    ],
+    "met_by": {
+     "fields": [
+      "return.suppression"
+     ],
+     "country_decision": "CFG-DAT-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 646,
+    "quotes": [
+     "Restrict identifiable outbreak investigation data to authorized roles."
+    ],
+    "met_by": {
+     "deviation": "aggregate-only"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 647,
+    "quotes": [
+     "Preserve the original submitted report when a correction is received."
+    ],
+    "met_by": {
+     "fields": [
+      "return.corrects"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 805,
+    "quotes": [
+     "HX-009",
+     "Health authority",
+     "Authorized statistics service",
+     "Aggregated or appropriately protected statistics"
+    ],
+    "met_by": {
+     "deviation": "statistics-exchange"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 807,
+    "quotes": [
+     "Each exchange must have a versioned contract, authenticated sender and recipient, documented purpose, permitted field list, and auditable receipt.",
+     "A connection between two institutions does not automatically authorize every possible data exchange between them."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/exchange/services.ts",
+      "how": "Exchange services are versioned, called only by approved integrations for an approved purpose, logged"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 849,
+    "quotes": [
+     "Public health",
+     "Unverified report or incomplete case data",
+     "Preserve the source status and uncertainty"
+    ],
+    "met_by": {
+     "fields": [
+      "return.validation",
+      "return.completeness"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 859,
+    "quotes": [
+     "CFG-PH-001",
+     "Notifiable conditions, reporting deadlines, and authorized sources"
+    ],
+    "met_by": {
+     "country_decision": "CFG-PH-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 880,
+    "quotes": [
+     "Public-health integrity: Reported, suspected, confirmed, and modelled information remain distinguishable."
+    ],
+    "met_by": {
+     "fields": [
+      "return.counts"
+     ],
+     "platform": {
+      "file": "app/src/lib/twin/signal.ts",
+      "how": "Every figure says whether it is observed, reported, modelled, sample or not connected"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 892,
+    "quotes": [
+     "Public-health reporting service — notification intake, case investigation, classifications, outbreak workflows, and protected statistics."
+    ],
+    "met_by": {
+     "deviation": "aggregate-only"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 618,
+    "quotes": [
+     "HLT-PH-015",
+     "Public-health aggregate data submission",
+     "Statistical dataset submitted"
+    ],
+    "met_by": {
+     "fields": [
+      "return.counts",
+      "return.dataset"
+     ],
+     "deviation": "aggregate-only"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1328,
+    "quotes": [
+     "Facility report",
+     "Reporting facility, indicator definitions, period, submitted values, validation state, corrections and provenance"
+    ],
+    "met_by": {
+     "fields": [
+      "return.reporter",
+      "return.dataset",
+      "return.period",
+      "return.counts",
+      "return.validation",
+      "return.corrects",
+      "return.method"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "return.reporter",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "reference_type_allowed",
+     "params": {
+      "types": [
+       "health-facilities",
+       "pharmacies"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reporting facility or reporter's registration number"
+   },
+   "hint": {
+    "en": "The facility's number in the register of organisations, as shown on its licence."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the reporting facility or reporter's registration number.",
+     "reference_exists": "There is no organisation with that number in the register.",
+     "REF-ACTIVE": "The facility's licence in the register is not active."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The return"
+   }
+  },
+  {
+   "id": "return.programme",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "health.country.public_health_programmes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reporting programme"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the reporting programme.",
+     "value_in_source": "Select the reporting programme from the list."
+    }
+   },
+   "country_decision": "CFG-PH-001: the reporting programmes, their reporting deadlines and the authorised sources (none ship).",
+   "section": {
+    "en": "The return"
+   }
+  },
+  {
+   "id": "return.dataset",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "approved_indicators_resolve",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Approved dataset definition and version"
+   },
+   "hint": {
+    "en": "The indicator definitions this return follows, as approved."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the approved dataset definition and version."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The return"
+   }
+  },
+  {
+   "id": "return.period",
+   "type": "date_range",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    },
+    {
+     "rule": "reporting_period_from_programme",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Period the counts cover"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the period the counts cover.",
+     "date_not_in_future": "Period the counts cover must be today or in the past."
+    }
+   },
+   "country_decision": "CFG-PH-001: the reporting periods and deadlines of each programme.",
+   "section": {
+    "en": "The return"
+   }
+  },
+  {
+   "id": "return.area",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.nation.regions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Area the counts cover"
+   },
+   "hint": {
+    "en": "One of the nation's regions."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the area the counts cover.",
+     "value_in_source": "Select the area the counts cover from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The return"
+   }
+  },
+  {
+   "id": "return.counts",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Counts"
+   },
+   "hint": {
+    "en": "One entry per indicator and breakdown. Whole numbers only. If a count is not available, say so rather than entering 0."
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the counts."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "indicator",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "health.country.public_health_indicators",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Indicator"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the indicator."
+      }
+     },
+     "country_decision": "The approved indicator definitions (none ship)."
+    },
+    {
+     "id": "breakdown",
+     "type": "choice",
+     "required": false,
+     "validation": [],
+     "values_source": "health.country.aggregate_breakdowns",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Breakdown, where the dataset defines one"
+     },
+     "country_decision": "The approved breakdowns (for example age band); none ship."
+    },
+    {
+     "id": "count",
+     "type": "number",
+     "required": false,
+     "validation": [
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      },
+      {
+       "rule": "NONNEGATIVE",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Count"
+     },
+     "error_text": {
+      "en": {
+       "integer_range": "Count must be a whole number, 0 or more.",
+       "NONNEGATIVE": "Count cannot be below zero."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "status",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "civicos.aggregate.count_status",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Is this count measured, estimated or incomplete?"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select an answer."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Counts"
+   }
+  },
+  {
+   "id": "return.completeness",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.aggregate.completeness",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Is the return complete for the period?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Counts"
+   }
+  },
+  {
+   "id": "return.method",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "How the counts were produced"
+   },
+   "hint": {
+    "en": "The source system or registers counted, and any estimate method."
+   },
+   "error_text": {
+    "en": {
+     "length": "How the counts were produced must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Counts"
+   }
+  },
+  {
+   "id": "return.corrects",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reference of the return this corrects, if any"
+   },
+   "hint": {
+    "en": "A correction is kept as a new version; the original return is preserved."
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Counts"
+   }
+  },
+  {
+   "id": "return.counts_only",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "This return holds counts only, and nothing about any individual person"
+   },
+   "error_text": {
+    "en": {
+     "required": "Confirm this statement to continue.",
+     "must_be_true": "Confirm this statement to continue."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Counts"
+   }
+  },
+  {
+   "id": "return.suppression",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "small_cell_suppression_from_policy",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.aggregate.count_status",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Small-cell protection applied"
+   },
+   "hint": {
+    "en": "Applied by the platform before any publication or exchange, by the nation's threshold."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "return.validation",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.aggregate.count_status",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Validation state"
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "return.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

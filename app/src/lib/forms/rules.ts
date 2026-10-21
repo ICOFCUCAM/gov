@@ -137,6 +137,12 @@ export const RULE_REGISTRY: Record<string, RegisteredRule> = {
   identifier_valid_for_target_registry: binding('An identifier valid for the target register', 'target register identifier formats'),
   lawful_basis_covers_data_and_purpose: binding('The lawful basis covers the data and purpose', 'exchange purposes with their legal basis (plan I9)'),
   attributes_minimized_and_allowed: binding('Only the allowed attributes', 'approved attribute sets per exchange (plan I9)'),
+  // ── Health regulation (field series Part 6, catalogue contracts batch 1): values the nation's law decides, shipped unset ──
+  corrective_action_period_from_rule: binding('Within the period the rules allow for the corrective action', 'the periods for corrective action set by the nation (CFG-LIC-002); shipped unset'),
+  renewal_window_from_rule: binding('Within the renewal window', 'the licence or registration period and when renewal opens, set by the nation (CFG-LIC-001, CFG-LIC-002); shipped unset'),
+  continuing_education_requirement_from_rule: binding('Meets the continuing-education requirement', 'the continuing-education requirement (hours or points per cycle) of each profession, set by the nation (CFG-LIC-001); shipped unset'),
+  reporting_period_from_programme: binding('A reporting period of the programme', 'the reporting programmes with their periods and deadlines, set by the nation (CFG-PH-001); none ship'),
+  small_cell_suppression_from_policy: binding('Small counts protected before publication or exchange', 'the small-cell suppression threshold, set by the nation (CFG-DAT-001); shipped unset'),
   // ── The specification's own validations (loaded from its form contracts) ──
   verify_with_service: r('Checked with an exchange service where the law allows', 'server'),
   configured_profile: binding('Checked against the country\'s configuration', 'the configuration the rule names'),

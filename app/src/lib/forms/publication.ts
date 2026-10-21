@@ -37,7 +37,7 @@ import { nationLanguages } from '@/lib/nation/registry';
 import { checkPackage, getPackage, ownerInstitution, runPackageTests, unsetDays } from '@/lib/casework/packages';
 import type { Case, CasePackage } from '@/lib/casework/types';
 import { registerIntakeGuard } from '@/lib/casework/engine';
-import { DATA_CLASSES, fieldClass, translationStatus, type ContractField } from './contract';
+import { DATA_CLASSES, fieldClass, translationStatus, type ContractDocument, type ContractField, type FormSpec } from './contract';
 import { RULE_REGISTRY } from './rules';
 import { formIds, scopeOf, type ScopeFinding } from './scope';
 
@@ -250,6 +250,33 @@ export function publicationOf(p: CasePackage, now = new Date(), effects?: string
     ...(open ? { pendingRelease: { by: proposal.by, at: proposal.at, ...(proposal.rollbackPlan ? { rollbackPlan: proposal.rollbackPlan } : {}), ...(proposal.releaseNotes ? { releaseNotes: proposal.releaseNotes } : {}), ...(proposal.environment ? { environment: proposal.environment } : {}) } } : {}),
     ...(status !== 'production' && samplesAllowed() ? { warning: 'Not released for production: a demonstration or training installation takes submissions anyway' } : {}),
   };
+}
+
+/**
+ * A library form (a contract no procedure of this installation carries yet)
+ * as the draft procedure it would be: no stages, no tests, no law cited, no
+ * approval. Its gates are read from the same records as any procedure's, so
+ * it is a contract draft until a procedure carrying it is drafted, tested and
+ * approved and every gate passes. Never stored; nothing in the form is read
+ * as a status.
+ */
+export function libraryPackage(lib: { key: string; title: string; owner: string; fields: ContractField[]; documents: ContractDocument[]; form?: FormSpec }): CasePackage {
+  return {
+    key: lib.key, version: 1, owner: lib.owner, title: lib.title, refPrefix: 'LIB', citations: [],
+    fields: structuredClone(lib.fields) as CasePackage['fields'], documents: structuredClone(lib.documents), ...(lib.form ? { form: structuredClone(lib.form) } : {}),
+    stages: [], actions: [], deadlines: [], notifications: [], retention: '', sensitivity: 'restricted',
+    state: 'draft', author: 'CivicOS form library', createdAt: '2026-10-21T00:00:00.000Z', reference: true, tests: [],
+  };
+}
+
+/** The publication of a library form: its gates as they stand, the first saying what it waits for. */
+export function libraryPublication(lib: Parameters<typeof libraryPackage>[0], waitsFor: string, now = new Date()): Publication {
+  const pub = publicationOf(libraryPackage(lib), now, []);
+  const schema = pub.automatic.find(x => x.id === 'schema')!;
+  schema.detail = [`No procedure of this installation carries it yet: ${waitsFor}`, ...schema.detail.filter(d => !/procedure key|at least two stages|reference prefix/.test(d))];
+  schema.passed = false;
+  pub.blockers = [...pub.automatic, ...pub.human].filter(x => x.applies && !x.passed).flatMap(x => x.detail.map(d => `${x.label}: ${d}`));
+  return pub;
 }
 
 /** Refusal for a public (self-service) submission: a production installation takes one only on a form in production. */

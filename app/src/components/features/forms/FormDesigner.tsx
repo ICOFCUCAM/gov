@@ -11,8 +11,9 @@
 // three channels. Saving changes a draft in place, or writes the next version
 // of an approved procedure; a different official who can sign approves it
 // under Procedures (draft → tested → approved). The form library (the
-// specification's sixteen forms) is shown with what its loader reported and
-// every deviation.
+// specification's sixteen forms, the field series' contracts and the
+// catalogue contracts CivicOS wrote in batches) is shown with what its loader
+// reported, every deviation and its publication gates (a contract draft).
 
 import * as React from 'react';
 import Link from 'next/link';
@@ -27,10 +28,11 @@ import {
 import { FormRenderer } from './FormRenderer';
 import { PrintForm } from './PrintForm';
 import { PublicationPanel } from './PublicationPanel';
+import { LibraryDetails, type LibraryInfo } from './LibraryDetails';
 
 interface Deadline { key: string; label: string; from: string; days?: number; sampleDays?: number; calendar: string }
 interface Pkg { key: string; version: number; title: string; state: string; owner: string; ownerInstitution: string | null; reference?: boolean; fields: ContractField[]; documents: ContractDocument[]; form?: FormSpec; deadlines: Deadline[]; appeal?: { days?: number; sampleDays?: number; body: string; suspensive: boolean }; sensitivity: string; author: string; editors?: { by: string; what: string }[]; testResult: { ok: boolean; failures: string[] }; publicationStatus?: string; [k: string]: unknown }
-interface LibraryRow { key: string; specId: string; title: string; owner: string; attachesTo: string | null; awaits: string | null; fields: number; notes: { field?: string; kind: string; note: string }[]; deviations: { field?: string; what: string; why: string }[]; status?: string }
+interface LibraryRow { key: string; specId: string; title: string; owner: string; attachesTo: string | null; awaits: string | null; fields: number; notes: { field?: string; kind: string; note: string }[]; deviations: { field?: string; what: string; why: string }[]; status?: string; source?: string }
 interface Contract { snapshot: ValueSnapshot; currency: string; languages: string[]; blocks: { key: string; label: string; description: string; example: { fields: ContractField[]; documents?: ContractDocument[] } }[]; services: { id: string; title: string }[] }
 
 const input = 'mt-1 block w-full min-h-tap rounded-sm border border-line bg-surface px-2 py-1 text-sm text-ink focus-ring';
@@ -148,13 +150,13 @@ export function FormDesigner() {
               ))}
             </ul>
           </Section>
-          <Section title="Form library" meta={`${library.length} from the specification`}>
+          <Section title="Form library" meta={`${library.length}: specification, field series, catalogue contracts`}>
             <ul className="space-y-1">
               {library.filter(l => match(l.title, l.key, l.specId, l.owner)).map(l => (
                 <li key={l.key}>
                   <button type="button" aria-current={libSel === l.key ? 'true' : undefined} className={`w-full rounded-sm border px-2 py-1.5 text-start text-sm focus-ring ${libSel === l.key ? 'border-ink bg-surface-2' : 'border-line'}`} onClick={() => { setLibSel(l.key); setSelected(''); }}>
                     <span className="block font-medium">{l.title}</span>
-                    <span className="block text-xs text-ink-muted"><bdi dir="ltr">{l.specId}</bdi> · {(l.status ?? 'contract_draft').replace(/_/g, ' ')} · {l.attachesTo ? `attached to ${l.attachesTo}` : `waits for ${l.awaits}`}</span>
+                    <span className="block text-xs text-ink-muted"><bdi dir="ltr">{l.specId}</bdi> · {(l.status ?? 'contract_draft').replace(/_/g, ' ')}{l.source ? ` · ${l.source}` : ''} · {l.attachesTo ? <>belongs to <bdi dir="ltr">{l.attachesTo}</bdi></> : 'waits for its procedure'}</span>
                   </button>
                 </li>
               ))}
@@ -163,7 +165,7 @@ export function FormDesigner() {
         </nav>
 
         <div className="min-w-0 space-y-5">
-          {libSel && libView ? <LibraryPanel data={libView as { form: Parameters<typeof PrintForm>[0]['view']; library?: { notes: LibraryRow['notes']; deviations: LibraryRow['deviations']; awaits: string | null } }} /> : null}
+          {libSel && libView ? <LibraryPanel data={libView as LibraryData} /> : null}
           {!work && !libSel ? <p className="text-sm text-ink-muted">Choose a procedure to edit its form, or a library form to see it.</p> : null}
           {work && contract && view ? (
             <>
@@ -225,15 +227,15 @@ export function FormDesigner() {
   );
 }
 
-function LibraryPanel({ data }: { data: { form: Parameters<typeof PrintForm>[0]['view']; library?: { notes: LibraryRow['notes']; deviations: LibraryRow['deviations']; awaits: string | null } } }) {
+type LibraryData = { form: Parameters<typeof PrintForm>[0]['view']; library?: LibraryInfo };
+
+function LibraryPanel({ data }: { data: LibraryData }) {
   const [c, setC] = React.useState<Channel | 'print'>('self-service');
   return (
     <>
-      <Section title={`${data.form.procedure.title} · form library`} meta={data.library?.awaits ? `waits for ${data.library.awaits}` : 'attached to its procedure'}>
-        <p className="text-sm text-ink-muted">Loaded from the specification&apos;s form contract, field for field. It is a draft: its sector step attaches it to a procedure the responsible institution approves.</p>
-        {data.library?.deviations.length ? <div className="text-sm"><strong>Deviations, each with its reason</strong><ul className="list-disc ps-5">{data.library.deviations.map((d, i) => <li key={i}>{d.field ? <bdi dir="ltr">{d.field}</bdi> : null} {d.what}: {d.why}</li>)}</ul></div> : null}
-        {data.library?.notes.length ? <div className="text-sm"><strong>What the loader reported</strong><ul className="list-disc ps-5">{data.library.notes.map((n, i) => <li key={i}>{n.field ? <bdi dir="ltr">{n.field}</bdi> : null} ({n.kind}) {n.note}</li>)}</ul></div> : null}
-      </Section>
+      {data.library ? <LibraryDetails title={data.form.procedure.title} library={data.library} /> : null}
+      <p className="text-sm"><Link className="underline" href={`/gov/law/procedures/forms/${encodeURIComponent(data.form.procedure.key)}`}>Open the form on its own page</Link></p>
+      <PublicationPanel key={data.form.procedure.key} pkgKey={data.form.procedure.key} version={data.form.procedure.version} />
       <div role="tablist" aria-label="Channel" className="flex flex-wrap gap-2">
         {(['self-service', 'assisted', 'paper', 'print'] as const).map(x => <button key={x} role="tab" type="button" aria-selected={c === x} className={`min-h-tap rounded-sm border px-3 text-sm focus-ring ${c === x ? 'border-ink bg-surface-2 font-semibold' : 'border-line'}`} onClick={() => setC(x)}>{x === 'print' ? 'Printed form' : x === 'paper' ? 'From a paper form' : x === 'assisted' ? 'Assisted at an office' : 'Self-service'}</button>)}
       </div>

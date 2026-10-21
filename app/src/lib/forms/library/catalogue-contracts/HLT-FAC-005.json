@@ -1,0 +1,797 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-FAC-005",
+ "record_type": "health.facility.renewal.case",
+ "form_version": 1,
+ "procedure_package_id": "health.facility-renewal",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-002: renewal procedures, the licence period and when renewal opens.",
+  "The renewal fee: an approved fee rule (lib/law/rules.ts); none ships.",
+  "The days within which the regulator decides: the procedure's day count, set by the nation (shipped unset).",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-FAC-005",
+  "part": 6,
+  "section": "6.2",
+  "line": 717
+ },
+ "library": {
+  "title": "Renew a health facility licence",
+  "intro": "Apply to renew a health facility's licence. Tell the regulator what has changed since it was granted and send the evidence that the conditions are still met. A change of services or capacity is a variation (its own form).",
+  "owner": "healthRegulation",
+  "filled_by": "The licensed facility's operator or someone acting for it.",
+  "procedure": {
+   "key": "health.facility-renewal",
+   "stage": "submitted",
+   "document": "renewal-evidence"
+  },
+  "lists": {
+   "health.country.facility_types": {
+    "values": [
+     {
+      "value": "hospital",
+      "label": "Hospital"
+     },
+     {
+      "value": "health-centre",
+      "label": "Health centre"
+     },
+     {
+      "value": "clinic",
+      "label": "Clinic"
+     },
+     {
+      "value": "dispensary",
+      "label": "Dispensary"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity home"
+     },
+     {
+      "value": "laboratory",
+      "label": "Medical laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging centre"
+     },
+     {
+      "value": "dental",
+      "label": "Dental practice"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.facility_services": {
+    "values": [
+     {
+      "value": "outpatient",
+      "label": "Outpatient care"
+     },
+     {
+      "value": "inpatient",
+      "label": "Inpatient care"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity and delivery"
+     },
+     {
+      "value": "emergency",
+      "label": "Emergency care"
+     },
+     {
+      "value": "surgery",
+      "label": "Surgery"
+     },
+     {
+      "value": "laboratory",
+      "label": "Laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging"
+     },
+     {
+      "value": "pharmacy",
+      "label": "Pharmacy"
+     },
+     {
+      "value": "immunisation",
+      "label": "Immunisation"
+     },
+     {
+      "value": "dental",
+      "label": "Dental"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.capacity_measures": {
+    "values": [
+     {
+      "value": "beds-total",
+      "label": "Beds (all)"
+     },
+     {
+      "value": "beds-intensive-care",
+      "label": "Intensive-care beds"
+     },
+     {
+      "value": "consulting-rooms",
+      "label": "Consulting rooms"
+     },
+     {
+      "value": "operating-theatres",
+      "label": "Operating theatres"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "health.facility.renewal-fee",
+    "kind": "fee",
+    "source": "rule",
+    "decision": "The renewal fee."
+   },
+   {
+    "key": "health.facility.renewal-window",
+    "kind": "period",
+    "source": "setting",
+    "decision": "How long before the licence ends renewal may or must be applied for."
+   },
+   {
+    "key": "health.facility-renewal.decide",
+    "kind": "days",
+    "source": "procedure",
+    "decision": "The days the regulator has to decide (deadline \"decide\")."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 866,
+    "quotes": [
+     "CFG-LIC-002",
+     "Facility licensing, inspection, and enforcement procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 717,
+    "quotes": [
+     "HLT-FAC-005",
+     "Facility licence renewal",
+     "Renewal review"
+    ],
+    "met_by": {
+     "fields": [
+      "renewal.facility",
+      "renewal.evidence"
+     ],
+     "procedure": "check"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1323,
+    "quotes": [
+     "Health facility",
+     "Unique facility ID, name, type, location, operator, authorised services, operational status, verification date"
+    ],
+    "met_by": {
+     "fields": [
+      "renewal.facility",
+      "renewal.services"
+     ],
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "The register keeps the licence's status and verification date"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1338,
+    "quotes": [
+     "Review against the applicable licensing rules."
+    ],
+    "met_by": {
+     "procedure": "verify"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "renewal.facility",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "reference_type_allowed",
+     "params": {
+      "types": [
+       "health-facilities",
+       "pharmacies"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Facility registration number"
+   },
+   "hint": {
+    "en": "The facility's number in the register of organisations, as shown on its licence."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the facility registration number.",
+     "reference_exists": "There is no organisation with that number in the register.",
+     "REF-ACTIVE": "The facility's licence in the register is not active."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The facility"
+   }
+  },
+  {
+   "use_group": "core.representation",
+   "version": 1,
+   "only": [
+    "representation.capacity",
+    "representation.actor",
+    "representation.authority_document"
+   ],
+   "section": {
+    "en": "Who is applying"
+   }
+  },
+  {
+   "id": "renewal.changed",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Has anything about the facility changed since the licence was granted?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The facility"
+   }
+  },
+  {
+   "id": "renewal.changes",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "renewal.changed",
+      "equals": true
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What has changed"
+   },
+   "hint": {
+    "en": "Changes of services or capacity need a variation; say here whether one was approved."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter what has changed.",
+     "length": "What has changed must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The facility"
+   }
+  },
+  {
+   "id": "renewal.services",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "health.country.facility_services",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Services offered now"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select services offered now.",
+     "value_in_source": "Select services offered now from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Services and capacity"
+   }
+  },
+  {
+   "id": "renewal.capacity",
+   "type": "group",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Capacity now"
+   },
+   "hint": {
+    "en": "Counts only."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "measure",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "health.country.capacity_measures",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "What is counted"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select what is counted."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "count",
+     "type": "number",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Number"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the number.",
+       "integer_range": "Number must be a whole number, 0 or more."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Services and capacity"
+   }
+  },
+  {
+   "id": "renewal.staffing",
+   "type": "group",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Staffing now by professional category"
+   },
+   "hint": {
+    "en": "Numbers by professional category only. No names and nothing about any patient."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "professionalCategory",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "configured_profession",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Professional category"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the professional category."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "count",
+     "type": "number",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Number of staff"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the number of staff.",
+       "integer_range": "Number of staff must be a whole number, 0 or more."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Services and capacity"
+   }
+  },
+  {
+   "id": "renewal.actions_complete",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Are all corrective actions from earlier inspections complete?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "renewal.actions_outstanding",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "renewal.actions_complete",
+      "equals": false
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Which actions are not complete, and why"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter which actions are not complete, and why.",
+     "length": "Which actions are not complete, and why must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "renewal.evidence",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "renewal-evidence",
+     "when": "as_required_by_the_approved_renewal_procedure"
+    }
+   ],
+   "label": {
+    "en": "Evidence the conditions are still met"
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide evidence the conditions are still met."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "renewal.window",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "renewal_window_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date the current licence ends"
+   },
+   "hint": {
+    "en": "As shown on the licence."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the date the current licence ends."
+    }
+   },
+   "country_decision": "CFG-LIC-002: how long before the licence ends a renewal may or must be made.",
+   "section": {
+    "en": "The facility"
+   }
+  },
+  {
+   "use_group": "core.payment",
+   "version": 1,
+   "section": {
+    "en": "Fee"
+   }
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "renewal.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

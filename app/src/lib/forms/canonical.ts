@@ -34,19 +34,34 @@ export interface CanonicalField {
   error_text?: Record<string, Record<string, string>>;
   accessibility?: Record<string, unknown>;
   country_decision?: string | null;
+  /** Several answers (a list of choices, references or documents; a repeatable group). */
+  multiple?: boolean;
+  /** type `group`: the questions of each item (simple questions only). */
+  items?: CanonicalField[];
+  /** The page of the self-service form the question is asked on (presentation only). */
+  section?: Record<string, string>;
 }
+/**
+ * A reusable field group used by a form (field series Part 1 §1.1: "A form
+ * references a group by immutable ID and version; it does not copy and
+ * silently modify the group's fields"), in the place its questions are asked.
+ * `only` lists the group's fields the form's decision needs (Part 1 §1.2).
+ */
+export interface CanonicalGroupUse { use_group: string; version: number; only?: string[]; section?: Record<string, string> }
+export const isGroupUse = (f: CanonicalField | CanonicalGroupUse): f is CanonicalGroupUse => typeof (f as CanonicalGroupUse).use_group === 'string';
 export interface CanonicalForm {
   schema_version: 'civicos.form-contract.v1';
   form_id: string;
   record_type: string;
   form_version: number;
-  status: string;
+  /** A declared status is never read (lib/forms/publication.ts derives the register status); CivicOS's own contracts carry none. */
+  status?: string;
   institution_id?: string;
   service_id?: string;
   procedure_package_id?: string;
   procedure_package_version?: number;
   legal_basis: unknown[];
-  fields: CanonicalField[];
+  fields: (CanonicalField | CanonicalGroupUse)[];
   country_decisions?: string[];
 }
 export interface CanonicalGroup {
@@ -87,6 +102,8 @@ const REGISTRY_SOURCES: Record<string, string> = {
   'tax.registry.taxpayer_accounts': 'taxpayer',
   'civicos.registry.law_provisions': 'law',
   'civicos.registry.approved_legal_authorities': 'law',
+  'civicos.registry.professionals': 'professional',
+  'civicos.registry.sites': 'site',
 };
 /** Rules whose field is answered by an official, or set by the platform. */
 const OFFICER_RULES = new Set(Object.entries(RULE_REGISTRY).filter(([, r]) => r.scope === 'officer').map(([k]) => k));
@@ -115,6 +132,14 @@ export function canonicalField(f: CanonicalField, group?: { id: string; version:
     case 'identifier_reference': base.type = 'identifierReference'; base.identifier = { scheme: f.label.en ?? f.id }; break;
     case 'registry_reference': base.type = 'registryReference'; base.register = (src && REGISTRY_SOURCES[src]) ?? src ?? 'unspecified'; break;
     case 'document': base.type = 'document'; base.evidence = f.evidence[0]?.kind ?? f.id.replace(/[._]/g, '-'); break;
+    case 'date_range': base.type = 'dateRange'; break;
+    case 'timestamp': base.type = 'timestamp'; break;
+    case 'quantity': base.type = 'quantity'; break;
+    case 'group':
+      // A repeatable set of simple questions (an inspection finding, a count by indicator): each item's questions load the same way.
+      base.type = 'group';
+      base.items = (f.items ?? []).map(i => { const r = canonicalField(i); notes.push(...r.notes.map(n => ({ ...n, field: `${f.id}.${n.field ?? i.id}` }))); return r.field; });
+      break;
     default:
       notes.push({ field: f.id, kind: 'not-expressed', note: `Type ${f.type} has no equivalent in the form contract: kept as a long-text answer` });
       base.type = 'longtext';
@@ -147,6 +172,8 @@ export function canonicalField(f: CanonicalField, group?: { id: string; version:
     ...(audience ? { audience, valueSource: audience === 'system' ? 'system' : 'authorized_officer' } : { valueSource: 'applicant' }),
     ...(showWhen && showWhen.field !== f.id ? { showWhen } : {}),
     ...(group ? { group } : {}),
+    ...(f.multiple ? { multiple: true } : {}),
+    ...(en(f.section) ? { section: en(f.section) } : {}),
   };
   // Other languages: translations kept with the English they were made from.
   const translations: Record<string, TranslationEntries> = {};
@@ -158,7 +185,7 @@ export function canonicalField(f: CanonicalField, group?: { id: string; version:
 }
 
 const mergeTranslations = (into: Record<string, TranslationEntries>, from: Record<string, TranslationEntries>) => { for (const [l, e] of Object.entries(from)) into[l] = { ...(into[l] ?? {}), ...e }; };
-const documentsOf = (fields: ContractField[]): ContractDocument[] => fields.filter(f => f.type === 'document' && f.evidence).map(f => ({ class: f.evidence!, label: f.label, required: !!f.required, ...(f.hint ? { purpose: f.hint } : {}) }));
+const documentsOf = (fields: ContractField[]): ContractDocument[] => fields.filter(f => f.type === 'document' && f.evidence).map(f => ({ class: f.evidence!, label: f.label, required: !!f.required, ...(f.hint ? { purpose: f.hint } : {}), ...(f.multiple ? { multiple: true } : {}) }));
 
 /** Load a reusable field group. */
 export function importFieldGroup(g: CanonicalGroup): FieldGroup {
@@ -176,12 +203,31 @@ export function importFieldGroup(g: CanonicalGroup): FieldGroup {
 
 export interface CanonicalDefinition { key: string; title: string; fields: ContractField[]; documents: ContractDocument[]; form: FormSpec }
 
-/** Load a form contract in the canonical format. */
-export function importCanonicalForm(c: CanonicalForm, opts: { title?: string } = {}): { definition: CanonicalDefinition; notes: CanonicalNote[] } {
+/**
+ * Load a form contract in the canonical format. A field group the form uses
+ * (`{"use_group": id, "version": n, "only": [...]}`) is resolved with
+ * `opts.groups` (the library's groups); its fields keep the group's id and
+ * version and are not changed. A group that cannot be resolved, or a field
+ * it does not have, is a problem: never skipped silently.
+ */
+export function importCanonicalForm(c: CanonicalForm, opts: { title?: string; groups?: (id: string, version: number) => FieldGroup | undefined } = {}): { definition: CanonicalDefinition; notes: CanonicalNote[] } {
   const notes: CanonicalNote[] = [];
   if (c.schema_version !== 'civicos.form-contract.v1') notes.push({ kind: 'problem', note: `Schema ${c.schema_version} is not civicos.form-contract.v1` });
   const translations: Record<string, TranslationEntries> = {};
-  const fields = (c.fields ?? []).map(f => { const r = canonicalField(f); notes.push(...r.notes); mergeTranslations(translations, r.translations); return r.field; });
+  const used: { id: string; version: number }[] = [];
+  const fields = (c.fields ?? []).flatMap(f => {
+    if (isGroupUse(f)) {
+      const g = opts.groups?.(f.use_group, f.version);
+      if (!g) { notes.push({ kind: 'problem', note: `Field group ${f.use_group} version ${f.version} is not in the library` }); return []; }
+      const missing = (f.only ?? []).filter(k => !g.fields.some(x => x.key === k));
+      if (missing.length) notes.push({ kind: 'problem', note: `Field group ${f.use_group} has no field ${missing.join(', ')}` });
+      if (!used.some(u => u.id === g.id && u.version === g.version)) used.push({ id: g.id, version: g.version });
+      mergeTranslations(translations, g.translations);
+      const sec = f.section?.en ?? (f.section ? Object.values(f.section)[0] : undefined);
+      return useGroup(g, f.only ? { only: f.only } : {}).map(x => (sec ? { ...x, section: sec } : x));
+    }
+    const r = canonicalField(f); notes.push(...r.notes); mergeTranslations(translations, r.translations); return [r.field];
+  });
   // A condition naming a field the contract does not define: the question is added (a yes-or-no the condition reads), never left unevaluable.
   for (const f of [...fields]) {
     for (const r of f.rules ?? []) {
@@ -194,12 +240,13 @@ export function importCanonicalForm(c: CanonicalForm, opts: { title?: string } =
   }
   const documents = documentsOf(fields);
   const form: FormSpec = {
-    version: String(c.form_version), schemaVersion: c.schema_version, status: c.status,
+    version: String(c.form_version), schemaVersion: c.schema_version, ...(c.status !== undefined ? { status: c.status } : {}),
     spec: { id: c.form_id, version: String(c.form_version), recordType: c.record_type },
     legalBasis: [...(c.legal_basis ?? [])], countryDecisions: [...(c.country_decisions ?? [])],
     ...(c.institution_id ? { institutionId: c.institution_id } : {}), ...(c.service_id ? { serviceId: c.service_id } : {}),
     ...(c.procedure_package_id ? { procedurePackage: { id: c.procedure_package_id, version: c.procedure_package_version ?? 1 } } : {}),
     ...(Object.keys(translations).length ? { translations } : {}),
+    ...(used.length ? { groups: used } : {}),
   };
   const keys = fields.map(f => f.key), classes = documents.map(d => d.class);
   for (const f of fields) { const why = fieldProblem(f, keys, classes); if (why) notes.push({ field: f.key, kind: 'problem', note: why }); }

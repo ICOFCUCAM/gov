@@ -1,0 +1,941 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-LIC-001",
+ "record_type": "professional.registration.case",
+ "form_version": 1,
+ "procedure_package_id": "prof.registration",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-001: professional categories, qualifications and licensing powers; the regulator of each profession.",
+  "CFG-DAT-001: classification, retention and disclosure of registration records.",
+  "The registration fee: an approved fee rule (lib/law/rules.ts); none ships.",
+  "The days within which the regulator decides: the procedure's day count, set by the nation (shipped unset).",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-LIC-001",
+  "part": 6,
+  "section": "6.1",
+  "line": 697
+ },
+ "library": {
+  "title": "Apply to register as a health professional",
+  "intro": "Apply to be registered in a regulated health profession. Your qualifications are checked with the bodies that awarded them. Disciplinary information is kept separately and restricted to the regulator. This form never asks about your health or about any patient.",
+  "owner": "professionalRegulation",
+  "filled_by": "The applicant, online, at an office or on paper.",
+  "authority": "The regulator that keeps the chosen profession's register (lib/professions/register.ts, profession().authority), under the approved permit authority mapping of the profession's permit type; never a ministry by name.",
+  "procedure": {
+   "key": "prof.registration",
+   "stage": "submitted",
+   "document": "qualification-evidence"
+  },
+  "lists": {
+   "professional.country.scope_categories": {
+    "values": [
+     {
+      "value": "full",
+      "label": "Full practice"
+     },
+     {
+      "value": "limited",
+      "label": "Limited scope"
+     },
+     {
+      "value": "supervised",
+      "label": "Supervised practice"
+     },
+     {
+      "value": "specialist",
+      "label": "Specialist practice"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "policies": {
+   "decision.licensing_authority": "configured_by_profession",
+   "decision.qualification_verification": "recorded_with_source",
+   "decision.legal_basis": "required",
+   "decision.disciplinary_information": "separately_restricted"
+  },
+  "nation_values": [
+   {
+    "key": "professional.registration-fee",
+    "kind": "fee",
+    "source": "rule",
+    "decision": "The registration fee, per profession."
+   },
+   {
+    "key": "prof.registration.decide",
+    "kind": "days",
+    "source": "procedure",
+    "decision": "The days the regulator has to decide (prof.registration deadline \"decide\")."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "spec-person",
+    "field": "applicant_reference",
+    "what": "person_reference carried as a register reference to the civil register (applicant.person) with the name as in the group core.person",
+    "why": "The register of professionals keeps a person reference; it is checked when the registration is decided (prof.check).",
+    "rule": "FORMS_CONFORMANCE §2 (professional-licensing.initial-application)"
+   },
+   {
+    "id": "no-health-declaration",
+    "what": "No declaration about the applicant's health or fitness on health grounds",
+    "why": "No individual health field anywhere; a nation whose law requires a health declaration handles it outside the platform.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "procedure-form",
+    "what": "Linked to prof.registration, which already carries the specification's form (professional-licensing.initial-application); this contract is the catalogue's, a superset of it, attached when the nation adopts it in a new procedure version",
+    "why": "Attaching it changes an existing reference procedure; a different official approves procedure versions.",
+    "rule": "CLAUDE.md Government operating model: cases change only under an approved procedure package"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 504,
+    "quotes": [
+     "Health professions regulator",
+     "Registration, licensing, and professional conduct",
+     "Licensing records are separate from confidential patient records"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 865,
+    "quotes": [
+     "CFG-LIC-001",
+     "Professional categories, qualifications, and licensing powers"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 697,
+    "quotes": [
+     "HLT-LIC-001",
+     "Initial professional registration",
+     "Application registered"
+    ],
+    "met_by": {
+     "fields": [
+      "applicant.person",
+      "registration.profession"
+     ],
+     "procedure": "check"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1324,
+    "quotes": [
+     "Health professional",
+     "Professional reference, verified qualifications, registration authority, licence status, scope of practice where authorised"
+    ],
+    "met_by": {
+     "fields": [
+      "applicant.person",
+      "registration.qualifications",
+      "registration.category"
+     ],
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "The registration authority and licence status are the register's; verification is HLT-LIC-002"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1805,
+    "quotes": [
+     "Professional identity reference, qualifications, verification sources, registration category, licence number, validity and status, restrictions that are lawfully disclosable, continuing requirements, case history and decision record."
+    ],
+    "met_by": {
+     "fields": [
+      "applicant.person",
+      "registration.qualifications",
+      "registration.category",
+      "registration.number"
+     ],
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Validity, status, conditions, case history and decision record are kept by the register and the case"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1809,
+    "quotes": [
+     "Applicant submits the application and required qualifications."
+    ],
+    "met_by": {
+     "fields": [
+      "registration.qualifications",
+      "registration.qualification_evidence"
+     ],
+     "procedure": "check"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1825,
+    "quotes": [
+     "{\"id\": \"applicant_reference\", \"type\": \"person_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "applicant.person"
+     ],
+     "deviation": "spec-person"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1826,
+    "quotes": [
+     "{\"id\": \"profession\", \"type\": \"configured_profession\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "registration.profession"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1827,
+    "quotes": [
+     "{\"id\": \"qualification_records\", \"type\": \"evidence_collection\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "registration.qualification_evidence",
+      "registration.qualifications"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1828,
+    "quotes": [
+     "{\"id\": \"issuing_institutions\", \"type\": \"organisation_reference_list\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "registration.qualifications"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1829,
+    "quotes": [
+     "{\"id\": \"practice_category\", \"type\": \"configured_scope_category\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "registration.category"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1830,
+    "quotes": [
+     "{\"id\": \"declarations\", \"type\": \"attestation_collection\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "declaration.confirmed",
+      "registration.matters"
+     ],
+     "deviation": "no-health-declaration"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1833,
+    "quotes": [
+     "\"licensing_authority\": \"configured_by_profession\""
+    ],
+    "met_by": {
+     "policy": "decision.licensing_authority"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1834,
+    "quotes": [
+     "\"qualification_verification\": \"recorded_with_source\""
+    ],
+    "met_by": {
+     "policy": "decision.qualification_verification"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1835,
+    "quotes": [
+     "\"legal_basis\": \"required\""
+    ],
+    "met_by": {
+     "policy": "decision.legal_basis"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1836,
+    "quotes": [
+     "\"disciplinary_information\": \"separately_restricted\""
+    ],
+    "met_by": {
+     "policy": "decision.disciplinary_information",
+     "fields": [
+      "registration.matters_details"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "applicant.person",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.person",
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Your birth registration or national identity number"
+   },
+   "hint": {
+    "en": "It links the registration to you; it is never shown on the public register."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter your birth registration or national identity number.",
+     "reference_exists": "There is no person with that number in the civil register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "You"
+   }
+  },
+  {
+   "use_group": "core.person",
+   "version": 1,
+   "only": [
+    "person.name_full"
+   ],
+   "section": {
+    "en": "You"
+   }
+  },
+  {
+   "id": "registration.profession",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "configured_profession",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Profession"
+   },
+   "hint": {
+    "en": "The professions whose registers the regulators keep."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the profession.",
+     "value_in_source": "Select the profession from the list."
+    }
+   },
+   "country_decision": "CFG-LIC-001: the professions regulated by law and the regulator of each.",
+   "section": {
+    "en": "Your profession"
+   }
+  },
+  {
+   "id": "registration.category",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "professional.country.scope_categories",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Registration category or scope of practice applied for"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the registration category or scope of practice applied for.",
+     "value_in_source": "Select the registration category or scope of practice applied for from the list."
+    }
+   },
+   "country_decision": "CFG-LIC-001: the registration categories and scopes of practice of each profession.",
+   "section": {
+    "en": "Your profession"
+   }
+  },
+  {
+   "id": "registration.qualifications",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Your qualifications"
+   },
+   "hint": {
+    "en": "One entry for each qualification. The regulator checks each with the body that awarded it."
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to your qualifications."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "title",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Title of the qualification"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the title of the qualification.",
+       "length": "Title of the qualification must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "awardingBody",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Body that awarded it"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the body that awarded it.",
+       "length": "Body that awarded it must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "awardingBodyRef",
+     "type": "registry_reference",
+     "required": false,
+     "validation": [],
+     "values_source": "civicos.registry.organisation",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Its number in the register of organisations, if it has one"
+     },
+     "country_decision": null
+    },
+    {
+     "id": "qualificationNumber",
+     "type": "identifier_reference",
+     "required": false,
+     "validation": [],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Qualification number, if the education register gave one"
+     },
+     "hint": {
+      "en": "A QUA- number lets the regulator check it through the qualification check service."
+     },
+     "country_decision": null
+    },
+    {
+     "id": "country",
+     "type": "choice",
+     "required": false,
+     "validation": [],
+     "values_source": "iso.3166-1.alpha2.current",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Country where it was awarded"
+     },
+     "country_decision": null
+    },
+    {
+     "id": "awardedOn",
+     "type": "date",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "date_not_in_future",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Date awarded"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the date awarded.",
+       "date_not_in_future": "Date awarded must be today or in the past."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Qualifications"
+   }
+  },
+  {
+   "id": "registration.qualification_evidence",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "qualification-evidence",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Evidence of your qualifications"
+   },
+   "hint": {
+    "en": "Certificates and transcripts. The regulator checks each with the body that awarded it."
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide evidence of your qualifications."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Qualifications"
+   }
+  },
+  {
+   "id": "registration.identity_evidence",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "identity-evidence",
+     "when": "unless_identity_evidence_was_seen_at_an_office"
+    }
+   ],
+   "label": {
+    "en": "Identity evidence"
+   },
+   "hint": {
+    "en": "At an office the official records the document they saw instead."
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide the identity evidence."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Qualifications"
+   }
+  },
+  {
+   "id": "registration.registered_elsewhere",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Are you, or were you, registered in this profession elsewhere?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Qualifications"
+   }
+  },
+  {
+   "id": "registration.good_standing",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "registration.registered_elsewhere",
+      "equals": true
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "good-standing",
+     "when": "when_registered_elsewhere"
+    }
+   ],
+   "label": {
+    "en": "Certificate of good standing from that regulator"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Say how you will provide the certificate of good standing from that regulator."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Qualifications"
+   }
+  },
+  {
+   "id": "registration.matters",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Has a regulator or a court ever made a finding, sanction or restriction the law says you must declare?"
+   },
+   "hint": {
+    "en": "Do not give information about your health on this form."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": "CFG-LIC-001: the matters the law requires an applicant to declare.",
+   "section": {
+    "en": "Declarations"
+   }
+  },
+  {
+   "id": "registration.matters_details",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "registration.matters",
+      "equals": true
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Details of what you are declaring"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter details of what you are declaring.",
+     "length": "Details of what you are declaring must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Declarations"
+   }
+  },
+  {
+   "id": "registration.number",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Registration number"
+   },
+   "hint": {
+    "en": "Given by the register when the registration is decided."
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.payment",
+   "version": 1,
+   "section": {
+    "en": "Fee"
+   }
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declarations"
+   }
+  },
+  {
+   "id": "registration.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

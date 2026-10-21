@@ -1,0 +1,474 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-LIC-012",
+ "record_type": "professional.fitness.case",
+ "form_version": 1,
+ "procedure_package_id": "prof.fitness",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-001: suspension and revocation powers and procedures.",
+  "The days given for representations: the procedure's day count, set by the nation (shipped unset).",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-LIC-012",
+  "part": 6,
+  "section": "6.1",
+  "line": 708
+ },
+ "library": {
+  "title": "Open a review to suspend or revoke a registration",
+  "intro": "Opens the legal process to suspend or revoke a professional's registration. The regulator states the grounds and the provision relied on; the professional is given notice and invited to make representations before an official with the power to decide does so, with reasons. Restricted to the regulator.",
+  "owner": "professionalRegulation",
+  "filled_by": "An official of the regulator; the decision is made later in the case by a different official who can sign.",
+  "authority": "The regulator that keeps the chosen profession's register (lib/professions/register.ts, profession().authority), under the approved permit authority mapping of the profession's permit type; never a ministry by name.",
+  "procedure": {
+   "key": "prof.fitness",
+   "stage": "opened",
+   "action": "notify",
+   "document": "grounds"
+  },
+  "lists": {
+   "professional.country.measures": {
+    "values": [
+     {
+      "value": "suspension",
+      "label": "Suspension (prof.fitness)"
+     },
+     {
+      "value": "revocation",
+      "label": "Revocation (prof.fitness)"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "prof.fitness.representations",
+    "kind": "days",
+    "source": "procedure",
+    "decision": "The days the professional has to make representations after notice."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 504,
+    "quotes": [
+     "Health professions regulator",
+     "Registration, licensing, and professional conduct",
+     "Licensing records are separate from confidential patient records"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 865,
+    "quotes": [
+     "CFG-LIC-001",
+     "Professional categories, qualifications, and licensing powers"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 800,
+    "quotes": [
+     "HX-004",
+     "Health regulator",
+     "Licensed provider",
+     "Regulatory notice or decision"
+    ],
+    "met_by": {
+     "procedure": "notify"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 708,
+    "quotes": [
+     "HLT-LIC-012",
+     "Licence suspension or revocation review",
+     "Legal process initiated"
+    ],
+    "met_by": {
+     "fields": [
+      "fitness.grounds",
+      "fitness.law"
+     ],
+     "procedure": "notify"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1324,
+    "quotes": [
+     "Health professional",
+     "Professional reference, verified qualifications, registration authority, licence status, scope of practice where authorised"
+    ],
+    "met_by": {
+     "fields": [
+      "fitness.professional"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1805,
+    "quotes": [
+     "Professional identity reference, qualifications, verification sources, registration category, licence number, validity and status, restrictions that are lawfully disclosable, continuing requirements, case history and decision record."
+    ],
+    "met_by": {
+     "fields": [
+      "fitness.related"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1816,
+    "quotes": [
+     "Renewal, suspension, restoration and appeal follow separate procedures."
+    ],
+    "met_by": {
+     "procedure": "notify",
+     "platform": {
+      "file": "app/src/lib/professions/procedures.ts",
+      "how": "Suspension and revocation are prof.fitness, separate from registration and renewal"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "fitness.professional",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.professionals",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Registration number"
+   },
+   "hint": {
+    "en": "The number on the professional register, as shown on the registration certificate."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the registration number.",
+     "reference_exists": "There is no professional with that number on the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The review"
+   }
+  },
+  {
+   "id": "fitness.measure",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "professional.country.measures",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Measure under review"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the measure under review.",
+     "value_in_source": "Select the measure under review from the list."
+    }
+   },
+   "country_decision": "CFG-LIC-001: the measures the law provides and who holds each power.",
+   "section": {
+    "en": "The review"
+   }
+  },
+  {
+   "id": "fitness.grounds",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Grounds"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter grounds.",
+     "length": "Grounds must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Grounds"
+   }
+  },
+  {
+   "id": "fitness.grounds_evidence",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "grounds",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Grounds (complaint, finding, report)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide grounds (complaint, finding, report)."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Grounds"
+   }
+  },
+  {
+   "id": "fitness.related",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Complaint, investigation or decision references"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Grounds"
+   }
+  },
+  {
+   "id": "fitness.law",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "legal_references_resolve",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.law_provisions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Provision of law relied on"
+   },
+   "hint": {
+    "en": "The provision from the laws register, in the version in force. The decision cites this version."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the provision of law relied on.",
+     "legal_references_resolve": "That provision is not in the laws register in a version in force."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Grounds"
+   }
+  },
+  {
+   "id": "fitness.opened_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Official who opened the review"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "fitness.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

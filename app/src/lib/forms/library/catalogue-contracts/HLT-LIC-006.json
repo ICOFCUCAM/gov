@@ -1,0 +1,585 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-LIC-006",
+ "record_type": "professional.continuing-education.record",
+ "form_version": 1,
+ "procedure_package_id": "prof.renewal",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-001: the continuing-education scheme of each profession: what counts, the cycle and the amount required.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-LIC-006",
+  "part": 6,
+  "section": "6.1",
+  "line": 702
+ },
+ "library": {
+  "title": "Record continuing education",
+  "intro": "Record the continuing education you have done, with evidence. The regulator accepts each activity or asks for more; what counts and how much is needed come from the nation's rules.",
+  "owner": "professionalRegulation",
+  "filled_by": "The registered professional; the regulator accepts each record at a step of its own.",
+  "authority": "The regulator that keeps the chosen profession's register (lib/professions/register.ts, profession().authority), under the approved permit authority mapping of the profession's permit type; never a ministry by name.",
+  "procedure": {
+   "key": "prof.renewal",
+   "stage": "submitted",
+   "document": "renewal-evidence"
+  },
+  "lists": {
+   "professional.country.cpd_activity_types": {
+    "values": [
+     {
+      "value": "course",
+      "label": "A course"
+     },
+     {
+      "value": "conference",
+      "label": "A conference or seminar"
+     },
+     {
+      "value": "supervised-practice",
+      "label": "Supervised practice"
+     },
+     {
+      "value": "self-directed",
+      "label": "Self-directed learning"
+     },
+     {
+      "value": "teaching",
+      "label": "Teaching or supervising others"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   },
+   "professional.country.cpd_acceptance": {
+    "values": [
+     {
+      "value": "accepted",
+      "label": "Accepted"
+     },
+     {
+      "value": "not-accepted",
+      "label": "Not accepted"
+     },
+     {
+      "value": "more-information",
+      "label": "More information needed"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "professional.cpd-requirement",
+    "kind": "hours",
+    "source": "setting",
+    "decision": "The continuing education required per cycle (hours or points)."
+   },
+   {
+    "key": "professional.cpd-cycle",
+    "kind": "period",
+    "source": "setting",
+    "decision": "The length of the continuing-education cycle."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 504,
+    "quotes": [
+     "Health professions regulator",
+     "Registration, licensing, and professional conduct",
+     "Licensing records are separate from confidential patient records"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 865,
+    "quotes": [
+     "CFG-LIC-001",
+     "Professional categories, qualifications, and licensing powers"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 702,
+    "quotes": [
+     "HLT-LIC-006",
+     "Continuing education record",
+     "Approved evidence recorded"
+    ],
+    "met_by": {
+     "fields": [
+      "cpd.activities",
+      "cpd.evidence",
+      "cpd.accepted"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1324,
+    "quotes": [
+     "Health professional",
+     "Professional reference, verified qualifications, registration authority, licence status, scope of practice where authorised"
+    ],
+    "met_by": {
+     "fields": [
+      "cpd.professional"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1805,
+    "quotes": [
+     "Professional identity reference, qualifications, verification sources, registration category, licence number, validity and status, restrictions that are lawfully disclosable, continuing requirements, case history and decision record."
+    ],
+    "met_by": {
+     "fields": [
+      "cpd.activities"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "cpd.professional",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.professionals",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Registration number"
+   },
+   "hint": {
+    "en": "The number on the professional register, as shown on the registration certificate."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the registration number.",
+     "reference_exists": "There is no professional with that number on the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "You"
+   }
+  },
+  {
+   "id": "cpd.period",
+   "type": "date_range",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "continuing_education_requirement_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Period these activities count towards"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the period these activities count towards."
+    }
+   },
+   "country_decision": "CFG-LIC-001: the continuing-education cycle of each profession.",
+   "section": {
+    "en": "Activities"
+   }
+  },
+  {
+   "id": "cpd.activities",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Activities"
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the activities."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "title",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Activity"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the activity.",
+       "length": "Activity must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "provider",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Provider"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the provider.",
+       "length": "Provider must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "providerApproval",
+     "type": "identifier_reference",
+     "required": false,
+     "validation": [],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Provider's approval reference, if approved"
+     },
+     "country_decision": null
+    },
+    {
+     "id": "kind",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "professional.country.cpd_activity_types",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Kind of activity"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the kind of activity."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "completedOn",
+     "type": "date",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "date_not_in_future",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Date completed"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the date completed.",
+       "date_not_in_future": "Date completed must be today or in the past."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "credit",
+     "type": "number",
+     "required": false,
+     "validation": [
+      {
+       "rule": "NONNEGATIVE",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Hours or points claimed"
+     },
+     "hint": {
+      "en": "As the nation's scheme counts them."
+     },
+     "error_text": {
+      "en": {
+       "NONNEGATIVE": "Hours or points claimed cannot be below zero."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Activities"
+   }
+  },
+  {
+   "id": "cpd.evidence",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "renewal-evidence",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Evidence of the activities"
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide evidence of the activities."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Activities"
+   }
+  },
+  {
+   "id": "cpd.accepted",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "professional.country.cpd_acceptance",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Regulator's acceptance"
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "cpd.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

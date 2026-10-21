@@ -1,0 +1,830 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-LIC-008",
+ "record_type": "professional.conduct.complaint",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-001: conduct complaint handling, who investigates and the bodies complaints are routed to.",
+  "Whether anonymous complaints are accepted, and how a complainant is protected.",
+  "CFG-DAT-001: retention and disclosure of complaints and the complainant's identity.",
+  "The days within which a complaint is acknowledged: set by the nation (shipped unset).",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-LIC-008",
+  "part": 6,
+  "section": "6.1",
+  "line": 704
+ },
+ "library": {
+  "title": "Complain about a health professional",
+  "intro": "Tell the regulator about the conduct of a registered health professional. Describe it in your own words; you do not need to give anyone's medical details. A complaint is never shown on the public register. Who you are and what you tell us are restricted to the officials handling it.",
+  "owner": "professionalRegulation",
+  "filled_by": "Anyone: online, at an office or on paper. The regulator registers it and routes it to the body that can act.",
+  "authority": "The regulator that keeps the chosen profession's register (lib/professions/register.ts, profession().authority), under the approved permit authority mapping of the profession's permit type; never a ministry by name.",
+  "procedure": null,
+  "intended": "A conduct-complaint intake of the professions regulator that registers and routes the complaint: to a conduct investigation (HLT-LIC-009) and fitness-to-practise case (prof.fitness, document \"grounds\") or by referral to another institution (lib/casework/referral.ts); the intake is not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "professional.country.concern_categories": {
+    "values": [
+     {
+      "value": "conduct",
+      "label": "Conduct or behaviour"
+     },
+     {
+      "value": "practising-unregistered",
+      "label": "Practising without registration"
+     },
+     {
+      "value": "outside-scope",
+      "label": "Practising outside their scope"
+     },
+     {
+      "value": "honesty-or-records",
+      "label": "Honesty or records"
+     },
+     {
+      "value": "communication",
+      "label": "Communication"
+     },
+     {
+      "value": "professional-work",
+      "label": "How they carry out their professional work"
+     },
+     {
+      "value": "other",
+      "label": "Something else"
+     }
+    ],
+    "proposed": true
+   },
+   "civicos.complaint.relationship": {
+    "values": [
+     {
+      "value": "used-the-service",
+      "label": "I used their service"
+     },
+     {
+      "value": "family-or-representative",
+      "label": "Family member or representative of someone who did"
+     },
+     {
+      "value": "colleague",
+      "label": "A colleague"
+     },
+     {
+      "value": "employer",
+      "label": "Their employer"
+     },
+     {
+      "value": "member-of-the-public",
+      "label": "Member of the public"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "professional.complaint-acknowledgement",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The days within which a complaint is acknowledged."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "free-text-only",
+    "what": "A complaint about care is described only in restricted free text",
+    "why": "No structured clinical, treatment or patient field; the text is restricted and shown only on the case.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "independent-oversight",
+    "what": "Independent health oversight is not this regulator: a complaint for an independent body is referred to it as a case (lib/casework/referral.ts); its independence and access limits are the institution register's",
+    "why": "An independent institution receives only a referral or request, never an instruction or the regulator's file.",
+    "rule": "CLAUDE.md Constitutional architecture: institutionBounds(), referrals between institutions are cases"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 504,
+    "quotes": [
+     "Health professions regulator",
+     "Registration, licensing, and professional conduct",
+     "Licensing records are separate from confidential patient records"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 865,
+    "quotes": [
+     "CFG-LIC-001",
+     "Professional categories, qualifications, and licensing powers"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 508,
+    "quotes": [
+     "Independent health oversight",
+     "Inspection, complaints, and patient-rights oversight",
+     "Must preserve its statutory independence and lawful access limits"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.routed_to"
+     ],
+     "deviation": "independent-oversight"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 704,
+    "quotes": [
+     "HLT-LIC-008",
+     "Professional conduct complaint",
+     "Complaint registered and routed"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.description",
+      "complaint.routed_to",
+      "complaint.routing_reason"
+     ],
+     "deviation": "free-text-only"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1324,
+    "quotes": [
+     "Health professional",
+     "Professional reference, verified qualifications, registration authority, licence status, scope of practice where authorised"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.professional"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1805,
+    "quotes": [
+     "Professional identity reference, qualifications, verification sources, registration category, licence number, validity and status, restrictions that are lawfully disclosable, continuing requirements, case history and decision record."
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.professional"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1836,
+    "quotes": [
+     "\"disciplinary_information\": \"separately_restricted\""
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.description",
+      "complainant.name"
+     ],
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Complaints are never on the register or its public check"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1841,
+    "quotes": [
+     "Public verification: show only the legally publishable minimum—typically a licence identifier, profession, current status and issuing authority where disclosure is authorised.",
+     "Do not expose addresses, identity-document numbers, personal contact details or unsubstantiated complaints."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/app/api/registers/professionals/route.ts",
+      "how": "Unsubstantiated complaints are never on the public check"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "complaint.professional",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.professionals",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Their registration number, if you know it"
+   },
+   "hint": {
+    "en": "The number on the professional register, as shown on the registration certificate."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no professional with that number on the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The professional"
+   }
+  },
+  {
+   "id": "complaint.professional_name",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Name of the professional"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the name of the professional.",
+     "length": "Name of the professional must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The professional"
+   }
+  },
+  {
+   "id": "complaint.workplace",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Where they work, if you know"
+   },
+   "error_text": {
+    "en": {
+     "length": "Where they work, if you know must be 300 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The professional"
+   }
+  },
+  {
+   "id": "complaint.facility",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "reference_type_allowed",
+     "params": {
+      "types": [
+       "health-facilities",
+       "pharmacies"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The facility's registration number, if you know it"
+   },
+   "hint": {
+    "en": "The facility's number in the register of organisations, as shown on its licence."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no organisation with that number in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The professional"
+   }
+  },
+  {
+   "id": "complaint.category",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "professional.country.concern_categories",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What is the complaint about?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.description",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Describe what happened"
+   },
+   "hint": {
+    "en": "What happened and when. You do not need to give anyone's medical details: the regulator asks for more only if it must and the law allows."
+   },
+   "error_text": {
+    "en": {
+     "required": "Describe what happened.",
+     "length": "Describe what happened must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.when",
+   "type": "date_range",
+   "required": false,
+   "validation": [
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "When it happened"
+   },
+   "error_text": {
+    "en": {
+     "date_not_in_future": "When it happened must be today or in the past."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.risk_now",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Do you think people are at risk now?"
+   },
+   "hint": {
+    "en": "If someone is in danger now, call the emergency services first."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.raised_elsewhere",
+   "type": "boolean",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Have you raised this with the employer, the police or another body?"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "complaint_evidence",
+     "when": "when_the_complainant_has_evidence"
+    }
+   ],
+   "label": {
+    "en": "Anything that supports the complaint"
+   },
+   "hint": {
+    "en": "Letters, messages, receipts. Do not send medical records."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complainant.anonymous",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "configured_profile",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Do you want to stay anonymous?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": "Whether the nation accepts anonymous complaints about professionals (CFG-LIC-001).",
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "complainant.name",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "complainant.anonymous",
+      "equals": false
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Your name"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter your name.",
+     "length": "Your name must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "complainant.contact",
+   "type": "contact",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "complainant.anonymous",
+      "equals": false
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "How we can reach you"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter how we can reach you."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "complainant.relationship",
+   "type": "choice",
+   "required": false,
+   "validation": [],
+   "values_source": "civicos.complaint.relationship",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "How you know the professional"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "complainant.identity_shared",
+   "type": "boolean",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "complainant.anonymous",
+      "equals": false
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "May the regulator tell the professional who you are?"
+   },
+   "hint": {
+    "en": "Fairness may require the professional to know the complaint; the regulator tells you first if your name must be given."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "complaint.routed_to",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Where the complaint was routed"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "complaint.routing_reason",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Why it was routed there"
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "complaint.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

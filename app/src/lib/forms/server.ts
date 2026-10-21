@@ -83,6 +83,8 @@ export function valueSnapshot(on?: string): ValueSnapshot {
       // The field series' standard values sources (Part 1 §1.3) and the ones another system keeps.
       ...STANDARD_SOURCES,
       'iso.3166-1.alpha2.current': COUNTRY_LIST.map(c => ({ value: c.iso2, label: `${c.name} (${c.iso2})` })),
+      // The nation's regions, as a values source a canonical contract names (read at use).
+      'civicos.nation.regions': regionList([]).map(r => ({ value: r, label: r })),
       'civicos.country.official_and_supported_languages': nationLanguages().map(l => ({ value: l, label: languageName(l) })),
     },
   };

@@ -1,0 +1,1366 @@
+{
+ "about": "Catalogue passages every contract of batch 1 answers the same way (Part 6 common, Part 1 shared rules, the supplement's conventions and gates), with how each is met. Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "applies_to": [
+  "HLT-FAC-001",
+  "HLT-FAC-002",
+  "HLT-FAC-003",
+  "HLT-FAC-004",
+  "HLT-FAC-005",
+  "HLT-FAC-006",
+  "HLT-FAC-007",
+  "HLT-FAC-008",
+  "HLT-FAC-009",
+  "HLT-FAC-010",
+  "HLT-LIC-001",
+  "HLT-LIC-002",
+  "HLT-LIC-003",
+  "HLT-LIC-004",
+  "HLT-LIC-005",
+  "HLT-LIC-006",
+  "HLT-LIC-007",
+  "HLT-LIC-008",
+  "HLT-LIC-009",
+  "HLT-LIC-010",
+  "HLT-LIC-011",
+  "HLT-LIC-012",
+  "HLT-LIC-013",
+  "HLT-LIC-014",
+  "HLT-PH-015"
+ ],
+ "items": [
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 496,
+   "quotes": [
+    "The central architectural rule is clinical confidentiality by design.",
+    "CivicOS may provide common identity, case management, payments, notifications, and audit infrastructure, but clinical records must remain under the control of authorized health institutions.",
+    "A government-wide platform must not become a universal medical-record browser."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/scope.ts",
+     "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 498,
+   "quotes": [
+    "As in earlier parts, all form IDs below are CivicOS catalogue identifiers.",
+    "Countries must configure their own laws, competent authorities, health-service structures, clinical standards, reporting obligations, and retention policies before enabling the workflows."
+   ],
+   "met_by": {
+    "country_decision": "CFG-HLT-001",
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "Legal basis, authority and the nation's values are publication gates; nothing a law decides ships set"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 509,
+   "quotes": [
+    "A shared patient reference does not imply that every connected institution may view the patient's full history.",
+    "The system must authorize each read, document the purpose, and retain an audit record."
+   ],
+   "met_by": {
+    "deviation": "no-patient-data",
+    "platform": {
+     "file": "app/src/lib/records/access-log.ts",
+     "how": "Every read of personal data in a case goes to the access log with its purpose"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 786,
+   "quotes": [
+    "The institution and role permitted to access the data."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "caseReadRefusal() and caseActRefusal(): the institution responsible and the role decide; whole government and administrators get no domain authority"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 787,
+   "quotes": [
+    "The care, administrative, regulatory, or public-health purpose."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's privacy.purposeCode is the procedure; regulatory and administrative purposes only"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 788,
+   "quotes": [
+    "The legal basis and applicable rule version."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/law/register.ts",
+     "how": "Legal basis cited from the laws register by version; the legal-review gate binds it"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 789,
+   "quotes": [
+    "The minimum necessary records and fields."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/contract.ts",
+     "how": "Only the fields this form names; every field has a personal-data class; personal classes stay out of lists, events and exports"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 790,
+   "quotes": [
+    "Whether the operation permits viewing, amendment, export, or onward disclosure."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Reads and changes are separate permissions; exports carry only public and administrative classes"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 791,
+   "quotes": [
+    "Required patient consent or other authorization, where applicable."
+   ],
+   "met_by": {
+    "deviation": "no-patient-data"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 792,
+   "quotes": [
+    "Any emergency-access conditions and subsequent review."
+   ],
+   "met_by": {
+    "deviation": "no-patient-data"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 793,
+   "quotes": [
+    "Retention, audit, and disclosure requirements."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/data/retention.ts",
+     "how": "Retention rules confirmed by two administrators; every event audited; disclosure only through the exchange layer"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 794,
+   "quotes": [
+    "Emergency access must be narrowly scoped, justified, logged, and subject to retrospective review where required.",
+    "It must not become a standing permission for unrestricted access."
+   ],
+   "met_by": {
+    "deviation": "no-patient-data"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 809,
+   "quotes": [
+    "All forms should use typed schemas, explicit validation rules, provenance, and field-level classifications.",
+    "A shared structure can support patient administration, clinical records, public-health cases, licensing, and claims without treating them as one unrestricted data domain."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/contract.ts",
+     "how": "Typed fields, registered rules only, provenance per value (Case.fieldSources), a personal-data class on every field"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 811,
+   "quotes": [
+    "recordId: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 812,
+   "quotes": [
+    "recordType: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 813,
+   "quotes": [
+    "schemaVersion: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 814,
+   "quotes": [
+    "sourceInstitutionId: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 815,
+   "quotes": [
+    "responsibleAuthorityId: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 816,
+   "quotes": [
+    "createdAt: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 817,
+   "quotes": [
+    "effectiveAt?: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 818,
+   "quotes": [
+    "provenanceRef: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 819,
+   "quotes": [
+    "legalBasisRuleId?: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 820,
+   "quotes": [
+    "dataClassification:"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 821,
+   "quotes": [
+    "\"internal\""
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 822,
+   "quotes": [
+    "\"confidential\""
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 823,
+   "quotes": [
+    "\"restricted\";"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 824,
+   "quotes": [
+    "retentionRuleId: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 825,
+   "quotes": [
+    "auditEventRef: string;"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The case record carries id, procedure and form versions, institution, authority, times, provenance, law cited, classes, retention rule and its audit entry"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 841,
+   "quotes": [
+    "This is an illustrative starting contract.",
+    "A production implementation must also define schema validation, identity-link resolution, access-policy enforcement, record retention, jurisdiction-specific legal rules, and secure data-transfer requirements."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "Schema checks, access policy, retention and the laws register are the platform's; identity links through the registers"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 850,
+   "quotes": [
+    "Privacy",
+    "Request exceeds permitted data scope",
+    "Deny or narrow access and log the event"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Refused and logged (refusal-log); the read is narrowed to the fields the role may see"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 851,
+   "quotes": [
+    "Retention",
+    "Record reaches configured retention milestone",
+    "Apply the approved retention workflow"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/data/retention.ts",
+     "how": "The procedure names its retention rule; the approved retention workflow applies"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 855,
+   "quotes": [
+    "CFG-HLT-001",
+    "Health institutions, jurisdictions, and record ownership"
+   ],
+   "met_by": {
+    "country_decision": "CFG-HLT-001",
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Who is responsible comes from the deployment profile (authorityFor()), never a ministry by name"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 870,
+   "quotes": [
+    "CFG-DAT-001",
+    "Health-data classification, retention, and disclosure requirements"
+   ],
+   "met_by": {
+    "country_decision": "CFG-DAT-001"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 873,
+   "quotes": [
+    "Every active rule must reference its legal or formally approved source, version, effective date, and approval history.",
+    "Material configuration changes must follow the required two-person confirmation process."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/law/rules.ts",
+     "how": "Rules are versions citing the law, approved by a second official; configuration changes go through two officials"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 875,
+   "quotes": [
+    "Clinical confidentiality: Clinical records cannot be accessed merely because a user belongs to a government institution."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/scope.ts",
+     "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 876,
+   "quotes": [
+    "Purpose-bound access: Every restricted-data read has an authorized purpose and audit record."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/records/access-log.ts",
+     "how": "Every read of personal data in a case goes to the access log with its purpose"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 885,
+   "quotes": [
+    "Accessibility: Forms meet WCAG 2.2 AA, support mobile and keyboard use, and provide accessible alternatives."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "One definition renders self-service, assisted and print; accessibility and localisation are a publication gate"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 886,
+   "quotes": [
+    "Production integrity: No fabricated patient records, clinical results, licences, or public-health statistics are presented as real."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+     "how": "A library draft, never shown as a licence or statistic; samples carry the Sample marker"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "line": 887,
+   "quotes": [
+    "Recovery: Backup restoration preserves record versions, provenance, access logs, and audit continuity."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/data/backups.ts",
+     "how": "Backups keep every store with its versions, the access log and the audit chain"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1699,
+   "quotes": [
+    "Stable field and group IDs",
+    "Universal",
+    "Never reuse an ID for a different meaning."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/contract.ts",
+     "how": "Field ids are stable; a new meaning is a new id"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1700,
+   "quotes": [
+    "Immutable approved versions",
+    "Universal",
+    "Changes create a new version and approval record."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/packages.ts",
+     "how": "Approved procedure versions are immutable; changes make a new version"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1701,
+   "quotes": [
+    "Rule-based validation",
+    "Universal",
+    "Only registered validation rules can execute.",
+    "No arbitrary form-authored code."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/rules.ts",
+     "how": "Only registered rules run; an unknown name fails closed"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1702,
+   "quotes": [
+    "Required field rationale",
+    "Universal",
+    "Every required field must have a recorded purpose and lawful/procedural basis."
+   ],
+   "met_by": {
+    "deviation": "minimisation"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1703,
+   "quotes": [
+    "Evidence traceability",
+    "Universal",
+    "Each required evidence item references an approved procedure requirement and legal basis or documented non-statutory authority where appropriate."
+   ],
+   "met_by": {
+    "deviation": "evidence-requirement"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1704,
+   "quotes": [
+    "Official-language translations",
+    "Universal",
+    "Required labels, hints, errors and notices are complete and reviewed before publication."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "Every official language translated through review before publication (accessibility gate)"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1705,
+   "quotes": [
+    "Personal-data classification",
+    "Universal",
+    "Fields have an assigned class and enforcement policy.",
+    "A class label alone does not grant access."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/contract.ts",
+     "how": "Every field has a class; access is decided by roles.ts, not by the class"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1706,
+   "quotes": [
+    "Fee calculation",
+    "Universal",
+    "Amounts come from active, approved rules; no applicant-entered government fees."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/law/rules.ts",
+     "how": "Fees only from an approved rule (core.payment: derived_from_approved_rule); no amount is typed"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1707,
+   "quotes": [
+    "Cross-register verification",
+    "Country-configurable",
+    "Only approved exchange services and lawful purposes may be invoked."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/exchange/services.ts",
+     "how": "Only approved exchange services, for approved purposes"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1708,
+   "quotes": [
+    "Address and identifier formats",
+    "Country-configurable",
+    "Local formats are added through versioned code lists and rules."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/rules.ts",
+     "how": "Identifier formats are binding rules until the country configures them"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1709,
+   "quotes": [
+    "Legal effect and evidentiary standards",
+    "Legal review required",
+    "The authorized national reviewer approves the relevant law, procedure and accepted evidence."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "Legal review is a human gate by an authorised official"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1710,
+   "quotes": [
+    "Retention and disclosure",
+    "Legal review required",
+    "The records owner and authorized privacy/legal reviewers approve retention, disclosure and access rules."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/data/retention.ts",
+     "how": "Retention and disclosure rules are confirmed by two officials; the data and privacy review is a human gate"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1756,
+   "quotes": [
+    "All three channels create the same underlying form submission and procedure case.",
+    "The channels change the presentation and capture process, not the legal meaning of the fields."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Self-service: a page per section, saved on the device, check your answers, evidence and notices before sending, versions frozen on the case"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1760,
+   "quotes": [
+    "Phone-first, accessible digital application."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Self-service: a page per section, saved on the device, check your answers, evidence and notices before sending, versions frozen on the case"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1761,
+   "quotes": [
+    "Show one question per page when it reduces cognitive load; group genuinely simple related questions."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Self-service: a page per section, saved on the device, check your answers, evidence and notices before sending, versions frozen on the case"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1762,
+   "quotes": [
+    "Provide save-and-return, progress indication and a check-your-answers page."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Self-service: a page per section, saved on the device, check your answers, evidence and notices before sending, versions frozen on the case"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1763,
+   "quotes": [
+    "Show evidence requirements and applicable notices before final submission."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Self-service: a page per section, saved on the device, check your answers, evidence and notices before sending, versions frozen on the case"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1764,
+   "quotes": [
+    "On submission, freeze the submitted field values and the relevant form, package, law and notice versions."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Self-service: a page per section, saved on the device, check your answers, evidence and notices before sending, versions frozen on the case"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1769,
+   "quotes": [
+    "An authorized officer helps the applicant complete the same contract."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Assisted: the official who helps is recorded, the identity evidence seen (kind only), provenance per answer; no signature on the applicant's behalf"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1770,
+   "quotes": [
+    "Record the officer's identity and the assistance role."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Assisted: the official who helps is recorded, the identity evidence seen (kind only), provenance per answer; no signature on the applicant's behalf"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1771,
+   "quotes": [
+    "Distinguish applicant-reported answers from information observed or verified by the officer."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Assisted: the official who helps is recorded, the identity evidence seen (kind only), provenance per answer; no signature on the applicant's behalf"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1772,
+   "quotes": [
+    "If identity evidence is inspected, record the evidence type, verification method and outcome."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Assisted: the official who helps is recorded, the identity evidence seen (kind only), provenance per answer; no signature on the applicant's behalf"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1773,
+   "quotes": [
+    "Do not treat an officer's assistance as representation, consent or a signature on behalf of the applicant."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Assisted: the official who helps is recorded, the identity evidence seen (kind only), provenance per answer; no signature on the applicant's behalf"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1774,
+   "quotes": [
+    "Offer an accessible private environment for restricted or special-category information."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "Assisted: the official who helps is recorded, the identity evidence seen (kind only), provenance per answer; no signature on the applicant's behalf"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1779,
+   "quotes": [
+    "The same fields, evidence requirements and declarations in a printable format."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/PrintForm.tsx",
+     "how": "Print: the same fields, evidence and declaration, the form and procedure versions and stable field ids"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1780,
+   "quotes": [
+    "Include the form ID, version, language, page number and a unique submission or paper-pack reference."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/PrintForm.tsx",
+     "how": "Print: the same fields, evidence and declaration, the form and procedure versions and stable field ids"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1781,
+   "quotes": [
+    "Print the legally approved declaration and relevant notice versions."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/PrintForm.tsx",
+     "how": "Print: the same fields, evidence and declaration, the form and procedure versions and stable field ids"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1782,
+   "quotes": [
+    "Preserve stable field IDs in the form's print-to-data mapping."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/PrintForm.tsx",
+     "how": "Print: the same fields, evidence and declaration, the form and procedure versions and stable field ids"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1783,
+   "quotes": [
+    "On scanning, store the original scan, the extraction result and any human correction as separate evidence."
+   ],
+   "met_by": {
+    "deviation": "scanning"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1784,
+   "quotes": [
+    "OCR output is a proposed transcription, never a verified fact until the required review is complete."
+   ],
+   "met_by": {
+    "deviation": "scanning"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1787,
+   "quotes": [
+    "Additional channels: field capture, offline submission and USSD/SMS are enabled only when appropriate to the service.",
+    "A short-message interface must not collect documents or sensitive details that its security model cannot safely handle.",
+    "Offline capture must record the capture time, submitting actor, device or session provenance and synchronization state; conflicting submissions must be resolved through an explicit, auditable workflow, never by silently overwriting the record."
+   ],
+   "met_by": {
+    "deviation": "scanning"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1789,
+   "quotes": [
+    "Before a form can be approved, CivicOS must run a field-level minimisation review."
+   ],
+   "met_by": {
+    "deviation": "minimisation"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1792,
+   "quotes": [
+    "What decision, action or statutory record requires this information?"
+   ],
+   "met_by": {
+    "deviation": "minimisation"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1793,
+   "quotes": [
+    "Which legal provision or approved procedural requirement authorizes its collection?"
+   ],
+   "met_by": {
+    "deviation": "minimisation"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1794,
+   "quotes": [
+    "Is it already available through an authorized register or exchange?"
+   ],
+   "met_by": {
+    "deviation": "minimisation"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1795,
+   "quotes": [
+    "Can the purpose be achieved with less sensitive data?"
+   ],
+   "met_by": {
+    "deviation": "minimisation"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1796,
+   "quotes": [
+    "Who can read it, for what purpose, and for how long?"
+   ],
+   "met_by": {
+    "deviation": "minimisation"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1797,
+   "quotes": [
+    "What happens if the applicant cannot supply it?"
+   ],
+   "met_by": {
+    "deviation": "minimisation"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1798,
+   "quotes": [
+    "Is the field necessary in all cases, or only under a registered condition?"
+   ],
+   "met_by": {
+    "deviation": "minimisation"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1799,
+   "quotes": [
+    "A required field without a satisfactory answer must block approval.",
+    "A special-category field requires stronger justification and narrower access.",
+    "An exchange lookup must be denied unless both the requesting institution and the purpose are authorized.",
+    "Logging a read is mandatory but does not make an otherwise unauthorized read lawful."
+   ],
+   "met_by": {
+    "deviation": "minimisation"
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 144,
+   "quotes": [
+    "form_id",
+    "Stable, globally unique identifier; never reused"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 145,
+   "quotes": [
+    "field_id / key",
+    "Stable field identity; labels can change independently"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 146,
+   "quotes": [
+    "type",
+    "Explicit type such as string, date, money, boolean, enum, entity_reference, address, document_reference, geo_reference"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 147,
+   "quotes": [
+    "required",
+    "Boolean or a country-configured conditional requirement"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 148,
+   "quotes": [
+    "classification",
+    "public, internal, confidential, restricted"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 149,
+   "quotes": [
+    "source",
+    "User input, authoritative registry, verified external source, calculated value or approved rule"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 150,
+   "quotes": [
+    "validation_rule_ids",
+    "References to versioned, testable validation rules"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 151,
+   "quotes": [
+    "evidence_requirements",
+    "Evidence type, required status, accepted formats and verification method"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 152,
+   "quotes": [
+    "legal_basis",
+    "Exact legal instrument, version and provision; never a guessed citation"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 153,
+   "quotes": [
+    "workflow",
+    "State machine, authorized actors, handovers and separation-of-duties rules"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 154,
+   "quotes": [
+    "decision",
+    "Decision types, reasons, lawful authority, review and appeal routes"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 155,
+   "quotes": [
+    "privacy",
+    "Purpose limitation, retention, access restrictions and logging"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 156,
+   "quotes": [
+    "audit",
+    "Append-only event history, corrections and evidence integrity"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/envelope.ts",
+     "how": "The envelope's conventions map onto the one contract (lib/forms/envelope.ts); legal basis never taken from the form"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2390,
+   "quotes": [
+    "The form owner and competent authority are verified."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2391,
+   "quotes": [
+    "Legal references and their versions have been approved."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2392,
+   "quotes": [
+    "Required fields and validation rules pass automated tests."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2393,
+   "quotes": [
+    "Data sources are authoritative or explicitly labelled otherwise."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2394,
+   "quotes": [
+    "Access controls and restricted-record audit tests pass."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2395,
+   "quotes": [
+    "Workflow and decision permissions pass negative tests."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2396,
+   "quotes": [
+    "Accessibility and localization tests pass."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2397,
+   "quotes": [
+    "Retention and correction rules are approved."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2398,
+   "quotes": [
+    "Release and rollback plans are recorded."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 2399,
+   "quotes": [
+    "The production approver is distinct from the proposer wherever separation of duties is required."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "A publication gate: automatic checks apart from human approvals by different signed-in officials; a library draft passes none"
+    }
+   }
+  }
+ ]
+}

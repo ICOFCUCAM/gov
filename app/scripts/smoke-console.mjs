@@ -45,6 +45,12 @@ const PAGES = [
   { path: '/gov/law/procedures/forms', map: false, text: /forms/i },
   { path: '/gov/law/procedures/forms/taxpayer-registration-v1', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/taxpayer-registration-v1/print', map: false, text: /register status/i },
+  // Catalogue contracts, batch 1 (health regulation): library forms with their catalogue row and publication gates.
+  { path: '/gov/law/procedures/forms/HLT-FAC-002', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-FAC-002/print', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-LIC-001', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-LIC-008', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-PH-015', map: false, text: /register status/i },
   // The seal key register (lib/keys/seal-register.ts).
   { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
 ];

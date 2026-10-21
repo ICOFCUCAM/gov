@@ -187,7 +187,7 @@ describe('forms catalogue in the register', () => {
   it('says for every catalogue form whether its own field contract has been given', () => {
     const forms = CAT_ROWS.filter(r => r.category === 'form');
     expect(forms.length).toBeGreaterThan(2000);
-    expect(forms.filter(r => r.contract !== 'given' && r.contract !== 'not yet given').map(r => r.id)).toEqual([]);
+    expect(forms.filter(r => r.contract !== 'given' && r.contract !== 'given (CivicOS library)' && r.contract !== 'not yet given').map(r => r.id)).toEqual([]);
   });
 });
 
@@ -202,6 +202,9 @@ const GAP = JSON.parse(fs.readFileSync(path.join(ROOT, CAT_DIR, 'gap-report.json
   contracts: { unmatched: unknown[]; ambiguous: unknown[] }; verified: Record<string, number>; reported: Record<string, number>;
 };
 const FORMS = CAT_ROWS.filter(r => r.category === 'form');
+// CivicOS's own contracts for catalogue forms whose text gives none (the form library, controlled batches).
+const LIB_DIR = 'app/src/lib/forms/library/catalogue-contracts';
+const LIB_FILES = fs.readdirSync(path.join(ROOT, LIB_DIR)).filter(f => f.endsWith('.json')).sort();
 
 describe('forms register (owner\'s direction 2026-10-21)', () => {
   it('gives every form exactly one form status, and none is approved or in production', () => {
@@ -252,10 +255,32 @@ describe('forms register (owner\'s direction 2026-10-21)', () => {
     expect(GAP.contracts.ambiguous).toEqual([]);
   });
 
+  it('matches every contract of the form library to exactly one registered form, none in an excluded or legal-review scope', () => {
+    expect(LIB_FILES.length).toBeGreaterThanOrEqual(25);
+    const bad: string[] = [];
+    for (const f of LIB_FILES) {
+      const c = JSON.parse(fs.readFileSync(path.join(ROOT, LIB_DIR, f), 'utf8')) as { form_id: string; catalogue?: { source: string; id: string }; fields: { id?: string; use_group?: string; items?: { id: string }[] }[] };
+      if (!c.catalogue) { bad.push(`${f}: names no register row`); continue; }
+      const rows = FORMS.filter(r => r.source === c.catalogue!.source && r.catalogue_id === c.catalogue!.id);
+      if (rows.length !== 1) { bad.push(`${f}: ${rows.length} register rows`); continue; }
+      const r = rows[0]!;
+      if (c.form_id !== c.catalogue.id) bad.push(`${f}: form_id ${c.form_id} is not its catalogue ID`);
+      if (r.contract !== 'given (CivicOS library)') bad.push(`${r.id}: contract ${r.contract}`);
+      if (r.form_status !== 'contract_draft' && r.form_status !== 'blocked') bad.push(`${r.id}: form status ${r.form_status}`);
+      const scope = SCOPE.forms.find(e => e.source === r.source && e.id === r.catalogue_id);
+      if (scope && scope.scope !== 'allowed') bad.push(`${r.id}: in scope ${scope.scope}`);
+      if (r.scope_flag) bad.push(`${r.id}: flagged ${r.scope_flag}`);
+    }
+    expect(bad).toEqual([]);
+    // No other row claims a library contract.
+    expect(FORMS.filter(r => r.contract === 'given (CivicOS library)').length).toBe(LIB_FILES.length);
+  });
+
   it('has a current gap report: generated from these sources and agreeing with the register', () => {
     const sha = (p: string) => createHash('sha256').update(fs.readFileSync(path.join(ROOT, p))).digest('hex');
     const want: Record<string, string> = { 'docs/requirements/form-scope.json': sha('docs/requirements/form-scope.json') };
     for (const f of CAT_FILES) want[`${CAT_DIR}/${f}`] = sha(`${CAT_DIR}/${f}`);
+    for (const f of LIB_FILES) want[`${LIB_DIR}/${f}`] = sha(`${LIB_DIR}/${f}`);
     expect(GAP.sources).toEqual(want);
     const counts: Record<string, number> = {};
     for (const r of FORMS) counts[r.form_status!] = (counts[r.form_status!] ?? 0) + 1;

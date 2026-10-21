@@ -1,0 +1,712 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-LIC-011",
+ "record_type": "professional.disciplinary.decision",
+ "form_version": 1,
+ "procedure_package_id": "prof.fitness",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-001: the disciplinary outcomes the law provides and who holds each power (the permit authority registry).",
+  "The publication of disciplinary outcomes (the profession's publicFields, changed by two officials citing the law).",
+  "The appeal period: the procedure's day count, set by the nation (shipped unset).",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-LIC-011",
+  "part": 6,
+  "section": "6.1",
+  "line": 707
+ },
+ "library": {
+  "title": "Record a disciplinary decision",
+  "intro": "What the decision-maker states when a conduct case is decided: the findings on each allegation, the outcome the law provides, the provision relied on and the reasons. The decision is made and sealed in the case by an official who can sign, different from the one who proposed it. Restricted to the regulator; what the public register shows is what the law allows.",
+  "owner": "professionalRegulation",
+  "filled_by": "The official or panel with the power to decide, signed in; a different official proposed it (four-eyes).",
+  "authority": "The regulator that keeps the chosen profession's register (lib/professions/register.ts, profession().authority), under the approved permit authority mapping of the profession's permit type; never a ministry by name.",
+  "procedure": {
+   "key": "prof.fitness",
+   "stage": "pending-approval",
+   "action": "suspend"
+  },
+  "lists": {
+   "professional.country.finding_outcomes": {
+    "values": [
+     {
+      "value": "proven",
+      "label": "Proven"
+     },
+     {
+      "value": "not-proven",
+      "label": "Not proven"
+     },
+     {
+      "value": "withdrawn",
+      "label": "Withdrawn"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "prof.fitness.appeal",
+    "kind": "days",
+    "source": "procedure",
+    "decision": "The days to appeal a disciplinary decision."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "decision-in-engine",
+    "what": "The decision is made and sealed by the case engine (prof.fitness \"suspend\", \"revoke\" or \"close\", four-eyes), never by submitting this form; the form records what the decision-maker states",
+    "why": "Every decision cites the law version and is signed with the decision key; AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts"
+   },
+   {
+    "id": "no-outcomes-shipped",
+    "what": "No disciplinary outcome ships in the list",
+    "why": "The platform never invents a decision power; the outcomes are the nation's law.",
+    "rule": "CLAUDE.md Government operating model: never hardcode a power"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 504,
+    "quotes": [
+     "Health professions regulator",
+     "Registration, licensing, and professional conduct",
+     "Licensing records are separate from confidential patient records"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 865,
+    "quotes": [
+     "CFG-LIC-001",
+     "Professional categories, qualifications, and licensing powers"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 800,
+    "quotes": [
+     "HX-004",
+     "Health regulator",
+     "Licensed provider",
+     "Regulatory notice or decision"
+    ],
+    "met_by": {
+     "procedure": "suspend"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 707,
+    "quotes": [
+     "HLT-LIC-011",
+     "Disciplinary decision",
+     "Authorized outcome recorded"
+    ],
+    "met_by": {
+     "fields": [
+      "decision.outcome",
+      "decision.decided_by"
+     ],
+     "deviation": "decision-in-engine"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1324,
+    "quotes": [
+     "Health professional",
+     "Professional reference, verified qualifications, registration authority, licence status, scope of practice where authorised"
+    ],
+    "met_by": {
+     "fields": [
+      "decision.professional"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1805,
+    "quotes": [
+     "Professional identity reference, qualifications, verification sources, registration category, licence number, validity and status, restrictions that are lawfully disclosable, continuing requirements, case history and decision record."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.outcome",
+      "decision.conditions"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1813,
+    "quotes": [
+     "The decision, legal basis and reasons are recorded."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.law",
+      "decision.reasons",
+      "decision.findings"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1836,
+    "quotes": [
+     "\"disciplinary_information\": \"separately_restricted\""
+    ],
+    "met_by": {
+     "fields": [
+      "decision.findings",
+      "decision.reasons"
+     ],
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Conditions reach the public check only where publicFields makes them public"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "decision.professional",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.professionals",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Registration number"
+   },
+   "hint": {
+    "en": "The number on the professional register, as shown on the registration certificate."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the registration number.",
+     "reference_exists": "There is no professional with that number on the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.investigation",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Investigation reference"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the investigation reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.findings",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Findings on each allegation"
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the findings on each allegation."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "allegation",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 300
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Allegation"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the allegation.",
+       "length": "Allegation must be 300 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "finding",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "professional.country.finding_outcomes",
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Finding"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the finding."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "reasons",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 4000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Reasons for the finding"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter reasons for the finding.",
+       "length": "Reasons for the finding must be 4000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Findings"
+   }
+  },
+  {
+   "id": "decision.outcome",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "professional.country.disciplinary_outcomes",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Outcome"
+   },
+   "hint": {
+    "en": "Only the outcomes the nation's law provides, as configured."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the outcome.",
+     "value_in_source": "Select the outcome from the list."
+    }
+   },
+   "country_decision": "CFG-LIC-001: the disciplinary outcomes the law provides (none ship).",
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.conditions",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Conditions imposed"
+   },
+   "error_text": {
+    "en": {
+     "length": "Conditions imposed must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.effective",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Takes effect on"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the date the decision takes effect."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.ends",
+   "type": "date",
+   "required": false,
+   "validation": [
+    {
+     "rule": "date_not_before",
+     "params": {
+      "reference": "decision.effective"
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Ends or is reviewed on"
+   },
+   "error_text": {
+    "en": {
+     "date_not_before": "Ends or is reviewed on must be on or after the date it follows."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.law",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "legal_references_resolve",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.law_provisions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Provision of law relied on"
+   },
+   "hint": {
+    "en": "The provision from the laws register, in the version in force. The decision cites this version."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the provision of law relied on.",
+     "legal_references_resolve": "That provision is not in the laws register in a version in force."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.reasons",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Reasons"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reasons.",
+     "length": "Reasons must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.publication",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": "professional.country.disciplinary_publication",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What the public register shows"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select what the public register shows."
+    }
+   },
+   "country_decision": "The profession's disclosure profile (publicFields) and the nation's publication rule for disciplinary outcomes (none ship).",
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.decided_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Decision-maker"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "decision.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}
