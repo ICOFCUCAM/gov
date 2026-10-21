@@ -236,6 +236,24 @@ What has been built is locked. Work only upgrades it toward the vision in
   office acted under (`accessBy()`) and the profile inside the hash. Never
   change a hashed field list in place: add a new entry format and keep the old
   one verifying.
+- The legislature's record (`lib/legislature/register.ts`, `/api/legislature`)
+  is kept by the institution named for the `legislature` slot and written only
+  by its officials (`legislativeRecordRefusal()`; assent by the head of
+  state's office, `assentRefusal()`); never by whole-government scope or a
+  ministry, and no other file imports a changing function (`writes.test.ts`).
+  Stages, vote rules, assent and publication come from the procedure two of
+  its officials approve; the reference ships unapproved. A recorded vote or
+  journal entry changes only by a correction a different official who can sign
+  there confirms, the earlier version kept. Enacted texts enter the laws
+  register from the certified record (`transmitToLaws()`, source
+  `legislature`), confirmed by a different official; `/api/law` never takes a
+  source from the request.
+- A regional or local government (standing `subnational`) is outside
+  whole-government reach (`Boundaries.subnational`); the centre reads or
+  instructs there only under an approved relationship. The portability tests
+  (`lib/nation/portability.test.ts`, three illustrative profiles built only
+  through the platform's own functions) prove the mechanism, never a legal
+  mapping; keep them passing and keep country-specific code out.
 
 ## Entry flow
 

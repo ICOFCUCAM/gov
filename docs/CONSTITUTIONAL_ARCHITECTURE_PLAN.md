@@ -242,6 +242,45 @@ on assent and publication. The three portability tests run in CI against illustr
 UAE profiles (structural portability, negative authorization, transition safety); passing them
 proves the mechanism, never the legal mapping.
 
+*Built (mechanism only; the procedure ships as an unapproved reference):* the legislature's own record
+(`lib/legislature/register.ts`, store `__civicosLegislature`, register `legislature` owned by the institution
+named for the `legislature` slot; API `/api/legislature/...`; console Branches of government → *Bills and
+votes* `/gov/legislature`, a bill's page, *Legislative procedure*; public `/assembly/bills`). The nation's
+legislative procedure — stages (kind, chamber, vote, optional), whether names are recorded with votes, the
+majority and quorum, seats, whether assent is needed, what the public sees — is drafted by one official of the
+legislature (from the shipped reference, which is never approved as it stands) and approved by a different one
+who can sign there, citing the standing orders where the laws register holds them; every version kept; no bill is
+introduced without one, in any mode. A bill keeps every text version, moves forward through the stages of the
+procedure it was introduced under (past a vote only once carried), and records amendments, votes (result from the
+procedure's rules; names only where it says, matching the counts), committee referrals and reports, passage, assent
+(the head of state's office; the clerk as communicated where none is named), commencement, publication and the
+clerk's certification (SHA-256 of the record, stale after any change). A recorded vote or journal entry is never
+rewritten: a correction is proposed by an official of the legislature and confirmed by a different one who can sign
+there, the earlier version kept, and never reverses a result the bill has moved on from. Only the legislature's
+officials write it (`legislativeRecordRefusal()`, `assentRefusal()`, path rule `legislature` in `roles.ts`;
+`lib/legislature/writes.test.ts`); whole-government scope and ministries are refused. On publication the certified
+enacted text enters the laws register from the record (`source.kind = 'legislature'`: bill, text version, votes,
+assent, publication, certification), recorded by the clerk and confirmed by a different official of the
+law-register authority as every law is; `/api/law` no longer takes a source from the request body. Akoma Ntoso
+`bill` export with lifecycle events. The public sees bills, texts, proceedings, amendments, reports and votes (names
+or counts) as the procedure in force allows, never the staff who recorded a step. Onboarding: the *Legislative
+record* track only when a legislature is named, and waiting items. Audit proposal K (minimal): a regional or local
+government (standing `subnational`) stands outside whole-government reach (`Boundaries.subnational`); the centre
+reads or instructs there only under an approved relationship covering it.
+The portability tests (`lib/nation/portability.test.ts`, CI): three illustrative profiles — presidential federal
+republic (US-like), parliamentary constitutional monarchy with devolution (UK-like), federation of emirates with
+constituent rulers (UAE-like) — built only through the platform's own setup, registry, relationship, office, laws
+and legislative-record functions; test 1 structural portability, test 2 negative authorization (legislature, courts,
+independent bodies without an approved relationship, constituent units), test 3 transition safety (officeholder,
+standing, relationship, law version enacted through the legislature: history kept, old decisions keep their
+version, no power moves before two officials and its date). Every test name says it proves the mechanism, never the
+legal mapping.
+Not yet: a second chamber as its own institution with its own record, joint committees and messages between
+chambers (recorded as stages and chamber names); a register of members; sittings, order papers and the full
+journal of debates; committee evidence and parliamentary privilege; head-of-state acts beyond assent (phase 6);
+reserved competences per subject and checked territory; a regional government's own confirmation of a relationship
+that touches it.
+
 ## Rules that already hold and stay
 
 AI never makes a legally material decision; every decision cites the law version; two different
