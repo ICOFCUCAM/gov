@@ -269,12 +269,12 @@ export default function SovereignCommandCenter() {
 
           {/* Posture + readiness */}
           <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
-            <div className="flex items-center gap-5 rounded-[3px] border border-line bg-surface px-4 py-3">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-[3px] border border-line bg-surface px-4 py-3">
               <div className="flex items-center gap-2.5">
                 <span className="grid h-9 w-9 place-items-center rounded-sm" style={{ backgroundColor: `color-mix(in srgb, ${TONE[posture?.level ?? 'ok']} 18%, transparent)`, color: TONE[posture?.level ?? 'ok'] }}>⛨</span>
                 <div><div className="text-[9px] uppercase tracking-[0.16em] text-ink-muted">Executive status</div><div className="flex items-center gap-1.5 text-lg font-semibold" style={{ color: TONE[view.risk.t] }}>{riskLabel}<SignalTag kind={view.risk.kind} source={view.risk.src} /></div></div>
               </div>
-              <p className="max-w-md text-xs text-ink-muted">
+              <p className="min-w-0 max-w-md text-xs text-ink-muted">
                 {view.risk.kind === 'unavailable'
                   ? 'No national posture is shown: nothing recorded on this installation measures it yet. '
                   : view.risk.kind === 'sample'
