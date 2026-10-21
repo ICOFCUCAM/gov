@@ -20,6 +20,9 @@ import { ConsoleMark, PoweredBy } from '@/components/ui/ConsoleMark';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { AccessibilityMenu } from '@/components/ui/AccessibilityMenu';
 import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
+import { isGenerated } from '@/lib/twin/generated';
+import { GeneratedFold, GeneratedMarked, GeneratedText, useGenerated, shownValue, NOT_CONNECTED } from '@/components/ui/Generated';
+import { executivePosture } from '@/lib/gov/executive-posture';
 export { TONE };
 export const ACCENT = INFO;
 
@@ -77,10 +80,15 @@ export function Panel({
   title, meta, className = '', bodyClass = '', signal, children,
 }: {
   title: string; meta?: React.ReactNode; className?: string; bodyClass?: string;
-  /** Where the panel's figures come from; anything not observed or reported shows its marker (lib/twin/signal.ts). */
+  /**
+   * Where the panel's figures come from; anything not observed or reported shows its marker (lib/twin/signal.ts).
+   * Generated ones (`sample`, `simulated`) fold to "Not connected" on a production installation (lib/twin/generated.ts).
+   */
   signal?: SignalKind;
   children: React.ReactNode;
 }) {
+  const gen = useGenerated(signal === 'simulated' ? 'simulated' : 'sample');
+  const folded = isGenerated(signal) && !gen.show;
   return (
     <section className={`relative flex min-h-0 flex-col rounded-[3px] border border-line bg-surface ${className}`}
       style={{
@@ -98,11 +106,13 @@ export function Panel({
         <h2 className="flex min-w-0 items-center gap-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.13em] text-ink-soft">
           <span aria-hidden className="h-1 w-1 shrink-0 rounded-full motion-safe:animate-breathe" style={{ background: ACCENT, boxShadow: `0 0 4px ${ACCENT}` }} />
           {title}
-          {signal ? <SignalTag kind={signal} source={REFERENCE_MODEL} /> : null}
+          {folded ? <SignalTag kind="unavailable" source={gen.src} /> : signal ? <SignalTag kind={signal} source={REFERENCE_MODEL} /> : null}
         </h2>
-        {meta ? <span className="shrink-0 text-[9.5px] text-ink-muted">{meta}</span> : null}
+        {meta && !folded ? <span className="shrink-0 text-[9.5px] text-ink-muted">{meta}</span> : null}
       </div>
-      <div className={`relative z-[1] flex-1 p-2 ${bodyClass}`}>{children}</div>
+      {folded
+        ? <div className="relative z-[1] flex-1 p-2"><GeneratedFold kind={signal === 'simulated' ? 'simulated' : 'sample'} what="This panel's figures">{meta ? <div className="mb-1 text-[9.5px] text-ink-muted">{meta}</div> : null}<div className={bodyClass}>{children}</div></GeneratedFold></div>
+        : <div className={`relative z-[1] flex-1 p-2 ${bodyClass}`}>{isGenerated(signal) ? <GeneratedMarked>{children}</GeneratedMarked> : children}</div>}
     </section>
   );
 }
@@ -287,6 +297,17 @@ export function TeleSpark({ pts, tone, active }: { pts: number[]; tone: string; 
 // Intelligence-grade KPI cell — state chip, dominant metric, drift,
 // sharp telemetry, baseline/threshold footer; criticals visually dominate.
 export function KpiCell({ d }: { d: Instr }) {
+  // A generated reading (the default) is "Not connected" on a production installation (lib/twin/generated.ts).
+  const gen = useGenerated();
+  const kind = d.kind ?? 'sample';
+  if (isGenerated(kind) && !gen.show) {
+    return (
+      <div data-generated="not-connected" className="relative overflow-hidden rounded-[3px] border border-line bg-surface px-2 py-1.5">
+        <div className="truncate text-[8px] font-semibold uppercase tracking-[0.13em] text-ink-muted">{d.l}</div>
+        <div className="mt-1 flex items-center gap-1 text-[11px] text-ink-muted">{NOT_CONNECTED}<SignalTag kind="unavailable" source={gen.src} className="!text-[7px] !leading-none" /></div>
+      </div>
+    );
+  }
   const tone = d.t || 'ok';
   const c = TONE[tone] ?? ACCENT;
   const up = d.d > 0, dn = d.d < 0;
@@ -643,6 +664,9 @@ export function SituationRoom() {
 
   const tickN = coord?.tick ?? 0;
   const epoch = Math.floor(tickN / 2);
+  // Generated readings: marked Sample in demo and training, "Not connected" in production (lib/twin/generated.ts).
+  const gen = useGenerated();
+  const xp = executivePosture(nat, coord);
 
   const regions = React.useMemo(
     () => Array.from({ length: 16 }).map((_, i) => ({
@@ -776,17 +800,19 @@ export function SituationRoom() {
   const syncInt = (99.2 - (incidents.length * 0.18)).toFixed(2);
   const emLoad = Math.round((incidents.length / 9) * 100);
   const driftSign = (posture?.level === 'alert' ? '↑' : posture?.level === 'warn' ? '↗' : '→');
-  const spine: { k: string; v: string; t: string; pulse?: boolean }[] = [
-    { k: 'STATUS', v: war ? 'WAR ROOM' : (posture?.label ?? 'STABLE'), t: war ? 'alert' : (posture?.level ?? 'ok'), pulse: true },
-    { k: 'NAT RISK', v: `${nationalRisk}`, t: toneFor(nationalRisk) as string },
-    { k: 'COORD', v: coordLvl, t: coordTone, pulse: coordTone !== 'ok' },
-    { k: 'SYNC', v: `${syncInt}%`, t: Number(syncInt) >= 98 ? 'ok' : 'warn' },
-    { k: 'READINESS', v: `${stabilityIdx}`, t: toneFor(100 - stabilityIdx) as string },
-    { k: 'PROPAGATION', v: `${propVel}/s`, t: propVel >= 24 ? 'alert' : propVel >= 14 ? 'warn' : 'ok' },
-    { k: 'ESC DRIFT', v: driftSign, t: posture?.level ?? 'ok' },
-    { k: 'EMERG LOAD', v: `${emLoad}%`, t: emLoad >= 60 ? 'alert' : emLoad >= 30 ? 'warn' : 'ok', pulse: emLoad >= 60 },
+  // `gen`: generated by the reference model (Sample in demo and training, "Not connected" in production).
+  const spineRaw: { k: string; v: string; t: string; pulse?: boolean; gen?: boolean }[] = [
+    { k: 'STATUS', v: war ? 'WAR ROOM' : xp.risk.v, t: war ? 'alert' : xp.risk.t, pulse: true },
+    { k: 'NAT RISK', v: `${nationalRisk}`, t: toneFor(nationalRisk) as string, gen: true },
+    { k: 'COORD', v: coordLvl, t: coordTone, pulse: coordTone !== 'ok', gen: true },
+    { k: 'SYNC', v: `${syncInt}%`, t: Number(syncInt) >= 98 ? 'ok' : 'warn', gen: true },
+    { k: 'READINESS', v: `${stabilityIdx}`, t: toneFor(100 - stabilityIdx) as string, gen: true },
+    { k: 'PROPAGATION', v: `${propVel}/s`, t: propVel >= 24 ? 'alert' : propVel >= 14 ? 'warn' : 'ok', gen: true },
+    { k: 'ESC DRIFT', v: driftSign, t: posture?.level ?? 'ok', gen: true },
+    { k: 'EMERG LOAD', v: `${emLoad}%`, t: emLoad >= 60 ? 'alert' : emLoad >= 30 ? 'warn' : 'ok', pulse: emLoad >= 60, gen: true },
     { k: 'INCIDENTS', v: `${incidents.length}`, t: incidents.length >= 6 ? 'alert' : incidents.length ? 'warn' : 'ok' },
   ];
+  const spine = spineRaw.map(x => (x.gen && !gen.show ? { ...x, v: NOT_CONNECTED, t: 'neutral', pulse: false } : x));
 
   return (
     <div data-mode={war ? 'crisis' : 'normal'} className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]"
@@ -851,10 +877,9 @@ export function SituationRoom() {
           <span className="hidden items-center gap-1 rounded-sm border border-line px-2 py-1 text-[10px] text-ink-muted lg:flex">
             <span style={{ color: TONE.alert }}>⚑</span> {incidents.length} esc
             <span className="mx-1 text-line">·</span>
-            <span style={{ color: ACCENT }}>✉</span> {3 + (epoch % 4)} briefs
+            <span style={{ color: ACCENT }}>✉</span> <GeneratedText source={`Briefs · ${REFERENCE_MODEL}`}>{3 + (epoch % 4)} briefs</GeneratedText>
             <span className="mx-1 text-line">·</span>
-            <span>{formatMoney(Number(revenue) * 1e9, { compact: true })}</span>
-            <SignalTag kind="sample" source={`Treasury liquidity · ${REFERENCE_MODEL}`} className="!text-[7px] !leading-none" />
+            <GeneratedText source={`Treasury liquidity · ${REFERENCE_MODEL}`}>{formatMoney(Number(revenue) * 1e9, { compact: true })}</GeneratedText>
           </span>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
           <button onClick={() => setWarManual(w => (w === true ? null : true))}
@@ -885,6 +910,7 @@ export function SituationRoom() {
           style={{ color: war ? TONE.alert : ACCENT }}>
           <span className="h-1.5 w-1.5 rounded-full motion-safe:animate-breathe" style={{ background: war ? TONE.alert : ACCENT, boxShadow: `0 0 6px ${war ? TONE.alert : ACCENT}` }} />
           LIVE READINGS
+          <SignalTag kind={gen.kind} source={`Readings other than status and incidents · ${gen.src}`} className="!text-[7px] !leading-none" />
         </span>
         <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
           {spine.map((s, i) => {
@@ -1347,7 +1373,7 @@ export function SituationRoom() {
                 })}
               </div>
             </Panel>
-            <Panel signal="sample" title="Incident severity distribution" meta="by classification"><Donut segs={donut} /></Panel>
+            <Panel signal={nat?.samples === false ? 'record' : 'sample'} title="Incident severity distribution" meta="by classification"><Donut segs={donut} /></Panel>
             <Panel signal="sample" title="Treasury flow monitor" meta="24h revenue · expenditure">
               <div className="space-y-2">
                 <div>
@@ -1369,7 +1395,8 @@ export function SituationRoom() {
                 })}
               </ul>
             </Panel>
-            <Panel signal="sample" title="Quick actions" meta="human-authorised">
+            {/* Links only, no figures: nothing to mark. */}
+            <Panel title="Quick actions" meta="human-authorised">
               <div className="grid gap-1.5">
                 {[
                   { l: 'National coordination', h: '/gov/coordination' },
@@ -1467,15 +1494,16 @@ export function SituationRoom() {
 
           {/* Row 5 — persistent command status strip */}
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+            {/* Readiness from the executive posture (not connected in production); tempo and population impacted are generated. */}
             {[
-              { l: 'Readiness', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
-              { l: 'Operational tempo', v: `T${tickN} · ${Math.round(40 + seed(`tempo:${epoch}`) * 50)}/min`, t: 'ok' },
-              { l: 'Active incidents', v: `${incidents.length} · ${sev('sev1')} crit`, t: incidents.length ? 'alert' : 'ok' },
-              { l: 'Population impacted', v: `${(0.4 + seed(`pi:${epoch}`) * 9).toFixed(1)}M`, t: 'warn' },
-              { l: 'War Room', v: war ? 'ENGAGED' : 'Standby', t: war ? 'alert' : 'neutral' },
+              { l: 'Readiness', v: war ? 'CRITICAL' : xp.readiness.v, t: war ? 'alert' : xp.readiness.t, kind: war ? undefined : xp.readiness.kind, src: xp.readiness.src },
+              { l: 'Operational tempo', v: shownValue(gen, `T${tickN} · ${Math.round(40 + seed(`tempo:${epoch}`) * 50)}/min`), t: gen.show ? 'ok' : 'neutral', kind: gen.kind, src: gen.src },
+              { l: 'Active incidents', v: `${incidents.length} · ${sev('sev1')} crit`, t: incidents.length ? 'alert' : 'ok', kind: xp.incidents.kind, src: xp.incidents.src },
+              { l: 'Population impacted', v: shownValue(gen, `${(0.4 + seed(`pi:${epoch}`) * 9).toFixed(1)}M`), t: gen.show ? 'warn' : 'neutral', kind: gen.kind, src: gen.src },
+              { l: 'War Room', v: war ? 'ENGAGED' : 'Standby', t: war ? 'alert' : 'neutral', kind: undefined, src: '' },
             ].map(s => (
               <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-                <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+                <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}<SignalTag kind={s.kind as SignalKind | undefined} source={s.src} /></span>
                 <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
                   {s.l === 'War Room' || s.l === 'Readiness' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
                   {s.v}

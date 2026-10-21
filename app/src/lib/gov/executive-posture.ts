@@ -12,6 +12,7 @@
 
 import type { NationalCoordination, NationalSnapshot } from '@/lib/api/types';
 import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
+import { generatedPolicy } from '@/lib/twin/generated';
 
 export type Tone = 'ok' | 'warn' | 'alert' | 'neutral';
 
@@ -97,9 +98,8 @@ export function executivePosture(nat: NationalSnapshot | null, coord: NationalCo
     }
   }
 
-  const generated = samples
-    ? { show: true, kind: 'sample' as SignalKind, src: REFERENCE_MODEL }
-    : { show: false, kind: 'unavailable' as SignalKind, src: 'No source connected; generated figures are not shown on a production installation' };
+  // The one rule for generated figures (lib/twin/generated.ts), shared with every console panel.
+  const generated = generatedPolicy(samples);
 
   return { samples, loaded, risk, readiness, incidents: incidentsFig, queues, banner, generated };
 }
