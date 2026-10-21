@@ -66,6 +66,10 @@ const gg = globalThis as unknown as { __caseDecisionGuards?: Map<string, Decisio
 export interface DualControlRules { twoOfficials: (c: Case, a: ActionSpec, pkg: CasePackage) => boolean; pendingHours: () => number; requireIdentityBinding: () => boolean }
 const gd = globalThis as unknown as { __caseDualControl?: DualControlRules };
 export function registerDualControlRules(r: DualControlRules): void { gd.__caseDualControl = r; }
+/** Whether a procedure's form takes submissions (lib/forms/publication.ts registers it): a reason when not. */
+export type IntakeGuard = (pkg: CasePackage, now: Date) => string | null;
+const gp = globalThis as unknown as { __caseIntakeGuard?: IntakeGuard };
+export function registerIntakeGuard(fn: IntakeGuard): void { gp.__caseIntakeGuard = fn; }
 const twoOfficials = (c: Case, a: ActionSpec, pkg: CasePackage) => !!a.needs.fourEyes || !!gd.__caseDualControl?.twoOfficials(c, a, pkg);
 const pendingHours = () => gd.__caseDualControl?.pendingHours() ?? 24;
 
@@ -286,6 +290,9 @@ function intakeOf(pkg: CasePackage, input: OpenInput, actor: Actor, now: Date): 
   const at = now.toISOString();
   const who = { ...(actor.id ? { id: actor.id } : {}), name: actor.name };
   const base: Intake = { channel: input.channel, at, form: { version: pkg.form?.version ?? `procedure-${pkg.version}`, ...(declarationVersions(pkg) ? { declaration: declarationVersions(pkg) } : {}), ...(pkg.form?.evidencePolicy ? { evidencePolicy: pkg.form.evidencePolicy } : {}) }, ...(input.locale && /^[a-z]{2,3}$/.test(input.locale) ? { locale: input.locale } : {}) };
+  // A form takes submissions in production only once its release is approved (lib/forms/publication.ts registers the check; without it a production installation refuses); demonstrations show its status instead.
+  const unreleased = gp.__caseIntakeGuard ? gp.__caseIntakeGuard(pkg, now) : pkg.form && !samplesAllowed() ? 'This form\'s publication gates are not loaded: it takes no submissions' : null;
+  if (unreleased) return { error: unreleased };
   if (input.channel === 'self-service' && actor.scope) return { error: 'An official records an application as assisted or from a paper form' };
   if (input.channel !== 'self-service' && !actor.scope && !samplesAllowed()) return { error: 'An assisted or paper application is recorded by a signed-in official' };
   const decl = pkg.form?.declaration;
@@ -322,6 +329,10 @@ function intakeOf(pkg: CasePackage, input: OpenInput, actor: Actor, now: Date): 
 export async function submitForm(input: OpenInput, actor: Actor, now = new Date()): Promise<Case | Refusal> {
   const pkg = activePackage(input.procedure, today(now));
   if (!pkg) return { error: `No approved version of the procedure ${input.procedure} applies today` };
+  if (input.channel) {
+    const unreleased = gp.__caseIntakeGuard ? gp.__caseIntakeGuard(pkg, now) : pkg.form && !samplesAllowed() ? 'This form\'s publication gates are not loaded: it takes no submissions' : null;
+    if (unreleased) return { error: unreleased };
+  }
   const pre = checkFields(pkg, input.fields, { submit: !!input.channel && !!pkg.form, ...(input.locale ? { locale: input.locale } : {}), on: today(now) });
   if ('error' in pre) return pre;
   if (!needsServiceCheck(pkg.fields, pre.values) && !recordsChecks(pkg.fields, pre.values)) return openCase(input, actor, now);

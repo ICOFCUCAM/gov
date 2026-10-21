@@ -16,6 +16,7 @@ import { samplesAllowed } from '@/lib/ops/mode';
 import { isAuthorityKey, type AuthorityKey } from '@/lib/nation/deployment';
 import { withDefaults } from '@/lib/data/defaults';
 import { FIELD_KEY, fieldClass, fieldProblem, formProblem, PERSONAL_CLASSES } from '@/lib/forms/contract';
+import { formIds, scopeOf } from '@/lib/forms/scope';
 import type { CasePackage, ActionSpec, FieldSpec, PackageTest } from './types';
 
 interface PackageDb { packages: CasePackage[] }
@@ -120,14 +121,30 @@ export function ownerInstitution(owner: AuthorityKey | string, authorityFor: (k:
 
 const clone = <T,>(x: T): T => structuredClone(x);
 
+/**
+ * The approved scope is binding (owner's direction of 21 October 2026,
+ * lib/forms/scope.ts): a form in the excluded scope (patient and clinical
+ * data, named students) is never drafted. A form the scope holds for a legal
+ * review may be drafted; it is not published until that review is recorded.
+ */
+function scopeRefusal(p: Pick<CasePackage, 'key' | 'fields' | 'form'>): string | null {
+  const s = scopeOf(formIds(p.key, p.form), p.fields);
+  return s.status === 'excluded' ? `Outside the approved scope: ${s.reason}` : null;
+}
+
 /** Write a draft (a new procedure, or the next version of one). */
 export function draftPackage(input: Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'>, by: string, byId: string | undefined, effects: string[], now = new Date()): CasePackage | { error: string } {
   const problem = checkPackage(input, effects);
   if (problem) return { error: problem };
+  const outside = scopeRefusal(input);
+  if (outside) return { error: outside };
   if (db().packages.some(p => p.key === input.key && p.version === input.version)) return { error: `${input.key} version ${input.version} already exists` };
   const latest = Math.max(0, ...db().packages.filter(p => p.key === input.key).map(p => p.version));
   if (input.version !== latest + 1) return { error: `The next version of ${input.key} is ${latest + 1}` };
-  const p: CasePackage = { ...clone(input), state: 'draft', author: by, ...(byId ? { authorId: byId } : {}), createdAt: now.toISOString() };
+  // Whoever wrote it, and that it is a draft, come from this act: a state, an approval or editors in the input are dropped.
+  const { state: _s, approvedBy: _a, approvedAt: _t, author: _w, authorId: _i, editors: _e, createdAt: _c, ...own } = clone(input) as CasePackage;
+  void _s; void _a; void _t; void _w; void _i; void _e; void _c;
+  const p: CasePackage = { ...own, state: 'draft', author: by, ...(byId ? { authorId: byId } : {}), createdAt: now.toISOString() };
   db().packages.push(p);
   recordAudit(by, 'procedure.draft', `Procedure:${p.key}@${p.version}`, 'ok', `${p.title}${p.reference ? ' (reference)' : ''}`);
   return clone(p);
@@ -187,6 +204,8 @@ export function editDraft(key: string, version: number, changes: DraftChanges, b
   if (changes.deadlines && (changes.deadlines.length !== p.deadlines.length || changes.deadlines.some((d, i) => d.key !== p.deadlines[i]!.key || d.from !== p.deadlines[i]!.from))) return { error: 'Deadlines keep their keys and the stage they count from; change their days, wording or citation' };
   const problem = checkPackage(next, effects);
   if (problem) return { error: problem };
+  const outside = scopeRefusal(next);
+  if (outside) return { error: outside };
   const what = Object.keys(changes).filter(k => allowed.includes(k as keyof DraftChanges)).join(', ') || 'nothing';
   Object.assign(p, next);
   delete p.sampleDeadlines;

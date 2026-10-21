@@ -219,7 +219,7 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each sealed decision') },
   { id: 'certificates', name: 'Certificates issued from sealed decisions, with their verification codes and standing', legal: { kind: 'institution', note: 'The institution that issued it' }, owner: { where: 'platform', keys: ['__civicosCertificates'] }, api: 'lib/records/certificates.ts; checked publicly at /verify', copies: [],
     storage: RECORD_DOCS('each certificate') },
-  { id: 'procedures', name: 'Procedures (case packages): versions, approval, the date each applies from', legal: { kind: 'institution', note: 'The authority each procedure names, which approves it' }, owner: { where: 'platform', keys: ['__civicosCasePackages'] }, api: '/api/case-packages', copies: [],
+  { id: 'procedures', name: 'Procedures (case packages): versions, approval, the date each applies from, and their forms\' publication approvals', legal: { kind: 'institution', note: 'The authority each procedure names, which approves it' }, owner: { where: 'platform', keys: ['__civicosCasePackages', '__civicosFormPublication'] }, api: '/api/case-packages', copies: [],
     storage: RECORD_DOCS('each procedure version') },
   { id: 'cases', name: 'Cases under the procedures: stage, fields, documents, decisions, deadlines, links and history', legal: { kind: 'institution', note: 'The institution responsible for each case\'s procedure' }, owner: { where: 'platform', keys: ['__civicosCases'] }, api: '/api/cases',
     copies: [{ where: 'substrate', what: 'case progress (civicos.case_mirror)', role: 'mirror', tables: ['case_mirror'], writes: ['civicos_mirror_case'], writer: MIRROR, reads: [], fallbackReaders: [],

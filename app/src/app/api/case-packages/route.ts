@@ -13,6 +13,12 @@
 // { op: 'edit', key, version, changes } changes a draft in place (its form,
 // evidence, day counts, citations: officials of the responsible institution;
 // whoever changes it cannot approve it; lib/casework/packages.ts editDraft()).
+// Publication (lib/forms/publication.ts): GET ?publication=<key>&version=
+// gives the version's gates, the automatic checks and the human approvals
+// apart, the register status they give and the acts recorded; POST { op:
+// 'approval', key, version, approval: { kind, outcome?, note?, citation?,
+// rollbackPlan?, releaseNotes?, environment? } } records one approval as an
+// act of the signed-in official (never a status sent in the request).
 // The form contract (lib/forms): GET ?form=<key>[&version=][&locale=] gives
 // a procedure's form as it renders; ?contract=1 what a form may use (types,
 // classes, named rules, patterns, approved lists, building blocks, exchange
@@ -38,6 +44,9 @@ import { installReferenceProcedures } from '@/lib/casework/modules';
 import { adminOnly } from '@/lib/auth/roles';
 import { loadDemonstration } from '@/lib/casework/demo';
 import { draftReferralProcedure } from '@/lib/casework/referral';
+import { publicationOf, recordApproval, approvalsOf, STATUS_LABEL, APPROVAL_LABEL, type ActInput } from '@/lib/forms/publication';
+import { scopeOf, formIds } from '@/lib/forms/scope';
+import { envelopeOf } from '@/lib/forms/envelope';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +66,15 @@ function citeDocuments(docs: ContractDocument[] | undefined): ContractDocument[]
 
 export function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams;
+  const pubKey = q.get('publication');
+  if (pubKey) {
+    const p = getPackage(pubKey, Number(q.get('version')));
+    if (!p) return NextResponse.json({ error: 'No such procedure version' }, { status: 404 });
+    const pub = publicationOf(p, new Date(), registeredEffects());
+    const legalReviewed = pub.human.find(h => h.id === 'legal-review')?.passed ?? false;
+    // Checks the platform verifies (automatic) and approvals only a person gives (human), kept apart.
+    return NextResponse.json({ publication: pub, statusLabel: STATUS_LABEL[pub.status], approvalLabels: APPROVAL_LABEL, approvals: approvalsOf(p.key, p.version), envelope: envelopeOf(p, ownerInstitution(p.owner, authorityFor), legalReviewed) });
+  }
   const formKey = q.get('form');
   if (formKey) {
     const version = Number(q.get('version'));
@@ -77,10 +95,12 @@ export function GET(req: NextRequest) {
     });
   }
   if (q.get('library')) {
-    return NextResponse.json({ forms: SPEC_LIBRARY.map(f => ({ key: f.key, specId: f.specId, title: f.title, owner: f.owner, attachesTo: f.attachesTo ?? null, awaits: f.awaits ?? null, fields: f.fields.length, notes: f.notes, deviations: f.deviations })) });
+    // A library form is a contract draft until a procedure carries it and its gates pass; its scope is shown as it stands.
+    return NextResponse.json({ forms: SPEC_LIBRARY.map(f => { const scope = scopeOf(formIds(f.key, f.form), f.fields); return { key: f.key, specId: f.specId, title: f.title, owner: f.owner, attachesTo: f.attachesTo ?? null, awaits: f.awaits ?? null, fields: f.fields.length, notes: f.notes, deviations: f.deviations, status: scope.status === 'excluded' ? 'excluded' : 'contract_draft', scope }; }) });
   }
   const key = q.get('key') ?? undefined;
-  const packages = listPackages({ key }).map(p => ({ ...p, ownerInstitution: ownerInstitution(p.owner, authorityFor) ?? null, tests: p.tests, testResult: runPackageTests(p) }));
+  const effects = registeredEffects();
+  const packages = listPackages({ key }).map(p => ({ ...p, ownerInstitution: ownerInstitution(p.owner, authorityFor) ?? null, tests: p.tests, testResult: runPackageTests(p), publicationStatus: publicationOf(p, new Date(), effects).status }));
   return NextResponse.json({ packages, effects: registeredEffects() });
 }
 
@@ -132,6 +152,20 @@ export async function POST(req: NextRequest) {
     }
     const r = editDraft(p.key, p.version, changes, actor.name, actor.id, registeredEffects());
     return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json({ package: r });
+  }
+  if (b.op === 'approval') {
+    // An approval is an act of the signed-in official (who acted comes from the session); only these fields are read.
+    const a = ((b as { approval?: Partial<ActInput> }).approval ?? {}) as Partial<ActInput>;
+    const input: ActInput = {
+      kind: a.kind as ActInput['kind'], ...(a.outcome === 'returned' ? { outcome: 'returned' as const } : {}),
+      ...(typeof a.note === 'string' ? { note: a.note } : {}),
+      ...(a.citation && typeof a.citation === 'object' ? { citation: { instrument: String(a.citation.instrument ?? ''), eId: String(a.citation.eId ?? '') } } : {}),
+      ...(typeof a.rollbackPlan === 'string' ? { rollbackPlan: a.rollbackPlan } : {}),
+      ...(typeof a.releaseNotes === 'string' ? { releaseNotes: a.releaseNotes } : {}),
+      ...(a.environment === 'staging' ? { environment: 'staging' } : {}),
+    };
+    const r = recordApproval(String(b.key ?? ''), Number(b.version), input, { ...(actor.id ? { id: actor.id } : {}), name: actor.name, scope: actor.scope ?? null });
+    return 'error' in r ? NextResponse.json(r, { status: actor.scope ? 422 : 403 }) : NextResponse.json({ publication: r });
   }
   if (b.op === 'install-references') {
     if (actor.scope) {

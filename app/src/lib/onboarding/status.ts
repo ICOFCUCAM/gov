@@ -22,6 +22,7 @@ import { listMappings } from '@/lib/permits/authority';
 import { suspensionPolicy } from '@/lib/permits/authority';
 import { dualControlPolicy } from '@/lib/casework/dual-control-policy';
 import { listPackages, ownerInstitution } from '@/lib/casework/packages';
+import { waitingReleases } from '@/lib/forms/publication';
 import { listRules } from '@/lib/law/rules';
 import { registerTypes, listOrganisations } from '@/lib/organisations/register';
 import { professions, disclosureChanges } from '@/lib/professions/register';
@@ -324,6 +325,7 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const c of waitingAccountChanges())wait({ what: `${c.summary} (waiting for the institution to confirm)`, proposedBy: c.by, at: c.at, href: '/admin/officials' }); });
   safe(() => { for (const o of waitingOffices()) wait({ what: `Office: ${o.title} — a change waiting for a second official`, proposedBy: o.pending.by, at: o.pending.at, href: '/gov/configuration/offices' }); });
   safe(() => { for (const p of waitingProfileSteps()) wait({ what: p.what, proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
+  safe(() => { for (const r of waitingReleases()) wait({ what: `Form release: ${r.key} version ${r.version} waiting for a second official`, proposedBy: r.by, at: r.at, href: '/gov/law/procedures/forms' }); });
   safe(() => { const p = constitutionOverview().process.changes.pending; if (p) wait({ what: 'Steps for changing the constitutional profile: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
   safe(() => { const p = classificationChanges().pending; if (p) wait({ what: 'Classification of the state: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/offices' }); });
   safe(() => { for (const w of waitingLegislative()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: w.href }); });

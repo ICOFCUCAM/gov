@@ -16,6 +16,7 @@
 
 import { fieldProblem, formProblem, type ContractDocument, type ContractField, type FormSpec, type PersonalDataClass } from './contract';
 import { isRegisteredRule } from './rules';
+import { EXCLUDED_FORMS, LEGAL_REVIEW_FORMS } from './scope';
 
 /** The envelope's form-level properties, kept on the form (FormSpec.envelope). */
 export interface Envelope {
@@ -47,23 +48,12 @@ export interface EnvelopeNote { field?: string; kind: 'problem' | 'not-expressed
 /** The envelope's classifications, held at least as strictly. */
 export const ENVELOPE_CLASSES: Record<string, PersonalDataClass> = { public: 'public', internal: 'administrative', confidential: 'personal', restricted: 'restricted' };
 
-/** Forms not loaded: a binding platform rule is stricter, or a legal review comes first (the supplement's own preface). */
-export const EXCLUDED_CONTRACTS: Record<string, string> = {
-  'HLT-PAT-001': 'Platform rule stricter: no patient or clinical field anywhere, no national patient record.',
-  'HLT-ENC-002': 'Platform rule stricter: no clinical encounter records.',
-  'HLT-REF-003': 'Platform rule stricter: no clinical referrals on named patients.',
-  'HLT-MED-004': 'Platform rule stricter: no dispensing records on named patients.',
-  'HLT-CARE-008': 'Platform rule stricter: no care plan on a named person.',
-  'EDU-STD-001': 'Platform rule stricter: there is no student record system.',
-  'EDU-ENR-003': 'Platform rule stricter: no enrolment records on named students.',
-  'EDU-ATT-004': 'Platform rule stricter: attendance only as aggregate returns.',
-  'EDU-RES-005': 'Platform rule stricter: no individual results records.',
-  'JUS-PRO-006': 'Legal review (I11): suspect references need a country\'s legal review; never a police field.',
-  'JUS-COR-008': 'Legal review (I11): custody admission needs a country\'s legal review.',
-  'SEC-INT-006': 'Legal review (I11): the platform is not an intelligence repository.',
-  'SEC-OVS-007': 'Legal review (I11).',
-  'ELE-REG-004': 'Legal review (I11): voter registration is held by the electoral body alone, after legal review.',
-};
+/**
+ * The envelope contracts the approved scope excludes or holds for a legal
+ * review (lib/forms/scope.ts, the one place those lists live): never loaded
+ * as forms.
+ */
+export const EXCLUDED_CONTRACTS: Record<string, string> = { ...EXCLUDED_FORMS, ...LEGAL_REVIEW_FORMS };
 
 const human = (k: string) => { const s = k.replace(/_/g, ' '); return s[0]!.toUpperCase() + s.slice(1); };
 type Mapped = Partial<ContractField> & { type: string };
@@ -190,7 +180,7 @@ export function importEnvelopeContract(c: EnvelopeContract & Partial<Record<stri
     contractVersion: '1.0.0', ...(c.title ? { title: c.title } : {}), ...((e.domain as string) ?? domain ? { domain: (e.domain as string) ?? domain } : {}),
     ...(e.form_type ? { formType: String(e.form_type) } : {}), ...(e.country_profile ? { countryProfile: String(e.country_profile) } : {}),
     ...(e.owning_institution_id ? { owningInstitutionId: String(e.owning_institution_id) } : {}), ...(e.competent_authority_rule_id ? { competentAuthorityRuleId: String(e.competent_authority_rule_id) } : {}),
-    ...(Array.isArray(e.legal_basis) ? { legalBasis: (e.legal_basis as Record<string, string>[]).map(l => ({ instrumentId: l.instrument_id!, versionId: l.version_id!, provision: l.provision!, verificationStatus: l.verification_status! })) } : {}),
+    ...(Array.isArray(e.legal_basis) ? { legalBasis: (e.legal_basis as Record<string, string>[]).map(l => ({ instrumentId: l.instrument_id!, versionId: l.version_id!, provision: l.provision!, verificationStatus: 'requires_approval' })) } : {}),
     ...(e.applicability ? { applicability: { ...(e.applicability as Record<string, boolean>) } } : {}),
     ...(e.workflow ? { workflow: camelObj(e.workflow) } : {}), ...(e.decision ? { decision: camelObj(e.decision) } : {}),
     ...(e.privacy ? { privacy: camelObj(e.privacy) } : {}), ...(e.audit ? { audit: camelObj(e.audit) } : {}), ...(e.accessibility ? { accessibility: camelObj(e.accessibility) } : {}),
@@ -207,14 +197,15 @@ const camel = (k: string) => k.replace(/_([a-z])/g, (_, c: string) => c.toUpperC
 function camelObj<T>(o: unknown): T { return Object.fromEntries(Object.entries(o as Record<string, unknown>).map(([k, v]) => [camel(k), v])) as T; }
 
 /** The envelope a procedure's form carries, derived from the package where the form does not state it. */
-export function envelopeOf(pkg: { key: string; title: string; owner: string; citations: { instrument: string; eId: string; version: string }[]; actions: { decision?: string; needs: { fourEyes?: boolean } }[]; retention: string; appeal?: { body: string }; form?: FormSpec; state: string }, ownerInstitution?: string): Envelope {
+export function envelopeOf(pkg: { key: string; title: string; owner: string; citations: { instrument: string; eId: string; version: string }[]; actions: { decision?: string; needs: { fourEyes?: boolean } }[]; retention: string; appeal?: { body: string }; form?: FormSpec; state: string }, ownerInstitution?: string, legalReviewed = false): Envelope {
   const own = pkg.form?.envelope;
   const decisions = [...new Set(pkg.actions.filter(a => a.decision).map(a => a.decision!))];
   return {
     contractVersion: '1.0.0', title: own?.title ?? pkg.title, ...(own?.domain ? { domain: own.domain } : {}), ...(own?.formType ? { formType: own.formType } : { formType: 'application' }),
     owningInstitutionId: own?.owningInstitutionId ?? ownerInstitution ?? pkg.owner,
     competentAuthorityRuleId: own?.competentAuthorityRuleId ?? `deployment:${pkg.owner}`,
-    legalBasis: own?.legalBasis ?? pkg.citations.map(c => ({ instrumentId: c.instrument, versionId: c.version, provision: c.eId, verificationStatus: pkg.state === 'approved' ? 'approved' : 'requires_approval' })),
+    // The verification status is never read from the form: it is approved only when an authorised official's legal review is recorded (lib/forms/publication.ts).
+    legalBasis: pkg.citations.map(c => ({ instrumentId: c.instrument, versionId: c.version, provision: c.eId, verificationStatus: legalReviewed ? 'approved' : 'requires_approval' })),
     ...(own?.applicability ? { applicability: own.applicability } : {}),
     workflow: { workflowId: pkg.key, initialState: 'draft', submissionState: 'submitted', decisionRequired: decisions.length > 0, separationOfDuties: pkg.actions.some(a => a.decision && a.needs.fourEyes), ...(own?.workflow ?? {}) },
     decision: { decisionTypes: own?.decision?.decisionTypes ?? decisions, mustRecordReason: true, legalBasisRequired: true, ...(pkg.appeal ? { appealRouteRuleId: own?.decision?.appealRouteRuleId ?? `${pkg.key}#appeal` } : {}) },

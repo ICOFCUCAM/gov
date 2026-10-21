@@ -15,6 +15,8 @@ import '@/lib/health/procedures';
 import '@/lib/customs/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
 import '@/lib/permits/decisions';
+// Publication gates: a form takes submissions in production only once its release is approved (lib/forms/publication.ts).
+import '@/lib/forms/publication';
 // Dual control: the platform's two-official minimum, the country's rules, proposals that lapse.
 import './dual-control-policy';
 // Transitions (plan phase 6): caretaker restrictions the nation adopted, courts' rulings on cited provisions.
