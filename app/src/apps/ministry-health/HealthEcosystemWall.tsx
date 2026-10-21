@@ -213,7 +213,7 @@ export function HealthEcosystemWall({ mode = 'production', standalone = false }:
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink">Registered health sites</h2>
               <span className="text-[10px] text-ink-muted">From the national facility register; the map&apos;s simulated layers are off.</span>
             </div>
-            <GeoMap geo={geo} metric="pressure" title="Registered health sites" height={220} layers={{ markers: false, heat: false, routes: false, facilities: true }} />
+            <GeoMap geo={geo} metric="pressure" title="Registered health sites" height={220} recordsOnly />
           </section>
         </div>
       ) : null}

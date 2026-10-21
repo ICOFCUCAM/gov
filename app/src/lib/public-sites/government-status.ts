@@ -62,7 +62,7 @@ export function publicGovernmentStatus(i: GovernmentStatusInput): PublicGovernme
   const tone = (t: string): StatusTone => (t === 'ok' || t === 'warn' || t === 'alert' ? t : 'neutral');
 
   const posture: PublicStatusLine = p.loaded
-    ? { label: 'Overall state', value: p.risk.v, kind: p.risk.kind, source: p.risk.src, tone: tone(p.risk.t) }
+    ? { label: 'Overall state', value: p.risk.v, kind: p.risk.kind, source: p.risk.src, tone: p.risk.v === 'NONE RECORDED' ? 'neutral' : tone(p.risk.t) }
     : { label: 'Overall state', value: NOT_CONNECTED, kind: 'unavailable', source: 'The national snapshot did not answer', tone: 'neutral' };
   const readiness: PublicStatusLine = { label: 'National readiness', value: p.readiness.v, kind: p.readiness.kind, source: p.readiness.src, tone: tone(p.readiness.t) };
 
@@ -92,7 +92,7 @@ export function publicGovernmentStatus(i: GovernmentStatusInput): PublicGovernme
   const audit: PublicStatusLine = !i.audit
     ? { label: 'Audit chain', value: NOT_CONNECTED, kind: 'unavailable', source: 'The audit chain\'s verification did not answer', tone: 'neutral' }
     : i.audit.ok
-      ? { label: 'Audit chain', value: `✓ verified · ${(i.audit.total ?? i.audit.checked).toLocaleString('en')} entries`, kind: 'record', tone: 'ok', source: 'Verification of the platform\'s audit chain (also open at /api/audit/verify)' }
+      ? { label: 'Audit chain', value: `✓ verified · ${(i.audit.total ?? i.audit.checked).toLocaleString('en')} ${(i.audit.total ?? i.audit.checked) === 1 ? 'entry' : 'entries'}`, kind: 'record', tone: 'ok', source: 'Verification of the platform\'s audit chain (also open at /api/audit/verify)' }
       : { label: 'Audit chain', value: `✗ broken${i.audit.brokenAtSeq !== undefined ? ` at entry ${i.audit.brokenAtSeq}` : ''}`, kind: 'record', tone: 'alert', source: 'Verification of the platform\'s audit chain (also open at /api/audit/verify)' };
 
   const lines: PublicStatusLine[] = [

@@ -74,7 +74,7 @@ function arc(a: Pt, b: Pt, bend = 0.14) {
 const btn = { borderColor: 'rgba(120,180,230,0.25)', background: 'rgba(8,20,35,0.7)', color: 'rgba(180,210,235,0.8)' };
 
 export function GeoMap({
-  geo, metric, title, height = 300, accent = '#37c7d4', iso3, layers, markerFilter = 'all', highlight, onSelectRegion,
+  geo, metric, title, height = 300, accent = '#37c7d4', iso3, layers, markerFilter = 'all', highlight, onSelectRegion, recordsOnly = false,
 }: {
   geo: HealthGeo; metric: Metric; title: string; height?: number;
   accent?: string; iso3?: string;
@@ -86,6 +86,8 @@ export function GeoMap({
   highlight?: string;
   /** Called with a region's name when its marker is chosen. */
   onSelectRegion?: (region: string) => void;
+  /** Only the national facility register's sites: the generated layers, their legend and the Sample marker are left out. */
+  recordsOnly?: boolean;
 }) {
   const [data, setData] = React.useState<Admin1Country | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -101,7 +103,9 @@ export function GeoMap({
   const callerKey = JSON.stringify(layers ?? {});
   const [own, setOwn] = React.useState<GeoLayers>({});
   React.useEffect(() => { setOwn({}); }, [callerKey]);
-  const on: Record<GeoLayer, boolean> = { ...defaults, ...(layers ?? {}), ...own };
+  const on: Record<GeoLayer, boolean> = recordsOnly
+    ? { markers: false, heat: false, routes: false, facilities: true }
+    : { ...defaults, ...(layers ?? {}), ...own };
   const [panel, setPanel] = React.useState(false);
   const [legend, setLegend] = React.useState(true);
 
@@ -393,13 +397,13 @@ export function GeoMap({
 
       {/* title */}
       <div className="pointer-events-none absolute left-3 top-2.5 text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: 'rgba(225,240,250,0.95)', textShadow: '0 0 8px #030711' }}>
-        {title || (data?.name ?? country)} <SignalTag kind="sample" source="Health figures, corridors and traffic are samples until a health information source is connected; registered sites come from the national facility register" className="ms-1 align-middle" />
+        {title || (data?.name ?? country)} {recordsOnly ? null : <SignalTag kind="sample" source="Health figures, corridors and traffic are samples until a health information source is connected; registered sites come from the national facility register" className="ms-1 align-middle" />}
       </div>
       {!country && !loading ? (
         <p className="absolute inset-x-3 top-1/2 text-center text-[12px]" style={{ color: 'rgba(200,222,240,0.9)' }}>Set the nation&rsquo;s country in setup to draw its map.</p>
       ) : null}
-      {/* layers control */}
-      <div className="absolute right-2.5 top-2.5 flex flex-col items-end gap-1">
+      {/* layers control (none for the register's sites alone) */}
+      <div className={`absolute right-2.5 top-2.5 flex-col items-end gap-1 ${recordsOnly ? 'hidden' : 'flex'}`}>
         <button type="button" onClick={() => setPanel(p => !p)} aria-expanded={panel} aria-controls={panelId} title="Map layers" aria-label="Map layers"
           className="focus-ring grid h-6 w-6 place-items-center rounded-[6px] border text-[11px]" style={{ ...btn, ...(panel ? { borderColor: accent, color: accent } : {}) }}>⧉</button>
         <button type="button" onClick={() => setLegend(l => !l)} aria-pressed={!legend} title={legend ? 'Hide legend' : 'Show legend'} aria-label={legend ? 'Hide legend' : 'Show legend'}
@@ -425,7 +429,7 @@ export function GeoMap({
         ) : null}
       </div>
       {/* legend */}
-      {legend ? (
+      {legend && !recordsOnly ? (
         <div className="pointer-events-none absolute left-3 top-9 flex max-w-[78%] flex-wrap items-center gap-x-3 gap-y-0.5 text-[8px] font-medium" style={{ color: 'rgba(200,222,240,0.9)' }}>
           {(Object.keys(BANDS) as BandKey[]).map(k => (
             <span key={k} className="inline-flex items-center gap-1">
@@ -448,7 +452,7 @@ export function GeoMap({
         </div>
       ) : null}
       {/* incident density scale (bottom right on the US map, where Alaska's inset sits bottom left) */}
-      {legend ? (
+      {legend && !recordsOnly ? (
         <div className={`pointer-events-none absolute bottom-2.5 ${data?.iso3 === 'USA' ? 'right-3' : 'left-3'} rounded-[6px] border px-2 py-1.5`} style={{ borderColor: 'rgba(120,180,230,0.2)', background: 'rgba(6,16,28,0.66)' }}>
           <div className="text-[7.5px] font-bold uppercase tracking-[0.16em]" style={{ color: 'rgba(190,215,235,0.85)' }}>Incident Density</div>
           <div className="mt-1 h-1.5 w-28 rounded-full" style={{ background: 'linear-gradient(90deg,#2dd4bf,#ffd23d,#ff4d5a)' }} />
