@@ -50,6 +50,9 @@
       "name": "civil"
     },
     {
+      "name": "constitution"
+    },
+    {
       "name": "courts"
     },
     {
@@ -120,6 +123,9 @@
     },
     {
       "name": "oauth"
+    },
+    {
+      "name": "offices"
     },
     {
       "name": "onboarding"
@@ -198,6 +204,9 @@
     },
     {
       "name": "work"
+    },
+    {
+      "name": "workspace"
     }
   ],
   "paths": {
@@ -1967,8 +1976,47 @@
                         {
                           "type": "object",
                           "properties": {
+                            "standing": {
+                              "type": "string",
+                              "enum": [
+                                "customary-or-religious",
+                                "executive-agency",
+                                "executive-ministry",
+                                "head-of-state",
+                                "independent-constitutional",
+                                "independent-statutory",
+                                "judiciary",
+                                "legislature",
+                                "subnational"
+                              ]
+                            },
                             "institutionName": {
                               "type": "string"
+                            },
+                            "heldOffices": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "acting": {
+                                    "type": "boolean"
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "title": {
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "title",
+                                  "kind"
+                                ]
+                              }
                             },
                             "sub": {
                               "type": "string",
@@ -2037,6 +2085,7 @@
                             }
                           },
                           "required": [
+                            "heldOffices",
                             "sub",
                             "name",
                             "method",
@@ -2130,7 +2179,15 @@
                     "summary": "Generated from the schema",
                     "value": {
                       "official": {
+                        "standing": "customary-or-religious",
                         "institutionName": "Example",
+                        "heldOffices": [
+                          {
+                            "id": "ID-0001",
+                            "title": "Example",
+                            "kind": "string"
+                          }
+                        ],
                         "sub": "string",
                         "name": "Example",
                         "office": "string",
@@ -7909,6 +7966,83 @@
           }
         ],
         "x-source": "src/app/api/civil/route.ts"
+      }
+    },
+    "/api/constitution/separation": {
+      "get": {
+        "tags": [
+          "constitution"
+        ],
+        "operationId": "get_constitution_separation",
+        "summary": "GET /api/constitution/separation",
+        "description": "/api/constitution/separation — the separation-of-powers checks, observed (plan phase 4; audit G): each one read from the configuration that the platform enforces (institution register, who is responsible, accounts, offices, access-log retention, directives), with the page that holds the record. Configuration facts only: no personal data, no case. GET only.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "observedAt": {
+                      "type": "string"
+                    },
+                    "checks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SeparationCheck"
+                      }
+                    },
+                    "intact": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "observedAt",
+                    "checks",
+                    "intact"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "observedAt": "2026-01-15T09:30:00.000Z",
+                      "checks": [
+                        {
+                          "key": "string",
+                          "label": "Example",
+                          "ok": true,
+                          "detail": "string",
+                          "href": "https://example.gov/",
+                          "kind": "observed"
+                        }
+                      ],
+                      "intact": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/constitution/separation/route.ts"
       }
     },
     "/api/courts/cause-list": {
@@ -20138,6 +20272,601 @@
         ],
         "x-permission-rule": "self-authenticated",
         "x-source": "src/app/api/oauth/token/route.ts"
+      }
+    },
+    "/api/offices": {
+      "get": {
+        "tags": [
+          "offices"
+        ],
+        "operationId": "get_offices",
+        "summary": "GET /api/offices",
+        "description": "/api/offices — the nation's offices of state and who holds them (lib/nation/office-register.ts; plan phase 4, audit F). An office is a record: institution, title per language, kind, references to its powers (enforced where they are recorded, never here), term, acting and succession rules, legal basis and dates. Holding one grants no permission. GET: every office (the head of government derived from the profile until the nation records one), holdings with their history, waiting changes and the starting list of kinds. POST { op }: 'record' (first-run setup only; administrators) { id?, institution?, title, titles?, kind, powers?, term?, acting?, succession?, heldWith?, effectiveFrom?, effectiveTo?, legalBasis? } 'propose' (an administrator of the whole government or of the office's institution) the same fields, a new office without id; legalBasis: [{ instrument, eId }] required; 'confirm' { id } a different official (an administrator or one who can sign; for an independent institution with its own officials who can sign, one of them); 'withdraw' { id, reason? } the proposer or an administrator; 'link' { officeId, accountId, from?, to?, acting?, note?, legalBasis? } an administrator of the office's institution (or of the whole government when it is not independent); waits for a second official; 'confirm-link' { holding } a different official of the office's institution (administrator or can sign); 'end-link' { holding, to?, reason } ends a holding (or withdraws a waiting link); kept with its end date. Who acted comes from the sign-in. Every step is audited and every version kept.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "offices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "confirmBy": {
+                            "anyOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name"
+                                ]
+                              }
+                            ]
+                          },
+                          "changes": {
+                            "type": "object",
+                            "properties": {
+                              "pending": {
+                                "type": "object",
+                                "properties": {
+                                  "values": {
+                                    "$ref": "#/components/schemas/OfficeTerms"
+                                  },
+                                  "basis": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/Citation"
+                                    }
+                                  },
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "confirmed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "by": {
+                                        "type": "string"
+                                      },
+                                      "byId": {
+                                        "type": "string"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "independence": {
+                                        "type": "string",
+                                        "enum": [
+                                          "accounts-only",
+                                          "identity-provider",
+                                          "unverified"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "by",
+                                      "at",
+                                      "independence"
+                                    ]
+                                  },
+                                  "expiresAt": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "values",
+                                  "basis",
+                                  "by",
+                                  "at",
+                                  "expiresAt"
+                                ],
+                                "description": "A proposal waiting for its second official."
+                              },
+                              "history": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "values": {
+                                      "$ref": "#/components/schemas/OfficeTerms"
+                                    },
+                                    "basis": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "#/components/schemas/Citation"
+                                      }
+                                    },
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "confirmed": {
+                                      "type": "object",
+                                      "properties": {
+                                        "by": {
+                                          "type": "string"
+                                        },
+                                        "byId": {
+                                          "type": "string"
+                                        },
+                                        "at": {
+                                          "type": "string"
+                                        },
+                                        "independence": {
+                                          "type": "string",
+                                          "enum": [
+                                            "accounts-only",
+                                            "identity-provider",
+                                            "unverified"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "by",
+                                        "at",
+                                        "independence"
+                                      ]
+                                    },
+                                    "outcome": {
+                                      "type": "string",
+                                      "enum": [
+                                        "adopted",
+                                        "lapsed",
+                                        "withdrawn"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "values",
+                                    "basis",
+                                    "by",
+                                    "at",
+                                    "outcome"
+                                  ]
+                                },
+                                "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                              }
+                            }
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "derived": {
+                            "type": "boolean",
+                            "description": "Derived from the profile (executiveTitle) because the nation has recorded no head of government."
+                          },
+                          "inForce": {
+                            "type": "boolean",
+                            "description": "In force today."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "ended",
+                              "in-force",
+                              "proposed",
+                              "scheduled"
+                            ],
+                            "description": "Proposed only, or adopted with a later date: not an office yet."
+                          },
+                          "basis": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/Citation"
+                            }
+                          },
+                          "institutionName": {
+                            "type": "string"
+                          },
+                          "holders": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "accountId": {
+                                  "type": "string"
+                                },
+                                "from": {
+                                  "type": "string"
+                                },
+                                "to": {
+                                  "type": "string"
+                                },
+                                "acting": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "accountId",
+                                "from"
+                              ]
+                            }
+                          },
+                          "institution": {
+                            "type": "string",
+                            "description": "The institution (registry id) the office belongs to; absent while the nation has not named one."
+                          },
+                          "title": {
+                            "type": "string",
+                            "description": "The official title in the nation's main language."
+                          },
+                          "titles": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "The title in further languages (language code → title)."
+                          },
+                          "kind": {
+                            "type": "string",
+                            "description": "What kind of office (OFFICE_KINDS is a starting list; the nation may name others)."
+                          },
+                          "powers": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "References to powers recorded elsewhere (e.g. \"authority:judiciary\", \"permit:building\", a law's eId). Enforced there, never here."
+                          },
+                          "term": {
+                            "type": "object",
+                            "properties": {
+                              "years": {
+                                "type": "number"
+                              },
+                              "limit": {
+                                "type": "number"
+                              },
+                              "note": {
+                                "type": "string"
+                              }
+                            },
+                            "description": "The term of office, as the law says."
+                          },
+                          "acting": {
+                            "type": "string",
+                            "description": "Who acts when the office is vacant or its holder absent, as the law says."
+                          },
+                          "succession": {
+                            "type": "string",
+                            "description": "How the office passes on, as the law says."
+                          },
+                          "heldWith": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Other offices (ids) the constitution has held together with this one (one person as head of state and of government)."
+                          },
+                          "effectiveFrom": {
+                            "type": "string"
+                          },
+                          "effectiveTo": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "confirmBy",
+                          "id",
+                          "inForce",
+                          "status",
+                          "holders",
+                          "title",
+                          "kind",
+                          "powers",
+                          "effectiveFrom"
+                        ]
+                      }
+                    },
+                    "holdings": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OfficeHolding"
+                      }
+                    },
+                    "waiting": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "institution": {
+                            "type": "string"
+                          },
+                          "pending": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/OfficeTerms"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "expiresAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "expiresAt"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "pending"
+                        ]
+                      }
+                    },
+                    "kinds": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label"
+                        ]
+                      }
+                    },
+                    "setupRunning": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "offices",
+                    "holdings",
+                    "waiting",
+                    "kinds",
+                    "setupRunning"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "offices": [
+                        {
+                          "confirmBy": {
+                            "id": "ID-0001",
+                            "name": "Example"
+                          },
+                          "id": "ID-0001",
+                          "inForce": true,
+                          "status": "ended",
+                          "holders": [
+                            {}
+                          ],
+                          "title": "Example",
+                          "kind": "string",
+                          "powers": [
+                            "string"
+                          ],
+                          "effectiveFrom": "2026-01-15"
+                        }
+                      ],
+                      "holdings": [
+                        {
+                          "id": "ID-0001",
+                          "officeId": "ID-0001",
+                          "accountId": "ID-0001",
+                          "holderName": "Example",
+                          "from": "string",
+                          "state": "active",
+                          "proposedBy": "A. Official",
+                          "proposedAt": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "waiting": [
+                        {
+                          "id": "ID-0001",
+                          "title": "Example",
+                          "pending": {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "expiresAt": "2026-01-15T09:30:00.000Z"
+                          }
+                        }
+                      ],
+                      "kinds": [
+                        {
+                          "key": "string",
+                          "label": "Example"
+                        }
+                      ],
+                      "setupRunning": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/offices/route.ts"
+      },
+      "post": {
+        "tags": [
+          "offices"
+        ],
+        "operationId": "post_offices",
+        "summary": "POST /api/offices",
+        "description": "/api/offices — the nation's offices of state and who holds them (lib/nation/office-register.ts; plan phase 4, audit F). An office is a record: institution, title per language, kind, references to its powers (enforced where they are recorded, never here), term, acting and succession rules, legal basis and dates. Holding one grants no permission. GET: every office (the head of government derived from the profile until the nation records one), holdings with their history, waiting changes and the starting list of kinds. POST { op }: 'record' (first-run setup only; administrators) { id?, institution?, title, titles?, kind, powers?, term?, acting?, succession?, heldWith?, effectiveFrom?, effectiveTo?, legalBasis? } 'propose' (an administrator of the whole government or of the office's institution) the same fields, a new office without id; legalBasis: [{ instrument, eId }] required; 'confirm' { id } a different official (an administrator or one who can sign; for an independent institution with its own officials who can sign, one of them); 'withdraw' { id, reason? } the proposer or an administrator; 'link' { officeId, accountId, from?, to?, acting?, note?, legalBasis? } an administrator of the office's institution (or of the whole government when it is not independent); waits for a second official; 'confirm-link' { holding } a different official of the office's institution (administrator or can sign); 'end-link' { holding, to?, reason } ends a holding (or withdraws a waiting link); kept with its end date. Who acted comes from the sign-in. Every step is audited and every version kept.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/offices/route.ts"
       }
     },
     "/api/onboarding/status": {
@@ -62382,6 +63111,115 @@
         ],
         "x-source": "src/app/api/work/route.ts"
       }
+    },
+    "/api/workspace": {
+      "get": {
+        "tags": [
+          "workspace"
+        ],
+        "operationId": "get_workspace",
+        "summary": "GET /api/workspace",
+        "description": "/api/workspace — the signed-in official's workspace panels (plan phase 4; docs/CONSTITUTIONAL_ARCHITECTURE.md §6.6): My authority, Awaiting my action, Institution status, Legal changes, Oversight and Exceptions, from the official's own office and institution (lib/workspace/panels.ts). Within what lib/auth/roles.ts lets the official read: counts, titles and configuration, never another institution's restricted records. \"My work\" is GET /api/work. GET only.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workspace": {
+                      "$ref": "#/components/schemas/Workspace"
+                    },
+                    "generatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "workspace",
+                    "generatedAt"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "workspace": {
+                        "authority": {
+                          "signedIn": true,
+                          "institution": {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "standing": "string",
+                            "independent": true,
+                            "court": true
+                          },
+                          "offices": [
+                            {}
+                          ],
+                          "delegations": [],
+                          "restrictions": [
+                            "string"
+                          ]
+                        },
+                        "awaiting": [
+                          {
+                            "what": "string",
+                            "href": "https://example.gov/"
+                          }
+                        ],
+                        "institutionStatus": [
+                          {
+                            "label": "Example",
+                            "value": "string",
+                            "href": "https://example.gov/"
+                          }
+                        ],
+                        "legalChanges": [
+                          {
+                            "what": "string",
+                            "href": "https://example.gov/"
+                          }
+                        ],
+                        "oversight": [
+                          {
+                            "what": "string",
+                            "href": "https://example.gov/"
+                          }
+                        ],
+                        "exceptions": [
+                          {
+                            "what": "string",
+                            "href": "https://example.gov/"
+                          }
+                        ]
+                      },
+                      "generatedAt": "2026-01-15T09:30:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/workspace/route.ts"
+      }
     }
   },
   "components": {
@@ -74412,6 +75250,27 @@
           "name"
         ]
       },
+      "Item": {
+        "type": "object",
+        "properties": {
+          "what": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "what",
+          "href"
+        ]
+      },
       "JobOverview": {
         "type": "object",
         "properties": {
@@ -77141,6 +78000,9 @@
           "source": {
             "type": "string",
             "description": "Where these facts come from, e.g. \"Constitution of 1995, arts. 77–78\"."
+          },
+          "classification": {
+            "$ref": "#/components/schemas/StateClassification"
           }
         }
       },
@@ -77644,6 +78506,342 @@
             ]
           }
         }
+      },
+      "OfficeHolding": {
+        "description": "An official account holding an office (plan phase 4): linked by one official, confirmed by another; history kept.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "officeId": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string",
+            "description": "The platform account (official id) that holds it."
+          },
+          "holderName": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ended",
+              "lapsed",
+              "waiting",
+              "withdrawn"
+            ]
+          },
+          "acting": {
+            "type": "boolean",
+            "description": "Holds it in an acting capacity (the office's acting rule)."
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "note": {
+            "type": "string"
+          },
+          "proposedBy": {
+            "type": "string"
+          },
+          "proposedById": {
+            "type": "string"
+          },
+          "proposedAt": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "confirmedBy": {
+            "type": "string"
+          },
+          "confirmedById": {
+            "type": "string"
+          },
+          "confirmedAt": {
+            "type": "string"
+          },
+          "independence": {
+            "type": "string",
+            "enum": [
+              "accounts-only",
+              "identity-provider",
+              "unverified"
+            ]
+          },
+          "endedBy": {
+            "type": "string"
+          },
+          "endedAt": {
+            "type": "string"
+          },
+          "endReason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "officeId",
+          "accountId",
+          "holderName",
+          "from",
+          "state",
+          "proposedBy",
+          "proposedAt",
+          "expiresAt"
+        ]
+      },
+      "OfficeRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "recorded": {
+            "$ref": "#/components/schemas/OfficeTerms"
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "object",
+            "properties": {
+              "pending": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "$ref": "#/components/schemas/OfficeTerms"
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    }
+                  },
+                  "by": {
+                    "type": "string"
+                  },
+                  "byId": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  },
+                  "confirmed": {
+                    "type": "object",
+                    "properties": {
+                      "by": {
+                        "type": "string"
+                      },
+                      "byId": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      },
+                      "independence": {
+                        "type": "string",
+                        "enum": [
+                          "accounts-only",
+                          "identity-provider",
+                          "unverified"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "by",
+                      "at",
+                      "independence"
+                    ]
+                  },
+                  "expiresAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "values",
+                  "basis",
+                  "by",
+                  "at",
+                  "expiresAt"
+                ],
+                "description": "A proposal waiting for its second official."
+              },
+              "history": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "values": {
+                      "$ref": "#/components/schemas/OfficeTerms"
+                    },
+                    "basis": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Citation"
+                      }
+                    },
+                    "by": {
+                      "type": "string"
+                    },
+                    "byId": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "confirmed": {
+                      "type": "object",
+                      "properties": {
+                        "by": {
+                          "type": "string"
+                        },
+                        "byId": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "string"
+                        },
+                        "independence": {
+                          "type": "string",
+                          "enum": [
+                            "accounts-only",
+                            "identity-provider",
+                            "unverified"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "by",
+                        "at",
+                        "independence"
+                      ]
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "adopted",
+                        "lapsed",
+                        "withdrawn"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "values",
+                    "basis",
+                    "by",
+                    "at",
+                    "outcome"
+                  ]
+                },
+                "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+              }
+            },
+            "description": "Changes after setup: proposed citing the law, confirmed by a different official, every version kept."
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "createdBy",
+          "changes"
+        ]
+      },
+      "OfficeTerms": {
+        "description": "An office of state (docs/CONSTITUTIONAL_ARCHITECTURE.md §6, §7.1 `offices`; plan phase 4, audit F): a record, not a title. Its powers are references to powers recorded and enforced elsewhere (who is responsible, permit authority mappings, procedures); holding the office grants nothing by itself.",
+        "type": "object",
+        "properties": {
+          "institution": {
+            "type": "string",
+            "description": "The institution (registry id) the office belongs to; absent while the nation has not named one."
+          },
+          "title": {
+            "type": "string",
+            "description": "The official title in the nation's main language."
+          },
+          "titles": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "The title in further languages (language code → title)."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What kind of office (OFFICE_KINDS is a starting list; the nation may name others)."
+          },
+          "powers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "References to powers recorded elsewhere (e.g. \"authority:judiciary\", \"permit:building\", a law's eId). Enforced there, never here."
+          },
+          "term": {
+            "type": "object",
+            "properties": {
+              "years": {
+                "type": "number"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "description": "The term of office, as the law says."
+          },
+          "acting": {
+            "type": "string",
+            "description": "Who acts when the office is vacant or its holder absent, as the law says."
+          },
+          "succession": {
+            "type": "string",
+            "description": "How the office passes on, as the law says."
+          },
+          "heldWith": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Other offices (ids) the constitution has held together with this one (one person as head of state and of government)."
+          },
+          "effectiveFrom": {
+            "type": "string"
+          },
+          "effectiveTo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "kind",
+          "powers",
+          "effectiveFrom"
+        ]
       },
       "OfficerInputRow": {
         "type": "object",
@@ -84919,6 +86117,40 @@
           "authority"
         ]
       },
+      "SeparationCheck": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "Held (true) or not (false), as observed in the records now."
+          },
+          "detail": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string",
+            "description": "The page where the deciding record is kept."
+          },
+          "kind": {
+            "type": "string",
+            "const": "observed"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "ok",
+          "detail",
+          "href",
+          "kind"
+        ]
+      },
       "ServiceCalls": {
         "type": "object",
         "properties": {
@@ -89116,6 +90348,80 @@
           "reason"
         ]
       },
+      "StateClassification": {
+        "description": "The state's classification on independent axes (§1.2): arrays, never one enum; the nation's facts, never the platform's.",
+        "type": "object",
+        "properties": {
+          "stateForms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "e.g. republic, monarchy, federal, city-state, union, theocratic … (open list)."
+          },
+          "governmentForms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "e.g. presidential, parliamentary, semi-presidential, directorial, absolute …"
+          },
+          "territorialArrangements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "e.g. unitary, federal, devolved, confederal, union …"
+          },
+          "legalTraditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "e.g. civil_law, common_law, customary_law, religious_law …"
+          },
+          "authorityTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "e.g. constitutional, statutory, customary, religious …"
+          },
+          "style": {
+            "type": "string",
+            "enum": [
+              "emirate",
+              "federation",
+              "government",
+              "grand-duchy",
+              "kingdom",
+              "principality",
+              "republic",
+              "sultanate",
+              "union"
+            ],
+            "description": "How the platform styles itself for this state (front-door label)."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Where these facts come from: the instruments (laws-register references or text)."
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "description": "From when this classification applies (YYYY-MM-DD)."
+          }
+        },
+        "required": [
+          "stateForms",
+          "governmentForms",
+          "territorialArrangements",
+          "legalTraditions",
+          "authorityTypes"
+        ]
+      },
       "StatusComponent": {
         "type": "object",
         "properties": {
@@ -92123,6 +93429,178 @@
           "ageHours",
           "priority",
           "state"
+        ]
+      },
+      "Workspace": {
+        "type": "object",
+        "properties": {
+          "authority": {
+            "type": "object",
+            "properties": {
+              "signedIn": {
+                "type": "boolean"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "office": {
+                "type": "string"
+              },
+              "institution": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "standing": {
+                        "type": "string"
+                      },
+                      "branch": {
+                        "type": "string"
+                      },
+                      "independent": {
+                        "type": "boolean"
+                      },
+                      "court": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "standing",
+                      "independent",
+                      "court"
+                    ]
+                  }
+                ]
+              },
+              "offices": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "acting": {
+                      "type": "boolean"
+                    },
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "powers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "kind",
+                    "from",
+                    "powers"
+                  ]
+                }
+              },
+              "delegations": {
+                "type": "array",
+                "prefixItems": [],
+                "minItems": 0,
+                "maxItems": 0,
+                "description": "Delegations are not yet recorded on this installation (plan phase 6)."
+              },
+              "restrictions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "signedIn",
+              "institution",
+              "offices",
+              "delegations",
+              "restrictions"
+            ]
+          },
+          "awaiting": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "institutionStatus": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "href": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "value",
+                "href"
+              ]
+            }
+          },
+          "legalChanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "oversight": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          }
+        },
+        "required": [
+          "authority",
+          "awaiting",
+          "institutionStatus",
+          "legalChanges",
+          "oversight",
+          "exceptions"
         ]
       },
       "XliffImport": {

@@ -194,6 +194,25 @@ What has been built is locked. Work only upgrades it toward the vision in
   records for a listed purpose only (`readRelationship()`), logged with the
   relationship and version, never a change, decision, secret case or a
   court's case. A new cross-institution power reads this register.
+  request, communication or referral.
+- Offices are records (`lib/nation/office-register.ts`, `/api/offices`):
+  recorded directly only during setup, afterwards through `policy-change.ts`
+  (cite the law, a different official confirms; an independent institution's
+  own signer confirms its offices). Head of state and head of government are
+  separate offices; until one is recorded the head of government is derived
+  from `executiveTitle`. Holders are linked by one official and confirmed by
+  another, ended with a reason and kept. Holding an office grants no
+  permission: `roles.ts` never reads offices. Never ship an office, title or
+  power for a nation.
+- Greetings name the signed-in official and their office (`lib/workspace/home.ts`),
+  never the nation's executive title; `/welcome` routes by the institution's
+  standing and the Command Center stays the executive's home. The shared
+  workspace panels are `/gov/workspace` (`/api/workspace`), within `roles.ts`.
+- Separation of powers is observed, never generated (`lib/gov/separation.ts`,
+  `/api/constitution/separation`): each check reads a configuration fact and
+  links to its record. The state's classification (`constitution.classification`,
+  `lib/nation/classification.ts`) is lists with sources and dates beside the
+  locked `stateForm`; `platformLabel` reads its `style`, else the old derivation.
 
 ## Entry flow
 

@@ -13,13 +13,13 @@ an unapproved draft; a production installation refuses it until approved).
 
 | Guidance | Today in CivicOS | Gap |
 |---|---|---|
-| Composable classification (§1.2) | One `stateForm` enum with presets; constitution templates per form (`lib/gov/constitution.ts`) | Form of state, form of government, territorial arrangement, legal traditions and recognised authority types are one value; no effective dates or legal sources on them |
+| Composable classification (§1.2) | One `stateForm` enum with presets; constitution templates per form (`lib/gov/constitution.ts`); since phase 4 `constitution.classification` (lists per axis, sources, effective date, style; derived from `stateForm` until recorded) | No presets for further forms; the classification changes through the profile, not yet its own change process (phase 5) |
 | Institution identity (§2.1) | Ministry registry (`/api/org`): name, archetype, status, departments; since phase 1 standing, branch, establishing law, effective date, independence per dimension, prohibitions, records owned, changed through the change process | Appointment, dismissal and funding are recorded facts, not enforced relationships (phase 3); powers and jurisdiction per institution |
-| Offices (§7.1 `offices`) | `lib/nation/offices.ts` titles; head of government from `executiveTitle` | Offices are titles, not records with powers, terms, acting and succession rules |
+| Offices (§7.1 `offices`) | Since phase 4 records (`lib/nation/office-register.ts`): title per language, institution, kind, power references, term, acting and succession rules, legal basis, dates; head of state separate from head of government; holders linked by two officials | Delegations and acting appointments as events (phase 6); powers are references, enforced where recorded |
 | Powers and relationships (§3) | Who is responsible (`deployment.authorities`, 15 slots); permit authority mappings (`lib/permits/authority.ts`, two officials, cite law); procedures; since phase 3 the relationship register (`lib/data/store/relationships.ts`), enforced for instructions and purpose-bound reads | Appointment, dismissal, funding and the other kinds are recorded, not yet enforced (phases 4, 6) |
 | Authorization (§5.2) | `roles.ts` (role and institution scope), `caseActRefusal`/`caseReadRefusal`, access log; since phase 2 whole-government scope stops at independent institutions, their accounts are their own, who is responsible changes by two officials citing the law | Office, purpose and relationship versions are not yet part of each decision (phases 3–4) |
 | Three kinds of administration (§5.3) | Administrator role; Update Center installation administrator | Platform operator, national commissioning authority and institution administrator are not distinct |
-| Workspaces per branch (§6) | Command Center for the executive; ministry workspaces; courts' cause list | Everyone is greeted as the head of government; no home for a speaker, clerk, chief justice, head of state or independent body |
+| Workspaces per branch (§6) | Command Center for the executive; ministry workspaces; courts' cause list; since phase 4 greetings name the official, `/welcome` routes by standing, *My workspace* (§6.6 panels) | Public service panel; per-office pages for a speaker, clerk or chief justice beyond the institution workspace |
 | Configuration lifecycle (§7.4) | Country rule sets through `lib/law/policy-change.ts` (propose, confirm, cite, history) | The constitutional profile itself has no draft → review → approval → scheduled activation → superseded lifecycle |
 | Transitions and emergencies (§4) | Emergency suspension of mappings; crisis mode on screens | Elections, terms, acting offices, caretaker profiles, dissolution, impeachment stages, judicial-review effects, succession, devolution are not modelled |
 | Read access logged across branches (§5.4) | Access log, oversight confirmation, access watch | Log entries do not record the office and relationship version that authorised a read |
@@ -146,6 +146,46 @@ the official's office and institution: My authority, My work, Awaiting my action
 status, Legal changes, Oversight, Exceptions, Public service (§6.6). The Command Center stays as
 the executive's home. The separation-of-powers panel is built from the register and the
 boundaries above, observed, not generated.
+
+*Built (mechanism only, no office, title or power chosen for a nation):* offices are records
+(`lib/nation/office-register.ts`, store `__civicosOffices`, API `/api/offices`, screen National settings →
+*Offices* `/gov/configuration/offices`): institution, title and titles per language, kind (an open list:
+head of state, head of government, presiding officer, clerk, chief justice, court president, registrar, head
+of an independent body, minister, permanent secretary, agency director, governor, traditional leader …),
+power references (enforced where they are recorded, never by the office), term, acting rule, succession rule,
+`heldWith`, legal basis and effective dates. Head of state and head of government are separate offices.
+Recorded directly during first-run setup; afterwards proposed by an administrator (whole government or the
+office's institution) citing the laws register through `policy-change.ts`, confirmed by a different official —
+an official who can sign at the institution when it is independent and has such officials; every version
+kept, future dates honoured. Until a nation records a head of government it is derived from `executiveTitle`
+(`derivedHeadOfGovernment()`), so nothing changes visibly; recorded head-of-state and head-of-government
+titles flow into `nationOffices()` (`HeadOffices`, root layout facts). Holding an office: an administrator of
+the office's institution (whole government only where it reaches) links an account, a different official
+whose scope reaches the institution confirms (never the holder), ending needs a reason and keeps the
+holding with its end date; all audited. **Holding an office grants no permission**: `roles.ts` reads role and
+institution only (its one change is the `/api/offices` path rule; `office-register.test.ts` checks).
+Home per branch (`lib/workspace/home.ts`): greetings name the signed-in official and the office they hold
+(`/welcome`, `/command`, `ExecutiveMenu`, `CommandShell`, Situation Room, Cabinet, National overview), never
+the executive title; `/welcome`'s primary destination follows standing — legislature → its workspace,
+the branch and the chamber; courts → workspace and cause list; head of state's office and independent bodies
+→ their workspace; executive → Command Center. The shared shell (§6.6) is *My workspace* (`/gov/workspace`,
+a tab of My work; `GET /api/workspace`, `lib/workspace/panels.ts`): My authority, My work (`/api/work`),
+Awaiting my action, Institution status, Legal changes, Oversight, Exceptions, within `roles.ts`.
+Separation of powers (audit G): `lib/gov/separation.ts` + `lib/nation/separation-facts.ts`
+(`GET /api/constitution/separation`): each constitutional branch has a registered institution; courts
+isolated; no whole-government account holding an independent institution's office; independent institutions
+have their own administrator; data-protection authority named; access-log shortening confirmed by oversight
+(and none adopted without it); no directive instructing an independent body — each observed with a link.
+The Command Center panel, Branches, branch pages and National shell read it (`separationIntegrity()` is
+gone); the branch readiness percentages stay only where samples are allowed, marked Sample.
+Classification (§1.2; audit H): `NationalConstitution.classification` (state forms, government forms,
+territorial arrangements, legal traditions, authority types — lists — with sources, effective date and a
+`style`), derived from `stateForm` until recorded (`lib/nation/classification.ts`); `stateForm` stays.
+`platformLabel` reads the recorded style, else derives the old labels (unchanged for existing nations).
+Onboarding: an *Offices of state* track (optional beyond the head of government) and waiting items.
+Not yet: delegations (phase 6), office-based acting in the access log (§5.4), presets for further forms,
+head-of-state acts as draft procedures, a per-office public page, the classification's own change process
+(phase 5; it is saved through the profile like the rest of the constitution).
 
 **Phase 5 — constitutional profile lifecycle (§7.4) (U).**
 The profile is a versioned package: draft → legal review → institutional consultation →
