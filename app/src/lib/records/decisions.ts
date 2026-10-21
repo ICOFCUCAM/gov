@@ -105,3 +105,5 @@ export function verifyDecision(d: Pick<SignedDecision, 'id' | 'content' | 'sha25
 export const getDecision = (id: string): SignedDecision | undefined => { const d = db().decisions.find(x => x.id === id); return d ? structuredClone(d) : undefined; };
 export const decisionsFor = (kind: 'case' | 'register', id: string): SignedDecision[] =>
   db().decisions.filter(d => d.content.subject.kind === kind && d.content.subject.id === id).map(d => structuredClone(d));
+/** Every sealed decision, oldest first (read only: a court's ruling flags the ones it touches, lib/transitions/events.ts). */
+export const listDecisions = (): SignedDecision[] => db().decisions.map(d => structuredClone(d));

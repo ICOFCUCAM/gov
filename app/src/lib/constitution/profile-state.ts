@@ -26,8 +26,8 @@ export type ProfileStatus =
   | 'active' | 'superseded' | 'disputed' | 'suspended_pending_review' | 'withdrawn' | 'set_aside';
 
 /** The parts a profile bundles: each kept and changed on its own (lib/constitution/parts.ts). */
-export type PartKey = 'classification' | 'institutions' | 'authorities' | 'offices' | 'relationships' | 'dualControl' | 'suspension';
-export const PART_KEYS: PartKey[] = ['classification', 'institutions', 'authorities', 'offices', 'relationships', 'dualControl', 'suspension'];
+export type PartKey = 'classification' | 'institutions' | 'authorities' | 'offices' | 'relationships' | 'dualControl' | 'suspension' | 'competences' | 'transitionRules';
+export const PART_KEYS: PartKey[] = ['classification', 'institutions', 'authorities', 'offices', 'relationships', 'dualControl', 'suspension', 'competences', 'transitionRules'];
 
 /**
  * The change process (policy-change.ts `audit` key) of each part: a dispute
@@ -42,6 +42,10 @@ export const PART_AUDIT: Record<PartKey, string> = {
   relationships: 'institution.relationship',
   dualControl: 'dual-control.policy',
   suspension: 'permit-authority.suspension-policy',
+  // Plan phase 6 (lib/transitions): competence allocations between national and subnational institutions, and the
+  // country's transition rules (caretaker restrictions, who records each impeachment stage, emergency limits).
+  competences: 'transition.competence',
+  transitionRules: 'transition.rules',
 };
 export const PART_LABELS: Record<PartKey, string> = {
   classification: 'Classification of the state',
@@ -51,6 +55,8 @@ export const PART_LABELS: Record<PartKey, string> = {
   relationships: 'Relationships between institutions',
   dualControl: 'Two-official rules for decisions',
   suspension: 'Emergency suspension rules',
+  competences: 'Allocation of powers between national and regional institutions',
+  transitionRules: 'Rules for transitions and emergencies',
 };
 
 /** One part as a profile holds it: the version in force when captured (the count of adopted changes) and the digest of its values. */

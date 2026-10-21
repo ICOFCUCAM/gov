@@ -15,6 +15,7 @@ import { touch } from '@/lib/data/repo/track';
 import { registeredTargets, institutionBounds } from '@/lib/data/store/institutions';
 import { getMinistry } from '@/lib/data/store/ministries';
 import { COMMUNICATION_KINDS, INSTRUCTION_KINDS, EXECUTIVE_OFFICE, directiveTargetRefusal } from '@/lib/auth/roles';
+import { caretakerRefusal, judicialRefusal } from '@/lib/transitions/restrictions';
 
 interface Db { rows: DirectiveRow[] }
 const g = globalThis as unknown as { __civicosDirectives?: Db };
@@ -78,6 +79,9 @@ export function draftDirective(input: { ref?: string; kind?: string; issuedByCha
     if ('error' in c) return { error: `Legal basis: ${c.error}` };
     legalBasis.push(c);
   }
+  // A caretaker restriction the nation adopted, or a court's ruling that a cited provision is invalid or suspended (plan phase 6).
+  const transition = caretakerRefusal({ institution: issuer, directive: kind }) ?? judicialRefusal(legalBasis);
+  if (transition) return { error: transition };
   const row: DirectiveRow = {
     id: randomUUID(), ref, kind, issued_by_charter_id: issuer,
     issued_by_name: by, title: title.slice(0, 300), citation: input.citation?.trim() || null, status: 'drafting',
@@ -99,7 +103,10 @@ export function signDirective(ref: string, by: string | undefined, effectiveAt?:
   if (!r) return { error: 'No such directive' };
   if (r.status !== 'drafting') return { error: `Only a draft can be signed (this one is ${r.status})` };
   // The relationship that allowed the draft may have been suspended, ended or expired since.
-  const refused = instructionRefusal(r.issued_by_charter_id, r.kind, r.targets);
+  const refused = instructionRefusal(r.issued_by_charter_id, r.kind, r.targets)
+    // A caretaker period or a court's ruling recorded since the draft stops it too (plan phase 6).
+    ?? caretakerRefusal({ institution: r.issued_by_charter_id, directive: r.kind })
+    ?? judicialRefusal(((r.payload as { legalBasis?: Citation[] } | null)?.legalBasis) ?? []);
   if (refused) return { error: refused };
   const now = new Date();
   const eff = effectiveAt ? new Date(effectiveAt) : now;

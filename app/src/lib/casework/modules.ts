@@ -17,6 +17,8 @@ import '@/lib/customs/procedures';
 import '@/lib/permits/decisions';
 // Dual control: the platform's two-official minimum, the country's rules, proposals that lapse.
 import './dual-control-policy';
+// Transitions (plan phase 6): caretaker restrictions the nation adopted, courts' rulings on cited provisions.
+import '@/lib/transitions/guard';
 import { installReferenceProcedures as installCivil } from '@/lib/civil/procedures';
 import { installOrganisationProcedures } from '@/lib/organisations/procedures';
 import { installImmigrationProcedures } from '@/lib/immigration/procedures';

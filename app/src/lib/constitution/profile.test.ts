@@ -70,7 +70,7 @@ describe('the constitutional profile', () => {
     expect(profileRef()).toBeUndefined();
     expect(o.notice).toBe(LEGAL_PROCESS_NOTICE);
     expect(o.notice).toMatch(/does not replace it/);
-    expect(o.live.parts.map(p => p.key)).toEqual(['classification', 'institutions', 'authorities', 'offices', 'relationships', 'dualControl', 'suspension']);
+    expect(o.live.parts.map(p => p.key)).toEqual(['classification', 'institutions', 'authorities', 'offices', 'relationships', 'dualControl', 'suspension', 'competences', 'transitionRules']);
   });
 
   it('is drafted only after setup by a whole-government administrator, and every step is by a different person from the drafter', () => {
@@ -80,7 +80,7 @@ describe('the constitutional profile', () => {
     const p = ok(draftProfile({ title: 'First profile', constraints: 'Rollback: re-approve version 0' }, A));
     expect(p).toMatchObject({ version: 1, status: 'draft', touches: expect.arrayContaining(['authorities', 'classification']) });
     expect(p.digest).toHaveLength(64);
-    expect(p.parts).toHaveLength(7);
+    expect(p.parts).toHaveLength(9);
     // Leaving the draft needs the law.
     expect(submitProfile(p.id, { legalBasis: [] }, A)).toMatchObject({ error: expect.stringMatching(/laws register/) });
     ok(submitProfile(p.id, { legalBasis: basis }, A));

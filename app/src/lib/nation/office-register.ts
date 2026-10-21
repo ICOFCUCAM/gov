@@ -27,6 +27,14 @@
 // are kept. Holding an office grants no permission: lib/auth/roles.ts reads
 // the account's role and institution only (guidance §2.2, §6.3: a seniority or
 // an office never grants a power its institution lacks).
+//
+// Terms (plan phase 6, guidance §4.1): a holding with no end date ends with
+// the office's term in years (from its start); past that date it is no longer
+// in force (not listed as a holder, not the office acted under) and is flagged
+// (pastTermHoldings()) until the nation records what the law says happens: an
+// end, a new holding, an acting appointment or a succession
+// (lib/transitions). Acting appointments and successions confirmed there
+// create their holding here (holdingFromTransition()).
 
 import { touch } from '@/lib/data/repo/track';
 import { recordAudit, getMinistry, getSetup, getSovereign } from '@/lib/data/store';
@@ -126,10 +134,51 @@ export function derivedHeadOfGovernment(p: Pick<SovereignProfile, 'executiveTitl
   };
 }
 
+/**
+ * The last day a holding runs: its end date, else the office's term in years
+ * from its start (the day before the anniversary), else none.
+ */
+export function termEndOf(h: Pick<OfficeHolding, 'from' | 'to'>, t: Pick<OfficeTerms, 'term'> | null | undefined): string | undefined {
+  if (h.to) return h.to;
+  const years = t?.term?.years;
+  if (!years) return undefined;
+  const d = new Date(`${h.from}T00:00:00Z`);
+  if (!Number.isFinite(d.getTime())) return undefined;
+  d.setUTCFullYear(d.getUTCFullYear() + years);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+/** Whether a holding is in force on a date: active, started, and within its end date or term. */
+const holdingInForce = (h: OfficeHolding, t: OfficeTerms | null | undefined, on: string) => {
+  if (h.state !== 'active' || h.from > on) return false;
+  const end = termEndOf(h, t);
+  return !end || end >= on;
+};
+
 function holdersOf(officeId: string, now: Date): OfficeView['holders'] {
   const on = today(now);
-  return db().holdings.filter(h => h.officeId === officeId && h.state === 'active' && h.from <= on && (!h.to || h.to >= on))
-    .map(h => ({ id: h.id, name: h.holderName, accountId: h.accountId, from: h.from, ...(h.to ? { to: h.to } : {}), ...(h.acting ? { acting: true } : {}) }));
+  const o = getOfficeRecord(officeId);
+  const t = o ? officeTermsOf(o, now) : null;
+  return db().holdings.filter(h => h.officeId === officeId && holdingInForce(h, t, on))
+    .map(h => { const end = termEndOf(h, t); return { id: h.id, name: h.holderName, accountId: h.accountId, from: h.from, ...(end ? { to: end } : {}), ...(h.acting ? { acting: true } : {}) }; });
+}
+
+/**
+ * Holdings still marked active whose term (years from their start, the
+ * office's recorded term) has passed without an end date: no longer in
+ * force, flagged until the nation records what follows.
+ */
+export function pastTermHoldings(now = new Date()): { id: string; officeId: string; title: string; holderName: string; from: string; termEnded: string }[] {
+  const on = today(now);
+  const out: ReturnType<typeof pastTermHoldings> = [];
+  for (const h of db().holdings) {
+    if (h.state !== 'active' || h.to) continue;
+    const o = getOfficeRecord(h.officeId);
+    const t = o ? officeTermsOf(o, now) : null;
+    const end = termEndOf(h, t);
+    if (end && end < on) out.push({ id: h.id, officeId: h.officeId, title: t?.title ?? h.officeId, holderName: h.holderName, from: h.from, termEnded: end });
+  }
+  return out;
 }
 
 function view(o: OfficeRecord, now: Date): OfficeView {
@@ -181,10 +230,10 @@ export function officesHeldBy(accountId: string, now = new Date()): { id: string
   const on = today(now);
   const out: ReturnType<typeof officesHeldBy> = [];
   for (const h of db().holdings) {
-    if (h.accountId !== accountId || h.state !== 'active' || h.from > on || (h.to && h.to < on)) continue;
+    if (h.accountId !== accountId) continue;
     const o = getOfficeRecord(h.officeId);
     const t = o ? officeTermsOf(o, now) : null;
-    if (!inForce(t, now)) continue;
+    if (!holdingInForce(h, t, on) || !inForce(t, now)) continue;
     out.push({ id: h.officeId, title: t.title, kind: t.kind, ...(t.institution ? { institution: t.institution } : {}), ...(h.acting ? { acting: true } : {}), from: h.from, ...(h.to ? { to: h.to } : {}) });
   }
   return out;
@@ -527,3 +576,35 @@ export const officeStanding = (institution: string | undefined, now = new Date()
   const m = institution ? getMinistry(institution) : undefined;
   return m ? institutionTermsOf(m, now).standing : undefined;
 };
+
+/**
+ * The holding an acting appointment or a succession creates once a different
+ * official has confirmed it (lib/transitions/events.ts): active from its date,
+ * named after the two officials who recorded and confirmed the event, linked
+ * to it. The same rule as every holding: no permission follows from it.
+ */
+export function holdingFromTransition(input: { officeId: string; accountId: string; from: string; to?: string; acting: boolean; basis: Citation[]; event: string; ref: string;
+  proposedBy: string; proposedById?: string; confirmedBy: string; confirmedById?: string; independence: OfficeHolding['independence'] }, now = new Date()): OfficeHolding | { error: string } {
+  const o = getOfficeRecord(input.officeId);
+  if (!o) return { error: 'No such office' };
+  const a = accountById(input.accountId.replace(/^local:/, ''));
+  if (!a) return { error: 'No such official account' };
+  const h: OfficeHolding = {
+    id: `OH-${now.getTime().toString(36)}-${db().holdings.length + 1}`, officeId: o.id, accountId: a.id, holderName: a.name, from: input.from, ...(input.to ? { to: input.to } : {}),
+    state: 'active', ...(input.acting ? { acting: true } : {}), ...(input.basis.length ? { basis: structuredClone(input.basis) } : {}), note: `Under ${input.ref}`,
+    proposedBy: input.proposedBy, ...(input.proposedById ? { proposedById: input.proposedById } : {}), proposedAt: now.toISOString(), expiresAt: now.toISOString(),
+    confirmedBy: input.confirmedBy, ...(input.confirmedById ? { confirmedById: input.confirmedById } : {}), confirmedAt: now.toISOString(),
+    ...(input.independence ? { independence: input.independence } : {}), event: input.event,
+  };
+  db().holdings.push(h);
+  recordAudit(input.confirmedBy, HOLD, `Office:${o.id}`, 'ok', `${a.name} holds ${officeTermsOf(o, now)?.title ?? o.id}${input.acting ? ' (acting)' : ''} from ${input.from}${input.to ? ` to ${input.to}` : ''} · under ${input.ref} · no permission follows from the office`);
+  return structuredClone(h);
+}
+
+/** End the holding a transition created, when that transition is ended (revoked, or an acting appointment cut short). */
+export function endTransitionHolding(id: string, to: string, reason: string, by: string, now = new Date()): void {
+  const h = db().holdings.find(x => x.id === id);
+  if (!h || h.state !== 'active') return;
+  Object.assign(h, { state: 'ended', to: to < h.from ? h.from : to, endedBy: by, endedAt: now.toISOString(), endReason: reason.slice(0, 300) });
+  recordAudit(by, `${HOLD}.end`, `Office:${h.officeId}`, 'ok', `${h.holderName} no longer holds the office from ${h.to}: ${reason.slice(0, 200)}`);
+}

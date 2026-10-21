@@ -337,6 +337,11 @@ const OFFICIAL_WORK: RegExp[] = [
   // the drafter; consultation by the consulted institution's own officials; disputes by any administrator or one who
   // can sign). Not ADMIN_ONLY: an independent institution's signatory answers a consultation or raises a dispute.
   /^\/api\/constitution\/profile$/,
+  // Transitions and emergencies (plan phase 6, lib/transitions/events.ts): each kind checks who records and confirms it
+  // (an office's institution, a court's own officials, the institution the nation names for an impeachment stage, the
+  // declarant of an interest …). Not ADMIN_ONLY: a court's signatory records a ruling. Nothing here reads a transition
+  // to grant a permission; a declared conflict of interest only removes one (caseActRefusal()).
+  /^\/api\/constitution\/transitions$/,
 ];
 
 export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official' | 'legislature';
@@ -714,6 +719,8 @@ export interface CaseFacts {
   stepUp?: boolean;
   /** The procedure's key: a read relationship may cover cases of one procedure only. */
   recordType?: string;
+  /** Official ids recused from this case by a declared conflict of interest (lib/transitions; plan phase 6). */
+  recused?: string[];
 }
 /** The record types a case read covers: every case of the institution, or this procedure's. */
 export const caseRecordTypes = (c: Pick<CaseFacts, 'recordType'>) => ['cases', ...(c.recordType ? [c.recordType] : [])];
@@ -745,6 +752,8 @@ export function caseActRefusal(s: CaseScope, c: CaseFacts, now = Date.now()): st
         ? 'This institution is independent: its cases are worked only by its own officials'
         : 'Cases are worked only by officials of the institution responsible for them; serving the whole government or administering the installation does not give that authority';
   }
+  // A declared conflict of interest: the official steps aside from every action on the case (guidance §4.13).
+  if (s.id && (c.recused ?? []).includes(s.id)) return 'You declared a conflict of interest on this case and stepped aside: another official acts on it (the recusal is lifted only by two officials)';
   if (c.decision && role !== 'signatory') return 'A decision needs an official who can sign for the institution';
   if (c.sensitivity === 'restricted' && !assignedTo(s, c) && role !== 'signatory') return 'This case is restricted to the officials assigned to it and those who can sign';
   if (c.sensitivity === 'secret' && !assignedTo(s, c) && !supervises(s, c)) return 'This case is open only to the officials assigned to it and its named supervisors';

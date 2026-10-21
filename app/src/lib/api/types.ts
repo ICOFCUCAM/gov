@@ -926,6 +926,8 @@ export interface OfficeHolding {
   confirmedBy?: string; confirmedById?: string; confirmedAt?: string;
   independence?: 'identity-provider' | 'accounts-only' | 'unverified';
   endedBy?: string; endedAt?: string; endReason?: string;
+  /** The recorded transition (acting appointment or succession, lib/transitions) this holding carries out. */
+  event?: string;
 }
 
 /** First-run platform setup. Null until a nation or ministry has completed

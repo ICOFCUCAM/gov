@@ -61,7 +61,9 @@ const lapse = <T,>(h: PolicyChanges<T>, now: Date, audit: string, by: string): v
 };
 
 /** Propose new values: checked by `check` against the current ones (missing values kept), cited, waiting for a second official. */
-export function proposePolicy<T extends object>(h: PolicyChanges<T>, current: T, input: Partial<T>, basisInput: unknown, opts: { by: string; byId?: string; now: Date; pendingHours: number; audit: string; context: string; check: (v: T) => string | null; describe: (v: T) => string }): (PolicyVersion<T> & { expiresAt: string }) | { error: string } {
+export function proposePolicy<T extends object>(h: PolicyChanges<T>, current: T, input: Partial<T>, basisInput: unknown, opts: { by: string; byId?: string; now: Date; pendingHours: number; audit: string; context: string; check: (v: T) => string | null; describe: (v: T) => string;
+  /** The record may be made without a citation (a restriction an official places on themselves, e.g. declaring a conflict of interest); one given is still resolved. */
+  optionalBasis?: boolean }): (PolicyVersion<T> & { expiresAt: string }) | { error: string } {
   lapse(h, opts.now, opts.audit, opts.by);
   const frozen = frozenRefusal(opts.audit);
   if (frozen) return { error: frozen };
@@ -69,11 +71,12 @@ export function proposePolicy<T extends object>(h: PolicyChanges<T>, current: T,
   const values = { ...current, ...Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined)) } as T;
   const why = opts.check(values);
   if (why) return { error: why };
-  const basis = citeBasis(basisInput, opts.now.toISOString().slice(0, 10), opts.context);
+  const given = Array.isArray(basisInput) && basisInput.length > 0;
+  const basis = opts.optionalBasis && !given ? [] : citeBasis(basisInput, opts.now.toISOString().slice(0, 10), opts.context);
   if ('error' in basis) return basis;
   const at = opts.now.toISOString();
   h.pending = { values, basis, by: opts.by, ...(opts.byId ? { byId: opts.byId } : {}), at, expiresAt: new Date(opts.now.getTime() + opts.pendingHours * 3_600_000).toISOString() };
-  recordAudit(opts.by, `${opts.audit}.propose`, opts.audit, 'ok', `${opts.describe(values)} · basis ${basis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`).join('; ').slice(0, 160)} · awaiting a second official`);
+  recordAudit(opts.by, `${opts.audit}.propose`, opts.audit, 'ok', `${opts.describe(values)} · basis ${basis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`).join('; ').slice(0, 160) || 'none cited'} · awaiting a second official`);
   return structuredClone(h.pending);
 }
 

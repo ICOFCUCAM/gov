@@ -13,6 +13,9 @@
 //   relationships   relationships between institutions, the adopted version in force of each
 //   dualControl     the country's two-official rules for decisions
 //   suspension      the country's emergency suspension rules for authority mappings
+//   competences     the allocation of powers between national and regional institutions in force (plan phase 6)
+//   transitionRules the country's rules for transitions: caretaker restrictions, who records each impeachment
+//                   stage, who may declare an emergency and for how long (plan phase 6)
 
 import { sha256Hex } from '@/lib/audit/sha256';
 import { canonicalJson } from '@/lib/data/store/shared';
@@ -25,6 +28,7 @@ import { dualControlPolicy } from '@/lib/casework/dual-control-policy';
 import { suspensionPolicy } from '@/lib/permits/authority';
 import { classificationOf } from '@/lib/nation/classification';
 import { PART_KEYS, PART_LABELS, type PartKey, type PartRef } from './profile-state';
+import { competencesInForce, competenceVersions, competencesWaiting, transitionRules } from '@/lib/transitions/state';
 
 const digestOf = (v: unknown) => sha256Hex(canonicalJson(v));
 const adoptedCount = (h?: { history?: { outcome: string }[] }) => (h?.history ?? []).filter(x => x.outcome === 'adopted').length;
@@ -76,6 +80,17 @@ function read(key: PartKey, now: Date): LivePart {
       return { key, label, version: adoptedCount(s.changes), digest: digestOf({ confirmWithinHours: s.confirmWithinHours, reviewWithinDays: s.reviewWithinDays, suspendBy: s.suspendBy ?? 'administrator', adopted: s.adopted }), waiting: waitingOf(s.changes),
         summary: s.adopted ? `Confirm within ${s.confirmWithinHours} h, review within ${s.reviewWithinDays} d` : 'Platform defaults (not adopted by the nation)' };
     }
+    case 'competences': {
+      const c = competencesInForce(now).map(x => ({ competence: x.competence, holder: x.holder, previous: x.previous ?? null, regions: x.regions, from: x.from, event: x.ref }));
+      return { key, label, version: competenceVersions(), digest: digestOf(c), waiting: competencesWaiting(), summary: c.length ? `${c.length} power(s) transferred` : 'No transfer of a power recorded' };
+    }
+    case 'transitionRules': {
+      const r = transitionRules();
+      const { changes, adopted, ...values } = r;
+      const restricted = values.caretakerProcedures.length + values.caretakerDecisions.length + values.caretakerDirectives.length;
+      return { key, label, version: adoptedCount(changes), digest: digestOf({ ...values, adopted }), waiting: waitingOf(changes),
+        summary: adopted ? `Caretaker restricts ${restricted} kind(s); ${values.impeachmentStages.filter(Boolean).length} of 7 impeachment stages named; emergencies by ${values.emergencyDeclarers.length} declarer(s)` : 'None adopted by the nation' };
+    }
   }
 }
 
@@ -90,7 +105,8 @@ export function partsDigest(parts: Pick<PartRef, 'key' | 'version' | 'digest'>[]
 }
 
 /** The parts whose digest differs between two captures (all of them when there is no earlier one). */
-export function changedParts(a: Pick<PartRef, 'key' | 'digest'>[] | undefined, b: Pick<PartRef, 'key' | 'digest'>[]): PartKey[] {
+export function changedParts(a: Pick<PartRef, 'key' | 'digest'>[] | undefined, b: (Pick<PartRef, 'key' | 'digest'> & { version?: number })[]): PartKey[] {
   if (!a) return b.map(p => p.key);
-  return b.filter(p => a.find(x => x.key === p.key)?.digest !== p.digest).map(p => p.key);
+  // A part added to the platform after the earlier capture (phase 6 added two) counts as changed only once it holds an adopted change.
+  return b.filter(p => { const x = a.find(y => y.key === p.key); return x ? x.digest !== p.digest : (p as { version?: number }).version !== 0; }).map(p => p.key);
 }

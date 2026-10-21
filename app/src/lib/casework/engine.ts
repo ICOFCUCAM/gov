@@ -26,6 +26,7 @@ import { activePackage, getPackage, ownerInstitution } from './packages';
 import { addDays, lapsed } from './calendar';
 import type { Case, CasePackage, ActionSpec, FieldSpec, Party, Step } from './types';
 import { queueMirror } from '@/lib/db/mirror';
+import { recusedOn } from '@/lib/transitions/state';
 
 interface CaseDb { cases: Case[]; seq: number }
 const g = globalThis as unknown as { __civicosCases?: CaseDb };
@@ -57,7 +58,7 @@ export type DecisionAuthority =
  * (lib/permits/decisions.ts registers the platform's): an error refuses it;
  * otherwise it says where the authority came from.
  */
-export type DecisionGuard = (c: Case, a: ActionSpec, pkg: CasePackage, now: Date) => { error: string } | { authority?: DecisionAuthority };
+export type DecisionGuard = (c: Case, a: ActionSpec, pkg: CasePackage, now: Date, citations?: Citation[]) => { error: string } | { authority?: DecisionAuthority };
 const gg = globalThis as unknown as { __caseDecisionGuards?: Map<string, DecisionGuard> };
 /** The dual-control rules (lib/casework/dual-control-policy.ts registers them): who needs two officials, how long a proposal waits. */
 export interface DualControlRules { twoOfficials: (c: Case, a: ActionSpec, pkg: CasePackage) => boolean; pendingHours: () => number; requireIdentityBinding: () => boolean }
@@ -85,10 +86,10 @@ export function lapseProposals(now = new Date()): string[] {
 }
 
 export function registerDecisionGuard(name: string, fn: DecisionGuard): void { (gg.__caseDecisionGuards ??= new Map()).set(name, fn); }
-function guardDecision(c: Case, a: ActionSpec, pkg: CasePackage, now: Date): { error: string } | { authority?: DecisionAuthority } {
+function guardDecision(c: Case, a: ActionSpec, pkg: CasePackage, now: Date, citations: Citation[]): { error: string } | { authority?: DecisionAuthority } {
   let authority: DecisionAuthority | undefined;
   for (const g of gg.__caseDecisionGuards?.values() ?? []) {
-    const r = g(c, a, pkg, now);
+    const r = g(c, a, pkg, now, citations);
     if ('error' in r) return r;
     authority ??= r.authority;
   }
@@ -149,6 +150,8 @@ const facts = (c: Case, a?: ActionSpec) => {
     ...(c.package?.key ? { recordType: c.package.key } : {}),
     judicial: b.judicial.includes(c.owner),
     independent: b.independent.includes(c.owner),
+    // Officials who declared a conflict of interest on this case step aside from acting on it (plan phase 6, lib/transitions).
+    recused: recusedOn([c.id, c.ref]),
     ...(a ? { decision: !!a.decision, stepUp: !!a.needs.stepUp } : {}),
   };
 };
@@ -278,7 +281,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   if (a.requires?.citations && !citations.length) return { error: 'Cite the provisions of law this rests on' };
 
   // A decision is checked against the authority it rests on when proposed and again when made.
-  const guarded = a.decision ? guardDecision(c, a, pkg, now) : {};
+  const guarded = a.decision ? guardDecision(c, a, pkg, now, citations) : {};
   if ('error' in guarded) return guarded;
 
   // Four-eyes: the first official proposes; a different one confirms.
