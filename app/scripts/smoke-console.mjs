@@ -34,6 +34,9 @@ const PAGES = [
   { path: '/gov/geopolitical', map: false, text: /world|foreign/i },
   { path: '/audit', map: false, text: /audit/i },
   { path: '/command', map: false, text: /command|sovereign/i },
+  // Plan phase 4: the shared workspace shell and the offices of state.
+  { path: '/gov/workspace', map: false, text: /my authority/i },
+  { path: '/gov/configuration/offices', map: false, text: /offices of state/i },
 ];
 const VIEWPORTS = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 

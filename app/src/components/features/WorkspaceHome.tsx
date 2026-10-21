@@ -68,9 +68,9 @@ export function WorkspaceHome() {
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-ink-muted">{official ? `Welcome, ${greetingName(official)}` : 'Not signed in'}</div>
-          <h1 className="text-xl font-semibold tracking-tight text-ink">My workspace</h1>
-          <p className="text-[12px] text-ink-muted">{official ? officeLine(official) : 'Sign in to see your office, your work and what waits for you.'}</p>
+          <div className="text-[11px] uppercase tracking-[0.16em] text-ink-muted">{official ? `Welcome, ${greetingName(official)}` : 'My workspace'}</div>
+          <h2 className="text-xl font-semibold tracking-tight text-ink">{official ? officeLine(official) : "Not signed in"}</h2>
+          <p className="text-[12px] text-ink-muted">{official ? (official.institutionName ?? "Whole government") : "Sign in to see your office, your work and what waits for you."}</p>
         </div>
         {home ? <Link href={home.href} className="focus-ring rounded-[3px] border border-line px-2.5 py-1 text-[12px] text-link no-underline hover:bg-surface-2">{home.t} →</Link> : null}
       </div>
