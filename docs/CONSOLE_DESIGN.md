@@ -50,13 +50,6 @@ before connecting sources:
 - The national snapshot no longer invents a population; the region count is the
   nation's own.
 - The regional model covers all of the nation's regions.
-- Generated panels in production (step I0.1): a panel whose figures come from
-  an engine or a model carries `SampleTag` in its header and wraps its body in
-  `SampleFold` (`components/ui/SampleFold.tsx`): shown under Sample in demo and
-  training, folded to "Not connected" (and not rendered) in production, like
-  the agency apps' `SimulatedView`. A screen that reads real records stays
-  outside the fold and folds only its generated panels (the interior record
-  screens, `/health-ecosystem`, the ministry workspace).
 
 Generated figures in production (step I0.1, October 2026): one rule,
 `lib/twin/generated.ts`, read by every console surface through
@@ -74,6 +67,16 @@ findings on /audit, the operations overview and incident register on /ops,
 the ministry registry, the twin's population). A panel whose inputs are
 generated is Sample, never Modelled. `components/ui/Generated.test.ts` checks
 the rule and scans the console files for untagged panels and tiles.
+
+There are two entry points and one rule. `Generated.tsx` (`useGenerated`,
+`GeneratedFold`, `GeneratedStrip`, `useTile`, `GeneratedText`) is the rule's
+own; `components/ui/SampleFold.tsx` (`SampleFold`, `SampleTag`) is the
+per-panel form used by screens that keep real records open beside generated
+panels (the interior record screens, `/health-ecosystem`, the ministry
+workspace). `SampleTag` reads `useGenerated()` and `SampleFold` renders
+`GeneratedFold`, so both say "Not connected" with the same reason in
+production, open as Simulation, and mark Sample in demo and training;
+`SampleFold.test.ts` checks the two render identically.
 
 Next: a durable store (register 1.1), then the twin core on the substrate
 (entities, sources, time-stamped observations) and the first connector
