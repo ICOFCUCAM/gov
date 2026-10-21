@@ -7968,6 +7968,1173 @@
         "x-source": "src/app/api/civil/route.ts"
       }
     },
+    "/api/constitution/profile": {
+      "get": {
+        "tags": [
+          "constitution"
+        ],
+        "operationId": "get_constitution_profile",
+        "summary": "GET /api/constitution/profile",
+        "description": "/api/constitution/profile — the constitutional profile as a versioned, governed package (lib/constitution/profile.ts; plan phase 5; guidance §7.4). It bundles, by reference and SHA-256 digest, the parts kept on their own (classification, institutions' standing, who is responsible, offices, relationships, the country's dual-control and suspension rules); each part keeps its own change process. This records the nation's legal process; it does not replace it. GET: the version in force, the parts as they stand with their digest, the parts changed since it was approved, every version with its steps and who took each, disputes and the frozen parts, the nation's own steps. POST { op } (OFFICIAL_WORK in lib/auth/roles.ts; who may take each step is checked in the store): 'draft' { title, effectiveFrom?, consult?: [institution id], constraints?, note? } an administrator serving the whole government; 'refresh' { id } capture the parts again before approval (the steps start over); 'submit' { id, legalBasis: [{ instrument, eId }], consult?, constraints? } draft → legal review; 'review' { id, outcome: cleared | returned, note? } a different person from the drafter; 'consult' { id, response: agree | object | no-comment, note? } an official of a consulted institution; 'validate' { id } security validation, an administrator other than the drafter; 'approve' { id, authorisedBy, note? } each approver a different person (two at least), naming the act that authorises it; 'withdraw' { id, reason? } the drafter or an administrator, before it is active; 'dispute' { id, grounds } freezes the parts it touches; the status quo stays in force; 'resolve' { id, outcome: upheld | set-aside, reference, note? } the recorded decision, by a different person; 'process-propose' { consultation?, approvals?, legalReviewInstitution?, legalBasis } the nation's own steps (an administrator); 'process-confirm' a different administrator; 'process-withdraw' { reason? }. Who acted comes from the sign-in; every step is audited.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "institutions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      }
+                    },
+                    "notice": {
+                      "type": "string"
+                    },
+                    "setupComplete": {
+                      "type": "boolean"
+                    },
+                    "inForce": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "number"
+                            },
+                            "digest": {
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "effectiveFrom": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "active",
+                                "approval",
+                                "consultation",
+                                "disputed",
+                                "draft",
+                                "legal_review",
+                                "scheduled",
+                                "security_validation",
+                                "set_aside",
+                                "superseded",
+                                "suspended_pending_review",
+                                "withdrawn"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "version",
+                            "digest",
+                            "title",
+                            "effectiveFrom",
+                            "status"
+                          ]
+                        }
+                      ]
+                    },
+                    "live": {
+                      "type": "object",
+                      "properties": {
+                        "parts": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/LivePart"
+                          }
+                        },
+                        "digest": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "parts",
+                        "digest"
+                      ]
+                    },
+                    "drift": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "authorities",
+                          "classification",
+                          "dualControl",
+                          "institutions",
+                          "offices",
+                          "relationships",
+                          "suspension"
+                        ]
+                      },
+                      "description": "Parts changed through their own process since the profile in force was approved (draft a new version to approve them together)."
+                    },
+                    "frozen": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "part": {
+                            "type": "string",
+                            "enum": [
+                              "authorities",
+                              "classification",
+                              "dualControl",
+                              "institutions",
+                              "offices",
+                              "relationships",
+                              "suspension"
+                            ]
+                          },
+                          "profile": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "number"
+                          },
+                          "grounds": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "part",
+                          "profile",
+                          "version",
+                          "grounds"
+                        ]
+                      }
+                    },
+                    "profiles": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConstitutionalProfile"
+                      }
+                    },
+                    "process": {
+                      "type": "object",
+                      "properties": {
+                        "adopted": {
+                          "type": "boolean"
+                        },
+                        "changes": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "object",
+                              "properties": {
+                                "values": {
+                                  "$ref": "#/components/schemas/ProfileProcessValues"
+                                },
+                                "basis": {
+                                  "type": "array",
+                                  "items": {
+                                    "$ref": "#/components/schemas/Citation"
+                                  }
+                                },
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "confirmed": {
+                                  "type": "object",
+                                  "properties": {
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "independence": {
+                                      "type": "string",
+                                      "enum": [
+                                        "accounts-only",
+                                        "identity-provider",
+                                        "unverified"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "by",
+                                    "at",
+                                    "independence"
+                                  ]
+                                },
+                                "expiresAt": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "values",
+                                "basis",
+                                "by",
+                                "at",
+                                "expiresAt"
+                              ],
+                              "description": "A proposal waiting for its second official."
+                            },
+                            "history": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "values": {
+                                    "$ref": "#/components/schemas/ProfileProcessValues"
+                                  },
+                                  "basis": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/Citation"
+                                    }
+                                  },
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "confirmed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "by": {
+                                        "type": "string"
+                                      },
+                                      "byId": {
+                                        "type": "string"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "independence": {
+                                        "type": "string",
+                                        "enum": [
+                                          "accounts-only",
+                                          "identity-provider",
+                                          "unverified"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "by",
+                                      "at",
+                                      "independence"
+                                    ]
+                                  },
+                                  "outcome": {
+                                    "type": "string",
+                                    "enum": [
+                                      "adopted",
+                                      "lapsed",
+                                      "withdrawn"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "values",
+                                  "basis",
+                                  "by",
+                                  "at",
+                                  "outcome"
+                                ]
+                              },
+                              "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                            }
+                          }
+                        },
+                        "legalReviewInstitution": {
+                          "type": "string"
+                        },
+                        "consultation": {
+                          "type": "string",
+                          "enum": [
+                            "optional",
+                            "required"
+                          ]
+                        },
+                        "approvals": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "adopted",
+                        "changes",
+                        "consultation",
+                        "approvals"
+                      ]
+                    },
+                    "labels": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "object",
+                          "properties": {
+                            "active": {
+                              "type": "string"
+                            },
+                            "approval": {
+                              "type": "string"
+                            },
+                            "consultation": {
+                              "type": "string"
+                            },
+                            "disputed": {
+                              "type": "string"
+                            },
+                            "draft": {
+                              "type": "string"
+                            },
+                            "legal_review": {
+                              "type": "string"
+                            },
+                            "scheduled": {
+                              "type": "string"
+                            },
+                            "security_validation": {
+                              "type": "string"
+                            },
+                            "set_aside": {
+                              "type": "string"
+                            },
+                            "superseded": {
+                              "type": "string"
+                            },
+                            "suspended_pending_review": {
+                              "type": "string"
+                            },
+                            "withdrawn": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "active",
+                            "approval",
+                            "consultation",
+                            "disputed",
+                            "draft",
+                            "legal_review",
+                            "scheduled",
+                            "security_validation",
+                            "set_aside",
+                            "superseded",
+                            "suspended_pending_review",
+                            "withdrawn"
+                          ]
+                        },
+                        "parts": {
+                          "type": "object",
+                          "properties": {
+                            "authorities": {
+                              "type": "string"
+                            },
+                            "classification": {
+                              "type": "string"
+                            },
+                            "dualControl": {
+                              "type": "string"
+                            },
+                            "institutions": {
+                              "type": "string"
+                            },
+                            "offices": {
+                              "type": "string"
+                            },
+                            "relationships": {
+                              "type": "string"
+                            },
+                            "suspension": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "authorities",
+                            "classification",
+                            "dualControl",
+                            "institutions",
+                            "offices",
+                            "relationships",
+                            "suspension"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "parts"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "institutions",
+                    "notice",
+                    "setupComplete",
+                    "inForce",
+                    "live",
+                    "drift",
+                    "frozen",
+                    "profiles",
+                    "process",
+                    "labels"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "institutions": [
+                        {
+                          "id": "ID-0001",
+                          "name": "Example"
+                        }
+                      ],
+                      "notice": "string",
+                      "setupComplete": true,
+                      "inForce": {
+                        "id": "ID-0001",
+                        "version": 1,
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "title": "Example",
+                        "effectiveFrom": "2026-01-15",
+                        "status": "active"
+                      },
+                      "live": {
+                        "parts": [
+                          {
+                            "waiting": 1,
+                            "key": "authorities",
+                            "label": "Example",
+                            "version": 1,
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "summary": "Text"
+                          }
+                        ],
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                      },
+                      "drift": [
+                        "authorities"
+                      ],
+                      "frozen": [
+                        {
+                          "part": "authorities",
+                          "profile": "string",
+                          "version": 1,
+                          "grounds": "string"
+                        }
+                      ],
+                      "profiles": [
+                        {
+                          "id": "ID-0001",
+                          "version": 1,
+                          "title": "Example",
+                          "status": "active",
+                          "parts": [
+                            {}
+                          ],
+                          "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "touches": [
+                            "authorities"
+                          ],
+                          "effectiveFrom": "2026-01-15",
+                          "basis": [
+                            {}
+                          ],
+                          "drafted": {
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          },
+                          "consult": [
+                            "string"
+                          ],
+                          "consultations": [
+                            {}
+                          ],
+                          "approvals": [
+                            {}
+                          ],
+                          "disputes": [
+                            {}
+                          ],
+                          "events": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "process": {
+                        "adopted": true,
+                        "changes": {},
+                        "legalReviewInstitution": "string",
+                        "consultation": "optional",
+                        "approvals": 1
+                      },
+                      "labels": {
+                        "status": {
+                          "active": "string",
+                          "approval": "string",
+                          "consultation": "string",
+                          "disputed": "string",
+                          "draft": "string",
+                          "legal_review": "string",
+                          "scheduled": "string",
+                          "security_validation": "string",
+                          "set_aside": "string",
+                          "superseded": "string",
+                          "suspended_pending_review": "string",
+                          "withdrawn": "string"
+                        },
+                        "parts": {
+                          "authorities": "string",
+                          "classification": "string",
+                          "dualControl": "string",
+                          "institutions": "string",
+                          "offices": "string",
+                          "relationships": "string",
+                          "suspension": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/constitution/profile/route.ts"
+      },
+      "post": {
+        "tags": [
+          "constitution"
+        ],
+        "operationId": "post_constitution_profile",
+        "summary": "POST /api/constitution/profile",
+        "description": "/api/constitution/profile — the constitutional profile as a versioned, governed package (lib/constitution/profile.ts; plan phase 5; guidance §7.4). It bundles, by reference and SHA-256 digest, the parts kept on their own (classification, institutions' standing, who is responsible, offices, relationships, the country's dual-control and suspension rules); each part keeps its own change process. This records the nation's legal process; it does not replace it. GET: the version in force, the parts as they stand with their digest, the parts changed since it was approved, every version with its steps and who took each, disputes and the frozen parts, the nation's own steps. POST { op } (OFFICIAL_WORK in lib/auth/roles.ts; who may take each step is checked in the store): 'draft' { title, effectiveFrom?, consult?: [institution id], constraints?, note? } an administrator serving the whole government; 'refresh' { id } capture the parts again before approval (the steps start over); 'submit' { id, legalBasis: [{ instrument, eId }], consult?, constraints? } draft → legal review; 'review' { id, outcome: cleared | returned, note? } a different person from the drafter; 'consult' { id, response: agree | object | no-comment, note? } an official of a consulted institution; 'validate' { id } security validation, an administrator other than the drafter; 'approve' { id, authorisedBy, note? } each approver a different person (two at least), naming the act that authorises it; 'withdraw' { id, reason? } the drafter or an administrator, before it is active; 'dispute' { id, grounds } freezes the parts it touches; the status quo stays in force; 'resolve' { id, outcome: upheld | set-aside, reference, note? } the recorded decision, by a different person; 'process-propose' { consultation?, approvals?, legalReviewInstitution?, legalBasis } the nation's own steps (an administrator); 'process-confirm' a different administrator; 'process-withdraw' { reason? }. Who acted comes from the sign-in; every step is audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notice": {
+                      "type": "string"
+                    },
+                    "setupComplete": {
+                      "type": "boolean"
+                    },
+                    "inForce": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "number"
+                            },
+                            "digest": {
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "effectiveFrom": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "active",
+                                "approval",
+                                "consultation",
+                                "disputed",
+                                "draft",
+                                "legal_review",
+                                "scheduled",
+                                "security_validation",
+                                "set_aside",
+                                "superseded",
+                                "suspended_pending_review",
+                                "withdrawn"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "version",
+                            "digest",
+                            "title",
+                            "effectiveFrom",
+                            "status"
+                          ]
+                        }
+                      ]
+                    },
+                    "live": {
+                      "type": "object",
+                      "properties": {
+                        "parts": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/LivePart"
+                          }
+                        },
+                        "digest": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "parts",
+                        "digest"
+                      ]
+                    },
+                    "drift": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "authorities",
+                          "classification",
+                          "dualControl",
+                          "institutions",
+                          "offices",
+                          "relationships",
+                          "suspension"
+                        ]
+                      },
+                      "description": "Parts changed through their own process since the profile in force was approved (draft a new version to approve them together)."
+                    },
+                    "frozen": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "part": {
+                            "type": "string",
+                            "enum": [
+                              "authorities",
+                              "classification",
+                              "dualControl",
+                              "institutions",
+                              "offices",
+                              "relationships",
+                              "suspension"
+                            ]
+                          },
+                          "profile": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "number"
+                          },
+                          "grounds": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "part",
+                          "profile",
+                          "version",
+                          "grounds"
+                        ]
+                      }
+                    },
+                    "profiles": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConstitutionalProfile"
+                      }
+                    },
+                    "process": {
+                      "type": "object",
+                      "properties": {
+                        "adopted": {
+                          "type": "boolean"
+                        },
+                        "changes": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "object",
+                              "properties": {
+                                "values": {
+                                  "$ref": "#/components/schemas/ProfileProcessValues"
+                                },
+                                "basis": {
+                                  "type": "array",
+                                  "items": {
+                                    "$ref": "#/components/schemas/Citation"
+                                  }
+                                },
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "confirmed": {
+                                  "type": "object",
+                                  "properties": {
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "independence": {
+                                      "type": "string",
+                                      "enum": [
+                                        "accounts-only",
+                                        "identity-provider",
+                                        "unverified"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "by",
+                                    "at",
+                                    "independence"
+                                  ]
+                                },
+                                "expiresAt": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "values",
+                                "basis",
+                                "by",
+                                "at",
+                                "expiresAt"
+                              ],
+                              "description": "A proposal waiting for its second official."
+                            },
+                            "history": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "values": {
+                                    "$ref": "#/components/schemas/ProfileProcessValues"
+                                  },
+                                  "basis": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/Citation"
+                                    }
+                                  },
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "confirmed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "by": {
+                                        "type": "string"
+                                      },
+                                      "byId": {
+                                        "type": "string"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "independence": {
+                                        "type": "string",
+                                        "enum": [
+                                          "accounts-only",
+                                          "identity-provider",
+                                          "unverified"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "by",
+                                      "at",
+                                      "independence"
+                                    ]
+                                  },
+                                  "outcome": {
+                                    "type": "string",
+                                    "enum": [
+                                      "adopted",
+                                      "lapsed",
+                                      "withdrawn"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "values",
+                                  "basis",
+                                  "by",
+                                  "at",
+                                  "outcome"
+                                ]
+                              },
+                              "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                            }
+                          }
+                        },
+                        "legalReviewInstitution": {
+                          "type": "string"
+                        },
+                        "consultation": {
+                          "type": "string",
+                          "enum": [
+                            "optional",
+                            "required"
+                          ]
+                        },
+                        "approvals": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "adopted",
+                        "changes",
+                        "consultation",
+                        "approvals"
+                      ]
+                    },
+                    "labels": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "object",
+                          "properties": {
+                            "active": {
+                              "type": "string"
+                            },
+                            "approval": {
+                              "type": "string"
+                            },
+                            "consultation": {
+                              "type": "string"
+                            },
+                            "disputed": {
+                              "type": "string"
+                            },
+                            "draft": {
+                              "type": "string"
+                            },
+                            "legal_review": {
+                              "type": "string"
+                            },
+                            "scheduled": {
+                              "type": "string"
+                            },
+                            "security_validation": {
+                              "type": "string"
+                            },
+                            "set_aside": {
+                              "type": "string"
+                            },
+                            "superseded": {
+                              "type": "string"
+                            },
+                            "suspended_pending_review": {
+                              "type": "string"
+                            },
+                            "withdrawn": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "active",
+                            "approval",
+                            "consultation",
+                            "disputed",
+                            "draft",
+                            "legal_review",
+                            "scheduled",
+                            "security_validation",
+                            "set_aside",
+                            "superseded",
+                            "suspended_pending_review",
+                            "withdrawn"
+                          ]
+                        },
+                        "parts": {
+                          "type": "object",
+                          "properties": {
+                            "authorities": {
+                              "type": "string"
+                            },
+                            "classification": {
+                              "type": "string"
+                            },
+                            "dualControl": {
+                              "type": "string"
+                            },
+                            "institutions": {
+                              "type": "string"
+                            },
+                            "offices": {
+                              "type": "string"
+                            },
+                            "relationships": {
+                              "type": "string"
+                            },
+                            "suspension": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "authorities",
+                            "classification",
+                            "dualControl",
+                            "institutions",
+                            "offices",
+                            "relationships",
+                            "suspension"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "parts"
+                      ]
+                    },
+                    "result": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "notice",
+                    "setupComplete",
+                    "inForce",
+                    "live",
+                    "drift",
+                    "frozen",
+                    "profiles",
+                    "process",
+                    "labels",
+                    "result"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "notice": "string",
+                      "setupComplete": true,
+                      "inForce": {
+                        "id": "ID-0001",
+                        "version": 1,
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "title": "Example",
+                        "effectiveFrom": "2026-01-15",
+                        "status": "active"
+                      },
+                      "live": {
+                        "parts": [
+                          {
+                            "waiting": 1,
+                            "key": "authorities",
+                            "label": "Example",
+                            "version": 1,
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "summary": "Text"
+                          }
+                        ],
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                      },
+                      "drift": [
+                        "authorities"
+                      ],
+                      "frozen": [
+                        {
+                          "part": "authorities",
+                          "profile": "string",
+                          "version": 1,
+                          "grounds": "string"
+                        }
+                      ],
+                      "profiles": [
+                        {
+                          "id": "ID-0001",
+                          "version": 1,
+                          "title": "Example",
+                          "status": "active",
+                          "parts": [
+                            {}
+                          ],
+                          "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "touches": [
+                            "authorities"
+                          ],
+                          "effectiveFrom": "2026-01-15",
+                          "basis": [
+                            {}
+                          ],
+                          "drafted": {
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          },
+                          "consult": [
+                            "string"
+                          ],
+                          "consultations": [
+                            {}
+                          ],
+                          "approvals": [
+                            {}
+                          ],
+                          "disputes": [
+                            {}
+                          ],
+                          "events": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "process": {
+                        "adopted": true,
+                        "changes": {},
+                        "legalReviewInstitution": "string",
+                        "consultation": "optional",
+                        "approvals": 1
+                      },
+                      "labels": {
+                        "status": {
+                          "active": "string",
+                          "approval": "string",
+                          "consultation": "string",
+                          "disputed": "string",
+                          "draft": "string",
+                          "legal_review": "string",
+                          "scheduled": "string",
+                          "security_validation": "string",
+                          "set_aside": "string",
+                          "superseded": "string",
+                          "suspended_pending_review": "string",
+                          "withdrawn": "string"
+                        },
+                        "parts": {
+                          "authorities": "string",
+                          "classification": "string",
+                          "dualControl": "string",
+                          "institutions": "string",
+                          "offices": "string",
+                          "relationships": "string",
+                          "suspension": "string"
+                        }
+                      },
+                      "result": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/constitution/profile/route.ts"
+      }
+    },
     "/api/constitution/separation": {
       "get": {
         "tags": [
@@ -54173,6 +55340,728 @@
         "x-source": "src/app/api/sovereign/authorities/route.ts"
       }
     },
+    "/api/sovereign/classification": {
+      "get": {
+        "tags": [
+          "sovereign"
+        ],
+        "operationId": "get_sovereign_classification",
+        "summary": "GET /api/sovereign/classification",
+        "description": "/api/sovereign/classification — the state's classification (forms of state and government, territorial arrangements, legal traditions, authority types, style; guidance §1.2) once setup is complete (lib/data/store/sovereign.ts; plan phase 5). During first-run setup it is saved through /api/sovereign as before; afterwards a direct change there is refused (409) and goes through here, the country's change process (lib/law/policy-change.ts). GET: the classification in force (recorded, or derived from the form of state), a proposal waiting for its second official and every earlier version. POST (administrators, ADMIN_ONLY under /api/sovereign): { op: 'propose' (default), classification: { … } | null, legalBasis: [{ instrument, eId }] } null returns to the classification derived from the form of state; { op: 'confirm' } a different administrator adopts it; { op: 'withdraw', reason? }. A dispute over the constitutional profile freezes it (proposals and confirmations refused). Who acted comes from the sign-in; every step is audited.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "classification": {
+                      "type": "object",
+                      "properties": {
+                        "stateForms": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "e.g. republic, monarchy, federal, city-state, union, theocratic … (open list)."
+                        },
+                        "governmentForms": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "e.g. presidential, parliamentary, semi-presidential, directorial, absolute …"
+                        },
+                        "territorialArrangements": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "e.g. unitary, federal, devolved, confederal, union …"
+                        },
+                        "legalTraditions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "e.g. civil_law, common_law, customary_law, religious_law …"
+                        },
+                        "authorityTypes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "e.g. constitutional, statutory, customary, religious …"
+                        },
+                        "style": {
+                          "type": "string",
+                          "enum": [
+                            "emirate",
+                            "federation",
+                            "government",
+                            "grand-duchy",
+                            "kingdom",
+                            "principality",
+                            "republic",
+                            "sultanate",
+                            "union"
+                          ],
+                          "description": "How the platform styles itself for this state (front-door label)."
+                        },
+                        "sources": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Where these facts come from: the instruments (laws-register references or text)."
+                        },
+                        "effectiveFrom": {
+                          "type": "string",
+                          "description": "From when this classification applies (YYYY-MM-DD)."
+                        },
+                        "derived": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "stateForms",
+                        "governmentForms",
+                        "territorialArrangements",
+                        "legalTraditions",
+                        "authorityTypes",
+                        "derived"
+                      ]
+                    },
+                    "changes": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "type": "object",
+                              "properties": {
+                                "classification": {
+                                  "anyOf": [
+                                    {
+                                      "$ref": "#/components/schemas/StateClassification"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "classification"
+                              ]
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "type": "object",
+                                "properties": {
+                                  "classification": {
+                                    "anyOf": [
+                                      {
+                                        "$ref": "#/components/schemas/StateClassification"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "classification"
+                                ]
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    },
+                    "setupComplete": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "classification",
+                    "changes",
+                    "setupComplete"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "classification": {
+                        "stateForms": [
+                          "string"
+                        ],
+                        "governmentForms": [
+                          "string"
+                        ],
+                        "territorialArrangements": [
+                          "string"
+                        ],
+                        "legalTraditions": [
+                          "string"
+                        ],
+                        "authorityTypes": [
+                          "string"
+                        ],
+                        "style": "emirate",
+                        "sources": [
+                          "string"
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "derived": true
+                      },
+                      "changes": {
+                        "pending": {
+                          "values": {
+                            "classification": {}
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      },
+                      "setupComplete": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/sovereign/classification/route.ts"
+      },
+      "post": {
+        "tags": [
+          "sovereign"
+        ],
+        "operationId": "post_sovereign_classification",
+        "summary": "POST /api/sovereign/classification",
+        "description": "/api/sovereign/classification — the state's classification (forms of state and government, territorial arrangements, legal traditions, authority types, style; guidance §1.2) once setup is complete (lib/data/store/sovereign.ts; plan phase 5). During first-run setup it is saved through /api/sovereign as before; afterwards a direct change there is refused (409) and goes through here, the country's change process (lib/law/policy-change.ts). GET: the classification in force (recorded, or derived from the form of state), a proposal waiting for its second official and every earlier version. POST (administrators, ADMIN_ONLY under /api/sovereign): { op: 'propose' (default), classification: { … } | null, legalBasis: [{ instrument, eId }] } null returns to the classification derived from the form of state; { op: 'confirm' } a different administrator adopts it; { op: 'withdraw', reason? }. A dispute over the constitutional profile freezes it (proposals and confirmations refused). Who acted comes from the sign-in; every step is audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "classification": {},
+                  "legalBasis": {},
+                  "reason": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "classification": null,
+                    "legalBasis": null,
+                    "reason": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object"
+                    },
+                    "classification": {
+                      "type": "object",
+                      "properties": {
+                        "stateForms": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "e.g. republic, monarchy, federal, city-state, union, theocratic … (open list)."
+                        },
+                        "governmentForms": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "e.g. presidential, parliamentary, semi-presidential, directorial, absolute …"
+                        },
+                        "territorialArrangements": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "e.g. unitary, federal, devolved, confederal, union …"
+                        },
+                        "legalTraditions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "e.g. civil_law, common_law, customary_law, religious_law …"
+                        },
+                        "authorityTypes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "e.g. constitutional, statutory, customary, religious …"
+                        },
+                        "style": {
+                          "type": "string",
+                          "enum": [
+                            "emirate",
+                            "federation",
+                            "government",
+                            "grand-duchy",
+                            "kingdom",
+                            "principality",
+                            "republic",
+                            "sultanate",
+                            "union"
+                          ],
+                          "description": "How the platform styles itself for this state (front-door label)."
+                        },
+                        "sources": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Where these facts come from: the instruments (laws-register references or text)."
+                        },
+                        "effectiveFrom": {
+                          "type": "string",
+                          "description": "From when this classification applies (YYYY-MM-DD)."
+                        },
+                        "derived": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "stateForms",
+                        "governmentForms",
+                        "territorialArrangements",
+                        "legalTraditions",
+                        "authorityTypes",
+                        "derived"
+                      ]
+                    },
+                    "changes": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "type": "object",
+                              "properties": {
+                                "classification": {
+                                  "anyOf": [
+                                    {
+                                      "$ref": "#/components/schemas/StateClassification"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "classification"
+                              ]
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "type": "object",
+                                "properties": {
+                                  "classification": {
+                                    "anyOf": [
+                                      {
+                                        "$ref": "#/components/schemas/StateClassification"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "classification"
+                                ]
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "classification",
+                    "changes"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {},
+                      "classification": {
+                        "stateForms": [
+                          "string"
+                        ],
+                        "governmentForms": [
+                          "string"
+                        ],
+                        "territorialArrangements": [
+                          "string"
+                        ],
+                        "legalTraditions": [
+                          "string"
+                        ],
+                        "authorityTypes": [
+                          "string"
+                        ],
+                        "style": "emirate",
+                        "sources": [
+                          "string"
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "derived": true
+                      },
+                      "changes": {
+                        "pending": {
+                          "values": {
+                            "classification": {}
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/sovereign/classification/route.ts"
+      }
+    },
     "/api/sovereign/preset": {
       "post": {
         "tags": [
@@ -63291,6 +65180,13 @@
       "AccessEntry": {
         "type": "object",
         "properties": {
+          "v": {
+            "type": "number",
+            "enum": [
+              2
+            ],
+            "description": "The entry format: absent for the first, 2 when the office and profile version are part of the hash."
+          },
           "id": {
             "type": "string"
           },
@@ -63364,6 +65260,12 @@
             "type": "string",
             "description": "Links the entry to an exchange transaction or a request."
           },
+          "office": {
+            "$ref": "#/components/schemas/AccessOffice"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/ProfileRef"
+          },
           "prev": {
             "type": "string"
           },
@@ -63381,6 +65283,25 @@
           "result",
           "prev",
           "hash"
+        ]
+      },
+      "AccessOffice": {
+        "description": "The office an official acted under (lib/nation/office-register.ts), as the entry records it.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "acting": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "title"
         ]
       },
       "AccountChange": {
@@ -68288,6 +70209,307 @@
           "revoked"
         ]
       },
+      "ConstitutionalProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number",
+            "description": "1, 2 … in the order drafted."
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "approval",
+              "consultation",
+              "disputed",
+              "draft",
+              "legal_review",
+              "scheduled",
+              "security_validation",
+              "set_aside",
+              "superseded",
+              "suspended_pending_review",
+              "withdrawn"
+            ]
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartRef"
+            }
+          },
+          "digest": {
+            "type": "string",
+            "description": "SHA-256 over the canonical JSON of the parts (key, version, digest)."
+          },
+          "previous": {
+            "$ref": "#/components/schemas/ProfileRef"
+          },
+          "touches": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "authorities",
+                "classification",
+                "dualControl",
+                "institutions",
+                "offices",
+                "relationships",
+                "suspension"
+              ]
+            },
+            "description": "The parts that differ from the previous profile (all of them for the first)."
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "description": "The date it is to apply from (YYYY-MM-DD)."
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "description": "The legal instruments the change rests on (laws register), required to leave the draft."
+          },
+          "constraints": {
+            "type": "string",
+            "description": "Migration and rollback constraints, in words (§7.4)."
+          },
+          "note": {
+            "type": "string"
+          },
+          "drafted": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "institution": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at"
+            ]
+          },
+          "consult": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Institutions asked for their view (the consultation step, where the nation requires it or the drafter names them)."
+          },
+          "consultations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "by": {
+                  "type": "string"
+                },
+                "byId": {
+                  "type": "string"
+                },
+                "institution": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "response": {
+                  "type": "string",
+                  "enum": [
+                    "agree",
+                    "no-comment",
+                    "object"
+                  ]
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "by",
+                "institution",
+                "at",
+                "response"
+              ]
+            }
+          },
+          "legalReview": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "institution": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "cleared",
+                  "returned"
+                ]
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "outcome"
+            ]
+          },
+          "security": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "institution": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "blocking": {
+                      "type": "boolean"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "ok",
+                    "blocking"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "checks"
+            ]
+          },
+          "approvals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "by": {
+                  "type": "string"
+                },
+                "byId": {
+                  "type": "string"
+                },
+                "institution": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "authorisedBy": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "independence": {
+                  "type": "string",
+                  "enum": [
+                    "accounts-only",
+                    "identity-provider",
+                    "unverified"
+                  ]
+                }
+              },
+              "required": [
+                "by",
+                "at",
+                "authorisedBy",
+                "independence"
+              ]
+            }
+          },
+          "activatedAt": {
+            "type": "string"
+          },
+          "supersededAt": {
+            "type": "string"
+          },
+          "supersededBy": {
+            "type": "string"
+          },
+          "disputes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileDispute"
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileEvent"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "title",
+          "status",
+          "parts",
+          "digest",
+          "touches",
+          "effectiveFrom",
+          "basis",
+          "drafted",
+          "consult",
+          "consultations",
+          "approvals",
+          "disputes",
+          "events"
+        ]
+      },
       "ConsumerOverview": {
         "type": "object",
         "properties": {
@@ -69574,6 +71796,9 @@
               "unverified"
             ],
             "description": "For a two-official decision: whether the two are known to be different people at the identity provider, or only different accounts."
+          },
+          "profile": {
+            "$ref": "#/components/schemas/ProfileRef"
           },
           "at": {
             "type": "string"
@@ -75978,6 +78203,46 @@
           "method"
         ]
       },
+      "LivePart": {
+        "type": "object",
+        "properties": {
+          "waiting": {
+            "type": "number"
+          },
+          "key": {
+            "type": "string",
+            "enum": [
+              "authorities",
+              "classification",
+              "dualControl",
+              "institutions",
+              "offices",
+              "relationships",
+              "suspension"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "waiting",
+          "key",
+          "label",
+          "version",
+          "digest",
+          "summary"
+        ]
+      },
       "LocalMirror": {
         "type": "object",
         "properties": {
@@ -80480,6 +82745,43 @@
           "accuracyM"
         ]
       },
+      "PartRef": {
+        "description": "One part as a profile holds it: the version in force when captured (the count of adopted changes) and the digest of its values.",
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "authorities",
+              "classification",
+              "dualControl",
+              "institutions",
+              "offices",
+              "relationships",
+              "suspension"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "version",
+          "digest",
+          "summary"
+        ]
+      },
       "Party": {
         "type": "object",
         "properties": {
@@ -81515,6 +83817,221 @@
           "by",
           "reason",
           "case"
+        ]
+      },
+      "ProfileDispute": {
+        "type": "object",
+        "properties": {
+          "raisedBy": {
+            "type": "string"
+          },
+          "raisedById": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "grounds": {
+            "type": "string"
+          },
+          "statusBefore": {
+            "type": "string",
+            "enum": [
+              "active",
+              "approval",
+              "consultation",
+              "disputed",
+              "draft",
+              "legal_review",
+              "scheduled",
+              "security_validation",
+              "set_aside",
+              "superseded",
+              "suspended_pending_review",
+              "withdrawn"
+            ],
+            "description": "The status it was in when disputed (returned to when upheld)."
+          },
+          "frozen": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "authorities",
+                "classification",
+                "dualControl",
+                "institutions",
+                "offices",
+                "relationships",
+                "suspension"
+              ]
+            },
+            "description": "The parts it touches, frozen until resolved."
+          },
+          "resolution": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "set-aside",
+                  "upheld"
+                ]
+              },
+              "reference": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "outcome",
+              "reference"
+            ]
+          }
+        },
+        "required": [
+          "raisedBy",
+          "at",
+          "grounds",
+          "statusBefore",
+          "frozen"
+        ]
+      },
+      "ProfileEvent": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string"
+          },
+          "step": {
+            "type": "string",
+            "description": "What happened: drafted, submitted, legal-review, consulted, validated, approved, scheduled, activated, superseded, disputed, resolved, withdrawn, refreshed."
+          },
+          "from": {
+            "type": "string",
+            "enum": [
+              "active",
+              "approval",
+              "consultation",
+              "disputed",
+              "draft",
+              "legal_review",
+              "scheduled",
+              "security_validation",
+              "set_aside",
+              "superseded",
+              "suspended_pending_review",
+              "withdrawn"
+            ]
+          },
+          "to": {
+            "type": "string",
+            "enum": [
+              "active",
+              "approval",
+              "consultation",
+              "disputed",
+              "draft",
+              "legal_review",
+              "scheduled",
+              "security_validation",
+              "set_aside",
+              "superseded",
+              "suspended_pending_review",
+              "withdrawn"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "description": "The legal act or decision recorded with the step (an approval's authorising act, a dispute's resolution)."
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "at",
+          "step",
+          "to",
+          "by"
+        ]
+      },
+      "ProfileProcessValues": {
+        "description": "The nation's own steps for a profile (a country rule set, changed through policy-change.ts).",
+        "type": "object",
+        "properties": {
+          "consultation": {
+            "type": "string",
+            "enum": [
+              "optional",
+              "required"
+            ],
+            "description": "Whether an institutional consultation is required for every profile (optional: only the institutions the drafter names)."
+          },
+          "approvals": {
+            "type": "number",
+            "description": "How many officials approve: never fewer than two (the platform minimum)."
+          },
+          "legalReviewInstitution": {
+            "type": "string",
+            "description": "The institution whose officials carry out the legal review (e.g. the attorney-general's office), when the nation names one."
+          }
+        },
+        "required": [
+          "consultation",
+          "approvals"
+        ]
+      },
+      "ProfileRef": {
+        "description": "What a sealed decision and an access-log entry record: the profile version in force when it happened.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "digest": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "digest"
         ]
       },
       "Proposal": {

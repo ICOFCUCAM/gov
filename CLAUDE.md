@@ -219,6 +219,24 @@ What has been built is locked. Work only upgrades it toward the vision in
   links to its record. The state's classification (`constitution.classification`,
   `lib/nation/classification.ts`) is lists with sources and dates beside the
   locked `stateForm`; `platformLabel` reads its `style`, else the old derivation.
+  After setup it changes only through `/api/sovereign/classification`.
+- The constitutional profile (`lib/constitution/`, `/api/constitution/profile`,
+  National settings → Constitution) bundles the parts kept on their own
+  (`parts.ts`: classification, institution terms, who is responsible, offices,
+  relationships, dual-control and suspension rules) by version and SHA-256
+  digest; never move a part's storage or change process into it. A new part of
+  the constitutional configuration joins `parts.ts` and `PART_AUDIT`. Steps are
+  events by named officials: legal review, validation and every approval by
+  people other than the drafter, two approvers minimum, each naming the act
+  that authorises it; the nation adds steps, never removes them. Never present
+  the platform's approval as the constitutional process. No profile ships in
+  any mode. A dispute freezes the parts it touches (`frozenRefusal()` in
+  `policy-change.ts`) and keeps the status quo until a recorded decision.
+- Consequential actions record the profile version in force (`profileRef()`):
+  sealed decisions carry `profile`; access-log entries are format 2 with the
+  office acted under (`accessBy()`) and the profile inside the hash. Never
+  change a hashed field list in place: add a new entry format and keep the old
+  one verifying.
 
 ## Entry flow
 

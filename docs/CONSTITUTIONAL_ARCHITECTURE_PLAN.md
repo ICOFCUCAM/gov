@@ -13,16 +13,16 @@ an unapproved draft; a production installation refuses it until approved).
 
 | Guidance | Today in CivicOS | Gap |
 |---|---|---|
-| Composable classification (§1.2) | One `stateForm` enum with presets; constitution templates per form (`lib/gov/constitution.ts`); since phase 4 `constitution.classification` (lists per axis, sources, effective date, style; derived from `stateForm` until recorded) | No presets for further forms; the classification changes through the profile, not yet its own change process (phase 5) |
+| Composable classification (§1.2) | One `stateForm` enum with presets; constitution templates per form (`lib/gov/constitution.ts`); since phase 4 `constitution.classification` (lists per axis, sources, effective date, style; derived from `stateForm` until recorded) | No presets for further forms; since phase 5 the classification changes after setup through its own change process |
 | Institution identity (§2.1) | Ministry registry (`/api/org`): name, archetype, status, departments; since phase 1 standing, branch, establishing law, effective date, independence per dimension, prohibitions, records owned, changed through the change process | Appointment, dismissal and funding are recorded facts, not enforced relationships (phase 3); powers and jurisdiction per institution |
 | Offices (§7.1 `offices`) | Since phase 4 records (`lib/nation/office-register.ts`): title per language, institution, kind, power references, term, acting and succession rules, legal basis, dates; head of state separate from head of government; holders linked by two officials | Delegations and acting appointments as events (phase 6); powers are references, enforced where recorded |
 | Powers and relationships (§3) | Who is responsible (`deployment.authorities`, 15 slots); permit authority mappings (`lib/permits/authority.ts`, two officials, cite law); procedures; since phase 3 the relationship register (`lib/data/store/relationships.ts`), enforced for instructions and purpose-bound reads | Appointment, dismissal, funding and the other kinds are recorded, not yet enforced (phases 4, 6) |
 | Authorization (§5.2) | `roles.ts` (role and institution scope), `caseActRefusal`/`caseReadRefusal`, access log; since phase 2 whole-government scope stops at independent institutions, their accounts are their own, who is responsible changes by two officials citing the law | Office, purpose and relationship versions are not yet part of each decision (phases 3–4) |
 | Three kinds of administration (§5.3) | Administrator role; Update Center installation administrator | Platform operator, national commissioning authority and institution administrator are not distinct |
 | Workspaces per branch (§6) | Command Center for the executive; ministry workspaces; courts' cause list; since phase 4 greetings name the official, `/welcome` routes by standing, *My workspace* (§6.6 panels) | Public service panel; per-office pages for a speaker, clerk or chief justice beyond the institution workspace |
-| Configuration lifecycle (§7.4) | Country rule sets through `lib/law/policy-change.ts` (propose, confirm, cite, history) | The constitutional profile itself has no draft → review → approval → scheduled activation → superseded lifecycle |
+| Configuration lifecycle (§7.4) | Country rule sets through `lib/law/policy-change.ts` (propose, confirm, cite, history); since phase 5 the constitutional profile as versions with the full lifecycle, disputes and freezing | The approval path is not modelled on a nation's amendment procedure beyond the named act; permit mappings, procedures and rules are not bundled |
 | Transitions and emergencies (§4) | Emergency suspension of mappings; crisis mode on screens | Elections, terms, acting offices, caretaker profiles, dissolution, impeachment stages, judicial-review effects, succession, devolution are not modelled |
-| Read access logged across branches (§5.4) | Access log, oversight confirmation, access watch | Log entries do not record the office and relationship version that authorised a read |
+| Read access logged across branches (§5.4) | Access log, oversight confirmation, access watch; since phase 5 entries record the office acted under and the profile version | The relationship version that authorised a read is in the rule text, not a field |
 
 ## Phases
 
@@ -183,15 +183,50 @@ territorial arrangements, legal traditions, authority types — lists — with s
 `style`), derived from `stateForm` until recorded (`lib/nation/classification.ts`); `stateForm` stays.
 `platformLabel` reads the recorded style, else derives the old labels (unchanged for existing nations).
 Onboarding: an *Offices of state* track (optional beyond the head of government) and waiting items.
-Not yet: delegations (phase 6), office-based acting in the access log (§5.4), presets for further forms,
-head-of-state acts as draft procedures, a per-office public page, the classification's own change process
-(phase 5; it is saved through the profile like the rest of the constitution).
+Not yet: delegations (phase 6), presets for further forms, head-of-state acts as draft procedures, a per-office
+public page. (The office in the access log and the classification's own change process came with phase 5.)
 
 **Phase 5 — constitutional profile lifecycle (§7.4) (U).**
 The profile is a versioned package: draft → legal review → institutional consultation →
 security validation → authorised approval → scheduled activation → active → superseded, with
 `disputed` / `suspended pending review`. Every consequential action records the profile version
 it ran under. Two-person technical approval is never presented as the constitutional process.
+
+*Built (mechanism only, no profile ships):* `lib/constitution/` (store `__civicosConstitutionProfile`, register
+`constitutional-profile`). A version bundles by reference and digest the parts kept on their own
+(`parts.ts`: classification, institutions' terms in force, who is responsible, offices in force, relationships'
+adopted versions, the dual-control and suspension rules); each part's version is the count of its adopted changes and
+its digest is SHA-256 over its values in force; the profile's digest covers the parts. Storage and change processes are
+unchanged. Each version records the profile in force before it, the parts it touches, its effective date, legal basis
+(laws register, required to leave the draft), migration and rollback constraints, the institutions consulted, and every
+step as an event with the named official (audited `constitution.profile.*`). Steps (`profile.ts`): drafted by a
+whole-government administrator after setup; legal review by a different person (of the institution the nation names
+for it, when it does); consultation answered by each consulted institution's own official (required by the nation's
+rules, or when the drafter names institutions; objections recorded, not blocking); security validation by an
+administrator other than the drafter (parts unchanged since the draft, audit chain and access log intact, nothing
+frozen, the law cited in force; waiting changes noted); approval by at least two officials, each different from the
+drafter and from each other, each naming the act of the body the nation's law empowers (`authorisedBy`); then
+scheduled and activated at its date by the case-deadlines job or the next read (`activateDue()`), superseding the one
+before (kept). A profile approved and due counts as in force for every action even before that write. Parts changed
+since the draft refuse approval until the draft is captured again (its steps start over); parts changed after
+activation show as drift. Disputes (§4.11, §8.3): a profile on its way becomes *disputed* (never activates), the
+active one *suspended pending review* (stays in force); the parts it touches are frozen in `policy-change.ts`
+(proposals and confirmations refused, withdrawal open; relationships' endorsements too); resolved only by a recorded
+decision naming its reference, by a different person — upheld returns it where it was, set aside ends it (an active
+one's predecessor is reinstated by that decision; parts are never reverted automatically). The nation's own steps
+(`consultation` optional or required, `approvals` 2–9, `legalReviewInstitution`) are a country rule set through
+`policy-change.ts`. Screens (National settings → *Constitution*) and the API say the legal process is the nation's.
+Consequential actions: sealed decisions carry `profile` (id, version, digest) inside the seal; access-log entries are
+now format 2 (`v: 2`) with the office the official acted under (`accessBy()`, from the offices they hold) and the
+profile version inside the hash; earlier entries verify with their original field list. The classification has its own
+change process after setup (`/api/sovereign/classification`; `PUT /api/sovereign` refuses a changed one with 409 and
+keeps it when a constitution is sent without it). Onboarding: *Constitutional profile* (approved and active —
+recommended in production, optional in demo and training; no drift; nothing frozen) and waiting items for each step.
+Tests: `lib/constitution/profile.test.ts`.
+Not yet: the approval path modelled on a nation's amendment procedure (votes, assent) beyond the named act; bundling
+permit authority mappings, procedures and operational rules (they carry their own versions on decisions); a required
+confirmation by an independent institution whose terms a profile touches (today a consultation); the relationship
+version as an access-log field; offices for substrate officers.
 
 **Phase 6 — transitions and emergencies (§4) (L).**
 Terms and office assumption, acting offices, caretaker authority profiles, dissolution, the
