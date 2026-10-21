@@ -19,7 +19,8 @@ import { lapseRegistrations } from '@/lib/professions/register';
 import { reconcileCustomsPayments } from '@/lib/customs/register';
 import { raiseSuspensionAlerts, lapseSuspensionPolicy } from '@/lib/permits/authority';
 import { lapseDualControlPolicy } from '@/lib/casework/dual-control-policy';
-import { listReceipts } from '@/lib/data/store';
+import { listReceipts, lapseClassification } from '@/lib/data/store';
+import { activateDue, lapseProcess } from '@/lib/constitution/profile';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,8 +36,10 @@ async function runJob(req: Request) {
   const suspensions = raiseSuspensionAlerts();
   const proposals = lapseProposals();
   // Proposed changes to the country's two-official and suspension rules that nobody confirmed in time.
-  lapseDualControlPolicy(); lapseSuspensionPolicy();
-  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length, proposalsLapsed: proposals.length });
+  lapseDualControlPolicy(); lapseSuspensionPolicy(); lapseClassification(); lapseProcess();
+  // Constitutional profiles approved for a date that has come (plan phase 5): activated with their recorded approvals.
+  const profilesActivated = activateDue();
+  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length, proposalsLapsed: proposals.length, profilesActivated });
 }
 
 // Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).

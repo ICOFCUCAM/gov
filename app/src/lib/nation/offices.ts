@@ -37,12 +37,20 @@ export const REFERENCE_OFFICES: NationOffices = {
 
 const strip = (s: string) => s.replace(/\s*\(.*\)\s*$/, '').trim();
 
-/** Offices for an installed nation; the reference wording until setup is complete. */
-export function nationOffices(p: SovereignProfile | null | undefined, configured: boolean): NationOffices {
+/** The titles of the head of state and head of government the nation recorded as offices (lib/nation/office-register.ts). */
+export interface HeadOffices { headOfState?: string; headOfGovernment?: string }
+
+/**
+ * Offices for an installed nation; the reference wording until setup is
+ * complete. `head`: the titles of the offices the nation recorded (plan
+ * phase 4); without them the head of government is the profile's executive
+ * title, as before, and the head of state comes from the constitution.
+ */
+export function nationOffices(p: SovereignProfile | null | undefined, configured: boolean, head?: HeadOffices): NationOffices {
   if (!p || !configured) return REFERENCE_OFFICES;
   const c = constitutionFor(p.stateForm, p.constitution);
-  const headOfGovernment = p.executiveTitle?.trim() || 'Head of Government';
-  const headOfState = p.constitution?.headOfStateTitle?.trim()
+  const headOfGovernment = head?.headOfGovernment?.trim() || p.executiveTitle?.trim() || 'Head of Government';
+  const headOfState = head?.headOfState?.trim() || p.constitution?.headOfStateTitle?.trim()
     || (p.stateForm === 'republic' ? headOfGovernment : strip(c.authorityChain[0]?.office ?? headOfGovernment));
   const name = p.stateName?.trim() || 'the State';
   return {

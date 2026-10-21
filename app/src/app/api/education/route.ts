@@ -14,6 +14,7 @@ import { authorityFor } from '@/lib/data/store';
 import { routeActor } from '@/lib/casework/actor';
 import { inspectionsOf, returnsOf, getAward, awardsOf, recordReturn, educationCounts } from '@/lib/education/register';
 import { recordAccess } from '@/lib/records/access-log';
+import { accessBy } from '@/lib/records/access-by';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
   if (s) {
     const why = canReadEducation(s, authorityFor('education'), purpose);
     const id = qualification ?? organisation;
-    if (id || holder || why) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'education', ...(id ? { id } : { query: holder ? 'holder=…' : '(counts)' }) }, action: why ? 'refused' : id ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
+    if (id || holder || why) recordAccess({ ...accessBy(s), record: { register: 'education', ...(id ? { id } : { query: holder ? 'holder=…' : '(counts)' }) }, action: why ? 'refused' : id ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
     if (why) return NextResponse.json({ error: why }, { status: 403 });
   }
   const counts = educationCounts();

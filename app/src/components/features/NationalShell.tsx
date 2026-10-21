@@ -10,7 +10,8 @@ import { deployableInstitutions } from '@/lib/institution/readiness';
 import { buildCascade } from '@/lib/institution/cascade';
 import { buildNationalFabric } from '@/lib/institution/national-fabric';
 import { constitutionFor } from '@/lib/gov/constitution';
-import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
+import { branchReadiness } from '@/lib/gov/branches';
+import { useSeparation, separationWord } from '@/components/features/SeparationChecks';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { serviceReadings } from '@/lib/gov/ministry-services';
@@ -102,7 +103,9 @@ export function NationalShell() {
   const dir = deployableInstitutions(mins);
   const fabric = buildNationalFabric(mins);
   const cascade = buildCascade(mins, (mid) => Math.round(waveSeries(`nh:${mid}`, ts, 1, 58, 99).at(-1)!));
-  const sep = separationIntegrity(ts);
+  // Separation of powers as observed from the configuration (audit G); "Not connected" when it cannot be read.
+  const { data: sepData } = useSeparation();
+  const sepTone = !sepData ? 'neutral' : sepData.intact ? 'ok' : 'warn';
   const deployable = dir.filter(d => d.readiness.deployable).length;
   const meanReady = dir.length ? Math.round(dir.reduce((a, d) => a + d.readiness.total, 0) / dir.length) : 0;
   const cascCrit = cascade.filter(c => c.posture === 'critical').length;
@@ -123,7 +126,7 @@ export function NationalShell() {
     { l: 'Deployable', v: `${deployable}/${dir.length || 0}`, t: deployable === dir.length ? 'ok' : 'warn', k: 'dp' },
     { l: 'Mean readiness', v: `${meanReady}%`, t: meanReady >= 70 ? 'ok' : 'warn', k: 'mr' },
     { l: 'Branch mean', v: `${branchMean}%`, t: branchMean >= 75 ? 'ok' : 'warn', k: 'br' },
-    { l: 'Separation', v: sep.intact ? 'INTACT' : 'STRAINED', t: sep.intact ? 'ok' : 'alert', k: 'sp' },
+    { l: 'Separation', v: separationWord(sepData).toUpperCase(), t: sepTone, k: 'sp' },
   ];
 
   const svcHealth = dir.map(({ ministry: m }) => {
@@ -218,7 +221,7 @@ export function NationalShell() {
   const rTone = rRoll.posture === 'critical' ? 'alert' : rRoll.posture === 'elevated' ? 'warn' : rRoll.posture === 'watch' ? 'neutral' : 'ok';
 
   const estates = [
-    { l: 'Constitutional Architecture', s: model.label, href: '/gov/branches', v: `${model.branches.length} branches`, t: sep.intact ? 'ok' : 'alert' },
+    { l: 'Constitutional Architecture', s: model.label, href: '/gov/branches', v: `${model.branches.length} branches`, t: sepTone },
     { l: 'Regional Command', s: `${regions.length} regions · ${rRoll.population}M`, href: '/gov/regional', v: `${rRoll.meanReadiness}% ready`, t: rTone },
     { l: 'National Simulation', s: lead ? `Lead · ${lead.label}` : 'Scenario · knock-on what-if', href: lead ? `/gov/simulation?s=${lead.key}` : '/gov/simulation', v: lead ? `${lead.composite} risk` : '10 vectors', t: leadTone },
     { l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', v: posture.l, t: posture.t },

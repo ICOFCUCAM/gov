@@ -9,6 +9,8 @@ import { locales } from '@/lib/i18n/config';
 import { OnboardingFrame, Eyebrow, SealTile, Rule, Corners, hair, CHAMPAGNE, CHAMPAGNE_HI, GOLD } from './Chrome';
 import type { SovereignProfile, Ministry, PlatformSetup } from '@/lib/api/types';
 import { useSignIn, refreshSignIn } from '@/lib/official';
+import { homeDestinations, greetingName, officeLine } from '@/lib/workspace/home';
+import { nationOffices } from '@/lib/nation/offices';
 
 const FORM_LABEL: Record<string, string> = {
   republic: 'Presidential republic', parliamentary: 'Parliamentary republic', federation: 'Federation',
@@ -80,17 +82,10 @@ export function Welcome() {
   const live = ministries.filter(m => m.status === 'active');
   const total = ministries.filter(m => m.status !== 'merged').length;
 
-  const destinations = [
-    { href: '/command', t: 'Sovereign Command Center', s: 'Whole-of-government status, pages and directory', k: 'Enter' },
-    { href: '/gov/situation-room', t: 'National Situation Room', s: 'Real-time command and coordination', k: 'Live' },
-    { href: '/gov', t: 'Cabinet Intelligence', s: 'Cabinet session, directives and briefings', k: 'Cabinet' },
-    { href: '/ministries', t: 'Institutions Admin', s: 'Compose, charter and govern institutions', k: 'Admin' },
-  ];
-  if (institutionPath) {
-    const i = destinations.findIndex(d => d.href === '/ministries');
-    const [inst] = destinations.splice(i, 1);
-    destinations.unshift({ ...inst!, t: 'Charter a new institution', k: 'Start' });
-  }
+  // The home follows the signed-in official's institution and office (plan phase 4, audit F): the executive's
+  // home stays the Command Center; a chamber, a court, the head of state's office or an independent body start
+  // at their own workspace (lib/workspace/home.ts). What they may do there is decided by lib/auth/roles.ts.
+  const destinations = homeDestinations(signedIn, { institutionPath, chamber: nationOffices(profile, true).primaryChamber });
   const [primary, ...rest] = destinations;
 
   return (
@@ -111,7 +106,8 @@ export function Welcome() {
         <div className="flex flex-col gap-7 sm:flex-row sm:items-center sm:gap-9">
           <SealTile seal={id.seal} accent={id.accent} size={132} inscription={id.stateName} />
           <div className="min-w-0">
-            <Eyebrow>{hour === null ? 'Welcome' : greeting(hour)}, {profile.executiveTitle}</Eyebrow>
+            <Eyebrow>{hour === null ? 'Welcome' : greeting(hour)}{signedIn ? `, ${greetingName(signedIn)}` : ''}</Eyebrow>
+            {signedIn ? <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.24em] text-night-muted">{officeLine(signedIn)}</p> : null}
             <h1 className="mt-4 text-[2.3rem] font-extralight leading-[1.04] tracking-[-0.035em] text-[#f3efe6] sm:text-[3.6rem]">
               Welcome to{' '}
               <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{id.stateName}</span>

@@ -10,6 +10,7 @@ import { canReadCivil } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
 import { searchPersons, getEvent, registerSize } from '@/lib/civil/register';
 import { recordAccess } from '@/lib/records/access-log';
+import { accessBy } from '@/lib/records/access-by';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
   const query = event ? undefined : ['family', 'given', 'birthDate', 'registration'].map(k => q.get(k) ? `${k}=${q.get(k)}` : '').filter(Boolean).join('&');
   if (s) {
     const why = canReadCivil(s, authorityFor('civilRegistration'), purpose);
-    recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'civil', ...(event ? { id: event } : { query: query || '(all)' }) }, action: why ? 'refused' : event ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
+    recordAccess({ ...accessBy(s), record: { register: 'civil', ...(event ? { id: event } : { query: query || '(all)' }) }, action: why ? 'refused' : event ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
     if (why) return NextResponse.json({ error: why }, { status: 403 });
   }
   if (event) {

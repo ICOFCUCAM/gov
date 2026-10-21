@@ -9,6 +9,7 @@ import { authorityFor } from '@/lib/data/store';
 import { ownerInstitution } from '@/lib/casework/packages';
 import { getOrganisation, publicOrganisation, registerType } from '@/lib/organisations/register';
 import { recordAccess } from '@/lib/records/access-log';
+import { accessBy } from '@/lib/records/access-by';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const purpose = req.nextUrl.searchParams.get('purpose') ?? undefined;
   const why = canReadOrganisation(s, keepers, purpose);
   if (why) return NextResponse.json({ organisation: publicOrganisation(o), full: false, why });
-  recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'organisations', id: o.number }, action: 'view', ...(purpose ? { purpose } : {}), result: 'allowed' });
+  recordAccess({ ...accessBy(s), record: { register: 'organisations', id: o.number }, action: 'view', ...(purpose ? { purpose } : {}), result: 'allowed' });
   return NextResponse.json({ organisation: o, full: true });
 }

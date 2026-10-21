@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { substrateAvailable } from '@/lib/db/client';
 import { api } from '@/lib/api/client';
 import { resolveIdentity } from '@/lib/sovereign-identity';
+import { derivedStyle, styleLabel } from '@/lib/nation/classification';
+import type { PlatformStyle } from '@/lib/api/types';
 
 // Shared entry behaviour for every cover design. Designs differ in look;
 // where each path lands, and how sign-in is handed off, stays identical.
@@ -118,10 +120,15 @@ export interface NationBrand {
 
 const PLATFORM_BRAND: NationBrand = { configured: false, name: 'CivicOS', motto: 'Sovereign Operating System', seal: 'CO', accent: '#37c7d4', platform: 'Official Government Platform' };
 
-/** Monarchies are styled as kingdoms (emirates as emirates); every other form as government. */
-export function platformLabel(stateForm: string, stateName: string): string {
-  if (stateForm !== 'monarchy') return 'Official Government Platform';
-  return /emirate/i.test(stateName) ? 'Official Emirate Platform' : 'Official Kingdom Platform';
+/**
+ * How the platform styles itself for the state: from the style the nation
+ * recorded in its classification (lib/nation/classification.ts: kingdom,
+ * emirate, sultanate, principality, grand duchy, republic …); until it records
+ * one, derived as before (monarchies as kingdoms, emirates by name as
+ * emirates, every other form as government), so existing nations keep theirs.
+ */
+export function platformLabel(stateForm: string, stateName: string, style?: PlatformStyle): string {
+  return styleLabel(style ?? derivedStyle(stateForm, stateName));
 }
 
 /** The identity the front door wears: the installed nation's name, motto and
@@ -135,7 +142,7 @@ export function useNationBrand({ title = true }: { title?: boolean } = {}): Nati
       .then(([st, s]) => {
         if (!live || !st.setup) return;
         const id = resolveIdentity(s.sovereign);
-        setBrand({ configured: true, name: id.stateName, motto: id.motto, seal: id.seal, accent: id.accent, platform: platformLabel(s.sovereign.stateForm, id.stateName) });
+        setBrand({ configured: true, name: id.stateName, motto: id.motto, seal: id.seal, accent: id.accent, platform: platformLabel(s.sovereign.stateForm, id.stateName, s.sovereign.constitution?.classification?.style) });
         if (title) document.title = id.stateName;
       })
       .catch(() => { /* keep the platform brand */ });

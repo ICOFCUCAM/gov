@@ -10,6 +10,7 @@ import { readRefusal, caseScope } from '@/lib/auth/official';
 import { canReadAccessLog } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
 import { listAccess, verifyAccessLog, unusualAccess, recordAccess, type AccessAction } from '@/lib/records/access-log';
+import { accessBy } from '@/lib/records/access-by';
 import { retentionChanges } from '@/lib/data/retention';
 import { raisedFindings } from '@/lib/records/access-watch';
 
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
     limit: Number(q.get('limit')) || undefined,
   });
   const s = await caseScope();
-  if (s) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'access-log', query: q.toString() || '(latest)' }, action: 'search', result: 'allowed', rule: 'oversight read' });
+  if (s) recordAccess({ ...accessBy(s), record: { register: 'access-log', query: q.toString() || '(latest)' }, action: 'search', result: 'allowed', rule: 'oversight read' });
   const day = new Date(Date.now() - 86_400_000).toISOString();
   // Rules to shorten this log, waiting for the oversight side (POST /api/access-log/retention).
   const awaiting = retentionChanges().filter(c => c.state === 'awaiting-oversight').map(c => ({ id: c.id, rule: c.rule, reason: c.reason, proposedBy: c.proposedBy, confirmedBy: c.decidedBy }));

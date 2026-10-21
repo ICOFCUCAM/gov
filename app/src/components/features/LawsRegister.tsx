@@ -11,7 +11,7 @@ import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
 import { SignalTag } from '@/components/ui/SignalTag';
 
-interface Version { id: string; language: string; dates: { adopted?: string; published?: string; inForce: string; ceased?: string }; provisions: { eId: string; num: string; heading?: string; text: string }[]; digest: string; state: string; recordedBy: string; confirmedBy?: string; withdrawn?: { reason: string }; source?: { kind: string } }
+interface Version { id: string; language: string; dates: { adopted?: string; published?: string; inForce: string; ceased?: string }; provisions: { eId: string; num: string; heading?: string; text: string }[]; digest: string; state: string; recordedBy: string; confirmedBy?: string; withdrawn?: { reason: string }; source?: { kind: string; bill?: string; billNumber?: string; billVersion?: number; publication?: { date: string; reference: string }; certification?: { digest: string } } }
 interface Instrument { id: string; title: string; type: string; jurisdiction: string; issuingAuthority: string; versions: Version[] }
 
 async function call<T>(url: string, body?: unknown): Promise<T> {
@@ -88,6 +88,11 @@ export function LawsRegister() {
                     {i.versions.map(v => (
                       <li key={v.id} className="rounded border border-line p-2">
                         <div>In force {v.dates.inForce}{v.dates.ceased ? ` until ${v.dates.ceased}` : ''} · {v.language} · {v.provisions.length} provisions · <span className="font-mono text-xs">{v.digest.slice(0, 12)}</span></div>
+                        {v.source?.kind === 'legislature' ? (
+                          <div className="text-xs text-ink-muted">
+                            From the legislature&apos;s record: <a className="underline" href={`/gov/legislature/bills/${encodeURIComponent(v.source.bill ?? '')}`}>{v.source.billNumber}</a>, text version {v.source.billVersion}, published {v.source.publication?.date} ({v.source.publication?.reference}); record certified <span className="font-mono">{v.source.certification?.digest.slice(0, 12)}</span>. The text is the legislature&apos;s: confirm that it entered as certified.
+                          </div>
+                        ) : v.source?.kind === 'entered' ? <div className="text-xs text-ink-muted">Typed in or loaded here (not from the legislature&apos;s record)</div> : null}
                         <div className="text-xs text-ink-muted">{v.state === 'confirmed' ? `Confirmed by ${v.confirmedBy}, recorded by ${v.recordedBy}` : v.state === 'withdrawn' ? `Withdrawn: ${v.withdrawn?.reason}` : `Recorded by ${v.recordedBy}; waiting for a second official`}</div>
                         <div className="mt-1 flex gap-2">
                           {v.state === 'recorded' ? <Button onClick={() => act('/api/law/confirm', { instrument: i.id, version: v.id }, 'Confirmed.')}>Confirm</Button> : null}

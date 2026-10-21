@@ -11,6 +11,7 @@ import { canReadCustoms } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
 import { getDeclaration, declarationsOf, customsCounts } from '@/lib/customs/register';
 import { recordAccess } from '@/lib/records/access-log';
+import { accessBy } from '@/lib/records/access-by';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
   const s = await caseScope();
   if (s) {
     const why = canReadCustoms(s, authorityFor('customs'), purpose);
-    if (number || declarant || why) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'customs', ...(number ? { id: number } : { query: declarant ? 'declarant=…' : '(counts)' }) }, action: why ? 'refused' : number ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
+    if (number || declarant || why) recordAccess({ ...accessBy(s), record: { register: 'customs', ...(number ? { id: number } : { query: declarant ? 'declarant=…' : '(counts)' }) }, action: why ? 'refused' : number ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
     if (why) return NextResponse.json({ error: why }, { status: 403 });
   }
   const counts = customsCounts();

@@ -7,10 +7,16 @@
 // confirmed in time lapses. Every adopted version is kept with who proposed
 // and confirmed it and how independent they were known to be. Values left
 // out of a proposal keep their current setting.
+//
+// A part of the constitutional profile frozen by a dispute or a review
+// (lib/constitution/profile-state.ts, plan phase 5) refuses new proposals and
+// confirmations under its key until a recorded decision resolves it; a
+// waiting proposal can still be withdrawn.
 
 import { cite, type Citation } from './register';
 import { dualControlRefusal, independenceOf } from '@/lib/data/dual-control';
 import { recordAudit } from '@/lib/data/store/audit';
+import { frozenRefusal } from '@/lib/constitution/profile-state';
 
 export interface PolicyVersion<T> {
   values: T;
@@ -55,17 +61,22 @@ const lapse = <T,>(h: PolicyChanges<T>, now: Date, audit: string, by: string): v
 };
 
 /** Propose new values: checked by `check` against the current ones (missing values kept), cited, waiting for a second official. */
-export function proposePolicy<T extends object>(h: PolicyChanges<T>, current: T, input: Partial<T>, basisInput: unknown, opts: { by: string; byId?: string; now: Date; pendingHours: number; audit: string; context: string; check: (v: T) => string | null; describe: (v: T) => string }): (PolicyVersion<T> & { expiresAt: string }) | { error: string } {
+export function proposePolicy<T extends object>(h: PolicyChanges<T>, current: T, input: Partial<T>, basisInput: unknown, opts: { by: string; byId?: string; now: Date; pendingHours: number; audit: string; context: string; check: (v: T) => string | null; describe: (v: T) => string;
+  /** The record may be made without a citation (a restriction an official places on themselves, e.g. declaring a conflict of interest); one given is still resolved. */
+  optionalBasis?: boolean }): (PolicyVersion<T> & { expiresAt: string }) | { error: string } {
   lapse(h, opts.now, opts.audit, opts.by);
+  const frozen = frozenRefusal(opts.audit);
+  if (frozen) return { error: frozen };
   if (h.pending) return { error: `A change proposed by ${h.pending.by} is waiting for a second official: confirm or withdraw it first` };
   const values = { ...current, ...Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined)) } as T;
   const why = opts.check(values);
   if (why) return { error: why };
-  const basis = citeBasis(basisInput, opts.now.toISOString().slice(0, 10), opts.context);
+  const given = Array.isArray(basisInput) && basisInput.length > 0;
+  const basis = opts.optionalBasis && !given ? [] : citeBasis(basisInput, opts.now.toISOString().slice(0, 10), opts.context);
   if ('error' in basis) return basis;
   const at = opts.now.toISOString();
   h.pending = { values, basis, by: opts.by, ...(opts.byId ? { byId: opts.byId } : {}), at, expiresAt: new Date(opts.now.getTime() + opts.pendingHours * 3_600_000).toISOString() };
-  recordAudit(opts.by, `${opts.audit}.propose`, opts.audit, 'ok', `${opts.describe(values)} · basis ${basis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`).join('; ').slice(0, 160)} · awaiting a second official`);
+  recordAudit(opts.by, `${opts.audit}.propose`, opts.audit, 'ok', `${opts.describe(values)} · basis ${basis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`).join('; ').slice(0, 160) || 'none cited'} · awaiting a second official`);
   return structuredClone(h.pending);
 }
 
@@ -74,6 +85,8 @@ export function confirmPolicy<T extends object>(h: PolicyChanges<T>, opts: { by:
   lapse(h, opts.now, opts.audit, opts.by);
   const p = h.pending;
   if (!p) return { error: 'No change is waiting to be confirmed (a proposal lapses after the waiting period)' };
+  const frozen = frozenRefusal(opts.audit);
+  if (frozen) return { error: frozen };
   const why = dualControlRefusal({ by: p.by, ...(p.byId ? { byId: p.byId } : {}) }, { by: opts.by, ...(opts.byId ? { byId: opts.byId } : {}) });
   if (why) return { error: why };
   const independence = independenceOf(p.byId, opts.byId);

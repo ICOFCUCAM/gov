@@ -10,6 +10,7 @@ import { canReadTax } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
 import { findTaxpayers, returnsOf, assessmentsOf, account, taxCounts } from '@/lib/tax/register';
 import { recordAccess } from '@/lib/records/access-log';
+import { accessBy } from '@/lib/records/access-by';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
   const s = await caseScope();
   if (s) {
     const why = canReadTax(s, authorityFor('tax'), purpose);
-    if (tin || party || why) recordAccess({ by: { id: s.id, name: s.label, ...(s.institution ? { institution: s.institution } : {}) }, record: { register: 'tax', ...(tin ? { id: tin } : { query: party ? 'party=…' : '(counts)' }) }, action: why ? 'refused' : tin ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
+    if (tin || party || why) recordAccess({ ...accessBy(s), record: { register: 'tax', ...(tin ? { id: tin } : { query: party ? 'party=…' : '(counts)' }) }, action: why ? 'refused' : tin ? 'view' : 'search', ...(purpose ? { purpose } : {}), result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
     if (why) return NextResponse.json({ error: why }, { status: 403 });
   }
   if (!tin && !party) return NextResponse.json({ counts: taxCounts(), taxpayers: [] });

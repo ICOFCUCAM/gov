@@ -33,6 +33,56 @@ export interface Boundaries {
   audit?: string;
   /** Every registered institution: directives are issued and signed for one only by its own officials. */
   institutions?: string[];
+  /** The approved relationships between institutions in force today (lib/data/store/relationships.ts relationshipGrants(); plan phase 3). */
+  relationships?: RelationshipGrant[];
+  /**
+   * Regional and local governments with their own powers (standing `subnational`): whole-government (federal or
+   * central) scope stops at them as at an independent institution, and reaches them only under an approved
+   * relationship (plan phase 7; audit K; guidance §8.4 test 2). Which competences are reserved is the nation's law:
+   * the platform only refuses what no approved relationship covers.
+   */
+  subnational?: string[];
+  /** The institution named for the `legislature` authority: the keeper of the legislative record (plan phase 7). */
+  legislature?: string;
+  /** The institution named for the `headOfState` authority: records assent where the legislative procedure asks for it. */
+  headOfState?: string;
+}
+
+/**
+ * One approved relationship in force (docs/CONSTITUTIONAL_ARCHITECTURE.md
+ * §3.3): `from` holds the power `type` over `to`, within the record types
+ * (or, for an instruction, the kinds of directive) and purposes listed.
+ * The version is the adopted version in force, named in the access log.
+ */
+export interface RelationshipGrant { id: string; version: number; from: string; to: string; type: string; recordTypes: string[]; purposes: string[] }
+
+/** Relationships that let the actor read the target's records: read only and for a listed purpose, never every record, a change or a decision (§3.3). */
+export const READ_RELATIONSHIPS = ['audit', 'request_information'];
+const purposeKey = (p: string) => p.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+/**
+ * The approved relationship that lets this official's institution read
+ * `to`'s records of one of `recordTypes` for the stated purpose, or null.
+ * Only officials of the relationship's own institution; never officials
+ * serving the whole government by that fact. It grants a read and nothing
+ * else: every rule that changes or decides ignores it. The caller writes the
+ * read to the access log with the relationship and its version
+ * (relationshipRule()).
+ */
+export function readRelationship(s: Scope, to: string, recordTypes: string[], purpose?: string): RelationshipGrant | null {
+  const p = purpose ? purposeKey(purpose) : '';
+  if (!s.institution || !p || s.institution === to) return null;
+  return s.bounds?.relationships?.find(g => g.from === s.institution && g.to === to && READ_RELATIONSHIPS.includes(g.type)
+    && g.recordTypes.some(t => recordTypes.includes(t)) && g.purposes.includes(p)) ?? null;
+}
+/** How a read under a relationship is named in the access log. */
+export const relationshipRule = (g: RelationshipGrant) => `Relationship ${g.id} version ${g.version} (${g.type.replace('_', ' ')}): read only, for a stated purpose`;
+/** When the official's institution has a read relationship with `to` but stated no purpose it covers: what to state. */
+function relationshipHint(s: Scope, to: string, recordTypes: string[]): string | null {
+  if (!s.institution) return null;
+  const gs = s.bounds?.relationships?.filter(g => g.from === s.institution && g.to === to && READ_RELATIONSHIPS.includes(g.type) && g.recordTypes.some(t => recordTypes.includes(t))) ?? [];
+  if (!gs.length) return null;
+  return `Your institution may read these records only for a purpose its relationship lists: state one of ${[...new Set(gs.flatMap(g => g.purposes))].join(', ')}`;
 }
 
 /** The part of an official's session the rules read. */
@@ -75,6 +125,8 @@ export const wholeGovernment = (s: Scope): boolean => !s.institution;
 
 /** Whether an institution stands outside whole-government reach. */
 export const isIndependent = (s: Scope, id: string | undefined): boolean => !!id && !!s.bounds?.independent.includes(id);
+/** Whether an institution is a regional or local government with its own powers (outside central reach). */
+export const isSubnational = (s: Scope, id: string | undefined): boolean => !!id && !!s.bounds?.subnational?.includes(id);
 /** Whether an institution is a court. */
 export const isJudicial = (s: Scope, id: string | undefined): boolean => !!id && !!s.bounds?.judicial.includes(id);
 /**
@@ -83,8 +135,9 @@ export const isJudicial = (s: Scope, id: string | undefined): boolean => !!id &&
  * independent (whole-government scope stops at the legislature, the courts,
  * the head of state's office and independent bodies).
  */
-export const reaches = (s: Scope, id: string): boolean => s.institution === id || (wholeGovernment(s) && !isIndependent(s, id));
+export const reaches = (s: Scope, id: string): boolean => s.institution === id || (wholeGovernment(s) && !isIndependent(s, id) && !isSubnational(s, id));
 const independentRefusal = 'This institution is independent: only its own officials work here; serving the whole government does not reach it';
+const subnationalRefusal = 'This is a regional or local government with its own powers: only its own officials work here; the central government acts there only through its own officials, and reads or instructs only under an approved relationship';
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -220,6 +273,14 @@ const INSTALLATION: RegExp[] = [/^\/api\/releases(\/|$)/];
 const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/passkeys(\/options)?\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/, /^\/api\/demo\/act-as$/];
 /** Inside one ministry's workspace: officials of that ministry, or of the whole government (not into an independent institution). */
 const MINISTRY = /^\/api\/org\/ministries\/([^/]+)\//;
+/**
+ * The legislature's own record (plan phase 7; guidance §2.3): bills, their versions, stages, amendments, recorded
+ * votes, committee referrals and reports, passage, commencement, publication and the clerk's certification. Written
+ * only by officials of the institution named for the legislature (legislativeRecordRefusal()); assent only by the
+ * head of state's office where one is named (assentRefusal()). Checked again in the route against the record.
+ */
+const LEGISLATURE = /^\/api\/legislature(\/|$)/;
+const ASSENT = /^\/api\/legislature\/bills\/[^/]+\/assent$/;
 /** An institution's constitutional terms: listed in OFFICIAL_WORK, decided in the route (lib/data/store/institutions.ts). */
 const CONSTITUTIONAL = /^\/api\/org\/ministries\/[^/]+\/standing$/;
 /**
@@ -263,9 +324,27 @@ const OFFICIAL_WORK: RegExp[] = [
   // confirmed by a different official, by the institution itself when it is independent (checked in the route).
   // Before MINISTRY so an independent institution's own official can confirm while whole-government scope cannot act there.
   /^\/api\/org\/ministries\/[^/]+\/standing$/,
+  // Relationships between institutions (plan phase 3): proposed by an administrator citing the law, confirmed by a
+  // different official, by each independent end's own official who can sign (checked in the route,
+  // lib/data/store/relationships.ts). Not ADMIN_ONLY: the confirmer may be an independent institution's signatory.
+  /^\/api\/org\/relationships$/,
+  // Offices of state and who holds them (lib/nation/office-register.ts): proposed by an administrator citing the law,
+  // confirmed by a different official, by the office's institution when it is independent (checked in the store).
+  // Holding an office grants no permission: nothing in this file reads it.
+  /^\/api\/offices$/,
+  // The constitutional profile (plan phase 5, lib/constitution/profile.ts): each step checks who may take it in the
+  // store (drafting by a whole-government administrator; legal review, validation and approval by people other than
+  // the drafter; consultation by the consulted institution's own officials; disputes by any administrator or one who
+  // can sign). Not ADMIN_ONLY: an independent institution's signatory answers a consultation or raises a dispute.
+  /^\/api\/constitution\/profile$/,
+  // Transitions and emergencies (plan phase 6, lib/transitions/events.ts): each kind checks who records and confirms it
+  // (an office's institution, a court's own officials, the institution the nation names for an impeachment stage, the
+  // declarant of an interest …). Not ADMIN_ONLY: a court's signatory records a ruling. Nothing here reads a transition
+  // to grant a permission; a declared conflict of interest only removes one (caseActRefusal()).
+  /^\/api\/constitution\/transitions$/,
 ];
 
-export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official';
+export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official' | 'legislature';
 
 /** The rule that covers a change to `pathname`, or null when none does (refused). */
 export function mutationRule(pathname: string): MutationRule | null {
@@ -277,6 +356,7 @@ export function mutationRule(pathname: string): MutationRule | null {
   if (UPDATE_CENTER_WORK.some(re => re.test(pathname))) return 'official';
   if (INSTALLATION.some(re => re.test(pathname))) return 'installation';
   if (CONSTITUTIONAL.test(pathname)) return 'official';
+  if (LEGISLATURE.test(pathname)) return 'legislature';
   if (MINISTRY.test(pathname)) return 'ministry';
   if (OFFICIAL_WORK.some(re => re.test(pathname))) return 'official';
   return null;
@@ -301,6 +381,12 @@ export function apiPermission(s: Scope, method: string, pathname: string): strin
   if (rule === 'installation') return installationAdmin(s);
   if (rule === 'ministry') return ministryPermission(s, decodeURIComponent(MINISTRY.exec(pathname)![1]!));
   if (rule === 'official' || rule === 'bearer') return null;
+  // The legislature's record: decided here when the boundaries are known (the signed-in official carries them),
+  // and always again in the route against the record itself.
+  if (rule === 'legislature') {
+    if (!s.bounds) return null;
+    return ASSENT.test(pathname) ? assentRefusal(s, s.bounds.headOfState, s.bounds.legislature) : legislativeRecordRefusal(s, s.bounds.legislature, 'record');
+  }
   return 'No permission rule covers this change, so it is refused (lib/auth/roles.ts)';
 }
 
@@ -323,7 +409,7 @@ export function installationAdmin(s: Scope): string | null {
 export function ministryPermission(s: Scope, ministryId: string): string | null {
   if (roleOf(s) === 'auditor') return 'Auditors can read records but not change them';
   if (reaches(s, ministryId)) return null;
-  return wholeGovernment(s) ? independentRefusal : 'You can act only for your own institution';
+  return wholeGovernment(s) ? (isSubnational(s, ministryId) ? subnationalRefusal : independentRefusal) : 'You can act only for your own institution';
 }
 
 /**
@@ -438,12 +524,24 @@ export const INSTITUTION_READS: RegExp[] = [
  * an independent body's cases only with a stated purpose (caseReadRefusal()),
  * never a court's.
  */
-const fullView = (s: Scope, id?: string): boolean => (wholeGovernment(s) || roleOf(s) === 'auditor') && !isIndependent(s, id);
+const fullView = (s: Scope, id?: string): boolean => (wholeGovernment(s) || roleOf(s) === 'auditor') && !isIndependent(s, id) && !isSubnational(s, id);
 
-/** Reading one institution's cases and the records around them: its own officials, the whole government and auditors (not into an independent institution). */
-export function canReadInstitution(s: Scope, ministryId: string): string | null {
+/** The record types an institution's queue read covers. */
+export const INSTITUTION_RECORDS = ['queue', 'cases'];
+/**
+ * Reading one institution's cases and the records around them: its own
+ * officials, the whole government and auditors (not into an independent
+ * institution); and officials of an institution with an approved `audit` or
+ * `request_information` relationship covering its queue or cases, for a
+ * purpose that relationship lists (read only; the route logs the read).
+ */
+export function canReadInstitution(s: Scope, ministryId: string, purpose?: string): string | null {
   if (s.institution === ministryId || fullView(s, ministryId)) return null;
-  return isIndependent(s, ministryId) ? 'This institution is independent: its records are read only by its own officials' : 'You can read only your own institution\'s records';
+  if (readRelationship(s, ministryId, INSTITUTION_RECORDS, purpose)) return null;
+  return relationshipHint(s, ministryId, INSTITUTION_RECORDS)
+    ?? (isIndependent(s, ministryId) ? 'This institution is independent: its records are read only by its own officials'
+      : isSubnational(s, ministryId) ? 'This is a regional or local government with its own powers: its records are read by its own officials, or under an approved relationship for a purpose it lists'
+      : 'You can read only your own institution\'s records');
 }
 
 /**
@@ -514,6 +612,39 @@ export function canSeeParcelRights(s: Scope, authorityId: string | undefined): s
 export const EXECUTIVE_OFFICE = 'executive-office';
 /** Kinds of directive that only ask or inform: the only kinds addressed to an independent institution (never an instruction). */
 export const COMMUNICATION_KINDS = ['request', 'communication', 'referral'];
+/** Kinds of directive that instruct (bind the institutions they address). */
+export const INSTRUCTION_KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declaration'];
+
+/**
+ * Whether a directive of `kind` from `issuer` may address these registered
+ * institutions (plan phase 3; guidance §5.1: "executive cannot issue binding
+ * directives to an independent body", default deny). A request, a
+ * communication or a referral may go to anyone. An instruction needs an
+ * approved `instruct` relationship from the issuer to the target covering
+ * its kind when the target is independent, or when the issuer is itself a
+ * registered institution addressing another (an institution instructs
+ * another only under a power the law gives it). The executive office (the
+ * whole government) instructs institutions within its reach as before.
+ * Pure: the caller passes the boundaries (institutionBounds()).
+ */
+export function directiveTargetRefusal(bounds: Boundaries | undefined, issuer: { id: string; name: string }, kind: string, targets: { id: string; name: string }[]): string | null {
+  if (COMMUNICATION_KINDS.includes(kind)) return null;
+  const registeredIssuer = !!bounds?.institutions?.includes(issuer.id);
+  const covered = (to: string) => !!bounds?.relationships?.some(g => g.type === 'instruct' && g.from === issuer.id && g.to === to && (!g.recordTypes.length || g.recordTypes.includes(kind)));
+  const missing = targets.filter(t => t.id !== issuer.id && (isIndependent({ bounds }, t.id) || isSubnational({ bounds }, t.id) || registeredIssuer) && !covered(t.id));
+  if (!missing.length) return null;
+  const independent = missing.filter(t => isIndependent({ bounds }, t.id));
+  const regional = missing.filter(t => isSubnational({ bounds }, t.id) && !isIndependent({ bounds }, t.id));
+  const list = (xs: { name: string }[]) => xs.map(t => t.name).join(', ');
+  const fix = 'record one under National settings · Relationships, citing the law, or send this as a request, a communication or a referral';
+  if (independent.length) {
+    return `${list(independent)} ${independent.length === 1 ? 'is' : 'are'} independent and cannot be instructed: no approved relationship lets ${issuer.name} instruct ${independent.length === 1 ? 'it' : 'them'} (${kind}); ${fix}`;
+  }
+  if (regional.length) {
+    return `${list(regional)} ${regional.length === 1 ? 'is a regional or local government' : 'are regional or local governments'} with ${regional.length === 1 ? 'its' : 'their'} own powers: no approved relationship lets ${issuer.name} instruct ${regional.length === 1 ? 'it' : 'them'} (${kind}); ${fix}`;
+  }
+  return `No approved relationship lets ${issuer.name} instruct ${list(missing)} (${kind}): an institution instructs another only under a power the law gives it; ${fix}`;
+}
 
 /**
  * The issuer a new directive is recorded under, whatever the request names:
@@ -586,7 +717,13 @@ export interface CaseFacts {
   decision?: boolean;
   /** The action needs a recent second sign-in step. */
   stepUp?: boolean;
+  /** The procedure's key: a read relationship may cover cases of one procedure only. */
+  recordType?: string;
+  /** Official ids recused from this case by a declared conflict of interest (lib/transitions; plan phase 6). */
+  recused?: string[];
 }
+/** The record types a case read covers: every case of the institution, or this procedure's. */
+export const caseRecordTypes = (c: Pick<CaseFacts, 'recordType'>) => ['cases', ...(c.recordType ? [c.recordType] : [])];
 
 /** The part of a session the case rules read, besides the role and institution. */
 export interface CaseScope extends Scope {
@@ -615,6 +752,8 @@ export function caseActRefusal(s: CaseScope, c: CaseFacts, now = Date.now()): st
         ? 'This institution is independent: its cases are worked only by its own officials'
         : 'Cases are worked only by officials of the institution responsible for them; serving the whole government or administering the installation does not give that authority';
   }
+  // A declared conflict of interest: the official steps aside from every action on the case (guidance §4.13).
+  if (s.id && (c.recused ?? []).includes(s.id)) return 'You declared a conflict of interest on this case and stepped aside: another official acts on it (the recusal is lifted only by two officials)';
   if (c.decision && role !== 'signatory') return 'A decision needs an official who can sign for the institution';
   if (c.sensitivity === 'restricted' && !assignedTo(s, c) && role !== 'signatory') return 'This case is restricted to the officials assigned to it and those who can sign';
   if (c.sensitivity === 'secret' && !assignedTo(s, c) && !supervises(s, c)) return 'This case is open only to the officials assigned to it and its named supervisors';
@@ -631,15 +770,23 @@ export function caseReadRefusal(s: CaseScope, c: CaseFacts, purpose?: string): s
   const role = roleOf(s);
   const own = s.institution === c.owner;
   if (c.judicial && !own) return 'A court\'s cases are read only by the court\'s own officials';
+  // An approved audit or request-information relationship from the official's institution covering these
+  // cases and the stated purpose (plan phase 3): a read, never a change or a decision (caseActRefusal() does
+  // not consult it), never a court's case, never a secret one. The caller logs it with the relationship.
+  const types = caseRecordTypes(c);
+  if (!own && c.sensitivity !== 'secret' && readRelationship(s, c.owner, types, purpose)) return null;
+  const hint = own ? null : relationshipHint(s, c.owner, types);
   // An independent institution's cases: its own officials; from outside only the public audit office's
   // auditors, with a stated purpose (the caller writes every such read and refusal to the access log).
   if (c.independent && !own) {
     const publicAudit = role === 'auditor' && !!s.bounds?.audit && s.institution === s.bounds.audit;
-    if (!publicAudit) return 'This institution is independent: its cases are read only by its own officials';
+    if (!publicAudit) return hint ?? 'This institution is independent: its cases are read only by its own officials';
     return purpose?.trim() ? null : 'Say why you need to read this independent institution\'s case (audit purpose)';
   }
+  // A regional or local government's cases (plan phase 7, audit K): its own officials, or under an approved relationship.
+  if (!own && isSubnational(s, c.owner)) return hint ?? 'This is a regional or local government with its own powers: its cases are read by its own officials, or under an approved relationship for a purpose it lists';
   const auditorWithPurpose = role === 'auditor' && (own || wholeGovernment(s)) && !!purpose?.trim();
-  if (c.sensitivity === 'normal') return own || wholeGovernment(s) ? null : 'Cases are read by officials of the responsible institution and of the whole government';
+  if (c.sensitivity === 'normal') return own || wholeGovernment(s) ? null : hint ?? 'Cases are read by officials of the responsible institution and of the whole government';
   if (c.sensitivity === 'restricted') {
     if (own && (assignedTo(s, c) || role === 'signatory')) return null;
     if (auditorWithPurpose) return null;
@@ -678,6 +825,44 @@ export function canRecordLaw(s: Scope, authority: string | undefined): string | 
   if (role === 'auditor') return 'Auditors can read records but not change them';
   if (authority) return s.institution === authority ? null : 'Only the law-register authority records laws';
   return wholeGovernment(s) && role === 'administrator' ? null : 'Name the law-register authority under Who is responsible first';
+}
+
+/**
+ * Keeping the legislature's own record (plan phase 7; guidance §2.3, §6.2): only officials of the institution
+ * named for the legislature, never an official serving the whole government (the legislature is independent)
+ * and never another institution's. `record`: introducing a bill, its versions, stages, amendments, referrals,
+ * reports and proposing a correction (officers, administrators and officials who can sign there). `sign`: what
+ * the clerk answers for — recording a vote, passage, commencement, publication, the certification, sending the
+ * enacted text to the laws register, approving the legislative procedure and confirming a correction (an
+ * official who can sign there).
+ */
+export function legislativeRecordRefusal(s: Scope, legislature: string | undefined, level: 'record' | 'sign'): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (!legislature) return 'Name the legislature under Who is responsible first: its record is kept by its own officials';
+  if (s.institution !== legislature) {
+    return wholeGovernment(s)
+      ? 'The legislature\'s record is kept by its own officials (the clerk); serving the whole government does not reach it'
+      : 'The legislature\'s record is kept by its own officials (the clerk); another institution cannot write or change it';
+  }
+  if (level === 'sign' && role !== 'signatory') return 'An official who can sign at the legislature (the clerk) records this';
+  return null;
+}
+
+/**
+ * Recording the head of state's assent to a bill (or that it was withheld): an official who can sign at the
+ * institution named for the head of state. Where the nation names none, the legislature's clerk records the
+ * assent as communicated to the chamber (marked so), never an official serving the whole government.
+ */
+export function assentRefusal(s: Scope, headOfState: string | undefined, legislature: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (headOfState) {
+    if (s.institution !== headOfState) return 'Assent is recorded by the head of state\'s office, not by another institution';
+    return role === 'signatory' ? null : 'An official who can sign at the head of state\'s office records assent';
+  }
+  const why = legislativeRecordRefusal(s, legislature, 'sign');
+  return why ? `${why} (no head of state's office is named, so the clerk records assent as communicated)` : null;
 }
 
 /** Confirming (four-eyes) or withdrawing a version of a law: those who can sign at the law-register authority; whole-government administrators only while none is named. */

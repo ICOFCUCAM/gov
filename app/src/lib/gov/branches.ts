@@ -115,16 +115,5 @@ export function branchReadiness(key: BranchKey, t: number): BranchReadiness {
   return { total, posture, tone, dims };
 }
 
-export interface SeparationCheck { l: string; ok: boolean; detail: string }
-// Separation-of-powers integrity — invariant watch across the branches.
-export function separationIntegrity(t: number): { checks: SeparationCheck[]; intact: boolean } {
-  const checks: SeparationCheck[] = [
-    { l: 'Executive bound by legislation', ok: true, detail: 'no rule without statute' },
-    { l: 'Judicial review available', ok: true, detail: 'constitutional court operational' },
-    { l: 'Legislative oversight active', ok: seed(`sep:lo:${Math.floor(t / 30)}`) > 0.1, detail: 'committees sitting' },
-    { l: 'Budget requires appropriation', ok: true, detail: 'no expenditure without vote' },
-    { l: 'Oversight independence', ok: true, detail: 'auditor-general autonomous' },
-    { l: 'No emergency power without sunset', ok: seed(`sep:em:${Math.floor(t / 30)}`) > 0.05, detail: 'time-bound · parliament-renewed' },
-  ];
-  return { checks, intact: checks.every(c => c.ok) };
-}
+// Separation-of-powers checks are observed from the configuration, never generated here
+// (plan phase 4, audit G): lib/gov/separation.ts and GET /api/constitution/separation.

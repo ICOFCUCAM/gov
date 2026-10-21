@@ -150,7 +150,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   follow `docs/CONSTITUTIONAL_ARCHITECTURE.md` (external guidance kept verbatim;
   binding). How it applies to the code, phase by phase:
   `docs/CONSTITUTIONAL_ARCHITECTURE_PLAN.md`; the code as audited:
-  `docs/reviews/2026-10-separation-of-powers-audit.md`. CivicOS enforces the
+  `docs/reviews/2026-10-separation-of-powers-audit.md`.
+- Ministries and institutions as complete, standalone-deployable systems
+  follow `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (external specification,
+  six parts, kept verbatim; binding). Assessment, upgrades, lower-priority
+  items, mapping to the code and build order:
+  `docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md`. Its implementation starts only
+  after the constitutional phases are complete and integrated. CivicOS enforces the
   nation's configuration and never invents, transfers or assumes authority:
   no institution is a child of a universal executive administrator, a seniority
   or a role never grants a power its institution lacks, independence is
@@ -179,7 +185,83 @@ What has been built is locked. Work only upgrades it toward the vision in
   setup, presets are refused and who is responsible changes only through
   `/api/sovereign/authorities`. Directives from the whole government are
   issued by `executive-office`; an independent institution receives only a
-  request, communication or referral.
+  request, communication or referral, unless an approved `instruct`
+  relationship covers the instruction.
+- Relationships between institutions (appoint, fund, instruct, audit,
+  request information …) live in the relationship register
+  (`lib/data/store/relationships.ts`, part of the institution register),
+  changed only through `policy-change.ts` (an administrator cites the law, a
+  different official confirms, each independent end with its own signers
+  confirms; every version kept). None ships, in any mode. `roles.ts` reads the
+  approved ones in force from `Scope.bounds.relationships`: an instruction
+  reaches an independent institution, or one institution instructs another,
+  only under an `instruct` relationship (`directiveTargetRefusal()`); an
+  `audit`/`request_information` relationship grants a read of the listed
+  records for a listed purpose only (`readRelationship()`), logged with the
+  relationship and version, never a change, decision, secret case or a
+  court's case. A new cross-institution power reads this register.
+- Offices are records (`lib/nation/office-register.ts`, `/api/offices`):
+  recorded directly only during setup, afterwards through `policy-change.ts`
+  (cite the law, a different official confirms; an independent institution's
+  own signer confirms its offices). Head of state and head of government are
+  separate offices; until one is recorded the head of government is derived
+  from `executiveTitle`. Holders are linked by one official and confirmed by
+  another, ended with a reason and kept. Holding an office grants no
+  permission: `roles.ts` never reads offices. Never ship an office, title or
+  power for a nation.
+- Greetings name the signed-in official and their office (`lib/workspace/home.ts`),
+  never the nation's executive title; `/welcome` routes by the institution's
+  standing and the Command Center stays the executive's home. The shared
+  workspace panels are `/gov/workspace` (`/api/workspace`), within `roles.ts`.
+- Transitions and emergencies (`lib/transitions/`, `/api/constitution/transitions`) are recorded legal
+  events: cited from the laws register, confirmed by a different person (never the one named), every
+  version kept; none and no rule ships. Their consequences live in one place
+  (`lib/transitions/restrictions.ts`): a caretaker period refuses only the kinds the nation's adopted
+  rules list (the whole government's never reaches independent or subnational institutions); a court's ruling that a provision is invalid or suspended refuses new decisions citing it
+  and flags (never changes) earlier ones; a declared interest recuses at once (`CaseFacts.recused`).
+  An emergency lapses at expiry and nothing in `roles.ts` reads it; impeachment stages run in order by
+  the institution named for each; a holding past its recorded term is no longer in force.
+- Separation of powers is observed, never generated (`lib/gov/separation.ts`,
+  `/api/constitution/separation`): each check reads a configuration fact and
+  links to its record. The state's classification (`constitution.classification`,
+  `lib/nation/classification.ts`) is lists with sources and dates beside the
+  locked `stateForm`; `platformLabel` reads its `style`, else the old derivation.
+  After setup it changes only through `/api/sovereign/classification`.
+- The constitutional profile (`lib/constitution/`, `/api/constitution/profile`,
+  National settings → Constitution) bundles the parts kept on their own
+  (`parts.ts`: classification, institution terms, who is responsible, offices,
+  relationships, dual-control and suspension rules) by version and SHA-256
+  digest; never move a part's storage or change process into it. A new part of
+  the constitutional configuration joins `parts.ts` and `PART_AUDIT`. Steps are
+  events by named officials: legal review, validation and every approval by
+  people other than the drafter, two approvers minimum, each naming the act
+  that authorises it; the nation adds steps, never removes them. Never present
+  the platform's approval as the constitutional process. No profile ships in
+  any mode. A dispute freezes the parts it touches (`frozenRefusal()` in
+  `policy-change.ts`) and keeps the status quo until a recorded decision.
+- Consequential actions record the profile version in force (`profileRef()`):
+  sealed decisions carry `profile`; access-log entries are format 2 with the
+  office acted under (`accessBy()`) and the profile inside the hash. Never
+  change a hashed field list in place: add a new entry format and keep the old
+  one verifying.
+- The legislature's record (`lib/legislature/register.ts`, `/api/legislature`)
+  is kept by the institution named for the `legislature` slot and written only
+  by its officials (`legislativeRecordRefusal()`; assent by the head of
+  state's office, `assentRefusal()`); never by whole-government scope or a
+  ministry, and no other file imports a changing function (`writes.test.ts`).
+  Stages, vote rules, assent and publication come from the procedure two of
+  its officials approve; the reference ships unapproved. A recorded vote or
+  journal entry changes only by a correction a different official who can sign
+  there confirms, the earlier version kept. Enacted texts enter the laws
+  register from the certified record (`transmitToLaws()`, source
+  `legislature`), confirmed by a different official; `/api/law` never takes a
+  source from the request.
+- A regional or local government (standing `subnational`) is outside
+  whole-government reach (`Boundaries.subnational`); the centre reads or
+  instructs there only under an approved relationship. The portability tests
+  (`lib/nation/portability.test.ts`, three illustrative profiles built only
+  through the platform's own functions) prove the mechanism, never a legal
+  mapping; keep them passing and keep country-specific code out.
 
 ## Entry flow
 

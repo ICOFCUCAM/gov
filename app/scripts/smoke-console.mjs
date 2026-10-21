@@ -34,6 +34,13 @@ const PAGES = [
   { path: '/gov/geopolitical', map: false, text: /world|foreign/i },
   { path: '/audit', map: false, text: /audit/i },
   { path: '/command', map: false, text: /command|sovereign/i },
+  // Plan phase 4: the shared workspace shell and the offices of state.
+  { path: '/gov/workspace', map: false, text: /my authority/i },
+  { path: '/gov/configuration/offices', map: false, text: /offices of state/i },
+  { path: '/gov/configuration/constitution', map: false, text: /constitutional profile/i },
+  { path: '/gov/legislature', map: false, text: /bills and votes/i },
+  // Plan phase 6: transitions and emergencies.
+  { path: '/gov/configuration/transitions', map: false, text: /record a legal event/i },
 ];
 const VIEWPORTS = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 

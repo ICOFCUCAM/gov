@@ -10,7 +10,7 @@
 import type { StateForm, NationalConstitution, NationMapSettings } from '@/lib/api/types';
 import { defaultCapital } from '@/lib/geo/capitals';
 import { constitutionFor, type ConstitutionModel } from '@/lib/gov/constitution';
-import { nationOffices, chamberText, type NationOffices } from '@/lib/nation/offices';
+import { nationOffices, chamberText, type NationOffices, type HeadOffices } from '@/lib/nation/offices';
 import { getMessages, hasMessages, loadMessages, type Messages } from '@/lib/i18n';
 import type { Locale } from '@/lib/types';
 import { locales as LOCALES } from '@/lib/i18n/config';
@@ -42,9 +42,11 @@ export interface NationFacts {
   accent?: string;
   /** How the nation's maps are drawn (capital, projection). */
   map?: NationMapSettings;
+  /** The titles of the head of state and head of government in the nation's office records, when it recorded them (lib/nation/office-register.ts). */
+  headOffices?: HeadOffices;
 }
 
-const state: { iso3?: string; regions: string[]; currency: string; locale: string; languages: string[]; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs']; aiAssistant?: boolean; seal?: string; accent?: string; map?: NationMapSettings } = {
+const state: { headOffices?: HeadOffices; iso3?: string; regions: string[]; currency: string; locale: string; languages: string[]; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs']; aiAssistant?: boolean; seal?: string; accent?: string; map?: NationMapSettings } = {
   configured: false,
   regions: [],
   currency: 'USD',
@@ -74,11 +76,17 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.seal = f.seal?.trim() || undefined;
   state.accent = f.accent && /^#[0-9a-fA-F]{6}$/.test(f.accent) ? f.accent : undefined;
   state.map = f.map;
+  if (f.headOffices !== undefined) state.headOffices = f.headOffices;
   // A browser carries English and the languages the page came with (lib/i18n, review L-7): a language
   // chosen since (in setup, with the page open) is fetched now and shows from the next render.
   if (typeof window !== 'undefined') {
     for (const l of [state.locale, ...state.languages]) if (KNOWN_LOCALES.includes(l) && !hasMessages(l as Locale)) void loadMessages(l as Locale);
   }
+}
+
+/** The head-of-state and head-of-government titles from the nation's office records (server: after each change; browser: from the page). */
+export function applyHeadOffices(h: HeadOffices | undefined): void {
+  state.headOffices = h && (h.headOfState || h.headOfGovernment) ? { ...h } : undefined;
 }
 
 /** The global the root layout's inline script fills with the nation's facts (see app/layout.tsx). */
@@ -206,7 +214,7 @@ export function currentOffices(): NationOffices {
     stateName: state.stateName ?? '', stateForm: state.stateForm ?? 'republic', executiveTitle: state.executiveTitle ?? '',
     legislatureName: state.legislatureName ?? '', currency: state.currency, regionNoun: 'region', locale: state.locale,
     constitution: state.constitution,
-  }, state.configured);
+  }, state.configured, state.headOffices);
 }
 
 /**

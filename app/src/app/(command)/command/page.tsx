@@ -11,7 +11,8 @@ import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { deployableInstitutions, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemHealth } from '@/lib/institution/operational-catalog';
 import { buildCascade } from '@/lib/institution/cascade';
-import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
+import { branchReadiness } from '@/lib/gov/branches';
+import { useSeparation, separationWord, SeparationCheckList } from '@/components/features/SeparationChecks';
 import { constitutionFor } from '@/lib/gov/constitution';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry, PaymentReceipt } from '@/lib/api/types';
 import { SignalTag } from '@/components/ui/SignalTag';
@@ -20,6 +21,8 @@ import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 import { nationTime, nationTimeZoneLabel, currentOffices, formatMoney, nationCurrency } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { executivePosture } from '@/lib/gov/executive-posture';
+import { useSignIn } from '@/lib/official';
+import { greetingName } from '@/lib/workspace/home';
 
 // A function so the executive office's name follows the installed nation at render.
 const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] => [
@@ -128,6 +131,11 @@ export default function SovereignCommandCenter() {
   const readiness = view.readiness.v;
   const readinessTone = view.readiness.t;
   const [secure, setSecure] = React.useState<boolean | null>(null);
+  // Separation of powers as observed from the configuration (audit G).
+  const separation = useSeparation();
+  // Who is looking (plan phase 4, audit F): the greeting names the signed-in official and their office, never the
+  // nation's executive title for everyone. The Command Center stays the executive's home.
+  const official = useSignIn()?.official ?? null;
   React.useEffect(() => { setSecure(window.location.protocol === 'https:'); }, []);
 
   const tele: { l: string; v: string; t?: string; dot?: boolean; kind?: SignalKind; src?: string }[] = [
@@ -220,7 +228,7 @@ export default function SovereignCommandCenter() {
           {secure ? <span className="hidden items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-[10px] text-ink-soft sm:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Secure Comms</span> : null}
           <span className="relative grid h-7 w-7 place-items-center rounded-sm text-ink-soft" title="Notifications">⌁<span className="absolute -right-0.5 -top-0.5 grid h-3.5 w-3.5 place-items-center rounded-full text-[8px] text-white" style={{ backgroundColor: TONE.alert }}>{incidents.length}</span></span>
           <span className="border-l border-line pl-3">
-            <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="National Executive" accent={ACCENT} />
+            <ExecutiveMenu accent={ACCENT} />
           </span>
         </div>
       </header>
@@ -261,7 +269,7 @@ export default function SovereignCommandCenter() {
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.025) 1px, transparent 1px)', backgroundSize: '38px 38px' }}>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.16em] text-ink-muted">Welcome back, {sov?.executiveTitle ?? 'Head of Government'}.</div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-ink-muted">{official ? `Welcome back, ${greetingName(official)}.` : 'Welcome back.'}</div>
               <h1 className="text-2xl font-semibold tracking-tight text-ink">Sovereign Command Center</h1>
               <p className="text-xs text-ink-muted">One coherent platform for institutional operation, citizen service, and whole-of-government coordination.</p>
             </div>
@@ -309,33 +317,44 @@ export default function SovereignCommandCenter() {
             </div>
           </Section>
 
-          <Section label="Constitutional status · Separation of powers" tag={gen.show ? <SignalTag kind="sample" source={`Branch readiness and separation checks: ${REFERENCE_MODEL}`} /> : <SignalTag kind="unavailable" source={`Branch readiness and separation checks: ${gen.src}`} />}>
+          <Section label="Constitutional status · Separation of powers" tag={gen.show ? <SignalTag kind="sample" source={`Branch readiness percentages: ${REFERENCE_MODEL}. The separation checks below are observed from the configuration.`} /> : null}>
             {(() => {
               const t = now / 4000;
-              // Generated checks only where samples are allowed; production keeps every branch link, without a percentage.
-              const sep = gen.show ? separationIntegrity(t) : null;
+              // Each branch: registered institutions as observed (lib/gov/separation.ts); the readiness percentage is a
+              // sample shown only where samples are allowed, marked. Production shows the observed fact or "Not connected".
               const cells = constitutionFor(sov?.stateForm ?? 'republic', sov?.constitution).branches.map(b => {
-                if (!gen.show) return { l: b.name, v: 'Not connected', c: 'rgb(var(--c-ink-muted))', href: `/gov/branch/${b.key}` };
-                const r = branchReadiness(b.key, t);
-                return { l: b.name, v: `${r.total}% · ${r.posture}`, c: r.total >= 85 ? 'rgb(var(--c-ok))' : r.total >= 65 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))', href: `/gov/branch/${b.key}` };
+                const seen = separation.data?.checks.find(c => c.key === `branch:${b.key}`);
+                if (gen.show) {
+                  const r = branchReadiness(b.key, t);
+                  return { l: b.name, v: `${r.total}% · ${r.posture}`, c: r.total >= 85 ? 'rgb(var(--c-ok))' : r.total >= 65 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))', href: `/gov/branch/${b.key}`, sample: true };
+                }
+                if (!seen) return { l: b.name, v: 'Not connected', c: 'rgb(var(--c-ink-muted))', href: `/gov/branch/${b.key}`, sample: false };
+                return { l: b.name, v: seen.ok ? 'Registered' : 'None registered', c: seen.ok ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))', href: `/gov/branch/${b.key}`, sample: false };
               });
+              const sep = separation.data;
               return (
-                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-5">
-                  {cells.map(s => (
-                    <Link key={s.l} href={s.href} className="focus-ring flex items-center justify-between gap-2 bg-surface px-3 py-1.5 no-underline transition-colors hover:bg-surface-2/50">
-                      <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
-                      <span className="font-mono font-semibold tabular-nums" style={{ color: s.c }}>{s.v}</span>
-                    </Link>
-                  ))}
-                  <div className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-                    <span className="uppercase tracking-[0.14em] text-ink-muted">Separation</span>
-                    {sep ? (
-                      <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: sep.intact ? 'rgb(var(--c-ok))' : 'rgb(var(--c-alert))' }}>
-                        <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: sep.intact ? 'rgb(var(--c-ok))' : 'rgb(var(--c-alert))' }} />
-                        {sep.intact ? 'INTACT' : 'STRAINED'}
-                      </span>
-                    ) : <span className="font-mono text-ink-muted">Not connected</span>}
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-5">
+                    {cells.map(s => (
+                      <Link key={s.l} href={s.href} className="focus-ring flex items-center justify-between gap-2 bg-surface px-3 py-1.5 no-underline transition-colors hover:bg-surface-2/50">
+                        <span className="min-w-0 truncate uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+                        <span className="font-mono font-semibold tabular-nums" style={{ color: s.c }}>{s.v}</span>
+                      </Link>
+                    ))}
+                    <div className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+                      <span className="uppercase tracking-[0.14em] text-ink-muted">Separation</span>
+                      {sep ? (
+                        <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: sep.intact ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' }}>
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: sep.intact ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' }} />
+                          {separationWord(sep).toUpperCase()}
+                        </span>
+                      ) : <span className="font-mono text-ink-muted">Not connected</span>}
+                    </div>
                   </div>
+                  <details className="rounded-[3px] border border-line bg-surface px-2 py-1">
+                    <summary className="focus-ring cursor-pointer text-[10px] uppercase tracking-[0.14em] text-ink-muted">What is checked · observed from the configuration</summary>
+                    <div className="py-1.5"><SeparationCheckList data={sep} failed={separation.failed} /></div>
+                  </details>
                 </div>
               );
             })()}

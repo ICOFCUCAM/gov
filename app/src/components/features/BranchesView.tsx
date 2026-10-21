@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/SituationRoom';
 import { constitutionFor } from '@/lib/gov/constitution';
-import { legislativePipeline, judicialDocket, separationIntegrity, branchReadiness } from '@/lib/gov/branches';
+import { legislativePipeline, judicialDocket, branchReadiness } from '@/lib/gov/branches';
+import { useSeparation, separationWord, SeparationCheckList } from '@/components/features/SeparationChecks';
 import type { StateForm, NationalConstitution } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
 
@@ -22,7 +23,10 @@ export function BranchesView() {
   const m = constitutionFor(form, nation);
   const bills = legislativePipeline(ts);
   const docket = judicialDocket(ts);
-  const sep = separationIntegrity(ts);
+  // Separation of powers as observed from the configuration (audit G), not generated.
+  const separation = useSeparation();
+  const sepOk = !!separation.data?.intact;
+  const sepTone = !separation.data ? TONE.neutral : sepOk ? TONE.ok : TONE.warn;
 
   const tele = [
     { l: 'Constitutional form', v: m.label, t: 'ok', k: 'cf' },
@@ -30,7 +34,7 @@ export function BranchesView() {
     { l: 'Legislature', v: m.legislature.structure.toUpperCase(), t: 'ok', k: 'lg' },
     { l: 'Bills in progress', v: String(bills.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'bp' },
     { l: 'Open cases', v: String(docket.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'oc' },
-    { l: 'Separation', v: sep.intact ? 'INTACT' : 'STRAINED', t: sep.intact ? 'ok' : 'alert', k: 'si' },
+    { l: 'Separation', v: separationWord(separation.data).toUpperCase(), t: !separation.data ? 'neutral' : sepOk ? 'ok' : 'warn', k: 'si' },
   ];
 
   return (
@@ -50,8 +54,8 @@ export function BranchesView() {
             ))}
           </select>
           <span className="rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: sep.intact ? TONE.ok : TONE.alert, color: sep.intact ? TONE.ok : TONE.alert, backgroundColor: `color-mix(in srgb, ${sep.intact ? TONE.ok : TONE.alert} 12%, transparent)` }}>
-            Separation of powers · {sep.intact ? 'Intact' : 'Strained'}
+            style={{ borderColor: sepTone, color: sepTone, backgroundColor: `color-mix(in srgb, ${sepTone} 12%, transparent)` }}>
+            Separation of powers · {separationWord(separation.data)}
           </span>
         </div>
       </div>
@@ -99,15 +103,8 @@ export function BranchesView() {
             </div>
           ))}
         </Panel>
-        <Panel signal="sample" title="Checks on the separation of powers" meta="constitutional safeguards" bodyClass="!p-1.5">
-          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-            {sep.checks.map(c => (
-              <div key={c.l} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
-                <span className="min-w-0"><span className="block truncate text-[11px] text-ink-soft">{c.l}</span><span className="block truncate text-[9px] text-ink-muted">{c.detail}</span></span>
-                <span className="shrink-0 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase" style={{ backgroundColor: `color-mix(in srgb, ${c.ok ? TONE.ok : TONE.alert} 18%, transparent)`, color: c.ok ? TONE.ok : TONE.alert }}>{c.ok ? 'Held' : 'Breach'}</span>
-              </div>
-            ))}
-          </div>
+        <Panel title="Checks on the separation of powers" meta="observed from the configuration" bodyClass="!p-1.5">
+          <SeparationCheckList data={separation.data} failed={separation.failed} />
         </Panel>
       </div>
 

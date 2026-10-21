@@ -22,7 +22,8 @@ import { logoutUrl, providerPublic } from '@/lib/auth/oidc';
 import type { AssertionJSON } from '@/lib/auth/webauthn';
 import { currentOfficial, actorLabel, issueSession, sessionToken, sessionKey } from '@/lib/auth/official';
 import { serverClient } from '@/lib/db/client';
-import { recordAudit, getMinistry } from '@/lib/data/store';
+import { recordAudit, getMinistry, termsOf } from '@/lib/data/store';
+import { officesHeldBy } from '@/lib/nation/office-register';
 import type { OfficialRole } from '@/lib/auth/roles';
 import { officerForUser, substrateScope, substrateAal2 } from '@/lib/auth/substrate-officials';
 import { deviceOf } from '@/lib/auth/activity';
@@ -40,7 +41,14 @@ export async function GET() {
   // The path of the change the middleware is checking (lib/data/persist.ts RECORD_ROUTES).
   let forPath: string | undefined;
   try { forPath = (await headers()).get(CHANGE_PATH_HEADER) ?? undefined; } catch { forPath = undefined; }
-  const official = o ? { ...o, institutionName: o.institution ? getMinistry(o.institution)?.name : undefined } : null;
+  // The offices the official holds and their institution's standing (plan phase 4): for the greeting and the home
+  // page only. Holding an office grants no permission (lib/auth/roles.ts never reads it).
+  const inst = o?.institution ? getMinistry(o.institution) : undefined;
+  const official = o ? {
+    ...o, institutionName: inst?.name,
+    heldOffices: o.sub.startsWith('local:') ? officesHeldBy(o.sub.slice('local:'.length)).map(h => ({ id: h.id, title: h.title, kind: h.kind, ...(h.acting ? { acting: true } : {}) })) : [],
+    ...(inst ? { standing: termsOf(inst).standing } : {}),
+  } : null;
   return NextResponse.json({
     official,
     // oidc: the name of the government's identity provider when one is set up (lib/auth/oidc.ts);

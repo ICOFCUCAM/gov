@@ -32,6 +32,7 @@ import { db } from './state';
 import { recordAudit } from './audit';
 import { getMinistry, renameMinistry, deactivateMinistry, mergeMinistry } from './ministries';
 import { authorityFor, getSetup } from './sovereign';
+import { relationshipGrants } from './relationships';
 
 export const STANDINGS: { key: InstitutionStanding; label: string; means: string }[] = [
   { key: 'executive-ministry', label: 'Ministry (executive)', means: 'Part of the government, under a minister.' },
@@ -123,19 +124,38 @@ export function isIndependentInstitution(id: string, now = new Date()): boolean 
  */
 export function institutionBounds(now = new Date()): Boundaries {
   const independent = new Set<string>(), judicial = new Set<string>();
-  const institutions: string[] = [];
+  const institutions: string[] = [], subnational: string[] = [];
   for (const m of db.ministries) {
     institutions.push(m.id);
     const t = termsOf(m, now);
     if (independentTerms(t)) independent.add(m.id);
     if (t.standing === 'judiciary') judicial.add(m.id);
+    // A regional or local government with its own powers (plan phase 7, audit K): outside central reach.
+    if (t.standing === 'subnational') subnational.push(m.id);
   }
   for (const k of INDEPENDENT_SLOTS) { const id = authorityFor(k); if (id) independent.add(id); }
   for (const k of JUDICIAL_SLOTS) { const id = authorityFor(k); if (id) { judicial.add(id); independent.add(id); } }
   const auditId = authorityFor('supremeAudit');
   const auditM = auditId ? getMinistry(auditId) : undefined;
   const audit = auditM && termsOf(auditM, now).standing === 'independent-constitutional' ? auditM.id : undefined;
-  return { independent: [...independent], judicial: [...judicial], ...(audit ? { audit } : {}), institutions };
+  // The approved relationships in force today (plan phase 3), for the rules that read them.
+  const relationships = relationshipGrants(now);
+  const legislature = authorityFor('legislature'), headOfState = authorityFor('headOfState');
+  return {
+    independent: [...independent], judicial: [...judicial], ...(audit ? { audit } : {}), institutions, ...(relationships.length ? { relationships } : {}),
+    ...(subnational.length ? { subnational } : {}), ...(legislature ? { legislature } : {}), ...(headOfState ? { headOfState } : {}),
+  };
+}
+
+/** The registered institutions a directive's targets name (id, slug or name), with their ids and names. */
+export function registeredTargets(targets: string[]): { target: string; id: string; name: string }[] {
+  const out: { target: string; id: string; name: string }[] = [];
+  for (const t of targets) {
+    const k = t.trim().toLowerCase();
+    const m = db.ministries.find(x => x.id.toLowerCase() === k || x.slug.toLowerCase() === k || x.name.toLowerCase() === k);
+    if (m) out.push({ target: t, id: m.id, name: m.name });
+  }
+  return out;
 }
 
 /** The registered institutions a directive's targets name (id, slug or name) that are independent today. */

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useSignIn, refreshSignIn, officialScope } from '@/lib/official';
 import { TONE } from '@/lib/tone-palette';
 import { DemoCastMenu } from './DemoCast';
+import { officeLine } from '@/lib/workspace/home';
 
 const ITEMS: { l: string; href: string; k?: boolean }[] = [
   { l: 'Executive profile', href: '/gov/configuration' },
@@ -19,17 +20,19 @@ const ITEMS: { l: string; href: string; k?: boolean }[] = [
 ];
 
 /**
- * Head-of-Government executive menu — an active sovereign command
- * dropdown (profile, cabinet session, alerts, secure comms, war room,
- * briefings, audit, continuity, settings, sign in or out). When an official
- * is signed in it shows them (name, office, what they may do) and Sign out
- * ends their session on the server; otherwise it says so and offers Sign in.
- * On a demonstration or training installation it also lists the demo cast
- * ("Switch to…", grouped by institution; components/ui/DemoCast.tsx).
+ * The official's menu in the console header — an active command dropdown
+ * (profile, cabinet session, alerts, secure comms, war room, briefings,
+ * audit, continuity, settings, sign in or out). When an official is signed in
+ * it shows them (name, the office they hold or their account's office, what
+ * they may do) and Sign out ends their session on the server; otherwise it
+ * says so and offers Sign in. It never names a viewer by the nation's
+ * executive title (plan phase 4, audit F). On a demonstration or training
+ * installation it also lists the demo cast ("Switch to…", grouped by
+ * institution; components/ui/DemoCast.tsx).
  */
 export function ExecutiveMenu({
-  title = 'Head of Government',
-  sub = 'National Executive',
+  title = 'Not signed in',
+  sub = 'Sign in to act',
   accent = '#37c7d4',
 }: {
   title?: string;
@@ -40,7 +43,7 @@ export function ExecutiveMenu({
   const pathname = usePathname();
   const official = useSignIn()?.official ?? null;
   const name = official?.name ?? title;
-  const office = official ? (official.office ?? 'Signed in') : sub;
+  const office = official ? officeLine(official) : sub;
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
 

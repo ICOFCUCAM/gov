@@ -34,8 +34,25 @@ export interface LegalVersion {
   confirmedBy?: string; confirmedAt?: string;
   withdrawn?: { by: string; at: string; reason: string };
   applicability?: { territorial?: string[]; personal?: string; subject?: string; transitional?: string };
-  /** How it entered: typed in, or imported from a file (its SHA-256). */
-  source: { kind: 'entered' } | { kind: 'sample' } | { kind: 'akoma-ntoso' | 'csv'; sha256: string };
+  /** How it entered: typed in, imported from a file (its SHA-256), or from the legislature's record (plan phase 7). */
+  source: { kind: 'entered' } | { kind: 'sample' } | { kind: 'akoma-ntoso' | 'csv'; sha256: string } | LegislativeSource;
+}
+
+/**
+ * Provenance of a version that entered from the legislature's own record
+ * (lib/legislature/register.ts): the bill and the text version passed, the
+ * recorded votes, assent, publication and the clerk's certification of the
+ * record (its SHA-256). The text is the bill's, never retyped.
+ */
+export interface LegislativeSource {
+  kind: 'legislature';
+  legislature: string;
+  bill: string; billNumber: string; billVersion: number; textDigest: string;
+  votes: { stage: string; date: string; yes: number; no: number; abstain: number; result: string }[];
+  assent?: { outcome: string; date: string; by: string; communicated?: boolean };
+  publication: { date: string; reference: string };
+  certification: { digest: string; by: string; at: string };
+  procedureVersion: number;
 }
 
 export interface LegalInstrument {
