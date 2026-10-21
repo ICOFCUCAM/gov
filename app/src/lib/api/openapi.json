@@ -13000,7 +13000,7 @@
         ],
         "operationId": "get_dual_control",
         "summary": "GET /api/dual-control",
-        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code), the country's rules with their legal basis, a proposal waiting for its second official and every earlier version. POST (administrators): { op: 'propose' (the default), extra?, requireIdentityBinding?, pendingHours?, legalBasis: [{ instrument, eId }] } proposes the country's rules, values left out keeping their current setting, the basis cited from the laws register; { op: 'confirm' } is a different official adopting it; { op: 'withdraw', reason? }. The minimum cannot be lowered here. Who acted comes from the sign-in.",
+        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code), the country's rules with their legal basis, a proposal waiting for its second official and every earlier version. POST (administrators): { op: 'propose' (the default), extra?, requireIdentityBinding?, requireIdentityProvider? (every two-person control needs two persons at the identity provider), pendingHours?, legalBasis: [{ instrument, eId }] } proposes the country's rules, values left out keeping their current setting, the basis cited from the laws register; { op: 'confirm' } is a different official adopting it; { op: 'withdraw', reason? }. The minimum cannot be lowered here. Who acted comes from the sign-in.",
         "parameters": [],
         "responses": {
           "200": {
@@ -13037,6 +13037,7 @@
                           "string"
                         ],
                         "requireIdentityBinding": true,
+                        "requireIdentityProvider": true,
                         "pendingHours": 1,
                         "adopted": true,
                         "by": "A. Official",
@@ -13084,7 +13085,7 @@
         ],
         "operationId": "post_dual_control",
         "summary": "POST /api/dual-control",
-        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code), the country's rules with their legal basis, a proposal waiting for its second official and every earlier version. POST (administrators): { op: 'propose' (the default), extra?, requireIdentityBinding?, pendingHours?, legalBasis: [{ instrument, eId }] } proposes the country's rules, values left out keeping their current setting, the basis cited from the laws register; { op: 'confirm' } is a different official adopting it; { op: 'withdraw', reason? }. The minimum cannot be lowered here. Who acted comes from the sign-in.",
+        "description": "/api/dual-control — the two-official rules for decisions (lib/casework/dual-control-policy.ts). GET: the platform's minimum (fixed in code), the country's rules with their legal basis, a proposal waiting for its second official and every earlier version. POST (administrators): { op: 'propose' (the default), extra?, requireIdentityBinding?, requireIdentityProvider? (every two-person control needs two persons at the identity provider), pendingHours?, legalBasis: [{ instrument, eId }] } proposes the country's rules, values left out keeping their current setting, the basis cited from the laws register; { op: 'confirm' } is a different official adopting it; { op: 'withdraw', reason? }. The minimum cannot be lowered here. Who acted comes from the sign-in.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -13133,6 +13134,7 @@
                           "string"
                         ],
                         "requireIdentityBinding": true,
+                        "requireIdentityProvider": true,
                         "pendingHours": 1,
                         "adopted": true,
                         "by": "A. Official",
@@ -76641,6 +76643,10 @@
             "type": "boolean",
             "description": "Refuse a two-official decision unless both accounts are linked to the national identity provider."
           },
+          "requireIdentityProvider": {
+            "type": "boolean",
+            "description": "Every two-person control (decisions, rule changes, restores, Update Center steps, integrations, laws, offices …: dualControlRefusal()) refuses unless the two are different persons at the national identity provider. Off until the nation adopts it; never shipped on."
+          },
           "pendingHours": {
             "type": "number",
             "description": "How long a proposal waits for its second official before it lapses."
@@ -76808,6 +76814,7 @@
         "required": [
           "extra",
           "requireIdentityBinding",
+          "requireIdentityProvider",
           "pendingHours",
           "adopted"
         ]
@@ -76829,12 +76836,17 @@
           "requireIdentityBinding": {
             "type": "boolean",
             "description": "Refuse a two-official decision unless both accounts are linked to the national identity provider."
+          },
+          "requireIdentityProvider": {
+            "type": "boolean",
+            "description": "Every two-person control (decisions, rule changes, restores, Update Center steps, integrations, laws, offices …: dualControlRefusal()) refuses unless the two are different persons at the national identity provider. Off until the nation adopts it; never shipped on."
           }
         },
         "required": [
           "extra",
           "pendingHours",
-          "requireIdentityBinding"
+          "requireIdentityBinding",
+          "requireIdentityProvider"
         ]
       },
       "EscrowAgreement": {

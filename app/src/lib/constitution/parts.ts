@@ -72,7 +72,7 @@ function read(key: PartKey, now: Date): LivePart {
     }
     case 'dualControl': {
       const d = dualControlPolicy();
-      return { key, label, version: adoptedCount(d.changes), digest: digestOf({ extra: d.extra, requireIdentityBinding: d.requireIdentityBinding, pendingHours: d.pendingHours, adopted: d.adopted }), waiting: waitingOf(d.changes),
+      return { key, label, version: adoptedCount(d.changes), digest: digestOf({ extra: d.extra, requireIdentityBinding: d.requireIdentityBinding, pendingHours: d.pendingHours, adopted: d.adopted, ...(d.requireIdentityProvider ? { requireIdentityProvider: true } : {}) }), waiting: waitingOf(d.changes),
         summary: d.adopted ? `${d.extra.length} further step(s); proposals lapse after ${d.pendingHours} h` : 'Platform defaults (not adopted by the nation)' };
     }
     case 'suspension': {

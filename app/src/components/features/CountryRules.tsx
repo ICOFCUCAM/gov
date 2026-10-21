@@ -16,7 +16,7 @@ interface Pending { by: string; at: string; expiresAt: string; basis: Cite[]; va
 interface History { by: string; at: string; outcome: string; confirmed?: { by: string; independence: string }; basis: Cite[] }
 interface Changes { pending?: Pending; history?: History[] }
 interface Suspension { confirmWithinHours: number; reviewWithinDays: number; suspendBy?: string; adopted: boolean; basis?: string; citations?: Cite[]; confirmedBy?: string; changes?: Changes }
-interface DualControl { extra: string[]; requireIdentityBinding: boolean; pendingHours: number; adopted: boolean; basis?: string; citations?: Cite[]; confirmedBy?: string; changes?: Changes }
+interface DualControl { extra: string[]; requireIdentityBinding: boolean; requireIdentityProvider?: boolean; pendingHours: number; adopted: boolean; basis?: string; citations?: Cite[]; confirmedBy?: string; changes?: Changes }
 const field = 'mt-1 w-full rounded border border-line bg-surface px-2 py-1 text-sm';
 const cites = (c?: Cite[], typed?: string) => (c?.length ? c.map(x => `${x.title ?? x.instrument} ${x.num ?? x.eId}`).join('; ') : typed ? `${typed} (typed before citations were required)` : 'none');
 
@@ -46,7 +46,7 @@ export function CountryRules() {
   const [msg, setMsg] = React.useState<string | null>(null);
   const [law, setLaw] = React.useState({ instrument: '', eId: '' });
   const [s, setS] = React.useState({ confirmWithinHours: '', reviewWithinDays: '', suspendBy: '' });
-  const [d, setD] = React.useState({ extra: '', pendingHours: '', requireIdentityBinding: '' });
+  const [d, setD] = React.useState({ extra: '', pendingHours: '', requireIdentityBinding: '', requireIdentityProvider: '' });
   const load = React.useCallback(() => {
     fetch('/api/permit-authorities', { cache: 'no-store' }).then(r => r.json()).then(j => setSus(j.suspensionPolicy ?? null)).catch(() => setSus(null));
     fetch('/api/dual-control', { cache: 'no-store' }).then(r => r.json()).then(j => setDc(j.policy ? j : null)).catch(() => setDc(null));
@@ -86,19 +86,21 @@ export function CountryRules() {
         <>
           <p className="text-sm">Always two officials (the platform&apos;s minimum, which no rule lowers):</p>
           <ul className="ms-5 list-disc text-sm">{dc.minimum.map(m => <li key={m}>{m}</li>)}</ul>
-          <p className="mt-1 text-sm">The country adds: {dc.policy.extra.length ? dc.policy.extra.join(', ') : 'nothing'} · a proposal waits {dc.policy.pendingHours} hours · identity provider link {dc.policy.requireIdentityBinding ? 'required' : 'not required'} · {dc.policy.adopted ? `adopted (confirmed by ${dc.policy.confirmedBy ?? '—'}), basis: ${cites(dc.policy.citations, dc.policy.basis)}` : 'platform defaults, not adopted by the country'}</p>
+          <p className="mt-1 text-sm">The country adds: {dc.policy.extra.length ? dc.policy.extra.join(', ') : 'nothing'} · a proposal waits {dc.policy.pendingHours} hours · identity provider link {dc.policy.requireIdentityBinding ? 'required' : 'not required'} · every two-person check {dc.policy.requireIdentityProvider ? 'needs two different persons at the identity provider' : 'compares accounts unless both are linked'} · {dc.policy.adopted ? `adopted (confirmed by ${dc.policy.confirmedBy ?? '—'}), basis: ${cites(dc.policy.citations, dc.policy.basis)}` : 'platform defaults, not adopted by the country'}</p>
         </>
       ) : <p className="text-sm text-ink-muted">Not available.</p>}
       <div className="mt-2 grid gap-2 md:grid-cols-3">
         <label className="text-sm">Further steps (procedure:step, one per line)<textarea className={field} rows={2} value={d.extra} onChange={e => setD(x => ({ ...x, extra: e.target.value }))} placeholder="customs.declaration:release" /></label>
         <label className="text-sm">A proposal waits (hours)<input className={field} inputMode="numeric" value={d.pendingHours} onChange={e => setD(x => ({ ...x, pendingHours: e.target.value }))} /></label>
         <label className="text-sm">Identity provider link<select className={field} value={d.requireIdentityBinding} onChange={e => setD(x => ({ ...x, requireIdentityBinding: e.target.value }))}><option value="">Keep as it is</option><option value="yes">Required for both officials</option><option value="no">Not required</option></select></label>
+        <label className="text-sm">Every two-person check<select className={field} value={d.requireIdentityProvider} onChange={e => setD(x => ({ ...x, requireIdentityProvider: e.target.value }))}><option value="">Keep as it is</option><option value="yes">Two different persons at the identity provider</option><option value="no">Two different accounts are enough</option></select></label>
       </div>
       <Button className="mt-2" onClick={() => void post('/api/dual-control', {
         op: 'propose', legalBasis,
         ...(d.extra.trim() ? { extra: d.extra.split('\n').map(x => x.trim()).filter(Boolean) } : {}),
         ...(num(d.pendingHours) !== undefined ? { pendingHours: num(d.pendingHours) } : {}),
         ...(d.requireIdentityBinding ? { requireIdentityBinding: d.requireIdentityBinding === 'yes' } : {}),
+        ...(d.requireIdentityProvider ? { requireIdentityProvider: d.requireIdentityProvider === 'yes' } : {}),
       }, 'Proposed: a different administrator confirms it.')}>Propose</Button>
       <Waiting changes={dc?.policy.changes} onConfirm={() => void post('/api/dual-control', { op: 'confirm' }, 'Confirmed: the two-official rules apply from now.')} onWithdraw={() => void post('/api/dual-control', { op: 'withdraw' }, 'Withdrawn.')} />
     </Section>

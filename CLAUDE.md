@@ -128,7 +128,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   `lib/casework/dual-control-policy.ts` whatever a procedure says; the
   country adds steps, never removes them. Dual control compares people
   (`personOf()`, identity-provider link) and records `independence`; a
-  waiting proposal lapses and is kept (`lapsedProposals`).
+  waiting proposal lapses and is kept (`lapsedProposals`). Every two-person
+  check goes through `dualControlRefusal()`, which refuses an accounts-only
+  pair once the country adopts `requireIdentityProvider` (ships off).
 - The public professional check takes one person by full name (the number
   only narrows it), shows the profession's `publicFields`, is rate-limited
   and watched for harvesting; bulk checks go through `professional.standing`.
