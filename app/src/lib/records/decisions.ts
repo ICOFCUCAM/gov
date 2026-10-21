@@ -46,7 +46,7 @@ export interface DecisionContent {
   reasons: string;
   citations: Citation[];
   /** The officials: who decided, and who confirmed it where the procedure needs two. */
-  officials: { role: 'decided' | 'confirmed'; name: string; id?: string }[];
+  officials: { role: 'decided' | 'confirmed'; name: string; id?: string; /** The decision was taken under a delegation of authority (plan I2): the delegation and who delegated. */ delegatedBy?: { id: string; name: string; delegation: string } }[];
   /** Facts the decision fixes (registration number, validity, conditions), as the procedure names them. */
   facts?: Record<string, string | number | boolean>;
   /** Where the authority came from when it was made: the exact approved authority-mapping version, or the deployment profile (lib/permits/decisions.ts). */

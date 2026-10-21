@@ -54,7 +54,7 @@ describe('structural changes record the verified official (plan I0.2)', () => {
     expect((await modules.POST(post(`/api/org/ministries/${mid}/modules`, { moduleKey: 'documents', enabled: false, by: 'operator' }), ctx({ id: mid }))).status).toBe(200);
     expect(lastAudit('module.set').actor).toBe(LABEL);
     expect((await depts.POST(post(`/api/org/ministries/${mid}/departments`, { name: 'Records', by: 'Typed' }), ctx({ id: mid }))).status).toBe(200);
-    expect(lastAudit('department.add').actor).toBe(LABEL);
+    expect(lastAudit('institution.department.setup').actor).toBe(LABEL);
   });
 
   it('integrations and webhooks: the session name', async () => {
@@ -93,7 +93,7 @@ describe('a department is ended with a reason and kept (plan I0.2)', () => {
     const kept = getMinistry(mid)!;
     expect(kept.departments).toHaveLength(n);
     expect(kept.departments.find(x => x.id === d.id)).toMatchObject({ status: 'ended', endReason: 'Merged with Planning', endedBy: LABEL });
-    expect(lastAudit('department.end').actor).toBe(LABEL);
+    expect(lastAudit('institution.department.setup').actor).toBe(LABEL);
   });
 
   it('POST { op: end } ends a department; ending it again is refused', async () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import routes from '@/app/route-lock.json';
-import { CONSOLE_NAV, ALL_ITEMS, HEADER_LINKS, locate } from './console-nav';
+import { CONSOLE_NAV, ALL_ITEMS, HEADER_LINKS, locate, navFor, pageRefusal } from './console-nav';
 import { GLOSSARY } from './glossary';
 
 // Every page the console menu linked to before the plain-language menu (60 links).
@@ -48,5 +48,33 @@ describe('every console page has its place', () => {
     const orphans = routes.filter(r => !locate(r.replace(/\[[^\]]+\]/g, 'x')) && !r.startsWith('/gov/ministry/'));
     expect(routes.length).toBeGreaterThan(60);
     expect(orphans).toEqual([]);
+  });
+});
+
+describe('navigation filtered by permission (plan I2)', () => {
+  const roles = [
+    { role: 'administrator' as const }, { role: 'auditor' as const },
+    { role: 'officer' as const, institution: 'min-health' }, { role: 'signatory' as const, institution: 'min-health' }, { role: 'administrator' as const, institution: 'min-health' },
+  ];
+  const hrefs = (s: Parameters<typeof navFor>[0]) => new Set(navFor(s).flatMap(sec => sec.items.flatMap(i => i.tabs.map(t => t.href))));
+
+  it('shows each official only what they can use', () => {
+    const officer = hrefs({ role: 'officer', institution: 'min-health' });
+    expect(officer.has('/admin/officials')).toBe(false);
+    expect(officer.has('/platform')).toBe(false);
+    expect(officer.has('/gov/institutions/administration')).toBe(true);
+    const admin = hrefs({ role: 'administrator' });
+    expect(admin.has('/admin/officials')).toBe(true);
+    expect(admin.has('/gov/access-log')).toBe(false);
+    expect(hrefs({ role: 'auditor' }).has('/gov/work/cases')).toBe(false);
+    // Each item's address is one of its visible tabs.
+    for (const s of roles) for (const i of navFor(s).flatMap(sec => sec.items)) expect(i.tabs.some(t => t.href === i.href), i.key).toBe(true);
+  });
+
+  it('keeps every page reachable for someone allowed, and the whole menu without a signed-in official', () => {
+    const all = new Set(roles.flatMap(s => [...hrefs(s)]));
+    expect(tabs.map(t => t.href).filter(h => !all.has(h))).toEqual([]);
+    expect(navFor(null)).toBe(CONSOLE_NAV);
+    expect(pageRefusal({ role: 'officer', institution: 'x' }, '/admin/officials')).toMatch(/administrator/);
   });
 });

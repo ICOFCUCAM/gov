@@ -4,7 +4,10 @@
 // progress; opening a track shows its checks, each linking to the page that
 // does the work. Changes begun by one official and waiting for a second are
 // listed together so they can be found and confirmed. Read-only: every change
-// is made on the linked page, under its own rules.
+// is made on the linked page, under its own rules. Completeness per item (plan
+// I2): every item names who is accountable, the date of its evidence where the
+// record carries one and, while not done, the next action; each institution's
+// critical items are listed, never a percentage.
 
 import * as React from 'react';
 import Link from 'next/link';
@@ -47,6 +50,9 @@ function TrackRow({ t, open, toggle }: { t: Track; open: boolean; toggle: () => 
                   <Link href={c.href} className="underline">{c.label}</Link>
                   <span className="sr-only">{c.done ? ' (done)' : ' (not done)'}</span>
                   {c.detail ? <span className="block text-xs text-ink-muted">{c.detail}</span> : null}
+                  <span className="block text-xs text-ink-muted">
+                    Owner: {c.owner ?? t.owner ?? '—'}{c.date ? ` · ${c.date}` : ''}{!c.done && c.next ? ` · Next: ${c.next}` : ''}
+                  </span>
                 </span>
               </li>
             ))}
@@ -105,6 +111,22 @@ export function OnboardingHub() {
         ) : (
           <p className="text-sm text-ink-muted">Nothing is waiting. A change one official begins (a law, a procedure, a rate, a rule set, a website) appears here until a different official confirms it.</p>
         )}
+      </Section>
+
+      <Section title="Completeness per institution" meta="critical items; never a percentage">
+        {(s.institutions ?? []).length ? (
+          <ul className="divide-y divide-line-soft text-sm">
+            {s.institutions.map(i => (
+              <li key={i.id} className="py-2">
+                <Link href={`/gov/institutions/completeness?institution=${i.id}`} className="font-medium underline">{i.name}</Link>
+                <span className="ms-2 text-xs text-ink-muted">{i.counts.verified} verified · {i.counts.in_progress} in progress · {i.counts.not_started} not started{i.counts.blocked ? ` · ${i.counts.blocked} blocked` : ''}{i.counts.not_assessed ? ` · ${i.counts.not_assessed} not assessed` : ''}</span>
+                {i.failing.length ? (
+                  <span className="block text-xs">{i.gateApplies ? 'Activation held: ' : 'Critical, not yet verified: '}{i.failing.map(f => `${f.label} (${f.owner})`).join(' · ')}</span>
+                ) : <span className="block text-xs text-ink-muted">Every critical item verified.</span>}
+              </li>
+            ))}
+          </ul>
+        ) : <p className="text-sm text-ink-muted">No active institution.</p>}
       </Section>
 
       {blocked.length ? (

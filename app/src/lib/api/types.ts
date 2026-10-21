@@ -562,6 +562,49 @@ export interface Department {
   endedAt?: ISODate;
   endedBy?: string;
   endReason?: string;
+  // ── A department as a record (plan I2; lib/institution/departments.ts) ──
+  // Records saved before carry none of these and read as a department with no
+  // accountable office, services or staff recorded yet.
+  /** The office accountable for it (lib/nation/office-register.ts). Holding that office grants no permission. */
+  office?: string;
+  /** The internal administration functions it performs (spec Part 1 §10), if any. */
+  functions?: AdminFunctionKey[];
+  /** The services it delivers: a name, and the procedure that carries it where one exists. */
+  services?: DepartmentService[];
+  /** The official accounts serving in it (lib/auth/officials.ts). Serving in a department grants no permission. */
+  staff?: string[];
+  /** The version in force (1 from its first record). */
+  version?: number;
+  /** Every earlier version, oldest first, with who changed it, who confirmed it and why. */
+  history?: DepartmentVersion[];
+}
+
+/** The internal administration functions every institution has (spec Part 1 §10; plan I2). */
+export type AdminFunctionKey = 'hr' | 'finance' | 'procurement' | 'assets' | 'records' | 'legal' | 'internal-audit' | 'ict' | 'communications' | 'planning' | 'monitoring';
+/** A service a department delivers: its name, and the procedure (case package key) that carries it where one exists. */
+export interface DepartmentService { name: string; procedure?: string }
+/** What a department is, as one version records it. */
+export interface DepartmentTerms { name: string; office?: string; functions: AdminFunctionKey[]; services: DepartmentService[]; staff: string[] }
+/** One version of a department, kept for ever. */
+export interface DepartmentVersion extends DepartmentTerms {
+  version: number;
+  at: ISODate;
+  /** What made it: recorded during setup, or a change proposed by one official and confirmed by another. */
+  change: 'record' | 'establish' | 'amend' | 'end';
+  by: string;
+  confirmedBy?: string;
+  reason?: string;
+  basis?: Citation[];
+  status: 'active' | 'ended';
+}
+/** A change to an institution's departments: establish one, amend it, or end it with a reason (plan I2). */
+export interface DepartmentChange {
+  kind: 'establish' | 'amend' | 'end';
+  /** The department changed (amend, end); for establish, the new department's id once adopted. */
+  department?: string;
+  /** What changes: values left out keep their current setting. */
+  terms?: Partial<DepartmentTerms>;
+  reason: string;
 }
 export interface ModuleActivation { moduleKey: string; enabled: boolean; }
 
@@ -598,6 +641,8 @@ export interface Ministry {
   records?: string[];
   /** Changes to the above: proposed citing the law, confirmed by a different official, every version kept. */
   terms?: PolicyChanges<InstitutionTerms>;
+  /** Changes to its departments once setup is complete: proposed by one official, confirmed by a different one (its own when independent), every version kept (plan I2). */
+  departmentChanges?: PolicyChanges<DepartmentChange>;
 }
 
 /** The constitutional standing of an institution (guidance §2.2–2.7). The nation records it; the platform never assumes it. */

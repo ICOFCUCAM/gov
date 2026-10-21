@@ -18,7 +18,7 @@ import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
 import { dualControlRefusal, independenceOf } from '@/lib/data/dual-control';
 import { samplesAllowed } from '@/lib/ops/mode';
-import { caseActRefusal, type CaseScope } from '@/lib/auth/roles';
+import { caseActRefusal, delegationCovering, roleOf, type CaseScope } from '@/lib/auth/roles';
 import { calendarOf } from '@/lib/nation/deployment';
 import { cite, type Citation } from '@/lib/law/register';
 import { recordDecision, type SignedDecision } from '@/lib/records/decisions';
@@ -176,7 +176,21 @@ function resolveCitations(list: { instrument?: string; eId?: string }[] | undefi
   return out;
 }
 
-const facts = (c: Case, a?: ActionSpec) => {
+/** The facility and jurisdiction a case names, through the fields its procedure marks (CasePackage.scopeFields; plan I2). */
+const scopeOf = (pkg: Pick<CasePackage, 'scopeFields'> | undefined, fields: Record<string, unknown>) => {
+  const f = pkg?.scopeFields?.facility, j = pkg?.scopeFields?.jurisdiction;
+  const v = (k?: string) => (k && typeof fields[k] === 'string' && (fields[k] as string).trim() ? (fields[k] as string).trim() : undefined);
+  return { ...(v(f) ? { facility: v(f) } : {}), ...(v(j) ? { jurisdiction: v(j) } : {}) };
+};
+
+/** The delegation of authority an actor takes this decision step under, when they cannot sign there themselves (plan I2). */
+function delegationUsed(actor: Actor, c: Case, a: ActionSpec, now: Date): Step['delegation'] | undefined {
+  if (!a.decision || !actor.scope || roleOf(actor.scope) === 'signatory' || !a.needs.delegable) return undefined;
+  const g = delegationCovering(actor.scope, c.owner, c.package.key, a.key, a.needs.task, now.toISOString().slice(0, 10));
+  return g ? { id: g.id, delegator: { ...g.delegator } } : undefined;
+}
+
+const facts = (c: Case, a?: ActionSpec, pkg?: Pick<CasePackage, 'scopeFields'>) => {
   // Courts (standing judiciary, or named for the judiciary or a constitutional court) are closed to every other
   // institution (directions 4.6); several may exist. Independent institutions (legislature, head of state,
   // independent bodies) to every other institution too, save the public audit office reading with a purpose.
@@ -189,7 +203,9 @@ const facts = (c: Case, a?: ActionSpec) => {
     independent: b.independent.includes(c.owner),
     // Officials who declared a conflict of interest on this case step aside from acting on it (plan phase 6, lib/transitions).
     recused: recusedOn([c.id, c.ref]),
-    ...(a ? { decision: !!a.decision, stepUp: !!a.needs.stepUp } : {}),
+    ...(a ? { decision: !!a.decision, stepUp: !!a.needs.stepUp, action: a.key, ...(a.needs.task ? { task: a.needs.task } : {}), ...(a.needs.delegable ? { delegable: true } : {}) } : {}),
+    // Attribute scope (plan I2): the facility and jurisdiction the case names.
+    ...scopeOf(pkg ?? (c.package ? getPackage(c.package.key, c.package.version) : undefined), c.fields ?? {}),
   };
 };
 
@@ -242,7 +258,7 @@ export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case
   // Sample cases exist only in demo and training installations (lib/ops/mode.ts; step I0.1).
   if (source === 'sample' && !samplesAllowed()) return { error: 'A production installation opens no sample case' };
   if (actor.scope && source !== 'citizen' && !input.referral) {
-    const why = caseActRefusal(actor.scope, { owner, sensitivity: pkg.sensitivity, assigned: [actor.scope.id ?? ''] }, now.getTime());
+    const why = caseActRefusal(actor.scope, { owner, sensitivity: pkg.sensitivity, assigned: [actor.scope.id ?? ''], ...scopeOf(pkg, input.fields ?? {}) }, now.getTime());
     if (why) return { error: why };
   }
   // A repeated request returns the case it opened: only after the check above, and only a case of the
@@ -390,8 +406,15 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   if (c.source === 'sample' && !samplesAllowed()) return { error: `${c.ref} is a sample case: a production installation takes no step or decision on it` };
   // Who may act is decided before anything about the case is returned, a repeated request included.
   if (actor.scope) {
-    const why = caseActRefusal(actor.scope, facts(c, a), now.getTime());
+    const why = caseActRefusal(actor.scope, facts(c, a, pkg), now.getTime());
     if (why) return { error: why };
+  }
+  // Separation of duties (plan I2): this step's official is a different person from those who took the steps it names.
+  for (const s of c.history.filter(h => a.needs.distinctFrom?.includes(h.action))) {
+    for (const earlier of [s.by, ...(s.confirmedBy ? [s.confirmedBy] : [])]) {
+      const same = dualControlRefusal({ by: earlier.name, ...(earlier.id ? { byId: earlier.id } : {}) }, { by: actor.name, ...(actor.id ? { byId: actor.id } : {}) });
+      if (same) return { error: `Separation of duties: ${a.label.toLowerCase()} is taken by a different person from the one who took "${pkg.actions.find(x => x.key === s.action)?.label ?? s.action}" (${earlier.name})` };
+    }
   }
   // A proposal past its waiting period lapses before anything else; a repeat of it is not a new proposal.
   const lapsedNow = c.pending?.action === a.key ? c.pending : undefined;
@@ -449,7 +472,8 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   const fourEyes = twoOfficials(c, a, pkg);
   if (fourEyes && !pending) {
     if (verifications.length) (c.verifications ??= []).push(...verifications);
-    c.pending = { action: a.key, by: by(actor), at: now.toISOString(), expiresAt: new Date(now.getTime() + pendingHours() * 3_600_000).toISOString(), ...(reason ? { reason } : {}), citations, fields, ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}) };
+    const proposedUnder = delegationUsed(actor, c, a, now);
+    c.pending = { action: a.key, by: by(actor), at: now.toISOString(), expiresAt: new Date(now.getTime() + pendingHours() * 3_600_000).toISOString(), ...(reason ? { reason } : {}), citations, fields, ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}), ...(proposedUnder ? { delegation: proposedUnder } : {}) };
     c.version += 1;
     audit(actor, 'case.propose', c, `${a.key} proposed; a second official confirms`);
     return { case: clone(c), pending: true };
@@ -465,6 +489,8 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   }
   const decidedBy = pending ? pending.by : by(actor);
   const confirmedBy = pending ? by(actor) : undefined;
+  // A delegated act records both the delegate (decidedBy) and the delegator (plan I2, transparent delegation).
+  const delegation = pending ? pending.delegation : delegationUsed(actor, c, a, now);
 
   // Domain effects, then the sealed decision, then the effects' follow-up.
   const ctx: EffectContext = { case: clone({ ...c, fields: merged }), package: pkg, action: a, actor, now };
@@ -483,7 +509,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
       subject: { kind: 'case', id: c.id, ref: c.ref, procedure: c.package },
       institution: { id: c.owner, name: inst?.name ?? c.owner },
       decision: a.decision, reasons: reason ?? '', citations,
-      officials: [{ role: 'decided', name: decidedBy.name, ...(decidedBy.id ? { id: decidedBy.id } : {}) }, ...(confirmedBy ? [{ role: 'confirmed' as const, name: confirmedBy.name, ...(confirmedBy.id ? { id: confirmedBy.id } : {}) }] : [])],
+      officials: [{ role: 'decided', name: decidedBy.name, ...(decidedBy.id ? { id: decidedBy.id } : {}), ...(delegation ? { delegatedBy: { id: delegation.delegator.id, name: delegation.delegator.name, delegation: delegation.id } } : {}) }, ...(confirmedBy ? [{ role: 'confirmed' as const, name: confirmedBy.name, ...(confirmedBy.id ? { id: confirmedBy.id } : {}) }] : [])],
       ...(results.some(r => r.facts) ? { facts: Object.assign({}, ...results.map(r => r.facts ?? {})) } : {}),
       ...(guarded.authority ? { authority: guarded.authority } : {}),
       ...(independence ? { independence } : {}),
@@ -500,7 +526,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   if (verifications.length) (c.verifications ??= []).push(...verifications);
   c.fieldSources = { ...(c.fieldSources ?? {}), ...sourcesOf(fields, verifications, { at: now.toISOString(), by: (pending ? pending.by : by(actor)).name, channel: 'step' }) };
   c.stage = a.to;
-  const step: Step = { seq: c.history.length + 1, action: a.key, from, to: a.to, by: decidedBy, ...(confirmedBy ? { confirmedBy } : {}), at, ...(reason ? { reason } : {}), ...(citations.length ? { citations } : {}), ...(decision ? { decision: decision.id } : {}), ...((pending?.idempotencyKey ?? input.idempotencyKey) ? { idempotencyKey: pending?.idempotencyKey ?? input.idempotencyKey } : {}), ...(pending?.idempotencyKey && input.idempotencyKey && input.idempotencyKey !== pending.idempotencyKey ? { confirmIdempotencyKey: input.idempotencyKey } : {}), ...(independence ? { independence } : {}) };
+  const step: Step = { seq: c.history.length + 1, action: a.key, from, to: a.to, by: decidedBy, ...(confirmedBy ? { confirmedBy } : {}), at, ...(reason ? { reason } : {}), ...(citations.length ? { citations } : {}), ...(decision ? { decision: decision.id } : {}), ...((pending?.idempotencyKey ?? input.idempotencyKey) ? { idempotencyKey: pending?.idempotencyKey ?? input.idempotencyKey } : {}), ...(pending?.idempotencyKey && input.idempotencyKey && input.idempotencyKey !== pending.idempotencyKey ? { confirmIdempotencyKey: input.idempotencyKey } : {}), ...(independence ? { independence } : {}), ...(delegation ? { delegation } : {}) };
   c.history.push(step);
   delete c.pending;
   for (const d of c.deadlines) if (!d.met && !d.lapsed && pkg.deadlines.find(x => x.key === d.key)?.from === from) d.met = at;
@@ -510,7 +536,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
     if (pkg.appeal?.days !== undefined && decision) c.deadlines.push({ key: 'appeal', label: `Appeal to ${pkg.appeal.body}`, due: addDays(at, pkg.appeal.days, 'calendar'), ...(pkg.appeal.citation ? { citation: pkg.appeal.citation } : {}), ...(pkg.sampleDeadlines ? { sample: true as const } : {}) });
   }
   c.version += 1;
-  audit(actor, decision ? 'case.decide' : 'case.stage', c, `${a.key}: ${from} → ${a.to}${decision ? ` · decision ${decision.id} · ${decision.sha256.slice(0, 12)}` : ''}${confirmedBy ? ` · confirmed by ${confirmedBy.name}` : ''}`);
+  audit(actor, decision ? 'case.decide' : 'case.stage', c, `${a.key}: ${from} → ${a.to}${decision ? ` · decision ${decision.id} · ${decision.sha256.slice(0, 12)}` : ''}${confirmedBy ? ` · confirmed by ${confirmedBy.name}` : ''}${delegation ? ` · by ${decidedBy.name} under delegation ${delegation.id} from ${delegation.delegator.name}` : ''}`);
   for (const r of results) if (r.after) await r.after(decision, clone(c));
   return { case: clone(c), ...(decision ? { decision } : {}) };
 }

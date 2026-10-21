@@ -2094,6 +2094,16 @@
                             },
                             "bounds": {
                               "$ref": "#/components/schemas/Boundaries"
+                            },
+                            "attributes": {
+                              "$ref": "#/components/schemas/AttributeScope"
+                            },
+                            "delegations": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/DelegationGrant"
+                              },
+                              "description": "Delegations of authority to this official in force today, read from the delegations register at each request (plan I2)."
                             }
                           },
                           "required": [
@@ -2220,7 +2230,19 @@
                           "judicial": [
                             "string"
                           ]
-                        }
+                        },
+                        "attributes": {},
+                        "delegations": [
+                          {
+                            "id": "ID-0001",
+                            "delegator": {},
+                            "institution": "string",
+                            "procedures": [],
+                            "actions": [],
+                            "from": "string",
+                            "basis": "string"
+                          }
+                        ]
                       },
                       "methods": {
                         "local": true,
@@ -2470,7 +2492,7 @@
         ],
         "operationId": "post_auth_officials_id",
         "summary": "POST /api/auth/officials/{id}",
-        "description": "Change a platform account (administrators only; audited): disable or re-enable it ({ disabled }), or set its role and institution ({ role, institution }; institution null or \"\" for the whole government), or reset its second sign-in step when the official's phone is lost ({ resetTwoStep: true }; they set it up again at their next sign-in), or issue a one-time password reset code to hand over in person ({ issueReset: true }; shown once, expires in 24 hours). An account of an independent institution (now, or after the change) is changed by that institution's own administrator; an administrator serving the whole government proposes the change and it waits (202) for an official who can sign there (lib/auth/account-changes.ts, accountChangeRule()); administrators of another institution may not.",
+        "description": "Change a platform account (administrators only; audited): disable or re-enable it ({ disabled }), or set its role and institution ({ role, institution }; institution null or \"\" for the whole government), or reset its second sign-in step when the official's phone is lost ({ resetTwoStep: true }; they set it up again at their next sign-in), or issue a one-time password reset code to hand over in person ({ issueReset: true }; shown once, expires in 24 hours), or set the attributes the account is scoped by within its institution (plan I2: { attributes: { facilities?, jurisdictions?, tasks? } }; each list narrows what the role allows, never widens it; checked against the facility register, the nation's regions and the task permissions; an independent institution's accounts only by its own administrators). An account of an independent institution (now, or after the change) is changed by that institution's own administrator; an administrator serving the whole government proposes the change and it waits (202) for an official who can sign there (lib/auth/account-changes.ts, accountChangeRule()); administrators of another institution may not.",
         "parameters": [
           {
             "name": "id",
@@ -2509,6 +2531,14 @@
                   },
                   "issueReset": {
                     "type": "boolean"
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "facilities": {},
+                      "jurisdictions": {},
+                      "tasks": {}
+                    }
                   }
                 }
               },
@@ -2520,7 +2550,12 @@
                     "role": "string",
                     "institution": "string",
                     "resetTwoStep": true,
-                    "issueReset": true
+                    "issueReset": true,
+                    "attributes": {
+                      "facilities": null,
+                      "jurisdictions": null,
+                      "tasks": null
+                    }
                   }
                 }
               }
@@ -2537,6 +2572,17 @@
                     {
                       "type": "object",
                       "properties": {
+                        "account": {
+                          "$ref": "#/components/schemas/PublicAccount"
+                        }
+                      },
+                      "required": [
+                        "account"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
                         "code": {
                           "type": "string"
                         },
@@ -2548,17 +2594,6 @@
                         "code",
                         "expiresAt"
                       ]
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "account": {
-                          "$ref": "#/components/schemas/PublicAccount"
-                        }
-                      },
-                      "required": [
-                        "account"
-                      ]
                     }
                   ]
                 },
@@ -2566,8 +2601,41 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
-                      "code": "string",
-                      "expiresAt": "2026-01-15T09:30:00.000Z"
+                      "account": {
+                        "id": "ID-0001",
+                        "name": "Example",
+                        "role": "administrator",
+                        "attributes": {},
+                        "institution": "string",
+                        "email": "official@example.gov",
+                        "office": "string",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "createdBy": "A. Official",
+                        "disabled": true,
+                        "lastSignIn": "string",
+                        "passwordChangedAt": "2026-01-15T09:30:00.000Z",
+                        "identity": {
+                          "issuer": "string",
+                          "claim": "string",
+                          "value": "string",
+                          "linkedAt": "2026-01-15T09:30:00.000Z",
+                          "linkedBy": "A. Official"
+                        },
+                        "noPassword": true,
+                        "demo": true,
+                        "twoStepSince": "string",
+                        "twoStepRequired": true,
+                        "resetPendingUntil": "string",
+                        "passkeys": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "createdAt": "2026-01-15T09:30:00.000Z",
+                            "synced": true
+                          }
+                        ],
+                        "secondStepOn": true
+                      }
                     }
                   }
                 }
@@ -3304,6 +3372,7 @@
                         "id": "ID-0001",
                         "name": "Example",
                         "role": "administrator",
+                        "attributes": {},
                         "institution": "string",
                         "email": "official@example.gov",
                         "office": "string",
@@ -6896,6 +6965,18 @@
                                   "under_review"
                                 ]
                               },
+                              "scopeFields": {
+                                "type": "object",
+                                "properties": {
+                                  "facility": {
+                                    "type": "string"
+                                  },
+                                  "jurisdiction": {
+                                    "type": "string"
+                                  }
+                                },
+                                "description": "The fields that hold a case's facility (a facility register id) and jurisdiction (one of the nation's regions), for accounts scoped by those attributes (plan I2; lib/auth/roles.ts attributeRefusal())."
+                              },
                               "key": {
                                 "type": "string"
                               },
@@ -7268,6 +7349,7 @@
                   "value": {
                     "op": "string",
                     "package": {
+                      "scopeFields": {},
                       "key": "string",
                       "version": 1,
                       "owner": "string",
@@ -7486,6 +7568,7 @@
                     "summary": "Generated from the schema",
                     "value": {
                       "package": {
+                        "scopeFields": {},
                         "key": "string",
                         "version": 1,
                         "owner": "string",
@@ -7612,6 +7695,7 @@
                     "summary": "Generated from the schema",
                     "value": {
                       "package": {
+                        "scopeFields": {},
                         "key": "string",
                         "version": 1,
                         "owner": "string",
@@ -8243,6 +8327,7 @@
                         }
                       },
                       "procedure": {
+                        "scopeFields": {},
                         "key": "string",
                         "version": 1,
                         "owner": "string",
@@ -28560,6 +28645,24 @@
                           "proposedBy": "A. Official",
                           "href": "https://example.gov/"
                         }
+                      ],
+                      "institutions": [
+                        {
+                          "id": "ID-0001",
+                          "name": "Example",
+                          "counts": {
+                            "blocked": 1,
+                            "in_progress": 1,
+                            "not_applicable": 1,
+                            "not_assessed": 1,
+                            "not_started": 1,
+                            "verified": 1
+                          },
+                          "failing": [
+                            {}
+                          ],
+                          "gateApplies": true
+                        }
                       ]
                     }
                   }
@@ -29522,7 +29625,8 @@
                         "records": [
                           "string"
                         ],
-                        "terms": {}
+                        "terms": {},
+                        "departmentChanges": {}
                       }
                     }
                   }
@@ -29548,6 +29652,769 @@
         ],
         "x-permission-rule": "admin",
         "x-source": "src/app/api/org/ministries/[id]/activate/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/administration": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_administration",
+        "summary": "GET /api/org/ministries/{id}/administration",
+        "description": "/api/org/ministries/{id}/administration — an institution's internal administration workspace (plan I2; spec Part 1 §10; supplement part 21). GET: for each function (HR, finance, procurement, assets, records, legal, internal audit, ICT, communications, planning, monitoring and evaluation): the departments that perform it, its catalogue forms and the state of their procedure link, the institution's own procedures (in force, draft or not adopted) with their open cases by stage, and its records (positions, payroll batch totals, privileged access grants, policies, delegations of authority). Only that institution's own records, read within reach (canReadAdministration()): the legislature, the judiciary and independent institutions keep their own. POST { op: 'draft-procedures' }: an administrator (or an official who can sign) of the institution drafts its internal administration procedures from the templates; a second official approves each (Laws → Procedures).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "institution": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    },
+                    "functions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "departments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "office": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "staff": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "office",
+                                "staff"
+                              ]
+                            }
+                          },
+                          "forms": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "type": "string"
+                                },
+                                "identity": {
+                                  "type": "string"
+                                },
+                                "link": {
+                                  "type": "string",
+                                  "enum": [
+                                    "approved",
+                                    "draft",
+                                    "missing",
+                                    "under_review"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "title",
+                                "identity",
+                                "link"
+                              ]
+                            }
+                          },
+                          "procedures": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "template": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "type": "string"
+                                },
+                                "forms": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "sensitivity": {
+                                  "type": "string",
+                                  "enum": [
+                                    "normal",
+                                    "restricted",
+                                    "secret"
+                                  ]
+                                },
+                                "state": {
+                                  "type": "string"
+                                },
+                                "cases": {
+                                  "type": "object",
+                                  "properties": {
+                                    "open": {
+                                      "type": "number"
+                                    },
+                                    "total": {
+                                      "type": "number"
+                                    },
+                                    "stages": {
+                                      "type": "object",
+                                      "additionalProperties": {
+                                        "type": "number"
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "open",
+                                    "total",
+                                    "stages"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "template",
+                                "key",
+                                "title",
+                                "forms",
+                                "sensitivity",
+                                "state",
+                                "cases"
+                              ]
+                            }
+                          },
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "assets",
+                              "communications",
+                              "finance",
+                              "hr",
+                              "ict",
+                              "internal-audit",
+                              "legal",
+                              "monitoring",
+                              "planning",
+                              "procurement",
+                              "records"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "records": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "departments",
+                          "forms",
+                          "procedures",
+                          "key",
+                          "label",
+                          "records"
+                        ]
+                      }
+                    },
+                    "records": {
+                      "type": "object",
+                      "properties": {
+                        "positions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "count": {
+                                "type": "number"
+                              },
+                              "grade": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "abolished",
+                                  "approved"
+                                ]
+                              },
+                              "case": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "sample": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "count",
+                              "grade",
+                              "status",
+                              "case",
+                              "at",
+                              "sample"
+                            ]
+                          }
+                        },
+                        "payroll": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ref": {
+                                "type": "string"
+                              },
+                              "period": {
+                                "type": "object",
+                                "properties": {
+                                  "from": {
+                                    "type": "string"
+                                  },
+                                  "to": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "from",
+                                  "to"
+                                ]
+                              },
+                              "employees": {
+                                "type": "number"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "approved",
+                                  "corrected",
+                                  "returned",
+                                  "reviewed",
+                                  "submitted"
+                                ]
+                              },
+                              "preparedBy": {
+                                "type": "string"
+                              },
+                              "reviewedBy": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              },
+                              "approvedBy": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              },
+                              "deductions": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              },
+                              "sample": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "ref",
+                              "period",
+                              "employees",
+                              "status",
+                              "preparedBy",
+                              "reviewedBy",
+                              "approvedBy",
+                              "deductions",
+                              "sample"
+                            ]
+                          }
+                        },
+                        "access": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "system": {
+                                "type": "string"
+                              },
+                              "role": {
+                                "type": "string"
+                              },
+                              "from": {
+                                "type": "string"
+                              },
+                              "until": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "granted",
+                                  "revoked"
+                                ]
+                              },
+                              "inForce": {
+                                "type": "boolean"
+                              },
+                              "case": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "system",
+                              "role",
+                              "from",
+                              "until",
+                              "status",
+                              "inForce",
+                              "case"
+                            ]
+                          }
+                        },
+                        "policies": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "version": {
+                                "type": "number"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "approved",
+                                  "retired"
+                                ]
+                              },
+                              "case": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "version",
+                              "status",
+                              "case"
+                            ]
+                          }
+                        },
+                        "delegations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "delegator": {
+                                "type": "string"
+                              },
+                              "delegate": {
+                                "type": "string"
+                              },
+                              "actions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "procedures": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "from": {
+                                "type": "string"
+                              },
+                              "until": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "revoked": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "reason": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "at",
+                                      "reason"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "case": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "delegator",
+                              "delegate",
+                              "actions",
+                              "procedures",
+                              "from",
+                              "until",
+                              "basis",
+                              "revoked",
+                              "case"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "positions",
+                        "payroll",
+                        "access",
+                        "policies",
+                        "delegations"
+                      ]
+                    },
+                    "rules": {
+                      "type": "object",
+                      "properties": {
+                        "payrollDeductions": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "payrollDeductions"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "institution",
+                    "functions",
+                    "records",
+                    "rules"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "institution": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "functions": [
+                        {
+                          "departments": [
+                            {}
+                          ],
+                          "forms": [
+                            {}
+                          ],
+                          "procedures": [
+                            {}
+                          ],
+                          "key": "assets",
+                          "label": "Example",
+                          "records": "string"
+                        }
+                      ],
+                      "records": {
+                        "positions": [
+                          {
+                            "id": "ID-0001",
+                            "title": "Example",
+                            "count": 1,
+                            "grade": "string",
+                            "status": "abolished",
+                            "case": "string",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "sample": true
+                          }
+                        ],
+                        "payroll": [
+                          {
+                            "ref": "string",
+                            "period": {},
+                            "employees": 1,
+                            "status": "approved",
+                            "preparedBy": "A. Official",
+                            "reviewedBy": "A. Official",
+                            "approvedBy": "A. Official",
+                            "deductions": "string",
+                            "sample": true
+                          }
+                        ],
+                        "access": [
+                          {
+                            "id": "ID-0001",
+                            "system": "string",
+                            "role": "string",
+                            "from": "string",
+                            "until": "2026-01-15T09:30:00.000Z",
+                            "status": "granted",
+                            "inForce": true,
+                            "case": "string"
+                          }
+                        ],
+                        "policies": [
+                          {
+                            "id": "ID-0001",
+                            "title": "Example",
+                            "version": 1,
+                            "status": "approved",
+                            "case": "string"
+                          }
+                        ],
+                        "delegations": [
+                          {
+                            "id": "ID-0001",
+                            "delegator": "string",
+                            "delegate": "string",
+                            "actions": [],
+                            "procedures": [],
+                            "from": "string",
+                            "until": "2026-01-15T09:30:00.000Z",
+                            "basis": [],
+                            "revoked": {},
+                            "case": "string"
+                          }
+                        ]
+                      },
+                      "rules": {
+                        "payrollDeductions": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/org/ministries/[id]/administration/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_administration",
+        "summary": "POST /api/org/ministries/{id}/administration",
+        "description": "/api/org/ministries/{id}/administration — an institution's internal administration workspace (plan I2; spec Part 1 §10; supplement part 21). GET: for each function (HR, finance, procurement, assets, records, legal, internal audit, ICT, communications, planning, monitoring and evaluation): the departments that perform it, its catalogue forms and the state of their procedure link, the institution's own procedures (in force, draft or not adopted) with their open cases by stage, and its records (positions, payroll batch totals, privileged access grants, policies, delegations of authority). Only that institution's own records, read within reach (canReadAdministration()): the legislature, the judiciary and independent institutions keep their own. POST { op: 'draft-procedures' }: an administrator (or an official who can sign) of the institution drafts its internal administration procedures from the templates; a second official approves each (Laws → Procedures).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "drafted": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "present": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "drafted",
+                    "present"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "drafted": [
+                        "string"
+                      ],
+                      "present": [
+                        "string"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "ministry",
+        "x-source": "src/app/api/org/ministries/[id]/administration/route.ts"
       }
     },
     "/api/org/ministries/{id}/analytics": {
@@ -29641,6 +30508,341 @@
           }
         ],
         "x-source": "src/app/api/org/ministries/[id]/analytics/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/capabilities": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_capabilities",
+        "summary": "GET /api/org/ministries/{id}/capabilities",
+        "description": "/api/org/ministries/{id}/capabilities — the institution's capability manifest, computed from records each time (plan I2; lib/institution/capabilities.ts): the responsibilities the nation named, the registers it is legally responsible for, its procedures in force and in draft, the permit mappings that give it a power, the exchange services it answers, its modules, departments and internal administration. Read within reach (canReadAdministration()).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "manifest": {
+                      "$ref": "#/components/schemas/CapabilityManifest"
+                    }
+                  },
+                  "required": [
+                    "manifest"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "manifest": {
+                        "institution": {
+                          "id": "ID-0001",
+                          "name": "Example",
+                          "status": "string",
+                          "standing": "string",
+                          "independent": true
+                        },
+                        "computedAt": "2026-01-15T09:30:00.000Z",
+                        "responsibilities": [
+                          {
+                            "key": "string",
+                            "label": "Example"
+                          }
+                        ],
+                        "registers": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "through": "string"
+                          }
+                        ],
+                        "procedures": {
+                          "inForce": [
+                            {}
+                          ],
+                          "drafts": [
+                            {}
+                          ]
+                        },
+                        "mappings": [
+                          {
+                            "permitType": "string",
+                            "title": "Example",
+                            "version": 1,
+                            "powers": []
+                          }
+                        ],
+                        "exchange": [
+                          {
+                            "id": "ID-0001",
+                            "title": "Example",
+                            "kind": "string"
+                          }
+                        ],
+                        "modules": [
+                          "string"
+                        ],
+                        "departments": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "functions": [],
+                            "staff": 1
+                          }
+                        ],
+                        "administration": [
+                          {
+                            "function": "string",
+                            "label": "Example",
+                            "departments": [],
+                            "procedures": []
+                          }
+                        ],
+                        "records": {
+                          "positions": 1,
+                          "payrollApproved": 1,
+                          "accessInForce": 1,
+                          "policies": 1
+                        },
+                        "note": "Text"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/org/ministries/[id]/capabilities/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/completeness": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_completeness",
+        "summary": "GET /api/org/ministries/{id}/completeness",
+        "description": "/api/org/ministries/{id}/completeness — completeness per item for one institution (plan I2; lib/onboarding/completeness.ts): each item's state (not started, in progress, verified, blocked, not applicable, not assessed), evidence, accountable owner, date and next action; the activation gate (critical items, applied in production). Never a percentage. Read within reach (canReadAdministration()).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "completeness": {
+                      "$ref": "#/components/schemas/InstitutionCompleteness"
+                    },
+                    "labels": {
+                      "type": "object",
+                      "properties": {
+                        "dimensions": {
+                          "type": "object",
+                          "properties": {
+                            "configuration": {
+                              "type": "string"
+                            },
+                            "continuity": {
+                              "type": "string"
+                            },
+                            "data": {
+                              "type": "string"
+                            },
+                            "governance": {
+                              "type": "string"
+                            },
+                            "integrations": {
+                              "type": "string"
+                            },
+                            "legal": {
+                              "type": "string"
+                            },
+                            "security": {
+                              "type": "string"
+                            },
+                            "service": {
+                              "type": "string"
+                            },
+                            "staffing": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "configuration",
+                            "continuity",
+                            "data",
+                            "governance",
+                            "integrations",
+                            "legal",
+                            "security",
+                            "service",
+                            "staffing"
+                          ]
+                        },
+                        "states": {
+                          "type": "object",
+                          "properties": {
+                            "blocked": {
+                              "type": "string"
+                            },
+                            "in_progress": {
+                              "type": "string"
+                            },
+                            "not_applicable": {
+                              "type": "string"
+                            },
+                            "not_assessed": {
+                              "type": "string"
+                            },
+                            "not_started": {
+                              "type": "string"
+                            },
+                            "verified": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "blocked",
+                            "in_progress",
+                            "not_applicable",
+                            "not_assessed",
+                            "not_started",
+                            "verified"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "dimensions",
+                        "states"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "completeness",
+                    "labels"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "completeness": {
+                        "institution": {
+                          "id": "ID-0001",
+                          "name": "Example"
+                        },
+                        "items": [
+                          {
+                            "key": "string",
+                            "dimension": "configuration",
+                            "label": "Example",
+                            "state": "blocked",
+                            "critical": true,
+                            "owner": "string",
+                            "href": "https://example.gov/"
+                          }
+                        ],
+                        "gate": {
+                          "applies": true,
+                          "open": true,
+                          "failing": [
+                            {}
+                          ]
+                        },
+                        "counts": {
+                          "blocked": 1,
+                          "in_progress": 1,
+                          "not_applicable": 1,
+                          "not_assessed": 1,
+                          "not_started": 1,
+                          "verified": 1
+                        }
+                      },
+                      "labels": {
+                        "dimensions": {
+                          "configuration": "string",
+                          "continuity": "string",
+                          "data": "string",
+                          "governance": "string",
+                          "integrations": "string",
+                          "legal": "string",
+                          "security": "string",
+                          "service": "string",
+                          "staffing": "string"
+                        },
+                        "states": {
+                          "blocked": "string",
+                          "in_progress": "string",
+                          "not_applicable": "string",
+                          "not_assessed": "string",
+                          "not_started": "string",
+                          "verified": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/org/ministries/[id]/completeness/route.ts"
       }
     },
     "/api/org/ministries/{id}/deactivate": {
@@ -29746,7 +30948,8 @@
                         "records": [
                           "string"
                         ],
-                        "terms": {}
+                        "terms": {},
+                        "departmentChanges": {}
                       }
                     }
                   }
@@ -29775,13 +30978,136 @@
       }
     },
     "/api/org/ministries/{id}/departments/{deptId}": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_departments_deptId",
+        "summary": "GET /api/org/ministries/{id}/departments/{deptId}",
+        "description": "/api/org/ministries/{id}/departments/{deptId} — one department of an institution (plan I2). GET: its record (office, functions, services, staff, every version). POST { op: 'end', reason } ends it; { op: 'amend', terms, reason } changes it: during first-run setup at once, afterwards proposed (202) for a different official to confirm (lib/institution/departments.ts). A department is ended with a reason and kept, never deleted (plan I0.2). DELETE, the earlier way to remove one, keeps working as an end: it needs a reason (body { reason } or ?reason=) and ends the department instead of deleting it; without a reason it is refused with the way to end it.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "department": {
+                      "$ref": "#/components/schemas/DepartmentView"
+                    }
+                  },
+                  "required": [
+                    "department"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "department": {
+                        "id": "ID-0001",
+                        "status": "active",
+                        "version": 1,
+                        "officeTitle": "string",
+                        "officeProblem": "string",
+                        "staffNames": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example"
+                          }
+                        ],
+                        "serviceStates": [
+                          {
+                            "name": "Example",
+                            "state": "approved"
+                          }
+                        ],
+                        "ended": {},
+                        "history": [
+                          {
+                            "version": 1,
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "change": "amend",
+                            "by": "A. Official",
+                            "status": "active",
+                            "name": "Example",
+                            "functions": [],
+                            "services": [],
+                            "staff": []
+                          }
+                        ],
+                        "name": "Example",
+                        "office": "string",
+                        "functions": [
+                          "assets"
+                        ],
+                        "services": [
+                          {
+                            "name": "Example"
+                          }
+                        ],
+                        "staff": [
+                          "string"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/org/ministries/[id]/departments/[deptId]/route.ts"
+      },
       "post": {
         "tags": [
           "org"
         ],
         "operationId": "post_org_ministries_id_departments_deptId",
         "summary": "POST /api/org/ministries/{id}/departments/{deptId}",
-        "description": "/api/org/ministries/{id}/departments/{deptId} — one department of an institution. A department is ended with a reason and kept, never deleted (plan I0.2). POST { op: 'end', reason } ends it (who acted comes from the sign-in). DELETE, the earlier way to remove one, keeps working as an end: it needs a reason (body { reason } or ?reason=) and ends the department instead of deleting it; without a reason it is refused with the way to end it.",
+        "description": "/api/org/ministries/{id}/departments/{deptId} — one department of an institution (plan I2). GET: its record (office, functions, services, staff, every version). POST { op: 'end', reason } ends it; { op: 'amend', terms, reason } changes it: during first-run setup at once, afterwards proposed (202) for a different official to confirm (lib/institution/departments.ts). A department is ended with a reason and kept, never deleted (plan I0.2). DELETE, the earlier way to remove one, keeps working as an end: it needs a reason (body { reason } or ?reason=) and ends the department instead of deleting it; without a reason it is refused with the way to end it.",
         "parameters": [
           {
             "name": "id",
@@ -29813,6 +31139,8 @@
                   "reason": {
                     "type": "string"
                   },
+                  "terms": {},
+                  "legalBasis": {},
                   "by": {
                     "type": "string"
                   }
@@ -29824,6 +31152,8 @@
                   "value": {
                     "op": "string",
                     "reason": "Text",
+                    "terms": null,
+                    "legalBasis": null,
                     "by": "A. Official"
                   }
                 }
@@ -29867,7 +31197,7 @@
         ],
         "operationId": "delete_org_ministries_id_departments_deptId",
         "summary": "DELETE /api/org/ministries/{id}/departments/{deptId}",
-        "description": "/api/org/ministries/{id}/departments/{deptId} — one department of an institution. A department is ended with a reason and kept, never deleted (plan I0.2). POST { op: 'end', reason } ends it (who acted comes from the sign-in). DELETE, the earlier way to remove one, keeps working as an end: it needs a reason (body { reason } or ?reason=) and ends the department instead of deleting it; without a reason it is refused with the way to end it.",
+        "description": "/api/org/ministries/{id}/departments/{deptId} — one department of an institution (plan I2). GET: its record (office, functions, services, staff, every version). POST { op: 'end', reason } ends it; { op: 'amend', terms, reason } changes it: during first-run setup at once, afterwards proposed (202) for a different official to confirm (lib/institution/departments.ts). A department is ended with a reason and kept, never deleted (plan I0.2). DELETE, the earlier way to remove one, keeps working as an end: it needs a reason (body { reason } or ?reason=) and ends the department instead of deleting it; without a reason it is refused with the way to end it.",
         "parameters": [
           {
             "name": "id",
@@ -29918,12 +31248,436 @@
       }
     },
     "/api/org/ministries/{id}/departments": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_departments",
+        "summary": "GET /api/org/ministries/{id}/departments",
+        "description": "/api/org/ministries/{id}/departments — an institution's departments as records (plan I2; lib/institution/departments.ts): each with its accountable office, functions, services, staff and every version. GET: the departments (ended ones kept, with their reason), a change waiting for its second official, every earlier change, and the choices. POST: { name } kept from before: establishes a department (during setup at once; afterwards proposed, 202, and a different official confirms) { op: 'record', change } during first-run setup only (an administrator) { op: 'propose', change, legalBasis? } one administrator (of the institution, or of the whole government where its reach goes; an independent institution's own administrators) { op: 'confirm' } a different official (administrator or one who can sign; an independent institution's own official) { op: 'withdraw', reason? } the proposer or an administrator change = { kind: 'establish' | 'amend' | 'end', department?, terms?: { name, office, functions, services, staff }, reason }. Who acted comes from the sign-in. Every step is audited and every version kept.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "institution": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "active",
+                            "deactivated",
+                            "merged"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "status"
+                      ]
+                    },
+                    "departments": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DepartmentView"
+                      }
+                    },
+                    "pending": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/DepartmentChange"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ]
+                        }
+                      ]
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "values": {
+                            "$ref": "#/components/schemas/DepartmentChange"
+                          },
+                          "basis": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/Citation"
+                            }
+                          },
+                          "by": {
+                            "type": "string"
+                          },
+                          "byId": {
+                            "type": "string"
+                          },
+                          "at": {
+                            "type": "string"
+                          },
+                          "confirmed": {
+                            "type": "object",
+                            "properties": {
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "independence": {
+                                "type": "string",
+                                "enum": [
+                                  "accounts-only",
+                                  "identity-provider",
+                                  "unverified"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "by",
+                              "at",
+                              "independence"
+                            ]
+                          },
+                          "outcome": {
+                            "type": "string",
+                            "enum": [
+                              "adopted",
+                              "lapsed",
+                              "withdrawn"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "values",
+                          "basis",
+                          "by",
+                          "at",
+                          "outcome"
+                        ]
+                      }
+                    },
+                    "setupRunning": {
+                      "type": "boolean"
+                    },
+                    "confirmByInstitution": {
+                      "type": "boolean"
+                    },
+                    "choices": {
+                      "type": "object",
+                      "properties": {
+                        "functions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "enum": [
+                                  "assets",
+                                  "communications",
+                                  "finance",
+                                  "hr",
+                                  "ict",
+                                  "internal-audit",
+                                  "legal",
+                                  "monitoring",
+                                  "planning",
+                                  "procurement",
+                                  "records"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "records": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "records"
+                            ]
+                          }
+                        },
+                        "offices": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title"
+                            ]
+                          }
+                        },
+                        "staff": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "office": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "office"
+                            ]
+                          }
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "functions",
+                        "offices",
+                        "staff",
+                        "procedures"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "institution",
+                    "departments",
+                    "pending",
+                    "history",
+                    "setupRunning",
+                    "confirmByInstitution",
+                    "choices"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "institution": {
+                        "id": "ID-0001",
+                        "name": "Example",
+                        "status": "active"
+                      },
+                      "departments": [
+                        {
+                          "id": "ID-0001",
+                          "status": "active",
+                          "version": 1,
+                          "staffNames": [
+                            {}
+                          ],
+                          "serviceStates": [
+                            {}
+                          ],
+                          "history": [
+                            {}
+                          ],
+                          "name": "Example",
+                          "functions": [
+                            "assets"
+                          ],
+                          "services": [
+                            {}
+                          ],
+                          "staff": [
+                            "string"
+                          ]
+                        }
+                      ],
+                      "pending": {
+                        "values": {
+                          "kind": "amend",
+                          "reason": "Text"
+                        },
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "by": "A. Official",
+                        "byId": "ID-0001",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "confirmed": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "independence": "accounts-only"
+                        },
+                        "expiresAt": "2026-01-15T09:30:00.000Z"
+                      },
+                      "history": [
+                        {
+                          "values": {
+                            "kind": "amend",
+                            "reason": "Text"
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "outcome": "adopted"
+                        }
+                      ],
+                      "setupRunning": true,
+                      "confirmByInstitution": true,
+                      "choices": {
+                        "functions": [
+                          {
+                            "key": "assets",
+                            "label": "Example",
+                            "records": "string"
+                          }
+                        ],
+                        "offices": [
+                          {
+                            "id": "ID-0001",
+                            "title": "Example"
+                          }
+                        ],
+                        "staff": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "office": "string"
+                          }
+                        ],
+                        "procedures": [
+                          "string"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/org/ministries/[id]/departments/route.ts"
+      },
       "post": {
         "tags": [
           "org"
         ],
         "operationId": "post_org_ministries_id_departments",
         "summary": "POST /api/org/ministries/{id}/departments",
+        "description": "/api/org/ministries/{id}/departments — an institution's departments as records (plan I2; lib/institution/departments.ts): each with its accountable office, functions, services, staff and every version. GET: the departments (ended ones kept, with their reason), a change waiting for its second official, every earlier change, and the choices. POST: { name } kept from before: establishes a department (during setup at once; afterwards proposed, 202, and a different official confirms) { op: 'record', change } during first-run setup only (an administrator) { op: 'propose', change, legalBasis? } one administrator (of the institution, or of the whole government where its reach goes; an independent institution's own administrators) { op: 'confirm' } a different official (administrator or one who can sign; an independent institution's own official) { op: 'withdraw', reason? } the proposer or an administrator change = { kind: 'establish' | 'amend' | 'end', department?, terms?: { name, office, functions, services, staff }, reason }. Who acted comes from the sign-in. Every step is audited and every version kept.",
         "parameters": [
           {
             "name": "id",
@@ -29941,7 +31695,15 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "op": {
+                    "type": "string"
+                  },
                   "name": {
+                    "type": "string"
+                  },
+                  "change": {},
+                  "legalBasis": {},
+                  "reason": {
                     "type": "string"
                   },
                   "by": {
@@ -29953,7 +31715,11 @@
                 "schema": {
                   "summary": "Generated from the schema",
                   "value": {
+                    "op": "string",
                     "name": "Example",
+                    "change": null,
+                    "legalBasis": null,
+                    "reason": "Text",
                     "by": "A. Official"
                   }
                 }
@@ -29967,14 +31733,118 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ministry": {
-                      "$ref": "#/components/schemas/Ministry"
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ministry": {
+                          "$ref": "#/components/schemas/Ministry"
+                        },
+                        "department": {
+                          "$ref": "#/components/schemas/Department"
+                        }
+                      },
+                      "required": [
+                        "department"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "department": {
+                          "$ref": "#/components/schemas/Department"
+                        },
+                        "ministry": {
+                          "$ref": "#/components/schemas/Ministry"
+                        }
+                      },
+                      "required": [
+                        "department"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "adopted": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/DepartmentChange"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at"
+                          ]
+                        },
+                        "departments": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/DepartmentView"
+                          }
+                        }
+                      },
+                      "required": [
+                        "adopted",
+                        "departments"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "ok"
+                      ]
                     }
-                  },
-                  "required": [
-                    "ministry"
                   ]
                 },
                 "examples": {
@@ -30024,8 +31894,190 @@
                         "records": [
                           "string"
                         ],
-                        "terms": {}
+                        "terms": {},
+                        "departmentChanges": {}
+                      },
+                      "department": {
+                        "id": "ID-0001",
+                        "name": "Example",
+                        "status": "active",
+                        "endedAt": "2026-01-15T09:30:00.000Z",
+                        "endedBy": "A. Official",
+                        "endReason": "Text",
+                        "office": "string",
+                        "functions": [
+                          "assets"
+                        ],
+                        "services": [
+                          {
+                            "name": "Example"
+                          }
+                        ],
+                        "staff": [
+                          "string"
+                        ],
+                        "version": 1,
+                        "history": [
+                          {
+                            "version": 1,
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "change": "amend",
+                            "by": "A. Official",
+                            "status": "active",
+                            "name": "Example",
+                            "functions": [],
+                            "services": [],
+                            "staff": []
+                          }
+                        ]
                       }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ministry": {
+                          "$ref": "#/components/schemas/Ministry"
+                        },
+                        "pending": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "pending"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/DepartmentChange"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "pending"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "ministry": {
+                        "id": "ID-0001",
+                        "slug": "string",
+                        "name": "Example",
+                        "archetype": "AGRICULTURE",
+                        "status": "active",
+                        "mergedIntoId": "ID-0001",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "activatedAt": "2026-01-15T09:30:00.000Z",
+                        "departments": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example"
+                          }
+                        ],
+                        "modules": [
+                          {
+                            "moduleKey": "string",
+                            "enabled": true
+                          }
+                        ],
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "terms": {},
+                        "departmentChanges": {}
+                      },
+                      "pending": {}
                     }
                   }
                 }
@@ -33532,7 +35584,8 @@
                         "records": [
                           "string"
                         ],
-                        "terms": {}
+                        "terms": {},
+                        "departmentChanges": {}
                       }
                     }
                   }
@@ -33671,7 +35724,8 @@
                         "records": [
                           "string"
                         ],
-                        "terms": {}
+                        "terms": {},
+                        "departmentChanges": {}
                       }
                     }
                   }
@@ -35522,7 +37576,8 @@
                         "records": [
                           "string"
                         ],
-                        "terms": {}
+                        "terms": {},
+                        "departmentChanges": {}
                       }
                     }
                   }
@@ -35630,7 +37685,8 @@
                         "records": [
                           "string"
                         ],
-                        "terms": {}
+                        "terms": {},
+                        "departmentChanges": {}
                       }
                     }
                   }
@@ -36797,7 +38853,8 @@
                         "records": [
                           "string"
                         ],
-                        "terms": {}
+                        "terms": {},
+                        "departmentChanges": {}
                       }
                     }
                   }
@@ -73718,6 +75775,36 @@
           "title"
         ]
       },
+      "AccountAttributes": {
+        "description": "The attributes an account is scoped by (lib/auth/roles.ts attributeRefusal()).",
+        "type": "object",
+        "properties": {
+          "facilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "jurisdictions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "setBy": {
+            "type": "string"
+          },
+          "setAt": {
+            "type": "string"
+          }
+        }
+      },
       "AccountChange": {
         "type": "object",
         "properties": {
@@ -73897,6 +75984,21 @@
               },
               "stepUp": {
                 "type": "boolean"
+              },
+              "task": {
+                "type": "string",
+                "description": "The catalogue task this step is (lib/auth/roles.ts TASK_PERMISSIONS): an account scoped by tasks takes it only when listed (plan I2)."
+              },
+              "distinctFrom": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Separation of duties (plan I2): the official taking this step must be a different person (lib/data/dual-control.ts dualControlRefusal(), never only a different account) from every official who took these earlier steps of the case, proposer and confirmer alike."
+              },
+              "delegable": {
+                "type": "boolean",
+                "description": "The law allows this decision step to be delegated (the nation sets it in its approved version): an official holding a delegation of authority in force for it may take it; the step records the delegate and the delegator."
               }
             },
             "required": [
@@ -74910,6 +77012,30 @@
           "entityId",
           "changePct"
         ]
+      },
+      "AttributeScope": {
+        "description": "What an account is scoped to within its institution: an absent or empty list leaves that attribute open.",
+        "type": "object",
+        "properties": {
+          "facilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "jurisdictions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       },
       "AuditEntry": {
         "type": "object",
@@ -77472,6 +79598,316 @@
           "note"
         ]
       },
+      "CapabilityManifest": {
+        "type": "object",
+        "properties": {
+          "institution": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "standing": {
+                "type": "string"
+              },
+              "independent": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "status",
+              "standing",
+              "independent"
+            ]
+          },
+          "computedAt": {
+            "type": "string"
+          },
+          "responsibilities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "label"
+              ]
+            }
+          },
+          "registers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "through": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "through"
+              ]
+            }
+          },
+          "procedures": {
+            "type": "object",
+            "properties": {
+              "inForce": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "number"
+                    },
+                    "activeFrom": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "title",
+                    "version"
+                  ]
+                }
+              },
+              "drafts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "title",
+                    "version"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "inForce",
+              "drafts"
+            ]
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "permitType": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "number"
+                },
+                "powers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "permitType",
+                "title",
+                "version",
+                "powers"
+              ]
+            }
+          },
+          "exchange": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "kind"
+              ]
+            }
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "departments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "functions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "office": {
+                  "type": "string"
+                },
+                "staff": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "functions",
+                "staff"
+              ]
+            }
+          },
+          "administration": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "function": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "departments": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "procedures": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "draft",
+                          "in force",
+                          "not adopted"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "state"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "function",
+                "label",
+                "departments",
+                "procedures"
+              ]
+            }
+          },
+          "records": {
+            "type": "object",
+            "properties": {
+              "positions": {
+                "type": "number"
+              },
+              "payrollApproved": {
+                "type": "number"
+              },
+              "accessInForce": {
+                "type": "number"
+              },
+              "policies": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "positions",
+              "payrollApproved",
+              "accessInForce",
+              "policies"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "In plain words: what the manifest leaves out (the archetype's blueprint is a template, not a capability)."
+          }
+        },
+        "required": [
+          "institution",
+          "computedAt",
+          "responsibilities",
+          "registers",
+          "procedures",
+          "mappings",
+          "exchange",
+          "modules",
+          "departments",
+          "administration",
+          "records",
+          "note"
+        ]
+      },
       "CapacityReturn": {
         "type": "object",
         "properties": {
@@ -77769,6 +80205,34 @@
                   "type": "string",
                   "description": "When it lapses unconfirmed (the dual-control policy's waiting period)."
                 },
+                "delegation": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "delegator": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "delegator"
+                  ],
+                  "description": "Proposed under a delegation of authority (plan I2)."
+                },
                 "lapsedAt": {
                   "type": "string"
                 }
@@ -77994,6 +80458,18 @@
       "CasePackage": {
         "type": "object",
         "properties": {
+          "scopeFields": {
+            "type": "object",
+            "properties": {
+              "facility": {
+                "type": "string"
+              },
+              "jurisdiction": {
+                "type": "string"
+              }
+            },
+            "description": "The fields that hold a case's facility (a facility register id) and jurisdiction (one of the nation's regions), for accounts scoped by those attributes (plan I2; lib/auth/roles.ts attributeRefusal())."
+          },
           "key": {
             "type": "string"
           },
@@ -78822,6 +81298,7 @@
         ]
       },
       "Check": {
+        "description": "One item of setting up (plan I2, completeness per item): done or not, the page that does the work, who is accountable for it (`owner`), the date of its evidence where the record carries one, and the next action while it is not done. No item is averaged into a percentage.",
         "type": "object",
         "properties": {
           "label": {
@@ -78834,6 +81311,15 @@
             "type": "string"
           },
           "detail": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "next": {
             "type": "string"
           }
         },
@@ -79126,6 +81612,74 @@
           "summary",
           "by",
           "at"
+        ]
+      },
+      "CompletenessItem": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "dimension": {
+            "type": "string",
+            "enum": [
+              "configuration",
+              "continuity",
+              "data",
+              "governance",
+              "integrations",
+              "legal",
+              "security",
+              "service",
+              "staffing"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "blocked",
+              "in_progress",
+              "not_applicable",
+              "not_assessed",
+              "not_started",
+              "verified"
+            ]
+          },
+          "critical": {
+            "type": "boolean",
+            "description": "A failed critical item is never hidden by the others: it holds activation in production."
+          },
+          "evidence": {
+            "type": "string",
+            "description": "What the state rests on: a record, a count, a citation."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Who is accountable for it (an institution's officials or a named authority)."
+          },
+          "date": {
+            "type": "string",
+            "description": "The date of the evidence (YYYY-MM-DD), where the record carries one."
+          },
+          "next": {
+            "type": "string",
+            "description": "What to do next, where it is not verified."
+          },
+          "href": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "dimension",
+          "label",
+          "state",
+          "critical",
+          "owner",
+          "href"
         ]
       },
       "Compromise": {
@@ -81770,6 +84324,25 @@
                 },
                 "id": {
                   "type": "string"
+                },
+                "delegatedBy": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "delegation": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "delegation"
+                  ]
                 }
               },
               "required": [
@@ -82200,6 +84773,63 @@
           "case"
         ]
       },
+      "DelegationGrant": {
+        "description": "A delegation of authority in force (lib/records/delegations.ts, kind `authority`; form ADM-GOV-039): `delegator` (an official who can sign at `institution`) lets the holder take the listed decision steps (`actions`, case package action keys or task ids; `procedures`, package keys or '*') from `from` until `until`, resting on the cited law (`basis`).",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "delegator": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "institution": {
+            "type": "string"
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "from": {
+            "type": "string"
+          },
+          "until": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "delegator",
+          "institution",
+          "procedures",
+          "actions",
+          "from",
+          "basis"
+        ]
+      },
       "Delivery": {
         "description": "`simulated`: a training or demo installation recorded the delivery without sending it (plan I0.2).",
         "type": "object",
@@ -82337,11 +84967,433 @@
           },
           "endReason": {
             "type": "string"
+          },
+          "office": {
+            "type": "string",
+            "description": "The office accountable for it (lib/nation/office-register.ts). Holding that office grants no permission."
+          },
+          "functions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "assets",
+                "communications",
+                "finance",
+                "hr",
+                "ict",
+                "internal-audit",
+                "legal",
+                "monitoring",
+                "planning",
+                "procurement",
+                "records"
+              ]
+            },
+            "description": "The internal administration functions it performs (spec Part 1 §10), if any."
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentService"
+            },
+            "description": "The services it delivers: a name, and the procedure that carries it where one exists."
+          },
+          "staff": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The official accounts serving in it (lib/auth/officials.ts). Serving in a department grants no permission."
+          },
+          "version": {
+            "type": "number",
+            "description": "The version in force (1 from its first record)."
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentVersion"
+            },
+            "description": "Every earlier version, oldest first, with who changed it, who confirmed it and why."
           }
         },
         "required": [
           "id",
           "name"
+        ]
+      },
+      "DepartmentChange": {
+        "description": "A change to an institution's departments: establish one, amend it, or end it with a reason (plan I2).",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "amend",
+              "end",
+              "establish"
+            ]
+          },
+          "department": {
+            "type": "string",
+            "description": "The department changed (amend, end); for establish, the new department's id once adopted."
+          },
+          "terms": {
+            "type": "object",
+            "properties": {
+              "functions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "assets",
+                    "communications",
+                    "finance",
+                    "hr",
+                    "ict",
+                    "internal-audit",
+                    "legal",
+                    "monitoring",
+                    "planning",
+                    "procurement",
+                    "records"
+                  ]
+                }
+              },
+              "name": {
+                "type": "string"
+              },
+              "office": {
+                "type": "string"
+              },
+              "services": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DepartmentService"
+                }
+              },
+              "staff": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "What changes: values left out keep their current setting."
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "reason"
+        ]
+      },
+      "DepartmentService": {
+        "description": "A service a department delivers: its name, and the procedure (case package key) that carries it where one exists.",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "procedure": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "DepartmentTerms": {
+        "description": "What a department is, as one version records it.",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "office": {
+            "type": "string"
+          },
+          "functions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "assets",
+                "communications",
+                "finance",
+                "hr",
+                "ict",
+                "internal-audit",
+                "legal",
+                "monitoring",
+                "planning",
+                "procurement",
+                "records"
+              ]
+            }
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentService"
+            }
+          },
+          "staff": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "functions",
+          "services",
+          "staff"
+        ]
+      },
+      "DepartmentVersion": {
+        "description": "One version of a department, kept for ever.",
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string"
+          },
+          "change": {
+            "type": "string",
+            "enum": [
+              "amend",
+              "end",
+              "establish",
+              "record"
+            ],
+            "description": "What made it: recorded during setup, or a change proposed by one official and confirmed by another."
+          },
+          "by": {
+            "type": "string"
+          },
+          "confirmedBy": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ended"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "office": {
+            "type": "string"
+          },
+          "functions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "assets",
+                "communications",
+                "finance",
+                "hr",
+                "ict",
+                "internal-audit",
+                "legal",
+                "monitoring",
+                "planning",
+                "procurement",
+                "records"
+              ]
+            }
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentService"
+            }
+          },
+          "staff": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "at",
+          "change",
+          "by",
+          "status",
+          "name",
+          "functions",
+          "services",
+          "staff"
+        ]
+      },
+      "DepartmentView": {
+        "description": "One department as the screens and the API show it: its record, the office's title, the staff's names, each service's procedure state.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ended"
+            ]
+          },
+          "version": {
+            "type": "number"
+          },
+          "officeTitle": {
+            "type": "string"
+          },
+          "officeProblem": {
+            "type": "string",
+            "description": "The office is no longer in force (or no longer the institution's): the department has no accountable office in force."
+          },
+          "staffNames": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "office": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "problem": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            }
+          },
+          "serviceStates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "procedure": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "approved",
+                    "draft",
+                    "none",
+                    "not a procedure"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "state"
+              ]
+            }
+          },
+          "ended": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentVersion"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "office": {
+            "type": "string"
+          },
+          "functions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "assets",
+                "communications",
+                "finance",
+                "hr",
+                "ict",
+                "internal-audit",
+                "legal",
+                "monitoring",
+                "planning",
+                "procurement",
+                "records"
+              ]
+            }
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentService"
+            }
+          },
+          "staff": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "version",
+          "staffNames",
+          "serviceStates",
+          "history",
+          "name",
+          "functions",
+          "services",
+          "staff"
         ]
       },
       "DependencyFinding": {
@@ -89938,6 +92990,111 @@
           "installedAt"
         ]
       },
+      "InstitutionCompleteness": {
+        "type": "object",
+        "properties": {
+          "institution": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompletenessItem"
+            }
+          },
+          "gate": {
+            "type": "object",
+            "properties": {
+              "applies": {
+                "type": "boolean"
+              },
+              "open": {
+                "type": "boolean"
+              },
+              "failing": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "owner": {
+                      "type": "string"
+                    },
+                    "next": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "label",
+                    "owner"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "applies",
+              "open",
+              "failing"
+            ],
+            "description": "The activation gate: critical items not verified."
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "blocked": {
+                "type": "number"
+              },
+              "in_progress": {
+                "type": "number"
+              },
+              "not_applicable": {
+                "type": "number"
+              },
+              "not_assessed": {
+                "type": "number"
+              },
+              "not_started": {
+                "type": "number"
+              },
+              "verified": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "blocked",
+              "in_progress",
+              "not_applicable",
+              "not_assessed",
+              "not_started",
+              "verified"
+            ]
+          }
+        },
+        "required": [
+          "institution",
+          "items",
+          "gate",
+          "counts"
+        ]
+      },
       "InstitutionProhibition": {
         "description": "Something the law forbids (guidance §7.2.5).",
         "type": "object",
@@ -93203,6 +96360,142 @@
               }
             },
             "description": "Changes to the above: proposed citing the law, confirmed by a different official, every version kept."
+          },
+          "departmentChanges": {
+            "type": "object",
+            "properties": {
+              "pending": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "$ref": "#/components/schemas/DepartmentChange"
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    }
+                  },
+                  "by": {
+                    "type": "string"
+                  },
+                  "byId": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  },
+                  "confirmed": {
+                    "type": "object",
+                    "properties": {
+                      "by": {
+                        "type": "string"
+                      },
+                      "byId": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      },
+                      "independence": {
+                        "type": "string",
+                        "enum": [
+                          "accounts-only",
+                          "identity-provider",
+                          "unverified"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "by",
+                      "at",
+                      "independence"
+                    ]
+                  },
+                  "expiresAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "values",
+                  "basis",
+                  "by",
+                  "at",
+                  "expiresAt"
+                ],
+                "description": "A proposal waiting for its second official."
+              },
+              "history": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "values": {
+                      "$ref": "#/components/schemas/DepartmentChange"
+                    },
+                    "basis": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Citation"
+                      }
+                    },
+                    "by": {
+                      "type": "string"
+                    },
+                    "byId": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "confirmed": {
+                      "type": "object",
+                      "properties": {
+                        "by": {
+                          "type": "string"
+                        },
+                        "byId": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "string"
+                        },
+                        "independence": {
+                          "type": "string",
+                          "enum": [
+                            "accounts-only",
+                            "identity-provider",
+                            "unverified"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "by",
+                        "at",
+                        "independence"
+                      ]
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "adopted",
+                        "lapsed",
+                        "withdrawn"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "values",
+                    "basis",
+                    "by",
+                    "at",
+                    "outcome"
+                  ]
+                },
+                "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+              }
+            },
+            "description": "Changes to its departments once setup is complete: proposed by one official, confirmed by a different one (its own when independent), every version kept (plan I2)."
           }
         },
         "required": [
@@ -95773,6 +99066,87 @@
             "items": {
               "$ref": "#/components/schemas/Waiting"
             }
+          },
+          "institutions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "counts": {
+                  "type": "object",
+                  "properties": {
+                    "blocked": {
+                      "type": "number"
+                    },
+                    "in_progress": {
+                      "type": "number"
+                    },
+                    "not_applicable": {
+                      "type": "number"
+                    },
+                    "not_assessed": {
+                      "type": "number"
+                    },
+                    "not_started": {
+                      "type": "number"
+                    },
+                    "verified": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "blocked",
+                    "in_progress",
+                    "not_applicable",
+                    "not_assessed",
+                    "not_started",
+                    "verified"
+                  ]
+                },
+                "failing": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "owner": {
+                        "type": "string"
+                      },
+                      "next": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "label",
+                      "owner"
+                    ]
+                  }
+                },
+                "gateApplies": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "counts",
+                "failing",
+                "gateApplies"
+              ]
+            },
+            "description": "Completeness per institution (lib/onboarding/completeness.ts): critical items failing, and counts by state; never a percentage."
           }
         },
         "required": [
@@ -95780,7 +99154,8 @@
           "tracks",
           "done",
           "total",
-          "waiting"
+          "waiting",
+          "institutions"
         ]
       },
       "OpenSource": {
@@ -100817,6 +104192,34 @@
           "expiresAt": {
             "type": "string",
             "description": "When it lapses unconfirmed (the dual-control policy's waiting period)."
+          },
+          "delegation": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "delegator": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "delegator"
+            ],
+            "description": "Proposed under a delegation of authority (plan I2)."
           }
         },
         "required": [
@@ -101338,6 +104741,9 @@
               "signatory"
             ],
             "description": "Absent on accounts made before roles: they keep everything (roleOf())."
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/AccountAttributes"
           },
           "institution": {
             "type": "string",
@@ -111843,6 +115249,34 @@
               "unverified"
             ],
             "description": "How independent the two officials of a two-official step are known to be (lib/data/dual-control.ts independenceOf)."
+          },
+          "delegation": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "delegator": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "delegator"
+            ],
+            "description": "Taken under a delegation of authority (plan I2): the delegation and the official who delegated. `by` is the delegate."
           }
         },
         "required": [
@@ -113343,6 +116777,10 @@
           "samplesCounted": {
             "type": "boolean",
             "description": "Its checks read records that demo and training installations seed with samples, so \"done\" may rest on them."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Who is accountable for the track's items unless an item names another (plan I2)."
           }
         },
         "required": [

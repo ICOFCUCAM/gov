@@ -21,7 +21,8 @@ import { subscribe as orchSubscribe, orchestrationStats, version as orchVersion 
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 import { useHydrated, useRenderNow } from '@/lib/clock/render-now';
 import { usePathname } from 'next/navigation';
-import { CONSOLE_NAV, HEADER_LINKS, locate } from '@/lib/nav/console-nav';
+import { HEADER_LINKS, locate, navFor } from '@/lib/nav/console-nav';
+import type { Scope } from '@/lib/auth/roles';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
 import { SkipLink } from '@/components/ui/SkipLink';
 import { executivePosture } from '@/lib/gov/executive-posture';
@@ -71,6 +72,14 @@ export function CommandShell({
   const [mins, setMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(useRenderNow());
   const [navOpen, setNavOpen] = React.useState(false);
+  // The signed-in official's role and institution: the menu shows what they can use (plan I2, lib/nav/console-nav.ts navFor()).
+  const [scope, setScope] = React.useState<Scope | null>(null);
+  React.useEffect(() => {
+    fetch('/api/auth/official', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null))
+      .then((j: { official?: { role?: Scope['role']; institution?: string } | null } | null) => { if (j?.official) setScope({ ...(j.official.role ? { role: j.official.role } : {}), ...(j.official.institution ? { institution: j.official.institution } : {}) }); })
+      .catch(() => undefined);
+  }, []);
+  const NAV = navFor(scope);
   const hydrated = useHydrated();
 
   React.useEffect(() => {
@@ -102,7 +111,9 @@ export function CommandShell({
     sr: incidents.length, ops: t?.queuesBreaching ?? 0, cab: crit, aud: t?.auditIntact === false ? 1 : 0,
   };
   const pathname = usePathname() ?? '';
-  const here = locate(pathname);
+  const found = locate(pathname);
+  // The tabs of this page's item as this official sees them (navigation filtered by permission).
+  const here = found ? { ...found, item: NAV.flatMap(sec => sec.items).find(i => i.key === found.item.key) ?? found.item } : null;
   // Only an encrypted connection is called encrypted.
   const [secure, setSecure] = React.useState<boolean | null>(null);
   React.useEffect(() => { setSecure(window.location.protocol === 'https:'); }, []);
@@ -140,7 +151,7 @@ export function CommandShell({
     ro.observe(el);
     return () => ro.disconnect();
   }, [teleKey]);
-  const cmd: CommandItem[] = CONSOLE_NAV.flatMap(sec => sec.items.flatMap(it => it.tabs.map(tb => ({
+  const cmd: CommandItem[] = NAV.flatMap(sec => sec.items.flatMap(it => it.tabs.map(tb => ({
     id: tb.href + tb.label, group: sec.label,
     label: tb.label === it.label ? it.label : `${it.label} › ${tb.label}`,
     hint: tb.was && tb.was !== tb.label ? `formerly “${tb.was}”` : it.purpose, href: tb.href,
@@ -218,7 +229,7 @@ export function CommandShell({
             ))}
           </div>
           <div className="flex-1 overflow-y-auto py-1" onClick={() => setNavOpen(false)}>
-            {CONSOLE_NAV.map(grp => (
+            {NAV.map(grp => (
               <div key={grp.label} className="mb-1">
                 <div className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{grp.label}</div>
                 {grp.items.map(it => {

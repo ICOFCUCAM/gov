@@ -134,15 +134,30 @@ export function renameMinistry(id: string, name: string, by = UNVERIFIED_ACTOR):
   return m;
 }
 /**
+ * The activation gate (plan I2): completeness per item
+ * (lib/onboarding/completeness.ts registers it), which refuses activation in
+ * a production installation while a critical item is not verified. Kept on
+ * globalThis so this store needs no import of the modules completeness reads.
+ */
+const gate = globalThis as unknown as { __institutionActivationGate?: (id: string) => string | null };
+export function registerActivationGate(fn: (id: string) => string | null): void { gate.__institutionActivationGate = fn; }
+
+/**
  * Activate an institution. The composite readiness score
  * (lib/institution/readiness.ts) no longer gates activation (plan I0.2): it
- * is recorded with the entry for information only; completeness is read per
- * item, with owner, date and next action (lib/onboarding/completeness.ts, I2).
+ * is recorded with the entry for information only. The gate is completeness
+ * per item, with owner, date and next action (lib/onboarding/completeness.ts,
+ * plan I2): in production every critical item verified.
  */
 export function activateMinistry(id: string, by = UNVERIFIED_ACTOR): Ministry | { error: string } {
   const m = getMinistry(id);
   if (!m) return { error: 'Ministry not found' };
   if (m.status === 'merged') return { error: 'Merged institutions cannot be activated' };
+  const held = gate.__institutionActivationGate?.(id) ?? null;
+  if (held) {
+    recordAudit(by, 'ministry.activate', `Ministry:${id}`, 'denied', held.slice(0, 400));
+    return { error: held };
+  }
   const r = scoreInstitution({ ...m, status: 'active' });
   m.status = 'active';
   m.activatedAt ??= new Date().toISOString();

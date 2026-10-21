@@ -18,9 +18,14 @@ import { officerNow, substrateScope } from './substrate-officials';
 import { logger } from '@/lib/ops/log';
 import { providerMfaAccepted } from './sign-on-store';
 import { institutionBounds } from '@/lib/data/store/institutions';
+import { authorityGrantsFor } from '@/lib/records/delegations';
 
 /** The signed-in official with where whole-government reach stops (lib/auth/roles.ts Boundaries), read at use. */
-export type CurrentOfficial = OfficialClaims & Pick<Scope, 'bounds'>;
+export type CurrentOfficial = OfficialClaims & Pick<Scope, 'bounds' | 'attributes' | 'delegations'>;
+/** Delegations of authority in force today for this official (lib/records/delegations.ts), read at use; none when the register cannot be read. */
+function delegationsOf(sub: string): Scope['delegations'] {
+  try { const g = authorityGrantsFor(sub); return g.length ? g : undefined; } catch (e) { logger.error('auth.delegations_unreadable', { error: (e as Error).message }); return undefined; }
+}
 /** The institution register's boundaries now; none when it cannot be read (nothing is then treated as independent). */
 function bounds(): Scope['bounds'] {
   try { return institutionBounds(); } catch (e) { logger.error('auth.bounds_unreadable', { error: (e as Error).message }); return undefined; }
@@ -59,8 +64,9 @@ export async function currentOfficial(): Promise<CurrentOfficial | null> {
     // Gone, inactive, or the register cannot be read just now: the session does not count.
     if (!row || !row.active) return null;
     const s = substrateScope(row);
+    const del = delegationsOf(c.sub);
     return { ...c, name: row.name, office: row.title ?? row.role, role: s.role, institution: s.institution,
-      twoStep: !!c.twoStep, twoStepRequired: s.twoStepRequired, bounds: bounds() };
+      twoStep: !!c.twoStep, twoStepRequired: s.twoStepRequired, bounds: bounds(), ...(del ? { delegations: del } : {}) };
   }
   if (c.method !== 'local') return { ...c, bounds: bounds() };
   const a = accountById(c.sub.slice('local:'.length));
@@ -72,8 +78,13 @@ export async function currentOfficial(): Promise<CurrentOfficial | null> {
   // The second step still counts while what proved it is still in place: the account's authenticator app or a
   // passkey, or, for an identity-provider sign-in, the provider's multi-factor sign-in while the policy accepts it.
   const secondStep = c.via === 'oidc' ? providerMfaAccepted() : a.secondStepOn;
+  // Attribute scope and delegations of authority are read from their records at each request (plan I2), never signed into the session.
+  const del = delegationsOf(c.sub);
+  const attrs = a.attributes && (a.attributes.facilities?.length || a.attributes.jurisdictions?.length || a.attributes.tasks?.length)
+    ? { ...(a.attributes.facilities?.length ? { facilities: [...a.attributes.facilities] } : {}), ...(a.attributes.jurisdictions?.length ? { jurisdictions: [...a.attributes.jurisdictions] } : {}), ...(a.attributes.tasks?.length ? { tasks: [...a.attributes.tasks] } : {}) }
+    : undefined;
   return { ...c, name: a.name, office: a.office, role: a.role, institution: a.institution,
-    twoStep: !!c.twoStep && secondStep, twoStepRequired: a.twoStepRequired, bounds: bounds() };
+    twoStep: !!c.twoStep && secondStep, twoStepRequired: a.twoStepRequired, bounds: bounds(), ...(attrs ? { attributes: attrs } : {}), ...(del ? { delegations: del } : {}) };
 }
 
 /**
@@ -86,7 +97,8 @@ export async function caseScope(): Promise<(CaseScope & { name: string; label: s
   const o = await currentOfficial();
   if (!o) return null;
   const twoStepAt = o.twoStep ? (o.twoStepAt ?? o.iat * 1000) : undefined;
-  return { id: o.sub, name: o.name, label: actorLabel(o), role: o.role, institution: o.institution, twoStep: o.twoStep, twoStepRequired: o.twoStepRequired, ...(o.bounds ? { bounds: o.bounds } : {}), ...(twoStepAt ? { twoStepAt } : {}) };
+  return { id: o.sub, name: o.name, label: actorLabel(o), role: o.role, institution: o.institution, twoStep: o.twoStep, twoStepRequired: o.twoStepRequired, ...(o.bounds ? { bounds: o.bounds } : {}), ...(twoStepAt ? { twoStepAt } : {}),
+    ...(o.attributes ? { attributes: o.attributes } : {}), ...(o.delegations ? { delegations: o.delegations } : {}) };
 }
 
 /** The name an action is recorded under: the verified official's, with their office. */
@@ -177,8 +189,8 @@ export async function officialId(): Promise<string | undefined> {
 export async function issueSession(res: NextResponse, claims: OfficialClaims, secure: boolean): Promise<NextResponse> {
   const problem = sessionSecretProblem();
   if (problem) return NextResponse.json({ error: problem }, { status: 503 });
-  // Boundaries are read at each request, never carried in the signed session.
-  const { bounds: _bounds, ...signed } = claims as CurrentOfficial;
+  // Boundaries, attributes and delegations are read at each request, never carried in the signed session.
+  const { bounds: _bounds, attributes: _attributes, delegations: _delegations, ...signed } = claims as CurrentOfficial;
   res.cookies.set(OFFICIAL_COOKIE, await signClaims(signed, sessionSecret()), {
     httpOnly: true, sameSite: 'lax', path: '/', maxAge: SESSION_HOURS * 3600, secure,
   });

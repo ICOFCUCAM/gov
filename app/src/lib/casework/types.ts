@@ -40,7 +40,24 @@ export interface ActionSpec {
   to: string;
   /** Makes the action a legal decision of this kind (register, grant, refuse, revoke…): sealed, citing the law. */
   decision?: string;
-  needs: { role: 'officer' | 'signatory'; assigned?: boolean; fourEyes?: boolean; stepUp?: boolean };
+  needs: {
+    role: 'officer' | 'signatory'; assigned?: boolean; fourEyes?: boolean; stepUp?: boolean;
+    /** The catalogue task this step is (lib/auth/roles.ts TASK_PERMISSIONS): an account scoped by tasks takes it only when listed (plan I2). */
+    task?: string;
+    /**
+     * Separation of duties (plan I2): the official taking this step must be a
+     * different person (lib/data/dual-control.ts dualControlRefusal(), never
+     * only a different account) from every official who took these earlier
+     * steps of the case, proposer and confirmer alike.
+     */
+    distinctFrom?: string[];
+    /**
+     * The law allows this decision step to be delegated (the nation sets it in
+     * its approved version): an official holding a delegation of authority in
+     * force for it may take it; the step records the delegate and the delegator.
+     */
+    delegable?: boolean;
+  };
   requires?: { documents?: string[]; fields?: string[]; reasons?: boolean; citations?: boolean };
   /** Domain effects the owning module registered (lib/casework/engine.ts registerEffect()). */
   effects?: string[];
@@ -68,6 +85,12 @@ export interface DeadlineSpec {
 export interface NotificationSpec { on: string; to: 'applicant' | 'assignee' | 'owner'; template: string }
 
 export interface CasePackage {
+  /**
+   * The fields that hold a case's facility (a facility register id) and
+   * jurisdiction (one of the nation's regions), for accounts scoped by those
+   * attributes (plan I2; lib/auth/roles.ts attributeRefusal()).
+   */
+  scopeFields?: { facility?: string; jurisdiction?: string };
   key: string;
   version: number;
   /** The authority (resolved through the deployment profile) or an institution id. */
@@ -131,6 +154,8 @@ export interface Step {
   confirmIdempotencyKey?: string;
   /** How independent the two officials of a two-official step are known to be (lib/data/dual-control.ts independenceOf). */
   independence?: 'identity-provider' | 'accounts-only' | 'unverified';
+  /** Taken under a delegation of authority (plan I2): the delegation and the official who delegated. `by` is the delegate. */
+  delegation?: { id: string; delegator: { id: string; name: string } };
 }
 
 export interface Proposal {
@@ -143,6 +168,8 @@ export interface Proposal {
   idempotencyKey?: string;
   /** When it lapses unconfirmed (the dual-control policy's waiting period). */
   expiresAt?: string;
+  /** Proposed under a delegation of authority (plan I2). */
+  delegation?: { id: string; delegator: { id: string; name: string } };
 }
 
 export interface Case {
