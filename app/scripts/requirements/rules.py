@@ -42,6 +42,9 @@ PREFILL = "reference procedures pre-fill deadline and appeal day counts (e.g. li
 
 EDITION = "lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, exchange answers not connected, a step needing another register pauses); tests lib/nation/edition.test.ts"
 PORTABLE = "lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log segments, trust list; sealed via key custody; two officials; verified offline by app/scripts/verify-institution-export.mjs; re-imported with ids unchanged); tests lib/portability/export.test.ts"
+IND = "lib/indicators/ (definitions by version: numerator, denominator, period, coverage, method version, disclosure rule, qualifications; drafted by one official, approved per institution by another; values computed from records with kind, period, coverage, lineage); tests lib/indicators/register.test.ts, compute.test.ts, twin.test.ts"
+INDTWIN = "lib/indicators/twin.ts (approved values as observations of one internal source, asOf/knownAt, real records only, after the disclosure rule; computed runs only, lib/twin/computed.ts); lib/indicators/contract.ts; tests lib/indicators/twin.test.ts 'refuses every way of typing an indicator observation', compute.test.ts 'gives every field of the common indicator contract'"
+INDPANELS = "components/features/indicators/ (IndicatorTile, InstitutionIndicators: value, marker, Draft, period, coverage, last update, reason); ministry workspace, /control, /command briefing and branch screens computed; tests components/features/indicators/panels.test.ts, app/(ministry)/control/control-indicators.test.ts"
 GATE = "lib/pilot/exit-gate.ts (computed from records: approved procedures, real completed cases, verifying seals with approved keys, mappings in force, audit chain, access-log reads, signed-in officials); tests lib/pilot/exit-gate.test.ts"
 RULES = []
 
@@ -103,7 +106,7 @@ R(0, None, r'mistake to create a separate, disconnected application', 'Partial',
 
 # ====================================================================== PART 1
 R(1, r'^1$', r'complete only when', 'Partial', 'No institution yet meets the full contract; lib/proof/birth-registration.test.ts is the one end-to-end service proof', 'One complete institution (Health, I4) to the launch checklist', 'I4')
-R(1, r'^1$', r'premium dashboard backed by simulated', 'Partial', FOLD + '; production folds generated figures (I0.1)', 'Generated sector panels still exist; replace with record-computed indicators', 'I3')
+R(1, r'^1$', r'premium dashboard backed by simulated', 'Partial', FOLD + '; production folds generated figures (I0.1); ' + INDPANELS, 'Generated panels with no record source remain (docs/INTEGRATION_REGISTER.md 20.65): records first (I5-I8), then their indicators', 'I3')
 # 1.1 capability contract
 R(1, r'^1\.1$', r'^Legal authority', 'Partial', DECIS + '; Citation {instrument, eId (provision), version, on} in lib/law/register.ts:73', 'Jurisdiction not recorded; only case decisions cite law (directives cite free text; sector panels none)', 'I1', 'I5')
 R(1, r'^1\.1$', r'^Institutional ownership', 'Met', REGOWN + '; ' + MAPPING, '', '—')
@@ -113,7 +116,7 @@ R(1, r'^1\.1$', r'^Documents', 'Partial', DOCS + '; ' + CERT + '; decisions seal
 R(1, r'^1\.1$', r'^Approvals', 'Met', DUAL + '; proposals bind to the pending action (Case.pending, idempotency keys)', '', '—')
 R(1, r'^1\.1$', r'^Finance', 'Partial', PAY + ' (bills and receipts are separate, reconciled once)', 'No refunds, adjustments or outgoing payments', 'I5')
 R(1, r'^1\.1$', r'^Exchange', 'Met', EXCH, '', '—')
-R(1, r'^1\.1$', r'^Oversight', 'Partial', TWIN, 'No indicator definitions (denominator, coverage, method version); most metrics generated', 'I3')
+R(1, r'^1\.1$', r'^Oversight', 'Partial', TWIN + '; ' + IND, 'Generated panels with no record source remain (20.65); estimates with methodology and uncertainty (20.68)', 'I3')
 R(1, r'^1\.1$', r'^Continuity', 'Partial', BACKUP + '; lib/events/restore-delivery.test.ts; offline audit replay', 'Restore into a clean environment not run in CI (P5-10)', 'I9')
 R(1, r'^1\.1$', r'^Public service', 'Partial', 'Online: citizen wallet (/wallet) on the same procedures; accessibility audits (app/scripts/audit-console.mjs, audit-public-sites.mjs); assisted only a deployment flag (lib/nation/deployment.ts:32)', 'Assisted-mode forms recording the assisting official; low-connectivity path (P6-20)', 'I1', 'I6')
 R(1, r'^1\.1$', r'^Standalone deployment', 'Met', EDITION + '; ' + PORTABLE + ' (acceptance P1-10, P5-01, P4-13)', '', '—')
@@ -139,7 +142,7 @@ R(1, r'^3\.2$', r'^Government Coordination', 'Partial', REFERRAL + '; ' + DIRECT
 R(1, r'^3\.2$', r'^Legal and Constitutional Affairs', 'Partial', LAW + '; ' + TRANS + '; lib/constitution/ profile', 'Legal-advice workflow; constitutional deadline tracking; ' + NODEPT, 'Unassigned', 'I2')
 R(1, r'^3\.2$', r'^Appointments Secretariat', 'Partial', OFFICES, 'Nomination, eligibility checks, consent and confirmation workflow; vacancy tracking; ' + NODEPT, 'Unassigned', 'I2')
 R(1, r'^3\.2$', r'^Public Communications', 'Partial', 'lib/data/site-editorial.ts (proposed by one, published by another); apps/communications screens', 'Announcement/speech approval records for the executive office; ' + NODEPT, 'Unassigned', 'I2')
-R(1, r'^3\.2$', r'^Delivery and Performance', 'Not yet', SCREENS, 'Approved service indicators (I3), milestones, verified blockers, corrective actions; ' + NODEPT, 'I3', 'I2,I5')
+R(1, r'^3\.2$', r'^Delivery and Performance', 'Not yet', SCREENS, 'Milestones, verified blockers, corrective actions (approved service indicators: ' + IND + '); ' + NODEPT, 'I3', 'I2,I5')
 R(1, r'^3\.2$', r'^Cabinet Secretariat', 'Not yet', 'No Cabinet records or procedure (audit A §2.6); /gov Cabinet.tsx is a screen', 'Cabinet submission/decision/action registers and procedure; ' + NODEPT, 'I5', 'I2')
 R(1, r'^3\.2$', r'^Internal Administration', 'Not yet', 'No HR, assets, records-management or internal-audit records', 'Shared internal administration workspace (Part 1 §10); ' + NODEPT, 'Unassigned', 'I2')
 R(1, r'^3\.2$', r'^(Policy and Strategy|Protocol and State Functions|Executive Correspondence)', 'Not yet', 'No records; presidency app reads no register (audit A §2.4)', 'Records and procedures; ' + NODEPT, 'Unassigned', 'I2')
@@ -157,16 +160,16 @@ R(1, r'^3\.4$', r'^Appointment register', 'Partial', OFFICES, 'Nominee, confirma
 R(1, r'^3\.4$', r'^Official publications', 'Partial', 'Legislature publication and laws register (lib/legislature/register.ts, lib/law/register.ts)', 'Executive publication register with signed versions and corrections', 'Unassigned')
 R(1, r'^3\.4$', r'^(Cabinet submissions|Cabinet decisions|Government action register)', 'Not yet', ABSENT, 'Register joins lib/data/register-owners.ts with owner, changing API, legal authority', 'I5')
 R(1, r'^3\.4$', r'^Petition register', 'Not yet', ABSENT, 'Register with personal-data access limited to the handling office', 'Unassigned')
-R(1, r'^3\.4$', r'read ministry indicators through approved exchange|should not copy', 'Partial', 'Twin reads observations by source (lib/twin/register.ts); /command reads generated posture', 'Indicator exchange from ministries (I3)', 'I3')
+R(1, r'^3\.4$', r'read ministry indicators through approved exchange|should not copy', 'Partial', 'Twin reads observations by source (lib/twin/register.ts); ' + INDTWIN + '; the /command briefing reads the indicator register', 'An indicator exchange service with purpose and receipt (docs/INTEGRATION_REGISTER.md 20.67)', 'I3')
 # §3.5 cabinet procedure
 R(1, r'^3\.5$', r'^Deadlines:? no universal|no universal number', 'Partial', 'Engine takes deadlines only from the approved package (DeadlineSpec, optional citation)', PREFILL, 'I1')
 R(1, r'^3\.5$', r'nation must configure', 'Country decision', 'Platform provides: DeadlineSpec in packages; legislature vote rules (Majority)', 'Quorum, voting and publication rules for a collective executive body are not configurable in case packages', 'I5')
 R(1, r'^3\.5$', r'Implement', 'Not yet', 'No Cabinet procedure; directives honour instructionRefusal() (' + DIRECT + ')', 'Action assignment that never transfers the receiving institution\'s powers', 'I5')
 R(1, r'^3\.5$', r'.', 'Not yet', 'No Cabinet procedure; engine supports stages, four-eyes, reasons (' + ENGINE + ')', 'Cabinet decision package (draft), quorum/voting configuration', 'I5')
 # §3.6 KPIs
-R(1, r'^3\.6$', r'disclose its denominator', 'Partial', TWIN, 'Indicator definitions with denominator and coverage', 'I3')
+R(1, r'^3\.6$', r'disclose its denominator', 'Met', IND + ' (IndicatorValue: numerator, denominator, period, records count and SHA-256, coverage)', '', '—')
 R(1, r'^3\.6$', r'formally suspended', 'Not yet', 'Deadlines are met/lapsed only (Case.deadlines)', 'Deadline suspension under an approved rule', 'I3', 'I5')
-R(1, r'^3\.6$', r'unresolved cross-ministry referrals', 'Partial', REFERRAL + ' (referral cases countable)', 'Indicator definition', 'I3')
+R(1, r'^3\.6$', r'unresolved cross-ministry referrals', 'Met', REFERRAL + '; casework.referrals_unresolved (lib/indicators/reference.ts, method referrals.unresolved); test lib/indicators/compute.test.ts "counts referrals from other institutions still open"', '', '—')
 R(1, r'^3\.6$', r'.', 'Not yet', 'No Cabinet or action records to compute from', 'Records (I5) then indicator definition (I3)', 'I5', 'I3')
 # §3.7 roles
 R(1, r'^3\.7$', r'Head of state', 'Met', OFFICES + '; assent by the head of state office only (lib/legislature/register.ts assentRefusal()); holding an office grants no other permission', '', '—')
@@ -223,10 +226,10 @@ R(1, r'^5\.5$', r'confirming official must independently review', 'Met', DUAL + 
 R(1, r'^5\.5$', r'disqualified', 'Partial', TRANS + '; declared interest recuses at once (CaseFacts.recused, lib/auth/roles.ts)', 'Recusal tested for tax objections specifically', 'Unassigned')
 R(1, r'^5\.5$', r'never overwrite the original return', 'Partial', 'Assessments sealed and superseded (decisions.ts supersedes)', 'Return amendments as new versions', 'Unassigned')
 R(1, r'^5\.5$', r'Read access to tax records', 'Met', 'canReadTax() and access log (CLAUDE.md Tax); app/api/tax route tests; lib/casework/cycle3-isolation.test.ts', '', '—')
-R(1, r'^5\.5$', r'twin receives approved aggregate', 'Partial', 'Case twin publishes counts (lib/casework/twin.ts); no individual returns in the twin', 'Approved disclosure rule per aggregate (I3)', 'I3')
+R(1, r'^5\.5$', r'twin receives approved aggregate', 'Met', 'Case twin publishes counts (lib/casework/twin.ts); ' + INDTWIN + '; disclosure rule per definition (lib/indicators/disclosure.ts, small cells through policy-change.ts)', '', '—')
 R(1, r'^5\.6$', r'tax-gap|operational metrics, not proof', 'Not yet', 'No tax-gap estimate exists', 'Estimate labelled modelled with methodology when built', 'I3')
 R(1, r'^5\.6$', r'Refunds awaiting', 'Not yet', 'No refund procedure', 'Refund claims (Unassigned) then indicator', 'Unassigned', 'I3')
-R(1, r'^5\.6$', r'.', 'Partial', 'Tax records exist (lib/tax/register.ts, cases); counts computable', 'Indicator definition with denominator, period, coverage', 'I3')
+R(1, r'^5\.6$', r'.', 'Partial', 'Tax records exist (lib/tax/register.ts, cases); the indicator register and its case methods exist (' + IND + ')', 'Tax indicator definitions and methods over the tax register, drafted with the tax work (docs/INTEGRATION_REGISTER.md 20.66)', 'I3')
 # §6 customs
 R(1, r'^6\.1$', r'represent the responsible authority for each permit', 'Partial', MAPPING + ' (customs-authorisation, customs-clearance mappings)', 'Other border agencies\' release conditions (permits from other regulators) as prerequisites', 'Unassigned')
 R(1, r'^6\.1$', r'^Revenue Assessment', 'Partial', 'Duty from approved customs.tariff rule; assessment four-eyes', 'Exemptions and legally authorised relief; ' + NODEPT, 'Unassigned', 'I2')
@@ -244,7 +247,7 @@ R(1, r'^6\.3$', r'.', 'Met', 'Acceptance P1-05: lib/customs/register.test.ts "re
 R(1, r'^6\.4$', r'^(Declaration|Goods line|Duty assessment|Inspection|Payment reconciliation|Release decision):', 'Met', 'lib/customs/register.ts declarations, lines, assessment with rule version, channel/findings, reconciliation, release; tests lib/customs/register.test.ts', '', '—')
 R(1, r'^6\.4$', r'^Post-clearance audit', 'Not yet', 'No package', 'Register and procedure', 'Unassigned')
 R(1, r'^6\.4$', r'seizure counts', 'Met', 'No seizure or inspection count presented as success metric (no seizure powers)', '', '—')
-R(1, r'^6\.4$', r'.', 'Partial', 'Customs records exist; times computable', 'Indicator definitions', 'I3')
+R(1, r'^6\.4$', r'.', 'Partial', 'Customs records exist; customs.days_to_decision (lib/indicators/reference.ts, method cases.days_to_decision for customs. procedures); ' + IND, 'Definitions for assessment, inspection, release after prerequisites, payment mismatches, amendments and appeals (methods over the customs register, 20.66)', 'I3')
 # §7 central bank
 R(1, r'^7\.1$', r'separately governed|must not be a child of the finance', 'Partial', INST + '; centralBank is a constitutional slot (lib/nation/deployment.ts); independence mechanism proven generically (acceptance P1-06)', 'No central bank records; no test against a finance-ministry account', 'I11')
 R(1, r'^7\.2$', r'separate regulator|different institutions', 'Met', 'Institution register allows any number of independent institutions (' + INST + ')', '', '—')
@@ -285,14 +288,14 @@ R(1, r'^11$', r'form schema version, declaration text version and evidence-polic
 R(1, r'^11$', r'never silently change an old submitted form', 'Met', 'Cases keep their package version; packages superseded not edited (lib/casework/packages.ts state draft→approved→superseded; migration.stageMap)', '', '—')
 R(1, r'^11$', r'.', 'Partial', FIELDSPEC, 'Form contract (plan §3.1)', 'I1')
 # §12 twin contract
-R(1, r'^12$', r'consume approved aggregate observations', 'Partial', TWIN + '; lib/casework/twin.ts aggregate case counts', 'Approved disclosure rule per aggregate; institutions publishing indicator observations', 'I3')
+R(1, r'^12$', r'consume approved aggregate observations', 'Met', TWIN + '; ' + INDTWIN, '', '—')
 R(1, r'^12$', r'zero must mean', 'Met', 'Acceptance P2-13: lib/twin/register.test.ts "leaves it not connected otherwise"; signal.test.ts', '', '—')
 R(1, r'^12$', r'^(observed|reported|modelled|sample|not_connected):', 'Met', 'lib/twin/signal.ts SignalKind (record, observed, reported, modelled, sample, simulated, unavailable); SignalTag; test lib/twin/signal.test.ts', '', '—')
 R(1, r'^12$', r'provenance vocabulary', 'Met', 'lib/twin/signal.ts', '', '—')
 R(1, r'^12$', r'methodology version, assumptions and uncertainty', 'Partial', 'Scenarios keep assumptions and SHA-256 (lib/twin/scenarios.ts); ObservationQuality stdErr/ci95', 'Methodology version on estimates', 'I3')
-R(1, r'^12$', r'Contract field (value|unit|observed_at|provenance|source_institution_id|period_start|period_end)', 'Partial', TWIN + ' (value, unit, validFrom/validTo, recordedAt, sourceId)', 'Institution id as source owner, explicit period object', 'I3')
-R(1, r'^12$', r'Contract field (indicator_id|source_record_type|source_query_or_method_version|coverage|quality_status|classification|legal_basis_ref)', 'Not yet', 'No indicator definition record; records lineage only for administrative counts (Observation.records)', 'Indicator definition (plan §3.2)', 'I3')
-R(1, r'^12$', r'.', 'Partial', TWIN, 'Indicator contract', 'I3')
+R(1, r'^12$', r'Contract field (value|unit|observed_at|provenance|source_institution_id|period_start|period_end)', 'Met', INDTWIN, '', '—')
+R(1, r'^12$', r'Contract field (indicator_id|source_record_type|source_query_or_method_version|coverage|quality_status|classification|legal_basis_ref)', 'Met', IND + '; ' + INDTWIN, '', '—')
+R(1, r'^12$', r'.', 'Met', TWIN + '; ' + INDTWIN, '', '—')
 R(1, r'^14$', r'.', 'Lower priority', 'Plan §4 "Reference lists of standards. Informative; cited where a feature uses one."', '', 'Unassigned')
 
 # ====================================================================== PART 2
@@ -327,7 +330,7 @@ R(2, r'^B$', r'^Services', 'Partial', 'Public catalogue of services on public si
 R(2, r'^B$', r'^Approvals', 'Met', DUAL + '; ' + DECIS + ' (named authority, reasons, legal basis)', '', '—')
 R(2, r'^B$', r'^Documents', 'Partial', DOCS + '; ' + CERT + '; decisions sealed', 'Templates; delivery receipts', 'I1', 'I9')
 R(2, r'^B$', r'^Exchange', 'Met', EXCH, '', '—')
-R(2, r'^B$', r'^Reporting', 'Partial', TWIN, 'Indicator definitions with quality status', 'I3')
+R(2, r'^B$', r'^Reporting', 'Met', IND + '; ' + INDTWIN + ' (quality_status, classification)', '', '—')
 R(2, r'^B$', r'^Administration', 'Partial', 'Officials and roles per institution (/admin/officials), locations via facilities', 'Delegated authority for officials, queues per department', 'I2')
 R(2, r'^B$', r'^Audit', 'Partial', AUDIT + '; ' + ACCESS, 'Exports written to the access log as `export` only for the substrate export (I0.1) and institution exports (' + PORTABLE + '); other bulk exports', 'I9')
 R(2, r'^B$', r'cannot itself confer legal power|may only execute an action', 'Met', MAPPING + '; engine checks decision classification at proposal and decision; law version must be in force', '', '—')
@@ -351,8 +354,8 @@ R(2, r'^C\.1$', r'request only the attributes it needs|Request identifier|Declar
 R(2, r'^C\.1$', r'^Independent privacy oversight', 'Partial', 'Data-protection authority reads the access log (roles.ts), access-watch findings', 'Investigation procedure scoping access (I8)', 'I8')
 R(2, r'^C\.1$', r'^Auditor', 'Met', ROLES + ' (auditors read with purpose, never change)', '', '—')
 R(2, r'^C\.1$', r'^(Registrar|Senior registrar|Credential officer|Records custodian|Identity verification service)', 'Partial', 'Officer/Can sign roles in the civil registration institution; exchange service returns only declared fields', 'Role scoping by task (senior registrar exceptions, credential officer)', 'I2')
-R(2, r'^C\.1$', r'Missing data must display as missing|denominator, reporting period', 'Partial', TWIN + '; missing shown as not connected (P2-13)', 'Indicator definitions with denominators', 'I3')
-R(2, r'^C\.1$', r'.', 'Partial', 'Civil register exists; aggregates in lib/civil/twin.ts', 'Indicator definitions', 'I3')
+R(2, r'^C\.1$', r'Missing data must display as missing|denominator, reporting period', 'Met', TWIN + '; missing shown as not connected (P2-13); ' + IND + ' (a region not reporting is missing, never zero; test compute.test.ts "shows a national figure only when every region reports")', '', '—')
+R(2, r'^C\.1$', r'.', 'Partial', 'Civil register exists; aggregates in lib/civil/twin.ts; civil.births_registered, deaths, marriages (lib/indicators/reference.ts, small-cell rule)', 'Definitions for completeness (needs an independent estimate), processing time, pending by age, corrections, identity conflicts and certificate delivery (20.66)', 'I3')
 # C.2 health
 R(2, r'^C\.2$', r'^(Facility licensing and accreditation|Inspection and compliance)', 'Partial', 'health.facility/pharmacy licence with inspection report document (lib/health/procedures.ts via organisations sectorProcedures)', 'Inspection findings as structured records under the inspector\'s account; corrective actions; ' + NODEPT, 'I4', 'I2')
 R(2, r'^C\.2$', r'^Health workforce registry', 'Partial', 'lib/professions/ (4 health professions)', NODEPT, 'I4', 'I2')
@@ -413,7 +416,7 @@ R(2, r'^C\.4$', r'^Form immigration', 'Partial', 'Package fields — ' + FIELDSP
 R(2, r'^C\.4$', r'automated_final_decision|legal_basis|decision_authority', 'Met', 'AI never decides; decisions need a signatory; mappings per permit type (' + MAPPING + ')', '', '—')
 R(2, r'^C\.4$', r'officer should see only cases within their assigned remit|Seniority alone', 'Met', ROLES + ' (restricted cases to assignee and supervisors; roles never read offices)', '', '—')
 R(2, r'^C\.4$', r'Police access must be grounded', 'Met', 'canReadImmigration() only immigration authority; others via immigration.status for an approved purpose', '', '—')
-R(2, r'^C\.4$', r'.', 'Partial', 'Immigration records exist', 'Indicator definitions', 'I3')
+R(2, r'^C\.4$', r'.', 'Partial', 'Immigration records exist; immigration.days_to_decision (lib/indicators/reference.ts, by procedure)', 'Further immigration indicator definitions (20.66)', 'I3')
 # C.5 labour
 R(2, r'^C\.5$', r'^Work-permit verification through an approved exchange', 'Partial', 'immigration.status exchange service', 'Labour procedures calling it', 'I6')
 R(2, r'^C\.5$', r'^(Workplace inspections|Occupational safety|Labour complaints)', 'Not yet', SCREENS, 'Complaint and inspection procedures', 'I6', 'I2')
@@ -472,10 +475,10 @@ R(2, r'^E$', r'.', 'Not yet', 'No field channel', 'Offline/field work', 'I6')
 R(2, r'^F$', r'Not connected|Data unavailable|inventing a plausible', 'Met', 'Acceptance P3-14 / P2-13 (lib/twin/register.test.ts, components/ui/Generated.test.ts)', '', '—')
 R(2, r'^F$', r'^(observed|reported|modelled|sample|not_connected) —', 'Met', 'lib/twin/signal.ts', '', '—')
 R(2, r'^F$', r'provenance vocabulary', 'Met', 'lib/twin/signal.ts', '', '—')
-R(2, r'^F$', r'Contract field (value|unit|period|geography|source\.register_id|provenance|last_updated)', 'Partial', TWIN, 'Indicator definition record', 'I3')
-R(2, r'^F$', r'Contract field', 'Not yet', 'No indicator definition (definition, coverage, validation_status, source_version)', 'Indicator definition (plan §3.2)', 'I3')
-R(2, r'^F$', r'modelled estimate|registered facilities|operational performance', 'Partial', 'Observation method distinguishes administrative-count/direct/estimate/model', 'Indicator definitions distinguishing register counts from real-world claims', 'I3')
-R(2, r'^F$', r'.', 'Partial', TWIN, '', 'I3')
+R(2, r'^F$', r'Contract field (value|unit|period|geography|source\.register_id|provenance|last_updated)', 'Met', INDTWIN, '', '—')
+R(2, r'^F$', r'Contract field', 'Met', IND + '; ' + INDTWIN, '', '—')
+R(2, r'^F$', r'modelled estimate|registered facilities|operational performance', 'Partial', 'Observation method distinguishes administrative-count/direct/estimate/model; indicator definitions carry intended use and qualifications that keep register counts apart from real-world claims (' + IND + ')', 'Definitions for facilities verified operational and for estimates (20.66, 20.68)', 'I3')
+R(2, r'^F$', r'.', 'Met', TWIN + '; ' + INDTWIN, '', '—')
 # G readiness
 R(2, r'^G$', r'Readiness must be derived from recorded evidence|manually set', 'Not yet', 'lib/institution/readiness.ts scoreInstitution() computes a 0-100 composite from archetype constants (audit integrity hard-coded 100) and gates activateMinistry() on it (lib/data/store/ministries.ts:118)', 'Readiness from recorded evidence; "Not assessed" until a check exists (plan §3.4)', 'I2')
 R(2, r'^G$', r'evaluate readiness at the level of each department', 'Not yet', 'Onboarding hub reads tracks per installation (lib/onboarding/status.ts), not per department/service', 'Department completeness view (I2)', 'I2')
@@ -505,7 +508,7 @@ R(3, r'^A\.1$', r'Access must be restricted by court|administrator may correct a
 R(3, r'^A\.1$', r'^(Court registrar|Registry clerk|Judge|Authorised judicial assistant|Court administrator|Authorised enforcement officer|Records officer|Auditor)$', 'Partial', 'Generic roles within the judiciary institution', 'Procedural role scoping (judge vs registry)', 'Unassigned', 'I2')
 R(3, r'^A\.1$', r'rank judges', 'Met', 'No judge ranking exists', '', '—')
 R(3, r'^A\.1$', r'without creating a route for outside authorities', 'Met', 'Acceptance P3-01 (lib/courts/procedures.test.ts)', '', '—')
-R(3, r'^A\.1$', r'.', 'Partial', 'Court records exist (cases, hearings)', 'Indicator definitions', 'I3')
+R(3, r'^A\.1$', r'.', 'Partial', 'Court records exist (cases, hearings); courts.filings_received and courts.backlog (lib/indicators/reference.ts, published outside the judiciary only once it approves them)', 'Definitions for hearings, procedural times, notices, appeals and accessibility (20.66)', 'I3')
 # A.2 prosecution, A.3 corrections, A.5 defence
 R(3, r'^A\.2$', r'prosecution system cannot alter a court judgment|Court outcomes return', 'Met', 'Only the judiciary acts on court cases (case-rules.test.ts)', '', '—')
 R(3, r'^A\.2$', r'.', 'Lower priority', 'Plan §4: prosecution built only as unapproved drafts after legal review; absent (audit A §3)', ABSENT, 'I11')
@@ -525,7 +528,7 @@ R(3, r'^A\.4$', r'Prevent bulk searches', 'Partial', 'Rate limits and harvest wa
 R(3, r'^A\.4$', r'automated prediction of criminality|complaints and allegations distinct', 'Met', 'No prediction; allegation not a finding (P3-03)', '', '—')
 R(3, r'^A\.4$', r'independent oversight for authorised categories', 'Partial', 'Data-protection authority reads access log; access-watch', 'Oversight scope for police sensitive access', 'I8')
 R(3, r'^A\.4$', r'isolated from ordinary ministry administration', 'Met', ROLES + ' (cases readable only by owning institution)', '', '—')
-R(3, r'^A\.4$', r'(Response times using defined clock|Incident-processing backlog|Referral completeness|Complaint-resolution status|System availability)', 'Partial', 'police.incident cases (received, triage, classified, assigned, referred) are records', 'Indicator definitions with clock rules', 'I3')
+R(3, r'^A\.4$', r'(Response times using defined clock|Incident-processing backlog|Referral completeness|Complaint-resolution status|System availability)', 'Partial', 'police.incident cases are records; police.incident_backlog and police.days_to_first_decision with their clock rule (lib/indicators/reference.ts)', 'Referral completeness, complaint resolution and availability definitions (20.66)', 'I3')
 R(3, r'^A\.4$', r'Arrest counts', 'Met', 'No arrest records or arrest counts exist (intake and referral only)', '', '—')
 R(3, r'^A\.4$', r'.', 'Platform rule stricter', 'CLAUDE.md Police intake and referral only', '', '—')
 # B.6 emergency
@@ -577,12 +580,12 @@ R(3, r'^E$', r'^Municipal Government', 'Partial', 'Subnational reports only unde
 R(3, r'^E$', r'Every exchange must specify', 'Partial', EXCH, 'Legal basis and effective period per exchange from the relationship register', 'I9')
 R(3, r'^E$', r'.', 'Partial', RELS, '', 'I9')
 # F twin indicators
-R(3, r'^F$', r'^(Courts|Land):', 'Partial', 'Records exist (court cases, parcels)', 'Indicator definitions with exclusions', 'I3')
+R(3, r'^F$', r'^(Courts|Land):', 'Partial', 'Records exist (court cases, parcels); courts.filings_received and courts.backlog with their qualifications (lib/indicators/reference.ts)', 'Land definitions (parcel coverage, spatial verification) over the parcel register (20.66)', 'I3')
 R(3, r'^F$', r'^(Prosecution|Corrections):', 'Lower priority', 'Absent sectors', '', 'I11')
-R(3, r'^F$', r'^Police:', 'Partial', 'police.incident cases', 'Indicator definitions with clocks', 'I3')
+R(3, r'^F$', r'^Police:', 'Partial', 'police.incident cases; police.incident_backlog and police.days_to_first_decision with their clock rule and classifications (lib/indicators/reference.ts)', 'Evidence-custody exceptions: no custody register (platform rule, I11)', 'I3')
 R(3, r'^F$', r'^(Emergencies|Local government|Transport|Energy|Environment|Housing|Public works):', 'Not yet', 'No records', 'Records then indicator definitions', 'I3', 'I7')
-R(3, r'^F$', r'provenance label|fabricated figures', 'Partial', 'lib/twin/signal.ts; production folds generated figures (acceptance P3-14 proven; P6-10 partial)', 'Last-updated timestamp on every figure; surfaces outside scanned files proven only by review', 'I3')
-R(3, r'^F$', r'.', 'Partial', TWIN, '', 'I3')
+R(3, r'^F$', r'provenance label|fabricated figures', 'Partial', 'lib/twin/signal.ts; production folds generated figures (acceptance P3-14 proven; P6-10 partial); ' + INDPANELS + ' (last update on every indicator value)', 'Last-updated timestamp on figures outside the indicator register; surfaces outside scanned files proven only by review', 'I3')
+R(3, r'^F$', r'.', 'Met', TWIN + '; ' + IND + ' (intended use and qualifications on every definition)', '', '—')
 # H implementation order and risks
 R(3, r'^H$', r'^Court and institutional authority model', 'Met', 'Constitutional phases 0-7 (institutions, relationships, offices, courts isolated)', '', '—')
 R(3, r'^H$', r'^Land and geospatial foundations', 'Met', 'Parcels, boundaries, facilities registers with versions', '', '—')
@@ -597,7 +600,7 @@ R(3, r'^H$', r'^False certainty', 'Met', 'SignalTag markers; production folds (P
 R(3, r'^H$', r'^Unsafe automation', 'Met', 'AI advisory only (CLAUDE.md Branding and AI)', '', '—')
 R(3, r'^H$', r'^Critical-infrastructure exposure', 'Partial', 'Acceptance P3-09 partial', 'Test', 'I7')
 R(3, r'^H$', r'^Weak continuity', 'Partial', BACKUP + '; docs/DISASTER_RECOVERY.md drill', 'Paper fallback and offline capture', 'Unassigned', 'I6')
-R(3, r'^H$', r'national twin is useful only when', 'Partial', TWIN + '; ' + FOLD, 'Indicator definitions (meaning, authority, limitations)', 'I3')
+R(3, r'^H$', r'national twin is useful only when', 'Partial', TWIN + '; ' + FOLD + '; ' + IND + ' (meaning, owner, limitations)', 'Generated panels with no record source remain (20.65)', 'I3')
 R(3, r'^H$', r'.', 'Met', 'Plan §5 follows a staged order', '', '—')
 
 # ====================================================================== PART 4
@@ -818,7 +821,7 @@ R(6, r'^D\.6$', r'.', 'Partial', DOCS + '; /verify', 'Viewer with signature stat
 R(6, r'^D\.7$', r'integrity cannot be verified', 'Met', 'Audit verify shows failure (verifyAuditChain(), /gov/audit)', '', '—')
 R(6, r'^D\.7$', r'.', 'Partial', '/gov/audit, /gov/access-log', 'Export with manifest; correlation references', 'I10', 'I9')
 R(6, r'^D\.8$', r'personally identifiable case data', 'Met', 'Case twin publishes counts only (lib/casework/twin.ts)', '', '—')
-R(6, r'^D\.8$', r'.', 'Partial', TWIN + '; SignalTag', 'Definition, coverage, methodology on each indicator view', 'I3', 'I10')
+R(6, r'^D\.8$', r'.', 'Met', TWIN + '; SignalTag; ' + INDPANELS + '; /gov/twin/indicators/[id] (definition and unit, period and scope, source institution and register, provenance, last update, coverage, limitations, method and version, disclosure rule)', '', '—')
 R(6, r'^D\.2$', r'impossible to mistake a draft|never use a hidden tab', 'Partial', 'AI wording via aiLabel(); drafts marked; backend enforces', 'Decision screen pattern', 'I10')
 R(6, r'^D', r'.', 'Partial', 'Console pages', 'Shared screen patterns', 'I10')
 R(6, r'^E$', r'Logical CSS', 'Partial', 'Public sites use logical CSS', 'Console/workspace logical CSS', 'I10')
@@ -834,7 +837,7 @@ R(6, r'^F$', r'Separate production and non-production data stores and credential
 R(6, r'^F$', r'background jobs and webhooks', 'Partial', 'Cron runs check samplesAllowed where they create data', 'Webhook delivery boundary per mode', 'Unassigned')
 R(6, r'^F$', r'authorised deployment process to change', 'Partial', 'CIVICOS_MODE decided only in lib/ops/mode.ts from the environment', 'Recorded authorised mode change', 'Unassigned')
 R(6, r'^F$', r'silently fall back to demo data', 'Met', 'Production folds to Not connected (Generated.test.ts; lib/twin/read.test.ts)', '', '—')
-R(6, r'^F$', r'(last successful update|reason for the degraded state)', 'Partial', FOLD + ' (Not connected shown)', 'Last successful update and reason on every degraded panel', 'I3', 'I10')
+R(6, r'^F$', r'(last successful update|reason for the degraded state)', 'Partial', FOLD + ' (Not connected shown); indicator tiles show the reason and the last update (' + INDPANELS + ')', 'Last successful update and reason on degraded panels outside the indicator register', 'I3', 'I10')
 R(6, r'^F$', r'integration boundaries', 'Partial', MODE + '; exchange refuses unapproved purposes in production', 'Webhook and outbound delivery boundary per mode', 'Unassigned')
 R(6, r'^F$', r'.', 'Met', MODE, '', '—')
 R(6, r'^G$', r'^(Treasury|Health|Justice|Police|Land|Electoral Commission|National Statistics Office):', 'Partial', 'Apps per institution with charters', 'Workspaces reflecting real functions from records', 'I10', 'I2')
@@ -850,7 +853,7 @@ R(6, r'^I$', r'^Roadmap 05', 'Partial', 'Health chosen (plan I4); ' + EDITION + 
 R(6, r'^I$', r'^Roadmap 06', 'Not yet', '', '', 'I9')
 R(6, r'^I$', r'pilot|Clear statutory|well-defined service|accountable institutional owner|Accessible source data|manageable number|Low enough risk|Reusability', 'Country decision', 'Plan I4 picks Health (owner\'s example)', '', 'I4')
 R(6, r'^I$', r'.', 'Met', 'Plan builds on the existing baseline', '', '—')
-R(6, r'^J$', r'^Invented or misleading data', 'Partial', FOLD, 'Indicator definitions', 'I3')
+R(6, r'^J$', r'^Invented or misleading data', 'Partial', FOLD + '; ' + IND, 'Generated panels with no record source remain (20.65)', 'I3')
 R(6, r'^J$', r'^(Incorrect legal authority|Executive overreach|Sample-data contamination|Unclear record ownership)', 'Met', LAW + '; ' + ROLES + '; ' + MODE + '; ' + REGOWN, '', '—')
 R(6, r'^J$', r'^Excessive personal-data collection', 'Partial', 'personal flag; retention', 'personalDataClass per field', 'I1')
 R(6, r'^J$', r'^Unrestricted senior access', 'Partial', 'Roles never read offices; break-glass four-eyes', 'Admin second-account loophole until requireIdentityProvider', 'I9')
@@ -868,7 +871,7 @@ R(6, r'^L$', r'^01', 'Partial', 'Decisions cite law; sector actions not yet', ''
 R(6, r'^L$', r'^02', 'Met', 'Constitutional controls', '', '—')
 R(6, r'^L$', r'^03', 'Partial', 'Nine operational sectors', '', 'I4')
 R(6, r'^L$', r'^04', 'Partial', 'Exchange', '', 'I9')
-R(6, r'^L$', r'^05', 'Partial', 'Twin', '', 'I3')
+R(6, r'^L$', r'^05', 'Partial', 'Twin; ' + IND, 'Estimates with methodology and uncertainty (20.68); statistics release workflow (20.69)', 'I3')
 R(6, r'^L$', r'^06', 'Partial', 'Backups', '', 'I9')
 R(6, r'^L$', r'(read-only audit|inventory of routes|map of existing|screens still using|production/demo isolation|security and independence gap|implementation sequence|Tests and evidence|Do not rebuild)', 'Met', 'docs/reviews/2026-10-institutional-baseline-audit.md, parts A-C, docs/INSTITUTIONAL_ACCEPTANCE.md', '', '—')
 R(6, r'^L$', r'.', 'Met', 'Plan §1', '', '—')

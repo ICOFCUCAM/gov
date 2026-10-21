@@ -598,6 +598,16 @@ What has been built is locked. Work only upgrades it toward the vision in
   observed values and are modelled, never observations; every version is kept
   with its inputs and a SHA-256 evidence hash, and a directive drafted from
   one cites scenario, version and hash.
+- Indicators (`lib/indicators/`, National data › Indicators; `docs/INTEGRATION_REGISTER.md`
+  20.60–20.69): a figure about an institution's work is a value computed from the records under a
+  definition (numerator, denominator, period, coverage, method and version, disclosure rule,
+  qualifications; never a target), drafted by an official of the owning institution and approved
+  per institution by a different one who can sign there, every version kept; reference definitions
+  ship as drafts. No source is "Not connected", never zero; sample records never count in
+  production; counts about people pass the indicator small-cell rule (`policy-change.ts`, shipped
+  unset). Approved values reach the twin only through `lib/indicators/twin.ts`: the internal source
+  and `indicator.` metrics take computed runs only (`lib/twin/computed.ts`). A changed computation is
+  a new method version in `methods.ts`; a generated panel moves to computed or stays folded.
 - The console menu is `lib/nav/console-nav.ts` (plain language, about 30
   entries; related pages are tabs of one item). A new console page joins an
   item as a tab (with `was` if it replaces an earlier name) instead of

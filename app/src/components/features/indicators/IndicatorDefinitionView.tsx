@@ -73,6 +73,8 @@ export function IndicatorDefinitionView({ id, institution }: { id: string; insti
   const latest = d.versions.at(-1)!;
   const version = d.versions.find(v => v.n === (shown ?? latest.n)) ?? latest;
   const each = 'each' in d.owner;
+  // Institution names for the approvals (ids as recorded, names as the registry has them now).
+  const names = new Map<string, string>([...data.byInstitution.map(r => [r.institution.id, r.institution.name] as [string, string]), ...(data.ownerInstitution ? [[data.ownerInstitution.id, data.ownerInstitution.name] as [string, string]] : [])]);
   const startDraft = () => setDraft({ title: latest.terms.title, definition: latest.terms.definition, numerator: latest.terms.numerator, denominator: latest.terms.denominator ?? '', qualifications: latest.terms.qualifications.join('\n'), limitations: latest.terms.limitations.join('\n'), reason: '' });
 
   return (
@@ -137,7 +139,7 @@ export function IndicatorDefinitionView({ id, institution }: { id: string; insti
                 <td className="pe-2">{v.by}<div className="text-[10px] text-ink-muted">{v.at.slice(0, 10)}</div></td>
                 <td className="pe-2">{v.reason}</td>
                 <td className="pe-2">{d.approvals.filter(a => a.version === v.n).map((a, i) => (
-                  <div key={i}>{a.institution} · {a.by} · {a.at.slice(0, 10)} · {a.independence}{a.withdrawn ? <span className="text-ink-muted"> · withdrawn {a.withdrawn.at.slice(0, 10)} by {a.withdrawn.by}: {a.withdrawn.reason}</span> : null}</div>
+                  <div key={i}>{names.get(a.institution) ?? a.institution} · {a.by} · {a.at.slice(0, 10)} · {a.independence}{a.withdrawn ? <span className="text-ink-muted"> · withdrawn {a.withdrawn.at.slice(0, 10)} by {a.withdrawn.by}: {a.withdrawn.reason}</span> : null}</div>
                 ))}{d.approvals.some(a => a.version === v.n) ? null : <span className="text-ink-muted">none</span>}</td>
                 <td>{v.reference ? null : <Button variant="secondary" onClick={() => void post({ op: 'approve', id: d.id, version: v.n, ...(approveFor ? { institution: approveFor } : {}) }, `Version ${v.n} approved.`)}>Approve v{v.n}</Button>}</td>
               </tr>

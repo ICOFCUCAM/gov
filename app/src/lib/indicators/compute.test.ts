@@ -5,7 +5,7 @@
 // counted in production; a definition with no source is "Not connected",
 // never zero.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { openCase, act, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
+import { openCase, act, refer, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
 import { draftPackage, approvePackage, resetPackages } from '@/lib/casework/packages';
 import { samplePackage } from '@/lib/casework/testkit';
 import { registerEvent, resetCivil } from '@/lib/civil/register';
@@ -129,6 +129,34 @@ describe('indicator values from records', () => {
     expect(full).toMatchObject({ value: 3, coverage: { completeness: 'complete' }, disclosure: { breakdownWithheld: true } });
     expect(full.groups).toBeUndefined();
     expect(contractOf(def, full)).toMatchObject({ indicator_id: 'civil.births_registered', value: 3, provenance: 'observed', quality_status: 'not_assessed', classification: 'draft_definition', coverage: { expected_sources: 2, reporting_sources: 2, completeness: 'complete' } });
+  });
+
+  it('counts referrals from other institutions still open at the receiving institution (spec Part 1 §3.6)', () => {
+    procedure();
+    const OTHER = listMinistries()[1]!.id;
+    setSovereign({ regions: ['North', 'South'], deployment: { authorities: { businessRegister: INST, civilRegistration: OTHER } } }, 'test');
+    const d = draftPackage(samplePackage({ key: 'test.permit', owner: 'civilRegistration', refPrefix: 'TP' }), 'Author', 'author', registeredEffects());
+    if ('error' in d) throw new Error(d.error);
+    approvePackage(d.key, d.version, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
+    const a = open('A', '2026-09-02T09:00:00Z');
+    const r = refer(a.id, { procedure: 'test.permit', fields: { name: 'A' }, reason: 'An inspection is needed first' }, { name: 'Clerk', scope: null }, new Date('2026-09-03T09:00:00Z'));
+    if ('error' in r) throw new Error(r.error);
+    const def = getDefinition('casework.referrals_unresolved')!;
+    expect(computeValue(def, { ...SEPT, institution: OTHER, samples: false })).toMatchObject({ value: 1, kind: 'record' });
+    expect(computeValue(def, { ...SEPT, institution: INST, samples: false })).toMatchObject({ value: 0, kind: 'record' });
+    expect(governmentValue(def, { ...SEPT, samples: false })).toMatchObject({ value: 1, institutions: 2 });
+  });
+
+  it('gives every field of the common indicator contract (spec Part 1 §12, Part 2 F)', () => {
+    procedure();
+    open('A', '2026-09-02T09:00:00Z');
+    const def = getDefinition('casework.cases_opened')!;
+    const c = contractOf(def, computeValue(def, { ...SEPT, institution: INST, samples: false }));
+    for (const k of ['indicator_id', 'value', 'unit', 'period_start', 'period_end', 'observed_at', 'source_institution_id', 'source_record_type', 'source_query_or_method_version', 'coverage', 'provenance', 'quality_status', 'classification', 'legal_basis_ref',
+      'definition', 'period', 'geography', 'source', 'last_updated', 'quality']) expect(c, k).toHaveProperty(k);
+    expect(c).toMatchObject({ indicator_id: 'casework.cases_opened', value: 1, unit: '{cases}', period: { start: '2026-09-01', end: '2026-10-01' }, period_start: '2026-09-01', source_institution_id: INST, source_record_type: 'case', source_query_or_method_version: 'cases.opened@1',
+      source: { institution_id: INST, register_id: 'case-work', source_version: 'cases.opened@1' }, coverage: { expected_sources: 1, reporting_sources: 1, completeness: 'complete' }, provenance: 'observed', quality: { coverage: 'complete', validation_status: 'not_assessed' }, classification: 'draft_definition' });
+    expect(c.legal_basis_ref).toMatch(/not personal data.*not approved/);
   });
 
   it('hides an institution\'s draft figure from officials outside its reach', () => {
