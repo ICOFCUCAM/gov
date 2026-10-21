@@ -46,7 +46,7 @@ export const CONSOLE_NAV: NavSection[] = [
       tabs: [tab('Laws', '/gov/law'), tab('Procedures', '/gov/law/procedures'), tab('Permit authorities', '/gov/law/permit-authorities'), tab('Rates and tariffs', '/gov/law/rules'), tab('How laws relate', '/gov/law/relations')] },
     { key: 'branches', icon: '⚖', label: 'Branches of government', href: '/gov/branches', match: /^\/gov\/branch\//,
       purpose: 'The branches the constitution sets up, their mandates and how they check each other.',
-      tabs: [tab('All branches', '/gov/branches', 'Branches of Government')] },
+      tabs: [tab('All branches', '/gov/branches', 'Branches of Government'), tab('Bills and votes', '/gov/legislature'), tab('Legislative procedure', '/gov/legislature/procedure')] },
   ]},
   { label: 'National situation', items: [
     { key: 'sr', icon: '◎', label: 'Situation now', href: '/gov/situation-room',

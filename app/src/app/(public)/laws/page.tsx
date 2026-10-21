@@ -28,6 +28,11 @@ export default async function LawsPage() {
               <summary className="cursor-pointer text-[14px] font-semibold">
                 {fill(t.lawsInForceFrom, { date: v.dates.inForce })}{v.dates.ceased ? ` · ${fill(t.lawsCeased, { date: v.dates.ceased })}` : ''} · {v.language}
               </summary>
+              {v.source.kind === 'legislature' ? (
+                <p className="mt-1 text-[13px] text-slate-700">
+                  <a className="underline underline-offset-2" href={`/assembly/bills/${encodeURIComponent(v.source.bill)}`}>{fill(t.lawsFromLegislature, { bill: v.source.billNumber, date: v.source.publication.date })}</a>
+                </p>
+              ) : null}
               <ol className="mt-2 space-y-2 text-[14px]">
                 {v.provisions.map(p => (
                   <li key={p.eId} id={`${v.id}-${p.eId}`} className={p.parent ? 'ms-4' : ''}>

@@ -67,7 +67,8 @@ export function homeDestinations(o: HomeOfficial | null, opts: { institutionPath
   let list: Destination[];
   switch (kind) {
     case 'legislature':
-      list = [own!, { href: '/gov/branch/legislature', t: 'Legislature', s: 'The branch, its chambers and committees', k: 'Branch' },
+      list = [own!, { href: '/gov/legislature', t: 'Bills and votes', s: 'The record the clerk keeps: bills, stages, votes, assent and publication', k: 'Record' },
+        { href: '/gov/branch/legislature', t: 'Legislature', s: 'The branch, its chambers and committees', k: 'Branch' },
         { href: '/assembly', t: opts.chamber ?? 'Chamber', s: 'The chamber\'s public site', k: 'Public' }, WORKSPACE];
       break;
     case 'judiciary':

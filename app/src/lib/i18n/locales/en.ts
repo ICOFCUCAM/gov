@@ -187,6 +187,36 @@ export interface Messages {
     professionalsNumber: string;
     lawsInForceFrom: string;
     lawsCeased: string;
+    billsTitle: string;
+    billsIntro: string;
+    billsNone: string;
+    billsStage: string;
+    billsStatus: string;
+    billsStateInProgress: string;
+    billsStatePassed: string;
+    billsStateAssented: string;
+    billsStateWithheld: string;
+    billsStatePublished: string;
+    billsStateClosed: string;
+    billsSponsor: string;
+    billsTexts: string;
+    billsVersion: string;
+    billsRecord: string;
+    billsVotes: string;
+    billsVoteCounts: string;
+    billsVoteCarried: string;
+    billsVoteNegatived: string;
+    billsVoteInquorate: string;
+    billsAmendments: string;
+    billsReports: string;
+    billsAssent: string;
+    billsAssentWithheld: string;
+    billsPublished: string;
+    billsInForce: string;
+    billsCertified: string;
+    billsCorrected: string;
+    billsAll: string;
+    lawsFromLegislature: string;
     verifyTitle: string;
     verifyIntro: string;
     verifyCode: string;
@@ -898,6 +928,36 @@ export const en: Messages = {
     professionalsNoMatch: 'Nobody on these registers matches.',
     lawsInForceFrom: 'In force from {date}',
     lawsCeased: 'Ceased {date}',
+    billsTitle: "Bills and acts",
+    billsIntro: "Bills before the legislature and the acts it has passed, as its clerk records them: every version of the text, each stage, the votes and the committees' reports.",
+    billsNone: "The legislature publishes no bills here yet.",
+    billsStage: "Stage: {stage}",
+    billsStatus: "Status: {status}",
+    billsStateInProgress: "Before the legislature",
+    billsStatePassed: "Passed",
+    billsStateAssented: "Assented",
+    billsStateWithheld: "Assent withheld",
+    billsStatePublished: "Published as law",
+    billsStateClosed: "No longer before the legislature",
+    billsSponsor: "Introduced by {sponsor}",
+    billsTexts: "Text",
+    billsVersion: "Version {n}: {label} ({date})",
+    billsRecord: "Proceedings",
+    billsVotes: "Votes",
+    billsVoteCounts: "{yes} yes, {no} no, {abstain} abstained — {result}",
+    billsVoteCarried: "carried",
+    billsVoteNegatived: "not carried",
+    billsVoteInquorate: "no quorum",
+    billsAmendments: "Amendments",
+    billsReports: "Committee reports",
+    billsAssent: "Assent given on {date}",
+    billsAssentWithheld: "Assent withheld on {date}",
+    billsPublished: "Published as act {number} ({reference}) on {date}",
+    billsInForce: "In force from {date}",
+    billsCertified: "Record certified by the clerk on {date} · {digest}",
+    billsCorrected: "corrected",
+    billsAll: "All bills and acts",
+    lawsFromLegislature: "From the legislature's record: {bill}, published {date}",
     verifyTitle: 'Check a certificate',
     verifyIntro: 'Type the code printed on a certificate to see whether it is genuine and still valid.',
     verifyCode: 'Certificate code',

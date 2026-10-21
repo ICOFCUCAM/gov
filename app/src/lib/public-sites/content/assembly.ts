@@ -42,7 +42,7 @@ export const assembly: SiteContent = {
   quickServices: [
     { title: 'Find Your Member', subtitle: 'By constituency', color: 'primary', icon: '⌕', to: 'contact' },
     { title: 'Watch Live', subtitle: 'Plenary & committees', color: '#7c4d8a', icon: '▶', to: '/noc' },
-    { title: 'Bill Tracker', subtitle: 'All readings', color: '#3a82d0', icon: '✎', to: '/public' },
+    { title: 'Bill Tracker', subtitle: 'All readings', color: '#3a82d0', icon: '✎', to: '/assembly/bills' },
     {
       title: 'Budget Debate',
       subtitle: 'Annual appropriation',
@@ -108,7 +108,7 @@ export const assembly: SiteContent = {
     pinCoords: [[20, 30], [55, 25], [40, 60], [70, 55], [30, 75], [80, 70]],
   },
   shortcuts: [
-    { title: 'Bill Library', subtitle: 'All readings', to: '/public' },
+    { title: 'Bill Library', subtitle: 'All readings', to: '/assembly/bills' },
     { title: 'Hansard Archive', subtitle: 'Full transcripts', to: '/public' },
     { title: 'Open Vote Data', subtitle: 'Roll-call records', to: '/public' },
     { title: 'Budget Library', subtitle: 'Appropriations & audit', to: '/public' },
@@ -120,7 +120,7 @@ export const assembly: SiteContent = {
         { label: 'Find Member', to: 'contact' },
         { label: 'Watch Live', to: '/noc' },
         { label: 'Hansard', to: '/public' },
-        { label: 'Bills', to: '/public' },
+        { label: 'Bills', to: '/assembly/bills' },
         { label: 'Budget', to: 'services' },
       ],
     },

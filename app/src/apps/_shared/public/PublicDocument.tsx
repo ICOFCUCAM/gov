@@ -4,7 +4,8 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { currentOffices } from '@/lib/nation/registry';
+import { currentOffices, siteMessages } from '@/lib/nation/registry';
+import { SkipLink } from './integration';
 
 const INK = '#0b1a2c';
 const LINE = '#dde3ec';
@@ -20,7 +21,8 @@ export function PublicDocument({ kicker, title, intro, template, children }: {
   const o = currentOffices();
   return (
     <div className="min-h-screen bg-[#f4f6f9] text-[#1a2332]">
-      <header className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg, ${INK}, #13294b)` }}>
+      <SkipLink label={siteMessages().skipMain} />
+      <header aria-label={o.government} className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg, ${INK}, #13294b)` }}>
         <div className="mx-auto flex max-w-[960px] flex-wrap items-center justify-between gap-3 px-6 py-2">
           <span>{o.government}</span>
           <nav className="flex gap-4">
@@ -29,7 +31,7 @@ export function PublicDocument({ kicker, title, intro, template, children }: {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-[960px] px-6 py-12">
+      <main id="main" className="mx-auto max-w-[960px] px-6 py-12">
         <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">{kicker}</div>
         <h1 className="mt-2 text-[34px] font-bold leading-tight" style={{ color: INK, fontFamily: 'Georgia, ui-serif, serif' }}>{title}</h1>
         <p className="mt-3 max-w-2xl text-[15px] text-slate-600">{intro}</p>
