@@ -125,7 +125,7 @@ export function OversightDesk() {
   };
   const readIdentity = async (id: string) => {
     const { ok, j } = await post({ op: 'read-identity', id, purpose });
-    setIdentity(ok ? `${j.result.anonymous ? 'Anonymous' : j.result.name}${j.result.contact ? ` · ${j.result.contact.method}: ${j.result.contact.value}` : ''} · consents to sharing: ${j.result.consentToShare ? 'yes' : 'no'} (this read is in the access log)` : `Refused: ${j.error} (the refusal is in the access log)`);
+    setIdentity(ok ? `${j.result.anonymous ? 'Anonymous' : j.result.name}${j.result.contact ? ` · ${j.result.contact.method}: ${j.result.contact.value}` : ''} · consents to sharing: ${j.result.consentToShare ? 'yes' : 'no'} (this read is in the access log)` : `Refused: ${j.error}${/Sign in/.test(j.error ?? '') ? '' : ' (the refusal is in the access log)'}`);
   };
 
   const names = data?.names ?? {};

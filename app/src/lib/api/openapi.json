@@ -146,6 +146,9 @@
       "name": "organisations"
     },
     {
+      "name": "oversight"
+    },
+    {
       "name": "parcels"
     },
     {
@@ -38023,6 +38026,729 @@
         "x-source": "src/app/api/organisations/types/route.ts"
       }
     },
+    "/api/oversight": {
+      "get": {
+        "tags": [
+          "oversight"
+        ],
+        "operationId": "get_oversight",
+        "summary": "GET /api/oversight",
+        "description": "/api/oversight — independent oversight (plan step I8; lib/oversight): the ombudsman, the human rights institution, the anti-corruption commission, the public audit office and the data-protection authority. Their cases run through /api/cases under their own approved procedures; this route carries what sits around them. GET: the bodies the nation named (each slot, empty by default) and, for the signed-in official, the oversight records they may see (oversightView(): their own body's findings, evidence requests, referrals and controller requests; a finding, request or controller request that concerns their own institution once it is sent to it), with counts. ?case=<id>: one case's findings, evidence requests, referrals, controller requests and protected identity markers (the role and whether the person is anonymous; never the identity), for those the case rules let read the case (the read logged). POST (signed-in officials; checked again here against the record): { op: 'receive', procedure, fields, identity: { anonymous, name, contact, consentToShare, protections } } open a complaint, disclosure or data-protection case with the person's identity kept apart; { op: 'read-identity', id, purpose } the assigned or authorised official reads a protected identity (logged); { op: 'authorise-reader', id, official: { id, name } } one who can sign there authorises a colleague (logged); { op: 'respond', finding, position, text, action?, evidence? } the institution a finding concerns answers it; { op: 'submit-evidence', request, description, document?, sha256? } the institution asked submits evidence; { op: 'answer-controller', request, outcome, reasons } the controller answers the data-protection authority; { op: 'access-history', case } the data-protection authority's access-log read for the records its case names (logged).",
+        "parameters": [
+          {
+            "name": "case",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "case": {
+                          "type": "object",
+                          "properties": {
+                            "sample": {
+                              "type": "boolean",
+                              "const": true
+                            },
+                            "assignee": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "ref": {
+                              "type": "string"
+                            },
+                            "owner": {
+                              "type": "string"
+                            },
+                            "stage": {
+                              "type": "string"
+                            },
+                            "procedure": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ref",
+                            "owner",
+                            "stage",
+                            "procedure"
+                          ]
+                        },
+                        "findings": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Finding"
+                          }
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/EvidenceRequest"
+                          }
+                        },
+                        "referrals": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Referral"
+                          }
+                        },
+                        "controller": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ControllerRequest"
+                          }
+                        },
+                        "identities": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/IdentityMarker"
+                          }
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "stages": {
+                              "type": "object",
+                              "properties": {
+                                "communicated": {
+                                  "type": "string"
+                                },
+                                "draft": {
+                                  "type": "string"
+                                },
+                                "issued": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "communicated",
+                                "draft",
+                                "issued"
+                              ]
+                            },
+                            "positions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "accepted",
+                                  "disputed",
+                                  "partly-accepted"
+                                ]
+                              }
+                            },
+                            "followUp": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "implemented",
+                                  "in-progress",
+                                  "not-implemented",
+                                  "open",
+                                  "partly-implemented"
+                                ]
+                              }
+                            },
+                            "outcomes": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "corrected",
+                                  "erased",
+                                  "no-record",
+                                  "partly",
+                                  "provided",
+                                  "refused",
+                                  "restricted"
+                                ]
+                              }
+                            },
+                            "roles": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "key": {
+                                    "type": "string",
+                                    "enum": [
+                                      "complainant",
+                                      "data-subject",
+                                      "whistleblower",
+                                      "witness"
+                                    ]
+                                  },
+                                  "label": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "key",
+                                  "label"
+                                ]
+                              }
+                            },
+                            "intake": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "stages",
+                            "positions",
+                            "followUp",
+                            "outcomes",
+                            "roles",
+                            "intake"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "case",
+                        "findings",
+                        "evidence",
+                        "referrals",
+                        "controller",
+                        "identities",
+                        "labels"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "findings": {
+                              "type": "number"
+                            },
+                            "issued": {
+                              "type": "number"
+                            },
+                            "responses": {
+                              "type": "number"
+                            },
+                            "evidenceRequests": {
+                              "type": "number"
+                            },
+                            "referrals": {
+                              "type": "number"
+                            },
+                            "controllerRequests": {
+                              "type": "number"
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "findings",
+                            "issued",
+                            "responses",
+                            "evidenceRequests",
+                            "referrals",
+                            "controllerRequests",
+                            "samples"
+                          ]
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "stages": {
+                              "type": "object",
+                              "properties": {
+                                "communicated": {
+                                  "type": "string"
+                                },
+                                "draft": {
+                                  "type": "string"
+                                },
+                                "issued": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "communicated",
+                                "draft",
+                                "issued"
+                              ]
+                            },
+                            "positions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "accepted",
+                                  "disputed",
+                                  "partly-accepted"
+                                ]
+                              }
+                            },
+                            "followUp": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "implemented",
+                                  "in-progress",
+                                  "not-implemented",
+                                  "open",
+                                  "partly-implemented"
+                                ]
+                              }
+                            },
+                            "outcomes": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "corrected",
+                                  "erased",
+                                  "no-record",
+                                  "partly",
+                                  "provided",
+                                  "refused",
+                                  "restricted"
+                                ]
+                              }
+                            },
+                            "roles": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "key": {
+                                    "type": "string",
+                                    "enum": [
+                                      "complainant",
+                                      "data-subject",
+                                      "whistleblower",
+                                      "witness"
+                                    ]
+                                  },
+                                  "label": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "key",
+                                  "label"
+                                ]
+                              }
+                            },
+                            "intake": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "stages",
+                            "positions",
+                            "followUp",
+                            "outcomes",
+                            "roles",
+                            "intake"
+                          ]
+                        },
+                        "names": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "findings": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Finding"
+                          }
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/EvidenceRequest"
+                          }
+                        },
+                        "referrals": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Referral"
+                          }
+                        },
+                        "controller": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ControllerRequest"
+                          }
+                        },
+                        "bodies": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "slot": {
+                                "type": "string",
+                                "enum": [
+                                  "anticorruption",
+                                  "dataProtection",
+                                  "humanRights",
+                                  "ombudsman",
+                                  "supremeAudit"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "institution": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              },
+                              "name": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "slot",
+                              "label",
+                              "institution",
+                              "name"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "labels",
+                        "names",
+                        "findings",
+                        "evidence",
+                        "referrals",
+                        "controller",
+                        "bodies"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "case": {
+                        "sample": true,
+                        "assignee": "string",
+                        "id": "ID-0001",
+                        "ref": "string",
+                        "owner": "string",
+                        "stage": "string",
+                        "procedure": "string"
+                      },
+                      "findings": [
+                        {
+                          "number": "string",
+                          "body": "string",
+                          "slot": "anticorruption",
+                          "case": {
+                            "id": "ID-0001",
+                            "ref": "string"
+                          },
+                          "concerns": "string",
+                          "stage": "communicated",
+                          "versions": [
+                            {}
+                          ],
+                          "responses": [
+                            {}
+                          ],
+                          "followUps": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "evidence": [
+                        {
+                          "number": "string",
+                          "body": "string",
+                          "case": {
+                            "id": "ID-0001",
+                            "ref": "string"
+                          },
+                          "to": "string",
+                          "relationship": {
+                            "id": "ID-0001",
+                            "version": 1,
+                            "type": "string"
+                          },
+                          "purpose": "string",
+                          "recordTypes": [
+                            "string"
+                          ],
+                          "requested": "string",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": {
+                            "name": "Example"
+                          },
+                          "submissions": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "referrals": [
+                        {
+                          "number": "string",
+                          "body": "string",
+                          "case": {
+                            "id": "ID-0001",
+                            "ref": "string"
+                          },
+                          "to": "string",
+                          "kind": "audit",
+                          "reason": "Text",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": {
+                            "name": "Example"
+                          }
+                        }
+                      ],
+                      "controller": [
+                        {
+                          "number": "string",
+                          "body": "string",
+                          "case": {
+                            "id": "ID-0001",
+                            "ref": "string"
+                          },
+                          "controller": "string",
+                          "relationship": {
+                            "id": "ID-0001",
+                            "version": 1,
+                            "type": "string"
+                          },
+                          "kind": "access",
+                          "records": [
+                            {}
+                          ],
+                          "purpose": "string",
+                          "asked": "string",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": {
+                            "name": "Example"
+                          }
+                        }
+                      ],
+                      "identities": [
+                        {
+                          "id": "ID-0001",
+                          "role": "complainant",
+                          "anonymous": true
+                        }
+                      ],
+                      "labels": {
+                        "stages": {
+                          "communicated": "string",
+                          "draft": "string",
+                          "issued": "string"
+                        },
+                        "positions": [
+                          "accepted"
+                        ],
+                        "followUp": [
+                          "implemented"
+                        ],
+                        "outcomes": [
+                          "corrected"
+                        ],
+                        "roles": [
+                          {
+                            "key": "complainant",
+                            "label": "Example"
+                          }
+                        ],
+                        "intake": [
+                          "string"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/oversight/route.ts"
+      },
+      "post": {
+        "tags": [
+          "oversight"
+        ],
+        "operationId": "post_oversight",
+        "summary": "POST /api/oversight",
+        "description": "/api/oversight — independent oversight (plan step I8; lib/oversight): the ombudsman, the human rights institution, the anti-corruption commission, the public audit office and the data-protection authority. Their cases run through /api/cases under their own approved procedures; this route carries what sits around them. GET: the bodies the nation named (each slot, empty by default) and, for the signed-in official, the oversight records they may see (oversightView(): their own body's findings, evidence requests, referrals and controller requests; a finding, request or controller request that concerns their own institution once it is sent to it), with counts. ?case=<id>: one case's findings, evidence requests, referrals, controller requests and protected identity markers (the role and whether the person is anonymous; never the identity), for those the case rules let read the case (the read logged). POST (signed-in officials; checked again here against the record): { op: 'receive', procedure, fields, identity: { anonymous, name, contact, consentToShare, protections } } open a complaint, disclosure or data-protection case with the person's identity kept apart; { op: 'read-identity', id, purpose } the assigned or authorised official reads a protected identity (logged); { op: 'authorise-reader', id, official: { id, name } } one who can sign there authorises a colleague (logged); { op: 'respond', finding, position, text, action?, evidence? } the institution a finding concerns answers it; { op: 'submit-evidence', request, description, document?, sha256? } the institution asked submits evidence; { op: 'answer-controller', request, outcome, reasons } the controller answers the data-protection authority; { op: 'access-history', case } the data-protection authority's access-log read for the records its case names (logged).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "case": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "ref": {
+                          "type": "string"
+                        },
+                        "stage": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "ref",
+                        "stage"
+                      ]
+                    },
+                    "identity": {
+                      "$ref": "#/components/schemas/IdentityMarker"
+                    }
+                  },
+                  "required": [
+                    "case",
+                    "identity"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "case": {
+                        "id": "ID-0001",
+                        "ref": "string",
+                        "stage": "string"
+                      },
+                      "identity": {
+                        "id": "ID-0001",
+                        "role": "complainant",
+                        "anonymous": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/oversight/route.ts"
+      }
+    },
     "/api/parcels/{pid}": {
       "get": {
         "tags": [
@@ -73941,6 +74667,23 @@
           "ok"
         ]
       },
+      "Actor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
       "Admin2Unit": {
         "type": "object",
         "properties": {
@@ -78153,6 +78896,21 @@
           "tests"
         ]
       },
+      "CaseRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref"
+        ]
+      },
       "CaseRefusal": {
         "type": "object",
         "properties": {
@@ -80812,6 +81570,134 @@
           "schedule",
           "unit",
           "max"
+        ]
+      },
+      "ControllerRequest": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "case": {
+            "$ref": "#/components/schemas/CaseRef"
+          },
+          "controller": {
+            "type": "string",
+            "description": "The institution that controls the records."
+          },
+          "relationship": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "version": {
+                "type": "number"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "version",
+              "type"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "access",
+              "correction",
+              "erasure",
+              "investigation",
+              "objection",
+              "restriction"
+            ]
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "register": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "register",
+                "id"
+              ]
+            },
+            "description": "The records concerned, by register and reference (never their content)."
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "asked": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "answer": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "$ref": "#/components/schemas/Actor"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "corrected",
+                  "erased",
+                  "no-record",
+                  "partly",
+                  "provided",
+                  "refused",
+                  "restricted"
+                ]
+              },
+              "reasons": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "outcome",
+              "reasons"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "body",
+          "case",
+          "controller",
+          "relationship",
+          "kind",
+          "records",
+          "purpose",
+          "asked",
+          "at",
+          "by"
         ]
       },
       "CoordinationEdge": {
@@ -84655,6 +85541,108 @@
         ],
         "additionalProperties": {}
       },
+      "EvidenceRequest": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "case": {
+            "$ref": "#/components/schemas/CaseRef"
+          },
+          "to": {
+            "type": "string",
+            "description": "The institution asked."
+          },
+          "relationship": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "version": {
+                "type": "number"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "version",
+              "type"
+            ],
+            "description": "The approved relationship it is made under, as in force when made."
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "recordTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requested": {
+            "type": "string"
+          },
+          "due": {
+            "type": "string",
+            "description": "The date the body asks for it by (its own choice, never a statutory period typed in)."
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "submissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvidenceSubmission"
+            }
+          },
+          "closed": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "$ref": "#/components/schemas/Actor"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "reason"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "body",
+          "case",
+          "to",
+          "relationship",
+          "purpose",
+          "recordTypes",
+          "requested",
+          "at",
+          "by",
+          "submissions"
+        ]
+      },
       "EvidenceRequirement": {
         "description": "The evidence-requirement record (civicos.evidence-requirement.v1, field series Part 1 §1.4): every activated evidence requirement resolves to it.",
         "type": "object",
@@ -84734,6 +85722,43 @@
           "drafted_by",
           "approved_by",
           "status"
+        ]
+      },
+      "EvidenceSubmission": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "description": {
+            "type": "string"
+          },
+          "document": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        "required": [
+          "n",
+          "at",
+          "by",
+          "description"
         ]
       },
       "ExchangeEntry": {
@@ -87692,6 +88717,165 @@
           "label"
         ]
       },
+      "Finding": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string",
+            "description": "The body (institution id) and its slot."
+          },
+          "slot": {
+            "type": "string",
+            "enum": [
+              "anticorruption",
+              "dataProtection",
+              "humanRights",
+              "ombudsman",
+              "supremeAudit"
+            ]
+          },
+          "case": {
+            "$ref": "#/components/schemas/CaseRef"
+          },
+          "concerns": {
+            "type": "string",
+            "description": "The institution the finding concerns."
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "communicated",
+              "draft",
+              "issued"
+            ]
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FindingVersion"
+            }
+          },
+          "decision": {
+            "type": "string",
+            "description": "The sealed decision that issued it (the report's approval, or the body's finding)."
+          },
+          "responses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagementResponse"
+            }
+          },
+          "followUps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowUp"
+            }
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "body",
+          "slot",
+          "case",
+          "concerns",
+          "stage",
+          "versions",
+          "responses",
+          "followUps"
+        ]
+      },
+      "FindingVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "criteria": {
+            "type": "string",
+            "description": "The standard or rule the matter is measured against (audit: criteria)."
+          },
+          "condition": {
+            "type": "string",
+            "description": "What was found."
+          },
+          "cause": {
+            "type": "string"
+          },
+          "effect": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Evidence relied on: document ids of the case, or described items."
+          },
+          "recommendation": {
+            "type": "string",
+            "description": "The recommendation: what the institution concerned is asked to do. Never an order."
+          }
+        },
+        "required": [
+          "n",
+          "at",
+          "by",
+          "reason",
+          "condition",
+          "evidence",
+          "recommendation"
+        ]
+      },
+      "FollowUp": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "implemented",
+              "in-progress",
+              "not-implemented",
+              "open",
+              "partly-implemented"
+            ]
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "at",
+          "by",
+          "status",
+          "note"
+        ]
+      },
       "FootprintPolygon": {
         "type": "object",
         "properties": {
@@ -89212,6 +90396,32 @@
           "preliminary",
           "assessments",
           "history"
+        ]
+      },
+      "IdentityMarker": {
+        "description": "What anyone who may see the case learns of a protected identity: that it exists, its role and whether the person is anonymous.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "complainant",
+              "data-subject",
+              "whistleblower",
+              "witness"
+            ]
+          },
+          "anonymous": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "anonymous"
         ]
       },
       "IdentityRequest": {
@@ -92318,6 +93528,49 @@
         "required": [
           "start",
           "end"
+        ]
+      },
+      "ManagementResponse": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "position": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "disputed",
+              "partly-accepted"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string",
+            "description": "What it will do, and by when it says."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "n",
+          "at",
+          "by",
+          "position",
+          "text",
+          "evidence"
         ]
       },
       "MediaShipment": {
@@ -103456,6 +104709,58 @@
           "followed",
           "outboxSeen",
           "lagMs"
+        ]
+      },
+      "Referral": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "case": {
+            "$ref": "#/components/schemas/CaseRef"
+          },
+          "to": {
+            "type": "string",
+            "description": "The receiving institution."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "audit",
+              "court",
+              "other",
+              "prosecution",
+              "regulator"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why. The referral carries the case reference and this, nothing of the file."
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "body",
+          "case",
+          "to",
+          "kind",
+          "reason",
+          "at",
+          "by"
         ]
       },
       "RegionReporting": {
