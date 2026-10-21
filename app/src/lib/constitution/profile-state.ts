@@ -26,8 +26,8 @@ export type ProfileStatus =
   | 'active' | 'superseded' | 'disputed' | 'suspended_pending_review' | 'withdrawn' | 'set_aside';
 
 /** The parts a profile bundles: each kept and changed on its own (lib/constitution/parts.ts). */
-export type PartKey = 'classification' | 'institutions' | 'authorities' | 'offices' | 'relationships' | 'dualControl' | 'suspension' | 'competences' | 'transitionRules';
-export const PART_KEYS: PartKey[] = ['classification', 'institutions', 'authorities', 'offices', 'relationships', 'dualControl', 'suspension', 'competences', 'transitionRules'];
+export type PartKey = 'classification' | 'institutions' | 'authorities' | 'offices' | 'relationships' | 'dualControl' | 'suspension' | 'competences' | 'transitionRules' | 'sealKeys';
+export const PART_KEYS: PartKey[] = ['classification', 'institutions', 'authorities', 'offices', 'relationships', 'dualControl', 'suspension', 'competences', 'transitionRules', 'sealKeys'];
 
 /**
  * The change process (policy-change.ts `audit` key) of each part: a dispute
@@ -46,6 +46,8 @@ export const PART_AUDIT: Record<PartKey, string> = {
   // country's transition rules (caretaker restrictions, who records each impeachment stage, emergency limits).
   competences: 'transition.competence',
   transitionRules: 'transition.rules',
+  // Who approves the state's seal keys (lib/keys/seal-register.ts): a part only once the nation adopts its rules.
+  sealKeys: 'seal-key.rules',
 };
 export const PART_LABELS: Record<PartKey, string> = {
   classification: 'Classification of the state',
@@ -57,6 +59,7 @@ export const PART_LABELS: Record<PartKey, string> = {
   suspension: 'Emergency suspension rules',
   competences: 'Allocation of powers between national and regional institutions',
   transitionRules: 'Rules for transitions and emergencies',
+  sealKeys: 'Who approves the state\'s seal keys',
 };
 
 /** One part as a profile holds it: the version in force when captured (the count of adopted changes) and the digest of its values. */

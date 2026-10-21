@@ -16,6 +16,9 @@
 //   competences     the allocation of powers between national and regional institutions in force (plan phase 6)
 //   transitionRules the country's rules for transitions: caretaker restrictions, who records each impeachment
 //                   stage, who may declare an emergency and for how long (plan phase 6)
+//   sealKeys        who approves the state's seal keys, how many, whether the legislature must too
+//                   (lib/keys/seal-register.ts); counted only once the nation adopts its rules, so the
+//                   digest of every profile drafted before stays as it was
 
 import { sha256Hex } from '@/lib/audit/sha256';
 import { canonicalJson } from '@/lib/data/store/shared';
@@ -28,6 +31,7 @@ import { dualControlPolicy } from '@/lib/casework/dual-control-policy';
 import { suspensionPolicy } from '@/lib/permits/authority';
 import { classificationOf } from '@/lib/nation/classification';
 import { PART_KEYS, PART_LABELS, type PartKey, type PartRef } from './profile-state';
+import { sealKeyRules } from '@/lib/keys/seal-register';
 import { competencesInForce, competenceVersions, competencesWaiting, transitionRules } from '@/lib/transitions/state';
 
 const digestOf = (v: unknown) => sha256Hex(canonicalJson(v));
@@ -91,12 +95,20 @@ function read(key: PartKey, now: Date): LivePart {
       return { key, label, version: adoptedCount(changes), digest: digestOf({ ...values, adopted }), waiting: waitingOf(changes),
         summary: adopted ? `Caretaker restricts ${restricted} kind(s); ${values.impeachmentStages.filter(Boolean).length} of 7 impeachment stages named; emergencies by ${values.emergencyDeclarers.length} declarer(s)` : 'None adopted by the nation' };
     }
+    case 'sealKeys': {
+      const r = sealKeyRules();
+      return { key, label, version: adoptedCount(r.changes), digest: digestOf({ authority: r.authority, approvers: r.approvers, legislatureResolution: r.legislatureResolution, reviewWithinDays: r.reviewWithinDays, adopted: r.adopted }), waiting: waitingOf(r.changes),
+        summary: r.adopted ? `${r.approvers} approvals${r.legislatureResolution ? ' and the legislature\'s enacted instrument' : ''} for each key; compromise reviewed within ${r.reviewWithinDays} d` : 'Platform defaults (not adopted by the nation)' };
+    }
   }
 }
 
+/** Parts that count only once the nation adopts them (added after profiles existed; their absence leaves earlier digests as they were). */
+const ONCE_ADOPTED: PartKey[] = ['sealKeys'];
+
 /** Every part as it stands today, in a fixed order. */
 export function currentParts(now = new Date()): LivePart[] {
-  return PART_KEYS.map(k => read(k, now));
+  return PART_KEYS.map(k => read(k, now)).filter(p => !ONCE_ADOPTED.includes(p.key) || p.version > 0);
 }
 
 /** The digest a profile carries: SHA-256 over the parts' keys, versions and digests (not their summaries). */
