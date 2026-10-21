@@ -61,6 +61,19 @@ What has been built is locked. Work only upgrades it toward the vision in
   decisions cite a law version from it. Decision records are signed with the
   `decision` key, certificates are checked at `/verify`; reference procedures
   are drafts until a nation approves them. Status: register §18.
+- Seal keys (`lib/keys/seal-register.ts`, `docs/SEAL_KEYS.md`; owner's
+  decision 2026-10-21): a production installation seals only with a key whose
+  fingerprint the register approves (`sealKeyRefusal()` in `recordDecision()`
+  and `signDocument()`). The nation's law names the approving authority once
+  (slot `trustServices`, empty by default) in the seal-key rules changed
+  through `policy-change.ts`; at least two officials who can sign there, other
+  than the proposer, approve every key; no act of parliament per key (the
+  `legislatureResolution` option, shipped off, is for nations whose law demands
+  one). Activation retires the previous key; retired keys verify forever;
+  revocation is reported by one and confirmed by a second official at once,
+  flags only seals after the compromise time and is reviewed afterwards by the
+  authority. Never change or delete a decision for a key; demo and training
+  trust a new key as a sample. Public trust list: `GET /api/trust/keys`.
 - Organisations (`lib/organisations/register.ts`) change only through the
   effects in `lib/organisations/procedures.ts`; a standing in a register is
   changed only by the authority that keeps that register type. Lists, the
