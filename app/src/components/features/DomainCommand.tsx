@@ -460,7 +460,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {cfg.strip(w).map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}<SignalTag kind="sample" source={REFERENCE_MODEL} /></span>
+            <span className="flex min-w-0 flex-wrap items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}<SignalTag kind="sample" source={REFERENCE_MODEL} /></span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
               <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} />{s.v}
             </span>

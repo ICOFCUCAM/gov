@@ -345,7 +345,7 @@ export function AuditView() {
           { l: 'Oversight', v: shownValue(gen, 'INDEPENDENT'), t: gen.show ? 'ok' : 'neutral', kind: gen.kind, src: gen.src },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}<SignalTag kind={s.kind} source={s.src} /></span>
+            <span className="flex min-w-0 flex-wrap items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}<SignalTag kind={s.kind} source={s.src} /></span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
               {s.l === 'Integrity posture' || s.l === 'Oversight' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
               {s.v}
