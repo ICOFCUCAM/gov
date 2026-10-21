@@ -57,6 +57,8 @@ const ALLOWED: { token: RegExp; why: string }[] = [
 
 const HEALTH = 'min-health';
 const GROUPS = blueprintFor('HEALTH').map(g => g.key);
+// Moments across two days, a few hours apart.
+const MOMENTS = Array.from({ length: 12 }, (_, i) => Date.UTC(2026, 9, 21, 0, 0) + i * 4.3 * 3_600_000);
 
 function found(text: string, where: string): string[] {
   const rest = ALLOWED.reduce((t, a) => t.replace(a.token, ''), text);
@@ -71,16 +73,23 @@ const render = (mode: InstallationMode, group: string, open = false) => {
 const text = (html: string) => html.replace(/<[^>]*\b(title|aria-label|placeholder)="([^"]*)"[^>]*>/g, ' $2 ').replace(/<[^>]+>/g, ' ').replace(/&#x27;/g, "'").replace(/&amp;/g, '&');
 
 describe('rendered health surfaces carry no patient or clinical field', () => {
-  it('every health group of the ministry system console, in demo, in production and opened as a simulation', () => {
+  it('every health group of the ministry system console, in demo, in production and opened as a simulation', { timeout: 60_000 }, () => {
     expect(GROUPS).toEqual(expect.arrayContaining(['doctor', 'patient', 'hospitals', 'lab', 'disease', 'pharma']));
-    const hits: string[] = [];
-    for (const group of GROUPS) {
-      for (const [mode, open] of [['demo', false], ['production', false], ['production', true]] as const) {
-        const html = render(mode, group, open);
-        hits.push(...found(text(html), `${group} · ${mode}${open ? ' opened' : ''}`));
+    const hits = new Set<string>();
+    // The engines' states move with time (a strained laboratory, a crisis posture): sweep several moments.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      for (const [k, at] of MOMENTS.entries()) {
+        vi.setSystemTime(at);
+        for (const group of GROUPS) {
+          const states = k === 0 ? [['demo', false], ['production', false], ['production', true]] as const : [['demo', false]] as const;
+          for (const [mode, open] of states) {
+            for (const hit of found(text(render(mode, group, open)), `${group} · ${mode}${open ? ' opened' : ''}`)) hits.add(hit.replace(/\d+/g, '#'));
+          }
+        }
       }
-    }
-    expect(hits).toEqual([]);
+    } finally { vi.useRealTimers(); }
+    expect([...hits]).toEqual([]);
   });
 
   it('the administrative panels replaced the person-level ones, keeping their places and links', () => {
