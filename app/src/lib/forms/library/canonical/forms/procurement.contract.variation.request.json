@@ -1,0 +1,125 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "procurement.contract.variation.request",
+  "record_type": "procurement.contract_variation",
+  "form_version": 1,
+  "status": "draft",
+  "fields": [
+    {
+      "id": "variation.contract_ref",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "contract_active_or_variation_eligible", "params": {}}],
+      "values_source": "procurement.contracts",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Contract"},
+      "hint": {"en": "Select the contract for which the change is requested."},
+      "error_text": {"en": {"contract_active_or_variation_eligible": "The contract cannot be varied under its current status or rules."}}
+    },
+    {
+      "id": "variation.requesting_party_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "party_authorized_to_request_variation", "params": {}}],
+      "values_source": "civicos.registry.contract_parties",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Requesting party"},
+      "hint": {"en": "Select the party authorized to request this change."},
+      "error_text": {"en": {"party_authorized_to_request_variation": "The selected party is not authorized to request this variation."}}
+    },
+    {
+      "id": "variation.change_type",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "variation_type_allowed_for_contract", "params": {}}],
+      "values_source": "procurement.country.approved.variation_types",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Type of change"},
+      "hint": {"en": "Choose the category that describes the requested change."},
+      "error_text": {"en": {"variation_type_allowed_for_contract": "This change type is not available under the contract's approved rules."}}
+    },
+    {
+      "id": "variation.reason",
+      "type": "long_text",
+      "required": true,
+      "validation": [{"rule": "length", "params": {"min": 20, "max": 10000}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Why is the change needed?"},
+      "hint": {"en": "Explain the circumstances and why the requested change is necessary."},
+      "error_text": {"en": {"length": "Explain the reason using between 20 and 10,000 characters."}}
+    },
+    {
+      "id": "variation.current_terms_ref",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "contract_terms_version_is_current", "params": {}}],
+      "values_source": "procurement.contract_terms",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Current contract terms"},
+      "hint": {"en": "Link the version of the contract currently in force."},
+      "error_text": {"en": {"contract_terms_version_is_current": "Select the current approved contract version."}}
+    },
+    {
+      "id": "variation.proposed_terms_ref",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "proposed_change_diff_is_recorded", "params": {}}],
+      "values_source": "procurement.proposed_contract_changes",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Proposed contract changes"},
+      "hint": {"en": "Link the exact proposed changes so the current terms remain preserved."},
+      "error_text": {"en": {"proposed_change_diff_is_recorded": "Record the proposed changes against the current terms."}}
+    },
+    {
+      "id": "variation.value_change",
+      "type": "money",
+      "required": false,
+      "validation": [{"rule": "value_change_calculated_from_proposed_terms", "params": {}}],
+      "values_source": "procurement.contract_change_calculations",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Change in contract value"},
+      "hint": {"en": "The system must calculate or validate this value from the proposed terms."},
+      "error_text": {"en": {"value_change_calculated_from_proposed_terms": "The value change does not match the proposed terms."}}
+    },
+    {
+      "id": "variation.legal_authority_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "variation_has_approved_legal_authority", "params": {}}],
+      "values_source": "civicos.registry.approved_legal_authorities",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Authority to vary the contract"},
+      "hint": {"en": "Link the approved legal and procedural authority for the proposed change."},
+      "error_text": {"en": {"variation_has_approved_legal_authority": "No applicable approved authority was found."}}
+    },
+    {
+      "id": "variation.supporting_evidence",
+      "type": "document",
+      "required": false,
+      "validation": [{"rule": "evidence_requirements_satisfied", "params": {}}, {"rule": "malware_scan_passed", "params": {}}],
+      "values_source": "civicos.documents.secure_store",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "variation_support", "when": "as_required_by_the_approved_contract_change_procedure"}],
+      "label": {"en": "Supporting evidence"},
+      "hint": {"en": "Attach the evidence required by the variation procedure."},
+      "error_text": {"en": {"evidence_requirements_satisfied": "Required evidence is missing.", "malware_scan_passed": "The file could not be accepted safely."}}
+    }
+  ],
+  "legal_basis": [],
+  "country_decisions": [
+    "Permitted contract variation types and limits.",
+    "Approval authority and separation of duties.",
+    "When a variation requires procurement-method review or a new competition.",
+    "Contract extension and termination powers.",
+    "Publication, disclosure and audit requirements."
+  ]
+}

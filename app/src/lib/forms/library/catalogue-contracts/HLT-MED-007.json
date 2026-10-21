@@ -1,0 +1,626 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-MED-007",
+ "record_type": "medicines.marketing-authorisation.renewal",
+ "form_version": 1,
+ "procedure_package_id": "medicines.renewal",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-MED-002: whether marketing authorisations are renewed, the validity period and when renewal opens.",
+  "The renewal fee: an approved fee rule (lib/law/rules.ts); none ships.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records.",
+  "CFG-MED-001: medicines and medical-device classifications, each from the standard the nation adopts.",
+  "CFG-MED-003: inspection, safety reporting and recall authority."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-MED-007",
+  "part": 6,
+  "section": "5.1",
+  "line": 658,
+  "batch": 2
+ },
+ "library": {
+  "title": "Renew a marketing authorisation",
+  "intro": "Apply to renew a marketing authorisation before it ends, where the law limits its validity. Confirm the product as authorised now, the variations approved since, its manufacturing sites, and give a summary of its safety in aggregate.",
+  "owner": "medicinesRegulation",
+  "filled_by": "The authorisation holder (a registered organisation) or someone acting for it.",
+  "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "procedure": {
+   "key": "medicines.renewal",
+   "stage": "submitted",
+   "action": "register",
+   "document": "application-form"
+  },
+  "lists": {},
+  "nation_values": [
+   {
+    "key": "medicines.marketing-authorisation.renewal-fee",
+    "kind": "fee",
+    "source": "rule",
+    "decision": "The renewal fee."
+   },
+   {
+    "key": "medicines.marketing-authorisation.renewal-window",
+    "kind": "period",
+    "source": "setting",
+    "decision": "How long before the authorisation ends renewal may or must be applied for."
+   },
+   {
+    "key": "medicines.marketing-authorisation.validity",
+    "kind": "period",
+    "source": "setting",
+    "decision": "How long a marketing authorisation is valid, where the law limits it."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "aggregate-safety",
+    "what": "The safety summary is aggregate free text (numbers and kinds of reports, signals, actions), restricted",
+    "why": "No individual report, person or clinical field enters a renewal.",
+    "rule": "CLAUDE.md Health: returns are aggregates; no patient or clinical field anywhere"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: records of products, of organisations (holders, manufacturers, importers) and of the regulator's decisions.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "medicines-authority-slot",
+    "what": "The form names the medicines-regulator slot (medicinesRegulation), which ships empty: until the nation names it, the health regulator slot (healthRegulation, \"Health facility regulation\") stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence; each power over a product type comes from the approved permit authority mapping",
+    "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
+    "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
+   },
+   {
+    "id": "no-product-register",
+    "what": "The regulated product record (Part 6 §5.2) is kept in the platform's register of medicines and medical devices (lib/health/products/register.ts), written only by the product procedures' effects and read in full only by the medicines authority; a reference to an authorised product in this form is still recorded as given and its check recorded as not performed until the form's reference check reads that register, and a status is never inferred from an import, inventory or procurement record",
+    "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
+    "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 505,
+    "quotes": [
+     "Medicines regulator",
+     "Medicines, medical devices, safety, and market authorization",
+     "Regulatory dossiers have their own access and disclosure rules"
+    ],
+    "met_by": {
+     "deviation": "medicines-authority-slot",
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Dossier, assessment, report and inspection content is restricted: read only at the institution responsible, every read of personal data in the access log"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 649,
+    "quotes": [
+     "The medicines regulator needs a separate workflow from clinical prescribing and hospital pharmacy operations.",
+     "Product authorization, manufacturing oversight, import authorization, safety reporting, and enforcement decisions must be managed under configured national law."
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002",
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "Apart from prescribing and pharmacy operations: no prescribing, dispensing or patient field in any form of this batch (the scope check runs on every key)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 688,
+    "quotes": [
+     "A marketing authorization must not be inferred from a product's appearance in an import record, hospital inventory, or procurement system.",
+     "Each status must derive from the competent regulator's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "An authorisation or licence reference must be active in its register (REF-ACTIVE); the approved permit mapping and its review path decide, and production refuses a power no approved mapping covers"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 862,
+    "quotes": [
+     "CFG-MED-001",
+     "Medicines and medical-device classifications"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 863,
+    "quotes": [
+     "CFG-MED-002",
+     "Marketing authorization and product variation procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 864,
+    "quotes": [
+     "CFG-MED-003",
+     "Inspection, safety reporting, and recall authority"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-003"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register",
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Holders, manufacturers and importers are organisations: their standing comes only from the register the competent authority keeps; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 893,
+    "quotes": [
+     "Medicines and devices regulatory service — applications, assessments, authorizations, inspections, safety reporting, and recalls."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Applications, assessments, authorisations, inspections, safety reporting and recalls are the contracts of batch 2; the service that runs them waits for plan step I4"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 684,
+    "quotes": [
+     "Authorization status, scope, conditions, effective date, and expiry where applicable."
+    ],
+    "met_by": {
+     "fields": [
+      "renewal.product",
+      "renewal.expiry"
+     ],
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 658,
+    "quotes": [
+     "HLT-MED-007",
+     "Product authorization renewal",
+     "Renewal review"
+    ],
+    "met_by": {
+     "fields": [
+      "renewal.product",
+      "renewal.evidence",
+      "renewal.safety_summary"
+     ],
+     "deviation": "aggregate-safety"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3237,
+    "quotes": [
+     "Controls: a supervisory employee should not be able to change an approved tariff, impose a sanction or revoke a licence without the required authority and approvals.",
+     "Confidential commercial information and protected supervisory returns must not become public simply because the regulator has a public website."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A suspension, withdrawal or other sanction needs the power an approved mapping gives, decided in a case by an official who can sign; dossier, report and inspection content is restricted and never on a public page or list"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "renewal.product",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.registry.products",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Marketing authorisation or registration number"
+   },
+   "hint": {
+    "en": "The number the regulator gave the product, as on its authorisation or the pack."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the marketing authorisation or registration number.",
+     "reference_exists": "There is no authorised product with that number.",
+     "REF-ACTIVE": "That product's authorisation is not in force."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The authorisation"
+   }
+  },
+  {
+   "id": "renewal.holder",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "organisation_identity_consistent",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "legal_entity_registration",
+     "when": "when_the_organisation_record_must_be_verified_under_the_approved_procedure"
+    }
+   ],
+   "label": {
+    "en": "Authorisation holder's organisation registration number"
+   },
+   "hint": {
+    "en": "The organisation as it stands in the register of organisations. A holder, manufacturer or importer is an organisation there, never a second identity."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the authorisation holder's organisation registration number.",
+     "reference_exists": "There is no organisation with that number in the register.",
+     "REF-ACTIVE": "That organisation is not active in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The authorisation"
+   }
+  },
+  {
+   "use_group": "core.representation",
+   "version": 1,
+   "only": [
+    "representation.capacity",
+    "representation.actor",
+    "representation.authority_document"
+   ],
+   "section": {
+    "en": "Who is applying"
+   }
+  },
+  {
+   "id": "renewal.expiry",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "product_renewal_window_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date the current authorisation ends"
+   },
+   "hint": {
+    "en": "As shown on the authorisation."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the date the current authorisation ends."
+    }
+   },
+   "country_decision": "CFG-MED-002: how long before the authorisation ends a renewal may or must be made.",
+   "section": {
+    "en": "The authorisation"
+   }
+  },
+  {
+   "id": "renewal.variations",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Variations approved since the authorisation or last renewal"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The authorisation"
+   }
+  },
+  {
+   "id": "renewal.marketed",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Is the product on the market in the country now?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The authorisation"
+   }
+  },
+  {
+   "id": "renewal.sites_unchanged",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Are the manufacturing sites and their good-practice certificates unchanged and current?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Manufacture"
+   }
+  },
+  {
+   "id": "renewal.sites_changes",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "renewal.sites_unchanged",
+      "equals": false
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What has changed, and the variation that approved it"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter what has changed, and the variation that approved it.",
+     "length": "What has changed, and the variation that approved it must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Manufacture"
+   }
+  },
+  {
+   "id": "renewal.safety_summary",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Summary of the product's safety since the authorisation or last renewal"
+   },
+   "hint": {
+    "en": "Aggregate only: the numbers and kinds of reports, the signals and the actions taken. Do not give anyone's identity or medical details."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the summary of the product's safety since the authorisation or last renewal.",
+     "length": "Summary of the product's safety since the authorisation or last renewal must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Safety"
+   }
+  },
+  {
+   "id": "renewal.evidence",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "renewal-evidence",
+     "when": "as_required_by_the_approved_renewal_procedure"
+    }
+   ],
+   "label": {
+    "en": "Evidence for the renewal"
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide evidence for the renewal."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Safety"
+   }
+  },
+  {
+   "use_group": "core.payment",
+   "version": 1,
+   "section": {
+    "en": "Fee"
+   }
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "renewal.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -16,7 +16,7 @@ import * as React from 'react';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api/client';
-import { AUTHORITIES, type AuthorityKey } from '@/lib/nation/deployment';
+import { AUTHORITIES, HEALTH_SLOTS, PROVISIONAL_FALLBACK, type AuthorityKey } from '@/lib/nation/deployment';
 import type { Ministry } from '@/lib/api/types';
 
 type AuthorityMap = Partial<Record<AuthorityKey, string>>;
@@ -112,7 +112,17 @@ export function ResponsibleAuthorities() {
         officials serving the whole government do not reach its records, cases or accounts. Others are independent when their standing says so (Ministries &amp; agencies).
       </p>
       <div className="grid gap-2 md:grid-cols-2">
-        {AUTHORITIES.filter(a => a.optional).map(select)}
+        {AUTHORITIES.filter(a => a.optional && !HEALTH_SLOTS.includes(a.key)).map(select)}
+      </div>
+      <h3 className="mt-4 text-sm font-semibold">Health bodies apart from the health regulator</h3>
+      <p className="mb-2 text-xs text-ink-muted">
+        Only where your nation&apos;s law sets them apart. Until one is named, the forms that name it are owned provisionally by the body below it
+        ({HEALTH_SLOTS.map(k => `${AUTHORITIES.find(a => a.key === k)!.label} → ${AUTHORITIES.find(a => a.key === PROVISIONAL_FALLBACK[k])!.label}`).join('; ')}).
+        A provisional owner is shown as such, is not proof of legal competence and does not pass the competent-authority check in production.
+        Where the health regulator is the competent body in law, name it here as well.
+      </p>
+      <div className="grid gap-2 md:grid-cols-2">
+        {AUTHORITIES.filter(a => HEALTH_SLOTS.includes(a.key)).map(select)}
       </div>
       {setupComplete ? (
         <div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_auto]">

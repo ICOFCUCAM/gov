@@ -1,0 +1,1045 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-FAC-003",
+ "record_type": "health.facility.inspection.record",
+ "form_version": 1,
+ "procedure_package_id": "health.facility",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-002: inspection procedures, the approved checklists, whether findings are graded and the periods for corrective action.",
+  "CFG-HLT-001: the institution whose inspectors carry inspection authority.",
+  "CFG-DAT-001: classification and retention of inspection reports and evidence."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-FAC-003",
+  "part": 6,
+  "section": "6.2",
+  "line": 715,
+  "batch": 1
+ },
+ "library": {
+  "title": "Record a health facility inspection",
+  "intro": "The inspection report, completed by the inspector the regulator assigned, under their own sign-in. It records what was observed against the approved checklist. It never records anything about a patient, and a finding is never a score.",
+  "owner": "healthRegulation",
+  "filled_by": "The inspector assigned by the health regulator, signed in (the inspector is recorded from the sign-in, never typed).",
+  "procedure": {
+   "key": "health.facility",
+   "stage": "inspection",
+   "action": "inspected",
+   "document": "inspection-report"
+  },
+  "lists": {
+   "health.country.facility_types": {
+    "values": [
+     {
+      "value": "hospital",
+      "label": "Hospital"
+     },
+     {
+      "value": "health-centre",
+      "label": "Health centre"
+     },
+     {
+      "value": "clinic",
+      "label": "Clinic"
+     },
+     {
+      "value": "dispensary",
+      "label": "Dispensary"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity home"
+     },
+     {
+      "value": "laboratory",
+      "label": "Medical laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging centre"
+     },
+     {
+      "value": "dental",
+      "label": "Dental practice"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.facility_services": {
+    "values": [
+     {
+      "value": "outpatient",
+      "label": "Outpatient care"
+     },
+     {
+      "value": "inpatient",
+      "label": "Inpatient care"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity and delivery"
+     },
+     {
+      "value": "emergency",
+      "label": "Emergency care"
+     },
+     {
+      "value": "surgery",
+      "label": "Surgery"
+     },
+     {
+      "value": "laboratory",
+      "label": "Laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging"
+     },
+     {
+      "value": "pharmacy",
+      "label": "Pharmacy"
+     },
+     {
+      "value": "immunisation",
+      "label": "Immunisation"
+     },
+     {
+      "value": "dental",
+      "label": "Dental"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.capacity_measures": {
+    "values": [
+     {
+      "value": "beds-total",
+      "label": "Beds (all)"
+     },
+     {
+      "value": "beds-intensive-care",
+      "label": "Intensive-care beds"
+     },
+     {
+      "value": "consulting-rooms",
+      "label": "Consulting rooms"
+     },
+     {
+      "value": "operating-theatres",
+      "label": "Operating theatres"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.inspection_types": {
+    "values": [
+     {
+      "value": "licensing",
+      "label": "For a licence application"
+     },
+     {
+      "value": "renewal",
+      "label": "For a renewal"
+     },
+     {
+      "value": "routine",
+      "label": "Routine"
+     },
+     {
+      "value": "follow-up",
+      "label": "Follow-up of earlier findings"
+     },
+     {
+      "value": "complaint",
+      "label": "After a complaint or concern"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.finding_results": {
+    "values": [
+     {
+      "value": "met",
+      "label": "Met"
+     },
+     {
+      "value": "partly-met",
+      "label": "Partly met"
+     },
+     {
+      "value": "not-met",
+      "label": "Not met"
+     },
+     {
+      "value": "not-assessed",
+      "label": "Not assessed"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.inspection_recommendations": {
+    "values": [
+     {
+      "value": "compliant",
+      "label": "Meets the requirements"
+     },
+     {
+      "value": "compliant-with-actions",
+      "label": "Meets them once corrective actions are done"
+     },
+     {
+      "value": "not-compliant",
+      "label": "Does not meet them"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "health.facility.corrective-action-period",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The period within which each kind of corrective action must be done."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "inspector-from-sign-in",
+    "field": "inspector_id",
+    "what": "The inspector is recorded from the sign-in (officer field), never typed",
+    "why": "Stricter: findings are entered under the inspector's own account.",
+    "rule": "CLAUDE.md Who acted: a signed-in official's verified name replaces any name in the request"
+   },
+   {
+    "id": "no-score",
+    "what": "A finding has a result and an observation, never a score",
+    "why": "Platform rule: no risk score anywhere; a finding is a prompt, never a conclusion.",
+    "rule": "CLAUDE.md Customs/Audit administration (never a score; a finding is a prompt)"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 866,
+    "quotes": [
+     "CFG-LIC-002",
+     "Facility licensing, inspection, and enforcement procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 715,
+    "quotes": [
+     "HLT-FAC-003",
+     "Facility inspection",
+     "Findings recorded"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.findings"
+     ],
+     "procedure": "inspected"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1570,
+    "quotes": [
+     "{\"key\": \"facility_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.facility"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1571,
+    "quotes": [
+     "{\"key\": \"inspector_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.inspector"
+     ],
+     "deviation": "inspector-from-sign-in"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1572,
+    "quotes": [
+     "{\"key\": \"inspection_rule_version\", \"type\": \"rule_version_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.checklist_version"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1573,
+    "quotes": [
+     "{\"key\": \"findings\", \"type\": \"array\", \"required\": true, \"items_type\": \"inspection_finding\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.findings"
+     ],
+     "deviation": "no-score"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1574,
+    "quotes": [
+     "{\"key\": \"corrective_actions\", \"type\": \"array\", \"required\": false, \"items_type\": \"corrective_action\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.corrective_actions"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1323,
+    "quotes": [
+     "Health facility",
+     "Unique facility ID, name, type, location, operator, authorised services, operational status, verification date"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "The facility register keeps the id, name, type, location, operator, services, status and verification date; this form points to it by the facility's number"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1325,
+    "quotes": [
+     "Inspection",
+     "Facility, inspection type, findings, evidence, inspector, corrective action, due date defined by applicable rules"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.facility",
+      "inspection.type",
+      "inspection.findings",
+      "inspection.evidence",
+      "inspection.inspector",
+      "inspection.corrective_actions"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1336,
+    "quotes": [
+     "Inspection assignment to an authorised inspector."
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.inspector"
+     ],
+     "procedure": "inspect"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1337,
+    "quotes": [
+     "Findings and evidence entered under the inspector’s account."
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.findings",
+      "inspection.evidence"
+     ],
+     "deviation": "inspector-from-sign-in"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "inspection.facility",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "reference_type_allowed",
+     "params": {
+      "types": [
+       "health-facilities",
+       "pharmacies"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Facility registration number"
+   },
+   "hint": {
+    "en": "The facility's number in the register of organisations, as shown on its licence."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the facility registration number.",
+     "reference_exists": "There is no organisation with that number in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.case",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Case the inspection is for, if any"
+   },
+   "hint": {
+    "en": "The licence, renewal or complaint case that asked for this inspection."
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.type",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "health.country.inspection_types",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Type of inspection"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the type of inspection.",
+     "value_in_source": "Select the type of inspection from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.checklist_version",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "approved_checklist_version",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Approved checklist and version used"
+   },
+   "hint": {
+    "en": "The inspection rules the facility was checked against, as approved."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the approved checklist and version used."
+    }
+   },
+   "country_decision": "CFG-LIC-002: the approved inspection checklists and their versions.",
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.date",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date of the inspection"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the date of the inspection.",
+     "date_not_in_future": "Date of the inspection must be today or in the past."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.inspector",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_active_inspection_authority",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspector"
+   },
+   "hint": {
+    "en": "Recorded from the inspector's sign-in."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "inspection.interest_declared",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "I have no interest in this facility that I have not declared to the regulator"
+   },
+   "hint": {
+    "en": "A declared interest takes you off the inspection."
+   },
+   "error_text": {
+    "en": {
+     "required": "Confirm this statement to continue.",
+     "must_be_true": "Confirm this statement to continue."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.areas",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Areas inspected"
+   },
+   "error_text": {
+    "en": {
+     "length": "Areas inspected must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Findings"
+   }
+  },
+  {
+   "id": "inspection.findings",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Findings"
+   },
+   "hint": {
+    "en": "One entry per requirement of the checklist. Describe the premises, equipment, records keeping or procedure you saw. Never name or describe a patient."
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the findings."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "requirement",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Requirement of the checklist"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the requirement of the checklist.",
+       "length": "Requirement of the checklist must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "result",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "health.country.finding_results",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Result"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the result."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "observation",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 4000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "What you observed"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter what you observed.",
+       "length": "What you observed must be 4000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "severity",
+     "type": "choice",
+     "required": false,
+     "validation": [],
+     "values_source": "health.country.finding_severity",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Severity, where the checklist grades it"
+     },
+     "country_decision": "CFG-LIC-002: whether and how findings are graded."
+    }
+   ],
+   "section": {
+    "en": "Findings"
+   }
+  },
+  {
+   "id": "inspection.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "inspection_evidence",
+     "when": "when_the_inspector_records_evidence"
+    }
+   ],
+   "label": {
+    "en": "Evidence gathered"
+   },
+   "hint": {
+    "en": "Photographs of premises or equipment, copies of policies. Never a patient record."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Findings"
+   }
+  },
+  {
+   "id": "inspection.corrective_actions",
+   "type": "group",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Corrective actions required"
+   },
+   "hint": {
+    "en": "What the facility must put right, by when. The period comes from the nation's rules."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "requirement",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Requirement it answers"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the requirement it answers.",
+       "length": "Requirement it answers must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "action",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 2000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Action required"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the action required.",
+       "length": "Action required must be 2000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "dueDate",
+     "type": "date",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "date_not_before",
+       "params": {
+        "reference": "submission_date"
+       }
+      },
+      {
+       "rule": "corrective_action_period_from_rule",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Due date"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the due date.",
+       "date_not_before": "Due date must be today or later."
+      }
+     },
+     "country_decision": "CFG-LIC-002: the period within which each kind of corrective action must be completed."
+    }
+   ],
+   "section": {
+    "en": "Corrective actions"
+   }
+  },
+  {
+   "id": "inspection.recommendation",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "health.country.inspection_recommendations",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspector's recommendation"
+   },
+   "hint": {
+    "en": "A recommendation only. The decision is made by the official with the power to decide."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the inspector's recommendation.",
+     "value_in_source": "Select the inspector's recommendation from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Corrective actions"
+   }
+  },
+  {
+   "id": "inspection.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

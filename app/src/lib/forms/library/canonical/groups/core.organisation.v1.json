@@ -1,0 +1,105 @@
+{
+  "group_id": "core.organisation",
+  "version": 1,
+  "scope": "universal",
+  "fields": [
+    {
+      "id": "organisation.registry_ref",
+      "type": "registry_reference",
+      "required": false,
+      "validation": [{"rule": "reference_type_allowed", "params": {"types": ["legal_entity", "business"]}}],
+      "values_source": "civicos.registry.organisation",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Registered organisation"},
+      "hint": {"en": "Select an existing record if the organisation is registered."},
+      "error_text": {"en": {"reference_type_allowed": "Select an organisation record."}}
+    },
+    {
+      "id": "organisation.legal_name",
+      "type": "localized_text",
+      "required": true,
+      "validation": [{"rule": "required", "params": {}}, {"rule": "length", "params": {"min": 1, "max": 300}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "registration_evidence", "when": "if_the_service_requires_an_existing_registered_entity"}],
+      "label": {"en": "Legal name of the organisation"},
+      "hint": {"en": "Enter the registered name if one exists."},
+      "error_text": {"en": {"required": "Enter the organisation's name."}}
+    },
+    {
+      "id": "organisation.trading_name",
+      "type": "localized_text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 300}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Trading or public name"},
+      "hint": {"en": "Enter a trading name only if it differs from the legal name."},
+      "error_text": {"en": {"length": "Check the trading name."}}
+    },
+    {
+      "id": "organisation.legal_form",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.organisation.legal_form.v1",
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "registration_evidence", "when": "if_the_legal_form_affects_the_decision"}],
+      "label": {"en": "Legal form"},
+      "hint": {"en": "Choose the registered legal form where applicable."},
+      "error_text": {"en": {"value_in_source": "Choose a legal form."}}
+    },
+    {
+      "id": "organisation.registration_identifier",
+      "type": "identifier_reference",
+      "required": false,
+      "validation": [{"rule": "identifier_format_from_source", "params": {}}],
+      "values_source": "civicos.organisation.identifier_types",
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "registration_evidence", "when": "if_required_by_the_approved_procedure"}],
+      "label": {"en": "Registration number"},
+      "hint": {"en": "Enter the registration number from the relevant register."},
+      "error_text": {"en": {"identifier_format_from_source": "Check the registration number."}}
+    },
+    {
+      "id": "organisation.country_of_registration",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "iso.3166-1.alpha2.current",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Country of registration"},
+      "hint": {"en": "Select the country where the organisation is registered."},
+      "error_text": {"en": {"value_in_source": "Select a country."}}
+    },
+    {
+      "id": "organisation.registered_address",
+      "type": "address",
+      "required": false,
+      "validation": [],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Registered address"},
+      "hint": {"en": "Provide this only if required for the service."},
+      "error_text": {}
+    }
+  ],
+  "accessibility": {
+    "support_foreign_entities": true,
+    "support_unregistered_entities_where_lawful": true,
+    "do_not_assume_every_entity_has_a_company_number": true
+  },
+  "assisted_channel": {
+    "officer_may_search_authorized_registry": true,
+    "record_registry_used_for_verification": true
+  },
+  "country_decisions": [
+    "Legal entity types recognized by the country.",
+    "Which registration identifier and registry are authoritative for each service.",
+    "Rules for foreign, informal, nonprofit, public and unregistered entities."
+  ]
+}

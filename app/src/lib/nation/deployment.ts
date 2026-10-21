@@ -16,7 +16,13 @@ export type AuthorityKey =
   // Constitutional bodies (docs/CONSTITUTIONAL_ARCHITECTURE.md §2.3–2.6): empty slots,
   // named only when the nation has such a body. Nothing is assumed.
   | 'legislature' | 'supremeAudit' | 'electoral' | 'centralBank' | 'ombudsman'
-  | 'anticorruption' | 'humanRights' | 'headOfState' | 'constitutionalCourt';
+  | 'anticorruption' | 'humanRights' | 'headOfState' | 'constitutionalCourt'
+  // The body the nation's law names to approve the state's seal keys (lib/keys/seal-register.ts): empty until named.
+  | 'trustServices'
+  // Health bodies the nation's law may set apart from the health regulator (owner's direction 2026-10-21,
+  // docs/forms-catalogue/DIRECTION-2026-10-21-HEALTH-INTEGRATION.md §3): empty until named. Until then a
+  // form that names one is owned provisionally (provisionalOwner()), never as proof of legal competence.
+  | 'medicinesRegulation' | 'controlledSubstances' | 'publicHealth';
 
 export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts' | 'tax' | 'customs' | 'education' | 'health' | 'professions';
 
@@ -65,7 +71,13 @@ export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string;
   { key: 'ombudsman', label: 'Ombudsman', registers: 'Complaints about public bodies and their findings', optional: true },
   { key: 'anticorruption', label: 'Anti-corruption body', registers: 'Corruption complaints, investigations and referrals', optional: true },
   { key: 'humanRights', label: 'Human rights body', registers: 'Human rights complaints, inquiries and reports', optional: true },
+  { key: 'trustServices', label: 'Seal keys authority', registers: 'The state\'s seal keys: which keys may seal decisions and certificates, their validity and revocation', optional: true },
+  { key: 'medicinesRegulation', label: 'Medicines and medical devices regulation', registers: 'Authorised medicines and medical devices, manufacturing sites, imports, safety reports and recalls', optional: true },
+  { key: 'controlledSubstances', label: 'Controlled substances authority', registers: 'Authorisations to handle controlled medicines (only where the nation\'s law names a body apart from the medicines regulator)', optional: true },
+  { key: 'publicHealth', label: 'Public health authority', registers: 'Public-health programmes and the aggregate returns they receive (never an individual case)', optional: true },
 ];
+/** Health bodies a nation may set apart from the health regulator: optional, provisionally stood in for until named (PROVISIONAL_FALLBACK). */
+export const HEALTH_SLOTS: AuthorityKey[] = ['medicinesRegulation', 'controlledSubstances', 'publicHealth'];
 /** The slots every installation fills (the registers the platform runs). */
 export const REQUIRED_AUTHORITIES = AUTHORITIES.filter(a => !a.optional);
 /**
@@ -183,6 +195,56 @@ export function moduleRuns(p: DeploymentProfile | undefined, key: ModuleKey): bo
   if (m) return m.enabled;
   const auth = MODULES.find(x => x.key === key)!.authority;
   return !!authorityIn(p, auth);
+}
+
+/**
+ * Where a slot the nation has not named is stood in for, until it names one
+ * (owner's direction 2026-10-21 §3): the medicines regulator by the health
+ * regulator, a controlled-substances authority by the medicines regulator
+ * (and so on), a public-health authority by the health regulator. A stand-in
+ * is provisional: it is shown as such, fails the competent-authority gate in
+ * production and is never taken as proof that the body is legally competent.
+ */
+export const PROVISIONAL_FALLBACK: Partial<Record<AuthorityKey, AuthorityKey>> = {
+  medicinesRegulation: 'healthRegulation',
+  controlledSubstances: 'medicinesRegulation',
+  publicHealth: 'healthRegulation',
+};
+
+const WHAT: Partial<Record<AuthorityKey, string>> = {
+  medicinesRegulation: 'the medicines authority', controlledSubstances: 'the controlled-substances authority', publicHealth: 'the public-health authority',
+};
+
+/** Who owns what a slot names: the institution named for it, or, where it is empty, a recorded provisional stand-in. */
+export interface OwnerResolution {
+  /** The slot the form or procedure names. */
+  slot: AuthorityKey;
+  /** The slot whose institution acts (the slot itself, or the stand-in). */
+  actingSlot: AuthorityKey;
+  institution?: string;
+  /** Set when the slot is empty and a stand-in acts: what the nation has not named, in plain words. */
+  provisional?: string;
+}
+
+/**
+ * The owner of a slot under a profile: the institution named for it, else
+ * the first named slot down its fallback chain, marked provisional ("the
+ * nation has not named the medicines authority"). Pure; callers pass the
+ * profile's authorities (authorityFor() in the store).
+ */
+export function provisionalOwner(slot: AuthorityKey, authorityFor: (k: AuthorityKey) => string | undefined): OwnerResolution {
+  const named = authorityFor(slot);
+  if (named || !PROVISIONAL_FALLBACK[slot]) return { slot, actingSlot: slot, ...(named ? { institution: named } : {}) };
+  const missing = WHAT[slot] ?? AUTHORITIES.find(a => a.key === slot)?.label ?? slot;
+  let k: AuthorityKey | undefined = PROVISIONAL_FALLBACK[slot];
+  const seen = new Set<AuthorityKey>([slot]);
+  while (k && !seen.has(k)) {
+    seen.add(k);
+    const id = authorityFor(k);
+    if (id) return { slot, actingSlot: k, institution: id, provisional: `provisional: the nation has not named ${missing}; ${AUTHORITIES.find(a => a.key === k)?.label ?? k} stands in, which is not proof that it is legally competent` };
+    k = PROVISIONAL_FALLBACK[k];
+  }
+  return { slot, actingSlot: slot, provisional: `provisional: the nation has not named ${missing}, and no institution stands in` };
 }
 
 /** The working calendar legal deadlines count in. */

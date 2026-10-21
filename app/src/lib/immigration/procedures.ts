@@ -10,6 +10,9 @@
 // Asylum and enforcement are not here (directions 17, Gate 5): they need
 // their own safeguards (15.6) and an independent legal review.
 
+import { libraryForm } from '@/lib/forms/library/definitions';
+import { attachForm } from '@/lib/forms/library/build';
+import { partyName } from '@/lib/forms/contract';
 import { registerEffect, registeredEffects, type EffectContext } from '@/lib/casework/engine';
 import { draftPackage, listPackages } from '@/lib/casework/packages';
 import { issueCertificate } from '@/lib/records/certificates';
@@ -24,7 +27,7 @@ const input = (c: Case): GrantInput => {
   const f = c.fields;
   return {
     kind: kindOf(c), category: str(f.category),
-    holder: { name: str(f.holderName), nationality: str(f.nationality), documentNumber: str(f.documentNumber), ...(str(f.birthDate) ? { birthDate: str(f.birthDate) } : {}) },
+    holder: { name: partyName(f.holderName), nationality: str(f.nationality), documentNumber: str(f.documentNumber), ...(str(f.birthDate) ? { birthDate: str(f.birthDate) } : {}) },
     validFrom: str(f.validFrom), validUntil: str(f.validUntil), ...(str(f.entries) ? { entries: str(f.entries) } : {}),
     conditions: str(f.conditions).split(/[;\n]/).map(x => x.trim()).filter(Boolean),
   };
@@ -86,7 +89,7 @@ const VALIDITY: CasePackage['fields'] = [
   { key: 'conditions', label: 'Conditions (one per line)', type: 'longtext' },
 ];
 const REFUSED_STAGE = { key: 'not-granted', label: 'Refused', terminal: true };
-const APPEAL = { days: 30, body: 'the immigration appeals tribunal', suspensive: false };
+const APPEAL = { sampleDays: 30, body: 'the immigration appeals tribunal', suspensive: false };
 
 export const REFERENCE_VISA: Ref = {
   key: 'immigration.visa', version: 1, owner: 'immigration', title: 'Visa application', refPrefix: 'VIA', reference: true, citations: [],
@@ -113,7 +116,7 @@ export const REFERENCE_VISA: Ref = {
     { key: 'refuse', label: 'Refuse, with reasons', from: ['pending-approval'], to: 'not-granted', decision: 'refuse', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['immigration.refuse'] },
     { key: 'issue', label: 'Issue the visa document', from: ['issued'], to: 'document-issued', needs: { role: 'officer' }, effects: ['immigration.issueDocument'] },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 15 working days', from: 'opened', days: 15, calendar: 'working', onLapse: 'escalate' }],
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 15, calendar: 'working', onLapse: 'escalate' }],
   notifications: [], appeal: APPEAL, retention: 'immigration-application', sensitivity: 'restricted',
   tests: [
     { name: 'granted', steps: [
@@ -157,7 +160,7 @@ export const REFERENCE_RESIDENCE_PERMIT: Ref = {
     { key: 'refuse', label: 'Refuse, with reasons', from: ['pending-approval'], to: 'not-granted', decision: 'refuse', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['immigration.refuse'] },
     { key: 'issue', label: 'Issue the permit document', from: ['issued'], to: 'document-issued', needs: { role: 'officer' }, effects: ['immigration.issueDocument'] },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 60 days', from: 'opened', days: 60, calendar: 'calendar', onLapse: 'escalate' }],
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 60, calendar: 'calendar', onLapse: 'escalate' }],
   retention: 'immigration-residence',
   tests: [
     { name: 'granted', steps: [
@@ -189,7 +192,7 @@ export const REFERENCE_EXTENSION: Ref = {
     { key: 'extend', label: 'Extend', from: ['pending-approval'], to: 'extended', decision: 'extend', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['immigration.extend'] },
     { key: 'refuse', label: 'Refuse, with reasons', from: ['pending-approval'], to: 'not-granted', decision: 'refuse', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true } },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 30 days', from: 'opened', days: 30, calendar: 'calendar', onLapse: 'escalate' }],
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 30, calendar: 'calendar', onLapse: 'escalate' }],
   notifications: [], appeal: APPEAL, retention: 'immigration-application', sensitivity: 'restricted',
   tests: [{ name: 'extended', steps: [{ action: 'assess', fields: { grant: 'VIS-1', newValidUntil: '2027-06-30' }, documents: ['extension-evidence'], expect: 'assessment' }, { action: 'propose', expect: 'pending-approval' }, { action: 'extend', expect: 'extended' }] }],
 };
@@ -205,13 +208,16 @@ export const REFERENCE_REVOCATION: Ref = {
     { key: 'revoke', label: 'Revoke', from: ['pending-approval'], to: 'revoked', decision: 'revoke', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['immigration.revoke'] },
     { key: 'close', label: 'Close without revocation', from: ['notice', 'pending-approval'], to: 'closed', needs: { role: 'signatory' }, requires: { reasons: true } },
   ],
-  deadlines: [{ key: 'representations', label: 'Representations within 14 days of notice', from: 'notice', days: 14, calendar: 'calendar', onLapse: 'notify' }],
+  deadlines: [{ key: 'representations', label: 'Representations within the time the law sets, from notice', from: 'notice', sampleDays: 14, calendar: 'calendar', onLapse: 'notify' }],
   notifications: [], appeal: { ...APPEAL, suspensive: true }, retention: 'immigration-application', sensitivity: 'restricted',
   tests: [
     { name: 'revoked after representations', steps: [{ action: 'notify', fields: { grant: 'VIS-1', grounds: 'x' }, documents: ['grounds-evidence'], expect: 'notice' }, { action: 'propose', expect: 'pending-approval' }, { action: 'revoke', expect: 'revoked' }] },
     { name: 'closed', steps: [{ action: 'notify', fields: { grant: 'VIS-1', grounds: 'x' }, documents: ['grounds-evidence'], expect: 'notice' }, { action: 'close', expect: 'closed' }] },
   ],
 };
+
+// The specification's form (immigration.residence-permit), attached to the procedure's own fields and documents (lib/forms/library); still a draft the nation approves.
+Object.assign(REFERENCE_RESIDENCE_PERMIT, attachForm(REFERENCE_RESIDENCE_PERMIT.fields, REFERENCE_RESIDENCE_PERMIT.documents, libraryForm('immigration.residence-permit')));
 
 export const IMMIGRATION_PROCEDURES: Ref[] = [REFERENCE_VISA, REFERENCE_RESIDENCE_PERMIT, REFERENCE_EXTENSION, REFERENCE_REVOCATION];
 

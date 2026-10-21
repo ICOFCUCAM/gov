@@ -1,3 +1,4 @@
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { openCase, act, attach, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
 import { draftPackage, approvePackage, resetPackages } from '@/lib/casework/packages';
@@ -22,7 +23,7 @@ describe('tax procedures', () => {
     vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 7).toString('base64'));
     TAX = listMinistries()[0]!.id;
     setSovereign({ deployment: { authorities: { tax: TAX } } }, 'Administrator');
-    for (const p of TAX_PROCEDURES) { draftPackage(p, 'Author', 'a', registeredEffects()); const a = approvePackage(p.key, 1, 'Approver', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); if ('error' in a) throw new Error(a.error); }
+    for (const p of TAX_PROCEDURES) { draftPackage(asNationSets(p), 'Author', 'a', registeredEffects()); const a = approvePackage(p.key, 1, 'Approver', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); if ('error' in a) throw new Error(a.error); }
   });
 
   async function taxpayer() {

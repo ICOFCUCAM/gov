@@ -1,5 +1,7 @@
 // A small procedure for the workflow foundation's tests (not shipped to any nation).
 import type { CasePackage } from './types';
+import { editDraft, listPackages, unsetDays } from './packages';
+import { registeredEffects } from './engine';
 
 export function samplePackage(x: Partial<CasePackage> = {}): Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'> {
   return {
@@ -20,4 +22,18 @@ export function samplePackage(x: Partial<CasePackage> = {}): Omit<CasePackage, '
     tests: [{ name: 'grant', steps: [{ action: 'accept', fields: { name: 'A' }, documents: ['application-form'], expect: 'review' }, { action: 'grant', expect: 'granted' }] }],
     ...x,
   };
+}
+
+/** A reference procedure with the day counts the nation sets (in a test: its sample values, as if the nation had chosen them). */
+export function asNationSets<P extends Pick<CasePackage, 'deadlines' | 'appeal'>>(p: P): P {
+  return {
+    ...p,
+    deadlines: p.deadlines.map(d => (d.days === undefined ? { ...d, days: d.sampleDays ?? 30 } : d)),
+    ...(p.appeal ? { appeal: { ...p.appeal, days: p.appeal.days ?? p.appeal.sampleDays ?? 30 } } : {}),
+  };
+}
+
+/** Set the day counts on every draft that lacks them, as the nation does before approving its version (a test stand-in for the drafting official). */
+export function setNationDays(): void {
+  for (const p of listPackages({ state: 'draft' })) if (unsetDays(p).length) editDraft(p.key, p.version, asNationSets({ deadlines: p.deadlines, appeal: p.appeal }), 'Nation drafter', 'nation-drafter', registeredEffects());
 }

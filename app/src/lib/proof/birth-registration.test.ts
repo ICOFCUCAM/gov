@@ -2,6 +2,7 @@
 // 17.2, design §12): a birth registration through every layer, in the nine
 // steps the directions name. Each step uses the platform's own APIs and
 // stores, nothing simulated.
+import { asNationSets, setNationDays } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { createHash } from 'node:crypto';
@@ -43,17 +44,22 @@ describe('proof: a birth registration through every layer', () => {
     law = { instrument: v.instrument.id, version: v.version.id, digest: v.version.digest };
     // The reference procedure, cited to the nation's law in its version 2 and approved by the authority.
     installReferenceProcedures('Administrator');
-    const v2 = draftPackage({ ...REFERENCE_BIRTH, version: 2, reference: false, citations: [{ instrument: law.instrument, eId: 'sec_12', version: law.version, digest: law.digest, on: '2026-01-01' }] }, 'Registrar general', 'rg', registeredEffects());
+    setNationDays();
+    const v2 = draftPackage({ ...asNationSets(REFERENCE_BIRTH), version: 2, reference: false, citations: [{ instrument: law.instrument, eId: 'sec_12', version: law.version, digest: law.digest, on: '2026-01-01' }] }, 'Registrar general', 'rg', registeredEffects());
     if ('error' in v2) throw new Error(v2.error);
     const ok = approvePackage('civil.birth', 2, 'Deputy registrar general', 'drg', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
     if ('error' in ok) throw new Error(ok.error);
   });
 
   it('1. a citizen notifies a birth', async () => {
-    const r = await citizenApply(new NextRequest('http://x/', { method: 'POST', body: JSON.stringify({ procedure: 'civil.birth', fields: { childGiven: 'Amara', childFamily: 'Okafor', sex: 'female', birthDate: '2026-09-01', region: 'North', motherGiven: 'Ngozi', motherFamily: 'Okafor' } }) }));
+    const r = await citizenApply(new NextRequest('http://x/', { method: 'POST', body: JSON.stringify({ procedure: 'civil.birth', fields: { childGiven: 'Amara', childFamily: 'Okafor', sex: 'female', birthDate: '2026-09-01', region: 'North', motherGiven: 'Ngozi', motherFamily: 'Okafor',
+      // The self-service form (crvs.birth-registration): where, who tells us, the evidence and the declaration.
+      birthPlace: { kind: 'described', text: 'District hospital' }, informantName: { kind: 'person', name: 'Ngozi Okafor' }, evidence: ['later'], declaration: { version: '1', confirmed: ['true'] } } }) }));
     expect(r.status).toBe(201);
-    caseId = (await r.json()).application.id;
-    expect(getCase(caseId)).toMatchObject({ source: 'citizen', stage: 'submitted', package: { key: 'civil.birth', version: 2 } });
+    const j = await r.json();
+    caseId = j.application.id;
+    expect(j.receipt).toMatchObject({ ref: j.application.ref, form: '1.0', channel: 'self-service', stillToProvide: ['Birth notification'] });
+    expect(getCase(caseId)).toMatchObject({ source: 'citizen', stage: 'submitted', package: { key: 'civil.birth', version: 2 }, intake: { channel: 'self-service', form: { version: '1.0', declaration: 'declaration@1' } }, fieldSources: { childGiven: { source: 'entered', channel: 'self-service' } } });
   });
 
   it('2. a traceable application, with the required evidence checked', async () => {

@@ -15,7 +15,7 @@ describe('certificates', () => {
     const c = issueCertificate({ kind: 'birth-registration', title: 'Certificate of birth registration', decision: await decision(), publicFacts: { 'Registration number': 'BR-2026-000001' } }, 'B');
     if ('error' in c) throw new Error(c.error);
     expect(c.code).toHaveLength(CODE_LENGTH);
-    expect(checkCode(printableCode(c.code).toLowerCase())).toEqual({ kind: 'birth-registration', title: 'Certificate of birth registration', institution: 'Civil Registry', issuedAt: c.issuedAt, status: 'valid', sealOk: true, publicFacts: { 'Registration number': 'BR-2026-000001' } });
+    expect(checkCode(printableCode(c.code).toLowerCase())).toEqual({ kind: 'birth-registration', title: 'Certificate of birth registration', institution: 'Civil Registry', issuedAt: c.issuedAt, status: 'valid', sealOk: true, publicFacts: { 'Registration number': 'BR-2026-000001' }, seal: expect.objectContaining({ state: 'trusted', sample: true }) });
     expect(checkCode('AAAA-BBBB-CCCC')).toBeNull();
     expect(issueCertificate({ kind: 'x', title: 't', decision: 'none', publicFacts: {} }, 'B')).toHaveProperty('error');
   });

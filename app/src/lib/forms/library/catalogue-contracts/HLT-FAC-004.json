@@ -1,0 +1,693 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-FAC-004",
+ "record_type": "health.facility.corrective-action.plan",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-002: corrective-action procedures and the periods within which each kind of action must be completed.",
+  "CFG-DAT-001: retention of corrective-action plans and their evidence.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-FAC-004",
+  "part": 6,
+  "section": "6.2",
+  "line": 716,
+  "batch": 1
+ },
+ "library": {
+  "title": "Submit a corrective action plan for a health facility",
+  "intro": "The facility's plan to put right what an inspection found: each action, who in the facility is responsible for it (a role, not a name) and the date it will be done. The regulator accepts the plan or sets other dates within the periods the law allows.",
+  "owner": "healthRegulation",
+  "filled_by": "The licensed facility's operator or someone acting for it; the regulator accepts it or sets the deadlines at a step of its own.",
+  "procedure": null,
+  "intended": "Follow-up of an inspection (health.facility inspection stage, and inspections of licensed facilities): a corrective-action follow-up procedure is not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "health.country.facility_types": {
+    "values": [
+     {
+      "value": "hospital",
+      "label": "Hospital"
+     },
+     {
+      "value": "health-centre",
+      "label": "Health centre"
+     },
+     {
+      "value": "clinic",
+      "label": "Clinic"
+     },
+     {
+      "value": "dispensary",
+      "label": "Dispensary"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity home"
+     },
+     {
+      "value": "laboratory",
+      "label": "Medical laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging centre"
+     },
+     {
+      "value": "dental",
+      "label": "Dental practice"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.facility_services": {
+    "values": [
+     {
+      "value": "outpatient",
+      "label": "Outpatient care"
+     },
+     {
+      "value": "inpatient",
+      "label": "Inpatient care"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity and delivery"
+     },
+     {
+      "value": "emergency",
+      "label": "Emergency care"
+     },
+     {
+      "value": "surgery",
+      "label": "Surgery"
+     },
+     {
+      "value": "laboratory",
+      "label": "Laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging"
+     },
+     {
+      "value": "pharmacy",
+      "label": "Pharmacy"
+     },
+     {
+      "value": "immunisation",
+      "label": "Immunisation"
+     },
+     {
+      "value": "dental",
+      "label": "Dental"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.capacity_measures": {
+    "values": [
+     {
+      "value": "beds-total",
+      "label": "Beds (all)"
+     },
+     {
+      "value": "beds-intensive-care",
+      "label": "Intensive-care beds"
+     },
+     {
+      "value": "consulting-rooms",
+      "label": "Consulting rooms"
+     },
+     {
+      "value": "operating-theatres",
+      "label": "Operating theatres"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.action_status": {
+    "values": [
+     {
+      "value": "planned",
+      "label": "Planned"
+     },
+     {
+      "value": "in-progress",
+      "label": "In progress"
+     },
+     {
+      "value": "completed",
+      "label": "Completed"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "health.facility.corrective-action-period",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The period within which each kind of corrective action must be done."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "deadlines-assigned",
+    "what": "\"Actions and deadlines assigned\": the facility proposes the dates; the regulator accepts them or sets others at its own step (officer field), within the periods the nation's rules set",
+    "why": "No corrective-action procedure exists yet, and a deadline is the regulator's act, never the applicant's.",
+    "rule": "CLAUDE.md Government operating model: a status change is an authorised action"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 866,
+    "quotes": [
+     "CFG-LIC-002",
+     "Facility licensing, inspection, and enforcement procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 716,
+    "quotes": [
+     "HLT-FAC-004",
+     "Facility corrective action plan",
+     "Actions and deadlines assigned"
+    ],
+    "met_by": {
+     "fields": [
+      "plan.actions",
+      "plan.deadlines_set_by"
+     ],
+     "deviation": "deadlines-assigned"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1574,
+    "quotes": [
+     "{\"key\": \"corrective_actions\", \"type\": \"array\", \"required\": false, \"items_type\": \"corrective_action\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "plan.actions"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1323,
+    "quotes": [
+     "Health facility",
+     "Unique facility ID, name, type, location, operator, authorised services, operational status, verification date"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "The facility register keeps the id, name, type, location, operator, services, status and verification date; this form points to it by the facility's number"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1325,
+    "quotes": [
+     "Inspection",
+     "Facility, inspection type, findings, evidence, inspector, corrective action, due date defined by applicable rules"
+    ],
+    "met_by": {
+     "fields": [
+      "plan.facility",
+      "plan.inspection",
+      "plan.actions"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "plan.facility",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "reference_type_allowed",
+     "params": {
+      "types": [
+       "health-facilities",
+       "pharmacies"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Facility registration number"
+   },
+   "hint": {
+    "en": "The facility's number in the register of organisations, as shown on its licence."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the facility registration number.",
+     "reference_exists": "There is no organisation with that number in the register.",
+     "REF-ACTIVE": "The facility's licence in the register is not active."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "plan.inspection",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspection report reference"
+   },
+   "hint": {
+    "en": "As shown on the inspection report the facility received."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the inspection report reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "use_group": "core.representation",
+   "version": 1,
+   "only": [
+    "representation.capacity",
+    "representation.actor",
+    "representation.authority_document"
+   ],
+   "section": {
+    "en": "Who is submitting"
+   }
+  },
+  {
+   "id": "plan.actions",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Corrective actions"
+   },
+   "hint": {
+    "en": "One entry for each corrective action the inspection required."
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the corrective actions."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "finding",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Finding or requirement it answers"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the finding or requirement it answers.",
+       "length": "Finding or requirement it answers must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "action",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 2000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "What the facility will do"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter what the facility will do.",
+       "length": "What the facility will do must be 2000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "responsibleRole",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 120
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Role responsible in the facility"
+     },
+     "hint": {
+      "en": "A role, for example facility manager. No names are needed."
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the role responsible in the facility.",
+       "length": "Role responsible in the facility must be 120 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "targetDate",
+     "type": "date",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "date_not_before",
+       "params": {
+        "reference": "submission_date"
+       }
+      },
+      {
+       "rule": "corrective_action_period_from_rule",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Date it will be done"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the date it will be done.",
+       "date_not_before": "Date it will be done must be today or later."
+      }
+     },
+     "country_decision": "CFG-LIC-002: the period within which each kind of corrective action must be completed."
+    },
+    {
+     "id": "status",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "health.country.action_status",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Progress"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the progress."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Actions"
+   }
+  },
+  {
+   "id": "plan.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "corrective_action_evidence",
+     "when": "when_an_action_is_reported_completed"
+    }
+   ],
+   "label": {
+    "en": "Evidence of actions already completed"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Actions"
+   }
+  },
+  {
+   "id": "plan.deadlines_set_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Official who accepted the plan or set the deadlines"
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "plan.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

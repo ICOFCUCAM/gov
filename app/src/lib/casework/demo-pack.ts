@@ -37,7 +37,9 @@ function sampleValue(f: FieldSpec, today: string): unknown {
     case 'person': return 'Sample person';
     case 'organisation': return 'Sample organisation';
     case 'place': return 'Sample place';
-    default: return 'Sample';
+    case 'text': case 'localizedText': return 'Sample';
+    // Typed answers (lists, references, money, evidence, positions…) are left for the official: a sample never invents a register reference.
+    default: return undefined;
   }
 }
 
@@ -64,7 +66,7 @@ export function loadDemoPack(by: string, now = new Date()): DemoPackResult | { e
     const id = `local:${officer.id}`;
     const c = openCase({
       procedure: key, source: 'sample', idempotencyKey: `demo-pack-${key}-${pkg.version}`,
-      fields: Object.fromEntries(pkg.fields.map(f => [f.key, sampleValue(f, today)])),
+      fields: Object.fromEntries(pkg.fields.map(f => [f.key, sampleValue(f, today)]).filter(([, v]) => v !== undefined)),
       subject: [{ kind: 'unregistered', name: 'Sample applicant (demonstration)' }],
     }, { id, name: `${officer.name}, ${officer.office}`, institution: owner, scope: { id, role: 'officer', institution: owner } }, now);
     if ('error' in c) { skipped.push({ procedure: pkg.title, why: c.error }); continue; }

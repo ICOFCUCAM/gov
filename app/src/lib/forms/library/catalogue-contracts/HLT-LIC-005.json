@@ -1,0 +1,684 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-LIC-005",
+ "record_type": "professional.amendment.case",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-001: registration categories and scopes of each profession, and the power to amend them.",
+  "The amendment fee: an approved fee rule (lib/law/rules.ts); none ships.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-LIC-005",
+  "part": 6,
+  "section": "6.1",
+  "line": 701,
+  "batch": 1
+ },
+ "library": {
+  "title": "Apply to change your registration category or scope",
+  "intro": "Apply to change your registration category, to add or remove a scope of practice, or to ask for a condition to be lifted. The regulator assesses it and an official with the power to decide does so, with reasons.",
+  "owner": "professionalRegulation",
+  "filled_by": "The registered professional, online, at an office or on paper.",
+  "authority": "The regulator that keeps the chosen profession's register (lib/professions/register.ts, profession().authority), under the approved permit authority mapping of the profession's permit type; never a ministry by name.",
+  "procedure": null,
+  "intended": "An amendment of a professional's standing (category, scope, conditions) on the professions register: not built (prof.renewal can change conditions only at renewal); the form waits in the library (plan step I4).",
+  "lists": {
+   "professional.country.scope_categories": {
+    "values": [
+     {
+      "value": "full",
+      "label": "Full practice"
+     },
+     {
+      "value": "limited",
+      "label": "Limited scope"
+     },
+     {
+      "value": "supervised",
+      "label": "Supervised practice"
+     },
+     {
+      "value": "specialist",
+      "label": "Specialist practice"
+     }
+    ],
+    "proposed": true
+   },
+   "professional.country.amendment_kinds": {
+    "values": [
+     {
+      "value": "change-category",
+      "label": "Change my registration category"
+     },
+     {
+      "value": "add-scope",
+      "label": "Add a scope of practice"
+     },
+     {
+      "value": "remove-scope",
+      "label": "Remove a scope of practice"
+     },
+     {
+      "value": "lift-condition",
+      "label": "Lift a condition"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "professional.amendment-fee",
+    "kind": "fee",
+    "source": "rule",
+    "decision": "The amendment fee."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 504,
+    "quotes": [
+     "Health professions regulator",
+     "Registration, licensing, and professional conduct",
+     "Licensing records are separate from confidential patient records"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 865,
+    "quotes": [
+     "CFG-LIC-001",
+     "Professional categories, qualifications, and licensing powers"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 701,
+    "quotes": [
+     "HLT-LIC-005",
+     "Licence scope or category amendment",
+     "Amendment assessed"
+    ],
+    "met_by": {
+     "fields": [
+      "amendment.kind",
+      "amendment.reason"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1324,
+    "quotes": [
+     "Health professional",
+     "Professional reference, verified qualifications, registration authority, licence status, scope of practice where authorised"
+    ],
+    "met_by": {
+     "fields": [
+      "amendment.scope",
+      "amendment.category"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1805,
+    "quotes": [
+     "Professional identity reference, qualifications, verification sources, registration category, licence number, validity and status, restrictions that are lawfully disclosable, continuing requirements, case history and decision record."
+    ],
+    "met_by": {
+     "fields": [
+      "amendment.category",
+      "amendment.condition"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "amendment.professional",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.professionals",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Registration number"
+   },
+   "hint": {
+    "en": "The number on the professional register, as shown on the registration certificate."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the registration number.",
+     "reference_exists": "There is no professional with that number on the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "You"
+   }
+  },
+  {
+   "use_group": "core.person",
+   "version": 1,
+   "only": [
+    "person.name_full"
+   ],
+   "section": {
+    "en": "You"
+   }
+  },
+  {
+   "id": "amendment.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "professional.country.amendment_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What do you want to change?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "amendment.category",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "amendment.kind",
+      "in": [
+       "change-category"
+      ]
+     }
+    }
+   ],
+   "values_source": "professional.country.scope_categories",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Category you are applying for"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select the category you are applying for."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "amendment.scope",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "amendment.kind",
+      "in": [
+       "add-scope",
+       "remove-scope"
+      ]
+     }
+    }
+   ],
+   "values_source": "professional.country.scope_of_practice",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Scopes of practice to add or remove"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select the scopes of practice to add or remove."
+    }
+   },
+   "country_decision": "CFG-LIC-001: the scopes of practice of each profession.",
+   "multiple": true,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "amendment.condition",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "amendment.kind",
+      "in": [
+       "lift-condition"
+      ]
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 500
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Condition you ask to be lifted"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter the condition you ask to be lifted.",
+     "length": "Condition you ask to be lifted must be 500 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "amendment.reason",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Why you are applying"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter why you are applying.",
+     "length": "Why you are applying must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "amendment.qualifications",
+   "type": "group",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "New qualifications that support it"
+   },
+   "hint": {
+    "en": "One entry for each qualification. The regulator checks each with the body that awarded it."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "title",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Title of the qualification"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the title of the qualification.",
+       "length": "Title of the qualification must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "awardingBody",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Body that awarded it"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the body that awarded it.",
+       "length": "Body that awarded it must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "awardingBodyRef",
+     "type": "registry_reference",
+     "required": false,
+     "validation": [],
+     "values_source": "civicos.registry.organisation",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Its number in the register of organisations, if it has one"
+     },
+     "country_decision": null
+    },
+    {
+     "id": "qualificationNumber",
+     "type": "identifier_reference",
+     "required": false,
+     "validation": [],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Qualification number, if the education register gave one"
+     },
+     "hint": {
+      "en": "A QUA- number lets the regulator check it through the qualification check service."
+     },
+     "country_decision": null
+    },
+    {
+     "id": "country",
+     "type": "choice",
+     "required": false,
+     "validation": [],
+     "values_source": "iso.3166-1.alpha2.current",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Country where it was awarded"
+     },
+     "country_decision": null
+    },
+    {
+     "id": "awardedOn",
+     "type": "date",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "date_not_in_future",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Date awarded"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the date awarded.",
+       "date_not_in_future": "Date awarded must be today or in the past."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "amendment.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "amendment_evidence",
+     "when": "as_required_by_the_approved_amendment_procedure"
+    }
+   ],
+   "label": {
+    "en": "Supporting evidence"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "use_group": "core.payment",
+   "version": 1,
+   "section": {
+    "en": "Fee"
+   }
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "amendment.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

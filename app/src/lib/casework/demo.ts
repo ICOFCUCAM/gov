@@ -11,9 +11,9 @@ import { samplesAllowed } from '@/lib/ops/mode';
 import { authorityFor, getSovereign } from '@/lib/data/store';
 import { recordAudit } from '@/lib/data/store/audit';
 import { recordVersion, confirmVersion, listInstruments } from '@/lib/law/register';
-import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
+import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
 import type { AuthorityKey } from '@/lib/nation/deployment';
-import { activePackage, approvePackage, draftPackage, listPackages } from '@/lib/casework/packages';
+import { activePackage, approvePackage, draftPackage, listPackages, withSampleDeadlines } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
 
 export const DEMO_ACT_TITLE = 'Civil Registration Act (sample for demonstration)';
@@ -78,6 +78,15 @@ const MORE_ACTS: { title: string; number: string; authority: AuthorityKey; provi
     'health.pharmacy-suspension': P('sec_22', '22', 'After notice and representations, a pharmacy licence may be suspended and later reinstated.'),
     'health.pharmacy-revocation': P('sec_23', '23', 'After notice and representations, a pharmacy licence may be revoked.'),
   } },
+  // Medicines and medical devices: only once the nation names its medicines authority (provisional owners never run cases). Powers only: no period, fee or outcome list.
+  { title: 'Medicines and Medical Devices Act (sample for demonstration)', number: 'sample-11', authority: 'medicinesRegulation', procedures: PRODUCT_PROCEDURES, provisions: {
+    'medicines.authorisation': P('sec_10', '10', 'No medicine shall be placed on the market unless the medicines authority has authorised it after assessing its quality, safety and efficacy.'),
+    'medicines.variation': P('sec_12', '12', 'A change to an authorised medicine takes effect once the medicines authority approves the variation.'),
+    'medicines.renewal': P('sec_13', '13', 'An authorisation may be renewed on a review of the product\'s benefits and risks.'),
+    'medicines.suspension': P('sec_15', '15', 'After notice and representations, an authorisation may be suspended, reinstated or withdrawn.'),
+    'medicines.recall': P('sec_18', '18', 'The medicines authority may order the recall of a medicine or medical device that presents a risk.'),
+    'medicines.device-registration': P('sec_20', '20', 'No medical device shall be placed on the market unless the medicines authority has registered it.'),
+  } },
   { title: 'Customs Act (sample for demonstration)', number: 'sample-10', authority: 'customs', procedures: CUSTOMS_PROCEDURES, provisions: {
     'customs.declaration': P('sec_30', '30', 'Goods shall be declared to customs, may be examined, and are released once the duty assessed on them is paid.'),
   } },
@@ -137,7 +146,8 @@ export function loadDemonstration(by: string, now = new Date()): DemoResult {
       const cite = set.provisions[p.key];
       if (!cite) continue;
       const next = Math.max(0, ...listPackages({ key: p.key }).map(x => x.version)) + 1;
-      const d = draftPackage({ ...p, version: next, reference: false, citations: [{ instrument: act.instrument, eId: cite.eId, version: act.version, digest: act.digest, on: today }] }, DRAFTER.name, DRAFTER.id, registeredEffects(), now);
+      // Day counts: the reference's sample values, marked Sample (a demonstration installation only).
+      const d = draftPackage(withSampleDeadlines({ ...p, version: next, reference: false, citations: [{ instrument: act.instrument, eId: cite.eId, version: act.version, digest: act.digest, on: today }] }), DRAFTER.name, DRAFTER.id, registeredEffects(), now);
       if ('error' in d) return { error: `${p.title}: ${d.error}` };
       const a = approvePackage(p.key, next, APPROVER.name, APPROVER.id, today, registeredEffects(), now);
       if ('error' in a) return { error: `${p.title}: ${a.error}` };

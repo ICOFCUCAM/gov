@@ -10,6 +10,7 @@ const INPUTS: Record<string, Record<string, unknown>[]> = {
   'professional.standing': [{ number: 'PRN-0000-000000' }],
   'customs.release': [{ number: 'CUS-0000-000000' }],
   'organisation.standing': [{ register: 'companies', number: 'ORG-0' }],
+  'product.status': [{ number: 'PRD-0000-000000' }, {}],
   'immigration.status': [{ nationality: 'XXX', documentNumber: 'X1' }, {}],
 };
 

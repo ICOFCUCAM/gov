@@ -6,7 +6,7 @@
 // keeps them, so whoever opens the page can confirm what someone else began.
 // Read-only: nothing here changes a record.
 
-import { AUTHORITIES, REQUIRED_AUTHORITIES } from '@/lib/nation/deployment';
+import { AUTHORITIES, REQUIRED_AUTHORITIES, HEALTH_SLOTS, provisionalOwner } from '@/lib/nation/deployment';
 import { authorityFor, getSetup, getSovereign, authorityChanges, classificationChanges } from '@/lib/data/store/sovereign';
 import { waitingInstitutionTerms } from '@/lib/data/store/institutions';
 import { listRelationships, waitingRelationships } from '@/lib/data/store/relationships';
@@ -22,10 +22,13 @@ import { listMappings } from '@/lib/permits/authority';
 import { suspensionPolicy } from '@/lib/permits/authority';
 import { dualControlPolicy } from '@/lib/casework/dual-control-policy';
 import { listPackages, ownerInstitution } from '@/lib/casework/packages';
+import { waitingReleases } from '@/lib/forms/publication';
 import { listRules } from '@/lib/law/rules';
 import { registerTypes, listOrganisations } from '@/lib/organisations/register';
 import { professions, disclosureChanges } from '@/lib/professions/register';
 import { listIntegrations } from '@/lib/data/store/federation';
+import { productCounts, publicClassification, productDisclosureChanges } from '@/lib/health/products/register';
+import { PRODUCT_PROCEDURES, PRODUCT_PERMIT_TYPES } from '@/lib/health/products/procedures';
 import { SITE_IDS } from '@/lib/public-sites';
 import { siteEditorial } from '@/lib/data/site-editorial';
 import { listBoundaryVersions } from '@/lib/data/boundaries';
@@ -36,6 +39,8 @@ import { installationMode, modeUnset, samplesAllowed } from '@/lib/ops/mode';
 import { listCases } from '@/lib/casework/engine';
 import { HOME_NATION, nationRecord } from '@/lib/data/updates';
 import { scheduledJobsHealthy } from '@/lib/ops/cron-runs';
+import { sealKeyRules, sealKeyAuthority, presentedStanding, waitingSealKeys } from '@/lib/keys/seal-register';
+import { signer } from '@/lib/keys/custody';
 
 export type TrackState = 'done' | 'in-progress' | 'not-started' | 'blocked';
 export interface Check { label: string; done: boolean; href: string; detail?: string }
@@ -97,7 +102,12 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       // without such a body leaves them empty, so they never count as missing; those it names must be active.
       const isActive = (key: (typeof AUTHORITIES)[number]['key']) => { const id = authorityFor(key); return id !== undefined && ids.has(id); };
       const named = REQUIRED_AUTHORITIES.filter(a => isActive(a.key));
-      const bodies = AUTHORITIES.filter(a => a.optional && authorityFor(a.key) !== undefined);
+      const bodies = AUTHORITIES.filter(a => a.optional && !HEALTH_SLOTS.includes(a.key) && authorityFor(a.key) !== undefined);
+      // Health bodies the catalogue forms name (medicines, controlled substances, public health): named, or stood in for
+      // provisionally (lib/nation/deployment.ts provisionalOwner()). Production takes no provisional owner as competent.
+      const health = HEALTH_SLOTS.map(k => ({ a: AUTHORITIES.find(x => x.key === k)!, o: provisionalOwner(k, authorityFor) }));
+      const provisional = health.filter(h => h.o.provisional);
+      const uncovered = health.filter(h => !h.o.institution);
       const inactiveBodies = bodies.filter(a => !isActive(a.key));
       // Relationships between institutions are optional (plan phase 3): none is fine; one approved while an end is
       // no longer active grants nothing and should be ended (or its institution reactivated).
@@ -108,6 +118,8 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Institutions created', done: ids.size > 0, href: '/gov/configuration', detail: n(ids.size, 'active institution') },
         { label: 'Every responsibility assigned to an active institution', done: named.length === REQUIRED_AUTHORITIES.length, href: '/gov/configuration/responsible', detail: `${named.length} of ${REQUIRED_AUTHORITIES.length}${named.length < REQUIRED_AUTHORITIES.length ? ` · missing: ${REQUIRED_AUTHORITIES.filter(a => !named.includes(a)).map(a => a.label).join(', ')}` : ''}` },
         { label: 'Constitutional bodies the nation named are active', done: inactiveBodies.length === 0, href: '/gov/configuration/responsible', detail: bodies.length ? `${n(bodies.length, 'body', 'bodies')} named${inactiveBodies.length ? ` · not active: ${inactiveBodies.map(a => a.label).join(', ')}` : ''}` : 'None named (only those the nation has)' },
+        { label: 'Health bodies the forms name (medicines, controlled substances, public health)', done: uncovered.length === 0 && (samplesAllowed(env) || provisional.length === 0), href: '/gov/configuration/responsible#who-is-responsible',
+          detail: provisional.length ? `${provisional.map(h => `${h.a.label}: ${h.o.provisional}`).join(' · ')}`.slice(0, 600) : 'Each named' },
         { label: 'Relationships between institutions are current (optional)', done: stale.length === 0, href: '/gov/configuration/relationships',
           detail: rels.length ? `${n(approved.length, 'approved')} · ${n(rels.filter(r => r.status === 'draft').length, 'draft')}${stale.length ? ` · with an institution no longer active: ${stale.map(r => `${r.fromName} → ${r.toName}`).join(', ').slice(0, 200)}` : ''}` : 'None recorded (only those the nation\'s law sets)' },
       ] };
@@ -195,6 +207,23 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       ] };
     }),
 
+    // The seal key register (lib/keys/seal-register.ts): a production installation seals no decision with a key it has not approved.
+    track({ key: 'seal-keys', title: 'Seal keys', why: 'The keys that seal the state\'s decisions and certificates: each approved by the authority the nation\'s law names (two officials at least), valid for a period, published so anyone can check a certificate. A production installation seals nothing with a key that is not approved.', href: '/gov/configuration/seal-keys' }, () => {
+      const r = sealKeyRules();
+      const authority = sealKeyAuthority();
+      const half = signer('decision').current();
+      const st = half ? presentedStanding('decision', half.publicKeyPem) : null;
+      const sample = st?.state === 'unregistered' && st.seals;
+      const open = waitingSealKeys().filter(w => /compromis/.test(w.what));
+      return { checks: [
+        { label: 'Seal keys authority named (Who is responsible)', done: !!authority, href: '/gov/configuration/responsible', detail: authority ? undefined : 'Nobody can approve a seal key until the nation names the authority its law designates' },
+        { label: 'Seal-key rules adopted, citing the law (recommended; the platform minimum of two approvals applies until then)', done: r.adopted, href: '/gov/configuration/seal-keys', detail: r.adopted ? `${r.approvers} approvals${r.legislatureResolution ? ' and the legislature\'s instrument' : ''} for each key` : undefined },
+        { label: 'The decision key in use is approved in the register', done: !!st && (st.state === 'active' || st.state === 'approved' || sample), href: '/gov/configuration/seal-keys',
+          detail: !st ? 'The key provider has not presented the key yet' : sample ? `${st.keyId}: trusted as a sample at its first seal (demonstration or training only)` : `${st.keyId}: ${st.state}` },
+        { label: 'No compromise waiting for confirmation or review', done: open.length === 0, href: '/gov/configuration/seal-keys', detail: open.length ? open.map(w => w.what).join('; ').slice(0, 200) : undefined },
+      ] };
+    }),
+
     track({ key: 'procedures', title: 'Procedures', why: 'How each kind of case runs: drafted by one official, tested, approved by another. Cases open only under an approved procedure.', href: '/gov/law/procedures' }, () => {
       const pk = listPackages();
       const approved = pk.filter(p => p.state === 'approved');
@@ -226,6 +255,26 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Register types defined by the nation', done: types.length > 0, href: '/gov/organisations', detail: `${n(types.length, 'register type')} of its own · ${registerTypes().length - types.length} platform references` },
         { label: 'Organisations entered (through cases or a confirmed load)', done: listOrganisations({ limit: 1 }).length > 0, href: '/gov/organisations' },
         { label: 'Professions defined by the nation', done: ps.length > 0, href: '/gov/health-regulation', detail: `${n(ps.length, 'profession')} of its own · ${professions().length - ps.length} platform references` },
+      ] };
+    }),
+
+    // The register of medicines and medical devices (Health I4): the nation's own body, procedures, mappings and public classification.
+    track({ key: 'products', title: 'Medicines and medical devices register', why: 'Authorised medicines and devices, recorded only by the medicines authority\'s decided cases; the public sees only what the nation\'s approved classification lists.', href: '/gov/health-regulation/products', seeded: true }, () => {
+      const pending = productDisclosureChanges().pending;
+      if (pending) wait({ what: 'What the public product check shows: a change waiting for a second official', proposedBy: pending.by, at: pending.at, href: '/gov/health-regulation/products' });
+      const keys = PRODUCT_PROCEDURES.filter(p => !p.key.startsWith('medicines.manufacturer') && !p.key.startsWith('medicines.importer') && !p.key.startsWith('medicines.wholesaler')).map(p => p.key);
+      const approved = keys.filter(k => listPackages({ key: k, state: 'approved' }).length);
+      const types = Object.values(PRODUCT_PERMIT_TYPES);
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const c = productCounts();
+      const own = provisionalOwner('medicinesRegulation', authorityFor);
+      const cls = publicClassification();
+      return { checks: [
+        { label: 'Medicines authority named (Who is responsible)', done: !!authorityFor('medicinesRegulation'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('medicinesRegulation') ? undefined : (own.provisional ?? 'Not named') },
+        { label: 'Product procedures approved (marketing authorisation, variation, renewal, suspension and withdrawal, recall, device registration)', done: approved.length === keys.length, href: '/gov/law/procedures', detail: `${approved.length} of ${keys.length} approved` },
+        { label: 'Who decides product powers approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        { label: 'What the public product check shows, approved by two officials citing the law', done: cls.approved, href: '/gov/health-regulation/products', detail: cls.approved ? `Version ${cls.version}: ${cls.fields.join(', ') || 'no attribute'}` : 'Ships empty: the public sees only the number, kind and published notices' },
+        { label: 'Products recorded through decided cases', done: c.total > 0, href: '/gov/health-regulation/products', detail: `${c.byKind.medicine} medicines · ${c.byKind.device} devices${c.samples ? ` (${c.samples} samples)` : ''}` },
       ] };
     }),
 
@@ -324,6 +373,7 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const c of waitingAccountChanges())wait({ what: `${c.summary} (waiting for the institution to confirm)`, proposedBy: c.by, at: c.at, href: '/admin/officials' }); });
   safe(() => { for (const o of waitingOffices()) wait({ what: `Office: ${o.title} — a change waiting for a second official`, proposedBy: o.pending.by, at: o.pending.at, href: '/gov/configuration/offices' }); });
   safe(() => { for (const p of waitingProfileSteps()) wait({ what: p.what, proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
+  safe(() => { for (const r of waitingReleases()) wait({ what: `Form release: ${r.key} version ${r.version} waiting for a second official`, proposedBy: r.by, at: r.at, href: '/gov/law/procedures/forms' }); });
   safe(() => { const p = constitutionOverview().process.changes.pending; if (p) wait({ what: 'Steps for changing the constitutional profile: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
   safe(() => { const p = classificationChanges().pending; if (p) wait({ what: 'Classification of the state: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/offices' }); });
   safe(() => { for (const w of waitingLegislative()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: w.href }); });
@@ -333,6 +383,7 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
     }
   });
   safe(() => { for (const t of waitingTransitions()) wait({ what: `${t.what} — waiting for a second official`, proposedBy: t.by, at: t.at, href: '/gov/configuration/transitions' }); });
+  safe(() => { for (const w of waitingSealKeys()) if (!/review/.test(w.what) || w.overdue) wait({ what: w.what, proposedBy: w.by, at: w.at, href: '/gov/configuration/seal-keys' }); });
   safe(() => { for (const h of waitingHoldings()) wait({ what: `${h.holderName} to hold an office — waiting for a second official`, proposedBy: h.proposedBy, at: h.proposedAt, href: '/gov/configuration/offices' }); });
 
   waiting.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''));

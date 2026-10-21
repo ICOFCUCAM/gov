@@ -13,6 +13,9 @@ import { issueBill } from '@/lib/data/store/payments';
 import { nationCurrency } from '@/lib/nation/registry';
 import { registerTaxpayer, fileReturn, recordAssessment, attachAssessmentDecision, varyAssessment, getTaxpayer, returnFor, assessmentOfCase } from './register';
 import type { CasePackage } from '@/lib/casework/types';
+import { libraryForm } from '@/lib/forms/library/definitions';
+import { attachForm } from '@/lib/forms/library/build';
+import { listOf, textOf } from '@/lib/forms/contract';
 
 type Ref = Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'>;
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
@@ -21,7 +24,7 @@ const currencyOf = (c: { fields: Record<string, unknown> }) => str(c.fields.curr
 
 registerEffect('tax.register', ({ case: c, actor, now }: EffectContext) => {
   const kind = str(c.fields.partyKind) === 'organisation' ? 'organisation' : 'person';
-  const t = registerTaxpayer({ party: { kind, id: str(c.fields.partyRef), name: str(c.fields.partyName) }, taxTypes: str(c.fields.taxTypes).split(/[,\s]+/).filter(Boolean) }, c.id, actor.name, now);
+  const t = registerTaxpayer({ party: { kind, id: str(c.fields.partyRef), name: textOf(c.fields.partyName).trim() }, taxTypes: listOf(c.fields.taxTypes).flatMap(x => x.split(/\s+/)).filter(Boolean) }, c.id, actor.name, now);
   if ('error' in t) return t;
   return { facts: { tin: t.tin } };
 });
@@ -83,13 +86,13 @@ const TAXPAYER_FIELDS: CasePackage['fields'] = [
 
 export const REFERENCE_TAX_REGISTRATION: Ref = {
   key: 'tax.registration', version: 1, owner: 'tax', title: 'Taxpayer registration', refPrefix: 'TXR', reference: true, citations: [],
-  fields: [
+  // The specification's taxpayer registration form (taxpayer-registration-v1), attached to the procedure's own fields (lib/forms/library).
+  ...attachForm([
     { key: 'partyKind', label: 'Person or organisation', type: 'choice', options: ['person', 'organisation'], required: true },
     { key: 'partyRef', label: 'Register reference (birth registration or organisation number)', type: 'text', required: true, personal: true },
     { key: 'partyName', label: 'Name', type: 'text', required: true, personal: true },
     { key: 'taxTypes', label: 'Tax types (comma separated)', type: 'text', required: true },
-  ],
-  documents: [{ class: 'identity-evidence', label: 'Identity or registration evidence', required: true }],
+  ], [{ class: 'identity-evidence', label: 'Identity or registration evidence', required: true }], libraryForm('taxpayer-registration-v1')),
   stages: [{ key: 'submitted', label: 'Submitted' }, { key: 'verification', label: 'Verification' }, { key: 'pending-approval', label: 'Decision' }, { key: 'registered', label: 'Registered', terminal: true }, { key: 'not-registered', label: 'Refused', terminal: true }],
   actions: [
     { key: 'verify', label: 'Verify identity and registration', from: ['submitted'], to: 'verification', needs: { role: 'officer' }, requires: { documents: ['identity-evidence'], fields: ['partyKind', 'partyRef', 'partyName', 'taxTypes'] } },
@@ -97,7 +100,7 @@ export const REFERENCE_TAX_REGISTRATION: Ref = {
     { key: 'register', label: 'Register the taxpayer', from: ['pending-approval'], to: 'registered', decision: 'register', needs: { role: 'signatory' }, requires: { reasons: true }, effects: ['tax.register'] },
     { key: 'refuse', label: 'Refuse, with reasons', from: ['pending-approval'], to: 'not-registered', decision: 'refuse', needs: { role: 'signatory' }, requires: { reasons: true } },
   ],
-  deadlines: [], notifications: [], appeal: { days: 30, body: 'the tax appeals tribunal', suspensive: false },
+  deadlines: [], notifications: [], appeal: { sampleDays: 30, body: 'the tax appeals tribunal', suspensive: false },
   retention: 'tax-record', sensitivity: 'restricted',
   tests: [{ name: 'registered', steps: [{ action: 'verify', fields: { partyKind: 'person', partyRef: 'BR-1', partyName: 'A', taxTypes: 'income' }, documents: ['identity-evidence'], expect: 'verification' }, { action: 'propose', expect: 'pending-approval' }, { action: 'register', expect: 'registered' }] }],
 };
@@ -126,7 +129,7 @@ export const REFERENCE_TAX_RETURN: Ref = {
     { key: 'assess', label: 'Make the assessment', from: ['pending-approval'], to: 'assessed', decision: 'assess', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['tax.assess'] },
     { key: 'issue', label: 'Issue the notice and the bill', from: ['assessed'], to: 'notice-issued', needs: { role: 'officer' }, requires: { fields: ['dueDate'] }, effects: ['tax.issueNotice'] },
   ],
-  deadlines: [], notifications: [], appeal: { days: 30, body: 'an objection to the tax authority, then the tax appeals tribunal', suspensive: false },
+  deadlines: [], notifications: [], appeal: { sampleDays: 30, body: 'an objection to the tax authority, then the tax appeals tribunal', suspensive: false },
   retention: 'tax-record', sensitivity: 'restricted',
   tests: [
     { name: 'assessed and notified', steps: [
@@ -153,7 +156,7 @@ export const REFERENCE_TAX_OBJECTION: Ref = {
     { key: 'vary', label: 'Vary the assessment', from: ['pending-approval'], to: 'varied', decision: 'vary', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true, fields: ['variedMinor'] }, effects: ['tax.vary'] },
     { key: 'dismiss', label: 'Dismiss the objection', from: ['pending-approval'], to: 'dismissed', decision: 'dismiss', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true } },
   ],
-  deadlines: [], notifications: [], appeal: { days: 30, body: 'the tax appeals tribunal', suspensive: false },
+  deadlines: [], notifications: [], appeal: { sampleDays: 30, body: 'the tax appeals tribunal', suspensive: false },
   retention: 'tax-record', sensitivity: 'restricted',
   tests: [
     { name: 'varied', steps: [{ action: 'review', fields: { assessment: 'tax:ASM-1', grounds: 'x' }, documents: ['objection'], expect: 'review' }, { action: 'propose', expect: 'pending-approval' }, { action: 'vary', fields: { variedMinor: 1 }, expect: 'varied' }] },

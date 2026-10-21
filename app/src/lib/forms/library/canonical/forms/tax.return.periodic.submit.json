@@ -1,0 +1,101 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "tax.return.periodic.submit",
+  "record_type": "tax.return",
+  "form_version": 1,
+  "status": "draft",
+  "fields": [
+    {
+      "id": "tax_return.taxpayer_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "taxpayer_active_for_period", "params": {}}],
+      "values_source": "tax.registry.taxpayer_accounts",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Taxpayer account"},
+      "hint": {"en": "Select the account for which this return is being submitted."},
+      "error_text": {"en": {"taxpayer_active_for_period": "The taxpayer account is not eligible for this filing period."}}
+    },
+    {
+      "id": "tax_return.tax_type",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "tax_type_registered_for_account", "params": {}}],
+      "values_source": "tax.country.approved_tax_types",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Type of tax return"},
+      "hint": {"en": "Select a tax type registered for this taxpayer."},
+      "error_text": {"en": {"tax_type_registered_for_account": "This taxpayer is not registered for the selected tax type."}}
+    },
+    {
+      "id": "tax_return.period_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "filing_period_valid_for_tax_type", "params": {}}, {"rule": "filing_window_status_resolved", "params": {}}],
+      "values_source": "tax.country.approved.filing_periods",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Filing period"},
+      "hint": {"en": "Choose the period specified in your filing obligation."},
+      "error_text": {"en": {"filing_period_valid_for_tax_type": "The period does not apply to this tax type.", "filing_window_status_resolved": "The filing period cannot be processed under the current approved rules."}}
+    },
+    {
+      "id": "tax_return.schema_ref",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "approved_tax_return_schema_active", "params": {}}],
+      "values_source": "tax.country.approved.return_schemas",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Approved return schema"},
+      "hint": {"en": "The system selects the form schema for this tax type and period."},
+      "error_text": {"en": {"approved_tax_return_schema_active": "No approved return schema is available for this tax type and period."}}
+    },
+    {
+      "id": "tax_return.tax_data",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "all_schema_fields_valid", "params": {}}, {"rule": "tax_calculation_rule_version_bound", "params": {}}],
+      "values_source": "tax.country.approved.return_data_sets",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Return details"},
+      "hint": {"en": "Complete the fields required by the approved return schema."},
+      "error_text": {"en": {"all_schema_fields_valid": "One or more required return fields are missing or invalid.", "tax_calculation_rule_version_bound": "The return calculation rules are not correctly bound to this submission."}}
+    },
+    {
+      "id": "tax_return.evidence_refs",
+      "type": "registry_reference",
+      "required": false,
+      "validation": [{"rule": "evidence_requirements_satisfied", "params": {}}],
+      "values_source": "tax.country.approved.return_evidence",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "tax_return_evidence", "when": "only_when_required_by_the_approved_tax_procedure"}],
+      "label": {"en": "Supporting records"},
+      "hint": {"en": "Attach or link only records required by the return procedure."},
+      "error_text": {"en": {"evidence_requirements_satisfied": "Required supporting records are missing."}}
+    },
+    {
+      "id": "tax_return.declaration",
+      "type": "boolean",
+      "required": true,
+      "validation": [{"rule": "must_be_true", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "tax_return_declaration", "when": "as_required_by_the_approved_tax_law_and_procedure"}],
+      "label": {"en": "I confirm the return declaration"},
+      "hint": {"en": "Read the approved declaration and its legal effect before confirming."},
+      "error_text": {"en": {"must_be_true": "Confirm the declaration to submit this return."}}
+    }
+  ],
+  "legal_basis": [],
+  "country_decisions": [
+    "Tax types, filing obligations, return schemas and accounting bases.",
+    "Tax periods, due dates, nil-return obligations and late-filing treatment.",
+    "Tax calculation rules, rates, thresholds, exemptions, deductions and rounding.",
+    "Required evidence, declaration wording and amendment rights.",
+    "Taxpayer confidentiality and review or appeal procedures."
+  ]
+}

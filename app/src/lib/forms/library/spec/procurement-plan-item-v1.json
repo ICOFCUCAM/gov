@@ -1,0 +1,61 @@
+{
+  "form_id": "procurement-plan-item-v1",
+  "fields": [
+    {
+      "id": "procuring_entity_id",
+      "type": "institution_reference",
+      "required": true,
+      "validation": "authorized_procuring_entity"
+    },
+    {
+      "id": "requirement_description",
+      "type": "localized_text",
+      "required": true,
+      "validation": "plain_language_and_length_limit"
+    },
+    {
+      "id": "procurement_category",
+      "type": "controlled_vocabulary",
+      "required": true,
+      "values_source": "national_procurement_classification"
+    },
+    {
+      "id": "budget_appropriation_id",
+      "type": "registry_reference",
+      "required": true,
+      "validation": "active_appropriation_with_sufficient_authority"
+    },
+    {
+      "id": "estimated_value",
+      "type": "money",
+      "required": true,
+      "validation": "nonnegative_decimal_and_currency_required",
+      "personal_data_class": "financial"
+    },
+    {
+      "id": "proposed_method",
+      "type": "enum",
+      "required": true,
+      "values_source": "approved_procurement_methods"
+    },
+    {
+      "id": "planned_publication_date",
+      "type": "date",
+      "required": true,
+      "validation": "valid_under_national_timetable"
+    },
+    {
+      "id": "conflict_declaration",
+      "type": "signed_attestation",
+      "required": true,
+      "validation": "valid_signature_and_policy_version",
+      "personal_data_class": "restricted"
+    },
+    {
+      "id": "approvals",
+      "type": "approval_evidence_collection",
+      "required": true,
+      "validation": "configured_separation_of_duties"
+    }
+  ]
+}

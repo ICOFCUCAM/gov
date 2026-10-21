@@ -2,6 +2,7 @@
 // decision in the new domains is a sealed decision record that verifies, the
 // audit chain holds after them, and neither the audit chain nor the events
 // derived from it carry personal or commercially confidential data.
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { openCase, act, attach, resetCases, registeredEffects, getCase, type Actor } from './engine';
 import { draftPackage, approvePackage, resetPackages } from './packages';
@@ -32,7 +33,7 @@ describe('cycle 3 audit evidence', () => {
     [EDU, PRO] = listMinistries().slice(0, 2).map(m => m.id) as [string, string];
     setSovereign({ deployment: { authorities: { education: EDU, professionalRegulation: PRO } } }, 'Administrator');
     for (const p of [...ORGANISATION_PROCEDURES, ...EDUCATION_PROCEDURES, ...PROFESSION_PROCEDURES]) {
-      draftPackage(p, 'Author', 'author', registeredEffects());
+      draftPackage(asNationSets(p), 'Author', 'author', registeredEffects());
       const a = approvePackage(p.key, 1, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
       if ('error' in a) throw new Error(`${p.key}: ${a.error}`);
     }

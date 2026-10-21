@@ -1,0 +1,19 @@
+{
+  "form_id": "land.register-interest-transfer",
+  "version": "1.0",
+  "fields": [
+    {"id": "parcel_reference", "type": "authoritative_parcel_reference", "required": true},
+    {"id": "current_interest_reference", "type": "registered_interest_reference", "required": true},
+    {"id": "transaction_type", "type": "configured_transaction_type", "required": true},
+    {"id": "transferring_parties", "type": "party_reference_collection", "required": true},
+    {"id": "receiving_parties", "type": "party_reference_collection", "required": true},
+    {"id": "legal_instrument", "type": "signed_document_reference", "required": true},
+    {"id": "required_consents", "type": "evidence_collection", "required": false}
+  ],
+  "controls": {
+    "authoritative_register": "configured_land_registry",
+    "legal_basis": "required",
+    "conflicts": "route_to_authorised_review",
+    "history": "append_only_registration_events"
+  }
+}

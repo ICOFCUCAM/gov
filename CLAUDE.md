@@ -61,6 +61,20 @@ What has been built is locked. Work only upgrades it toward the vision in
   decisions cite a law version from it. Decision records are signed with the
   `decision` key, certificates are checked at `/verify`; reference procedures
   are drafts until a nation approves them. Status: register §18.
+- Seal keys (`lib/keys/seal-register.ts`, `docs/SEAL_KEYS.md`; owner's
+  decision 2026-10-21): a production installation seals only with a key whose
+  fingerprint the register approves (`sealKeyRefusal()` in `recordDecision()`
+  and `signDocument()`). The nation's law names the approving authority once
+  (slot `trustServices`, empty by default) in the seal-key rules changed
+  through `policy-change.ts`; at least two officials who can sign there, other
+  than the proposer, approve every key; no act of parliament per key (the
+  `legislatureResolution` option, shipped off, is for nations whose law demands
+  one). Activation retires the previous key; retired keys verify forever;
+  revocation is reported by one and confirmed by a second official at once,
+  flags only seals whose audit-chain time (the `decision.seal` entry; never
+  the record's own `content.at`/`seal.at`) is after the compromise time and is reviewed afterwards by the
+  authority. Never change or delete a decision for a key; demo and training
+  trust a new key as a sample. Public trust list: `GET /api/trust/keys`.
 - Organisations (`lib/organisations/register.ts`) change only through the
   effects in `lib/organisations/procedures.ts`; a standing in a register is
   changed only by the authority that keeps that register type. Lists, the
@@ -103,10 +117,39 @@ What has been built is locked. Work only upgrades it toward the vision in
   are on the professions register, each profession kept by its regulator.
   Public, administrative and clinical data stay apart: no patient or clinical
   field anywhere, no national patient record; returns are aggregates.
+- Medicines and devices (`lib/health/products/`): the product register is kept for the
+  `medicinesRegulation` slot (`lib/data/register-owners.ts`) and changes only through the
+  effects of its procedures (`procedures.ts`: authorisation, variation, renewal, suspension
+  and withdrawal, recall, device registration; drafts, no period, fee or outcome typed);
+  holders are organisations by number. Full records are read only under `canReadProduct()`
+  (every read in the access log); lists, the public check, `product.status` and every other
+  output carry `publicProductView()` under the classification two officials approve.
 - Customs (`lib/customs/`): duty only from the approved `customs.tariff` rule
   or entered with reasons; the control channel is an officer's choice with
   reasons, never a score; no seizure, penalty or detention powers. Others
   learn only whether goods were released (`customs.release`).
+- A procedure's form is its contract (`lib/forms/contract.ts`, `docs/FORMS_CONFORMANCE.md`):
+  typed fields with a personal-data class, only registered rules
+  (`lib/forms/rules.ts`, unknown names fail closed), the same checks and
+  messages in the browser and in `submitForm()`; library forms load in their
+  own JSON (`lib/forms/canonical.ts`, `envelope.ts`), never a second format.
+  Day counts are the nation's (shipped unset). Scope lists are
+  `lib/forms/scope.ts`; publication is `lib/forms/publication.ts` (automatic
+  checks apart from approvals that are acts of different signed-in officials,
+  bound to the contract's hash; no status field).
+- A catalogue form is identified by catalogue, form ID and version
+  (`formIdentity()`, `lib/forms/identity.ts`; owner, 21 October 2026): every
+  lookup, approval and publication uses it, and a bare ID two catalogues use is
+  refused with both candidates, never resolved to one. A library contract's
+  link to its procedure (`missing`, `draft`, `under_review`, `approved`) is
+  computed from the package register (`lib/forms/procedure-link.ts`), never
+  stored or set; a required procedure that is missing fails the go-live gate.
+  An empty `medicinesRegulation`, `controlledSubstances` or `publicHealth`
+  slot is stood in for only provisionally (`provisionalOwner()`): shown as
+  provisional, refused as competent in production, never confirmed. A product
+  record leaves the regulator only through `publicProductView()`
+  (`lib/health/products/public.ts`). Health is tracked in
+  `docs/HEALTH_I4_DEPENDENCIES.md` and not called complete before it is.
 - Every decision step is classified in `lib/permits/decisions.ts` (permit
   mapping, deployment-profile domain, or refused in production when
   unclassified); the case engine checks it when a decision is proposed and
@@ -166,13 +209,42 @@ What has been built is locked. Work only upgrades it toward the vision in
   six parts, kept verbatim; binding). Assessment, upgrades, lower-priority
   items, mapping to the code and build order:
   `docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md`. Its implementation starts only
-  after the constitutional phases are complete and integrated. CivicOS enforces the
+  after the constitutional phases are complete and integrated.
+- The complete form system (ChatGPT, 13 parts and supplementary parts
+  14–22 with contracts for parts 5–13, in `docs/forms-catalogue/`) is kept verbatim and binding (owner, 21 October 2026):
+  never summarise the owner's documents; every catalogue item (form, register,
+  configuration, exchange, safeguard, acceptance gate) is a row of the
+  requirements register and is closed step by step; forms are built to a higher
+  standard than the catalogue where we can, never lower. CivicOS enforces the
   nation's configuration and never invents, transfers or assumes authority:
   no institution is a child of a universal executive administrator, a seniority
   or a role never grants a power its institution lacks, independence is
   recorded per dimension (decisions, appointment, dismissal, funding,
   instructions), and constitution-dependent powers ship as slots or unapproved
   drafts until the nation's legal process approves them.
+- Forms follow the owner's direction of 21 October 2026
+  (`docs/forms-catalogue/DIRECTION-2026-10-21-REGISTER-FIRST.md`): each form has
+  one register status (catalogued, contract_missing, contract_draft,
+  under_review, blocked, excluded, approved, production); a missing contract is
+  never an empty, approved or complete form. Patient, clinical and named-student
+  forms are excluded (binding scope, not a warning); suspect-identifying
+  prosecution referrals, prison admission, intelligence and voter registration
+  require legal review; neither passes production validation. Publication is
+  refused unless every applicable gate passes; human approvals (legal review,
+  authority, release) are recorded acts of different signed-in officials, never
+  a status field. The verified gap report (`docs/forms-catalogue/GAP-REPORT.md`)
+  exists; missing contracts are written only in controlled batches the owner
+  approves (batch 1, health regulation, 25 forms; batch 2, medicines and
+  devices regulation, 21 forms; batch 3, taxpayer registration and account,
+  29 forms: owner 2026-10-21), as library
+  drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
+  register row, never for an excluded form, regenerated into the register.
+- Every requirement of that specification is a row of
+  `docs/INSTITUTIONAL_REQUIREMENTS.md` (binding; rows in
+  `docs/requirements/requirements.json`, regenerated by
+  `python3 -I app/scripts/requirements/extract.py .`, checked by
+  `lib/requirements/requirements.test.ts`). A step's brief lists the row IDs it
+  delivers; a change that meets or breaks a requirement updates its row.
 - An institution's constitutional terms (standing, branch, establishing law,
   effective date, independence per dimension, prohibitions, records owned)
   live on the ministry registry record (`lib/data/store/institutions.ts`):

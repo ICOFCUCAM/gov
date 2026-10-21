@@ -12,6 +12,7 @@
 // (with reinstatement) and a revocation. Four-eyes on registration, grants,
 // suspensions, reinstatements and revocations.
 
+import { attachForm, type LibraryForm } from '@/lib/forms/library/build';
 import { registerEffect, registeredEffects, sampleMark, type EffectContext } from '@/lib/casework/engine';
 import { draftPackage, listPackages, ownerInstitution } from '@/lib/casework/packages';
 import { authorityFor } from '@/lib/data/store';
@@ -200,8 +201,8 @@ export const REFERENCE_ORG_REGISTRATION: Ref = {
     { key: 'reject', label: 'Reject', from: ['pending-approval'], to: 'rejected', decision: 'reject', needs: { role: 'signatory' }, requires: { reasons: true } },
     { key: 'issue', label: 'Issue the certificate', from: ['registered'], to: 'certificate-issued', needs: { role: 'officer' }, effects: ['org.issueCertificate'] },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 10 working days', from: 'opened', days: 10, calendar: 'working', onLapse: 'escalate' }],
-  notifications: [], appeal: { days: 30, body: 'the business register appeals authority', suspensive: false },
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 10, calendar: 'working', onLapse: 'escalate' }],
+  notifications: [], appeal: { sampleDays: 30, body: 'the business register appeals authority', suspensive: false },
   retention: 'organisation-register-permanent', sensitivity: 'normal',
   tests: [
     { name: 'registered and certified', steps: [
@@ -241,8 +242,8 @@ export const REFERENCE_LICENCE: Ref = {
     { key: 'refuse', label: 'Refuse', from: ['pending-approval'], to: 'declined', decision: 'refuse', needs: { role: 'signatory' }, requires: { reasons: true }, effects: ['org.refuse'] },
     { key: 'issue', label: 'Issue the licence', from: ['granted'], to: 'certificate-issued', needs: { role: 'officer' }, effects: ['org.issueCertificate'] },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 30 working days', from: 'opened', days: 30, calendar: 'working', onLapse: 'escalate' }],
-  notifications: [], appeal: { days: 30, body: 'the licensing appeals authority', suspensive: false },
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 30, calendar: 'working', onLapse: 'escalate' }],
+  notifications: [], appeal: { sampleDays: 30, body: 'the licensing appeals authority', suspensive: false },
   retention: 'organisation-register-permanent', sensitivity: 'normal',
   tests: [
     { name: 'inspected and granted', steps: [
@@ -289,8 +290,8 @@ export const REFERENCE_ACCREDITATION: Ref = {
     { key: 'refuse', label: 'Refuse', from: ['pending-approval', 'committee'], to: 'declined', decision: 'refuse', needs: { role: 'signatory' }, requires: { reasons: true }, effects: ['org.refuse'] },
     { key: 'issue', label: 'Issue the certificate', from: ['accredited'], to: 'certificate-issued', needs: { role: 'officer' }, effects: ['org.issueCertificate'] },
   ],
-  deadlines: [{ key: 'decide', label: 'Decide within 180 days', from: 'opened', days: 180, calendar: 'calendar', onLapse: 'escalate' }],
-  notifications: [], appeal: { days: 60, body: 'the accreditation appeals board', suspensive: false },
+  deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 180, calendar: 'calendar', onLapse: 'escalate' }],
+  notifications: [], appeal: { sampleDays: 60, body: 'the accreditation appeals board', suspensive: false },
   retention: 'organisation-register-permanent', sensitivity: 'normal',
   tests: [
     { name: 'accredited', steps: [
@@ -329,8 +330,8 @@ function standingProcedures(family: 'licence' | 'accreditation', owner: string, 
         { key: 'refuse', label: 'Refuse', from: ['pending-approval'], to: 'declined', decision: 'refuse', needs: { role: 'signatory' }, requires: { reasons: true } },
         { key: 'issue', label: 'Issue the renewed certificate', from: ['renewed'], to: 'certificate-issued', needs: { role: 'officer' }, effects: ['org.issueCertificate'] },
       ],
-      deadlines: [{ key: 'decide', label: 'Decide within 30 working days', from: 'opened', days: 30, calendar: 'working', onLapse: 'escalate' }],
-      appeal: { days: 30, body: `the ${word} appeals authority`, suspensive: false },
+      deadlines: [{ key: 'decide', label: 'Decide within the time the law sets', from: 'opened', sampleDays: 30, calendar: 'working', onLapse: 'escalate' }],
+      appeal: { sampleDays: 30, body: `the ${word} appeals authority`, suspensive: false },
       tests: [{ name: 'renewed', steps: [{ action: 'check', fields: { organisation: 'ORG-1' }, documents: ['renewal-evidence'], expect: 'verification' }, { action: 'verify', expect: 'pending-approval' }, { action: 'renew', expect: 'renewed' }, { action: 'issue', expect: 'certificate-issued' }] }],
     },
     {
@@ -344,8 +345,8 @@ function standingProcedures(family: 'licence' | 'accreditation', owner: string, 
         { key: 'close', label: 'Close without suspension', from: ['hearing', 'pending-approval'], to: 'closed', needs: { role: 'signatory' }, requires: { reasons: true } },
         { key: 'reinstate', label: 'Reinstate', from: ['suspended'], to: 'reinstated', decision: 'reinstate', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['org.reinstate'] },
       ],
-      deadlines: [{ key: 'representations', label: 'Representations within 14 days of notice', from: 'hearing', days: 14, calendar: 'calendar', onLapse: 'notify' }],
-      appeal: { days: 30, body: `the ${word} appeals authority`, suspensive: false },
+      deadlines: [{ key: 'representations', label: 'Representations within the time the law sets, from notice', from: 'hearing', sampleDays: 14, calendar: 'calendar', onLapse: 'notify' }],
+      appeal: { sampleDays: 30, body: `the ${word} appeals authority`, suspensive: false },
       tests: [
         { name: 'suspended and reinstated', steps: [{ action: 'notify', fields: { organisation: 'ORG-1' }, documents: ['grounds'], expect: 'hearing' }, { action: 'propose', expect: 'pending-approval' }, { action: 'suspend', expect: 'suspended' }, { action: 'reinstate', expect: 'reinstated' }] },
         { name: 'closed after representations', steps: [{ action: 'notify', fields: { organisation: 'ORG-1' }, documents: ['grounds'], expect: 'hearing' }, { action: 'close', expect: 'closed' }] },
@@ -361,8 +362,8 @@ function standingProcedures(family: 'licence' | 'accreditation', owner: string, 
         ...decisionSteps('revoked', 'revoke', 'org.revoke'),
         { key: 'close', label: 'Close without revocation', from: ['hearing', 'pending-approval'], to: 'closed', needs: { role: 'signatory' }, requires: { reasons: true } },
       ],
-      deadlines: [{ key: 'representations', label: 'Representations within 21 days of notice', from: 'hearing', days: 21, calendar: 'calendar', onLapse: 'notify' }],
-      appeal: { days: 30, body: `the ${word} appeals authority`, suspensive: true },
+      deadlines: [{ key: 'representations', label: 'Representations within the time the law sets, from notice', from: 'hearing', sampleDays: 21, calendar: 'calendar', onLapse: 'notify' }],
+      appeal: { sampleDays: 30, body: `the ${word} appeals authority`, suspensive: true },
       tests: [{ name: 'revoked', steps: [{ action: 'notify', fields: { organisation: 'ORG-1' }, documents: ['grounds'], expect: 'hearing' }, { action: 'propose', expect: 'pending-approval' }, { action: 'revoke', expect: 'revoked' }] }],
     },
   ];
@@ -380,6 +381,8 @@ export interface SectorFamily {
   documents?: { class: string; label: string; required: boolean }[];
   /** Name the premises as registered sites when sending for inspection (health facilities, pharmacies). */
   linkSites?: boolean;
+  /** The application form to attach to the licence application (lib/forms/library). */
+  form?: Pick<LibraryForm, 'fields' | 'documents' | 'form'>;
 }
 const SECTOR_REGISTERS = new Map<string, string>();
 
@@ -392,6 +395,7 @@ export function sectorProcedures(f: SectorFamily): Ref[] {
     licence.fields = [...licence.fields, { key: 'campuses', label: 'Premises (registered site ids)', type: 'text' }];
     licence.actions = licence.actions.map(a => a.key === 'inspect' ? { ...a, effects: [...(a.effects ?? []), 'org.linkCampuses'] } : a);
   }
+  if (f.form) Object.assign(licence, attachForm(licence.fields, licence.documents, f.form));
   const [renewal, suspension, revocation] = standingProcedures('licence', f.owner, f.register, f.refPrefix);
   return [
     licence,

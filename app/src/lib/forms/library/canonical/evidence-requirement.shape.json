@@ -1,0 +1,20 @@
+{
+  "schema_version": "civicos.evidence-requirement.v1",
+  "evidence_requirement_id": "approved-unique-id",
+  "procedure_package_id": "approved-package-id",
+  "procedure_package_version": 1,
+  "evidence_type": "identity_evidence",
+  "required_when_rule_id": "registered-rule-id",
+  "legal_basis": {
+    "law_record_id": "approved-law-record-id",
+    "law_version_id": "approved-law-version-id",
+    "provision_reference": "approved-provision-reference",
+    "authority_type": "statutory_requirement"
+  },
+  "accepted_alternatives_source": "approved-evidence-alternatives-source",
+  "verification_method_source": "approved-verification-methods-source",
+  "retention_rule_id": "approved-retention-rule-id",
+  "drafted_by": "authorized-official-id",
+  "approved_by": "different-authorized-official-id",
+  "status": "approved"
+}

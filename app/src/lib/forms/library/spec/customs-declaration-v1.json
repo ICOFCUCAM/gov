@@ -1,0 +1,65 @@
+{
+  "form_id": "customs-declaration-v1",
+  "record_type": "customs_declaration",
+  "fields": [
+    {
+      "id": "declarant_organisation_id",
+      "type": "registry_reference",
+      "required": true,
+      "validation": "active_organization_and_authorized_representation",
+      "personal_data_class": "restricted"
+    },
+    {
+      "id": "declaration_type",
+      "type": "enum",
+      "required": true,
+      "values_source": "approved_customs_procedure_codes",
+      "personal_data_class": "administrative"
+    },
+    {
+      "id": "consignment_reference",
+      "type": "string",
+      "required": true,
+      "validation": "country_configured_unique_reference",
+      "personal_data_class": "commercial_confidential"
+    },
+    {
+      "id": "transport_document_reference",
+      "type": "string",
+      "required": true,
+      "validation": "transport_document_profile",
+      "personal_data_class": "commercial_confidential"
+    },
+    {
+      "id": "origin_country_code",
+      "type": "country_code",
+      "required": true,
+      "validation": "approved_country_code_list",
+      "personal_data_class": "commercial"
+    },
+    {
+      "id": "goods_lines",
+      "type": "array<customs_goods_line>",
+      "required": true,
+      "validation": "minimum_one_line"
+    },
+    {
+      "id": "currency_code",
+      "type": "currency_code",
+      "required": true,
+      "validation": "approved_currency_code"
+    },
+    {
+      "id": "supporting_documents",
+      "type": "array<document_reference>",
+      "required": true,
+      "validation": "required_document_policy_for_procedure"
+    },
+    {
+      "id": "declarant_attestation",
+      "type": "signed_attestation",
+      "required": true,
+      "validation": "valid_signature_and_authorized_signer"
+    }
+  ]
+}

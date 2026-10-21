@@ -1,0 +1,157 @@
+{
+  "group_id": "core.address",
+  "version": 1,
+  "scope": "universal",
+  "fields": [
+    {
+      "id": "address.country",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "iso.3166-1.alpha2.current",
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Country"},
+      "hint": {"en": "Select the country for this address."},
+      "error_text": {"en": {"value_in_source": "Select a country."}}
+    },
+    {
+      "id": "address.kind",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.address.kind.v1",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Address type"},
+      "hint": {"en": "Choose the option that best describes the address."},
+      "error_text": {"en": {"value_in_source": "Choose an address type."}}
+    },
+    {
+      "id": "address.formatted",
+      "type": "localized_text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 500}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Address as written or normally used"},
+      "hint": {"en": "Enter the address in the local format where possible."},
+      "error_text": {"en": {"length": "Check the address length."}}
+    },
+    {
+      "id": "address.building_or_plot",
+      "type": "text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 100}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Building, house or plot number"},
+      "hint": {"en": "Leave blank if the place has no number."},
+      "error_text": {"en": {"length": "Check the building or plot number."}}
+    },
+    {
+      "id": "address.locality",
+      "type": "localized_text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 200}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Village, neighbourhood or locality"},
+      "hint": {"en": "Use the name people locally recognize."},
+      "error_text": {"en": {"length": "Check the locality name."}}
+    },
+    {
+      "id": "address.administrative_area",
+      "type": "registry_reference",
+      "required": false,
+      "validation": [{"rule": "reference_type_allowed", "params": {"types": ["administrative_area"]}}],
+      "values_source": "civicos.registry.administrative_area",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "District or administrative area"},
+      "hint": {"en": "Select the official area if one is registered."},
+      "error_text": {"en": {"reference_type_allowed": "Select an available administrative area."}}
+    },
+    {
+      "id": "address.postal_code",
+      "type": "text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 30}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Postal code"},
+      "hint": {"en": "Leave blank if this address has no postal code."},
+      "error_text": {"en": {"length": "Check the postal code."}}
+    },
+    {
+      "id": "address.po_box",
+      "type": "text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 100}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "PO box"},
+      "hint": {"en": "Enter a PO box if used for correspondence."},
+      "error_text": {"en": {"length": "Check the PO box."}}
+    },
+    {
+      "id": "address.landmark_directions",
+      "type": "long_text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 1000}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Directions or nearby landmark"},
+      "hint": {"en": "Describe how someone can find the location."},
+      "error_text": {"en": {"length": "Check the directions."}}
+    },
+    {
+      "id": "address.point",
+      "type": "point",
+      "required": false,
+      "validation": [{"rule": "coordinate_range", "params": {"latitude": [-90, 90], "longitude": [-180, 180]}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Location on map"},
+      "hint": {"en": "Provide a location only when it is necessary for this service."},
+      "error_text": {"en": {"coordinate_range": "Enter valid map coordinates."}}
+    },
+    {
+      "id": "address.purpose",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.address.purpose.v1",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "How will this address be used?"},
+      "hint": {"en": "For example, residence, business premises or correspondence."},
+      "error_text": {"en": {"value_in_source": "Select the address purpose."}}
+    }
+  ],
+  "accessibility": {
+    "support_international_address_order": true,
+    "do_not_require_postal_code_unless_lawfully_required": true,
+    "map_not_required_for_address_entry": true,
+    "coordinate_reference_system_must_be_explicit": true,
+    "rtl_supported": true
+  },
+  "assisted_channel": {
+    "allow_landmark_and_verbal_directions": true,
+    "officer_may_capture_point_when_necessary": true,
+    "record_if_point_was_reported_or_observed": true
+  },
+  "country_decisions": [
+    "National address schema and administrative-area hierarchy.",
+    "Accepted coordinate reference systems and geocoding service, if any.",
+    "Which services require a service, residence, premises or correspondence address.",
+    "Legal circumstances in which a postal address or verified residence is mandatory."
+  ]
+}

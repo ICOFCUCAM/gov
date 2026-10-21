@@ -1,0 +1,670 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-FAC-007",
+ "record_type": "health.facility.closure.case",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-002: closure notice, surrender of a licence and the authority that records it.",
+  "CFG-DAT-001: custody and retention of a closed facility's records.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-FAC-007",
+  "part": 6,
+  "section": "6.2",
+  "line": 719,
+  "batch": 1
+ },
+ "library": {
+  "title": "Tell the regulator a health facility is closing",
+  "intro": "Tell the health regulator that a licensed facility will close, for good or for a time. Say how the people who use it will be told and where services will continue, and which organisation will keep the facility's records. Do not name or describe anyone.",
+  "owner": "healthRegulation",
+  "filled_by": "The licensed facility's operator or someone acting for it.",
+  "procedure": null,
+  "intended": "Closure or surrender of a standing in the health-facilities register (lib/organisations/procedures.ts effects): not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "health.country.facility_types": {
+    "values": [
+     {
+      "value": "hospital",
+      "label": "Hospital"
+     },
+     {
+      "value": "health-centre",
+      "label": "Health centre"
+     },
+     {
+      "value": "clinic",
+      "label": "Clinic"
+     },
+     {
+      "value": "dispensary",
+      "label": "Dispensary"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity home"
+     },
+     {
+      "value": "laboratory",
+      "label": "Medical laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging centre"
+     },
+     {
+      "value": "dental",
+      "label": "Dental practice"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.facility_services": {
+    "values": [
+     {
+      "value": "outpatient",
+      "label": "Outpatient care"
+     },
+     {
+      "value": "inpatient",
+      "label": "Inpatient care"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity and delivery"
+     },
+     {
+      "value": "emergency",
+      "label": "Emergency care"
+     },
+     {
+      "value": "surgery",
+      "label": "Surgery"
+     },
+     {
+      "value": "laboratory",
+      "label": "Laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging"
+     },
+     {
+      "value": "pharmacy",
+      "label": "Pharmacy"
+     },
+     {
+      "value": "immunisation",
+      "label": "Immunisation"
+     },
+     {
+      "value": "dental",
+      "label": "Dental"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.capacity_measures": {
+    "values": [
+     {
+      "value": "beds-total",
+      "label": "Beds (all)"
+     },
+     {
+      "value": "beds-intensive-care",
+      "label": "Intensive-care beds"
+     },
+     {
+      "value": "consulting-rooms",
+      "label": "Consulting rooms"
+     },
+     {
+      "value": "operating-theatres",
+      "label": "Operating theatres"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.closure_kinds": {
+    "values": [
+     {
+      "value": "permanent",
+      "label": "For good"
+     },
+     {
+      "value": "temporary",
+      "label": "For a time"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "health.facility.closure-notice",
+    "kind": "days",
+    "source": "setting",
+    "decision": "How much notice of a closure the law requires."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 866,
+    "quotes": [
+     "CFG-LIC-002",
+     "Facility licensing, inspection, and enforcement procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 719,
+    "quotes": [
+     "HLT-FAC-007",
+     "Facility closure notification",
+     "Closure process initiated"
+    ],
+    "met_by": {
+     "fields": [
+      "closure.facility",
+      "closure.date",
+      "closure.continuity"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1323,
+    "quotes": [
+     "Health facility",
+     "Unique facility ID, name, type, location, operator, authorised services, operational status, verification date"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "The facility register keeps the id, name, type, location, operator, services, status and verification date; this form points to it by the facility's number"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1341,
+    "quotes": [
+     "Register updated and the public-facing licence status published only to the extent legally permitted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "The register's standing changes only through a procedure effect; the public check then shows it"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "closure.facility",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "reference_type_allowed",
+     "params": {
+      "types": [
+       "health-facilities",
+       "pharmacies"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Facility registration number"
+   },
+   "hint": {
+    "en": "The facility's number in the register of organisations, as shown on its licence."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the facility registration number.",
+     "reference_exists": "There is no organisation with that number in the register.",
+     "REF-ACTIVE": "The facility's licence in the register is not active."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The facility"
+   }
+  },
+  {
+   "use_group": "core.representation",
+   "version": 1,
+   "only": [
+    "representation.capacity",
+    "representation.actor",
+    "representation.authority_document"
+   ],
+   "section": {
+    "en": "Who is telling us"
+   }
+  },
+  {
+   "id": "closure.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "health.country.closure_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Is the facility closing for good or for a time?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The closure"
+   }
+  },
+  {
+   "id": "closure.date",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "configured_profile",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date it closes"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the date it closes."
+    }
+   },
+   "country_decision": "CFG-LIC-002: how much notice of a closure the law requires.",
+   "section": {
+    "en": "The closure"
+   }
+  },
+  {
+   "id": "closure.reopening",
+   "type": "date",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "closure.kind",
+      "equals": "temporary"
+     }
+    },
+    {
+     "rule": "date_not_before",
+     "params": {
+      "reference": "closure.date"
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date it expects to reopen"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter the date it expects to reopen.",
+     "date_not_before": "Date it expects to reopen must be on or after the date it follows."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The closure"
+   }
+  },
+  {
+   "id": "closure.reason",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Why it is closing"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter why it is closing.",
+     "length": "Why it is closing must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The closure"
+   }
+  },
+  {
+   "id": "closure.services",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "health.country.facility_services",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Services affected"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select services affected.",
+     "value_in_source": "Select services affected from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The closure"
+   }
+  },
+  {
+   "id": "closure.continuity",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "How people who use the facility will be told, and where services will continue"
+   },
+   "hint": {
+    "en": "Describe the arrangements. Do not name or describe anyone."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter how people who use the facility will be told, and where services will continue.",
+     "length": "How people who use the facility will be told, and where services will continue must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The closure"
+   }
+  },
+  {
+   "id": "closure.records_custodian",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Organisation that will keep the facility's records after it closes"
+   },
+   "hint": {
+    "en": "Only which organisation keeps them. The records themselves never come to the regulator through this form."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the organisation that will keep the facility's records after it closes."
+    }
+   },
+   "country_decision": "CFG-DAT-001: who must keep a closed facility's records, and for how long.",
+   "section": {
+    "en": "Records"
+   }
+  },
+  {
+   "id": "closure.surrender",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Do you surrender the licence?"
+   },
+   "hint": {
+    "en": "For a closure for good, the licence normally ends; the regulator records it."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Records"
+   }
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "closure.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

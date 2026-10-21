@@ -20,6 +20,8 @@ import { draftPackage, listPackages } from '@/lib/casework/packages';
 import { getMinistry } from '@/lib/data/store';
 import { scheduleHearing, concludeHearing } from './hearings';
 import type { CasePackage } from '@/lib/casework/types';
+import { libraryForm } from '@/lib/forms/library/definitions';
+import { attachForm } from '@/lib/forms/library/build';
 
 type Ref = Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'>;
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
@@ -88,8 +90,8 @@ export const REFERENCE_COURT_CASE: Ref = {
     { key: 'archive', label: 'Archive', from: ['final', 'enforcement'], to: 'archived', needs: { role: 'officer' } },
   ],
   deadlines: [
-    { key: 'review', label: 'Registry review within 5 working days', from: 'opened', days: 5, calendar: 'working', onLapse: 'escalate' },
-    { key: 'appeal', label: 'Appeal period (30 days from judgment)', from: 'judgment', days: 30, calendar: 'calendar', onLapse: 'notify' },
+    { key: 'review', label: 'Registry review within the time the law sets', from: 'opened', sampleDays: 5, calendar: 'working', onLapse: 'escalate' },
+    { key: 'appeal', label: 'Appeal period (from judgment, as the law sets it)', from: 'judgment', sampleDays: 30, calendar: 'calendar', onLapse: 'notify' },
   ],
   notifications: [], retention: 'court-record', sensitivity: 'restricted',
   tests: [
@@ -112,6 +114,9 @@ export const REFERENCE_COURT_CASE: Ref = {
     ] },
   ],
 };
+
+// The specification's form (judiciary.case-filing), attached to the procedure's own fields and documents (lib/forms/library); still a draft the nation approves.
+Object.assign(REFERENCE_COURT_CASE, attachForm(REFERENCE_COURT_CASE.fields, REFERENCE_COURT_CASE.documents, libraryForm('judiciary.case-filing')));
 
 export const COURT_PROCEDURES: Ref[] = [REFERENCE_COURT_CASE];
 

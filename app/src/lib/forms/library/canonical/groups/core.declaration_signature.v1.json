@@ -1,0 +1,83 @@
+{
+  "group_id": "core.declaration_signature",
+  "version": 1,
+  "scope": "universal_when_the_procedure_requires_a_declaration",
+  "fields": [
+    {
+      "id": "declaration.text_version",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "approved_content_version", "params": {}}],
+      "values_source": "civicos.approved.declaration_texts",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Declaration being made"},
+      "hint": {"en": "Read the declaration before confirming it."},
+      "error_text": {"en": {"approved_content_version": "This declaration is not an approved version."}}
+    },
+    {
+      "id": "declaration.confirmed",
+      "type": "boolean",
+      "required": true,
+      "validation": [{"rule": "must_be_true", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "I confirm that the information I provided is accurate to the best of my knowledge"},
+      "hint": {"en": "Select this only if you agree with the statement."},
+      "error_text": {"en": {"must_be_true": "Confirm the declaration to continue."}}
+    },
+    {
+      "id": "declaration.signing_method",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.signature.method.v1",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "How will you sign?"},
+      "hint": {"en": "Choose a method accepted for this procedure."},
+      "error_text": {"en": {"value_in_source": "Choose an available signing method."}}
+    },
+    {
+      "id": "declaration.signature_reference",
+      "type": "document",
+      "required": false,
+      "validation": [{"rule": "required_if", "params": {"field": "declaration.signing_method", "in": ["digital_signature", "uploaded_signed_document"]}}],
+      "values_source": null,
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "signature_evidence", "when": "as_required_by_the_approved_procedure"}],
+      "label": {"en": "Signature evidence"},
+      "hint": {"en": "Provide signature evidence only if required by the chosen method."},
+      "error_text": {"en": {"required_if": "Provide the required signature evidence."}}
+    },
+    {
+      "id": "declaration.signed_at",
+      "type": "date",
+      "required": true,
+      "validation": [{"rule": "must_match_server_submission_date", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Date of declaration"},
+      "hint": {"en": "The system records the submission date automatically."},
+      "error_text": {"en": {"must_match_server_submission_date": "The declaration date must match the recorded submission date."}}
+    }
+  ],
+  "accessibility": {
+    "declaration_text_must_be_readable_before_confirmation": true,
+    "signature_must_be_keyboard_accessible": true,
+    "signature_image_must_not_be_the_only_supported_method": true
+  },
+  "assisted_channel": {
+    "officer_may_record_or_witness_signature_only_when_authorized": true,
+    "record_signing_method_and_witness_role": true,
+    "never_sign_for_the_applicant_without_explicit_legal_authority": true
+  },
+  "country_decisions": [
+    "Legal effect of each declaration type.",
+    "Recognized signature methods and identity assurance levels.",
+    "Whether witnessing, oath, notarization or a specific attestation is required.",
+    "Legal consequences of knowingly false declarations and the approved wording that explains them."
+  ]
+}

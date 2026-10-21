@@ -1,0 +1,753 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "taxpayer.registration.appeal_assessment",
+ "record_type": "taxpayer.registration_dispute_assessment",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "country.tax.registration: taxpayer categories, registration identifiers, tax obligations and registration procedures (approved by the authorized tax and legal authority).",
+  "country.tax.disputes: objections, appeals, deadlines, extensions, review bodies and settlement powers.",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for these records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "taxpayer.registration.appeal_assessment",
+  "part": 2,
+  "section": "2.6",
+  "line": 2717,
+  "batch": 3
+ },
+ "library": {
+  "title": "Assess an objection or appeal",
+  "intro": "The procedural assessment of an objection or appeal about a registration: the decision challenged, whether it was lodged in time under the rule in force, whether it is complete and admissible, and where it goes next. By an official not disqualified from the matter.",
+  "owner": "tax",
+  "filled_by": "An official of the tax authority, signed in, not disqualified under the independence or recusal rules.",
+  "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
+  "procedure": null,
+  "intended": "The admissibility stage of an objection or appeal procedure for registration decisions: not built; the form waits in the library (plan step I5).",
+  "lists": {
+   "tax.registration.dispute_kinds": {
+    "values": [
+     {
+      "value": "objection",
+      "label": "Objection"
+     },
+     {
+      "value": "appeal",
+      "label": "Appeal"
+     }
+    ],
+    "proposed": true
+   },
+   "tax.registration.timeliness_findings": {
+    "values": [
+     {
+      "value": "yes",
+      "label": "Yes"
+     },
+     {
+      "value": "no",
+      "label": "No"
+     },
+     {
+      "value": "extension-sought",
+      "label": "Late, with an extension sought"
+     },
+     {
+      "value": "disputed",
+      "label": "The event date or the rule is disputed: for authorised review"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "policies": {
+   "access.read_rule": "canReadTax() in lib/auth/roles.ts: the tax authority's officials and auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only registration status, through the taxpayer.status exchange service, for an approved purpose"
+  },
+  "nation_values": [
+   {
+    "key": "tax.disputes.objection-period",
+    "kind": "days",
+    "source": "rule",
+    "decision": "The period to object to a registration decision, counted from the legally relevant event date, and the powers to extend it."
+   },
+   {
+    "key": "tax.disputes.appeal-period",
+    "kind": "days",
+    "source": "rule",
+    "decision": "The period to appeal a registration or objection decision, counted from the legally relevant event date, and the powers to extend it."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "registration-dispute-not-built",
+    "what": "The reference objection procedure (tax.objection) is for assessments only; an objection to or appeal of a registration decision has no procedure yet, so this form waits in the library",
+    "why": "No decision power is invented: the nation's procedure names who reviews, within which period and with which remedies.",
+    "rule": "CLAUDE.md Government operating model: cases change only under an approved procedure package; plan step I5"
+   },
+   {
+    "id": "no-amount",
+    "what": "No requested amount is asked: a registration decision fixes no liability or refund (dispute.requested_amount does not arise); an objection to an assessment is the tax.objection procedure",
+    "why": "Money is calculated only by an approved rule; a registration dispute carries none.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts"
+   },
+   {
+    "id": "tax-secrecy-class",
+    "what": "Every field of the form is restricted and marked tax secrecy (confidentiality tax), stricter than the catalogue's administrative and personal classes where it gives them; the case is restricted and read only under canReadTax() (the tax authority's officials, auditors with a purpose), every read in the access log; other institutions learn status only through the taxpayer.status exchange service",
+    "why": "Tax records are confidential: a class label alone grants no access, and nothing about a taxpayer leaves the tax authority except through an approved exchange for an approved purpose.",
+    "rule": "CLAUDE.md Tax: lib/tax/ is read by the tax authority only (canReadTax(), every read in the access log); others use the taxpayer.status exchange service"
+   },
+   {
+    "id": "no-tax-values",
+    "what": "No rate, threshold, penalty, interest, deadline, registration threshold, obligation trigger or fee is typed: each is a named nation value checked by a binding rule (recorded as not performed and a publication blocker until the nation approves it); tax types, taxpayer categories and obligations are nation lists that ship empty, naming the standard expected",
+    "why": "The field series Part 2 §2.6: tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, retention and appeal rights come from approved national rules, never universal constants.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2717,
+    "quotes": [
+     "taxpayer.registration.appeal_assessment — record the procedural assessment of an objection or appeal."
+    ],
+    "met_by": {
+     "fields": [
+      "appeal_assessment.in_time",
+      "appeal_assessment.complete",
+      "appeal_assessment.route"
+     ],
+     "deviation": "registration-dispute-not-built"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3191,
+    "quotes": [
+     "case_ref: identifier_reference, required; source is the owning institution's authorized case registry."
+    ],
+    "met_by": {
+     "fields": [
+      "appeal_assessment.case_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3193,
+    "quotes": [
+     "rule_refs: registry_reference, required for assessment and decision records; exact approved rules used."
+    ],
+    "met_by": {
+     "fields": [
+      "appeal_assessment.rule_refs"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3062,
+    "quotes": [
+     "dispute.taxpayer_ref: registry_reference, required; restricted."
+    ],
+    "met_by": {
+     "fields": [
+      "appeal_assessment.taxpayer"
+     ],
+     "deviation": "tax-secrecy-class"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3063,
+    "quotes": [
+     "dispute.original_decision_ref: identifier_reference, required; links to the decision being challenged."
+    ],
+    "met_by": {
+     "fields": [
+      "appeal_assessment.decision"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3070,
+    "quotes": [
+     "dispute.timeliness_rule_ref: identifier_reference, required; resolves to the approved procedural deadline rule."
+    ],
+    "met_by": {
+     "fields": [
+      "appeal_assessment.timeliness_rule"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3076,
+    "quotes": [
+     "Country decisions: objection and appeal eligibility; deadlines and extension powers; independent appellate authority; settlement and compromise powers; suspension of collection during disputes; reasons, notice and representation requirements."
+    ],
+    "met_by": {
+     "country_decision": "country.tax.disputes"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3078,
+    "quotes": [
+     "The application must never calculate an appeal deadline from a hard-coded number of days.",
+     "It must use the active approved rule and the legally relevant event date.",
+     "If that event date or rule is disputed, the case must be routed for authorized review."
+    ],
+    "met_by": {
+     "fields": [
+      "appeal_assessment.in_time",
+      "appeal_assessment.timeliness_rule"
+     ],
+     "country_decision": "country.tax.disputes"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3223,
+    "quotes": [
+     "country.tax.disputes",
+     "Objections, appeals, deadlines, extensions, review bodies and settlement powers",
+     "Authorized tax/legal authority"
+    ],
+    "met_by": {
+     "country_decision": "country.tax.disputes"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 392,
+    "quotes": [
+     "Objections and Appeals",
+     "Administrative objections, independent internal review where required and referrals"
+    ],
+    "met_by": {
+     "fields": [
+      "appeal_assessment.route"
+     ],
+     "deviation": "registration-dispute-not-built"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 410,
+    "quotes": [
+     "Objection",
+     "Objection → admissibility → review by authorized official → decision → appeal/referral",
+     "Objection decision"
+    ],
+    "met_by": {
+     "fields": [
+      "appeal_assessment.complete",
+      "appeal_assessment.route"
+     ],
+     "deviation": "registration-dispute-not-built"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 508,
+    "quotes": [
+     "Objections must not be decided by a person disqualified under the country's independence or recusal rules."
+    ],
+    "met_by": {
+     "fields": [
+      "appeal_assessment.not_disqualified"
+     ],
+     "platform": {
+      "file": "app/src/lib/transitions/restrictions.ts",
+      "how": "A declared interest recuses the official at once (CaseFacts.recused)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3205,
+    "quotes": [
+     "Universal control: these records must be bound to the actual service-specific procedure package.",
+     "A generic internal form cannot be used to bypass the case's approved stages, skip mandatory legal review or issue a decision that the officer is not authorized to make."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "Each record is made at a step of the procedure package its case runs under; it cannot move the case past a stage, skip a review or decide what the official may not (caseActRefusal())"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2710,
+    "quotes": [
+     "The following forms are available only to authorized tax officers and reviewers:"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Officials of the tax authority only: caseActRefusal() refuses anyone else, and administrators and whole-government officials get no domain authority"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "appeal_assessment.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Case reference"
+   },
+   "hint": {
+    "en": "The registration case this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter case reference.",
+     "case_exists_and_is_open": "There is no open case with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registration.dispute_kinds",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Objection or appeal"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select objection or appeal.",
+     "value_in_source": "Choose one of the listed values for objection or appeal."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.taxpayer",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registry.taxpayer_accounts",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Taxpayer account"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.decision",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The decision challenged"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the decision challenged.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.in_time",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "dispute_period_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registration.timeliness_findings",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Lodged in time?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select lodged in time?.",
+     "value_in_source": "Choose one of the listed values for lodged in time?."
+    }
+   },
+   "country_decision": "country.tax.disputes: the periods and the event dates they count from (none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.timeliness_rule",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "dispute_period_from_rule",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Deadline rule applied"
+   },
+   "hint": {
+    "en": "The approved rule in force and the event date it counts from."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "appeal_assessment.rule_refs",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.approved_rules",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Rules applied"
+   },
+   "hint": {
+    "en": "The approved rules applied, by key and version (lib/law/rules.ts)."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select rules applied.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.complete",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Is it complete?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.missing",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "appeal_assessment.complete",
+      "equals": false
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What is missing"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter what is missing.",
+     "length": "What is missing must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.route",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.country.approved.dispute_routes",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Where it goes next"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select where it goes next.",
+     "value_in_source": "Choose one of the listed values for where it goes next."
+    }
+   },
+   "country_decision": "country.tax.disputes: the review officers and bodies, and the route to each (none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.not_disqualified",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "I am not disqualified from this matter under the independence or recusal rules"
+   },
+   "error_text": {
+    "en": {
+     "must_be_true": "Confirm this to continue."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.reasons",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Reasons"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reasons.",
+     "length": "Reasons must be 10000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "appeal_assessment.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded by"
+   },
+   "hint": {
+    "en": "The signed-in official who records this; never typed in."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "appeal_assessment.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  }
+ ]
+}

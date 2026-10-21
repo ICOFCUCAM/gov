@@ -1,0 +1,841 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-MED-003",
+ "record_type": "medicines.assessment.record",
+ "form_version": 1,
+ "procedure_package_id": "medicines.authorisation",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-MED-002: assessment procedures, the guidelines applied and whether a second assessor is required.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records.",
+  "CFG-MED-001: medicines and medical-device classifications, each from the standard the nation adopts.",
+  "CFG-MED-003: inspection, safety reporting and recall authority."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-MED-003",
+  "part": 6,
+  "section": "5.1",
+  "line": 654,
+  "batch": 2
+ },
+ "library": {
+  "title": "Record a technical assessment of a medicine",
+  "intro": "The assessment report of an application, written by the assessor the regulator assigned, under their own sign-in. It records what was assessed, the findings and the questions for the applicant. It is a recommendation only: the decision is made by the official with the power to decide.",
+  "owner": "medicinesRegulation",
+  "filled_by": "An assessor of the medicines regulator, signed in (recorded from the sign-in, never typed).",
+  "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "procedure": {
+   "key": "medicines.authorisation",
+   "stage": "assessment",
+   "action": "assess",
+   "document": "assessment-report",
+   "also": [
+    "medicines.variation",
+    "medicines.renewal",
+    "medicines.device-registration"
+   ]
+  },
+  "lists": {
+   "medicines.country.assessment_areas": {
+    "values": [
+     {
+      "value": "quality",
+      "label": "Quality (chemistry, manufacturing and controls)"
+     },
+     {
+      "value": "toxicology",
+      "label": "Non-clinical safety (pharmacology and toxicology)"
+     },
+     {
+      "value": "efficacy-safety",
+      "label": "Efficacy and safety"
+     },
+     {
+      "value": "product-information",
+      "label": "Product information and labelling"
+     },
+     {
+      "value": "manufacturing",
+      "label": "Manufacturing compliance"
+     },
+     {
+      "value": "benefit-risk",
+      "label": "Overall benefit and risk"
+     }
+    ],
+    "proposed": true
+   },
+   "medicines.country.assessment_status": {
+    "values": [
+     {
+      "value": "satisfactory",
+      "label": "Satisfactory"
+     },
+     {
+      "value": "question",
+      "label": "Question to the applicant"
+     },
+     {
+      "value": "unresolved",
+      "label": "Unresolved"
+     }
+    ],
+    "proposed": true
+   },
+   "medicines.country.report_stages": {
+    "values": [
+     {
+      "value": "preliminary",
+      "label": "Preliminary"
+     },
+     {
+      "value": "final",
+      "label": "Final"
+     }
+    ],
+    "proposed": true
+   },
+   "medicines.country.assessment_recommendations": {
+    "values": [
+     {
+      "value": "grant",
+      "label": "Grant"
+     },
+     {
+      "value": "grant-with-conditions",
+      "label": "Grant with conditions"
+     },
+     {
+      "value": "request-information",
+      "label": "Ask the applicant for more information"
+     },
+     {
+      "value": "refuse",
+      "label": "Refuse"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "medicines.marketing-authorisation.assessment-time",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The time the law allows for assessment and decision, and when the clock stops."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "assessor-from-sign-in",
+    "field": "assessor",
+    "what": "The assessor is recorded from the sign-in (officer field), never typed",
+    "why": "Stricter: an assessment is entered under the assessor's own account.",
+    "rule": "CLAUDE.md Who acted: a signed-in official's verified name replaces any name in the request"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: records of products, of organisations (holders, manufacturers, importers) and of the regulator's decisions.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "medicines-authority-slot",
+    "what": "The form names the medicines-regulator slot (medicinesRegulation), which ships empty: until the nation names it, the health regulator slot (healthRegulation, \"Health facility regulation\") stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence; each power over a product type comes from the approved permit authority mapping",
+    "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
+    "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
+   },
+   {
+    "id": "no-product-register",
+    "what": "The regulated product record (Part 6 §5.2) is kept in the platform's register of medicines and medical devices (lib/health/products/register.ts), written only by the product procedures' effects and read in full only by the medicines authority; a reference to an authorised product in this form is still recorded as given and its check recorded as not performed until the form's reference check reads that register, and a status is never inferred from an import, inventory or procurement record",
+    "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
+    "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 505,
+    "quotes": [
+     "Medicines regulator",
+     "Medicines, medical devices, safety, and market authorization",
+     "Regulatory dossiers have their own access and disclosure rules"
+    ],
+    "met_by": {
+     "deviation": "medicines-authority-slot",
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Dossier, assessment, report and inspection content is restricted: read only at the institution responsible, every read of personal data in the access log"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 649,
+    "quotes": [
+     "The medicines regulator needs a separate workflow from clinical prescribing and hospital pharmacy operations.",
+     "Product authorization, manufacturing oversight, import authorization, safety reporting, and enforcement decisions must be managed under configured national law."
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002",
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "Apart from prescribing and pharmacy operations: no prescribing, dispensing or patient field in any form of this batch (the scope check runs on every key)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 688,
+    "quotes": [
+     "A marketing authorization must not be inferred from a product's appearance in an import record, hospital inventory, or procurement system.",
+     "Each status must derive from the competent regulator's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "An authorisation or licence reference must be active in its register (REF-ACTIVE); the approved permit mapping and its review path decide, and production refuses a power no approved mapping covers"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 862,
+    "quotes": [
+     "CFG-MED-001",
+     "Medicines and medical-device classifications"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 863,
+    "quotes": [
+     "CFG-MED-002",
+     "Marketing authorization and product variation procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 864,
+    "quotes": [
+     "CFG-MED-003",
+     "Inspection, safety reporting, and recall authority"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-003"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register",
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Holders, manufacturers and importers are organisations: their standing comes only from the register the competent authority keeps; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 893,
+    "quotes": [
+     "Medicines and devices regulatory service — applications, assessments, authorizations, inspections, safety reporting, and recalls."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Applications, assessments, authorisations, inspections, safety reporting and recalls are the contracts of batch 2; the service that runs them waits for plan step I4"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 683,
+    "quotes": [
+     "Assessment records and material evidence."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.findings",
+      "assessment.evidence",
+      "assessment.conclusion"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 654,
+    "quotes": [
+     "HLT-MED-003",
+     "Technical assessment record",
+     "Assessment prepared"
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.conclusion",
+      "assessment.assessor"
+     ],
+     "deviation": "assessor-from-sign-in"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3237,
+    "quotes": [
+     "Controls: a supervisory employee should not be able to change an approved tariff, impose a sanction or revoke a licence without the required authority and approvals.",
+     "Confidential commercial information and protected supervisory returns must not become public simply because the regulator has a public website."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A suspension, withdrawal or other sanction needs the power an approved mapping gives, decided in a case by an official who can sign; dossier, report and inspection content is restricted and never on a public page or list"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3231,
+    "quotes": [
+     "Record preliminary concerns separately from final findings."
+    ],
+    "met_by": {
+     "fields": [
+      "assessment.stage",
+      "assessment.findings"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "assessment.application",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Application reference"
+   },
+   "hint": {
+    "en": "The reference given when the application was registered."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the application reference.",
+     "case_exists_and_is_open": "There is no open application with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.dossier_version",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Dossier version assessed"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the dossier version assessed."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.area",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.assessment_areas",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What was assessed"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select what was assessed.",
+     "value_in_source": "Select what was assessed from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.stage",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.report_stages",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Preliminary or final report?"
+   },
+   "hint": {
+    "en": "Preliminary concerns are kept apart from final findings."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.guidelines",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Guidelines and standards applied"
+   },
+   "error_text": {
+    "en": {
+     "length": "Guidelines and standards applied must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": "CFG-MED-002: the assessment guidelines the regulator has adopted.",
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.interest_declared",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "I have no interest in this product or applicant that I have not declared to the regulator"
+   },
+   "hint": {
+    "en": "A declared interest takes you off the assessment."
+   },
+   "error_text": {
+    "en": {
+     "required": "Confirm this statement to continue.",
+     "must_be_true": "Confirm this statement to continue."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The assessment"
+   }
+  },
+  {
+   "id": "assessment.findings",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Findings"
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the findings."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "topic",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Topic"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the topic.",
+       "length": "Topic must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "observation",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 4000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "What the dossier shows"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter what the dossier shows.",
+       "length": "What the dossier shows must be 4000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "status",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "medicines.country.assessment_status",
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Status"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the status."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "question",
+     "type": "long_text",
+     "required": false,
+     "validation": [
+      {
+       "rule": "length",
+       "params": {
+        "max": 2000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Question to put to the applicant, if any"
+     },
+     "error_text": {
+      "en": {
+       "length": "Question to put to the applicant, if any must be 2000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Findings"
+   }
+  },
+  {
+   "id": "assessment.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "assessment_evidence",
+     "when": "when_the_assessor_relies_on_material_beyond_the_dossier"
+    }
+   ],
+   "label": {
+    "en": "Material evidence relied on"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Findings"
+   }
+  },
+  {
+   "id": "assessment.conclusion",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Conclusion of this assessment"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the conclusion of this assessment.",
+     "length": "Conclusion of this assessment must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Conclusion"
+   }
+  },
+  {
+   "id": "assessment.recommendation",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.assessment_recommendations",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Assessor's recommendation"
+   },
+   "hint": {
+    "en": "A recommendation only. The decision is made by the official with the power to decide."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the assessor's recommendation.",
+     "value_in_source": "Select the assessor's recommendation from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Conclusion"
+   }
+  },
+  {
+   "id": "assessment.assessor",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Assessor"
+   },
+   "hint": {
+    "en": "Recorded from the assessor's sign-in."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "assessment.second_assessor",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Second assessor, where the procedure requires one"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "assessment.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -28,6 +28,8 @@ import { samplesAllowed } from '@/lib/ops/mode';
 import { registerType } from '@/lib/organisations/register';
 import { registerOfCase } from '@/lib/organisations/procedures';
 import { getProfessional, profession } from '@/lib/professions/register';
+import { getProduct, productOfCase } from '@/lib/health/products/register';
+import { PRODUCT_PERMIT_TYPES } from '@/lib/health/products/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -37,7 +39,7 @@ export type DecisionClass = { kind: 'mapping'; permitType: string; power: Power 
 export function powerOf(decision: string): Power {
   if (decision === 'renew') return 'renew';
   if (decision === 'suspend' || decision === 'reinstate') return 'suspend';
-  if (decision === 'revoke') return 'revoke';
+  if (decision === 'revoke' || decision === 'withdraw') return 'revoke';
   return 'issue';
 }
 
@@ -62,9 +64,18 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
     const p = profession(str(c.fields.profession) || getProfessional(str(c.fields.professional))?.profession || '');
     return mapped(p?.permitType);
   }
-  if (key.startsWith('org.') || is(key, 'edu.school') || is(key, 'health.facility') || is(key, 'health.pharmacy')) {
+  if (key.startsWith('org.') || is(key, 'edu.school') || is(key, 'health.facility') || is(key, 'health.pharmacy')
+    || is(key, 'medicines.manufacturer') || is(key, 'medicines.importer') || is(key, 'medicines.wholesaler')) {
     const t = registerType(registerOfCase(c) ?? '');
     return mapped(t?.permitType);
+  }
+  // The register of medicines and medical devices (lib/health/products): a recall by the recall mapping, a device by
+  // the device registration mapping, every other product decision by the marketing authorisation mapping.
+  if (key.startsWith('medicines.')) {
+    if (is(key, 'medicines.recall')) return mapped(PRODUCT_PERMIT_TYPES.recall);
+    if (is(key, 'medicines.device-registration')) return mapped(PRODUCT_PERMIT_TYPES.device);
+    const p = getProduct(str(c.fields.product)) ?? productOfCase(c.id);
+    return mapped(p ? PRODUCT_PERMIT_TYPES[p.kind] : (pkg.authority?.permitType ?? PRODUCT_PERMIT_TYPES.medicine));
   }
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);

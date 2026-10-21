@@ -1,0 +1,57 @@
+{
+  "group_id": "core.accessibility_needs",
+  "version": 1,
+  "scope": "optional_purpose_limited",
+  "fields": [
+    {
+      "id": "accessibility.accommodation_requested",
+      "type": "boolean",
+      "required": false,
+      "validation": [],
+      "values_source": null,
+      "personal_data_class": "special",
+      "evidence": [],
+      "label": {"en": "Would an adjustment help you use this service?"},
+      "hint": {"en": "You do not need to provide a diagnosis."},
+      "error_text": {}
+    },
+    {
+      "id": "accessibility.accommodation_types",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "required_if", "params": {"field": "accessibility.accommodation_requested", "equals": true}}, {"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.accessibility.accommodation_types.v1",
+      "personal_data_class": "special",
+      "evidence": [],
+      "label": {"en": "What adjustment would help?"},
+      "hint": {"en": "Choose only the adjustments relevant to this service."},
+      "error_text": {"en": {"required_if": "Choose an adjustment or explain what would help."}}
+    },
+    {
+      "id": "accessibility.adjustment_details",
+      "type": "long_text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 1000}}],
+      "values_source": null,
+      "personal_data_class": "special",
+      "evidence": [],
+      "label": {"en": "Tell us what would make this service accessible"},
+      "hint": {"en": "Describe the adjustment, not your medical history."},
+      "error_text": {"en": {"length": "Keep the description within the permitted length."}}
+    }
+  ],
+  "accessibility": {
+    "this_group_must_not_be_required_for_general_service_access": true,
+    "no_diagnosis_required_by_default": true,
+    "accommodation_must_not_lower_service_priority": true
+  },
+  "assisted_channel": {
+    "officer_records_requested_adjustment_not_assumed_disability": true,
+    "provide_accessible_alternative_channel": true
+  },
+  "country_decisions": [
+    "Legal basis for processing special-category data where applicable.",
+    "Accommodation options supported by each service.",
+    "Who may access the request and when it must be deleted or reviewed."
+  ]
+}

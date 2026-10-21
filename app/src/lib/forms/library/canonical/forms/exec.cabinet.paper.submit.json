@@ -1,0 +1,112 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "exec.cabinet.paper.submit",
+  "record_type": "exec.cabinet.paper",
+  "form_version": 1,
+  "status": "draft",
+  "fields": [
+    {
+      "id": "paper.title",
+      "type": "localized_text",
+      "required": true,
+      "validation": [{"rule": "required", "params": {}}, {"rule": "length", "params": {"min": 5, "max": 300}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Title of the Cabinet paper"},
+      "hint": {"en": "Use a short title that states the matter requiring Cabinet consideration."},
+      "error_text": {"en": {"required": "Enter a title.", "length": "Use between 5 and 300 characters."}}
+    },
+    {
+      "id": "paper.sponsoring_institution",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "institution_active", "params": {}}, {"rule": "actor_authorized_for_institution", "params": {}}],
+      "values_source": "civicos.registry.institutions",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Sponsoring institution"},
+      "hint": {"en": "Select the institution formally submitting the paper."},
+      "error_text": {"en": {"institution_active": "Select an active institution.", "actor_authorized_for_institution": "You are not authorized to submit on behalf of this institution."}}
+    },
+    {
+      "id": "paper.decision_requested",
+      "type": "long_text",
+      "required": true,
+      "validation": [{"rule": "required", "params": {}}, {"rule": "length", "params": {"min": 20, "max": 5000}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Decision requested"},
+      "hint": {"en": "State precisely what Cabinet is being asked to decide."},
+      "error_text": {"en": {"required": "State the decision requested.", "length": "Use between 20 and 5,000 characters."}}
+    },
+    {
+      "id": "paper.policy_context",
+      "type": "long_text",
+      "required": true,
+      "validation": [{"rule": "length", "params": {"min": 20, "max": 10000}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Background and policy context"},
+      "hint": {"en": "Explain the issue, options considered and intended public outcome."},
+      "error_text": {"en": {"length": "Provide a sufficiently clear background within the allowed length."}}
+    },
+    {
+      "id": "paper.legal_basis_refs",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "all_references_resolve_to_approved_law", "params": {}}],
+      "values_source": "civicos.registry.law_provisions",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Legal authority and constraints"},
+      "hint": {"en": "Reference the approved laws and provisions relevant to the proposal."},
+      "error_text": {"en": {"all_references_resolve_to_approved_law": "Every legal reference must resolve to an approved law and provision."}}
+    },
+    {
+      "id": "paper.fiscal_impact",
+      "type": "money",
+      "required": false,
+      "validation": [{"rule": "requires_approved_fiscal_estimate", "params": {}}],
+      "values_source": "civicos.finance.approved_estimates",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Estimated fiscal impact"},
+      "hint": {"en": "Use an approved fiscal estimate; do not enter an unsupported figure."},
+      "error_text": {"en": {"requires_approved_fiscal_estimate": "Link an approved fiscal estimate or record that no estimate is applicable."}}
+    },
+    {
+      "id": "paper.risk_and_alternatives",
+      "type": "long_text",
+      "required": true,
+      "validation": [{"rule": "length", "params": {"min": 10, "max": 10000}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Risks and alternatives"},
+      "hint": {"en": "Explain material risks and the principal alternatives considered."},
+      "error_text": {"en": {"length": "Describe the material risks and alternatives."}}
+    },
+    {
+      "id": "paper.supporting_documents",
+      "type": "document",
+      "required": false,
+      "validation": [{"rule": "file_type_allowlist", "params": {}}, {"rule": "malware_scan_passed", "params": {}}],
+      "values_source": "civicos.documents.secure_store",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "supporting_paper", "when": "as_required_by_the_approved_cabinet_procedure"}],
+      "label": {"en": "Supporting documents"},
+      "hint": {"en": "Upload only documents relevant to the decision requested."},
+      "error_text": {"en": {"file_type_allowlist": "This file type is not accepted.", "malware_scan_passed": "The file could not be accepted safely."}}
+    }
+  ],
+  "legal_basis": [],
+  "country_decisions": [
+    "Cabinet paper types and required review paths.",
+    "Which matters require legal, fiscal, human-rights or other impact review.",
+    "Cabinet confidentiality classifications and publication rules.",
+    "Who may sponsor papers and which office may approve the agenda."
+  ]
+}

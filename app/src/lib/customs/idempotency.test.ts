@@ -1,6 +1,7 @@
 // Cycle 3 event idempotency (owner's directive, non-negotiable 9): a repeated
 // request, a replayed decision, a bank transfer reported twice and a
 // reconciliation run twice each change the records once.
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { openCase, act, attach, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
 import { draftPackage, approvePackage, resetPackages } from '@/lib/casework/packages';
@@ -27,7 +28,7 @@ describe('cycle 3 idempotency', () => {
     vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 7).toString('base64'));
     CUS = listMinistries()[0]!.id;
     setSovereign({ deployment: { authorities: { customs: CUS } } }, 'Administrator');
-    for (const p of CUSTOMS_PROCEDURES) { draftPackage(p, 'Author', 'a', registeredEffects()); approvePackage(p.key, 1, 'Approver', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); }
+    for (const p of CUSTOMS_PROCEDURES) { draftPackage(asNationSets(p), 'Author', 'a', registeredEffects()); approvePackage(p.key, 1, 'Approver', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); }
   });
 
   it('a repeated open, decision, notice, transfer and reconciliation each count once', async () => {

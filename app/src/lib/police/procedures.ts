@@ -17,6 +17,8 @@
 import { registerEffect, registeredEffects, type EffectContext } from '@/lib/casework/engine';
 import { draftPackage, listPackages } from '@/lib/casework/packages';
 import type { CasePackage } from '@/lib/casework/types';
+import { libraryForm } from '@/lib/forms/library/definitions';
+import { attachForm } from '@/lib/forms/library/build';
 
 type Ref = Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'>;
 
@@ -62,8 +64,8 @@ export const REFERENCE_INCIDENT: Ref = {
     { key: 'archive', label: 'Archive under the retention rules', from: ['closed'], to: 'archived', needs: { role: 'signatory' }, requires: { reasons: true } },
   ],
   deadlines: [
-    { key: 'triage', label: 'Triage within 1 working day', from: 'opened', days: 1, calendar: 'working', onLapse: 'escalate' },
-    { key: 'classify', label: 'Classify within 5 working days', from: 'triage', days: 5, calendar: 'working', onLapse: 'escalate' },
+    { key: 'triage', label: 'Triage within the time the law sets', from: 'opened', sampleDays: 1, calendar: 'working', onLapse: 'escalate' },
+    { key: 'classify', label: 'Classify within the time the law sets', from: 'triage', sampleDays: 5, calendar: 'working', onLapse: 'escalate' },
   ],
   notifications: [], retention: 'police-incident-report', sensitivity: 'restricted',
   tests: [
@@ -82,6 +84,9 @@ export const REFERENCE_INCIDENT: Ref = {
     ] },
   ],
 };
+
+// The specification's form (police.incident-report), attached to the procedure's own fields and documents (lib/forms/library); still a draft the nation approves.
+Object.assign(REFERENCE_INCIDENT, attachForm(REFERENCE_INCIDENT.fields, REFERENCE_INCIDENT.documents, libraryForm('police.incident-report')));
 
 export const POLICE_PROCEDURES: Ref[] = [REFERENCE_INCIDENT];
 

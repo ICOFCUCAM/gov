@@ -1,0 +1,529 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "taxpayer.registration.referral",
+ "record_type": "taxpayer.registration_referral",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "country.tax.registration: taxpayer categories, registration identifiers, tax obligations and registration procedures (approved by the authorized tax and legal authority).",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for these records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "taxpayer.registration.referral",
+  "part": 2,
+  "section": "2.6",
+  "line": 2544,
+  "batch": 3
+ },
+ "library": {
+  "title": "Refer a registration matter to an authorized unit",
+  "intro": "Refer a registration matter to an institution or unit authorised to receive it, under the authority cited, sending only what the recipient needs.",
+  "owner": "tax",
+  "filled_by": "An official of the tax authority, signed in.",
+  "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
+  "procedure": null,
+  "intended": "A referral from tax.registration, opened as a case at the recipient (lib/casework/referral.ts): not built; the form waits in the library (plan step I5).",
+  "lists": {
+   "tax.registration.referral_matters": {
+    "values": [
+     {
+      "value": "identity",
+      "label": "Doubt about identity or entity"
+     },
+     {
+      "value": "possible-duplicate",
+      "label": "A possible duplicate registration"
+     },
+     {
+      "value": "specialist-question",
+      "label": "A question needing a specialist unit"
+     },
+     {
+      "value": "other-authority",
+      "label": "A matter for another authority"
+     },
+     {
+      "value": "other",
+      "label": "Another matter"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "policies": {
+   "access.read_rule": "canReadTax() in lib/auth/roles.ts: the tax authority's officials and auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only registration status, through the taxpayer.status exchange service, for an approved purpose"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "referral-case",
+    "what": "A referral to another institution is a case of its own (lib/casework/referral.ts), sharing only what the record names; a referral inside the tax authority goes to a unit the nation configures",
+    "why": "Referrals between institutions are cases; information leaves only for an approved purpose.",
+    "rule": "CLAUDE.md Government operating model: referrals between institutions are cases (lib/casework/referral.ts)"
+   },
+   {
+    "id": "tax-secrecy-class",
+    "what": "Every field of the form is restricted and marked tax secrecy (confidentiality tax), stricter than the catalogue's administrative and personal classes where it gives them; the case is restricted and read only under canReadTax() (the tax authority's officials, auditors with a purpose), every read in the access log; other institutions learn status only through the taxpayer.status exchange service",
+    "why": "Tax records are confidential: a class label alone grants no access, and nothing about a taxpayer leaves the tax authority except through an approved exchange for an approved purpose.",
+    "rule": "CLAUDE.md Tax: lib/tax/ is read by the tax authority only (canReadTax(), every read in the access log); others use the taxpayer.status exchange service"
+   },
+   {
+    "id": "no-tax-values",
+    "what": "No rate, threshold, penalty, interest, deadline, registration threshold, obligation trigger or fee is typed: each is a named nation value checked by a binding rule (recorded as not performed and a publication blocker until the nation approves it); tax types, taxpayer categories and obligations are nation lists that ship empty, naming the standard expected",
+    "why": "The field series Part 2 §2.6: tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, retention and appeal rights come from approved national rules, never universal constants.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2544,
+    "quotes": [
+     "taxpayer.registration.referral",
+     "Refer a registration matter to an authorized unit",
+     "Authorized tax officer",
+     "Referral",
+     "Referral record"
+    ],
+    "met_by": {
+     "fields": [
+      "referral.destination",
+      "referral.reason",
+      "referral.referral_case"
+     ],
+     "deviation": "referral-case"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3191,
+    "quotes": [
+     "case_ref: identifier_reference, required; source is the owning institution's authorized case registry."
+    ],
+    "met_by": {
+     "fields": [
+      "referral.case_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3202,
+    "quotes": [
+     "referral_destination: registry_reference, required; must resolve to an institution or unit authorized to receive the referral."
+    ],
+    "met_by": {
+     "fields": [
+      "referral.destination"
+     ],
+     "platform": {
+      "file": "app/src/lib/casework/referral.ts",
+      "how": "A referral is a case opened at the receiving institution, which must exist and be authorised to receive it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3203,
+    "quotes": [
+     "referral_authority_ref: registry_reference, required; approved legal or procedural authority for the exchange."
+    ],
+    "met_by": {
+     "fields": [
+      "referral.authority"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3205,
+    "quotes": [
+     "Universal control: these records must be bound to the actual service-specific procedure package.",
+     "A generic internal form cannot be used to bypass the case's approved stages, skip mandatory legal review or issue a decision that the officer is not authorized to make."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "Each record is made at a step of the procedure package its case runs under; it cannot move the case past a stage, skip a review or decide what the official may not (caseActRefusal())"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "referral.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Case reference"
+   },
+   "hint": {
+    "en": "The registration case this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter case reference.",
+     "case_exists_and_is_open": "There is no open case with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The referral"
+   }
+  },
+  {
+   "id": "referral.destination",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "recipient_authorized_for_data",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Institution or unit referred to"
+   },
+   "hint": {
+    "en": "It must be authorised to receive the referral."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select institution or unit referred to.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The referral"
+   }
+  },
+  {
+   "id": "referral.authority",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "legal_references_resolve",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.law_provisions",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Legal or procedural authority for the referral"
+   },
+   "hint": {
+    "en": "From the laws register, in the version in force; the record cites this version."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select legal or procedural authority for the referral.",
+     "legal_references_resolve": "That provision is not in the laws register in a version in force."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The referral"
+   }
+  },
+  {
+   "id": "referral.matter",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registration.referral_matters",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Matter"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select matter.",
+     "value_in_source": "Choose one of the listed values for matter."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The referral"
+   }
+  },
+  {
+   "id": "referral.reason",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Reason"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reason.",
+     "length": "Reason must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The referral"
+   }
+  },
+  {
+   "id": "referral.questions",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Questions for the recipient"
+   },
+   "error_text": {
+    "en": {
+     "length": "Questions for the recipient must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The referral"
+   }
+  },
+  {
+   "id": "referral.information_shared",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "attributes_minimized_and_allowed",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Information sent with it"
+   },
+   "hint": {
+    "en": "Only what the recipient needs and may receive."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter information sent with it.",
+     "length": "Information sent with it must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The referral"
+   }
+  },
+  {
+   "id": "referral.evidence_refs",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "referral_documents",
+     "when": "conditional_according_to_the_procedure"
+    }
+   ],
+   "label": {
+    "en": "Documents sent"
+   },
+   "error_text": {
+    "en": {
+     "evidence_requirement_in_approved_package": "This evidence is not included in the approved procedure."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "The referral"
+   }
+  },
+  {
+   "id": "referral.referral_case",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Referral case"
+   },
+   "hint": {
+    "en": "The case opened at the recipient (lib/casework/referral.ts)."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "referral.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded by"
+   },
+   "hint": {
+    "en": "The signed-in official who records this; never typed in."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "referral.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  }
+ ]
+}

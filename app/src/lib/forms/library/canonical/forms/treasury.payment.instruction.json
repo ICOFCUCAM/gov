@@ -1,0 +1,112 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "treasury.payment.instruction",
+  "record_type": "treasury.payment_instruction",
+  "form_version": 1,
+  "status": "draft",
+  "fields": [
+    {
+      "id": "payment_instruction.paying_entity",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "institution_active", "params": {}}, {"rule": "actor_authorized_for_institution", "params": {}}],
+      "values_source": "civicos.registry.institutions",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Paying institution"},
+      "hint": {"en": "Select the institution authorized to make this payment."},
+      "error_text": {"en": {"institution_active": "Select an active institution.", "actor_authorized_for_institution": "You are not authorized to submit payments for this institution."}}
+    },
+    {
+      "id": "payment_instruction.payee",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "payee_type_allowed", "params": {}}],
+      "values_source": "civicos.registry.approved_payees",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Payee"},
+      "hint": {"en": "Select the payee linked to the approved obligation."},
+      "error_text": {"en": {"payee_type_allowed": "Select an eligible payee record."}}
+    },
+    {
+      "id": "payment_instruction.obligation_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "obligation_open_and_payable", "params": {}}],
+      "values_source": "civicos.finance.approved_obligations",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Approved obligation"},
+      "hint": {"en": "Select the invoice, award, payroll batch or other approved obligation being paid."},
+      "error_text": {"en": {"obligation_open_and_payable": "The obligation is not approved, payable or available for this payment."}}
+    },
+    {
+      "id": "payment_instruction.budget_allocation_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "available_budget_covers_payment", "params": {}}],
+      "values_source": "civicos.finance.approved_budget_allocations",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Budget allocation"},
+      "hint": {"en": "Select the approved allocation that funds the payment."},
+      "error_text": {"en": {"available_budget_covers_payment": "The allocation is missing, inactive or insufficient."}}
+    },
+    {
+      "id": "payment_instruction.amount",
+      "type": "money",
+      "required": true,
+      "validation": [{"rule": "amount_matches_approved_obligation", "params": {}}, {"rule": "currency_matches_obligation", "params": {}}],
+      "values_source": "civicos.finance.approved_obligations",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Payment amount"},
+      "hint": {"en": "The amount must match the approved obligation and any authorized partial-payment rule."},
+      "error_text": {"en": {"amount_matches_approved_obligation": "The amount does not match the approved obligation.", "currency_matches_obligation": "The currency must match the obligation."}}
+    },
+    {
+      "id": "payment_instruction.supporting_documents",
+      "type": "document",
+      "required": false,
+      "validation": [{"rule": "evidence_requirements_satisfied", "params": {}}, {"rule": "malware_scan_passed", "params": {}}],
+      "values_source": "civicos.documents.secure_store",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "payment_support", "when": "as_required_by_the_approved_payment_procedure"}],
+      "label": {"en": "Supporting payment documents"},
+      "hint": {"en": "Attach only evidence required by the payment procedure."},
+      "error_text": {"en": {"evidence_requirements_satisfied": "Required payment evidence is missing.", "malware_scan_passed": "The file could not be accepted safely."}}
+    },
+    {
+      "id": "payment_instruction.payment_purpose",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "purpose_matches_obligation", "params": {}}],
+      "values_source": "civicos.finance.payment_purposes",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Payment purpose"},
+      "hint": {"en": "Select the purpose associated with the approved obligation."},
+      "error_text": {"en": {"purpose_matches_obligation": "The selected purpose does not match the obligation."}}
+    },
+    {
+      "id": "payment_instruction.requested_execution_date",
+      "type": "date",
+      "required": false,
+      "validation": [{"rule": "date_allowed_by_treasury_calendar", "params": {}}],
+      "values_source": "civicos.finance.treasury_calendar",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Requested payment date"},
+      "hint": {"en": "Choose a date allowed by the treasury payment calendar."},
+      "error_text": {"en": {"date_allowed_by_treasury_calendar": "Choose an allowed payment date."}}
+    }
+  ],
+  "legal_basis": [],
+  "country_decisions": [
+    "Payment authorization thresholds and delegated approval limits.",
+    "Permitted payment instruments, settlement systems and payment calendars.",
+    "Required separation between instruction, approval, execution and reconciliation.",
+    "Retention, audit and disclosure rules for treasury payment records."
+  ]
+}

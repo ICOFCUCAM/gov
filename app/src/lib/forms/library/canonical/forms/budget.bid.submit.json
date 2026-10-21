@@ -1,0 +1,124 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "budget.bid.submit",
+  "record_type": "budget.institutional_bid",
+  "form_version": 1,
+  "status": "draft",
+  "fields": [
+    {
+      "id": "budget_bid.institution",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "institution_active", "params": {}}, {"rule": "authorized_budget_submitter", "params": {}}],
+      "values_source": "civicos.registry.institutions",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Submitting institution"},
+      "hint": {"en": "Select the institution authorized to submit this bid."},
+      "error_text": {"en": {"institution_active": "Select an active institution.", "authorized_budget_submitter": "You are not authorized to submit a budget bid for this institution."}}
+    },
+    {
+      "id": "budget_bid.fiscal_period",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "budget_period_open", "params": {}}],
+      "values_source": "civicos.finance.budget_periods",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Budget period"},
+      "hint": {"en": "Select an open budget period."},
+      "error_text": {"en": {"budget_period_open": "The selected budget period is not open for submissions."}}
+    },
+    {
+      "id": "budget_bid.ceiling_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "ceiling_active_for_institution_and_period", "params": {}}],
+      "values_source": "civicos.finance.approved_budget_ceilings",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Approved budget ceiling"},
+      "hint": {"en": "Select the ceiling that applies to this institution and period."},
+      "error_text": {"en": {"ceiling_active_for_institution_and_period": "No applicable approved ceiling was found."}}
+    },
+    {
+      "id": "budget_bid.programme_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "programme_belongs_to_institution", "params": {}}],
+      "values_source": "civicos.finance.registered_programmes",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Programme or service"},
+      "hint": {"en": "Select the programme for which funding is requested."},
+      "error_text": {"en": {"programme_belongs_to_institution": "Select a programme owned by the submitting institution."}}
+    },
+    {
+      "id": "budget_bid.objective",
+      "type": "long_text",
+      "required": true,
+      "validation": [{"rule": "length", "params": {"min": 20, "max": 5000}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Purpose of the funding request"},
+      "hint": {"en": "Explain the public service or result the funding will support."},
+      "error_text": {"en": {"length": "Provide a clear explanation within the allowed length."}}
+    },
+    {
+      "id": "budget_bid.requested_amount",
+      "type": "money",
+      "required": true,
+      "validation": [{"rule": "currency_matches_budget_period", "params": {}}, {"rule": "within_authorized_submission_bounds", "params": {}}],
+      "values_source": "civicos.finance.budget_parameters",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Total funding requested"},
+      "hint": {"en": "Enter the amount requested in the budget's configured currency."},
+      "error_text": {"en": {"currency_matches_budget_period": "Use the configured budget currency.", "within_authorized_submission_bounds": "The request is outside the permitted submission bounds."}}
+    },
+    {
+      "id": "budget_bid.cost_breakdown",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "approved_costing_complete", "params": {}}],
+      "values_source": "civicos.finance.cost_estimates",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Cost breakdown"},
+      "hint": {"en": "Link the approved or submitted breakdown of the requested costs."},
+      "error_text": {"en": {"approved_costing_complete": "Provide a complete cost breakdown."}}
+    },
+    {
+      "id": "budget_bid.performance_targets",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "approved_indicators_resolve", "params": {}}],
+      "values_source": "civicos.performance.approved_indicators",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Expected results"},
+      "hint": {"en": "Link the indicators and targets approved for this programme."},
+      "error_text": {"en": {"approved_indicators_resolve": "Select valid programme indicators and targets."}}
+    },
+    {
+      "id": "budget_bid.justification_document",
+      "type": "document",
+      "required": false,
+      "validation": [{"rule": "evidence_requirements_satisfied", "params": {}}, {"rule": "malware_scan_passed", "params": {}}],
+      "values_source": "civicos.documents.secure_store",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "budget_justification", "when": "as_required_by_the_approved_budget_procedure"}],
+      "label": {"en": "Supporting budget documents"},
+      "hint": {"en": "Attach the evidence required by the budget call circular."},
+      "error_text": {"en": {"evidence_requirements_satisfied": "Required budget evidence is missing.", "malware_scan_passed": "The file could not be accepted safely."}}
+    }
+  ],
+  "legal_basis": [],
+  "country_decisions": [
+    "Budget calendar and submission windows.",
+    "Budget classifications and chart-of-accounts mapping.",
+    "Institutional ceilings, permitted adjustments and approval authority.",
+    "Required performance indicators and capital-project appraisal rules."
+  ]
+}

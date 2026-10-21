@@ -1,0 +1,69 @@
+{
+  "group_id": "core.contact",
+  "version": 1,
+  "scope": "universal",
+  "fields": [
+    {
+      "id": "contact.email",
+      "type": "text",
+      "required": false,
+      "validation": [{"rule": "email_format", "params": {}}, {"rule": "length", "params": {"min": 3, "max": 254}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Email address"},
+      "hint": {"en": "Enter an address you can access."},
+      "error_text": {"en": {"email_format": "Enter an email address in a valid format."}}
+    },
+    {
+      "id": "contact.phone",
+      "type": "text",
+      "required": false,
+      "validation": [{"rule": "phone_format", "params": {"international_format": "E.164"}}, {"rule": "length", "params": {"min": 3, "max": 30}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Telephone number"},
+      "hint": {"en": "Include the country code if you know it."},
+      "error_text": {"en": {"phone_format": "Enter a telephone number in a recognized format."}}
+    },
+    {
+      "id": "contact.preferred_channel",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.notification.channel.v1",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Preferred way to contact you"},
+      "hint": {"en": "Choose from the available contact methods."},
+      "error_text": {"en": {"value_in_source": "Choose a contact method."}}
+    },
+    {
+      "id": "contact.accessibility_safe_channel",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.notification.channel.v1",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "A safe way to contact you, if different"},
+      "hint": {"en": "Provide this only if it is important for safe communication."},
+      "error_text": {"en": {"value_in_source": "Choose an available contact method."}}
+    }
+  ],
+  "accessibility": {
+    "email_and_phone_must_not_both_be_required_by_default": true,
+    "verification_code_not_equivalent_to_legal_identity_proof": true,
+    "never_send_sensitive_details_in_sms_by_default": true
+  },
+  "assisted_channel": {
+    "officer_must_confirm_safe_channel_if_disclosed": true,
+    "do_not_read_sensitive_contact_details_aloud_in_public": true
+  },
+  "country_decisions": [
+    "Permitted notification channels and approved delivery providers.",
+    "Whether a service legally requires a contact method.",
+    "Applicable consent and communication rules for electronic notices."
+  ]
+}

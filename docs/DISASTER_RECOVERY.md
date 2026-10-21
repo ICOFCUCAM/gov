@@ -121,6 +121,43 @@ Backups are useless without the key that wrapped their data key.
   for the newest backup. A verification that fails with "does not open"
   means the standby does not hold the key — fix that before you need it.
 
+### 5a. Seal key compromise and replacement
+
+The decision (seal) key is in the seal key register (`docs/SEAL_KEYS.md`,
+National settings → Seal keys). A production installation seals nothing with
+a key the register has not approved. The register is kept as it stands by a
+data restore (`KEPT_ON_RESTORE`): a restore never brings back trust in a key
+revoked since. A standby must present the same approved key (or a newly
+approved one) to seal.
+
+**Planned replacement.** Generate the new key in custody; an official proposes
+its public key (citing the law); the seal keys authority approves it (two
+officials who can sign there, or more if the country's rules say so). Then
+present it (`CIVICOS_DECISION_KEY` or the provider's key version). Its first
+seal activates it and retires the old key; everything the old key sealed
+still verifies.
+
+**Compromise (emergency).**
+
+1. Any administrator or a signatory of the seal keys authority reports the key
+   compromised on the screen, with the time from which it is not trusted (the
+   earliest moment it may have left custody) and what happened. The key seals
+   nothing from this moment, everywhere.
+2. A second, different official confirms the report at once (no waiting
+   period). The key is revoked: seals made at or after the compromise time
+   verify as not trusted on `/verify` and in the trust list; earlier ones stay
+   valid. No decision or certificate is changed or deleted.
+3. Replace the key (as above); until a new key is approved and presented, no
+   decision is sealed. Affected decisions sealed after the compromise time are
+   re-decided through their procedure (a new decision supersedes) where the
+   law requires.
+4. The seal keys authority reviews the compromise within the period of the
+   country's rules (default 30 days) and records its findings; a review can
+   move the compromise time only earlier.
+5. A report made in error is withdrawn only before it is confirmed; a
+   confirmed revocation is never withdrawn, and a revoked key is never
+   approved again.
+
 ## 6. Procedures
 
 ### 6.1 Daily (automatic)

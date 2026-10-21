@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { openCase, act, attach, refer, getCase, resetCases, registeredEffects, type Actor } from './engine';
 import { approvePackage, resetPackages, draftPackage } from './packages';
-import { samplePackage } from './testkit';
+import { samplePackage, setNationDays } from './testkit';
 import { addDocument, resetDocuments } from '@/lib/records/documents';
 import { setSovereign, listMinistries, listAudit } from '@/lib/data/store';
 import { draftReferralProcedure, referralKey } from './referral';
@@ -24,6 +24,7 @@ describe('referral between institutions as linked cases', () => {
     approvePackage(d.key, d.version, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
     expect(draftReferralProcedure(HEALTH, 'Administrator')).toEqual({ drafted: referralKey(HEALTH) });
     expect(draftReferralProcedure(HEALTH, 'Administrator')).toEqual({ present: referralKey(HEALTH) });
+    setNationDays();
     expect(approvePackage(referralKey(HEALTH), 1, 'Health approver', 'ha', '2026-01-01', registeredEffects(), new Date('2026-01-01'))).not.toHaveProperty('error');
 
     const origin = openCase({ procedure: 'test.licence', fields: { name: 'Campus' } }, edu('e1')) as { id: string; ref: string };

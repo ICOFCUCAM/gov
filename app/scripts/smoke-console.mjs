@@ -41,6 +41,40 @@ const PAGES = [
   { path: '/gov/legislature', map: false, text: /bills and votes/i },
   // Plan phase 6: transitions and emergencies.
   { path: '/gov/configuration/transitions', map: false, text: /record a legal event/i },
+  // Plan step I1: the form designer, one form in its channels (a library form: present on a fresh server), the printed form.
+  { path: '/gov/law/procedures/forms', map: false, text: /forms/i },
+  { path: '/gov/law/procedures/forms/taxpayer-registration-v1', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer-registration-v1/print', map: false, text: /register status/i },
+  // Catalogue contracts, batch 1 (health regulation): library forms with their catalogue row and publication gates.
+  { path: '/gov/law/procedures/forms/HLT-FAC-002', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-FAC-002/print', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-LIC-001', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-LIC-008', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-PH-015', map: false, text: /register status/i },
+  // Catalogue contracts, batch 2 (medicines and medical devices regulation).
+  { path: '/gov/law/procedures/forms/HLT-MED-001', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-001/print', map: false, text: /register status/i },
+  // HLT-MED-004 names two catalogue forms: the bare ID is refused with both candidates; each identity opens its own entry.
+  { path: '/gov/law/procedures/forms/HLT-MED-004', map: false, text: /names more than one form/i },
+  { path: '/gov/law/procedures/forms/FIELD-SERIES-PARTS-05-07%3AHLT-MED-004%401', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13%3AHLT-MED-004', map: false, text: /excluded by the approved scope/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-015', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-017', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-019', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-024', map: false, text: /register status/i },
+  // Catalogue contracts, batch 3 (taxpayer registration and account).
+  { path: '/gov/law/procedures/forms/taxpayer.registration.individual', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.registration.individual/print', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.registration.nonresident', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.details.change', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.registration.objection', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.certificate.request', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.registration.decision', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/taxpayer.registration.further_information@P2', map: false, text: /register status/i },
+  // The register of medicines and medical devices (Health I4): its public view and the regulator's full record.
+  { path: '/gov/health-regulation/products', map: false, text: /medicines and medical devices/i },
+  // The seal key register (lib/keys/seal-register.ts).
+  { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
 ];
 const VIEWPORTS = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 

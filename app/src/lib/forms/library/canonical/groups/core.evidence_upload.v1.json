@@ -1,0 +1,84 @@
+{
+  "group_id": "core.evidence_upload",
+  "version": 1,
+  "scope": "universal_when_evidence_is_required",
+  "fields": [
+    {
+      "id": "evidence.requirement_ref",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "evidence_requirement_in_approved_package", "params": {}}],
+      "values_source": "civicos.procedure.evidence_requirements",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Required evidence item"},
+      "hint": {"en": "Choose an evidence item required by this procedure."},
+      "error_text": {"en": {"evidence_requirement_in_approved_package": "This evidence item is not in the approved procedure."}}
+    },
+    {
+      "id": "evidence.document",
+      "type": "document",
+      "required": true,
+      "validation": [{"rule": "file_type_allowlist", "params": {}}, {"rule": "file_size_limit_from_policy", "params": {}}, {"rule": "malware_scan_passed", "params": {}}, {"rule": "document_requirement_match", "params": {}}],
+      "values_source": "civicos.documents.secure_store",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "evidence_document", "when": "as_required_by_the_approved_procedure"}],
+      "label": {"en": "Upload the requested document"},
+      "hint": {"en": "Use one of the accepted file types and provide only the requested document."},
+      "error_text": {"en": {"file_type_allowlist": "This file type is not accepted.", "file_size_limit_from_policy": "The file is larger than the permitted limit.", "malware_scan_passed": "The file could not be accepted safely.", "document_requirement_match": "Upload the document requested for this evidence item."}}
+    },
+    {
+      "id": "evidence.issuer",
+      "type": "text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 200}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Issuing authority, if known"},
+      "hint": {"en": "Enter the issuing authority only if it helps verify the document."},
+      "error_text": {"en": {"length": "Check the issuing authority."}}
+    },
+    {
+      "id": "evidence.issued_date",
+      "type": "date",
+      "required": false,
+      "validation": [{"rule": "date_not_in_future", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Issue date, if shown"},
+      "hint": {"en": "Leave blank if the document does not show an issue date."},
+      "error_text": {"en": {"date_not_in_future": "The issue date cannot be in the future."}}
+    },
+    {
+      "id": "evidence.verification_status",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "officer_or_service_only", "params": {}}],
+      "values_source": "civicos.evidence.verification_status.v1",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Verification status"},
+      "hint": {"en": "This status is recorded by the authorized reviewer or verification service."},
+      "error_text": {"en": {"officer_or_service_only": "Applicants cannot set the verification status."}}
+    }
+  ],
+  "accessibility": {
+    "accepted_formats_and_limits_are_announced_before_upload": true,
+    "upload_progress_is_announced": true,
+    "keyboard_upload_and_camera_capture_supported_where_available": true,
+    "document_content_is_not_exposed_in_error_logs": true
+  },
+  "assisted_channel": {
+    "allow_authorized_officer_to_scan_paper_evidence": true,
+    "record_capture_method_and_capturing_actor": true,
+    "original_document_is_not_destroyed_by_scanning": true
+  },
+  "country_decisions": [
+    "Evidence requirements, acceptable substitutes and legal basis for each service.",
+    "Permitted file formats and upload-size limits based on approved security policy.",
+    "Retention, redaction, access, authenticity and destruction rules for each document class.",
+    "Which records may be verified through an authorized government exchange instead of an upload."
+  ]
+}

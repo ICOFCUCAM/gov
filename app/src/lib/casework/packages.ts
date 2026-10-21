@@ -12,19 +12,32 @@
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { dualControlRefusal } from '@/lib/data/dual-control';
+import { samplesAllowed } from '@/lib/ops/mode';
 import { isAuthorityKey, type AuthorityKey } from '@/lib/nation/deployment';
+import { withDefaults } from '@/lib/data/defaults';
+import { FIELD_KEY, fieldClass, fieldProblem, formProblem, PERSONAL_CLASSES } from '@/lib/forms/contract';
+import { formScope } from '@/lib/forms/scope';
+import { catalogueIdRefusal } from '@/lib/forms/identity';
 import type { CasePackage, ActionSpec, FieldSpec, PackageTest } from './types';
 
 interface PackageDb { packages: CasePackage[] }
 const g = globalThis as unknown as { __civicosCasePackages?: PackageDb };
-const db = (): PackageDb => touch('__civicosCasePackages', g.__civicosCasePackages ??= { packages: [] });
+/**
+ * A field saved before the form contract gains its personal-data class from
+ * its `personal` flag; a field written with a class gains the `personal` flag
+ * that readers before the contract use. Never overwrites a saved value.
+ */
+const fieldDefaults = (f: FieldSpec): void => { withDefaults(f as unknown as Record<string, unknown>, { personalDataClass: fieldClass(f), personal: PERSONAL_CLASSES.includes(fieldClass(f)) }); };
+const db = (): PackageDb => {
+  const d = touch('__civicosCasePackages', g.__civicosCasePackages ??= { packages: [] });
+  for (const p of d.packages) for (const f of p.fields ?? []) if (f.personalDataClass === undefined || f.personal === undefined) fieldDefaults(f);
+  return d;
+};
 export function resetPackages(): void { g.__civicosCasePackages = undefined; }
 
 const KEY = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 /** Field keys are names a form and its data use: camelCase. */
-const FIELD_KEY = /^[a-z][A-Za-z0-9]{0,40}$/;
-const FIELD_TYPES = ['text', 'longtext', 'date', 'number', 'choice', 'boolean', 'person', 'organisation', 'place'];
 
 /** Check a procedure's structure: every stage, action, field, document and deadline must fit together. */
 export function checkPackage(p: Partial<CasePackage>, effects: string[] = []): string | null {
@@ -39,13 +52,18 @@ export function checkPackage(p: Partial<CasePackage>, effects: string[] = []): s
   if (sk.size !== stages.length || stages.some(s => !KEY.test(s.key))) return 'Stage keys must be distinct lowercase words';
   if (!stages.some(s => s.terminal)) return 'At least one stage ends the case';
   const fk = new Set<string>();
+  const dk = new Set((p.documents ?? []).map(d => d.class));
+  const keys = (p.fields ?? []).map(f => f.key);
   for (const f of p.fields ?? []) {
     if (!FIELD_KEY.test(f.key) || fk.has(f.key)) return `Field ${f.key}: keys must be distinct names in camelCase`;
-    if (!FIELD_TYPES.includes(f.type)) return `Field ${f.key}: unknown type ${f.type}`;
     if (f.type === 'choice' && !f.options?.length) return `Field ${f.key}: a choice needs its options`;
+    // The form contract (lib/forms/contract.ts): type, class, approved lists, named rules, wording.
+    const problem = fieldProblem(f, keys, [...dk]);
+    if (problem) return problem;
     fk.add(f.key);
   }
-  const dk = new Set((p.documents ?? []).map(d => d.class));
+  const formWhy = formProblem(p.form, p.fields ?? [], p.documents ?? [], p.sensitivity ?? 'normal');
+  if (formWhy) return formWhy;
   const ak = new Set<string>();
   for (const a of p.actions ?? []) {
     if (!KEY.test(a.key) || ak.has(a.key)) return `Action ${a.key}: keys must be distinct lowercase words`;
@@ -63,9 +81,9 @@ export function checkPackage(p: Partial<CasePackage>, effects: string[] = []): s
   if (!ak.size) return 'A procedure has at least one action';
   for (const d of p.deadlines ?? []) {
     if (d.from !== 'opened' && !sk.has(d.from)) return `Deadline ${d.key}: counted from a stage that does not exist`;
-    if (!Number.isInteger(d.days) || d.days < 1 || d.days > 3650) return `Deadline ${d.key}: days from 1 to 3650`;
+    for (const n of [d.days, d.sampleDays]) if (n !== undefined && (!Number.isInteger(n) || n < 1 || n > 3650)) return `Deadline ${d.key}: days from 1 to 3650`;
   }
-  if (p.appeal && (!Number.isInteger(p.appeal.days) || p.appeal.days < 1)) return 'The appeal window is a number of days';
+  if (p.appeal) for (const n of [p.appeal.days, p.appeal.sampleDays]) if (n !== undefined && (!Number.isInteger(n) || n < 1 || n > 3650)) return 'The appeal window is a number of days';
   if (!p.retention?.trim()) return 'Name the retention class of its cases';
   if (!['normal', 'restricted', 'secret'].includes(p.sensitivity ?? '')) return 'Sensitivity must be normal, restricted or secret';
   if (p.migration) for (const [from, to] of Object.entries(p.migration.stageMap)) if (!sk.has(to)) return `Migration maps ${from} to a stage that does not exist`;
@@ -104,14 +122,32 @@ export function ownerInstitution(owner: AuthorityKey | string, authorityFor: (k:
 
 const clone = <T,>(x: T): T => structuredClone(x);
 
+/**
+ * The approved scope is binding (owner's direction of 21 October 2026,
+ * lib/forms/scope.ts): a form in the excluded scope (patient and clinical
+ * data, named students) is never drafted. A form the scope holds for a legal
+ * review may be drafted; it is not published until that review is recorded.
+ */
+function scopeRefusal(p: Pick<CasePackage, 'key' | 'fields' | 'form'>): string | null {
+  const s = formScope(p.key, p.form, p.fields);
+  if (s.status === 'excluded') return `Outside the approved scope: ${s.reason}`;
+  // A catalogue ID another catalogue reuses names no form on its own: the form says which catalogue it answers (lib/forms/identity.ts).
+  return catalogueIdRefusal(p.form);
+}
+
 /** Write a draft (a new procedure, or the next version of one). */
 export function draftPackage(input: Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'>, by: string, byId: string | undefined, effects: string[], now = new Date()): CasePackage | { error: string } {
   const problem = checkPackage(input, effects);
   if (problem) return { error: problem };
+  const outside = scopeRefusal(input);
+  if (outside) return { error: outside };
   if (db().packages.some(p => p.key === input.key && p.version === input.version)) return { error: `${input.key} version ${input.version} already exists` };
   const latest = Math.max(0, ...db().packages.filter(p => p.key === input.key).map(p => p.version));
   if (input.version !== latest + 1) return { error: `The next version of ${input.key} is ${latest + 1}` };
-  const p: CasePackage = { ...clone(input), state: 'draft', author: by, ...(byId ? { authorId: byId } : {}), createdAt: now.toISOString() };
+  // Whoever wrote it, and that it is a draft, come from this act: a state, an approval or editors in the input are dropped.
+  const { state: _s, approvedBy: _a, approvedAt: _t, author: _w, authorId: _i, editors: _e, createdAt: _c, ...own } = clone(input) as CasePackage;
+  void _s; void _a; void _t; void _w; void _i; void _e; void _c;
+  const p: CasePackage = { ...own, state: 'draft', author: by, ...(byId ? { authorId: byId } : {}), createdAt: now.toISOString() };
   db().packages.push(p);
   recordAudit(by, 'procedure.draft', `Procedure:${p.key}@${p.version}`, 'ok', `${p.title}${p.reference ? ' (reference)' : ''}`);
   return clone(p);
@@ -131,8 +167,17 @@ export function approvePackage(key: string, version: number, by: string, byId: s
     const same = dualControlRefusal({ by: p.author, byId: p.authorId }, { by, byId });
     if (same) return { error: same };
   }
+  // Whoever changed the draft (a reference's day counts, its form) cannot approve it either.
+  for (const e of p.editors ?? []) {
+    const same = dualControlRefusal({ by: e.by, byId: e.byId }, { by, byId });
+    if (same) return { error: `${same} (they changed this draft: ${e.what})` };
+  }
   const problem = checkPackage(p, effects);
   if (problem) return { error: problem };
+  // Day counts are the nation's law: a version is approved only once each is set, and never with demonstration values in production.
+  const unset = unsetDays(p);
+  if (unset.length) return { error: `Set the days the nation's law gives before approving: ${unset.join(', ')}` };
+  if (p.sampleDeadlines && !samplesAllowed()) return { error: 'This version carries sample day counts from a demonstration: a production installation approves only the nation\'s own' };
   const tests = runPackageTests(p);
   if (!tests.ok) return { error: `Its tests fail: ${tests.failures.join('; ')}` };
   const from = activeFrom ?? now.toISOString().slice(0, 10);
@@ -141,6 +186,63 @@ export function approvePackage(key: string, version: number, by: string, byId: s
   Object.assign(p, { state: 'approved', approvedBy: by, approvedAt: now.toISOString(), activeFrom: from });
   recordAudit(by, 'procedure.approve', `Procedure:${key}@${version}`, 'ok', `${p.title} · applies from ${from} · ${p.tests.length} tests passed · written by ${p.author}`);
   return clone(p);
+}
+
+/** What an official may change in a draft before it is approved: the form, the evidence, the day counts, the laws it cites. */
+export type DraftChanges = Partial<Pick<CasePackage, 'fields' | 'documents' | 'form' | 'deadlines' | 'appeal' | 'citations' | 'title'>>;
+
+/**
+ * Change a draft in place (never an approved version: that takes a new
+ * version). The structure is checked again; who changed what is kept, and
+ * none of them may approve it. Used by the form designer and to set the day
+ * counts the nation's law gives on a reference procedure.
+ */
+export function editDraft(key: string, version: number, changes: DraftChanges, by: string, byId: string | undefined, effects: string[], now = new Date()): CasePackage | { error: string } {
+  const p = db().packages.find(x => x.key === key && x.version === version);
+  if (!p) return { error: 'No such procedure version' };
+  if (p.state !== 'draft') return { error: `This version is ${p.state}: changes go into a new version` };
+  const allowed: (keyof DraftChanges)[] = ['fields', 'documents', 'form', 'deadlines', 'appeal', 'citations', 'title'];
+  const next = { ...clone(p), ...Object.fromEntries(Object.entries(clone(changes)).filter(([k]) => allowed.includes(k as keyof DraftChanges))) } as CasePackage;
+  // Deadlines keep their keys and stages: only their wording, days and citation change here.
+  if (changes.deadlines && (changes.deadlines.length !== p.deadlines.length || changes.deadlines.some((d, i) => d.key !== p.deadlines[i]!.key || d.from !== p.deadlines[i]!.from))) return { error: 'Deadlines keep their keys and the stage they count from; change their days, wording or citation' };
+  const problem = checkPackage(next, effects);
+  if (problem) return { error: problem };
+  const outside = scopeRefusal(next);
+  if (outside) return { error: outside };
+  const what = Object.keys(changes).filter(k => allowed.includes(k as keyof DraftChanges)).join(', ') || 'nothing';
+  Object.assign(p, next);
+  delete p.sampleDeadlines;
+  (p.editors ??= []).push({ by, ...(byId ? { byId } : {}), at: now.toISOString(), what });
+  recordAudit(by, 'procedure.draft.edit', `Procedure:${key}@${version}`, 'ok', `${p.title} · changed ${what}`);
+  return clone(p);
+}
+
+/** The deadlines (and the appeal) whose days are not set yet. */
+export function unsetDays(p: Pick<CasePackage, 'deadlines' | 'appeal'>): string[] {
+  return [...p.deadlines.filter(d => d.days === undefined).map(d => d.label), ...(p.appeal && p.appeal.days === undefined ? [`appeal to ${p.appeal.body}`] : [])];
+}
+
+/**
+ * A demo or training installation fills a reference's unset day counts with
+ * its sample values, marked Sample; elsewhere the procedure is returned as it
+ * is (the nation sets its own days).
+ */
+export function withSampleDeadlines<P extends Pick<CasePackage, 'deadlines' | 'appeal'> & { sampleDeadlines?: true }>(p: P): P {
+  if (!samplesAllowed() || !unsetDays(p).length) return p;
+  return {
+    ...p, sampleDeadlines: true,
+    deadlines: p.deadlines.map(d => (d.days === undefined && d.sampleDays !== undefined ? { ...d, days: d.sampleDays } : d)),
+    ...(p.appeal ? { appeal: p.appeal.days === undefined && p.appeal.sampleDays !== undefined ? { ...p.appeal, days: p.appeal.sampleDays } : p.appeal } : {}),
+  };
+}
+
+/** Set day counts by deadline key ('appeal' for the appeal): the nation's values, entered when it drafts its version. */
+export function withDays<P extends Pick<CasePackage, 'deadlines' | 'appeal'>>(p: P, days: Record<string, number>): P {
+  return {
+    ...p,
+    deadlines: p.deadlines.map(d => (days[d.key] !== undefined ? { ...d, days: days[d.key] } : d)),
+    ...(p.appeal && days.appeal !== undefined ? { appeal: { ...p.appeal, days: days.appeal } } : {}),
+  };
 }
 
 /** The approved version in force on a date (none: the procedure cannot start). */

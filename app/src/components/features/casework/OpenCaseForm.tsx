@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { RefusalText } from '@/components/ui/RefusalText';
 import { FieldInputs, filled, type FieldSpecView, type FieldValues } from './FieldInputs';
 
-interface Pkg { key: string; version: number; title: string; state: string; activeFrom?: string; ownerInstitution: string | null; fields: FieldSpecView[]; stages: { key: string; label: string }[]; sensitivity: string }
+interface Pkg { key: string; version: number; title: string; state: string; activeFrom?: string; ownerInstitution: string | null; fields: FieldSpecView[]; stages: { key: string; label: string }[]; sensitivity: string; form?: { version: string } }
 interface Ministry { id: string; name: string }
 
 const PARTY_KINDS = [
@@ -99,6 +99,13 @@ export function OpenCaseForm() {
           </label>
           {pkg ? (
             <>
+              {pkg.form ? (
+                <p className="text-sm">
+                  This procedure has a form (version {pkg.form.version}). Record an application on it, with the same checks the applicant sees:{' '}
+                  <a className="underline" href={`/gov/law/procedures/forms/${encodeURIComponent(pkg.key)}?channel=assisted`}>assisted at an office</a> (the identity evidence you saw is recorded) or{' '}
+                  <a className="underline" href={`/gov/law/procedures/forms/${encodeURIComponent(pkg.key)}?channel=paper`}>from a paper form</a>.
+                </p>
+              ) : null}
               <p className="text-xs text-ink-muted">
                 Version {pkg.version} · starts at {pkg.stages[0]?.label ?? 'its first stage'} · {pkg.sensitivity !== 'normal' ? `${pkg.sensitivity} · ` : ''}
                 kept by {pkg.ownerInstitution ? names[pkg.ownerInstitution] ?? pkg.ownerInstitution : <RefusalText text="no institution: name one under Who is responsible" />}

@@ -1,0 +1,20 @@
+{
+  "form_id": "police.incident-report",
+  "version": "1.0",
+  "fields": [
+    {"id": "incident_type", "type": "configured_classification", "required": true},
+    {"id": "reported_at", "type": "timestamp", "required": true},
+    {"id": "incident_location", "type": "location_reference", "required": true},
+    {"id": "reporting_source", "type": "restricted_source_reference", "required": true},
+    {"id": "narrative", "type": "structured_text", "required": true},
+    {"id": "persons_and_objects", "type": "purpose_limited_reference_collection", "required": false},
+    {"id": "evidence_items", "type": "evidence_collection", "required": false},
+    {"id": "response_actions", "type": "event_collection", "required": false}
+  ],
+  "controls": {
+    "allegation_is_not_a_finding": true,
+    "evidence_custody_is_traceable": true,
+    "access": "purpose_and_assignment_scoped",
+    "retention": "configured_by_law"
+  }
+}

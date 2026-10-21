@@ -1,0 +1,19 @@
+{
+  "form_id": "health.facility-registration",
+  "version": "1.0",
+  "fields": [
+    {"id": "facility_name", "type": "text", "required": true},
+    {"id": "facility_type", "type": "controlled_vocabulary", "required": true},
+    {"id": "operator_reference", "type": "organisation_reference", "required": true},
+    {"id": "location", "type": "geospatial_point", "required": true},
+    {"id": "services_offered", "type": "controlled_multiselect", "required": true},
+    {"id": "staffing_summary", "type": "structured_summary", "required": false},
+    {"id": "premises_evidence", "type": "evidence_collection", "required": true}
+  ],
+  "decision": {
+    "authority": "configured_health_licensing_authority",
+    "legal_basis": "required",
+    "inspection_requirement": "configured_by_national_rules",
+    "second_approval": "configured_by_law_or_policy"
+  }
+}

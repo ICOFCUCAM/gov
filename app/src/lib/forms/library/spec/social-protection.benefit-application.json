@@ -1,0 +1,19 @@
+{
+  "form_id": "social-protection.benefit-application",
+  "version": "1.0",
+  "fields": [
+    {"id": "applicant_reference", "type": "person_reference", "required": true},
+    {"id": "programme", "type": "configured_benefit_programme", "required": true},
+    {"id": "household_information", "type": "minimum_required_structure", "required": false},
+    {"id": "income_or_resource_evidence", "type": "evidence_collection", "required": false},
+    {"id": "other_eligibility_evidence", "type": "evidence_collection", "required": true},
+    {"id": "payment_preference", "type": "approved_payment_method", "required": true},
+    {"id": "declaration", "type": "attestation", "required": true}
+  ],
+  "decision": {
+    "eligibility_rules": "approved_versioned_rule_set",
+    "calculation": "reproducible_and_auditable",
+    "final_decision": "authorised_human_decision_maker",
+    "appeal_route": "configured_by_law"
+  }
+}

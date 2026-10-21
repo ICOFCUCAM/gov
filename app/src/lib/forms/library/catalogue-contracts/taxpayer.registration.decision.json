@@ -1,0 +1,687 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "taxpayer.registration.decision",
+ "record_type": "taxpayer.registration_decision",
+ "form_version": 1,
+ "procedure_package_id": "tax.registration",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "country.tax.registration: taxpayer categories, registration identifiers, tax obligations and registration procedures (approved by the authorized tax and legal authority).",
+  "Registration thresholds and obligation triggers: an approved rule per tax (lib/law/rules.ts); none ships.",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for these records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "taxpayer.registration.decision",
+  "part": 2,
+  "section": "2.6",
+  "line": 2541,
+  "batch": 3
+ },
+ "library": {
+  "title": "Record the registration decision",
+  "intro": "What the official with the power to decide states when a registration is decided: approve, refuse or return for further information, the provisions and rules relied on and the reasons. The decision itself is made and sealed in the case.",
+  "owner": "tax",
+  "filled_by": "An official of the tax authority who can sign, signed in; a different official proposed it.",
+  "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
+  "procedure": {
+   "key": "tax.registration",
+   "stage": "pending-approval",
+   "action": "register"
+  },
+  "lists": {
+   "tax.registration.decision_outcomes": {
+    "values": [
+     {
+      "value": "approve",
+      "label": "Approve: register the taxpayer"
+     },
+     {
+      "value": "refuse",
+      "label": "Refuse, with reasons"
+     },
+     {
+      "value": "return-for-information",
+      "label": "Return for further information"
+     },
+     {
+      "value": "otherwise-disposed",
+      "label": "Otherwise disposed of under a lawful rule"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "policies": {
+   "access.read_rule": "canReadTax() in lib/auth/roles.ts: the tax authority's officials and auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only registration status, through the taxpayer.status exchange service, for an approved purpose"
+  },
+  "nation_values": [
+   {
+    "key": "tax.registration.decision-period",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The time the tax authority has to decide a registration, if the law sets one."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "decision-in-engine",
+    "what": "The decision is made and sealed by the case engine (tax.registration \"register\" or \"refuse\", by an official who can sign, different from the one who proposed it), never by submitting this form; the form records what the decision-maker states",
+    "why": "Every decision cites the law version that applied and is signed with the decision key; AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts"
+   },
+   {
+    "id": "tin-assigned",
+    "what": "The taxpayer identification number is set by the tax register when the registration is decided (effect tax.register), never asked of the applicant",
+    "why": "A tax officer must not create a taxpayer record outside the approved registration workflow; the identifier is the register's.",
+    "rule": "CLAUDE.md Government operating model: registers change only through procedure effects; field series Part 2 §2.6",
+    "field": "decision.tin"
+   },
+   {
+    "id": "tax-secrecy-class",
+    "what": "Every field of the form is restricted and marked tax secrecy (confidentiality tax), stricter than the catalogue's administrative and personal classes where it gives them; the case is restricted and read only under canReadTax() (the tax authority's officials, auditors with a purpose), every read in the access log; other institutions learn status only through the taxpayer.status exchange service",
+    "why": "Tax records are confidential: a class label alone grants no access, and nothing about a taxpayer leaves the tax authority except through an approved exchange for an approved purpose.",
+    "rule": "CLAUDE.md Tax: lib/tax/ is read by the tax authority only (canReadTax(), every read in the access log); others use the taxpayer.status exchange service"
+   },
+   {
+    "id": "no-tax-values",
+    "what": "No rate, threshold, penalty, interest, deadline, registration threshold, obligation trigger or fee is typed: each is a named nation value checked by a binding rule (recorded as not performed and a publication blocker until the nation approves it); tax types, taxpayer categories and obligations are nation lists that ship empty, naming the standard expected",
+    "why": "The field series Part 2 §2.6: tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, retention and appeal rights come from approved national rules, never universal constants.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2541,
+    "quotes": [
+     "taxpayer.registration.decision",
+     "Record the registration decision",
+     "Authorized tax officer",
+     "Decision",
+     "Approve, refuse or request further information"
+    ],
+    "met_by": {
+     "fields": [
+      "decision.outcome",
+      "decision.reason"
+     ],
+     "procedure": "register",
+     "deviation": "decision-in-engine"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3191,
+    "quotes": [
+     "case_ref: identifier_reference, required; source is the owning institution's authorized case registry."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.case_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2725,
+    "quotes": [
+     "decision.legal_basis_refs: registry_reference, required; approved legal provisions; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.legal_basis_refs"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2726,
+    "quotes": [
+     "decision.outcome: choice, required; source tax.registration.decision_outcomes; restricted."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.outcome"
+     ],
+     "deviation": "tax-secrecy-class"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2727,
+    "quotes": [
+     "decision.reason: long_text, required for refusal, conditional approval, or any other outcome for which reasons are required; restricted."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.reason"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2728,
+    "quotes": [
+     "decision.decision_maker: identifier_reference, required; authorized officer; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.decision_maker"
+     ],
+     "deviation": "tax-secrecy-class"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2729,
+    "quotes": [
+     "decision.approval_event_ref: identifier_reference, required where a second approver is required; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.approval_event_ref"
+     ],
+     "deviation": "tax-secrecy-class"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3193,
+    "quotes": [
+     "rule_refs: registry_reference, required for assessment and decision records; exact approved rules used."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.rule_refs"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3198,
+    "quotes": [
+     "decision_outcome: choice, required at decision stage; source is the service-specific approved outcomes."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.outcome"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3199,
+    "quotes": [
+     "decision_reason: long_text, required when required by the law or decision procedure."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.reason"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3200,
+    "quotes": [
+     "decision_maker_ref: identifier_reference, system-resolved to an authorized person."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.decision_maker"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3201,
+    "quotes": [
+     "approval_event_ref: identifier_reference, required when a second approver is mandated."
+    ],
+    "met_by": {
+     "fields": [
+      "decision.approval_event_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 507,
+    "quotes": [
+     "Where two officials are required, the confirming official must independently review the proposal."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/dual-control-policy.ts",
+      "how": "The confirming official is a different person from the proposer (personOf()); their act is recorded with its independence"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3205,
+    "quotes": [
+     "Universal control: these records must be bound to the actual service-specific procedure package.",
+     "A generic internal form cannot be used to bypass the case's approved stages, skip mandatory legal review or issue a decision that the officer is not authorized to make."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "Each record is made at a step of the procedure package its case runs under; it cannot move the case past a stage, skip a review or decide what the official may not (caseActRefusal())"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "decision.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Case reference"
+   },
+   "hint": {
+    "en": "The registration case this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter case reference.",
+     "case_exists_and_is_open": "There is no open case with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.outcome",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registration.decision_outcomes",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Outcome"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select outcome.",
+     "value_in_source": "Choose one of the listed values for outcome."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.obligations",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "decision.outcome",
+      "equals": "approve"
+     }
+    },
+    {
+     "rule": "obligations_available_for_taxpayer_type",
+     "params": {}
+    },
+    {
+     "rule": "registration_obligation_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.country.approved.tax_obligations",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Obligations registered"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select obligations registered."
+    }
+   },
+   "country_decision": "country.tax.registration: the tax obligations open to each taxpayer type, as the tax types in force under the nation's law (none ship; expected source: the nation's tax laws, mapped to the IMF GFSM 2014 classification of taxes for statistics).",
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.effective_date",
+   "type": "date",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "decision.outcome",
+      "equals": "approve"
+     }
+    },
+    {
+     "rule": "date_allowed_by_registration_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Registered from"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter registered from.",
+     "date_allowed_by_registration_rule": "The date does not meet the configured registration rule."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.information_requested",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "decision.outcome",
+      "equals": "return-for-information"
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Information requested"
+   },
+   "hint": {
+    "en": "The request itself is issued with the further-information form."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter information requested.",
+     "length": "Information requested must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "decision.legal_basis_refs",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "legal_references_resolve",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.law_provisions",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Legal provisions relied on"
+   },
+   "hint": {
+    "en": "From the laws register, in the version in force; the record cites this version."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select legal provisions relied on.",
+     "legal_references_resolve": "That provision is not in the laws register in a version in force."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "Reasons"
+   }
+  },
+  {
+   "id": "decision.rule_refs",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.approved_rules",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Rules applied"
+   },
+   "hint": {
+    "en": "The approved rules applied, by key and version (lib/law/rules.ts)."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select rules applied.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "Reasons"
+   }
+  },
+  {
+   "id": "decision.reason",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Reasons"
+   },
+   "hint": {
+    "en": "Required for a refusal, a conditional approval and any outcome for which reasons are required."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reasons.",
+     "length": "Reasons must be 10000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Reasons"
+   }
+  },
+  {
+   "id": "decision.decision_maker",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Decision-maker"
+   },
+   "hint": {
+    "en": "The signed-in official with the power to decide."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "decision.approval_event_ref",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Second official's approval"
+   },
+   "hint": {
+    "en": "The approval by a different official, where a second approver is required."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "decision.tin",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Taxpayer identification number"
+   },
+   "hint": {
+    "en": "Given by the tax authority's register when the registration is decided; never typed by the applicant."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "decision.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  }
+ ]
+}

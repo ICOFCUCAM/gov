@@ -1,0 +1,136 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "procurement.plan.item.add",
+  "record_type": "procurement.plan_item",
+  "form_version": 1,
+  "status": "draft",
+  "fields": [
+    {
+      "id": "plan_item.procuring_entity",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "institution_active", "params": {}}, {"rule": "actor_authorized_for_procurement", "params": {}}],
+      "values_source": "civicos.registry.institutions",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Procuring entity"},
+      "hint": {"en": "Select the institution that will conduct the procurement."},
+      "error_text": {"en": {"institution_active": "Select an active institution.", "actor_authorized_for_procurement": "You are not authorized to submit this procurement plan item."}}
+    },
+    {
+      "id": "plan_item.fiscal_period",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "procurement_period_open", "params": {}}],
+      "values_source": "civicos.finance.budget_periods",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Planned procurement period"},
+      "hint": {"en": "Select the approved planning period."},
+      "error_text": {"en": {"procurement_period_open": "Select an available procurement planning period."}}
+    },
+    {
+      "id": "plan_item.description",
+      "type": "localized_text",
+      "required": true,
+      "validation": [{"rule": "length", "params": {"min": 5, "max": 500}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "What do you plan to buy?"},
+      "hint": {"en": "Describe the goods, services or works without naming a preferred supplier unless the approved procedure permits it."},
+      "error_text": {"en": {"length": "Enter a description between 5 and 500 characters."}}
+    },
+    {
+      "id": "plan_item.category",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "procurement_category_active", "params": {}}],
+      "values_source": "procurement.country.approved.categories",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Procurement category"},
+      "hint": {"en": "Choose the approved category that matches the planned purchase."},
+      "error_text": {"en": {"procurement_category_active": "Choose an available procurement category."}}
+    },
+    {
+      "id": "plan_item.estimated_value",
+      "type": "money",
+      "required": true,
+      "validation": [{"rule": "currency_matches_budget_period", "params": {}}, {"rule": "estimate_basis_recorded", "params": {}}],
+      "values_source": "civicos.finance.approved_cost_estimates",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Estimated procurement value"},
+      "hint": {"en": "Use a supported estimate and record its basis. This is not a tender award or payment amount."},
+      "error_text": {"en": {"currency_matches_budget_period": "Use the configured budget currency.", "estimate_basis_recorded": "Record the basis for the estimate."}}
+    },
+    {
+      "id": "plan_item.budget_allocation_ref",
+      "type": "registry_reference",
+      "required": false,
+      "validation": [{"rule": "allocation_valid_for_planned_period", "params": {}}],
+      "values_source": "civicos.finance.approved_budget_allocations",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Budget allocation"},
+      "hint": {"en": "Link the allocation if one has been approved."},
+      "error_text": {"en": {"allocation_valid_for_planned_period": "The allocation is not valid for this procurement period."}}
+    },
+    {
+      "id": "plan_item.planned_method",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "procurement_method_available", "params": {}}],
+      "values_source": "procurement.country.approved.methods",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Proposed procurement method"},
+      "hint": {"en": "Select a method available under the country's approved procurement rules."},
+      "error_text": {"en": {"procurement_method_available": "Choose an available procurement method."}}
+    },
+    {
+      "id": "plan_item.method_justification",
+      "type": "long_text",
+      "required": false,
+      "validation": [{"rule": "required_if_method_needs_justification", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Reason for the proposed method"},
+      "hint": {"en": "Explain the proposed method where the rules require justification."},
+      "error_text": {"en": {"required_if_method_needs_justification": "Provide the justification required for this method."}}
+    },
+    {
+      "id": "plan_item.planned_timeline",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "planned_dates_follow_procurement_calendar", "params": {}}],
+      "values_source": "procurement.country.approved.planning_schedules",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Planned procurement timeline"},
+      "hint": {"en": "Select or provide the schedule required by the approved planning procedure."},
+      "error_text": {"en": {"planned_dates_follow_procurement_calendar": "Check the proposed timeline."}}
+    },
+    {
+      "id": "plan_item.legal_basis_refs",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "legal_references_resolve", "params": {}}],
+      "values_source": "civicos.registry.law_provisions",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Applicable procurement authority"},
+      "hint": {"en": "Link the legal authority and approved rules governing the proposed method."},
+      "error_text": {"en": {"legal_references_resolve": "Select approved legal references."}}
+    }
+  ],
+  "legal_basis": [],
+  "country_decisions": [
+    "Procurement categories and classification codes.",
+    "Procurement methods, thresholds and required method justifications.",
+    "Planning calendars, budget requirements and approval authority.",
+    "Publication requirements and records-retention rules."
+  ]
+}

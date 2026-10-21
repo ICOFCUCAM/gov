@@ -1,0 +1,1115 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-FAC-001",
+ "record_type": "health.facility.establishment.case",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-002: whether a facility needs approval to be established before it is licensed, the evidence required and the authority that decides.",
+  "CFG-HLT-001: the institution that keeps the health-facilities register (named under Who is responsible).",
+  "CFG-DAT-001: classification, retention and disclosure of establishment applications.",
+  "The establishment fee: an approved fee rule (lib/law/rules.ts); none ships."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-FAC-001",
+  "part": 6,
+  "section": "6.2",
+  "line": 713,
+  "batch": 1
+ },
+ "library": {
+  "title": "Apply to establish a health facility",
+  "intro": "Apply for approval to set up a new health facility before it opens. The operator must be a registered organisation. This form asks only about the facility and its operator, never about patients or treatment.",
+  "owner": "healthRegulation",
+  "filled_by": "The operator (a registered organisation) or someone acting for it, online, at an office or on paper.",
+  "procedure": null,
+  "intended": "An establishment-approval procedure of the health regulator on the health-facilities register, before the licence application (health.facility): not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "health.country.facility_types": {
+    "values": [
+     {
+      "value": "hospital",
+      "label": "Hospital"
+     },
+     {
+      "value": "health-centre",
+      "label": "Health centre"
+     },
+     {
+      "value": "clinic",
+      "label": "Clinic"
+     },
+     {
+      "value": "dispensary",
+      "label": "Dispensary"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity home"
+     },
+     {
+      "value": "laboratory",
+      "label": "Medical laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging centre"
+     },
+     {
+      "value": "dental",
+      "label": "Dental practice"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.facility_services": {
+    "values": [
+     {
+      "value": "outpatient",
+      "label": "Outpatient care"
+     },
+     {
+      "value": "inpatient",
+      "label": "Inpatient care"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity and delivery"
+     },
+     {
+      "value": "emergency",
+      "label": "Emergency care"
+     },
+     {
+      "value": "surgery",
+      "label": "Surgery"
+     },
+     {
+      "value": "laboratory",
+      "label": "Laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging"
+     },
+     {
+      "value": "pharmacy",
+      "label": "Pharmacy"
+     },
+     {
+      "value": "immunisation",
+      "label": "Immunisation"
+     },
+     {
+      "value": "dental",
+      "label": "Dental"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.capacity_measures": {
+    "values": [
+     {
+      "value": "beds-total",
+      "label": "Beds (all)"
+     },
+     {
+      "value": "beds-intensive-care",
+      "label": "Intensive-care beds"
+     },
+     {
+      "value": "consulting-rooms",
+      "label": "Consulting rooms"
+     },
+     {
+      "value": "operating-theatres",
+      "label": "Operating theatres"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "policies": {
+   "decision.authority": "configured_health_licensing_authority",
+   "decision.legal_basis": "required",
+   "decision.inspection_requirement": "configured_by_national_rules",
+   "decision.second_approval": "configured_by_law_or_policy"
+  },
+  "nation_values": [
+   {
+    "key": "health.facility.establishment-fee",
+    "kind": "fee",
+    "source": "rule",
+    "decision": "The establishment approval fee, if the law sets one."
+   },
+   {
+    "key": "health.facility.establishment-validity",
+    "kind": "period",
+    "source": "setting",
+    "decision": "How long an establishment approval stays valid before the facility must be licensed."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "spec-operator",
+    "field": "operator_reference",
+    "what": "organisation_reference carried as a register reference to an active organisation (establishment.operator)",
+    "why": "Stricter: the operator must be in the organisations register.",
+    "rule": "CLAUDE.md Organisations; FORMS_CONFORMANCE §2 (health.facility-registration)"
+   },
+   {
+    "id": "spec-decision-establishment",
+    "what": "The decision block (authority, legal basis, inspection requirement, second approval) applies to the licence (HLT-FAC-002); here it is the establishment procedure's, which is not built",
+    "why": "No establishment procedure exists; the platform never invents a decision power.",
+    "rule": "CLAUDE.md Government operating model: who holds a power comes from the permit authority registry"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 866,
+    "quotes": [
+     "CFG-LIC-002",
+     "Facility licensing, inspection, and enforcement procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 713,
+    "quotes": [
+     "HLT-FAC-001",
+     "Facility establishment application",
+     "Application registered"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.operator",
+      "establishment.name"
+     ],
+     "platform": {
+      "file": "app/src/lib/forms/receipt.ts",
+      "how": "Registered: a reference and receipt on submission"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1559,
+    "quotes": [
+     "{\"key\": \"facility_legal_name\", \"type\": \"string\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.name"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1560,
+    "quotes": [
+     "{\"key\": \"facility_type\", \"type\": \"enum\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.type"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1561,
+    "quotes": [
+     "{\"key\": \"owner_entity_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.operator"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1562,
+    "quotes": [
+     "{\"key\": \"facility_location\", \"type\": \"geo_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.location",
+      "establishment.address",
+      "establishment.site"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1563,
+    "quotes": [
+     "{\"key\": \"service_capabilities\", \"type\": \"array\", \"required\": true, \"items_type\": \"code_reference\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.services"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1564,
+    "quotes": [
+     "{\"key\": \"licence_or_authorization_reference\", \"type\": \"document_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.other_approvals"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1323,
+    "quotes": [
+     "Health facility",
+     "Unique facility ID, name, type, location, operator, authorised services, operational status, verification date"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.name",
+      "establishment.type",
+      "establishment.location",
+      "establishment.operator",
+      "establishment.services"
+     ],
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "The unique id, operational status and verification date are kept by the register when the licence is decided"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1334,
+    "quotes": [
+     "Application by the facility operator."
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.operator",
+      "representation.capacity"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1335,
+    "quotes": [
+     "Validation of identity, premises and required evidence."
+    ],
+    "met_by": {
+     "fields": [
+      "representation.actor",
+      "establishment.premises_evidence",
+      "establishment.site_plan"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1350,
+    "quotes": [
+     "{\"id\": \"facility_name\", \"type\": \"text\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.name"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1351,
+    "quotes": [
+     "{\"id\": \"facility_type\", \"type\": \"controlled_vocabulary\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.type"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1352,
+    "quotes": [
+     "{\"id\": \"operator_reference\", \"type\": \"organisation_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.operator"
+     ],
+     "deviation": "spec-operator"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1353,
+    "quotes": [
+     "{\"id\": \"location\", \"type\": \"geospatial_point\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.location"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1354,
+    "quotes": [
+     "{\"id\": \"services_offered\", \"type\": \"controlled_multiselect\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.services"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1355,
+    "quotes": [
+     "{\"id\": \"staffing_summary\", \"type\": \"structured_summary\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.staffing"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1356,
+    "quotes": [
+     "{\"id\": \"premises_evidence\", \"type\": \"evidence_collection\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "establishment.premises_evidence"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1359,
+    "quotes": [
+     "\"authority\": \"configured_health_licensing_authority\""
+    ],
+    "met_by": {
+     "deviation": "spec-decision-establishment"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1360,
+    "quotes": [
+     "\"legal_basis\": \"required\""
+    ],
+    "met_by": {
+     "deviation": "spec-decision-establishment"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1361,
+    "quotes": [
+     "\"inspection_requirement\": \"configured_by_national_rules\""
+    ],
+    "met_by": {
+     "deviation": "spec-decision-establishment"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1362,
+    "quotes": [
+     "\"second_approval\": \"configured_by_law_or_policy\""
+    ],
+    "met_by": {
+     "deviation": "spec-decision-establishment"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "establishment.operator",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "organisation_identity_consistent",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "legal_entity_registration",
+     "when": "when_the_operator_record_must_be_verified_under_the_approved_procedure"
+    }
+   ],
+   "label": {
+    "en": "Operator's organisation registration number"
+   },
+   "hint": {
+    "en": "The organisation that will run the facility, as in the register of organisations."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the operator's organisation registration number.",
+     "reference_exists": "There is no organisation with that number in the register.",
+     "REF-ACTIVE": "That organisation is not active in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The operator"
+   }
+  },
+  {
+   "use_group": "core.representation",
+   "version": 1,
+   "only": [
+    "representation.capacity",
+    "representation.actor",
+    "representation.authority_document"
+   ],
+   "section": {
+    "en": "Who is applying"
+   }
+  },
+  {
+   "id": "establishment.name",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "public",
+   "evidence": [],
+   "label": {
+    "en": "Proposed name of the facility"
+   },
+   "hint": {
+    "en": "The name it will be registered and licensed under. Once licensed, the name may be published."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the proposed name of the facility.",
+     "length": "Proposed name of the facility must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The planned facility"
+   }
+  },
+  {
+   "id": "establishment.type",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "health.country.facility_types",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Type of facility"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the type of facility.",
+     "value_in_source": "Select the type of facility from the list."
+    }
+   },
+   "country_decision": "The facility types the nation's law recognises (CFG-LIC-002). CivicOS proposes a starting list to be checked against the law.",
+   "section": {
+    "en": "The planned facility"
+   }
+  },
+  {
+   "id": "establishment.location",
+   "type": "point",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "coordinate_range",
+     "params": {
+      "latitude": [
+       -90,
+       90
+      ],
+      "longitude": [
+       -180,
+       180
+      ]
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Position of the premises"
+   },
+   "hint": {
+    "en": "Longitude and latitude, from a phone or the map. The region and district are worked out from the position, never typed."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the position of the premises.",
+     "coordinate_range": "Give a latitude between -90 and 90 and a longitude between -180 and 180."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The planned facility"
+   }
+  },
+  {
+   "id": "establishment.address",
+   "type": "address",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Address of the premises"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the address of the premises."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The planned facility"
+   }
+  },
+  {
+   "id": "establishment.site",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.sites",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Registered site, if the premises are already in the register of sites"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The planned facility"
+   }
+  },
+  {
+   "id": "establishment.services",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "health.country.facility_services",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Services planned"
+   },
+   "hint": {
+    "en": "Select all that apply. Services, not treatments: nothing about any patient."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select services planned.",
+     "value_in_source": "Select services planned from the list."
+    }
+   },
+   "country_decision": "The service categories the nation licenses (CFG-LIC-002).",
+   "multiple": true,
+   "section": {
+    "en": "Planned services and capacity"
+   }
+  },
+  {
+   "id": "establishment.capacity",
+   "type": "group",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Planned capacity"
+   },
+   "hint": {
+    "en": "Counts only, for example the number of beds."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "measure",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "health.country.capacity_measures",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "What is counted"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select what is counted."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "count",
+     "type": "number",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Number"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the number.",
+       "integer_range": "Number must be a whole number, 0 or more."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Planned services and capacity"
+   }
+  },
+  {
+   "id": "establishment.staffing",
+   "type": "group",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Planned staffing by professional category"
+   },
+   "hint": {
+    "en": "Numbers by professional category only. No names and nothing about any patient."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "professionalCategory",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "configured_profession",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Professional category"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the professional category."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "count",
+     "type": "number",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Number of staff"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the number of staff.",
+       "integer_range": "Number of staff must be a whole number, 0 or more."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Planned services and capacity"
+   }
+  },
+  {
+   "id": "establishment.planned_opening",
+   "type": "date",
+   "required": false,
+   "validation": [
+    {
+     "rule": "date_not_before",
+     "params": {
+      "reference": "submission_date"
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Planned opening date"
+   },
+   "error_text": {
+    "en": {
+     "date_not_before": "Planned opening date must be today or later."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Planned services and capacity"
+   }
+  },
+  {
+   "id": "establishment.premises_evidence",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "premises_tenure",
+     "when": "as_required_by_the_approved_establishment_procedure"
+    }
+   ],
+   "label": {
+    "en": "Evidence that the operator holds the premises"
+   },
+   "hint": {
+    "en": "For example a title, lease or letter of allocation."
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide evidence that the operator holds the premises."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "establishment.site_plan",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "site_plan",
+     "when": "as_required_by_the_approved_establishment_procedure"
+    }
+   ],
+   "label": {
+    "en": "Site and building plans"
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide the site and building plans."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "establishment.other_approvals",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "other_premises_approval",
+     "when": "when_another_authority_must_approve_the_premises"
+    }
+   ],
+   "label": {
+    "en": "Other approvals the law requires for the premises"
+   },
+   "hint": {
+    "en": "For example planning or environmental approval, where the nation's law requires it."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "use_group": "core.payment",
+   "version": 1,
+   "section": {
+    "en": "Fee"
+   }
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "establishment.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

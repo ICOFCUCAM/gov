@@ -1,0 +1,18 @@
+{
+  "form_id": "agriculture.support-application",
+  "version": "1.0",
+  "fields": [
+    {"id": "applicant_reference", "type": "person_or_organisation_reference", "required": true},
+    {"id": "farm_reference", "type": "farm_record_reference", "required": true},
+    {"id": "programme", "type": "configured_programme", "required": true},
+    {"id": "production_period", "type": "date_range", "required": true},
+    {"id": "eligible_activity", "type": "controlled_vocabulary", "required": true},
+    {"id": "supporting_evidence", "type": "evidence_collection", "required": true},
+    {"id": "payment_destination", "type": "approved_payment_reference", "required": true}
+  ],
+  "decision": {
+    "eligibility": "approved_programme_rules",
+    "inspection": "configured_if_required",
+    "payment": "treasury_reconciliation_required"
+  }
+}

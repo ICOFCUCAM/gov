@@ -15,7 +15,8 @@ import type {
 import { db } from './state';
 import { uid, citizen, canonicalJson } from './shared';
 import { createHash } from 'node:crypto';
-import { signer } from '@/lib/keys/custody';
+import { signer, developmentKeyRefusal } from '@/lib/keys/custody';
+import { sealKeyRefusal } from '@/lib/keys/seal-register';
 import { checkCode } from '@/lib/records/certificates';
 import { recordAudit } from './audit';
 import { institutionsKeeping } from './ministries';
@@ -139,6 +140,9 @@ export function verifyDocument(code: string): VerifyResult {
 }
 
 // ── Digital signatures ────────────────────────────────────────────────
+/** The seal may not be used here (development key in production, or a key the seal key register does not trust). */
+export class SealRefused extends Error {}
+
 /**
  * Sign a document reference with the installation's seal (key custody,
  * purpose `decision`): the canonical record of document, title, signer and
@@ -149,9 +153,16 @@ export async function signDocument(req: SignatureRequest): Promise<SignatureResu
   const signedAt = new Date().toISOString();
   const id = uid('SG');
   const material = canonicalJson({ type: 'civicos.document-signature', v: 1, id, documentId: req.documentId, documentTitle: req.documentTitle, signerName: req.signerName, signedAt });
+  // The installation's seal: never the development key in production, and only a key the seal key register trusts.
+  const dev = developmentKeyRefusal('decision');
+  if (dev) throw new SealRefused(dev);
   const seal = await signer('decision').sign(material);
-  recordAudit(req.signerName, 'document.sign', `Document:${req.documentId}`, 'ok', `${req.documentTitle.slice(0, 120)} · key ${seal.keyId}`);
-  return { id, documentId: req.documentId, signerName: req.signerName, signedAt, hash: createHash('sha256').update(material, 'utf8').digest('hex'), nonRepudiation: true, seal: { keyId: seal.keyId, publicKeyPem: seal.publicKeyPem, signature: seal.signature } };
+  const untrusted = sealKeyRefusal('decision', seal.publicKeyPem);
+  if (untrusted) throw new SealRefused(untrusted);
+  const sha = createHash('sha256').update(material, 'utf8').digest('hex');
+  // The audit entry is the signature's tamper-evident time (as `decision.seal` is a decision's): it names the signature, its hash and key.
+  recordAudit(req.signerName, 'document.sign', `Document:${req.documentId}`, 'ok', `${req.documentTitle.slice(0, 120)} · signature ${id} · ${sha.slice(0, 12)} · key ${seal.keyId}`);
+  return { id, documentId: req.documentId, signerName: req.signerName, signedAt, hash: sha, nonRepudiation: true, seal: { keyId: seal.keyId, publicKeyPem: seal.publicKeyPem, signature: seal.signature } };
 }
 
 // ── Municipal onboarding ──────────────────────────────────────────────

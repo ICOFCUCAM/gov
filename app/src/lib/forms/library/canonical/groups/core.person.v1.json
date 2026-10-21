@@ -1,0 +1,109 @@
+{
+  "group_id": "core.person",
+  "version": 1,
+  "scope": "universal",
+  "fields": [
+    {
+      "id": "person.record_ref",
+      "type": "identifier_reference",
+      "required": false,
+      "validation": [{"rule": "reference_type_allowed", "params": {"types": ["person"]}}],
+      "values_source": "civicos.registry.person",
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Existing person record"},
+      "hint": {"en": "Use this if the person already has a CivicOS record."},
+      "error_text": {"en": {"reference_type_allowed": "Select a person record."}}
+    },
+    {
+      "id": "person.name_full",
+      "type": "localized_text",
+      "required": true,
+      "validation": [{"rule": "required", "params": {}}, {"rule": "length", "params": {"min": 1, "max": 300}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [{"kind": "identity_evidence", "when": "if_required_by_the_approved_procedure"}],
+      "label": {"en": "Name as you use or legally record it"},
+      "hint": {"en": "Enter the full name in its original script where possible. Do not split a single name into first and last names."},
+      "error_text": {"en": {"required": "Enter the person's name.", "length": "The name must be between 1 and 300 characters."}}
+    },
+    {
+      "id": "person.name_components",
+      "type": "localized_text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 300}}],
+      "values_source": "civicos.person.name_component_types",
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Name components, if known"},
+      "hint": {"en": "Add given names, family names, patronymics or other components only when known and useful."},
+      "error_text": {"en": {"length": "Check the length of the name component."}}
+    },
+    {
+      "id": "person.name_order",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.person.name_order.v1",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "How the name is ordered"},
+      "hint": {"en": "Choose the order only if it is known."},
+      "error_text": {"en": {"value_in_source": "Choose an available option."}}
+    },
+    {
+      "id": "person.transliterated_name",
+      "type": "text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 300}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [{"kind": "identity_evidence", "when": "if_transliteration_is_used_to_match_an_official_record"}],
+      "label": {"en": "Name in Latin script, if applicable"},
+      "hint": {"en": "Enter an existing official transliteration; do not invent one."},
+      "error_text": {"en": {"length": "Check the transliterated name."}}
+    },
+    {
+      "id": "person.date_of_birth",
+      "type": "date",
+      "required": false,
+      "validation": [{"rule": "date_not_in_future", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [{"kind": "identity_evidence", "when": "if_required_by_the_approved_procedure"}],
+      "label": {"en": "Date of birth"},
+      "hint": {"en": "Leave this blank if the date is not known and the procedure permits that."},
+      "error_text": {"en": {"date_not_in_future": "The date cannot be in the future."}}
+    },
+    {
+      "id": "person.preferred_contact_name",
+      "type": "text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 150}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Name to use when contacting you"},
+      "hint": {"en": "You may enter a preferred name different from the legal record."},
+      "error_text": {"en": {"length": "Check the name."}}
+    }
+  ],
+  "accessibility": {
+    "name_order_must_not_be_assumed": true,
+    "original_script_supported": true,
+    "transliteration_is_separate": true,
+    "screen_reader_labels_required": true,
+    "rtl_supported": true,
+    "autofill_must_not_overwrite_original_script": true
+  },
+  "assisted_channel": {
+    "officer_may_transcribe": true,
+    "record_transcription_source": true,
+    "identity_evidence_is_not_automatically_required": true
+  },
+  "country_decisions": [
+    "Which civil-registration name fields are legally authoritative.",
+    "Which transliteration standards and scripts are accepted by each connected register.",
+    "Whether a specific service lawfully requires verified legal name rather than self-reported name."
+  ]
+}

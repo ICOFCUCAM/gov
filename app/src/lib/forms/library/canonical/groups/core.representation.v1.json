@@ -1,0 +1,95 @@
+{
+  "group_id": "core.representation",
+  "version": 1,
+  "scope": "universal",
+  "fields": [
+    {
+      "id": "representation.capacity",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.representation.capacity.v1",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Why are you acting for this person or organisation?"},
+      "hint": {"en": "Choose your legal or authorized role."},
+      "error_text": {"en": {"value_in_source": "Choose your role."}}
+    },
+    {
+      "id": "representation.represented_party",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "reference_exists", "params": {}}],
+      "values_source": "civicos.registry.person_or_organisation",
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Person or organisation you represent"},
+      "hint": {"en": "Select the person or organisation this request concerns."},
+      "error_text": {"en": {"reference_exists": "Select a valid person or organisation."}}
+    },
+    {
+      "id": "representation.actor",
+      "type": "person",
+      "required": true,
+      "validation": [{"rule": "required", "params": {}}],
+      "values_source": "civicos.registry.person",
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Your details"},
+      "hint": {"en": "Enter your details as the person acting."},
+      "error_text": {"en": {"required": "Enter your details."}}
+    },
+    {
+      "id": "representation.authority_document",
+      "type": "document",
+      "required": false,
+      "validation": [{"rule": "required_if", "params": {"field": "representation.capacity", "in": ["agent", "power_of_attorney", "legal_guardian", "court_appointed_representative"]}}],
+      "values_source": null,
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "authority_to_act", "when": "when_the_approved_procedure_requires_documentary_authority"}],
+      "label": {"en": "Evidence that you may act for them"},
+      "hint": {"en": "Upload the relevant authorization only if required."},
+      "error_text": {"en": {"required_if": "Provide the required evidence of authority."}}
+    },
+    {
+      "id": "representation.scope",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.representation.scope.v1",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "What are you authorized to do?"},
+      "hint": {"en": "Choose only the actions covered by your authority."},
+      "error_text": {"en": {"value_in_source": "Choose the permitted scope."}}
+    },
+    {
+      "id": "representation.valid_until",
+      "type": "date",
+      "required": false,
+      "validation": [{"rule": "date_not_before", "params": {"reference": "submission_date"}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Authority expiry date, if any"},
+      "hint": {"en": "Enter the expiry date if the authorization has one."},
+      "error_text": {"en": {"date_not_before": "Check the authority expiry date."}}
+    }
+  ],
+  "accessibility": {
+    "separate_actor_from_represented_party": true,
+    "authority_scope_is_explicit": true,
+    "expired_authority_must_not_be_silently_accepted": true
+  },
+  "assisted_channel": {
+    "distinguish_form_assistance_from_legal_representation": true,
+    "record_assisting_officer_separately": true,
+    "do_not_collect_guardianship_details_without_legal_need": true
+  },
+  "country_decisions": [
+    "Recognized forms of representation and guardianship.",
+    "Evidence sufficient to establish authority for each service.",
+    "Legal scope, duration, revocation and verification of authority.",
+    "Rules for minors, persons requiring support and organizations represented by officers."
+  ]
+}

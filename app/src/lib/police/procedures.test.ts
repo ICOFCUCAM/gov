@@ -1,3 +1,4 @@
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { openCase, act, assign, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
 import { draftPackage, approvePackage, resetPackages } from '@/lib/casework/packages';
@@ -14,7 +15,7 @@ describe('police incident intake', () => {
     POLICE = listMinistries()[0]!.id;
     setSovereign({ deployment: { authorities: { police: POLICE } } }, 'Administrator');
     for (const p of POLICE_PROCEDURES) {
-      draftPackage(p, 'Author', 'author', registeredEffects());
+      draftPackage(asNationSets(p), 'Author', 'author', registeredEffects());
       const a = approvePackage(p.key, 1, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01'));
       if ('error' in a) throw new Error(a.error);
     }

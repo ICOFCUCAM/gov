@@ -1,0 +1,19 @@
+{
+  "form_id": "education.school-registration",
+  "version": "1.0",
+  "fields": [
+    {"id": "school_name", "type": "text", "required": true},
+    {"id": "operator", "type": "organisation_reference", "required": true},
+    {"id": "school_levels", "type": "controlled_multiselect", "required": true},
+    {"id": "location", "type": "location_reference", "required": true},
+    {"id": "facilities", "type": "structured_checklist", "required": true},
+    {"id": "staffing", "type": "structured_summary", "required": false},
+    {"id": "supporting_documents", "type": "evidence_collection", "required": true}
+  ],
+  "decision": {
+    "authority": "configured_education_authority",
+    "legal_basis": "required",
+    "inspection_rules": "country_configured",
+    "appeal_rules": "country_configured"
+  }
+}

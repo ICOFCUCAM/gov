@@ -2,6 +2,8 @@
 // under the mapping at once, needs a different official to confirm it within
 // the policy period, is reviewed and lifted by a different official, keeps
 // every event, and leaves earlier decisions as they were.
+import { asNationSets } from '@/lib/casework/testkit';
+import { approvedSealKeyFixture } from '@/lib/keys/seal-register.fixture';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { generateKeyPairSync } from 'node:crypto';
 import { openCase, act, attach, resetCases, registeredEffects, type Actor } from '@/lib/casework/engine';
@@ -33,9 +35,10 @@ describe('emergency suspension of an authority mapping (G)', () => {
     for (const r of [resetCases, resetPackages, resetDocuments, resetDecisions, resetLaw, resetTax, resetPermitAuthorities]) r();
     vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 7).toString('base64'));
     vi.stubEnv('CIVICOS_DECISION_KEY', KEY);
+    approvedSealKeyFixture(KEY); // a production installation seals only with an approved key (lib/keys/seal-register.ts)
     TAX = listMinistries()[0]!.id;
     setSovereign({ deployment: { authorities: { tax: TAX } } }, 'Administrator');
-    for (const p of TAX_PROCEDURES) { draftPackage(p, 'A', 'a', registeredEffects()); approvePackage(p.key, 1, 'B', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); }
+    for (const p of TAX_PROCEDURES) { draftPackage(asNationSets(p), 'A', 'a', registeredEffects()); approvePackage(p.key, 1, 'B', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); }
     const v = recordVersion({ instrument: { title: 'Tax Administration Act', type: 'act', jurisdiction: 'X', year: 2001, number: '1', issuingAuthority: 'Parliament' }, dates: { inForce: '2001-01-01' }, provisions: [{ eId: 'sec_8', num: '8', text: 'Registration.' }] }, 'L1', 'l1');
     if ('error' in v) throw new Error(v.error);
     confirmVersion(v.instrument.id, v.version.id, 'L2', 'l2');

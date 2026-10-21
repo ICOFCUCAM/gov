@@ -12,7 +12,8 @@ import { randomInt } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
-import { getDecision, verifyDecision } from './decisions';
+import { getDecision, sealReport } from './decisions';
+import type { SealState } from '@/lib/keys/seal-register';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const CODE_LENGTH = 12;
@@ -71,14 +72,20 @@ export function revokeCertificate(id: string, reason: string, by: string, now = 
   return structuredClone(c);
 }
 
-export interface PublicCheck { kind: string; title: string; institution: string; issuedAt: string; status: Certificate['status']; sealOk: boolean; publicFacts: Record<string, string> }
+/** What the seal key register says about the seal's key (lib/keys/seal-register.ts): no names of officials. */
+export interface PublicSeal { state: SealState; keyId: string; fingerprint?: string; validFrom?: string; validUntil?: string; basis: string[]; compromisedFrom?: string; sample?: boolean; note: string }
+export interface PublicCheck { kind: string; title: string; institution: string; issuedAt: string; status: Certificate['status']; sealOk: boolean; publicFacts: Record<string, string>; seal?: PublicSeal }
 
 /** What anyone may see for a code: the certificate's own statements and its standing. Null when no certificate has it. */
 export function checkCode(code: string): PublicCheck | null {
   const c = db().certificates.find(x => x.code === normaliseCode(code));
   if (!c) return null;
   const d = getDecision(c.decision);
-  return { kind: c.kind, title: c.title, institution: c.institution.name, issuedAt: c.issuedAt, status: c.status, sealOk: !!d && verifyDecision(d).ok, publicFacts: { ...c.publicFacts } };
+  const r = d ? sealReport(d) : null;
+  const k = r?.key;
+  const seal: PublicSeal | undefined = k ? { state: k.state, keyId: k.keyId, ...(k.fingerprint ? { fingerprint: k.fingerprint } : {}), ...(k.key?.validFrom ? { validFrom: k.key.validFrom } : {}), ...(k.key?.validUntil ? { validUntil: k.key.validUntil } : {}),
+    basis: k.key?.basis ?? [], ...(k.key?.compromisedFrom ? { compromisedFrom: k.key.compromisedFrom } : {}), ...(k.key?.sample ? { sample: true } : {}), note: k.note } : undefined;
+  return { kind: c.kind, title: c.title, institution: c.institution.name, issuedAt: c.issuedAt, status: c.status, sealOk: !!r?.ok, publicFacts: { ...c.publicFacts }, ...(seal ? { seal } : {}) };
 }
 
 export const certificatesFor = (decisionIds: string[]): Certificate[] => db().certificates.filter(c => decisionIds.includes(c.decision)).map(c => structuredClone(c));

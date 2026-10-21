@@ -1,0 +1,866 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-FAC-006",
+ "record_type": "health.facility.variation.case",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LIC-002: which changes need a variation, the notice needed and the authority that decides.",
+  "The variation fee: an approved fee rule (lib/law/rules.ts); none ships.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-FAC-006",
+  "part": 6,
+  "section": "6.2",
+  "line": 718,
+  "batch": 1
+ },
+ "library": {
+  "title": "Apply to vary a health facility's services or capacity",
+  "intro": "Apply to add or withdraw services, change capacity or alter the premises of a licensed facility. If services are withdrawn, say how the people who use them will be told and where they can go: describe arrangements, never individual people.",
+  "owner": "healthRegulation",
+  "filled_by": "The licensed facility's operator or someone acting for it.",
+  "procedure": null,
+  "intended": "A variation of a standing in the health-facilities register (assessment, then a decision under the approved permit mapping): not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "health.country.facility_types": {
+    "values": [
+     {
+      "value": "hospital",
+      "label": "Hospital"
+     },
+     {
+      "value": "health-centre",
+      "label": "Health centre"
+     },
+     {
+      "value": "clinic",
+      "label": "Clinic"
+     },
+     {
+      "value": "dispensary",
+      "label": "Dispensary"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity home"
+     },
+     {
+      "value": "laboratory",
+      "label": "Medical laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging centre"
+     },
+     {
+      "value": "dental",
+      "label": "Dental practice"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.facility_services": {
+    "values": [
+     {
+      "value": "outpatient",
+      "label": "Outpatient care"
+     },
+     {
+      "value": "inpatient",
+      "label": "Inpatient care"
+     },
+     {
+      "value": "maternity",
+      "label": "Maternity and delivery"
+     },
+     {
+      "value": "emergency",
+      "label": "Emergency care"
+     },
+     {
+      "value": "surgery",
+      "label": "Surgery"
+     },
+     {
+      "value": "laboratory",
+      "label": "Laboratory"
+     },
+     {
+      "value": "imaging",
+      "label": "Imaging"
+     },
+     {
+      "value": "pharmacy",
+      "label": "Pharmacy"
+     },
+     {
+      "value": "immunisation",
+      "label": "Immunisation"
+     },
+     {
+      "value": "dental",
+      "label": "Dental"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.capacity_measures": {
+    "values": [
+     {
+      "value": "beds-total",
+      "label": "Beds (all)"
+     },
+     {
+      "value": "beds-intensive-care",
+      "label": "Intensive-care beds"
+     },
+     {
+      "value": "consulting-rooms",
+      "label": "Consulting rooms"
+     },
+     {
+      "value": "operating-theatres",
+      "label": "Operating theatres"
+     }
+    ],
+    "proposed": true
+   },
+   "health.country.variation_kinds": {
+    "values": [
+     {
+      "value": "add-service",
+      "label": "Add a service"
+     },
+     {
+      "value": "withdraw-service",
+      "label": "Withdraw a service"
+     },
+     {
+      "value": "change-capacity",
+      "label": "Change capacity"
+     },
+     {
+      "value": "alter-premises",
+      "label": "Alter or move the premises"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "health.facility.variation-fee",
+    "kind": "fee",
+    "source": "rule",
+    "decision": "The variation fee."
+   },
+   {
+    "key": "health.facility.variation-notice",
+    "kind": "days",
+    "source": "setting",
+    "decision": "How much notice a variation needs before it takes effect."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "stage-b-id",
+    "what": "The supplement's Stage B uses HLT-FAC-006 for health facility registration; this contract is the field series' HLT-FAC-006 (service or capacity variation), matched to that row only",
+    "why": "One ID, two forms: the register keeps them apart (HLT-FAC-006@P6).",
+    "rule": "Owner's direction 2026-10-21 §4 (match every contract to exactly one registered form)"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 694,
+    "quotes": [
+     "Licensing services should maintain professional and facility records without unnecessarily exposing patient information."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "No patient, clinical, treatment or diagnosis field: the scope check runs on every key and the conformance test holds it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 723,
+    "quotes": [
+     "Professional or facility status should be disclosed only at the level authorized by law.",
+     "A public register might show that a licence is active, while investigation details or protected personal information remain restricted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists and checks carry only publicOrganisation() / the profession's publicFields; investigation fields are restricted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A licence reference must be active in its register (REF-ACTIVE); the approved mapping and its review path decide"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 866,
+    "quotes": [
+     "CFG-LIC-002",
+     "Facility licensing, inspection, and enforcement procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-LIC-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/professions/register.ts",
+      "how": "Standing comes only from the register kept by the competent authority; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 894,
+    "quotes": [
+     "Health-professions and facility registry — licensing, renewals, inspections, complaints, and authorized status verification."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Licensing, renewals, inspections, complaints and status verification are the contracts of this batch"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 718,
+    "quotes": [
+     "HLT-FAC-006",
+     "Service or capacity variation",
+     "Variation assessment"
+    ],
+    "met_by": {
+     "fields": [
+      "variation.kind",
+      "variation.reason"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1563,
+    "quotes": [
+     "{\"key\": \"service_capabilities\", \"type\": \"array\", \"required\": true, \"items_type\": \"code_reference\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "variation.services_added",
+      "variation.services_withdrawn"
+     ],
+     "deviation": "stage-b-id"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1323,
+    "quotes": [
+     "Health facility",
+     "Unique facility ID, name, type, location, operator, authorised services, operational status, verification date"
+    ],
+    "met_by": {
+     "fields": [
+      "variation.services_added",
+      "variation.services_withdrawn",
+      "variation.capacity",
+      "variation.new_location"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "variation.facility",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "reference_type_allowed",
+     "params": {
+      "types": [
+       "health-facilities",
+       "pharmacies"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Facility registration number"
+   },
+   "hint": {
+    "en": "The facility's number in the register of organisations, as shown on its licence."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the facility registration number.",
+     "reference_exists": "There is no organisation with that number in the register.",
+     "REF-ACTIVE": "The facility's licence in the register is not active."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The facility"
+   }
+  },
+  {
+   "use_group": "core.representation",
+   "version": 1,
+   "only": [
+    "representation.capacity",
+    "representation.actor",
+    "representation.authority_document"
+   ],
+   "section": {
+    "en": "Who is applying"
+   }
+  },
+  {
+   "id": "variation.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "health.country.variation_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What do you want to change?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "variation.services_added",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "variation.kind",
+      "in": [
+       "add-service"
+      ]
+     }
+    }
+   ],
+   "values_source": "health.country.facility_services",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Services to add"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select services to add."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "variation.services_withdrawn",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "variation.kind",
+      "in": [
+       "withdraw-service"
+      ]
+     }
+    }
+   ],
+   "values_source": "health.country.facility_services",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Services to withdraw"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select services to withdraw."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "variation.capacity",
+   "type": "group",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "variation.kind",
+      "in": [
+       "change-capacity"
+      ]
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Capacity change"
+   },
+   "hint": {
+    "en": "Counts only."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter capacity change."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "measure",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "health.country.capacity_measures",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "What is counted"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select what is counted."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "current",
+     "type": "number",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Number now"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the number now.",
+       "integer_range": "Number now must be a whole number, 0 or more."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "proposed",
+     "type": "number",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Number after the change"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the number after the change.",
+       "integer_range": "Number after the change must be a whole number, 0 or more."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "variation.premises_change",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "variation.kind",
+      "in": [
+       "alter-premises"
+      ]
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Change to the premises"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter the change to the premises.",
+     "length": "Change to the premises must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "variation.new_location",
+   "type": "point",
+   "required": false,
+   "validation": [
+    {
+     "rule": "coordinate_range",
+     "params": {
+      "latitude": [
+       -90,
+       90
+      ],
+      "longitude": [
+       -180,
+       180
+      ]
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "New position, if the premises move"
+   },
+   "error_text": {
+    "en": {
+     "coordinate_range": "Give a latitude between -90 and 90 and a longitude between -180 and 180."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "variation.reason",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Why the change is needed"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter why the change is needed.",
+     "length": "Why the change is needed must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "variation.from",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "date_not_before",
+     "params": {
+      "reference": "submission_date"
+     }
+    },
+    {
+     "rule": "configured_profile",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date the change is to take effect"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the date the change is to take effect.",
+     "date_not_before": "Date the change is to take effect must be today or later."
+    }
+   },
+   "country_decision": "CFG-LIC-002: how much notice a variation needs before it takes effect.",
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "variation.continuity",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "variation.kind",
+      "in": [
+       "withdraw-service"
+      ]
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "How people who use a withdrawn service will be told, and where they can go"
+   },
+   "hint": {
+    "en": "Describe the arrangements. Do not name or describe anyone."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter how people who use a withdrawn service will be told, and where they can go.",
+     "length": "How people who use a withdrawn service will be told, and where they can go must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "variation.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "variation_evidence",
+     "when": "as_required_by_the_approved_variation_procedure"
+    }
+   ],
+   "label": {
+    "en": "Supporting evidence"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "use_group": "core.payment",
+   "version": 1,
+   "section": {
+    "en": "Fee"
+   }
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "variation.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

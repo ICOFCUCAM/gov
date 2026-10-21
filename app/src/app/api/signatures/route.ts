@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { signDocument } from '@/lib/data/store';
+import { SealRefused } from '@/lib/data/store/permits';
 import type { SignatureRequest } from '@/lib/api/types';
 import { withOfficial } from '@/lib/auth/official';
 
@@ -20,10 +21,16 @@ export async function POST(req: NextRequest) {
       { status: 422 },
     );
   }
-  const result = await signDocument({
-    documentId: body.documentId,
-    documentTitle: body.documentTitle,
-    signerName: body.signerName,
-  });
+  let result;
+  try {
+    result = await signDocument({
+      documentId: body.documentId,
+      documentTitle: body.documentTitle,
+      signerName: body.signerName,
+    });
+  } catch (e) {
+    if (e instanceof SealRefused) return NextResponse.json({ error: e.message }, { status: 409 });
+    throw e;
+  }
   return NextResponse.json({ result }, { status: 201 });
 }

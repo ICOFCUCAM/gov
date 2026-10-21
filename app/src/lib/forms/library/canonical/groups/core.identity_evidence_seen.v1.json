@@ -1,0 +1,106 @@
+{
+  "group_id": "core.identity_evidence_seen",
+  "version": 1,
+  "scope": "universal_when_required",
+  "fields": [
+    {
+      "id": "identity_evidence.kind",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.identity.evidence_type.v1",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Type of identity evidence seen"},
+      "hint": {"en": "Select the type of evidence you actually inspected."},
+      "error_text": {"en": {"value_in_source": "Select the evidence type."}}
+    },
+    {
+      "id": "identity_evidence.issuer_country",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "iso.3166-1.alpha2.current",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Issuing country"},
+      "hint": {"en": "Enter this if it appears on the evidence."},
+      "error_text": {"en": {"value_in_source": "Select an issuing country."}}
+    },
+    {
+      "id": "identity_evidence.document_type",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.identity.document_type.v1",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Document type"},
+      "hint": {"en": "Choose the document type."},
+      "error_text": {"en": {"value_in_source": "Choose a document type."}}
+    },
+    {
+      "id": "identity_evidence.reference_token",
+      "type": "text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 100}}],
+      "values_source": null,
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Document reference, if needed"},
+      "hint": {"en": "Enter only the reference required for this procedure."},
+      "error_text": {"en": {"length": "Check the document reference."}}
+    },
+    {
+      "id": "identity_evidence.method",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.identity.inspection_method.v1",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "How was the evidence checked?"},
+      "hint": {"en": "Record the method actually used."},
+      "error_text": {"en": {"value_in_source": "Choose a verification method."}}
+    },
+    {
+      "id": "identity_evidence.outcome",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.identity.inspection_outcome.v1",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Outcome of the check"},
+      "hint": {"en": "Record the observed outcome, not an unsupported conclusion."},
+      "error_text": {"en": {"value_in_source": "Choose an outcome."}}
+    },
+    {
+      "id": "identity_evidence.officer",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "actor_has_role", "params": {"role": "identity_evidence_recorder"}}],
+      "values_source": "civicos.registry.authorized_officer",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Officer who checked the evidence"},
+      "hint": {"en": "This is recorded automatically where possible."},
+      "error_text": {"en": {"actor_has_role": "Only an authorized officer can record this check."}}
+    }
+  ],
+  "accessibility": {
+    "do_not_require_document_upload_when_visual_inspection_is_sufficient": true,
+    "never_store_full_document_image_by_default": true,
+    "identity_check_is_not_a_legal_decision": true
+  },
+  "assisted_channel": {
+    "officer_identity_and_timestamp_are_audited": true,
+    "record_only_observed_facts": true,
+    "record_alternative_evidence_if_the_procedure_allows_it": true
+  },
+  "country_decisions": [
+    "Accepted identity evidence by service and applicant category.",
+    "Whether document numbers, scans or copies may be retained.",
+    "Authorized verification methods and any applicable retention period."
+  ]
+}

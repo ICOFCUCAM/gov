@@ -1,6 +1,7 @@
 // A repeated request never shows a case to someone who may not work it: the
 // engine decides who may act before it answers a repeated key, and a key only
 // finds a case of the same procedure and institution.
+import { asNationSets } from '@/lib/casework/testkit';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { openCase, act, attach, resetCases, registeredEffects, type Actor } from './engine';
 import { draftPackage, approvePackage, resetPackages } from './packages';
@@ -19,7 +20,7 @@ describe('repeated requests and case isolation', () => {
     vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 7).toString('base64'));
     [TAX, OTHER] = listMinistries().slice(0, 2).map(m => m.id) as [string, string];
     setSovereign({ deployment: { authorities: { tax: TAX } } }, 'Administrator');
-    for (const p of TAX_PROCEDURES) { draftPackage(p, 'A', 'a', registeredEffects()); approvePackage(p.key, 1, 'B', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); }
+    for (const p of TAX_PROCEDURES) { draftPackage(asNationSets(p), 'A', 'a', registeredEffects()); approvePackage(p.key, 1, 'B', 'b', '2026-01-01', registeredEffects(), new Date('2026-01-01')); }
   });
 
   it('refuses a repeated open from another institution and does not return the case', () => {

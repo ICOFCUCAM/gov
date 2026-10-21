@@ -16,10 +16,18 @@
 // was made (`profile`: id, version, digest; plan phase 5, guidance §7), inside
 // what the seal covers; absent while the nation has approved none, and on
 // decisions sealed before (which verify as they always did).
+//
+// The key that seals must be in the seal key register (lib/keys/seal-register.ts):
+// in a production installation a key not approved there seals nothing, and a
+// check reports whether the register trusted the key when the seal was made
+// (the time of its `decision.seal` entry in the audit chain, which the hash
+// chain fixes; `seal.at` and `content.at` are for display, since a stolen key
+// can write any time into what it signs). Old decisions verify forever: replacing the key never
+// invalidates them, and only a confirmed compromise flags those sealed after it.
 
 import { createHash } from 'node:crypto';
 import { canonicalJson } from '@/lib/data/store/shared';
-import { recordAudit } from '@/lib/data/store/audit';
+import { recordAudit, firstAuditEntry, auditHashV2 } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
 import { signer, type Signature } from '@/lib/keys/custody';
@@ -27,6 +35,7 @@ import { verifyBytes } from '@/lib/crypto/signing-key';
 import type { Citation } from '@/lib/law/register';
 import { installationMode } from '@/lib/ops/mode';
 import { profileRef, type ProfileRef } from '@/lib/constitution/profile-state';
+import { sealKeyRefusal, sealStanding, registerSealHistory, type SealStanding } from '@/lib/keys/seal-register';
 
 export interface DecisionContent {
   /** What was decided: the case (and its procedure version) or the register record. */
@@ -56,7 +65,7 @@ export interface SignedDecision {
   content: DecisionContent;
   /** SHA-256 of the canonical JSON of { id, content }. */
   sha256: string;
-  seal: Signature & { framework: 'platform' };
+  seal: Signature & { framework: 'platform'; /** When the platform sealed it (absent on decisions sealed before the seal key register). */ at?: string };
   /** A qualified signature added under the nation's own framework, when connected. */
   qualified?: { service: string; signature: string; at: string };
   /** Set when a later decision supersedes this one. */
@@ -86,7 +95,10 @@ export async function recordDecision(content: DecisionContent): Promise<SignedDe
   if (!s.production && installationMode() === 'production') return { error: 'Decisions are sealed with the installation\'s decision key: set CIVICOS_DECISION_KEY (or the key provider) first' };
   let seal: Signature;
   try { seal = await s.sign(material); } catch (e) { return { error: `The decision could not be sealed: ${(e as Error).message}` }; }
-  const d: SignedDecision = { id, content: structuredClone(content), sha256, seal: { ...seal, framework: 'platform' } };
+  // Only a key the seal key register trusts keeps a seal (an approved key becomes active here; demo and training trust a new key as a sample).
+  const untrusted = sealKeyRefusal('decision', seal.publicKeyPem);
+  if (untrusted) return { error: untrusted };
+  const d: SignedDecision = { id, content: structuredClone(content), sha256, seal: { ...seal, framework: 'platform', at: new Date().toISOString() } };
   db().decisions.push(d);
   if (prev) prev.supersededBy = id;
   const decided = content.officials.find(o => o.role === 'decided')!.name;
@@ -94,12 +106,49 @@ export async function recordDecision(content: DecisionContent): Promise<SignedDe
   return structuredClone(d);
 }
 
-/** Check a decision: its hash and its seal. */
+/** When the decision says it was sealed (display only: not covered by the seal, and a stolen key can write any time). */
+export const sealedAt = (d: Pick<SignedDecision, 'content' | 'seal'>): string => d.seal.at ?? d.content.at;
+
+/**
+ * The tamper-evident time of a seal: the audit chain's `decision.seal` entry
+ * written when recordDecision() kept it, whose time and position the hash
+ * chain fixes. It must name this record's hash and key (a record forged under
+ * a genuine decision's id does not match) and its own hash must hold. Null
+ * when the chain has no such entry: a record that never went through
+ * recordDecision(), or a forgery.
+ */
+export function sealAuditTime(d: Pick<SignedDecision, 'id' | 'sha256' | 'seal'>): string | null {
+  const e = firstAuditEntry('decision.seal', `Decision:${d.id}`);
+  if (!e || e.outcome !== 'ok') return null;
+  if (!e.detail?.includes(d.sha256.slice(0, 12)) || !e.detail.includes(`key ${d.seal.keyId}`)) return null;
+  if (e.alg === 'sha256-v2' && auditHashV2(e) !== e.hash) return null;
+  return e.at;
+}
+
+/** The time the register judges a seal by: the audit entry's, else the record's own (then marked unaudited). */
+export const sealTime = (d: Pick<SignedDecision, 'id' | 'sha256' | 'content' | 'seal'>): { at: string; audited: boolean } => { const at = sealAuditTime(d); return at ? { at, audited: true } : { at: sealedAt(d), audited: false }; };
+
+/**
+ * Check a decision: its hash, its seal, and that the seal key register
+ * trusted the key when it sealed (a key outside its validity, not in the
+ * register after the register started, or sealing after a confirmed
+ * compromise is not trusted). A key not in the register that sealed before
+ * the register started verifies as before (sealReport() says so).
+ */
 export function verifyDecision(d: Pick<SignedDecision, 'id' | 'content' | 'sha256' | 'seal'>): { ok: boolean; problem?: string } {
   const material = decisionMaterial(d.id, d.content);
   if (createHash('sha256').update(material, 'utf8').digest('hex') !== d.sha256) return { ok: false, problem: 'The record does not match its hash' };
   if (!verifyBytes(d.seal.publicKeyPem, material, d.seal.signature)) return { ok: false, problem: 'The seal does not verify' };
+  const t = sealTime(d);
+  const k = sealStanding('decision', d.seal.publicKeyPem, t.at, t.audited);
+  if (!k.trusted) return { ok: false, problem: k.note };
   return { ok: true };
+}
+
+/** The full check with what the register says about the seal's key (for /verify and the console). */
+export function sealReport(d: Pick<SignedDecision, 'id' | 'content' | 'sha256' | 'seal'>): { ok: boolean; problem?: string; key: SealStanding; sealedAt: string; timeFrom: 'audit-chain' | 'record' } {
+  const t = sealTime(d);
+  return { ...verifyDecision(d), key: sealStanding('decision', d.seal.publicKeyPem, t.at, t.audited), sealedAt: t.at, timeFrom: t.audited ? 'audit-chain' : 'record' };
 }
 
 export const getDecision = (id: string): SignedDecision | undefined => { const d = db().decisions.find(x => x.id === id); return d ? structuredClone(d) : undefined; };
@@ -107,3 +156,10 @@ export const decisionsFor = (kind: 'case' | 'register', id: string): SignedDecis
   db().decisions.filter(d => d.content.subject.kind === kind && d.content.subject.id === id).map(d => structuredClone(d));
 /** Every sealed decision, oldest first (read only: a court's ruling flags the ones it touches, lib/transitions/events.ts). */
 export const listDecisions = (): SignedDecision[] => db().decisions.map(d => structuredClone(d));
+
+// What the decisions already sealed say about a key (the seal key register reads it when a key is proposed).
+registerSealHistory((purpose, keyId) => {
+  if (purpose !== 'decision') return { count: 0 };
+  const times = db().decisions.filter(d => d.seal.keyId === keyId).map(d => sealTime(d).at).sort();
+  return { count: times.length, ...(times.length ? { first: times[0], last: times[times.length - 1] } : {}) };
+});

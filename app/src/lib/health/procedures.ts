@@ -11,11 +11,14 @@ import { registeredEffects } from '@/lib/casework/engine';
 import { draftPackage, listPackages } from '@/lib/casework/packages';
 import { sectorProcedures } from '@/lib/organisations/procedures';
 import type { CasePackage } from '@/lib/casework/types';
+import { libraryForm } from '@/lib/forms/library/definitions';
+import { attachForm } from '@/lib/forms/library/build';
 
 type Ref = Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'>;
 
 export const HEALTH_PROCEDURES: Ref[] = [
-  ...sectorProcedures({ prefix: 'health.facility', owner: 'healthRegulation', register: 'health-facilities', word: 'health facility licence', refPrefix: 'HFL', linkSites: true }),
+  // The specification's health facility registration form, attached to the licence application (lib/forms/library).
+  ...sectorProcedures({ prefix: 'health.facility', owner: 'healthRegulation', register: 'health-facilities', word: 'health facility licence', refPrefix: 'HFL', linkSites: true, form: libraryForm('health.facility-registration') }),
   ...sectorProcedures({ prefix: 'health.pharmacy', owner: 'healthRegulation', register: 'pharmacies', word: 'pharmacy licence', refPrefix: 'PHL', linkSites: true }),
 ];
 

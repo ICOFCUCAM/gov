@@ -237,6 +237,8 @@ const ADMIN_ONLY: RegExp[] = [
   // The register types of the organisations register (which authority keeps which register).
   /^\/api\/organisations\/types$/,
   /^\/api\/professions\/types$/,
+  // What the public product check shows (the nation's public information classification): proposed citing the law, confirmed by a different official.
+  /^\/api\/health-regulation\/products$/,
   /^\/api\/dual-control$/,
   // Which authority the law designates for each permit and licence type (four-eyes in the route).
   /^\/api\/permit-authorities$/,
@@ -342,6 +344,10 @@ const OFFICIAL_WORK: RegExp[] = [
   // declarant of an interest …). Not ADMIN_ONLY: a court's signatory records a ruling. Nothing here reads a transition
   // to grant a permission; a declared conflict of interest only removes one (caseActRefusal()).
   /^\/api\/constitution\/transitions$/,
+  // The seal key register (lib/keys/seal-register.ts): proposed by an administrator or a signatory of the seal keys
+  // authority, approved only by officials who can sign there (sealKeyProposeRefusal() / sealKeyApproveRefusal(),
+  // checked in the store). Not ADMIN_ONLY: the approvers are the named authority's own officials.
+  /^\/api\/seal-keys$/,
 ];
 
 export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official' | 'legislature';
@@ -836,6 +842,38 @@ export function canConfirmAccessLogRetention(s: Scope, dataProtection: string | 
   return role === 'auditor' ? null : 'An auditor confirms this while no data-protection authority is named';
 }
 
+/**
+ * The seal key register (lib/keys/seal-register.ts). Proposing a key, or
+ * reporting one compromised: an administrator, or an official who can sign at
+ * the institution the nation's seal-key rules name (`authority`). Approving a
+ * key, confirming a reported compromise and reviewing it afterwards: only an
+ * official who can sign at that institution; nobody while the nation has
+ * named none (the platform never assumes one). Whole-government scope and
+ * seniority grant nothing here.
+ */
+export function sealKeyProposeRefusal(s: Scope, authority: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (role === 'administrator') return null;
+  if (authority && s.institution === authority && role === 'signatory') return null;
+  return 'An administrator, or an official who can sign at the seal keys authority, proposes a seal key or reports one compromised';
+}
+export function sealKeyApproveRefusal(s: Scope, authority: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (!authority) return 'Name the seal keys authority first (Who is responsible, and the seal-key rules citing the law that names it): the platform never assumes who approves the state\'s seal';
+  if (s.institution !== authority || role !== 'signatory') return 'Only an official who can sign at the seal keys authority approves a seal key, confirms a compromise or reviews it';
+  return null;
+}
+/** The country's seal-key rules (lib/law/policy-change.ts): proposed by an administrator; confirmed by a different administrator or one who can sign at the seal keys authority. */
+export function sealKeyRulesRefusal(s: Scope, authority: string | undefined, step: 'propose' | 'confirm'): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (role === 'administrator') return null;
+  if (step === 'confirm' && authority && s.institution === authority && role === 'signatory') return null;
+  return step === 'propose' ? 'An administrator proposes the seal-key rules, citing the law' : 'An administrator, or an official who can sign at the seal keys authority, confirms the seal-key rules';
+}
+
 /** Recording a version of a law (lib/law/register.ts): officials of the nation's law-register authority; whole-government administrators only while none is named. */
 export function canRecordLaw(s: Scope, authority: string | undefined): string | null {
   const role = roleOf(s);
@@ -941,6 +979,22 @@ export function canReadCustoms(s: Scope, authority: string | undefined, purpose?
   if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read customs declarations';
   if (authority && s.institution === authority) return null;
   return 'Customs declarations are read by the customs authority; other institutions check release through the exchange (customs.release)';
+}
+
+/**
+ * A full record of the register of medicines and medical devices
+ * (lib/health/products/register.ts: dossier versions, the assessment,
+ * composition, sites, grounds of enforcement, recall completions): the
+ * officials of the medicines authority the nation named (`medicinesRegulation`)
+ * only. Nobody else, not the whole government, an administrator elsewhere or a
+ * provisional stand-in: they see publicProductView(). Every read is logged by
+ * the route.
+ */
+export function canReadProduct(s: Scope, authority: string | undefined): string | null {
+  if (authority && s.institution === authority && roleOf(s) !== 'administrator') return null;
+  return authority
+    ? 'Full product records are read by the medicines authority\'s officials; everyone else sees the public product check (publicProductView) or the product.status exchange'
+    : 'No medicines authority is named under Who is responsible: nobody reads full product records until the nation names it';
 }
 
 /** Visas and residence permits (lib/immigration/register.ts): the immigration authority's officials; auditors with a purpose. Never the whole government by default (directions 15.1). */
