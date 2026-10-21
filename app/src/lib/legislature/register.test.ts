@@ -14,6 +14,7 @@ import { recordTermsDuringSetup, institutionBounds } from '@/lib/data/store/inst
 import { resetLaw, recordVersion, confirmVersion, getInstrument, versionOn } from '@/lib/law/register';
 import { toAkomaNtoso } from '@/lib/law/akoma-ntoso';
 import { apiPermission, type Scope } from '@/lib/auth/roles';
+import { onboardingStatus } from '@/lib/onboarding/status';
 import {
   resetLegislature, draftProcedure, approveProcedure, activeProcedure, listProcedures, introduceBill, addText, recordStage, referToCommittee,
   recordReport, proposeAmendment, decideAmendment, recordVote, passBill, recordAssent, recordCommencement, publishBill, certifyBill,
@@ -250,5 +251,19 @@ describe('what the public sees', () => {
     expect(publicBill(b.id)).toBeNull();
     expect(readsFullRecord(wgAdmin.scope, getBill(b.id)!)).toBe(false);
     expect(readsFullRecord(president.scope, getBill(b.id)!)).toBe(false);
+  });
+});
+
+describe('onboarding', () => {
+  it('adds the legislative record track only when a legislature is named, and lists what waits for a second official', () => {
+    const d = ok(draftProcedure({ fromReference: true, chambers: ['National Assembly'] }, staff));
+    const st = onboardingStatus();
+    const t = st.tracks.find(x => x.key === 'legislature')!;
+    expect(t.checks.find(c => /procedure approved/.test(c.label))).toMatchObject({ done: false });
+    expect(st.waiting.some(w => /Legislative procedure version 1/.test(w.what))).toBe(true);
+    ok(approveProcedure(d.version, clerk));
+    expect(onboardingStatus().tracks.find(x => x.key === 'legislature')!.checks.find(c => /procedure approved/.test(c.label))).toMatchObject({ done: true });
+    setSovereign({ deployment: { authorities: {} } }, 'test');
+    expect(onboardingStatus().tracks.some(x => x.key === 'legislature')).toBe(false);
   });
 });

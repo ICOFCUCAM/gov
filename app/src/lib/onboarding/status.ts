@@ -13,6 +13,7 @@ import { listRelationships, waitingRelationships } from '@/lib/data/store/relati
 import { waitingAccountChanges } from '@/lib/auth/account-changes';
 import { listOffices, waitingOffices, waitingHoldings } from '@/lib/nation/office-register';
 import { constitutionOverview, waitingProfileSteps } from '@/lib/constitution/profile';
+import { activeProcedure, listBills, waitingLegislative, legislatureName } from '@/lib/legislature/register';
 import { listMinistries } from '@/lib/data/store/ministries';
 import { listAccounts, twoStepPolicy } from '@/lib/auth/officials';
 import { listInstruments } from '@/lib/law/register';
@@ -274,6 +275,24 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
     }),
   ];
 
+  // The legislature's own record (plan phase 7): only when the nation names a legislature (an optional slot).
+  const legislature = authorityFor('legislature');
+  if (legislature) {
+    tracks.push(track({ key: 'legislature', title: 'Legislative record', why: 'The legislature\'s own record of bills, votes, assent and publication, kept by its clerk under the procedure its officials approve; enacted texts enter the laws register from it. Only where the nation names a legislature.', href: '/gov/legislature/procedure' }, () => {
+      const active = activeProcedure();
+      const signers = listAccounts().filter(a => !a.disabled && a.institution === legislature && a.role === 'signatory').length;
+      const published = listBills({ state: 'published' });
+      const unsent = published.filter(b => !(b.law ?? []).length);
+      return { checks: [
+        { label: 'Two officials who can sign at the legislature (the clerk and a second)', done: signers >= 2, href: '/admin/officials', detail: `${signers} at ${legislatureName() ?? 'the legislature'}` },
+        { label: 'Legislative procedure approved by the legislature', done: !!active, href: '/gov/legislature/procedure', detail: active ? `Version ${active.version}, approved by ${active.approvedBy} from ${active.activeFrom}` : 'Only the reference ships; the legislature drafts its own and a second official approves it' },
+        { label: 'The procedure cites the standing orders (optional)', done: !active || active.basis.length > 0, href: '/gov/legislature/procedure', detail: active ? (active.basis.length ? active.basis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`).join('; ') : 'Record the standing orders in the laws register and cite them in the next version') : undefined },
+        { label: 'Someone records assent where the procedure asks for it', done: !active?.assent.required || !!authorityFor('headOfState'), href: '/gov/configuration/responsible', detail: active?.assent.required && !authorityFor('headOfState') ? 'No head of state\'s office is named: the clerk records assent as communicated to the chamber' : undefined },
+        { label: 'Published acts entered the laws register', done: unsent.length === 0, href: '/gov/legislature', detail: published.length ? `${published.length - unsent.length} of ${published.length}${unsent.length ? ` · not yet sent: ${unsent.slice(0, 4).map(b => b.number).join(', ')}` : ''}` : 'No act published yet' },
+      ] };
+    }));
+  }
+
   if (samplesAllowed(env)) {
     tracks.push(track({ key: 'demo', title: 'Demonstration', why: 'Sample officials and records to try every feature. Only in demo and training installations; never in production.', href: '/admin/onboarding#demo', samplesOnly: true }, () => ({
       checks: [
@@ -293,6 +312,12 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const p of waitingProfileSteps()) wait({ what: p.what, proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
   safe(() => { const p = constitutionOverview().process.changes.pending; if (p) wait({ what: 'Steps for changing the constitutional profile: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
   safe(() => { const p = classificationChanges().pending; if (p) wait({ what: 'Classification of the state: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/offices' }); });
+  safe(() => { for (const w of waitingLegislative()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: w.href }); });
+  safe(() => {
+    for (const i of listInstruments({ state: 'any' })) for (const v of i.versions) {
+      if (v.state === 'recorded' && v.source.kind === 'legislature') wait({ what: `${i.title}: enacted text from the legislature waiting for the law-register authority to confirm`, proposedBy: v.recordedBy, at: v.at, href: '/gov/law' });
+    }
+  });
   safe(() => { for (const h of waitingHoldings()) wait({ what: `${h.holderName} to hold an office — waiting for a second official`, proposedBy: h.proposedBy, at: h.proposedAt, href: '/gov/configuration/offices' }); });
 
   waiting.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''));

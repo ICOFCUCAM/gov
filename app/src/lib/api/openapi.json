@@ -104,6 +104,9 @@
       "name": "law"
     },
     {
+      "name": "legislature"
+    },
+    {
       "name": "map-pack"
     },
     {
@@ -1198,7 +1201,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/audit/verify/route.ts"
       }
     },
@@ -2242,7 +2249,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/auth/official/route.ts"
       },
       "post": {
@@ -5026,7 +5037,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/boundaries/active/route.ts"
       }
     },
@@ -9296,7 +9311,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/courts/cause-list/route.ts"
       }
     },
@@ -13044,7 +13063,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/exchange/key/route.ts"
       }
     },
@@ -19207,7 +19230,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/law/cite/route.ts"
       }
     },
@@ -19299,7 +19326,25 @@
                         },
                         "applicability": {},
                         "source": {
-                          "kind": "entered"
+                          "kind": "legislature",
+                          "legislature": "string",
+                          "bill": "string",
+                          "billNumber": "string",
+                          "billVersion": 1,
+                          "textDigest": "string",
+                          "votes": [
+                            {}
+                          ],
+                          "publication": {
+                            "date": "2026-01-15",
+                            "reference": "string"
+                          },
+                          "certification": {
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          },
+                          "procedureVersion": 1
                         }
                       }
                     }
@@ -19376,7 +19421,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/law/export/route.ts"
       }
     },
@@ -19606,7 +19655,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/law/route.ts"
       },
       "post": {
@@ -19699,6 +19752,9 @@
                   },
                   "source": {
                     "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/LegislativeSource"
+                      },
                       {
                         "type": "object",
                         "properties": {
@@ -19795,7 +19851,37 @@
                       "transitional": "string"
                     },
                     "source": {
-                      "kind": "entered"
+                      "kind": "legislature",
+                      "legislature": "string",
+                      "bill": "string",
+                      "billNumber": "string",
+                      "billVersion": 1,
+                      "textDigest": "string",
+                      "votes": [
+                        {
+                          "stage": "string",
+                          "date": "2026-01-15",
+                          "yes": 1,
+                          "no": 1,
+                          "abstain": 1,
+                          "result": "string"
+                        }
+                      ],
+                      "assent": {
+                        "outcome": "string",
+                        "date": "2026-01-15",
+                        "by": "A. Official"
+                      },
+                      "publication": {
+                        "date": "2026-01-15",
+                        "reference": "string"
+                      },
+                      "certification": {
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z"
+                      },
+                      "procedureVersion": 1
                     },
                     "by": "A. Official",
                     "format": "akoma-ntoso",
@@ -19888,7 +19974,25 @@
                         },
                         "applicability": {},
                         "source": {
-                          "kind": "entered"
+                          "kind": "legislature",
+                          "legislature": "string",
+                          "bill": "string",
+                          "billNumber": "string",
+                          "billVersion": 1,
+                          "textDigest": "string",
+                          "votes": [
+                            {}
+                          ],
+                          "publication": {
+                            "date": "2026-01-15",
+                            "reference": "string"
+                          },
+                          "certification": {
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          },
+                          "procedureVersion": 1
                         }
                       }
                     }
@@ -20009,7 +20113,25 @@
                         },
                         "applicability": {},
                         "source": {
-                          "kind": "entered"
+                          "kind": "legislature",
+                          "legislature": "string",
+                          "bill": "string",
+                          "billNumber": "string",
+                          "billVersion": 1,
+                          "textDigest": "string",
+                          "votes": [
+                            {}
+                          ],
+                          "publication": {
+                            "date": "2026-01-15",
+                            "reference": "string"
+                          },
+                          "certification": {
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          },
+                          "procedureVersion": 1
                         }
                       }
                     }
@@ -20036,6 +20158,1303 @@
         ],
         "x-permission-rule": "official",
         "x-source": "src/app/api/law/withdraw/route.ts"
+      }
+    },
+    "/api/legislature/bills/{id}/akn": {
+      "get": {
+        "tags": [
+          "legislature"
+        ],
+        "operationId": "get_legislature_bills_id_akn",
+        "summary": "GET /api/legislature/bills/{id}/akn",
+        "description": "GET /api/legislature/bills/{id}/akn?version=n — a version of a bill's text as an Akoma Ntoso bill document, with its life so far as lifecycle events (lib/law/akoma-ntoso.ts; plan phase 7). For the public only when the chamber makes the bill public; the legislature's officials always.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/legislature/bills/[id]/akn/route.ts"
+      }
+    },
+    "/api/legislature/bills/{id}/assent": {
+      "post": {
+        "tags": [
+          "legislature"
+        ],
+        "operationId": "post_legislature_bills_id_assent",
+        "summary": "POST /api/legislature/bills/{id}/assent",
+        "description": "POST /api/legislature/bills/{id}/assent — assent to a passed bill, or that it was withheld, where the legislative procedure asks for assent (lib/legislature/register.ts recordAssent(); plan phase 7): an official who can sign at the institution named for the head of state; where the nation names none, the legislature's clerk records it as communicated to the chamber. Body: { outcome: assented | withheld, date?, reference?, note? }.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "legislature",
+        "x-source": "src/app/api/legislature/bills/[id]/assent/route.ts"
+      }
+    },
+    "/api/legislature/bills/{id}": {
+      "get": {
+        "tags": [
+          "legislature"
+        ],
+        "operationId": "get_legislature_bills_id",
+        "summary": "GET /api/legislature/bills/{id}",
+        "description": "/api/legislature/bills/{id} — one bill of the legislature's record (lib/legislature/register.ts; plan phase 7). GET: the full record for the legislature's officials (and the head of state's office once passed), otherwise what the chamber makes public. POST { op } — officials of the legislature only; the clerk's steps need an official who can sign there: 'text' { label, provisions, date?, amendments? } a new version of the text 'stage' { stage, date?, note? } the bill moves to a later stage 'refer' { committee, date? } committee referral 'report' { committee, date?, recommendation, summary, reference? } 'amendment' { number?, proposer?, text, date? } 'decide-amendment' { amendment, outcome: agreed | negatived | withdrawn, vote?, date? } 'vote' { question?, on?: bill | amendment, amendment?, date?, yes, no, abstain, division?, names? } (can sign) 'pass' { date? } (can sign) 'commence' { inForce, note? } (can sign) 'publish' { date?, reference, actNumber } (can sign) 'close' { outcome: withdrawn | lapsed | defeated, date?, reason } (can sign) 'certify' {} the clerk certifies the record as it stands (can sign) 'transmit' {} the enacted text enters the laws register (can sign) 'correct' { target: { kind: vote | journal, id }, values, reason } proposes a correction 'confirm-correction' { correction } a different official who can sign there 'withdraw-correction' { correction } Assent: POST /api/legislature/bills/{id}/assent.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "bill": {
+                          "$ref": "#/components/schemas/Bill"
+                        },
+                        "full": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "certification": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "digest": {
+                                  "type": "string"
+                                },
+                                "textVersion": {
+                                  "type": "number"
+                                },
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "current": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "digest",
+                                "textVersion",
+                                "by",
+                                "at",
+                                "current"
+                              ]
+                            }
+                          ]
+                        },
+                        "digest": {
+                          "type": "string"
+                        },
+                        "procedure": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/components/schemas/LegislativeProcedure"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "ownOfficial": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "bill",
+                        "full",
+                        "certification",
+                        "digest",
+                        "procedure",
+                        "ownOfficial"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "bill": {
+                          "$ref": "#/components/schemas/PublicBill"
+                        },
+                        "full": {
+                          "type": "boolean",
+                          "const": false
+                        }
+                      },
+                      "required": [
+                        "bill",
+                        "full"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "bill": {
+                        "id": "ID-0001",
+                        "number": "string",
+                        "title": "Example",
+                        "instrumentType": "act",
+                        "language": "string",
+                        "sponsor": "string",
+                        "chamber": "string",
+                        "summary": "Text",
+                        "lawInstrument": "string",
+                        "procedureVersion": 1,
+                        "stage": "string",
+                        "state": "assent-withheld",
+                        "texts": [
+                          {
+                            "n": 1,
+                            "label": "Example",
+                            "provisions": [],
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "date": "2026-01-15",
+                            "stage": "string",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "journal": [
+                          {
+                            "id": "ID-0001",
+                            "kind": "amendment",
+                            "date": "2026-01-15",
+                            "text": "string",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "votes": [
+                          {
+                            "id": "ID-0001",
+                            "stage": "string",
+                            "question": "string",
+                            "on": "amendment",
+                            "date": "2026-01-15",
+                            "yes": 1,
+                            "no": 1,
+                            "abstain": 1,
+                            "result": "carried",
+                            "rule": "string",
+                            "procedureVersion": 1,
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "amendments": [
+                          {
+                            "id": "ID-0001",
+                            "number": "string",
+                            "stage": "string",
+                            "text": "string",
+                            "outcome": "agreed",
+                            "date": "2026-01-15",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "referrals": [
+                          {
+                            "id": "ID-0001",
+                            "committee": "string",
+                            "date": "2026-01-15",
+                            "stage": "string",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "reports": [
+                          {
+                            "id": "ID-0001",
+                            "committee": "string",
+                            "date": "2026-01-15",
+                            "recommendation": "no-recommendation",
+                            "summary": "Text",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "passed": {
+                          "date": "2026-01-15",
+                          "textVersion": 1,
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "assent": {
+                          "outcome": "assented",
+                          "date": "2026-01-15",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "commencement": {
+                          "inForce": "string",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "publication": {
+                          "date": "2026-01-15",
+                          "reference": "string",
+                          "actNumber": "string",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "closed": {
+                          "outcome": "defeated",
+                          "date": "2026-01-15",
+                          "reason": "Text",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "certifications": [
+                          {
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "textVersion": 1,
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "corrections": [
+                          {
+                            "id": "ID-0001",
+                            "target": {},
+                            "values": {},
+                            "reason": "Text",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "state": "confirmed"
+                          }
+                        ],
+                        "law": [
+                          {
+                            "instrument": "string",
+                            "version": "string",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "createdAt": "2026-01-15T09:30:00.000Z"
+                      },
+                      "full": true,
+                      "certification": {
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "textVersion": 1,
+                        "by": "A. Official",
+                        "byId": "ID-0001",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "current": true
+                      },
+                      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "procedure": {
+                        "version": 1,
+                        "title": "Example",
+                        "chambers": [
+                          "string"
+                        ],
+                        "stages": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "kind": "committee"
+                          }
+                        ],
+                        "votes": {
+                          "names": "always",
+                          "majority": "absolute"
+                        },
+                        "assent": {
+                          "required": true
+                        },
+                        "publicRecord": {
+                          "bills": "enacted",
+                          "votes": "counts"
+                        },
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "state": "approved",
+                        "fromReference": true,
+                        "author": "string",
+                        "authorId": "ID-0001",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "approvedBy": "A. Official",
+                        "approvedById": "ID-0001",
+                        "approvedAt": "2026-01-15T09:30:00.000Z",
+                        "activeFrom": "2026-01-15",
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        }
+                      },
+                      "ownOfficial": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/legislature/bills/[id]/route.ts"
+      },
+      "post": {
+        "tags": [
+          "legislature"
+        ],
+        "operationId": "post_legislature_bills_id",
+        "summary": "POST /api/legislature/bills/{id}",
+        "description": "/api/legislature/bills/{id} — one bill of the legislature's record (lib/legislature/register.ts; plan phase 7). GET: the full record for the legislature's officials (and the head of state's office once passed), otherwise what the chamber makes public. POST { op } — officials of the legislature only; the clerk's steps need an official who can sign there: 'text' { label, provisions, date?, amendments? } a new version of the text 'stage' { stage, date?, note? } the bill moves to a later stage 'refer' { committee, date? } committee referral 'report' { committee, date?, recommendation, summary, reference? } 'amendment' { number?, proposer?, text, date? } 'decide-amendment' { amendment, outcome: agreed | negatived | withdrawn, vote?, date? } 'vote' { question?, on?: bill | amendment, amendment?, date?, yes, no, abstain, division?, names? } (can sign) 'pass' { date? } (can sign) 'commence' { inForce, note? } (can sign) 'publish' { date?, reference, actNumber } (can sign) 'close' { outcome: withdrawn | lapsed | defeated, date?, reason } (can sign) 'certify' {} the clerk certifies the record as it stands (can sign) 'transmit' {} the enacted text enters the laws register (can sign) 'correct' { target: { kind: vote | journal, id }, values, reason } proposes a correction 'confirm-correction' { correction } a different official who can sign there 'withdraw-correction' { correction } Assent: POST /api/legislature/bills/{id}/assent.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "legislature",
+        "x-source": "src/app/api/legislature/bills/[id]/route.ts"
+      }
+    },
+    "/api/legislature/bills": {
+      "get": {
+        "tags": [
+          "legislature"
+        ],
+        "operationId": "get_legislature_bills",
+        "summary": "GET /api/legislature/bills",
+        "description": "/api/legislature/bills — the legislature's bills (lib/legislature/register.ts; plan phase 7). GET: officials of the legislature read the full record; the head of state's office reads bills passed and on; everyone else reads what the chamber's procedure makes public (texts, journal, amendments, reports, votes with names or counts as set; never who on the staff recorded a step). POST: introduce a bill under the approved procedure in force — an official of the legislature { title, number?, instrumentType?, language?, sponsor?, chamber?, summary?, provisions, date?, lawInstrument? }.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bills": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "legislature": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id"
+                          ]
+                        }
+                      ]
+                    },
+                    "procedure": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/LegislativeProcedure"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "ownOfficial": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "bills",
+                    "legislature",
+                    "procedure",
+                    "ownOfficial"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "bills": [
+                        {}
+                      ],
+                      "legislature": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "procedure": {
+                        "version": 1,
+                        "title": "Example",
+                        "chambers": [
+                          "string"
+                        ],
+                        "stages": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "kind": "committee"
+                          }
+                        ],
+                        "votes": {
+                          "names": "always",
+                          "majority": "absolute"
+                        },
+                        "assent": {
+                          "required": true
+                        },
+                        "publicRecord": {
+                          "bills": "enacted",
+                          "votes": "counts"
+                        },
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "state": "approved",
+                        "fromReference": true,
+                        "author": "string",
+                        "authorId": "ID-0001",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "approvedBy": "A. Official",
+                        "approvedById": "ID-0001",
+                        "approvedAt": "2026-01-15T09:30:00.000Z",
+                        "activeFrom": "2026-01-15",
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        }
+                      },
+                      "ownOfficial": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/legislature/bills/route.ts"
+      },
+      "post": {
+        "tags": [
+          "legislature"
+        ],
+        "operationId": "post_legislature_bills",
+        "summary": "POST /api/legislature/bills",
+        "description": "/api/legislature/bills — the legislature's bills (lib/legislature/register.ts; plan phase 7). GET: officials of the legislature read the full record; the head of state's office reads bills passed and on; everyone else reads what the chamber's procedure makes public (texts, journal, amendments, reports, votes with names or counts as set; never who on the staff recorded a step). POST: introduce a bill under the approved procedure in force — an official of the legislature { title, number?, instrumentType?, language?, sponsor?, chamber?, summary?, provisions, date?, lawInstrument? }.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {},
+                  "number": {},
+                  "instrumentType": {},
+                  "language": {},
+                  "sponsor": {},
+                  "chamber": {},
+                  "summary": {},
+                  "provisions": {},
+                  "date": {},
+                  "lawInstrument": {},
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "title": null,
+                    "number": null,
+                    "instrumentType": null,
+                    "language": null,
+                    "sponsor": null,
+                    "chamber": null,
+                    "summary": null,
+                    "provisions": null,
+                    "date": null,
+                    "lawInstrument": null,
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "legislature",
+        "x-source": "src/app/api/legislature/bills/route.ts"
+      }
+    },
+    "/api/legislature/procedure": {
+      "get": {
+        "tags": [
+          "legislature"
+        ],
+        "operationId": "get_legislature_procedure",
+        "summary": "GET /api/legislature/procedure",
+        "description": "/api/legislature/procedure — the nation's legislative procedure (lib/legislature/register.ts; plan phase 7): stages, how votes are counted and named, whether assent is needed and what the public sees. The reference shipped with the platform is never approved as it stands. GET: every version (the reference first), the one in force, the legislature and head of state named, the choices. POST { op }: 'draft' an official of the legislature { fromReference?, title?, chambers?, stages?, votes?, assent?, publicRecord?, legalBasis? } 'approve' { version, activeFrom? } a different official who can sign at the legislature; 'withdraw' { version, reason? } an official of the legislature. Who acted comes from the sign-in; every step is audited and every version kept.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "procedures": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LegislativeProcedure"
+                      }
+                    },
+                    "active": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/LegislativeProcedure"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "legislature": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id"
+                          ]
+                        }
+                      ]
+                    },
+                    "headOfState": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        }
+                      ]
+                    },
+                    "choices": {
+                      "type": "object",
+                      "properties": {
+                        "stageKinds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "committee",
+                              "consideration",
+                              "introduction",
+                              "other",
+                              "reading",
+                              "report",
+                              "vote"
+                            ]
+                          }
+                        },
+                        "majorities": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "enum": [
+                                  "absolute",
+                                  "simple",
+                                  "two-thirds-members",
+                                  "two-thirds-voting"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "stageKinds",
+                        "majorities"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "procedures",
+                    "active",
+                    "legislature",
+                    "headOfState",
+                    "choices"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "procedures": [
+                        {
+                          "version": 1,
+                          "title": "Example",
+                          "chambers": [
+                            "string"
+                          ],
+                          "stages": [
+                            {}
+                          ],
+                          "votes": {
+                            "names": "always",
+                            "majority": "absolute"
+                          },
+                          "assent": {
+                            "required": true
+                          },
+                          "publicRecord": {
+                            "bills": "enacted",
+                            "votes": "counts"
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "state": "approved",
+                          "author": "string",
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "active": {
+                        "version": 1,
+                        "title": "Example",
+                        "chambers": [
+                          "string"
+                        ],
+                        "stages": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "kind": "committee"
+                          }
+                        ],
+                        "votes": {
+                          "names": "always",
+                          "majority": "absolute"
+                        },
+                        "assent": {
+                          "required": true
+                        },
+                        "publicRecord": {
+                          "bills": "enacted",
+                          "votes": "counts"
+                        },
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "state": "approved",
+                        "fromReference": true,
+                        "author": "string",
+                        "authorId": "ID-0001",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "approvedBy": "A. Official",
+                        "approvedById": "ID-0001",
+                        "approvedAt": "2026-01-15T09:30:00.000Z",
+                        "activeFrom": "2026-01-15",
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        }
+                      },
+                      "legislature": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "headOfState": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "choices": {
+                        "stageKinds": [
+                          "committee"
+                        ],
+                        "majorities": [
+                          {
+                            "key": "absolute",
+                            "label": "Example"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/legislature/procedure/route.ts"
+      },
+      "post": {
+        "tags": [
+          "legislature"
+        ],
+        "operationId": "post_legislature_procedure",
+        "summary": "POST /api/legislature/procedure",
+        "description": "/api/legislature/procedure — the nation's legislative procedure (lib/legislature/register.ts; plan phase 7): stages, how votes are counted and named, whether assent is needed and what the public sees. The reference shipped with the platform is never approved as it stands. GET: every version (the reference first), the one in force, the legislature and head of state named, the choices. POST { op }: 'draft' an official of the legislature { fromReference?, title?, chambers?, stages?, votes?, assent?, publicRecord?, legalBasis? } 'approve' { version, activeFrom? } a different official who can sign at the legislature; 'withdraw' { version, reason? } an official of the legislature. Who acted comes from the sign-in; every step is audited and every version kept.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "chambers": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "stages": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/LegislativeStage"
+                    }
+                  },
+                  "votes": {
+                    "$ref": "#/components/schemas/VoteRules"
+                  },
+                  "assent": {
+                    "type": "object",
+                    "properties": {
+                      "required": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "required"
+                    ],
+                    "description": "Whether a passed bill needs assent before it is enacted."
+                  },
+                  "publicRecord": {
+                    "type": "object",
+                    "properties": {
+                      "bills": {
+                        "type": "string",
+                        "enum": [
+                          "enacted",
+                          "introduced",
+                          "none",
+                          "passed"
+                        ]
+                      },
+                      "votes": {
+                        "type": "string",
+                        "enum": [
+                          "counts",
+                          "names",
+                          "none"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "bills",
+                      "votes"
+                    ],
+                    "description": "What the public sees: bills from which point, and votes with names, counts only or not at all."
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    },
+                    "description": "The standing orders (or law) it rests on, cited from the laws register."
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "approved",
+                      "draft",
+                      "reference",
+                      "superseded",
+                      "withdrawn"
+                    ]
+                  },
+                  "fromReference": {
+                    "type": "boolean",
+                    "description": "Drafted from the reference shipped with the platform."
+                  },
+                  "author": {
+                    "type": "string"
+                  },
+                  "authorId": {
+                    "type": "string"
+                  },
+                  "createdAt": {
+                    "type": "string"
+                  },
+                  "approvedBy": {
+                    "type": "string"
+                  },
+                  "approvedById": {
+                    "type": "string"
+                  },
+                  "approvedAt": {
+                    "type": "string"
+                  },
+                  "activeFrom": {
+                    "type": "string"
+                  },
+                  "withdrawn": {
+                    "type": "object",
+                    "properties": {
+                      "by": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      },
+                      "reason": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "by",
+                      "at",
+                      "reason"
+                    ]
+                  },
+                  "op": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  },
+                  "reason": {},
+                  "legalBasis": {}
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "version": 1,
+                    "title": "Example",
+                    "chambers": [
+                      "string"
+                    ],
+                    "stages": [
+                      {
+                        "key": "string",
+                        "label": "Example",
+                        "kind": "committee"
+                      }
+                    ],
+                    "votes": {
+                      "names": "always",
+                      "majority": "absolute",
+                      "quorum": 1,
+                      "membership": 1
+                    },
+                    "assent": {
+                      "required": true
+                    },
+                    "publicRecord": {
+                      "bills": "enacted",
+                      "votes": "counts"
+                    },
+                    "basis": [
+                      {
+                        "instrument": "string",
+                        "eId": "ID-0001",
+                        "version": "string",
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "on": "string"
+                      }
+                    ],
+                    "state": "approved",
+                    "fromReference": true,
+                    "author": "string",
+                    "authorId": "ID-0001",
+                    "createdAt": "2026-01-15T09:30:00.000Z",
+                    "approvedBy": "A. Official",
+                    "approvedById": "ID-0001",
+                    "approvedAt": "2026-01-15T09:30:00.000Z",
+                    "activeFrom": "2026-01-15",
+                    "withdrawn": {
+                      "by": "A. Official",
+                      "at": "2026-01-15T09:30:00.000Z",
+                      "reason": "Text"
+                    },
+                    "op": "string",
+                    "by": "A. Official",
+                    "reason": null,
+                    "legalBasis": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "legislature",
+        "x-source": "src/app/api/legislature/procedure/route.ts"
       }
     },
     "/api/map-pack/districts": {
@@ -20162,7 +21581,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/map-pack/districts/route.ts"
       }
     },
@@ -29869,7 +31292,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/org/ministries/route.ts"
       },
       "post": {
@@ -34172,7 +35599,7 @@
                     "bills": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Bill"
+                        "$ref": "#/components/schemas/Bill_types"
                       }
                     },
                     "receipts": {
@@ -39660,7 +41087,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/public-sites/[id]/content/route.ts"
       }
     },
@@ -40080,7 +41511,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/public-sites/[id]/logo/route.ts"
       }
     },
@@ -41151,7 +42586,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/public-sites/language/route.ts"
       }
     },
@@ -41583,7 +43022,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/public/accountability/route.ts"
       }
     },
@@ -41723,7 +43166,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/public/charters/route.ts"
       }
     },
@@ -41908,7 +43355,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/public/directives/route.ts"
       }
     },
@@ -42360,7 +43811,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/registers/check/route.ts"
       }
     },
@@ -42475,7 +43930,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/registers/professionals/route.ts"
       }
     },
@@ -42556,7 +44015,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/registers/route.ts"
       }
     },
@@ -54162,7 +55625,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/setup/route.ts"
       },
       "post": {
@@ -56322,7 +57789,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/sovereign/route.ts"
       },
       "put": {
@@ -63886,7 +65357,11 @@
             }
           }
         },
-        "security": [],
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
         "x-source": "src/app/api/twin/tiles/facilities.pmtiles/route.ts"
       }
     },
@@ -65893,6 +67368,60 @@
           "detail"
         ]
       },
+      "Amendment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "proposer": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "agreed",
+              "negatived",
+              "pending",
+              "withdrawn"
+            ]
+          },
+          "vote": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "decidedOn": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "stage",
+          "text",
+          "outcome",
+          "date",
+          "by",
+          "at"
+        ]
+      },
       "AnalyticDelta": {
         "type": "object",
         "properties": {
@@ -66189,6 +67718,48 @@
         "required": [
           "method",
           "keyFingerprint"
+        ]
+      },
+      "Assent": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "assented",
+              "withheld"
+            ]
+          },
+          "date": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "communicated": {
+            "type": "boolean"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "date",
+          "by",
+          "at"
         ]
       },
       "AssertionJSON": {
@@ -67660,6 +69231,323 @@
           "id": {
             "type": "string"
           },
+          "number": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "instrumentType": {
+            "type": "string",
+            "enum": [
+              "act",
+              "bylaw",
+              "constitution",
+              "decree",
+              "order",
+              "other",
+              "regulation",
+              "treaty"
+            ]
+          },
+          "language": {
+            "type": "string"
+          },
+          "sponsor": {
+            "type": "string"
+          },
+          "chamber": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "lawInstrument": {
+            "type": "string",
+            "description": "An instrument already in the laws register that this bill gives a new version of (an amending or consolidating bill)."
+          },
+          "procedureVersion": {
+            "type": "number",
+            "description": "The approved procedure the bill was introduced under; it keeps it."
+          },
+          "stage": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "assent-withheld",
+              "assented",
+              "defeated",
+              "in-progress",
+              "lapsed",
+              "passed",
+              "published",
+              "withdrawn"
+            ]
+          },
+          "texts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillText"
+            }
+          },
+          "journal": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalEntry"
+            }
+          },
+          "votes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordedVote"
+            }
+          },
+          "amendments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Amendment"
+            }
+          },
+          "referrals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommitteeReferral"
+            }
+          },
+          "reports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommitteeReport"
+            }
+          },
+          "passed": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "textVersion": {
+                "type": "number"
+              },
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "date",
+              "textVersion",
+              "by",
+              "at"
+            ]
+          },
+          "assent": {
+            "$ref": "#/components/schemas/Assent"
+          },
+          "commencement": {
+            "type": "object",
+            "properties": {
+              "inForce": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "inForce",
+              "by",
+              "at"
+            ]
+          },
+          "publication": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "reference": {
+                "type": "string"
+              },
+              "actNumber": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "date",
+              "reference",
+              "actNumber",
+              "by",
+              "at"
+            ]
+          },
+          "closed": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "defeated",
+                  "lapsed",
+                  "withdrawn"
+                ]
+              },
+              "date": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "outcome",
+              "date",
+              "reason",
+              "by",
+              "at"
+            ]
+          },
+          "certifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Certification"
+            }
+          },
+          "corrections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Correction"
+            }
+          },
+          "law": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "instrument": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "instrument",
+                "version",
+                "by",
+                "at"
+              ]
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "title",
+          "instrumentType",
+          "language",
+          "procedureVersion",
+          "stage",
+          "state",
+          "texts",
+          "journal",
+          "votes",
+          "amendments",
+          "referrals",
+          "reports",
+          "certifications",
+          "corrections",
+          "createdAt"
+        ]
+      },
+      "BillText": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          },
+          "provisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Provision"
+            }
+          },
+          "digest": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "amendments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "label",
+          "provisions",
+          "digest",
+          "date",
+          "stage",
+          "by",
+          "at"
+        ]
+      },
+      "Bill_types": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -67812,6 +69700,21 @@
               "$ref": "#/components/schemas/RelationshipGrant"
             },
             "description": "The approved relationships between institutions in force today (lib/data/store/relationships.ts relationshipGrants(); plan phase 3)."
+          },
+          "subnational": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Regional and local governments with their own powers (standing `subnational`): whole-government (federal or central) scope stops at them as at an independent institution, and reaches them only under an approved relationship (plan phase 7; audit K; guidance §8.4 test 2). Which competences are reserved is the nation's law: the platform only refuses what no approved relationship covers."
+          },
+          "legislature": {
+            "type": "string",
+            "description": "The institution named for the `legislature` authority: the keeper of the legislative record (plan phase 7)."
+          },
+          "headOfState": {
+            "type": "string",
+            "description": "The institution named for the `headOfState` authority: records assent where the legislative procedure asks for it."
           }
         },
         "required": [
@@ -69603,6 +71506,32 @@
           "status"
         ]
       },
+      "Certification": {
+        "type": "object",
+        "properties": {
+          "digest": {
+            "type": "string"
+          },
+          "textVersion": {
+            "type": "number"
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "digest",
+          "textVersion",
+          "by",
+          "at"
+        ]
+      },
       "ChamberRelease": {
         "description": "A release as one nation sees it: its own decision state and fit.",
         "type": "object",
@@ -70072,6 +72001,81 @@
           "datacontenttype",
           "auditseq",
           "data"
+        ]
+      },
+      "CommitteeReferral": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "committee": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "committee",
+          "date",
+          "stage",
+          "by",
+          "at"
+        ]
+      },
+      "CommitteeReport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "committee": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "recommendation": {
+            "type": "string",
+            "enum": [
+              "no-recommendation",
+              "not-proceed",
+              "proceed",
+              "proceed-with-amendments"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "committee",
+          "date",
+          "recommendation",
+          "summary",
+          "by",
+          "at"
         ]
       },
       "ConfigBundle": {
@@ -71111,6 +73115,79 @@
           "what",
           "role",
           "note"
+        ]
+      },
+      "Correction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "journal",
+                  "vote"
+                ]
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ]
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "reason": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "lapsed",
+              "waiting",
+              "withdrawn"
+            ]
+          },
+          "confirmedBy": {
+            "type": "string"
+          },
+          "confirmedById": {
+            "type": "string"
+          },
+          "confirmedAt": {
+            "type": "string"
+          },
+          "withdrawnBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target",
+          "values",
+          "reason",
+          "by",
+          "at",
+          "state"
         ]
       },
       "CostLine": {
@@ -77624,6 +79701,98 @@
           "runs"
         ]
       },
+      "JournalEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "amendment",
+              "amendment-decided",
+              "assent",
+              "certification",
+              "closed",
+              "commencement",
+              "correction",
+              "introduced",
+              "passed",
+              "publication",
+              "referral",
+              "report",
+              "stage",
+              "text",
+              "transmitted",
+              "vote"
+            ]
+          },
+          "date": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "values": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "date",
+                    "text"
+                  ]
+                },
+                "correction": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "values",
+                "correction",
+                "at"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "date",
+          "text",
+          "by",
+          "at"
+        ]
+      },
       "KpiValue": {
         "type": "object",
         "properties": {
@@ -77897,6 +80066,9 @@
           "source": {
             "anyOf": [
               {
+                "$ref": "#/components/schemas/LegislativeSource"
+              },
+              {
                 "type": "object",
                 "properties": {
                   "kind": {
@@ -77940,7 +80112,7 @@
                 ]
               }
             ],
-            "description": "How it entered: typed in, or imported from a file (its SHA-256)."
+            "description": "How it entered: typed in, imported from a file (its SHA-256), or from the legislature's record (plan phase 7)."
           }
         },
         "required": [
@@ -77953,6 +80125,315 @@
           "recordedBy",
           "at",
           "source"
+        ]
+      },
+      "LegislativeProcedure": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "chambers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegislativeStage"
+            }
+          },
+          "votes": {
+            "$ref": "#/components/schemas/VoteRules"
+          },
+          "assent": {
+            "type": "object",
+            "properties": {
+              "required": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "required"
+            ],
+            "description": "Whether a passed bill needs assent before it is enacted."
+          },
+          "publicRecord": {
+            "type": "object",
+            "properties": {
+              "bills": {
+                "type": "string",
+                "enum": [
+                  "enacted",
+                  "introduced",
+                  "none",
+                  "passed"
+                ]
+              },
+              "votes": {
+                "type": "string",
+                "enum": [
+                  "counts",
+                  "names",
+                  "none"
+                ]
+              }
+            },
+            "required": [
+              "bills",
+              "votes"
+            ],
+            "description": "What the public sees: bills from which point, and votes with names, counts only or not at all."
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "description": "The standing orders (or law) it rests on, cited from the laws register."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "draft",
+              "reference",
+              "superseded",
+              "withdrawn"
+            ]
+          },
+          "fromReference": {
+            "type": "boolean",
+            "description": "Drafted from the reference shipped with the platform."
+          },
+          "author": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "approvedBy": {
+            "type": "string"
+          },
+          "approvedById": {
+            "type": "string"
+          },
+          "approvedAt": {
+            "type": "string"
+          },
+          "activeFrom": {
+            "type": "string"
+          },
+          "withdrawn": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason"
+            ]
+          }
+        },
+        "required": [
+          "version",
+          "title",
+          "chambers",
+          "stages",
+          "votes",
+          "assent",
+          "publicRecord",
+          "basis",
+          "state",
+          "author",
+          "createdAt"
+        ]
+      },
+      "LegislativeSource": {
+        "description": "Provenance of a version that entered from the legislature's own record (lib/legislature/register.ts): the bill and the text version passed, the recorded votes, assent, publication and the clerk's certification of the record (its SHA-256). The text is the bill's, never retyped.",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "legislature"
+          },
+          "legislature": {
+            "type": "string"
+          },
+          "bill": {
+            "type": "string"
+          },
+          "billNumber": {
+            "type": "string"
+          },
+          "billVersion": {
+            "type": "number"
+          },
+          "textDigest": {
+            "type": "string"
+          },
+          "votes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stage": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string"
+                },
+                "yes": {
+                  "type": "number"
+                },
+                "no": {
+                  "type": "number"
+                },
+                "abstain": {
+                  "type": "number"
+                },
+                "result": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "stage",
+                "date",
+                "yes",
+                "no",
+                "abstain",
+                "result"
+              ]
+            }
+          },
+          "assent": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string"
+              },
+              "date": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "communicated": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "outcome",
+              "date",
+              "by"
+            ]
+          },
+          "publication": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "date",
+              "reference"
+            ]
+          },
+          "certification": {
+            "type": "object",
+            "properties": {
+              "digest": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "digest",
+              "by",
+              "at"
+            ]
+          },
+          "procedureVersion": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "legislature",
+          "bill",
+          "billNumber",
+          "billVersion",
+          "textDigest",
+          "votes",
+          "publication",
+          "certification",
+          "procedureVersion"
+        ]
+      },
+      "LegislativeStage": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "committee",
+              "consideration",
+              "introduction",
+              "other",
+              "reading",
+              "report",
+              "vote"
+            ]
+          },
+          "chamber": {
+            "type": "string",
+            "description": "The chamber this stage happens in (a name from the procedure's chambers)."
+          },
+          "vote": {
+            "type": "boolean",
+            "description": "A vote on the bill is taken at this stage: the bill moves on only once it is carried."
+          },
+          "optional": {
+            "type": "boolean",
+            "description": "The standing orders let a bill pass over this stage."
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "kind"
         ]
       },
       "LifecycleLine": {
@@ -78605,6 +81086,26 @@
           "sealId",
           "state",
           "chain"
+        ]
+      },
+      "MemberVote": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "vote": {
+            "type": "string",
+            "enum": [
+              "abstain",
+              "no",
+              "yes"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "vote"
         ]
       },
       "MessageView": {
@@ -84695,6 +87196,325 @@
           "secondStepOn"
         ]
       },
+      "PublicBill": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "sponsor": {
+            "type": "string"
+          },
+          "chamber": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "assent-withheld",
+              "assented",
+              "defeated",
+              "in-progress",
+              "lapsed",
+              "passed",
+              "published",
+              "withdrawn"
+            ]
+          },
+          "stage": {
+            "type": "string"
+          },
+          "texts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "n": {
+                  "type": "number"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string"
+                },
+                "digest": {
+                  "type": "string"
+                },
+                "provisions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Provision"
+                  }
+                }
+              },
+              "required": [
+                "n",
+                "label",
+                "date",
+                "digest",
+                "provisions"
+              ]
+            }
+          },
+          "journal": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "amendment",
+                    "amendment-decided",
+                    "assent",
+                    "certification",
+                    "closed",
+                    "commencement",
+                    "correction",
+                    "introduced",
+                    "passed",
+                    "publication",
+                    "referral",
+                    "report",
+                    "stage",
+                    "text",
+                    "transmitted",
+                    "vote"
+                  ]
+                },
+                "date": {
+                  "type": "string"
+                },
+                "stage": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "corrected": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "kind",
+                "date",
+                "stage",
+                "text"
+              ]
+            }
+          },
+          "votes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stage": {
+                  "type": "string"
+                },
+                "question": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string"
+                },
+                "yes": {
+                  "type": "number"
+                },
+                "no": {
+                  "type": "number"
+                },
+                "abstain": {
+                  "type": "number"
+                },
+                "result": {
+                  "type": "string",
+                  "enum": [
+                    "carried",
+                    "inquorate",
+                    "negatived"
+                  ]
+                },
+                "names": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemberVote"
+                  }
+                },
+                "corrected": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "stage",
+                "question",
+                "date",
+                "yes",
+                "no",
+                "abstain",
+                "result"
+              ]
+            }
+          },
+          "amendments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "number": {
+                  "type": "string"
+                },
+                "proposer": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "agreed",
+                    "negatived",
+                    "pending",
+                    "withdrawn"
+                  ]
+                }
+              },
+              "required": [
+                "number",
+                "text",
+                "outcome"
+              ]
+            }
+          },
+          "reports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "committee": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string"
+                },
+                "recommendation": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "reference": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "committee",
+                "date",
+                "recommendation",
+                "summary"
+              ]
+            }
+          },
+          "assent": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string"
+              },
+              "date": {
+                "type": "string"
+              },
+              "communicated": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "outcome",
+              "date"
+            ]
+          },
+          "commencement": {
+            "type": "string"
+          },
+          "publication": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "reference": {
+                "type": "string"
+              },
+              "actNumber": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "date",
+              "reference",
+              "actNumber"
+            ]
+          },
+          "certified": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "digest": {
+                "type": "string"
+              },
+              "current": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "at",
+              "digest",
+              "current"
+            ]
+          },
+          "law": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "instrument": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "instrument",
+                "version"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "title",
+          "state",
+          "stage",
+          "texts",
+          "journal",
+          "amendments",
+          "reports"
+        ]
+      },
       "PublicOrganisation": {
         "type": "object",
         "properties": {
@@ -85648,6 +88468,150 @@
           "kind",
           "subject",
           "detail"
+        ]
+      },
+      "RecordedVote": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "on": {
+            "type": "string",
+            "enum": [
+              "amendment",
+              "bill"
+            ]
+          },
+          "amendment": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "yes": {
+            "type": "number"
+          },
+          "no": {
+            "type": "number"
+          },
+          "abstain": {
+            "type": "number"
+          },
+          "division": {
+            "type": "boolean"
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberVote"
+            }
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "carried",
+              "inquorate",
+              "negatived"
+            ]
+          },
+          "rule": {
+            "type": "string"
+          },
+          "procedureVersion": {
+            "type": "number"
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "values": {
+                  "type": "object",
+                  "properties": {
+                    "abstain": {
+                      "type": "number"
+                    },
+                    "date": {
+                      "type": "string"
+                    },
+                    "names": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MemberVote"
+                      }
+                    },
+                    "no": {
+                      "type": "number"
+                    },
+                    "question": {
+                      "type": "string"
+                    },
+                    "result": {
+                      "type": "string",
+                      "enum": [
+                        "carried",
+                        "inquorate",
+                        "negatived"
+                      ]
+                    },
+                    "yes": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "abstain",
+                    "date",
+                    "no",
+                    "question",
+                    "result",
+                    "yes"
+                  ]
+                },
+                "correction": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "values",
+                "correction",
+                "at"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "stage",
+          "question",
+          "on",
+          "date",
+          "yes",
+          "no",
+          "abstain",
+          "result",
+          "rule",
+          "procedureVersion",
+          "by",
+          "at"
         ]
       },
       "RecordsStatus": {
@@ -95480,6 +98444,41 @@
           "registeredAt",
           "late",
           "amendments"
+        ]
+      },
+      "VoteRules": {
+        "type": "object",
+        "properties": {
+          "names": {
+            "type": "string",
+            "enum": [
+              "always",
+              "never",
+              "on-division"
+            ],
+            "description": "Whether members' names are recorded with a vote: always, only on a division, or never."
+          },
+          "majority": {
+            "type": "string",
+            "enum": [
+              "absolute",
+              "simple",
+              "two-thirds-members",
+              "two-thirds-voting"
+            ]
+          },
+          "quorum": {
+            "type": "number",
+            "description": "Members who must take part (yes, no or abstain) for a vote to count."
+          },
+          "membership": {
+            "type": "number",
+            "description": "Seats in the chamber (needed for majorities of all members)."
+          }
+        },
+        "required": [
+          "names",
+          "majority"
         ]
       },
       "Waiting": {
