@@ -54,7 +54,10 @@ const PAGES = [
   // Catalogue contracts, batch 2 (medicines and medical devices regulation).
   { path: '/gov/law/procedures/forms/HLT-MED-001', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-MED-001/print', map: false, text: /register status/i },
-  { path: '/gov/law/procedures/forms/HLT-MED-004', map: false, text: /register status/i },
+  // HLT-MED-004 names two catalogue forms: the bare ID is refused with both candidates; each identity opens its own entry.
+  { path: '/gov/law/procedures/forms/HLT-MED-004', map: false, text: /names more than one form/i },
+  { path: '/gov/law/procedures/forms/FIELD-SERIES-PARTS-05-07%3AHLT-MED-004%401', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13%3AHLT-MED-004', map: false, text: /excluded by the approved scope/i },
   { path: '/gov/law/procedures/forms/HLT-MED-015', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-MED-017', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-MED-019', map: false, text: /register status/i },
