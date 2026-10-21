@@ -871,7 +871,7 @@ export function SituationRoom() {
             <span className="font-mono text-[10px] font-semibold uppercase tracking-wider tabular-nums text-ink-soft">{war ? 'CRISIS' : 'SYNC'} · T{tickN}</span>
           </span>
           <span className="hidden border-l border-line pl-3 sm:inline">
-            <ExecutiveMenu title={sov?.executiveTitle ?? 'Executive Office'} sub="Head of Government" accent={war ? TONE.alert : ACCENT} />
+            <ExecutiveMenu accent={war ? TONE.alert : ACCENT} />
           </span>
         </div>
       </header>
@@ -909,7 +909,7 @@ export function SituationRoom() {
         {/* Icon command rail */}
         {navOpen ? <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setNavOpen(false)} aria-hidden /> : null}
         <nav aria-label="Situation Room navigation" className={`${navOpen ? 'flex' : 'hidden'} fixed inset-y-0 left-0 z-40 w-[240px] shrink-0 flex-col border-r border-line bg-bg lg:static lg:z-auto lg:flex lg:w-[212px]`}>
-          <div className="border-b border-line px-3 py-2 sm:hidden"><ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="Not signed in" /></div>
+          <div className="border-b border-line px-3 py-2 sm:hidden"><ExecutiveMenu /></div>
           <div className="flex-1 overflow-y-auto py-1" onClick={() => setNavOpen(false)}>
             {rail().map(grp => (
               <div key={grp.g} className="mb-0.5">

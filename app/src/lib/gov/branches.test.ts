@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   branchesFor, branchFor, legislativePipeline, judicialDocket,
-  separationIntegrity, branchReadiness, chambersFor, courtHierarchyFor,
+  branchReadiness, chambersFor, courtHierarchyFor,
   BILL_STAGES, CASE_STAGES,
 } from './branches';
 
@@ -40,9 +40,4 @@ describe('constitutional process engines', () => {
     expect(a.total).toBeLessThanOrEqual(100);
   });
 
-  it('separation checks are deterministic and complete', () => {
-    const s = separationIntegrity(100);
-    expect(s.checks.length).toBe(6);
-    expect(typeof s.intact).toBe('boolean');
-  });
 });

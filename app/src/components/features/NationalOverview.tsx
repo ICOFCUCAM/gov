@@ -18,6 +18,10 @@ import { api } from '@/lib/api/client';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import type { NationalCoordination, NationalSnapshot } from '@/lib/api/types';
+import { useSignIn } from '@/lib/official';
+import { officeLine } from '@/lib/workspace/home';
+
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('');
 
 const BG = '#070b11';
 const PANEL = '#0c1119';
@@ -144,6 +148,7 @@ function Panel({ title, action, children, className }: {
 const FROM_PLATFORM = new Set(['National Posture', 'Active Incidents', 'Population', 'Threat Level']);
 
 export function NationalOverview() {
+  const viewer = useSignIn()?.official ?? null;
   const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -260,8 +265,9 @@ export function NationalOverview() {
             <span className="uppercase tracking-[0.12em]">Alerts</span>
           </span>
           <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-1" style={{ borderColor: LINE }}>
-            <span className="grid h-5 w-5 place-items-center rounded-full text-[8px] font-bold" style={{ background: GOLD, color: '#1a1305' }}>HG</span>
-            <span><span className="block uppercase tracking-[0.1em]" style={{ color: MUT }}>Head of Government</span><span style={{ color: INK }}>National Executive</span></span>
+            <span className="grid h-5 w-5 place-items-center rounded-full text-[8px] font-bold" style={{ background: GOLD, color: '#1a1305' }}>{viewer ? initials(viewer.name) : '··'}</span>
+            {/* The signed-in official and their office, never the nation's executive title for everyone (plan phase 4, audit F). */}
+            <span><span className="block uppercase tracking-[0.1em]" style={{ color: MUT }}>{viewer ? officeLine(viewer) : 'Not signed in'}</span><span style={{ color: INK }}>{viewer ? viewer.name : 'Sign in to act'}</span></span>
           </span>
         </div>
       </div>

@@ -25,7 +25,7 @@ export const CONSOLE_NAV: NavSection[] = [
   { label: 'My desk', items: [
     { key: 'work', icon: '☑', label: 'My work', href: '/gov/work', match: /^\/gov\/(items|cases)\//,
       purpose: 'Everything waiting on you and your colleagues: decisions, cases, requests and incidents.',
-      tabs: [tab('Waiting on officials', '/gov/work', 'My work'), tab('Today', '/gov/home', 'Officer Home'), tab('Directives to me', '/gov/inbox', 'Directive inbox'),
+      tabs: [tab('Waiting on officials', '/gov/work', 'My work'), tab('My workspace', '/gov/workspace'), tab('Today', '/gov/home', 'Officer Home'), tab('Directives to me', '/gov/inbox', 'Directive inbox'),
         tab('Case work', '/gov/workbench', 'Officer Workbench'), tab('Citizen requests', '/gov/intake', 'Citizen Intake'), tab('Permits', '/console', 'Officer Console'),
         tab('Notifications', '/gov/alerts'), tab('Following', '/gov/watchlist', 'Watchlist'), tab('Load cases', '/gov/work/cases'), tab('Cases', '/gov/work/cases/open')] },
     { key: 'me', icon: '◉', label: 'My account', href: '/gov/me', purpose: 'Your profile, your signing key and your session.', tabs: [tab('Profile', '/gov/me')] },
@@ -99,7 +99,7 @@ export const CONSOLE_NAV: NavSection[] = [
   ]},
   { label: 'Set-up & platform', items: [
     { key: 'cfg', icon: '⚙', label: 'National settings', href: '/gov/configuration', purpose: 'The nation\'s profile, offices, regions and how work flows.',
-      tabs: [tab('National settings', '/gov/configuration', 'Sovereign Configuration'), tab('Who is responsible', '/gov/configuration/responsible'), tab('Relationships', '/gov/configuration/relationships'), tab('Setup', '/setup'), tab('Onboarding', '/admin/onboarding'),
+      tabs: [tab('National settings', '/gov/configuration', 'Sovereign Configuration'), tab('Who is responsible', '/gov/configuration/responsible'), tab('Offices', '/gov/configuration/offices'), tab('Relationships', '/gov/configuration/relationships'), tab('Setup', '/setup'), tab('Onboarding', '/admin/onboarding'),
         tab('Workflows', '/gov/workflows', 'Workflow Catalogue')] },
     { key: 'upd', icon: '⬆', label: 'Updates', href: '/updates', purpose: 'New versions of the platform: what they change, and installing them safely.',
       tabs: [tab('Updates', '/updates', 'Update chamber'), tab('Publisher console', '/admin/releases')] },

@@ -10,10 +10,11 @@ import { legislativeState, committeeInquiries, BILL_STAGES } from '@/lib/gov/leg
 import { judicialState } from '@/lib/gov/judicial-engine';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import {
-  branchFor, branchReadiness, separationIntegrity,
+  branchFor, branchReadiness,
   legislativePipeline, chambersFor, committees, legislativeCalendar,
   judicialDocket, courtHierarchyFor, constitutionalReview, judicialRegistries,
 } from '@/lib/gov/branches';
+import { useSeparation, separationWord, SeparationCheckList } from '@/components/features/SeparationChecks';
 import type { StateForm, NationalConstitution } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
 
@@ -31,7 +32,9 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
   const b = model.branches.find(x => x.key === branchKey) ?? branchFor(form, branchKey);
   const engine = b.engine ?? 'none';
   const r = branchReadiness(b.key, ts);
-  const sep = separationIntegrity(ts);
+  // Separation of powers as observed from the configuration (audit G), not generated.
+  const separation = useSeparation();
+  const sepTone = !separation.data ? TONE.neutral : separation.data.intact ? TONE.ok : TONE.warn;
 
   const tabsByEngine: Record<string, string[]> =
     engine === 'legislative' ? ['Chambers', 'Committees', 'Bill pipeline', 'Calendar', 'Oversight inquiries']
@@ -101,8 +104,8 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
           <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
         </div>
         <span className="rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
-          style={{ borderColor: sep.intact ? TONE.ok : TONE.alert, color: sep.intact ? TONE.ok : TONE.alert, backgroundColor: `color-mix(in srgb, ${sep.intact ? TONE.ok : TONE.alert} 12%, transparent)` }}>
-          Separation · {sep.intact ? 'Intact' : 'Strained'} · Readiness {r.total}%
+          style={{ borderColor: sepTone, color: sepTone, backgroundColor: `color-mix(in srgb, ${sepTone} 12%, transparent)` }}>
+          Separation · {separationWord(separation.data)} · Readiness {r.total}% (sample)
         </span>
       </div>
 
@@ -583,15 +586,8 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
       )}
 
       {(tab === 'Constitutional posture' || tab === 'Controls' || tab === 'Electoral cycle') && (
-        <Panel signal="sample" title={tab} meta="constitutional safeguards" bodyClass="!p-1.5">
-          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 xl:grid-cols-3">
-            {sep.checks.map(c => (
-              <div key={c.l} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
-                <span className="min-w-0"><span className="block truncate text-[11px] text-ink-soft">{c.l}</span><span className="block truncate text-[9px] text-ink-muted">{c.detail}</span></span>
-                <span className="shrink-0 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase" style={{ backgroundColor: `color-mix(in srgb, ${c.ok ? TONE.ok : TONE.alert} 18%, transparent)`, color: c.ok ? TONE.ok : TONE.alert }}>{c.ok ? 'Held' : 'Breach'}</span>
-              </div>
-            ))}
-          </div>
+        <Panel title={tab} meta="observed from the configuration" bodyClass="!p-1.5">
+          <SeparationCheckList data={separation.data} failed={separation.failed} />
         </Panel>
       )}
 

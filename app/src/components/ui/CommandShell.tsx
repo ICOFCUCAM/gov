@@ -24,7 +24,6 @@ import { usePathname } from 'next/navigation';
 import { CONSOLE_NAV, HEADER_LINKS, locate } from '@/lib/nav/console-nav';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
 import { SkipLink } from '@/components/ui/SkipLink';
-import { useSignIn } from '@/lib/official';
 import { executivePosture } from '@/lib/gov/executive-posture';
 
 // Adapter from substrate search hits → CommandPalette items.
@@ -103,7 +102,6 @@ export function CommandShell({
     sr: incidents.length, ops: t?.queuesBreaching ?? 0, cab: crit, aud: t?.auditIntact === false ? 1 : 0,
   };
   const pathname = usePathname() ?? '';
-  const signIn = useSignIn();
   const here = locate(pathname);
   // Only an encrypted connection is called encrypted.
   const [secure, setSecure] = React.useState<boolean | null>(null);
@@ -202,7 +200,7 @@ export function CommandShell({
           {secure ? <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-[10px] text-ink-soft min-[1440px]:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Encrypted</span> : null}
           {/* On phones the official's menu sits at the top of the navigation drawer instead. */}
           <span className="hidden border-l border-line pl-3 sm:inline">
-            <ExecutiveMenu title={signIn?.official?.name ?? sov?.executiveTitle ?? 'Head of Government'} sub={signIn?.official ? (signIn.official.office ?? 'Signed in') : 'Not signed in'} accent={accent} />
+            <ExecutiveMenu accent={accent} />
           </span>
         </div>
       </header>
@@ -212,7 +210,7 @@ export function CommandShell({
         <nav aria-label="Sovereign command"
           className={`${navOpen ? 'flex' : 'hidden'} fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-line bg-bg lg:static lg:z-auto lg:flex lg:w-[212px]`}>
           <div className="space-y-2 border-b border-line px-3 py-2 sm:hidden">
-            <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="Not signed in" accent={accent} />
+            <ExecutiveMenu accent={accent} />
             {HEADER_LINKS.map(h => (
               <Link key={h.href} href={h.href} onClick={() => setNavOpen(false)} className="focus-ring flex h-9 items-center gap-1.5 rounded-[3px] border border-line px-2.5 text-[13px] text-ink-soft no-underline hover:bg-surface-2 hover:text-ink">
                 <span aria-hidden>⌕</span>{h.label}
