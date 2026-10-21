@@ -654,6 +654,15 @@ export function canResolveTwinConflict(s: Scope, statistics: string | undefined)
   return wholeGovernment(s) && role === 'administrator' ? null : 'Name the statistics authority under Who is responsible first';
 }
 
+/**
+ * The demo citizen's own Civic Wallet actions (demo and training installations only, owner's decision
+ * 2026-10-21): applying for a permit, paying a bill, signing and checking a document. Under enforced
+ * sign-in the demo citizen session (civicos_session) may make exactly these POSTs and no other change;
+ * the middleware applies it only while samplesAllowed() and with no official session. A production
+ * installation has no demo citizen, so the list never applies there.
+ */
+export const CITIZEN_DEMO_WRITES: RegExp[] = [/^\/api\/permits$/, /^\/api\/payments$/, /^\/api\/signatures$/, /^\/api\/documents\/verify$/];
+
 /** Reading where setup stands (/admin/onboarding): administrators, and auditors who read every record. */
 export function canSeeOnboarding(s: Scope): string | null {
   const role = roleOf(s);

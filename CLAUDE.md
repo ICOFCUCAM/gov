@@ -574,7 +574,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   an `Authorization` header skips the session gate only on routes listed in
   `SELF_AUTHENTICATED` / `BEARER_ROUTES` that verify it themselves. Under
   `enforce`, reads need the signed `civicos_official` session; the demo
-  `civicos_session` cookie opens only `/wallet`.
+  `civicos_session` cookie opens only `/wallet` and, in demo and training
+  installations with no official session, the wallet's four actions
+  (`CITIZEN_DEMO_WRITES` in `roles.ts`: apply for a permit, pay, sign, check a
+  document; owner's decision 2026-10-21). Never widen that list.
 - The demo data pack (`lib/casework/demo-pack.ts`, `POST /api/demo/pack`,
   administrators, demo and training only) runs through the real engine: the
   cast, the sample acts and procedures, one sample case per procedure opened by

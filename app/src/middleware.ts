@@ -5,7 +5,7 @@ import { PUBLIC_SITES } from '@/lib/auth/public-paths';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { OFFICIAL_COOKIE, verifyToken, type OfficialClaims } from '@/lib/auth/session-token';
-import { apiPermission, PUBLIC_WRITE, SELF_AUTHENTICATED, verifiesOwnCredential } from '@/lib/auth/roles';
+import { apiPermission, PUBLIC_WRITE, SELF_AUTHENTICATED, verifiesOwnCredential, CITIZEN_DEMO_WRITES } from '@/lib/auth/roles';
 import { contentSecurityPolicy } from '../security-headers.mjs';
 import { POLICIES, take, tooMany, clientAddress, type Scope } from '@/lib/ops/rate-limit-core';
 
@@ -17,8 +17,9 @@ import { POLICIES, take, tooMany, clientAddress, type Scope } from '@/lib/ops/ra
 // declared demonstration), the gate is transparent (all routes pass, the
 // cover's demo session works) but the policy is in place and audited. Under enforcement the demo cookie (civicos_session=demo, set by the
 // cover and /login when no identity substrate is configured) opens only the
-// citizen's Civic Wallet pages (CITIZEN_DEMO); it opens no console page and
-// no API.
+// citizen's Civic Wallet pages (CITIZEN_DEMO) and the wallet's own four actions
+// (CITIZEN_DEMO_WRITES: apply, pay, sign, check a document) in demo and training
+// installations; it opens no console page and no other API.
 // Read-only facts the cover shows pre-sign-in: identity (name, motto, insignia),
 // the institution register (also public in the Government Directory) and the
 // audit chain's integrity check used by the start-up sequence; and how
@@ -348,6 +349,10 @@ function gate(req: NextRequest, res: NextResponse): NextResponse | Promise<NextR
   if (req.method === 'POST' && PUBLIC_WRITE.some(re => re.test(pathname))) return res;
 
   if (req.method === 'POST' && SIGN_IN.some(re => re.test(pathname))) return res;
+  // The demo citizen's four wallet actions (CITIZEN_DEMO_WRITES): demo and training only, and only without an
+  // official session (an official is always held to the official gate and their own permissions).
+  if (req.method === 'POST' && CITIZEN_DEMO_WRITES.some(re => re.test(pathname)) && samplesAllowed()
+    && req.cookies.get('civicos_session')?.value && !req.cookies.get(OFFICIAL_COOKIE)?.value) return res;
   if (pathname.startsWith('/api/') && MUTATING.has(req.method)) return officialGate(req, res);
   // The citizen demo session opens the Civic Wallet pages only (no API, no console page).
   // Never in a production installation, which has no demo citizen (lib/ops/mode.ts).
