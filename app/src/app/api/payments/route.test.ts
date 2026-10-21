@@ -69,9 +69,13 @@ describe('POST /api/payments (the stand-in payment)', () => {
     const b = taxBill('ministry-of-finance');
     expect((await post({ billId: b.id })).status).toBe(409);
     expect(listBills().find(x => x.id === b.id)?.status).not.toBe('paid');
+    // A general bill of its own, so the production refusal is always exercised.
+    const general = issueBill({ kind: 'licence-fee', description: 'licence fee', amountMinor: 1200, currency: 'KES', dueDate: '2026-12-31', reference: `licence:TEST-${++n}` }, 'Licensing official') as { id: string };
     vi.stubEnv('CIVICOS_MODE', 'production');
-    const general = listBills().find(x => !x.payer && x.status !== 'paid');
-    if (general) expect((await post({ billId: general.id })).status).toBe(409);
+    expect((await post({ billId: general.id })).status).toBe(409);
+    // payBill itself refuses in production, whoever calls it.
+    expect(payBill(general.id, 'Test rail')).toEqual({ error: expect.stringMatching(/No payment provider is connected/) });
+    expect(listBills().find(x => x.id === general.id)?.status).toBe('due');
   });
 
   it('keeps payBill usable by the store (demonstration flows) with the simulated mark', () => {

@@ -6,6 +6,7 @@ import type {
 import { db } from './state';
 import { uid, hash } from './shared';
 import { recordAudit } from './audit';
+import { samplesAllowed } from '@/lib/ops/mode';
 
 // ── Payments ──────────────────────────────────────────────────────────
 export function listBills(): Bill[] {
@@ -39,9 +40,12 @@ export function receiptsVisibleTo(viewer: { institution?: string } | null): Paym
 /**
  * The platform's stand-in payment (integration register 1.8): marks a bill
  * paid without money moving. Its receipts are marked simulated and are never
- * counted by reconciliation in production; the route refuses it there.
+ * counted by reconciliation in production. It refuses itself in a
+ * production installation (step I0.1), whoever calls it: there payments are
+ * recorded from the payment provider or bank.
  */
 export function payBill(billId: string, rail: string, by = 'citizen'): PaymentReceipt | { error: string } {
+  if (!samplesAllowed()) return { error: 'No payment provider is connected: payments are recorded from the payment provider or bank, never marked paid here' };
   const bill = db.bills.find(b => b.id === billId);
   if (!bill) return { error: 'Bill not found' };
   if (bill.status === 'paid') return { error: 'Bill already paid' };
