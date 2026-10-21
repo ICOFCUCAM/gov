@@ -44,6 +44,12 @@ export const EXCLUDED_FIELD_WORDS: Record<string, string> = {
   patient: 'patient data', clinical: 'clinical data', diagnosis: 'clinical data', prescription: 'clinical data', dispensing: 'dispensing to a named patient',
   'care plan': 'a personal care plan', student: 'a named student record', pupil: 'a named student record', learner: 'a named student record',
   'result value': 'an individual assessment result', 'assessment result': 'an individual assessment result',
+  // Individual public-health records (owner's direction 2026-10-21 §1; form-scope.json HLT-PH-001 … 010, 012, 013, 016 … 018): a person
+  // vaccinated, a traced contact, a specimen or a laboratory result stay in the health authority's own systems.
+  vaccinee: 'an individual vaccination record', 'vaccinated person': 'an individual vaccination record', 'vaccination record': 'an individual vaccination record',
+  'immunisation record': 'an individual vaccination record', 'immunization record': 'an individual vaccination record',
+  'contact tracing': 'an individual contact record', 'traced contact': 'an individual contact record', 'case person': 'an individual case record',
+  specimen: 'an individual laboratory record', 'laboratory result': 'an individual laboratory record', 'lab result': 'an individual laboratory record',
 };
 
 /** Words in a field's key that make a form wait for a legal review (suspects, prison admission, intelligence, voters). */

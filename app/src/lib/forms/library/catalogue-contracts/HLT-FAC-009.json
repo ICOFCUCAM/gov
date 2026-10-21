@@ -3,6 +3,8 @@
  "form_id": "HLT-FAC-009",
  "record_type": "health.facility.complaint.case",
  "form_version": 1,
+ "procedure_package_id": "health.complaint",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "CFG-LIC-002: complaint handling, referral and the authorities that act on each kind of concern.",
@@ -24,8 +26,12 @@
   "intro": "Tell the health regulator about a concern with a health facility: its premises, safety, equipment, staffing, how it is run, or the service people receive there. Describe it in your own words. You do not need to give anyone's medical details. Who you are and what you tell us are restricted: only the officials handling the concern can see them.",
   "owner": "healthRegulation",
   "filled_by": "Anyone: online, at an office or on paper. The regulator registers it and refers it to the institution that can act.",
-  "procedure": null,
-  "intended": "A complaint intake of the health regulator that registers the concern and refers it (lib/casework/referral.ts) or opens grounds for a review (health.facility-suspension, document \"grounds\"): the intake is not built; the form waits in the library (plan step I4).",
+  "procedure": {
+   "key": "health.complaint",
+   "stage": "received",
+   "action": "register",
+   "document": "complaint"
+  },
   "lists": {
    "health.country.facility_types": {
     "values": [
@@ -356,7 +362,8 @@
       "concern.referred_to",
       "concern.referral_reason"
      ],
-     "deviation": "free-text-only"
+     "deviation": "free-text-only",
+     "procedure": "refer"
     }
    },
    {

@@ -98,6 +98,23 @@ describe('procedure-link states', () => {
     expect(CATALOGUE_CONTRACTS.filter(x => x.batch === 2 && !x.procedure).map(f => f.specId)).toEqual(['HLT-MED-024']);
   });
 
+  it('is draft for the public-health forms and the complaint forms once their procedures are in the register, linked by identity, never approved by it', () => {
+    const linked: Record<string, string> = { 'HLT-PH-011': 'public-health.programme-return', 'HLT-PH-015': 'public-health.programme-return', 'HLT-PH-014': 'public-health.risk-communication', 'HLT-FAC-009': 'health.complaint', 'HLT-LIC-008': 'prof.complaint' };
+    for (const [id, key] of Object.entries(linked)) {
+      expect(lib(id).procedure, id).toMatchObject({ key });
+      expect(lib(id).identity, id).toBe(`FIELD-SERIES-PARTS-05-07:${id}@1`);
+      expect(libraryPublicationOf(found(id)).procedure.state, id).toBe('missing');
+    }
+    installAll('Administrator');
+    for (const id of Object.keys(linked)) {
+      const pub = libraryPublicationOf(found(id));
+      expect(pub.procedure, id).toMatchObject({ state: 'draft' });
+      expect(procedureLink({ identity: lib(id).identity, procedure: lib(id).procedure }), id).toMatchObject({ state: 'draft', linked: { key: linked[id], inRegister: true } });
+      expect(pub.status, id).not.toBe('approved');
+      expect(pub.human.filter(g => g.applies && g.passed), id).toEqual([]);
+    }
+  });
+
   it('moves draft → under review → approved only as the register changes', () => {
     installReferenceProcedures('Administrator');
     const state = () => libraryPublicationOf(found('HLT-FAC-001')).procedure.state;

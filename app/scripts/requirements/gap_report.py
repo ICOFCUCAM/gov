@@ -16,7 +16,7 @@ APP_DATA = 'app/src/lib/forms/data'
 SCOPE_SRC = 'docs/requirements/form-scope.json'
 REPORTED = {'listed forms, parts 14–22': 216, 'contracts, parts 14–22': 61, 'core contracts, parts 5–13': 72}
 # What each controlled batch of CivicOS's own contracts covers (owner's approvals, 21 October 2026).
-BATCH_LABEL = {1: 'health regulation', 2: 'medicines and medical devices regulation', 3: 'taxpayer registration and account'}
+BATCH_LABEL = {1: 'health regulation', 2: 'medicines and medical devices regulation', 3: 'taxpayer registration and account', 4: 'public-health programme forms'}
 GATES = [
     'The form owner and competent authority are verified.',
     'Legal references and their versions have been approved.',
@@ -113,7 +113,7 @@ def build(repo, rows, checks):
     lib_bad = [dict(path=c['path'], id=c['id'], matches=c['matches']) for c in lib if len(c['matches']) != 1]
     row_of = {o['id']: o for o in forms}
     batches = collections.OrderedDict()
-    for c in lib:
+    for c in sorted(lib, key=lambda x: x['batch']):
         b = batches.setdefault(c['batch'], dict(batch=c['batch'], contracts=[], form_status=collections.Counter()))
         r = row_of.get(c['matches'][0]) if len(c['matches']) == 1 else None
         b['contracts'].append(dict(id=c['id'], identity=c.get('identity'), row=c['matches'][0] if r else None, file=c['path'], fields=len(c['fields']), form_status=r['form_status'] if r else None, scope=(r or {}).get('scope', 'allowed'),

@@ -126,6 +126,8 @@ export const REFERENCE_REGISTERS: { key: string; label: string; example: string;
   { key: 'law', label: 'laws register (instrument#provision)', example: '/eli/x/act/2020/7#sec_12', connected: true },
   // The register of medicines and medical devices (lib/health/products/register.ts): by register or authorisation number, decided records only.
   { key: 'product', label: 'register of medicines and medical devices', example: 'MA-2026-000123', connected: true },
+  // The register of public-health programmes (lib/health/programmes/register.ts): an established programme by its number.
+  { key: 'programme', label: 'register of public-health programmes', example: 'PHP-2026-000123', connected: true },
   { key: 'appropriation', label: 'register of budget appropriations', example: 'the appropriation reference', connected: false },
   { key: 'farm', label: 'register of farms', example: 'the farm record', connected: false },
   { key: 'water-source', label: 'register of water sources', example: 'the water source reference', connected: false },

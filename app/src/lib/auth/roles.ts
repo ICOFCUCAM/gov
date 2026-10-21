@@ -239,6 +239,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/professions\/types$/,
   // What the public product check shows (the nation's public information classification): proposed citing the law, confirmed by a different official.
   /^\/api\/health-regulation\/products$/,
+  // The public-health country rule sets (intervention authority rules, CFG-PH-003; the small-cell threshold): proposed citing the law, confirmed by a different official.
+  /^\/api\/health-regulation\/programmes$/,
   /^\/api\/dual-control$/,
   // Which authority the law designates for each permit and licence type (four-eyes in the route).
   /^\/api\/permit-authorities$/,
