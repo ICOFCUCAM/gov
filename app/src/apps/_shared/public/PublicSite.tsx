@@ -33,6 +33,8 @@ export interface PublicSiteProps {
   preview?: string;
   /** The visitor's language and the page's origin, read by the page with siteRequest(). */
   request?: SiteRequest;
+  /** Live keys whose value comes from a simulation (siteProps `sampleLive`). */
+  sampleLive?: string[];
 }
 
 /** The preset a site uses: the requested one when the site may use it, else the one its ministry chose, else its default. */
@@ -42,8 +44,8 @@ export function presetFor(id: string, requested?: string): Preset {
   return allowed.find(p => p.id === requested) ?? allowed.find(p => p.id === chosen) ?? PRESETS[DEFAULT_PRESET[id] ?? 'civic-standard'] ?? PRESETS['civic-standard']!;
 }
 
-export function PublicSite({ id, theme, illustration, live, preset, preview, request, extra }: PublicSiteProps) {
-  const props = siteProps(id, { theme, illustration, live, preview, request });
+export function PublicSite({ id, theme, illustration, live, preset, preview, request, extra, sampleLive }: PublicSiteProps) {
+  const props = siteProps(id, { theme, illustration, live, preview, request, sampleLive });
   // The locator shows the institution's own published sites from the national facility register.
   const site = props.locator ? { ...props, locations: siteLocations(id, props.locator.tabs) } : props;
   const p = presetFor(id, preset ?? (preview ? effectiveContent(id, preview).previewPreset ?? undefined : undefined));
@@ -314,6 +316,7 @@ function Hero({ c, variant }: { c: Ctx; variant: string }) {
               <div className="relative -mt-14 ms-6 me-6 border bg-white p-4 shadow-lg" style={{ borderColor: c.rule, borderRadius: c.d.radius }}>
                 <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: th.emergencyA }}><span aria-hidden>●</span> {s.alert.label}</div>
                 <p className="mt-1 text-[13px] text-slate-700">{s.alert.text}</p>
+                {s.alert.sample ? <div className="mt-1"><SampleChip label={c.t.sampleAlert} note={c.t.sampleAlertNote} /></div> : null}
               </div>
             ) : null}
           </div>
@@ -425,6 +428,7 @@ function Alert({ c, variant }: { c: Ctx; variant: string }) {
         <Wrap className="flex flex-col items-start gap-1.5 py-3 sm:flex-row sm:items-center sm:gap-3">
           <span className="flex shrink-0 items-center gap-2 text-[13px] font-bold uppercase tracking-wide"><span aria-hidden>⚠</span> {a.label}</span>
           <span className="w-full min-w-0 text-[14px] sm:w-auto sm:flex-1">{a.text}</span>
+          {a.sample ? <SampleChip label={c.t.sampleAlert} note={c.t.sampleAlertNote} /> : null}
           <Link href="#news" className="text-[12px] font-semibold underline underline-offset-2">{c.t.viewAlerts}</Link>
         </Wrap>
       </div>
@@ -435,6 +439,7 @@ function Alert({ c, variant }: { c: Ctx; variant: string }) {
       <div className="flex flex-col items-start gap-1.5 border px-4 py-3 sm:flex-row sm:items-center sm:gap-3" style={{ borderColor: '#f6c5c5', background: '#fdeeee', borderRadius: c.d.radius }}>
         <span className="flex shrink-0 items-center gap-2 text-[13px] font-bold" style={{ color: '#c0232c' }}><span aria-hidden>⚠</span> {a.label}</span>
         <span className="w-full min-w-0 text-[13px] text-slate-700 sm:w-auto sm:flex-1">{a.text}</span>
+        {a.sample ? <SampleChip label={c.t.sampleAlert} note={c.t.sampleAlertNote} /> : null}
         <Link href="#news" className="text-[12px] font-semibold" style={{ color: '#c0232c' }}>{c.t.viewAlerts}</Link>
       </div>
     </Wrap>

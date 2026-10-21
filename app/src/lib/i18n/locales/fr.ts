@@ -379,6 +379,8 @@ export const fr: Messages = {
     live: 'En direct',
     sampleNews: 'Annonces d’exemple',
     sampleNote: 'Affichés jusqu’à ce que {name} publie les siens.',
+    sampleAlert: 'Exemple · pas une vraie alerte',
+    sampleAlertNote: 'Alerte simulée affichée dans une installation de démonstration ou de formation ; aucune urgence n’a été déclarée.',
     browseTopics: 'Parcourir par thème',
     gatewayLink: 'Voici la page de {name} sur la plateforme nationale. Son site principal est {host}.',
     gatewayMigrate: '{name} transfère son site ici depuis {host} ; les pages non encore transférées y restent.',
