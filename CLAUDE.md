@@ -143,6 +143,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   the data-protection authority after two administrators
   (`confirmByOversight()`, which compares persons, never names). Unusual access is raised by
   `lib/records/access-watch.ts`; a finding is a prompt, never a conclusion.
+  The audit chain (`/api/audit`) is read only under `canReadAuditChain()`, logged;
+  refusals (`refusal()`, `readRefusal()`, the middleware's 403) are logged as
+  reference and rule (`lib/records/refusal-log.ts`).
 
 ## Constitutional architecture
 
