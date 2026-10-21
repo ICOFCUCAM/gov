@@ -22,6 +22,10 @@ All 13 parts received.
 statuses, binding scope exclusions, publication gates, and a verified gap report
 before any further contracts are generated.
 
+**Direction (health integration).** `DIRECTION-2026-10-21-HEALTH-INTEGRATION.md`
+(owner, binding): composite form identity, procedure-link states, provisional
+ownership, I4 as a dependency, the HLT-MED-004 boundary, the public product check.
+
 **Gaps.** The 13 parts left out several areas named in the owner's request; the
 supplement (parts 14–22) covers them and gives baseline JSON contracts for the
 core forms of parts 5–13. Still without their own contract, by the supplement's
