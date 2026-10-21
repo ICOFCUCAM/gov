@@ -2,6 +2,9 @@
 // These types are the contract between UI and backend. The backend
 // implementation is swappable (mock adapter now; sovereign datastore later).
 import type { DeploymentProfile } from '@/lib/nation/deployment';
+import type { BranchKey } from '@/lib/gov/constitution';
+import type { Citation } from '@/lib/law/register';
+import type { PolicyChanges } from '@/lib/law/policy-change';
 
 export type ISODate = string;
 
@@ -545,6 +548,62 @@ export interface Ministry {
   activatedAt?: ISODate;
   departments: Department[];
   modules: ModuleActivation[];
+  // ── Constitutional standing (docs/CONSTITUTIONAL_ARCHITECTURE.md §2.1, §7.1–7.2) ──
+  // The nation's own facts, recorded during first-run setup or changed only
+  // through the change process (lib/data/store/institutions.ts, on
+  // lib/law/policy-change.ts). Records saved before these existed read as an
+  // executive ministry with no independence claims.
+  /** What kind of public body this is under the nation's law. */
+  standing?: InstitutionStanding;
+  /** The branch of state it belongs to, when the nation says (branch keys of lib/gov/constitution.ts). */
+  branch?: BranchKey;
+  /** The law that establishes it, cited from the laws register. */
+  basis?: Citation[];
+  /** From when the recorded standing applies (YYYY-MM-DD). */
+  effectiveFrom?: string;
+  /** Independence, one rule per dimension (never one flag, guidance §7.2.1–2). */
+  independence?: Partial<Record<IndependenceDimension, IndependenceRule>>;
+  /** What the law forbids: directions it may not receive, data it may not reach, powers it may not delegate (§7.2.5). */
+  prohibitions?: InstitutionProhibition[];
+  /** The records it is the authoritative owner of, in the nation's words (§7.2.4). */
+  records?: string[];
+  /** Changes to the above: proposed citing the law, confirmed by a different official, every version kept. */
+  terms?: PolicyChanges<InstitutionTerms>;
+}
+
+/** The constitutional standing of an institution (guidance §2.2–2.7). The nation records it; the platform never assumes it. */
+export type InstitutionStanding =
+  | 'executive-ministry' | 'executive-agency' | 'independent-statutory' | 'independent-constitutional'
+  | 'legislature' | 'judiciary' | 'head-of-state' | 'subnational' | 'customary-or-religious';
+/** The dimensions of independence, each recorded separately (guidance §7.2.1–2). */
+export type IndependenceDimension = 'decisions' | 'appointment' | 'dismissal' | 'funding' | 'instructions';
+/** What the law provides for one dimension of an institution's independence. */
+export interface IndependenceRule {
+  /** The law protects this dimension from control by another institution. */
+  protected: boolean;
+  /** Who acts on this dimension under the law, in the nation's words (who appoints, who funds, who may dismiss). */
+  actor?: string;
+  /** The provisions it rests on, cited from the laws register. */
+  basis?: Citation[];
+  note?: string;
+}
+/** Something the law forbids (guidance §7.2.5). */
+export interface InstitutionProhibition {
+  kind: 'direction' | 'data-access' | 'non-delegable';
+  text: string;
+}
+/** A structural change to an institution carried out when its change is confirmed. */
+export type InstitutionStructuralChange = { kind: 'rename'; name: string } | { kind: 'deactivate' } | { kind: 'merge'; into: string };
+/** The values a change to an institution's constitutional terms carries. */
+export interface InstitutionTerms {
+  standing: InstitutionStanding;
+  branch?: BranchKey;
+  effectiveFrom: string;
+  independence: Partial<Record<IndependenceDimension, IndependenceRule>>;
+  prohibitions: InstitutionProhibition[];
+  records: string[];
+  /** Renaming, deactivating or merging the institution, when this change does that. */
+  change?: InstitutionStructuralChange;
 }
 
 // ── Module operations (archetype-driven operational dashboards) ───────

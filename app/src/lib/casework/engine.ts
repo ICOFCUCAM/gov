@@ -12,7 +12,7 @@
 // procedure and stage, never personal fields. Held in platform state.
 
 import { recordAudit } from '@/lib/data/store/audit';
-import { authorityFor, getSovereign, getMinistry } from '@/lib/data/store';
+import { authorityFor, getSovereign, getMinistry, institutionBounds } from '@/lib/data/store';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
 import { dualControlRefusal, independenceOf } from '@/lib/data/dual-control';
@@ -138,12 +138,18 @@ function resolveCitations(list: { instrument?: string; eId?: string }[] | undefi
   return out;
 }
 
-const facts = (c: Case, a?: ActionSpec) => ({
-  owner: c.owner, sensitivity: c.sensitivity, assigned: c.assignee ? [c.assignee.id] : [],
-  // The judiciary named in the deployment profile: its cases are closed to every other institution (directions 4.6).
-  judicial: !!authorityFor('judiciary') && c.owner === authorityFor('judiciary'),
-  ...(a ? { decision: !!a.decision, stepUp: !!a.needs.stepUp } : {}),
-});
+const facts = (c: Case, a?: ActionSpec) => {
+  // Courts (standing judiciary, or named for the judiciary or a constitutional court) are closed to every other
+  // institution (directions 4.6); several may exist. Independent institutions (legislature, head of state,
+  // independent bodies) to every other institution too, save the public audit office reading with a purpose.
+  const b = institutionBounds();
+  return {
+    owner: c.owner, sensitivity: c.sensitivity, assigned: c.assignee ? [c.assignee.id] : [],
+    judicial: b.judicial.includes(c.owner),
+    independent: b.independent.includes(c.owner),
+    ...(a ? { decision: !!a.decision, stepUp: !!a.needs.stepUp } : {}),
+  };
+};
 
 function audit(actor: Actor, action: string, c: Case, detail: string) {
   recordAudit(actor.name, action, `Case:${c.ref}`, 'ok', `${c.package.key}@${c.package.version} · ${detail}`);

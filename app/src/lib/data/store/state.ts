@@ -28,6 +28,8 @@ import type {
 } from '@/lib/api/types';
 import { hash, citizen } from './shared';
 import { samplesAllowed } from '@/lib/ops/mode';
+import type { PolicyChanges } from '@/lib/law/policy-change';
+import type { AuthorityKey } from '@/lib/nation/deployment';
 
 // Module-level singletons (process-lifetime).
 const g = globalThis as unknown as { __civicos?: ReturnType<typeof seed> };
@@ -185,7 +187,9 @@ export function seed() {
   const integrationKeys: Record<string, string> = {};
   // Each webhook's HMAC signing secret, sealed under CIVICOS_DATA_KEK when set (lib/crypto/envelope.ts).
   const webhookSecrets: Record<string, string> = {};
-  return { setup, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, integrationKeys, webhookSecrets, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
+  // Changes to who is responsible once setup is complete (two officials, citing the law; lib/data/store/sovereign.ts).
+  const authorityChanges: PolicyChanges<{ authorities: Partial<Record<AuthorityKey, string>> }> = {};
+  return { setup, authorityChanges, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, integrationKeys, webhookSecrets, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
 }
 
 // A store restored from a saved snapshot (lib/data/persist.ts) keeps its data; fields added to the
@@ -194,7 +198,12 @@ export function seed() {
 // Held at module level, so wrapped: every use notes the store as used, and with CIVICOS_STATE=postgres
 // its changed records are written at the next flush (lib/data/repo/track.ts, documents.ts).
 export const db = tracked('__civicos', g.__civicos = withDefaults(g.__civicos, seed(), { opaque: ['sovereign', 'tenantSync', 'ministryQueues', 'ministryIncidents'] }));
+// Institutions saved before they carried a constitutional standing read as an executive ministry
+// with no independence claims (lib/data/store/institutions.ts); lists are records, so each is filled.
+export const MINISTRY_DEFAULTS = { standing: 'executive-ministry' } as const;
+const ministryDefaults = () => { for (const m of db.ministries) withDefaults(m as unknown as Record<string, unknown>, { ...MINISTRY_DEFAULTS }); };
+ministryDefaults();
 // Engines read the installed nation (regions, map, currency) from the registry.
 applyNation({ ...db.sovereign, configured: !!db.setup });
 // Another instance changed the profile or setup (postgres mode): the registry follows.
-onFollow('__civicos', () => applyNation({ ...db.sovereign, configured: !!db.setup }));
+onFollow('__civicos', () => { ministryDefaults(); applyNation({ ...db.sovereign, configured: !!db.setup }); });

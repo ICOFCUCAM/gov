@@ -4,6 +4,7 @@ import path from 'node:path';
 import { NextRequest } from 'next/server';
 import { middleware, clearReadChecks } from './middleware';
 import { signClaims } from './lib/auth/session-token';
+import { resetRateLimits } from './lib/ops/rate-limit-core';
 
 const CRON = path.join(__dirname, 'app', 'api', 'cron');
 const cronJobs = fs.readdirSync(CRON).filter(d => fs.existsSync(path.join(CRON, d, 'route.ts')));
@@ -133,6 +134,28 @@ describe('access gate (CIVICOS_AUTH=enforce)', () => {
     expect((await call('/wallet/permits', 'civicos_session=demo')).headers.get('location')).toBeNull();
     expect((await call('/wallet')).headers.get('location')).toMatch(/\/login\?from=%2Fwallet$/);
     expect((await call('/api/permits', 'civicos_session=demo')).status).toBe(401);
+  });
+
+  it('lets the demo citizen make its four wallet actions, only in demo and training and only those', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    const post = (p: string, cookie?: string) => middleware(new NextRequest(`http://localhost${p}`, { method: 'POST', headers: { 'sec-fetch-site': 'same-origin', ...(cookie ? { cookie } : {}) } }));
+    const actions = ['/api/permits', '/api/payments', '/api/signatures', '/api/documents/verify'];
+    for (const mode of ['demo', 'training']) {
+      vi.stubEnv('CIVICOS_MODE', mode);
+      for (const a of actions) expect((await post(a, 'civicos_session=demo')).status, `${mode} ${a}`).toBe(200);
+      // No other change, and no read beyond the wallet pages.
+      expect((await post('/api/directives', 'civicos_session=demo')).status).toBe(401);
+      expect((await post('/api/permits/x/decide', 'civicos_session=demo')).status).toBe(401);
+      expect((await call('/api/permits', 'civicos_session=demo')).status).toBe(401);
+      // Without the demo session nothing opens.
+      expect((await post('/api/permits')).status).toBe(401);
+    }
+    vi.stubEnv('CIVICOS_MODE', 'production');
+    for (const a of actions) expect((await post(a, 'civicos_session=demo')).status, `production ${a}`).toBe(401);
+    vi.unstubAllEnvs();
+    // These anonymous changes count against the shared public limit; later tests start from a fresh one.
+    resetRateLimits();
   });
 
   it('accepts a bearer instead of a session only on routes that verify it themselves', async () => {

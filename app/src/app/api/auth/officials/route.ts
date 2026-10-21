@@ -8,11 +8,18 @@
 // lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote
 // to its output at start), every later one by an administrator. While the
 // substrate is the sign-in method no platform account is created (409).
+// An account of an independent institution (the legislature, a court, the
+// head of state's office, an independent body) is created by that
+// institution's own administrator; an administrator serving the whole
+// government proposes it, and it waits (202) for an official who can sign
+// there to confirm (lib/auth/account-changes.ts, accountChangeRule()).
+// Administrators of another institution may not.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { listAccounts, createAccount, hasAccounts, twoStepPolicy, twoStepPolicySet } from '@/lib/auth/officials';
 import { currentOfficial, actorLabel } from '@/lib/auth/official';
-import { roleOf } from '@/lib/auth/roles';
+import { roleOf, accountChangeRule } from '@/lib/auth/roles';
+import { proposeAccountChange } from '@/lib/auth/account-changes';
 import { LOCAL_ACCOUNTS_REFUSED } from '@/lib/auth/setup-token';
 import { stateWritable, persistenceStatus } from '@/lib/data/persist';
 
@@ -39,6 +46,14 @@ export async function POST(req: NextRequest) {
   if (hasAccounts() && !o) return NextResponse.json({ error: 'Only a signed-in official can create accounts' }, { status: 401 });
   if (o && roleOf(o) !== 'administrator') return NextResponse.json({ error: 'Only an administrator can create accounts' }, { status: 403 });
   const b = await req.json().catch(() => ({}));
+  if (o) {
+    const rule = accountChangeRule(o, [typeof b?.institution === 'string' ? b.institution : undefined]);
+    if (typeof rule === 'string') return NextResponse.json({ error: rule }, { status: 403 });
+    if (rule) {
+      const p = proposeAccountChange({ kind: 'create', details: b ?? {} }, rule.confirmBy, { by: actorLabel(o), byId: o.sub });
+      return 'error' in p ? NextResponse.json(p, { status: 422 }) : NextResponse.json({ pending: p }, { status: 202 });
+    }
+  }
   const r = await createAccount(b, o ? actorLabel(o) : null);
   if ('error' in r) return NextResponse.json(r, { status: r.error === LOCAL_ACCOUNTS_REFUSED ? 409 : 422 });
   return NextResponse.json({ account: r }, { status: 201 });

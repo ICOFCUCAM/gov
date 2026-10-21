@@ -141,7 +141,7 @@ What has been built is locked. Work only upgrades it toward the vision in
 - Audit administration stays apart from operations: administrators do not
   read the access log, reading it is itself logged, and shortening it needs
   the data-protection authority after two administrators
-  (`confirmByOversight()`). Unusual access is raised by
+  (`confirmByOversight()`, which compares persons, never names). Unusual access is raised by
   `lib/records/access-watch.ts`; a finding is a prompt, never a conclusion.
 
 ## Constitutional architecture
@@ -157,6 +157,29 @@ What has been built is locked. Work only upgrades it toward the vision in
   recorded per dimension (decisions, appointment, dismissal, funding,
   instructions), and constitution-dependent powers ship as slots or unapproved
   drafts until the nation's legal process approves them.
+- An institution's constitutional terms (standing, branch, establishing law,
+  effective date, independence per dimension, prohibitions, records owned)
+  live on the ministry registry record (`lib/data/store/institutions.ts`):
+  recorded directly only during first-run setup, afterwards only through
+  `policy-change.ts` (cite the law, a different official confirms; an
+  independent institution with its own signers confirms itself). Never ship
+  a standing or independence value for a nation; existing records read as
+  an executive ministry.
+- Who is independent is `institutionBounds()` (standing, and the bodies named
+  for judiciary, data protection, legislature, head of state, constitutional
+  court). `roles.ts` reads it from `Scope.bounds`, filled by
+  `currentOfficial()` at each request (never signed into the session):
+  whole-government scope and auditors stop at independent institutions
+  (`reaches()`); only the public audit office reads an independent body's
+  case, with a purpose, never a court's. A new rule about an institution's
+  records uses `reaches()`/`isIndependent()`, never `wholeGovernment()` alone.
+- Accounts of an independent institution are changed by its own
+  administrators; a whole-government administrator's change waits for its
+  confirmation (`accountChangeRule()`, `lib/auth/account-changes.ts`). After
+  setup, presets are refused and who is responsible changes only through
+  `/api/sovereign/authorities`. Directives from the whole government are
+  issued by `executive-office`; an independent institution receives only a
+  request, communication or referral.
 
 ## Entry flow
 
@@ -574,7 +597,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   an `Authorization` header skips the session gate only on routes listed in
   `SELF_AUTHENTICATED` / `BEARER_ROUTES` that verify it themselves. Under
   `enforce`, reads need the signed `civicos_official` session; the demo
-  `civicos_session` cookie opens only `/wallet`.
+  `civicos_session` cookie opens only `/wallet` and, in demo and training
+  installations with no official session, the wallet's four actions
+  (`CITIZEN_DEMO_WRITES` in `roles.ts`: apply for a permit, pay, sign, check a
+  document; owner's decision 2026-10-21). Never widen that list.
 - The demo data pack (`lib/casework/demo-pack.ts`, `POST /api/demo/pack`,
   administrators, demo and training only) runs through the real engine: the
   cast, the sample acts and procedures, one sample case per procedure opened by

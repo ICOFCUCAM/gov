@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { roleLabel, roleOf, type OfficialRole } from '@/lib/auth/roles';
+import { roleLabel, roleOf, type OfficialRole, type Boundaries } from '@/lib/auth/roles';
 
 // The official acting at this desk. When someone has signed in
 // (/api/auth/official, register 15.4) that is their verified name, and the
@@ -15,7 +15,9 @@ const KEY = 'civicos.updates.actor';
 const EVENT = 'civicos-actor';
 
 export interface VerifiedOfficial { sub: string; name: string; office?: string; method: 'local' | 'substrate'; role?: OfficialRole; institution?: string; institutionName?: string;
-  via?: 'password' | 'passkey' | 'oidc'; twoStep?: boolean; twoStepRequired?: boolean }
+  via?: 'password' | 'passkey' | 'oidc'; twoStep?: boolean; twoStepRequired?: boolean;
+  /** Where whole-government reach stops (lib/auth/roles.ts), so screens offer only what the server allows. */
+  bounds?: Boundaries }
 export interface SignInState { official: VerifiedOfficial | null; enforced: boolean; accounts: boolean;
   /** oidc: the government's identity provider's name when one is set up; passkey: whether passkeys work here. */
   methods: { local: boolean; substrate: boolean; oidc?: { name: string } | null; passkey?: boolean } }

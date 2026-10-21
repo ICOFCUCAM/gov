@@ -25,6 +25,7 @@ import type { Permit, QueueItem } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
 import { db as store } from '@/lib/data/store/state';
 import { touch } from '@/lib/data/repo/track';
+import { personOf } from '@/lib/data/dual-control';
 import { sweepSubscriptions } from '@/lib/data/site-subscriptions';
 import { sweepSignInFailures } from '@/lib/auth/officials';
 import { flushAggregated } from '@/lib/audit/aggregate';
@@ -66,11 +67,15 @@ export interface RetentionChange {
   rule: RetentionRule;
   reason: string;
   proposedBy: string;
+  /** The proposer's verified identity (session subject), when signed in: the oversight step compares persons, not names. */
+  proposedById?: string;
   proposedAt: string;
   /** awaiting-oversight: deleting from the access log also needs the data-protection authority (directions 15.3). */
   state: 'proposed' | 'awaiting-oversight' | 'confirmed' | 'withdrawn';
   oversightBy?: string;
   decidedBy?: string;
+  /** The confirming administrator's verified identity, when signed in. */
+  decidedById?: string;
   decidedAt?: string;
 }
 
@@ -118,7 +123,7 @@ const isCategory = (v: unknown): v is RetentionCategory => RETENTION_CATEGORIES.
  * only stops deletion); anonymise and delete wait for a different
  * administrator's confirmation.
  */
-export function proposeRetention(input: { category?: unknown; action?: unknown; days?: unknown; basis?: unknown; reason?: unknown }, by: string, now = Date.now()): RetentionChange | { error: string } {
+export function proposeRetention(input: { category?: unknown; action?: unknown; days?: unknown; basis?: unknown; reason?: unknown }, by: string, now = Date.now(), byId?: string): RetentionChange | { error: string } {
   if (!by.trim()) return { error: 'Name the administrator proposing the rule' };
   if (!isCategory(input.category)) return { error: `category must be one of ${RETENTION_CATEGORIES.map(c => c.id).join(', ')}` };
   const action = input.action;
@@ -139,7 +144,7 @@ export function proposeRetention(input: { category?: unknown; action?: unknown; 
   const at = new Date(now).toISOString();
   // A newer proposal for the same category replaces one still waiting.
   for (const c of d.changes) if (c.category === input.category && c.state === 'proposed') Object.assign(c, { state: 'withdrawn', decidedBy: by, decidedAt: at });
-  const change: RetentionChange = { id: `RET-${randomUUID().slice(0, 8)}`, category: input.category, rule, reason, proposedBy: by, proposedAt: at, state: 'proposed' };
+  const change: RetentionChange = { id: `RET-${randomUUID().slice(0, 8)}`, category: input.category, rule, reason, proposedBy: by, ...(byId ? { proposedById: byId } : {}), proposedAt: at, state: 'proposed' };
   d.changes.push(change);
   if (d.changes.length > 500) d.changes.splice(0, d.changes.length - 500);
   recordAudit(by, 'retention.propose', `Retention:${change.category}`, 'ok', `${describe(rule)} · ${reason}`);
@@ -154,7 +159,7 @@ export function proposeRetention(input: { category?: unknown; action?: unknown; 
 }
 
 /** Confirm (a different administrator) or withdraw a proposed rule. */
-export function decideRetention(id: string, decision: unknown, by: string, now = Date.now()): RetentionChange | { error: string } {
+export function decideRetention(id: string, decision: unknown, by: string, now = Date.now(), byId?: string): RetentionChange | { error: string } {
   if (!by.trim()) return { error: 'Name the administrator deciding' };
   const d = db();
   const c = d.changes.find(x => x.id === id);
@@ -168,10 +173,11 @@ export function decideRetention(id: string, decision: unknown, by: string, now =
   }
   if (decision !== 'confirm') return { error: 'decision must be confirm or withdraw' };
   if (by === c.proposedBy) return { error: 'A different administrator confirms the rule (four-eyes)' };
+  if (byId && c.proposedById && (byId === c.proposedById || (personOf(byId).bound && personOf(byId).key === personOf(c.proposedById).key))) return { error: 'A different administrator confirms the rule (four-eyes)' };
   // Audit administration is separate from operational administration: shortening the access log
   // also needs the oversight side (confirmByOversight()).
   if (c.category === 'access-log' && c.rule.action === 'delete') {
-    Object.assign(c, { state: 'awaiting-oversight', decidedBy: by, decidedAt: at });
+    Object.assign(c, { state: 'awaiting-oversight', decidedBy: by, decidedAt: at }, byId ? { decidedById: byId } : {});
     recordAudit(by, 'retention.confirm', `Retention:${c.category}`, 'ok', `${describe(c.rule)} · proposed by ${c.proposedBy} · waiting for the data-protection authority`);
     return c;
   }
@@ -186,12 +192,24 @@ export function decideRetention(id: string, decision: unknown, by: string, now =
  * a rule that deletes from the access log, after the two administrators.
  * The route checks who may (canConfirmAccessLogRetention()).
  */
-export function confirmByOversight(id: string, by: string, now = Date.now()): RetentionChange | { error: string } {
+export function confirmByOversight(id: string, by: string, now = Date.now(), byId?: string): RetentionChange | { error: string } {
   const d = db();
   const c = d.changes.find(x => x.id === id);
   if (!c) return { error: 'No such proposal' };
   if (c.state !== 'awaiting-oversight') return { error: 'This proposal is not waiting for the data-protection authority' };
-  if (by === c.proposedBy || by === c.decidedBy) return { error: 'The oversight confirmation is by someone other than the administrators who proposed and confirmed it' };
+  const refused = 'The oversight confirmation is by someone other than the administrators who proposed and confirmed it';
+  if (by === c.proposedBy || by === c.decidedBy) return { error: refused };
+  // Compared by person (audit L): the same account, or two accounts of one person at the identity
+  // provider, is refused whatever names they carry; a proposal made signed in needs a signed-in confirmer.
+  const earlier = [c.proposedById, c.decidedById].filter((x): x is string => !!x);
+  if (earlier.length && !byId) return { error: 'The administrators were signed in: the oversight confirmation must be made signed in too' };
+  if (byId) {
+    const me = personOf(byId);
+    for (const e of earlier) {
+      const them = personOf(e);
+      if (e === byId || (me.bound && them.bound && me.key === them.key)) return { error: refused };
+    }
+  }
   const at = new Date(now).toISOString();
   Object.assign(c, { state: 'confirmed', oversightBy: by });
   d.rules[c.category] = { ...c.rule, proposedBy: c.proposedBy, confirmedBy: `${c.decidedBy} and ${by} (oversight)`, since: at };

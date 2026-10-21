@@ -265,10 +265,12 @@
                         },
                         "reason": "Text",
                         "proposedBy": "A. Official",
+                        "proposedById": "ID-0001",
                         "proposedAt": "2026-01-15T09:30:00.000Z",
                         "state": "awaiting-oversight",
                         "oversightBy": "A. Official",
                         "decidedBy": "A. Official",
+                        "decidedById": "ID-0001",
                         "decidedAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
@@ -1553,6 +1555,220 @@
         "x-source": "src/app/api/audit/witnesses/route.ts"
       }
     },
+    "/api/auth/account-changes/{id}": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "post_auth_account_changes_id",
+        "summary": "POST /api/auth/account-changes/{id}",
+        "description": "POST /api/auth/account-changes/{id} { op: 'confirm' | 'withdraw', reason? } (lib/auth/account-changes.ts; plan phase 2, audit D). Confirm: an official who can sign at the independent institution the change waits for (or its administrator), a different person from the administrator who proposed it (canConfirmAccountChange()); when every institution has confirmed, the change is made and a reset code for a new account (or one asked for) is returned once, to this official, to hand over in person. Withdraw: the proposer or an administrator. Who acted comes from the sign-in; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "reason": "Text"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "change": {
+                          "$ref": "#/components/schemas/AccountChange"
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "change"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "change": {
+                          "$ref": "#/components/schemas/AccountChange"
+                        }
+                      },
+                      "required": [
+                        "change"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "change": {
+                        "id": "ID-0001",
+                        "kind": "create",
+                        "accountId": "ID-0001",
+                        "officerId": "ID-0001",
+                        "input": {},
+                        "summary": "Text",
+                        "confirmFrom": [
+                          "2026-01-15"
+                        ],
+                        "confirmations": [
+                          {
+                            "institution": "string",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "by": "A. Official",
+                        "byId": "ID-0001",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "expiresAt": "2026-01-15T09:30:00.000Z",
+                        "state": "done",
+                        "result": "string",
+                        "doneAt": "2026-01-15T09:30:00.000Z"
+                      },
+                      "code": "string",
+                      "expiresAt": "2026-01-15T09:30:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/auth/account-changes/[id]/route.ts"
+      }
+    },
+    "/api/auth/account-changes": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_account_changes",
+        "summary": "GET /api/auth/account-changes",
+        "description": "/api/auth/account-changes — account changes waiting for an independent institution to confirm (lib/auth/account-changes.ts; plan phase 2, audit D). GET: administrators see every change; any other signed-in official sees the changes waiting for their own institution and those they proposed. Confirming or withdrawing one: POST /api/auth/account-changes/{id}.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "changes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AccountChange"
+                      }
+                    }
+                  },
+                  "required": [
+                    "changes"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "changes": [
+                        {
+                          "id": "ID-0001",
+                          "kind": "create",
+                          "input": {},
+                          "summary": "Text",
+                          "confirmFrom": [
+                            "2026-01-15"
+                          ],
+                          "confirmations": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z",
+                          "state": "done"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/auth/account-changes/route.ts"
+      }
+    },
     "/api/auth/activity": {
       "get": {
         "tags": [
@@ -1815,6 +2031,9 @@
                             },
                             "exp": {
                               "type": "number"
+                            },
+                            "bounds": {
+                              "$ref": "#/components/schemas/Boundaries"
                             }
                           },
                           "required": [
@@ -1924,7 +2143,15 @@
                         "via": "oidc",
                         "sid": "string",
                         "iat": 1,
-                        "exp": 1
+                        "exp": 1,
+                        "bounds": {
+                          "independent": [
+                            "string"
+                          ],
+                          "judicial": [
+                            "string"
+                          ]
+                        }
                       },
                       "methods": {
                         "local": true,
@@ -2174,7 +2401,7 @@
         ],
         "operationId": "post_auth_officials_id",
         "summary": "POST /api/auth/officials/{id}",
-        "description": "Change a platform account (administrators only; audited): disable or re-enable it ({ disabled }), or set its role and institution ({ role, institution }; institution null or \"\" for the whole government), or reset its second sign-in step when the official's phone is lost ({ resetTwoStep: true }; they set it up again at their next sign-in), or issue a one-time password reset code to hand over in person ({ issueReset: true }; shown once, expires in 24 hours).",
+        "description": "Change a platform account (administrators only; audited): disable or re-enable it ({ disabled }), or set its role and institution ({ role, institution }; institution null or \"\" for the whole government), or reset its second sign-in step when the official's phone is lost ({ resetTwoStep: true }; they set it up again at their next sign-in), or issue a one-time password reset code to hand over in person ({ issueReset: true }; shown once, expires in 24 hours). An account of an independent institution (now, or after the change) is changed by that institution's own administrator; an administrator serving the whole government proposes the change and it waits (202) for an official who can sign there (lib/auth/account-changes.ts, accountChangeRule()); administrators of another institution may not.",
         "parameters": [
           {
             "name": "id",
@@ -2278,6 +2505,56 @@
               }
             }
           },
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pending": {
+                      "$ref": "#/components/schemas/AccountChange"
+                    }
+                  },
+                  "required": [
+                    "pending"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "pending": {
+                        "id": "ID-0001",
+                        "kind": "create",
+                        "accountId": "ID-0001",
+                        "officerId": "ID-0001",
+                        "input": {},
+                        "summary": "Text",
+                        "confirmFrom": [
+                          "2026-01-15"
+                        ],
+                        "confirmations": [
+                          {
+                            "institution": "string",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "by": "A. Official",
+                        "byId": "ID-0001",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "expiresAt": "2026-01-15T09:30:00.000Z",
+                        "state": "done",
+                        "result": "string",
+                        "doneAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "default": {
             "description": "Error: `{ \"error\": string }`",
             "content": {
@@ -2305,7 +2582,7 @@
         ],
         "operationId": "get_auth_officials_identity_provider",
         "summary": "GET /api/auth/officials/identity-provider",
-        "description": "The government's identity provider for officials (OpenID Connect, lib/auth/oidc.ts). Administrators only (ADMIN_ONLY in lib/auth/roles.ts), every change audited; the client secret is sealed and never returned. GET: the configuration, the redirect URI to register at the provider, and the identities waiting for an administrator. POST { action }: 'save' { name, issuer, clientId, clientSecret?, tokenAuth?, scopes?, matchClaim?, groups?: { claim, rules: [{ group, role, institution? }] } | null, mfa?: { accept, amr?, acr? }, internalNetwork?, extraHosts?, enabled? } → reads the provider's discovery document and saves; 'enable' / 'disable'; 'decide' { requestId, decision: link | create | refuse, accountId?, account?, reason? } → link the identity to an account, make an account with a role, or refuse; 'unlink' { accountId } → remove an account's identity link.",
+        "description": "The government's identity provider for officials (OpenID Connect, lib/auth/oidc.ts). Administrators only (ADMIN_ONLY in lib/auth/roles.ts), every change audited; the client secret is sealed and never returned. GET: the configuration, the redirect URI to register at the provider, and the identities waiting for an administrator. POST { action }: 'save' { name, issuer, clientId, clientSecret?, tokenAuth?, scopes?, matchClaim?, groups?: { claim, rules: [{ group, role, institution? }] } | null, mfa?: { accept, amr?, acr? }, internalNetwork?, extraHosts?, enabled? } → reads the provider's discovery document and saves; 'enable' / 'disable'; 'decide' { requestId, decision: link | create | refuse, accountId?, account?, reason? } → link the identity to an account, make an account with a role, or refuse; 'unlink' { accountId } → remove an account's identity link. Independent institutions keep their own user administration (plan phase 2): making or linking an account of one, mapping a provider group to one, or unlinking one of its accounts is for its own administrators; an administrator serving the whole government uses Official accounts instead, where the institution confirms (lib/auth/account-changes.ts).",
         "parameters": [],
         "responses": {
           "200": {
@@ -2441,7 +2718,7 @@
         ],
         "operationId": "post_auth_officials_identity_provider",
         "summary": "POST /api/auth/officials/identity-provider",
-        "description": "The government's identity provider for officials (OpenID Connect, lib/auth/oidc.ts). Administrators only (ADMIN_ONLY in lib/auth/roles.ts), every change audited; the client secret is sealed and never returned. GET: the configuration, the redirect URI to register at the provider, and the identities waiting for an administrator. POST { action }: 'save' { name, issuer, clientId, clientSecret?, tokenAuth?, scopes?, matchClaim?, groups?: { claim, rules: [{ group, role, institution? }] } | null, mfa?: { accept, amr?, acr? }, internalNetwork?, extraHosts?, enabled? } → reads the provider's discovery document and saves; 'enable' / 'disable'; 'decide' { requestId, decision: link | create | refuse, accountId?, account?, reason? } → link the identity to an account, make an account with a role, or refuse; 'unlink' { accountId } → remove an account's identity link.",
+        "description": "The government's identity provider for officials (OpenID Connect, lib/auth/oidc.ts). Administrators only (ADMIN_ONLY in lib/auth/roles.ts), every change audited; the client secret is sealed and never returned. GET: the configuration, the redirect URI to register at the provider, and the identities waiting for an administrator. POST { action }: 'save' { name, issuer, clientId, clientSecret?, tokenAuth?, scopes?, matchClaim?, groups?: { claim, rules: [{ group, role, institution? }] } | null, mfa?: { accept, amr?, acr? }, internalNetwork?, extraHosts?, enabled? } → reads the provider's discovery document and saves; 'enable' / 'disable'; 'decide' { requestId, decision: link | create | refuse, accountId?, account?, reason? } → link the identity to an account, make an account with a role, or refuse; 'unlink' { accountId } → remove an account's identity link. Independent institutions keep their own user administration (plan phase 2): making or linking an account of one, mapping a provider group to one, or unlinking one of its accounts is for its own administrators; an administrator serving the whole government uses Official accounts instead, where the institution confirms (lib/auth/account-changes.ts).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -2720,7 +2997,7 @@
         ],
         "operationId": "get_auth_officials",
         "summary": "GET /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409). An account of an independent institution (the legislature, a court, the head of state's office, an independent body) is created by that institution's own administrator; an administrator serving the whole government proposes it, and it waits (202) for an official who can sign there to confirm (lib/auth/account-changes.ts, accountChangeRule()). Administrators of another institution may not.",
         "parameters": [],
         "responses": {
           "200": {
@@ -2885,7 +3162,7 @@
         ],
         "operationId": "post_auth_officials",
         "summary": "POST /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409). An account of an independent institution (the legislature, a court, the head of state's office, an independent body) is created by that institution's own administrator; an administrator serving the whole government proposes it, and it waits (202) for an official who can sign there to confirm (lib/auth/account-changes.ts, accountChangeRule()). Administrators of another institution may not.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -2957,6 +3234,7 @@
                       "account": {
                         "id": "ID-0001",
                         "name": "Example",
+                        "role": "administrator",
                         "institution": "string",
                         "email": "official@example.gov",
                         "office": "string",
@@ -2964,7 +3242,6 @@
                         "createdBy": "A. Official",
                         "disabled": true,
                         "lastSignIn": "string",
-                        "role": "administrator",
                         "passwordChangedAt": "2026-01-15T09:30:00.000Z",
                         "identity": {
                           "issuer": "string",
@@ -2987,6 +3264,56 @@
                           }
                         ],
                         "secondStepOn": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pending": {
+                      "$ref": "#/components/schemas/AccountChange"
+                    }
+                  },
+                  "required": [
+                    "pending"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "pending": {
+                        "id": "ID-0001",
+                        "kind": "create",
+                        "accountId": "ID-0001",
+                        "officerId": "ID-0001",
+                        "input": {},
+                        "summary": "Text",
+                        "confirmFrom": [
+                          "2026-01-15"
+                        ],
+                        "confirmations": [
+                          {
+                            "institution": "string",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "by": "A. Official",
+                        "byId": "ID-0001",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "expiresAt": "2026-01-15T09:30:00.000Z",
+                        "state": "done",
+                        "result": "string",
+                        "doneAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
                   }
@@ -3021,7 +3348,7 @@
         ],
         "operationId": "get_auth_officials_substrate",
         "summary": "GET /api/auth/officials/substrate",
-        "description": "What officials who sign in through the substrate may do on the platform (go-live review H-3; lib/auth/substrate-officials.ts). GET lists the administrators' assignments; POST records one ({ officerId, role, institution, name? }; institution null or \"\" for the whole government) or removes it ({ officerId, role: null }), after which the officer register's least applies again. Administrators only; audited. Takes effect at the officer's next request.",
+        "description": "What officials who sign in through the substrate may do on the platform (go-live review H-3; lib/auth/substrate-officials.ts). GET lists the administrators' assignments; POST records one ({ officerId, role, institution, name? }; institution null or \"\" for the whole government) or removes it ({ officerId, role: null }), after which the officer register's least applies again. Administrators only; audited. Takes effect at the officer's next request. An assignment into (or out of) an independent institution by an administrator serving the whole government waits (202) for an official who can sign there (lib/auth/account-changes.ts).",
         "parameters": [],
         "responses": {
           "200": {
@@ -3113,7 +3440,7 @@
         ],
         "operationId": "post_auth_officials_substrate",
         "summary": "POST /api/auth/officials/substrate",
-        "description": "What officials who sign in through the substrate may do on the platform (go-live review H-3; lib/auth/substrate-officials.ts). GET lists the administrators' assignments; POST records one ({ officerId, role, institution, name? }; institution null or \"\" for the whole government) or removes it ({ officerId, role: null }), after which the officer register's least applies again. Administrators only; audited. Takes effect at the officer's next request.",
+        "description": "What officials who sign in through the substrate may do on the platform (go-live review H-3; lib/auth/substrate-officials.ts). GET lists the administrators' assignments; POST records one ({ officerId, role, institution, name? }; institution null or \"\" for the whole government) or removes it ({ officerId, role: null }), after which the officer register's least applies again. Administrators only; audited. Takes effect at the officer's next request. An assignment into (or out of) an independent institution by an administrator serving the whole government waits (202) for an official who can sign there (lib/auth/account-changes.ts).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -3234,6 +3561,56 @@
                         "institution": "string",
                         "by": "A. Official",
                         "at": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pending": {
+                      "$ref": "#/components/schemas/AccountChange"
+                    }
+                  },
+                  "required": [
+                    "pending"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "pending": {
+                        "id": "ID-0001",
+                        "kind": "create",
+                        "accountId": "ID-0001",
+                        "officerId": "ID-0001",
+                        "input": {},
+                        "summary": "Text",
+                        "confirmFrom": [
+                          "2026-01-15"
+                        ],
+                        "confirmations": [
+                          {
+                            "institution": "string",
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "by": "A. Official",
+                        "byId": "ID-0001",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "expiresAt": "2026-01-15T09:30:00.000Z",
+                        "state": "done",
+                        "result": "string",
+                        "doneAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
                   }
@@ -11539,7 +11916,7 @@
                           },
                           "dataClass": "personal",
                           "owner": {
-                            "key": "businessRegister",
+                            "key": "anticorruption",
                             "label": "Example",
                             "named": true
                           },
@@ -11701,20 +12078,29 @@
                           "owner": {
                             "type": "string",
                             "enum": [
+                              "anticorruption",
                               "businessRegister",
+                              "centralBank",
                               "civilRegistration",
+                              "constitutionalCourt",
                               "customs",
                               "dataProtection",
                               "education",
+                              "electoral",
+                              "headOfState",
                               "healthRegulation",
                               "higherEducationAccreditation",
+                              "humanRights",
                               "identity",
                               "immigration",
                               "judiciary",
                               "lawRegister",
+                              "legislature",
+                              "ombudsman",
                               "police",
                               "professionalRegulation",
                               "statistics",
+                              "supremeAudit",
                               "tax"
                             ]
                           },
@@ -11772,7 +12158,7 @@
                           "version": 1,
                           "kind": "event",
                           "title": "Example",
-                          "owner": "businessRegister",
+                          "owner": "anticorruption",
                           "scope": "string",
                           "returns": {
                             "key": "string"
@@ -20721,7 +21107,30 @@
                             "moduleKey": "string",
                             "enabled": true
                           }
-                        ]
+                        ],
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "terms": {}
                       }
                     }
                   }
@@ -20904,7 +21313,30 @@
                             "moduleKey": "string",
                             "enabled": true
                           }
-                        ]
+                        ],
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "terms": {}
                       }
                     }
                   }
@@ -20997,7 +21429,30 @@
                             "moduleKey": "string",
                             "enabled": true
                           }
-                        ]
+                        ],
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "terms": {}
                       }
                     }
                   }
@@ -21105,7 +21560,30 @@
                             "moduleKey": "string",
                             "enabled": true
                           }
-                        ]
+                        ],
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "terms": {}
                       }
                     }
                   }
@@ -24301,7 +24779,30 @@
                             "moduleKey": "string",
                             "enabled": true
                           }
-                        ]
+                        ],
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "terms": {}
                       }
                     }
                   }
@@ -24413,7 +24914,30 @@
                             "moduleKey": "string",
                             "enabled": true
                           }
-                        ]
+                        ],
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "terms": {}
                       }
                     }
                   }
@@ -26227,7 +26751,30 @@
                             "moduleKey": "string",
                             "enabled": true
                           }
-                        ]
+                        ],
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "terms": {}
                       }
                     }
                   }
@@ -26312,7 +26859,30 @@
                             "moduleKey": "string",
                             "enabled": true
                           }
-                        ]
+                        ],
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "terms": {}
                       }
                     }
                   }
@@ -26409,6 +26979,926 @@
           }
         ],
         "x-source": "src/app/api/org/ministries/[id]/series/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/standing": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_standing",
+        "summary": "GET /api/org/ministries/{id}/standing",
+        "description": "/api/org/ministries/{id}/standing — an institution's constitutional terms (lib/data/store/institutions.ts; plan phase 1): its standing, branch, establishing law, the date it applies from, independence per dimension, what the law forbids and the records it owns. GET: the terms in force, changes scheduled, a change waiting for its second official, every earlier version, and the choices (standings, dimensions, branches). POST { op }: 'record' (first-run setup only; administrators) { standing?, branch?, effectiveFrom?, independence?, prohibitions?, records?, legalBasis? } 'propose' (administrators of the whole government or of the institution) the same fields, legalBasis: [{ instrument, eId }] required, and optionally change: { kind: rename, name } | { kind: deactivate } | { kind: merge, into }; 'confirm' a different official (an administrator or one who can sign); for an independent institution with its own officials who can sign, one of them; 'withdraw' { reason? } the proposer or an administrator. Who acted comes from the sign-in. Every step is audited and every version kept.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "institution": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "active",
+                            "deactivated",
+                            "merged"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "status"
+                      ]
+                    },
+                    "terms": {
+                      "type": "object",
+                      "properties": {
+                        "standing": {
+                          "type": "string",
+                          "enum": [
+                            "customary-or-religious",
+                            "executive-agency",
+                            "executive-ministry",
+                            "head-of-state",
+                            "independent-constitutional",
+                            "independent-statutory",
+                            "judiciary",
+                            "legislature",
+                            "subnational"
+                          ]
+                        },
+                        "branch": {
+                          "type": "string",
+                          "enum": [
+                            "crown",
+                            "electoral",
+                            "executive",
+                            "federal-council",
+                            "judiciary",
+                            "legislature",
+                            "oversight"
+                          ]
+                        },
+                        "effectiveFrom": {
+                          "type": "string"
+                        },
+                        "independence": {
+                          "type": "object",
+                          "properties": {
+                            "appointment": {
+                              "$ref": "#/components/schemas/IndependenceRule"
+                            },
+                            "decisions": {
+                              "$ref": "#/components/schemas/IndependenceRule"
+                            },
+                            "dismissal": {
+                              "$ref": "#/components/schemas/IndependenceRule"
+                            },
+                            "funding": {
+                              "$ref": "#/components/schemas/IndependenceRule"
+                            },
+                            "instructions": {
+                              "$ref": "#/components/schemas/IndependenceRule"
+                            }
+                          }
+                        },
+                        "prohibitions": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/InstitutionProhibition"
+                          }
+                        },
+                        "records": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "change": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "const": "deactivate"
+                                }
+                              },
+                              "required": [
+                                "kind"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "const": "merge"
+                                },
+                                "into": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "into"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "const": "rename"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "name"
+                              ]
+                            }
+                          ],
+                          "description": "Renaming, deactivating or merging the institution, when this change does that."
+                        },
+                        "basis": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Citation"
+                          }
+                        }
+                      },
+                      "required": [
+                        "standing",
+                        "effectiveFrom",
+                        "independence",
+                        "prohibitions",
+                        "records"
+                      ]
+                    },
+                    "independent": {
+                      "type": "boolean"
+                    },
+                    "scheduled": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Adopted"
+                      }
+                    },
+                    "pending": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/InstitutionTerms"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ]
+                        }
+                      ]
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "values": {
+                            "$ref": "#/components/schemas/InstitutionTerms"
+                          },
+                          "basis": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/Citation"
+                            }
+                          },
+                          "by": {
+                            "type": "string"
+                          },
+                          "byId": {
+                            "type": "string"
+                          },
+                          "at": {
+                            "type": "string"
+                          },
+                          "confirmed": {
+                            "type": "object",
+                            "properties": {
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "independence": {
+                                "type": "string",
+                                "enum": [
+                                  "accounts-only",
+                                  "identity-provider",
+                                  "unverified"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "by",
+                              "at",
+                              "independence"
+                            ]
+                          },
+                          "outcome": {
+                            "type": "string",
+                            "enum": [
+                              "adopted",
+                              "lapsed",
+                              "withdrawn"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "values",
+                          "basis",
+                          "by",
+                          "at",
+                          "outcome"
+                        ]
+                      }
+                    },
+                    "confirmBy": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        }
+                      ]
+                    },
+                    "setupRunning": {
+                      "type": "boolean"
+                    },
+                    "choices": {
+                      "type": "object",
+                      "properties": {
+                        "standings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "enum": [
+                                  "customary-or-religious",
+                                  "executive-agency",
+                                  "executive-ministry",
+                                  "head-of-state",
+                                  "independent-constitutional",
+                                  "independent-statutory",
+                                  "judiciary",
+                                  "legislature",
+                                  "subnational"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "means": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "means"
+                            ]
+                          }
+                        },
+                        "dimensions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "enum": [
+                                  "appointment",
+                                  "decisions",
+                                  "dismissal",
+                                  "funding",
+                                  "instructions"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "question": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "question"
+                            ]
+                          }
+                        },
+                        "branches": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "enum": [
+                                  "crown",
+                                  "electoral",
+                                  "executive",
+                                  "federal-council",
+                                  "judiciary",
+                                  "legislature",
+                                  "oversight"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "standings",
+                        "dimensions",
+                        "branches"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "institution",
+                    "terms",
+                    "independent",
+                    "scheduled",
+                    "pending",
+                    "history",
+                    "confirmBy",
+                    "setupRunning",
+                    "choices"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "institution": {
+                        "id": "ID-0001",
+                        "name": "Example",
+                        "status": "active"
+                      },
+                      "terms": {
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "change": {
+                          "kind": "deactivate"
+                        },
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ]
+                      },
+                      "independent": true,
+                      "scheduled": [
+                        {
+                          "values": {
+                            "standing": "customary-or-religious",
+                            "effectiveFrom": "2026-01-15",
+                            "independence": {},
+                            "prohibitions": [],
+                            "records": []
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "outcome": "string"
+                        }
+                      ],
+                      "pending": {
+                        "values": {
+                          "standing": "customary-or-religious",
+                          "effectiveFrom": "2026-01-15",
+                          "independence": {},
+                          "prohibitions": [
+                            {}
+                          ],
+                          "records": [
+                            "string"
+                          ]
+                        },
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "by": "A. Official",
+                        "byId": "ID-0001",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "confirmed": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "independence": "accounts-only"
+                        },
+                        "expiresAt": "2026-01-15T09:30:00.000Z"
+                      },
+                      "history": [
+                        {
+                          "values": {
+                            "standing": "customary-or-religious",
+                            "effectiveFrom": "2026-01-15",
+                            "independence": {},
+                            "prohibitions": [],
+                            "records": []
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "outcome": "adopted"
+                        }
+                      ],
+                      "confirmBy": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "setupRunning": true,
+                      "choices": {
+                        "standings": [
+                          {
+                            "key": "customary-or-religious",
+                            "label": "Example",
+                            "means": "string"
+                          }
+                        ],
+                        "dimensions": [
+                          {
+                            "key": "appointment",
+                            "label": "Example",
+                            "question": "string"
+                          }
+                        ],
+                        "branches": [
+                          {
+                            "key": "crown",
+                            "label": "Example"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/org/ministries/[id]/standing/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_standing",
+        "summary": "POST /api/org/ministries/{id}/standing",
+        "description": "/api/org/ministries/{id}/standing — an institution's constitutional terms (lib/data/store/institutions.ts; plan phase 1): its standing, branch, establishing law, the date it applies from, independence per dimension, what the law forbids and the records it owns. GET: the terms in force, changes scheduled, a change waiting for its second official, every earlier version, and the choices (standings, dimensions, branches). POST { op }: 'record' (first-run setup only; administrators) { standing?, branch?, effectiveFrom?, independence?, prohibitions?, records?, legalBasis? } 'propose' (administrators of the whole government or of the institution) the same fields, legalBasis: [{ instrument, eId }] required, and optionally change: { kind: rename, name } | { kind: deactivate } | { kind: merge, into }; 'confirm' a different official (an administrator or one who can sign); for an independent institution with its own officials who can sign, one of them; 'withdraw' { reason? } the proposer or an administrator. Who acted comes from the sign-in. Every step is audited and every version kept.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "reason": "Text"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "result": {
+                          "type": "object"
+                        },
+                        "terms": {
+                          "type": "object",
+                          "properties": {
+                            "standing": {
+                              "type": "string",
+                              "enum": [
+                                "customary-or-religious",
+                                "executive-agency",
+                                "executive-ministry",
+                                "head-of-state",
+                                "independent-constitutional",
+                                "independent-statutory",
+                                "judiciary",
+                                "legislature",
+                                "subnational"
+                              ]
+                            },
+                            "branch": {
+                              "type": "string",
+                              "enum": [
+                                "crown",
+                                "electoral",
+                                "executive",
+                                "federal-council",
+                                "judiciary",
+                                "legislature",
+                                "oversight"
+                              ]
+                            },
+                            "effectiveFrom": {
+                              "type": "string"
+                            },
+                            "independence": {
+                              "type": "object",
+                              "properties": {
+                                "appointment": {
+                                  "$ref": "#/components/schemas/IndependenceRule"
+                                },
+                                "decisions": {
+                                  "$ref": "#/components/schemas/IndependenceRule"
+                                },
+                                "dismissal": {
+                                  "$ref": "#/components/schemas/IndependenceRule"
+                                },
+                                "funding": {
+                                  "$ref": "#/components/schemas/IndependenceRule"
+                                },
+                                "instructions": {
+                                  "$ref": "#/components/schemas/IndependenceRule"
+                                }
+                              }
+                            },
+                            "prohibitions": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/InstitutionProhibition"
+                              }
+                            },
+                            "records": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "change": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "deactivate"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind"
+                                  ]
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "merge"
+                                    },
+                                    "into": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "into"
+                                  ]
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "const": "rename"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "name"
+                                  ]
+                                }
+                              ],
+                              "description": "Renaming, deactivating or merging the institution, when this change does that."
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            }
+                          },
+                          "required": [
+                            "standing",
+                            "effectiveFrom",
+                            "independence",
+                            "prohibitions",
+                            "records"
+                          ]
+                        },
+                        "independent": {
+                          "type": "boolean"
+                        },
+                        "pending": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "values": {
+                                  "$ref": "#/components/schemas/InstitutionTerms"
+                                },
+                                "basis": {
+                                  "type": "array",
+                                  "items": {
+                                    "$ref": "#/components/schemas/Citation"
+                                  }
+                                },
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "confirmed": {
+                                  "type": "object",
+                                  "properties": {
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "independence": {
+                                      "type": "string",
+                                      "enum": [
+                                        "accounts-only",
+                                        "identity-provider",
+                                        "unverified"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "by",
+                                    "at",
+                                    "independence"
+                                  ]
+                                },
+                                "expiresAt": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "values",
+                                "basis",
+                                "by",
+                                "at",
+                                "expiresAt"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "terms",
+                        "independent",
+                        "pending"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "error": "Text"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/org/ministries/[id]/standing/route.ts"
       }
     },
     "/api/org/ministries": {
@@ -26535,7 +28025,30 @@
                             "moduleKey": "string",
                             "enabled": true
                           }
-                        ]
+                        ],
+                        "standing": "customary-or-religious",
+                        "branch": "crown",
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "effectiveFrom": "2026-01-15",
+                        "independence": {},
+                        "prohibitions": [
+                          {
+                            "kind": "data-access",
+                            "text": "string"
+                          }
+                        ],
+                        "records": [
+                          "string"
+                        ],
+                        "terms": {}
                       }
                     }
                   }
@@ -33695,20 +35208,29 @@
                                   "key": {
                                     "type": "string",
                                     "enum": [
+                                      "anticorruption",
                                       "businessRegister",
+                                      "centralBank",
                                       "civilRegistration",
+                                      "constitutionalCourt",
                                       "customs",
                                       "dataProtection",
                                       "education",
+                                      "electoral",
+                                      "headOfState",
                                       "healthRegulation",
                                       "higherEducationAccreditation",
+                                      "humanRights",
                                       "identity",
                                       "immigration",
                                       "judiciary",
                                       "lawRegister",
+                                      "legislature",
+                                      "ombudsman",
                                       "police",
                                       "professionalRegulation",
                                       "statistics",
+                                      "supremeAudit",
                                       "tax"
                                     ]
                                   }
@@ -33797,7 +35319,7 @@
                           "name": "Example",
                           "legal": {
                             "kind": "authority",
-                            "key": "businessRegister"
+                            "key": "anticorruption"
                           },
                           "named": true
                         }
@@ -34150,10 +35672,12 @@
                         },
                         "reason": "Text",
                         "proposedBy": "A. Official",
+                        "proposedById": "ID-0001",
                         "proposedAt": "2026-01-15T09:30:00.000Z",
                         "state": "awaiting-oversight",
                         "oversightBy": "A. Official",
                         "decidedBy": "A. Official",
+                        "decidedById": "ID-0001",
                         "decidedAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
@@ -34439,10 +35963,12 @@
                         },
                         "reason": "Text",
                         "proposedBy": "A. Official",
+                        "proposedById": "ID-0001",
                         "proposedAt": "2026-01-15T09:30:00.000Z",
                         "state": "awaiting-oversight",
                         "oversightBy": "A. Official",
                         "decidedBy": "A. Official",
+                        "decidedById": "ID-0001",
                         "decidedAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
@@ -50474,6 +52000,1002 @@
         "x-source": "src/app/api/signatures/route.ts"
       }
     },
+    "/api/sovereign/authorities": {
+      "get": {
+        "tags": [
+          "sovereign"
+        ],
+        "operationId": "get_sovereign_authorities",
+        "summary": "GET /api/sovereign/authorities",
+        "description": "/api/sovereign/authorities — who is responsible for each register and power, once setup is complete (lib/data/store/sovereign.ts; plan phase 2, audit D). During first-run setup the deployment profile is saved through /api/sovereign as before; afterwards a direct change there is refused and goes through here, the country's change process (lib/law/policy-change.ts). GET: who is named now, a proposal waiting for its second official and every earlier version. POST (administrators, ADMIN_ONLY under /api/sovereign): { op: 'propose' (default), authorities: { register: institution id | \"\" }, legalBasis: [{ instrument, eId }] } by an administrator serving the whole government; registers left out keep their institution; { op: 'confirm' } a different administrator adopts it; { op: 'withdraw', reason? }. Who acted comes from the sign-in; every step is audited.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authorities": {
+                      "type": "object",
+                      "properties": {
+                        "anticorruption": {
+                          "type": "string"
+                        },
+                        "businessRegister": {
+                          "type": "string"
+                        },
+                        "centralBank": {
+                          "type": "string"
+                        },
+                        "civilRegistration": {
+                          "type": "string"
+                        },
+                        "constitutionalCourt": {
+                          "type": "string"
+                        },
+                        "customs": {
+                          "type": "string"
+                        },
+                        "dataProtection": {
+                          "type": "string"
+                        },
+                        "education": {
+                          "type": "string"
+                        },
+                        "electoral": {
+                          "type": "string"
+                        },
+                        "headOfState": {
+                          "type": "string"
+                        },
+                        "healthRegulation": {
+                          "type": "string"
+                        },
+                        "higherEducationAccreditation": {
+                          "type": "string"
+                        },
+                        "humanRights": {
+                          "type": "string"
+                        },
+                        "identity": {
+                          "type": "string"
+                        },
+                        "immigration": {
+                          "type": "string"
+                        },
+                        "judiciary": {
+                          "type": "string"
+                        },
+                        "lawRegister": {
+                          "type": "string"
+                        },
+                        "legislature": {
+                          "type": "string"
+                        },
+                        "ombudsman": {
+                          "type": "string"
+                        },
+                        "police": {
+                          "type": "string"
+                        },
+                        "professionalRegulation": {
+                          "type": "string"
+                        },
+                        "statistics": {
+                          "type": "string"
+                        },
+                        "supremeAudit": {
+                          "type": "string"
+                        },
+                        "tax": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "changes": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "type": "object",
+                              "properties": {
+                                "authorities": {
+                                  "type": "object",
+                                  "properties": {
+                                    "anticorruption": {
+                                      "type": "string"
+                                    },
+                                    "businessRegister": {
+                                      "type": "string"
+                                    },
+                                    "centralBank": {
+                                      "type": "string"
+                                    },
+                                    "civilRegistration": {
+                                      "type": "string"
+                                    },
+                                    "constitutionalCourt": {
+                                      "type": "string"
+                                    },
+                                    "customs": {
+                                      "type": "string"
+                                    },
+                                    "dataProtection": {
+                                      "type": "string"
+                                    },
+                                    "education": {
+                                      "type": "string"
+                                    },
+                                    "electoral": {
+                                      "type": "string"
+                                    },
+                                    "headOfState": {
+                                      "type": "string"
+                                    },
+                                    "healthRegulation": {
+                                      "type": "string"
+                                    },
+                                    "higherEducationAccreditation": {
+                                      "type": "string"
+                                    },
+                                    "humanRights": {
+                                      "type": "string"
+                                    },
+                                    "identity": {
+                                      "type": "string"
+                                    },
+                                    "immigration": {
+                                      "type": "string"
+                                    },
+                                    "judiciary": {
+                                      "type": "string"
+                                    },
+                                    "lawRegister": {
+                                      "type": "string"
+                                    },
+                                    "legislature": {
+                                      "type": "string"
+                                    },
+                                    "ombudsman": {
+                                      "type": "string"
+                                    },
+                                    "police": {
+                                      "type": "string"
+                                    },
+                                    "professionalRegulation": {
+                                      "type": "string"
+                                    },
+                                    "statistics": {
+                                      "type": "string"
+                                    },
+                                    "supremeAudit": {
+                                      "type": "string"
+                                    },
+                                    "tax": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              },
+                              "required": [
+                                "authorities"
+                              ]
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "type": "object",
+                                "properties": {
+                                  "authorities": {
+                                    "type": "object",
+                                    "properties": {
+                                      "anticorruption": {
+                                        "type": "string"
+                                      },
+                                      "businessRegister": {
+                                        "type": "string"
+                                      },
+                                      "centralBank": {
+                                        "type": "string"
+                                      },
+                                      "civilRegistration": {
+                                        "type": "string"
+                                      },
+                                      "constitutionalCourt": {
+                                        "type": "string"
+                                      },
+                                      "customs": {
+                                        "type": "string"
+                                      },
+                                      "dataProtection": {
+                                        "type": "string"
+                                      },
+                                      "education": {
+                                        "type": "string"
+                                      },
+                                      "electoral": {
+                                        "type": "string"
+                                      },
+                                      "headOfState": {
+                                        "type": "string"
+                                      },
+                                      "healthRegulation": {
+                                        "type": "string"
+                                      },
+                                      "higherEducationAccreditation": {
+                                        "type": "string"
+                                      },
+                                      "humanRights": {
+                                        "type": "string"
+                                      },
+                                      "identity": {
+                                        "type": "string"
+                                      },
+                                      "immigration": {
+                                        "type": "string"
+                                      },
+                                      "judiciary": {
+                                        "type": "string"
+                                      },
+                                      "lawRegister": {
+                                        "type": "string"
+                                      },
+                                      "legislature": {
+                                        "type": "string"
+                                      },
+                                      "ombudsman": {
+                                        "type": "string"
+                                      },
+                                      "police": {
+                                        "type": "string"
+                                      },
+                                      "professionalRegulation": {
+                                        "type": "string"
+                                      },
+                                      "statistics": {
+                                        "type": "string"
+                                      },
+                                      "supremeAudit": {
+                                        "type": "string"
+                                      },
+                                      "tax": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "authorities"
+                                ]
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    },
+                    "setupComplete": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "authorities",
+                    "changes",
+                    "setupComplete"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "authorities": {
+                        "anticorruption": "string",
+                        "businessRegister": "string",
+                        "centralBank": "string",
+                        "civilRegistration": "string",
+                        "constitutionalCourt": "string",
+                        "customs": "string",
+                        "dataProtection": "string",
+                        "education": "string",
+                        "electoral": "string",
+                        "headOfState": "string",
+                        "healthRegulation": "string",
+                        "higherEducationAccreditation": "string",
+                        "humanRights": "string",
+                        "identity": "string",
+                        "immigration": "string",
+                        "judiciary": "string",
+                        "lawRegister": "string",
+                        "legislature": "string",
+                        "ombudsman": "string",
+                        "police": "string",
+                        "professionalRegulation": "string",
+                        "statistics": "string",
+                        "supremeAudit": "string",
+                        "tax": "string"
+                      },
+                      "changes": {
+                        "pending": {
+                          "values": {
+                            "authorities": {}
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      },
+                      "setupComplete": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/sovereign/authorities/route.ts"
+      },
+      "post": {
+        "tags": [
+          "sovereign"
+        ],
+        "operationId": "post_sovereign_authorities",
+        "summary": "POST /api/sovereign/authorities",
+        "description": "/api/sovereign/authorities — who is responsible for each register and power, once setup is complete (lib/data/store/sovereign.ts; plan phase 2, audit D). During first-run setup the deployment profile is saved through /api/sovereign as before; afterwards a direct change there is refused and goes through here, the country's change process (lib/law/policy-change.ts). GET: who is named now, a proposal waiting for its second official and every earlier version. POST (administrators, ADMIN_ONLY under /api/sovereign): { op: 'propose' (default), authorities: { register: institution id | \"\" }, legalBasis: [{ instrument, eId }] } by an administrator serving the whole government; registers left out keep their institution; { op: 'confirm' } a different administrator adopts it; { op: 'withdraw', reason? }. Who acted comes from the sign-in; every step is audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "authorities": {},
+                  "legalBasis": {},
+                  "reason": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "authorities": null,
+                    "legalBasis": null,
+                    "reason": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object"
+                    },
+                    "authorities": {
+                      "type": "object",
+                      "properties": {
+                        "anticorruption": {
+                          "type": "string"
+                        },
+                        "businessRegister": {
+                          "type": "string"
+                        },
+                        "centralBank": {
+                          "type": "string"
+                        },
+                        "civilRegistration": {
+                          "type": "string"
+                        },
+                        "constitutionalCourt": {
+                          "type": "string"
+                        },
+                        "customs": {
+                          "type": "string"
+                        },
+                        "dataProtection": {
+                          "type": "string"
+                        },
+                        "education": {
+                          "type": "string"
+                        },
+                        "electoral": {
+                          "type": "string"
+                        },
+                        "headOfState": {
+                          "type": "string"
+                        },
+                        "healthRegulation": {
+                          "type": "string"
+                        },
+                        "higherEducationAccreditation": {
+                          "type": "string"
+                        },
+                        "humanRights": {
+                          "type": "string"
+                        },
+                        "identity": {
+                          "type": "string"
+                        },
+                        "immigration": {
+                          "type": "string"
+                        },
+                        "judiciary": {
+                          "type": "string"
+                        },
+                        "lawRegister": {
+                          "type": "string"
+                        },
+                        "legislature": {
+                          "type": "string"
+                        },
+                        "ombudsman": {
+                          "type": "string"
+                        },
+                        "police": {
+                          "type": "string"
+                        },
+                        "professionalRegulation": {
+                          "type": "string"
+                        },
+                        "statistics": {
+                          "type": "string"
+                        },
+                        "supremeAudit": {
+                          "type": "string"
+                        },
+                        "tax": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "changes": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "type": "object",
+                              "properties": {
+                                "authorities": {
+                                  "type": "object",
+                                  "properties": {
+                                    "anticorruption": {
+                                      "type": "string"
+                                    },
+                                    "businessRegister": {
+                                      "type": "string"
+                                    },
+                                    "centralBank": {
+                                      "type": "string"
+                                    },
+                                    "civilRegistration": {
+                                      "type": "string"
+                                    },
+                                    "constitutionalCourt": {
+                                      "type": "string"
+                                    },
+                                    "customs": {
+                                      "type": "string"
+                                    },
+                                    "dataProtection": {
+                                      "type": "string"
+                                    },
+                                    "education": {
+                                      "type": "string"
+                                    },
+                                    "electoral": {
+                                      "type": "string"
+                                    },
+                                    "headOfState": {
+                                      "type": "string"
+                                    },
+                                    "healthRegulation": {
+                                      "type": "string"
+                                    },
+                                    "higherEducationAccreditation": {
+                                      "type": "string"
+                                    },
+                                    "humanRights": {
+                                      "type": "string"
+                                    },
+                                    "identity": {
+                                      "type": "string"
+                                    },
+                                    "immigration": {
+                                      "type": "string"
+                                    },
+                                    "judiciary": {
+                                      "type": "string"
+                                    },
+                                    "lawRegister": {
+                                      "type": "string"
+                                    },
+                                    "legislature": {
+                                      "type": "string"
+                                    },
+                                    "ombudsman": {
+                                      "type": "string"
+                                    },
+                                    "police": {
+                                      "type": "string"
+                                    },
+                                    "professionalRegulation": {
+                                      "type": "string"
+                                    },
+                                    "statistics": {
+                                      "type": "string"
+                                    },
+                                    "supremeAudit": {
+                                      "type": "string"
+                                    },
+                                    "tax": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              },
+                              "required": [
+                                "authorities"
+                              ]
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "type": "object",
+                                "properties": {
+                                  "authorities": {
+                                    "type": "object",
+                                    "properties": {
+                                      "anticorruption": {
+                                        "type": "string"
+                                      },
+                                      "businessRegister": {
+                                        "type": "string"
+                                      },
+                                      "centralBank": {
+                                        "type": "string"
+                                      },
+                                      "civilRegistration": {
+                                        "type": "string"
+                                      },
+                                      "constitutionalCourt": {
+                                        "type": "string"
+                                      },
+                                      "customs": {
+                                        "type": "string"
+                                      },
+                                      "dataProtection": {
+                                        "type": "string"
+                                      },
+                                      "education": {
+                                        "type": "string"
+                                      },
+                                      "electoral": {
+                                        "type": "string"
+                                      },
+                                      "headOfState": {
+                                        "type": "string"
+                                      },
+                                      "healthRegulation": {
+                                        "type": "string"
+                                      },
+                                      "higherEducationAccreditation": {
+                                        "type": "string"
+                                      },
+                                      "humanRights": {
+                                        "type": "string"
+                                      },
+                                      "identity": {
+                                        "type": "string"
+                                      },
+                                      "immigration": {
+                                        "type": "string"
+                                      },
+                                      "judiciary": {
+                                        "type": "string"
+                                      },
+                                      "lawRegister": {
+                                        "type": "string"
+                                      },
+                                      "legislature": {
+                                        "type": "string"
+                                      },
+                                      "ombudsman": {
+                                        "type": "string"
+                                      },
+                                      "police": {
+                                        "type": "string"
+                                      },
+                                      "professionalRegulation": {
+                                        "type": "string"
+                                      },
+                                      "statistics": {
+                                        "type": "string"
+                                      },
+                                      "supremeAudit": {
+                                        "type": "string"
+                                      },
+                                      "tax": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "authorities"
+                                ]
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "authorities",
+                    "changes"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {},
+                      "authorities": {
+                        "anticorruption": "string",
+                        "businessRegister": "string",
+                        "centralBank": "string",
+                        "civilRegistration": "string",
+                        "constitutionalCourt": "string",
+                        "customs": "string",
+                        "dataProtection": "string",
+                        "education": "string",
+                        "electoral": "string",
+                        "headOfState": "string",
+                        "healthRegulation": "string",
+                        "higherEducationAccreditation": "string",
+                        "humanRights": "string",
+                        "identity": "string",
+                        "immigration": "string",
+                        "judiciary": "string",
+                        "lawRegister": "string",
+                        "legislature": "string",
+                        "ombudsman": "string",
+                        "police": "string",
+                        "professionalRegulation": "string",
+                        "statistics": "string",
+                        "supremeAudit": "string",
+                        "tax": "string"
+                      },
+                      "changes": {
+                        "pending": {
+                          "values": {
+                            "authorities": {}
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/sovereign/authorities/route.ts"
+      }
+    },
     "/api/sovereign/preset": {
       "post": {
         "tags": [
@@ -50481,6 +53003,7 @@
         ],
         "operationId": "post_sovereign_preset",
         "summary": "POST /api/sovereign/preset",
+        "description": "POST { key } applies a sovereign preset (a first-run template): refused (409) once setup is complete (lib/data/store/sovereign.ts applySovereignPreset(), plan phase 0).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -59574,6 +62097,145 @@
           "hash"
         ]
       },
+      "AccountChange": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "create",
+              "disable",
+              "enable",
+              "issue-reset",
+              "reset-two-step",
+              "role",
+              "substrate"
+            ]
+          },
+          "accountId": {
+            "type": "string",
+            "description": "The platform account changed (absent for a new one until it is created)."
+          },
+          "officerId": {
+            "type": "string",
+            "description": "A substrate officer's id, for an assignment."
+          },
+          "input": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "office": {
+                "type": "string"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "institution": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "description": "What is to be done, never a password."
+          },
+          "summary": {
+            "type": "string",
+            "description": "In plain words, for the screens and the audit chain."
+          },
+          "confirmFrom": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The independent institutions that must confirm, each by one of its officials who can sign."
+          },
+          "confirmations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "institution": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "byId": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "institution",
+                "by",
+                "at"
+              ]
+            }
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "done",
+              "failed",
+              "lapsed",
+              "waiting",
+              "withdrawn"
+            ]
+          },
+          "result": {
+            "type": "string"
+          },
+          "doneAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "input",
+          "summary",
+          "confirmFrom",
+          "confirmations",
+          "by",
+          "at",
+          "expiresAt",
+          "state"
+        ]
+      },
       "ActionSpec": {
         "type": "object",
         "properties": {
@@ -59760,6 +62422,66 @@
           "lng",
           "lat",
           "geometry"
+        ]
+      },
+      "Adopted": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "$ref": "#/components/schemas/InstitutionTerms"
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "by": {
+            "type": "string"
+          },
+          "byId": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "confirmed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "independence": {
+                "type": "string",
+                "enum": [
+                  "accounts-only",
+                  "identity-provider",
+                  "unverified"
+                ]
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "independence"
+            ]
+          },
+          "outcome": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "values",
+          "basis",
+          "by",
+          "at",
+          "outcome"
         ]
       },
       "AdvisoryExposure": {
@@ -61846,6 +64568,41 @@
           "end",
           "by",
           "at"
+        ]
+      },
+      "Boundaries": {
+        "description": "Where whole-government reach stops (docs/CONSTITUTIONAL_ARCHITECTURE.md §5.1, §5.3; plan phase 2). Read from the institution register at use (lib/data/store/institutions.ts institutionBounds()) and carried with the signed-in official (lib/auth/official.ts currentOfficial()), so this file keeps no imports.",
+        "type": "object",
+        "properties": {
+          "independent": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Independent institutions: the legislature, courts, the head of state's office, bodies the constitution sets up, bodies set up by law whose decisions are recorded as protected, and those named for the judiciary and data protection."
+          },
+          "judicial": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Courts (standing judiciary, or named for the judiciary or a constitutional court): closed to every other institution."
+          },
+          "audit": {
+            "type": "string",
+            "description": "The public audit office, when the nation named one and recorded it as set up by the constitution."
+          },
+          "institutions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every registered institution: directives are issued and signed for one only by its own officials."
+          }
+        },
+        "required": [
+          "independent",
+          "judicial"
         ]
       },
       "BoundaryCheck": {
@@ -66136,10 +68893,19 @@
           "authorities": {
             "type": "object",
             "properties": {
+              "anticorruption": {
+                "type": "string"
+              },
               "businessRegister": {
                 "type": "string"
               },
+              "centralBank": {
+                "type": "string"
+              },
               "civilRegistration": {
+                "type": "string"
+              },
+              "constitutionalCourt": {
                 "type": "string"
               },
               "customs": {
@@ -66151,10 +68917,19 @@
               "education": {
                 "type": "string"
               },
+              "electoral": {
+                "type": "string"
+              },
+              "headOfState": {
+                "type": "string"
+              },
               "healthRegulation": {
                 "type": "string"
               },
               "higherEducationAccreditation": {
+                "type": "string"
+              },
+              "humanRights": {
                 "type": "string"
               },
               "identity": {
@@ -66169,6 +68944,12 @@
               "lawRegister": {
                 "type": "string"
               },
+              "legislature": {
+                "type": "string"
+              },
+              "ombudsman": {
+                "type": "string"
+              },
               "police": {
                 "type": "string"
               },
@@ -66176,6 +68957,9 @@
                 "type": "string"
               },
               "statistics": {
+                "type": "string"
+              },
+              "supremeAudit": {
                 "type": "string"
               },
               "tax": {
@@ -70299,6 +73083,33 @@
           "at"
         ]
       },
+      "IndependenceRule": {
+        "description": "What the law provides for one dimension of an institution's independence.",
+        "type": "object",
+        "properties": {
+          "protected": {
+            "type": "boolean",
+            "description": "The law protects this dimension from control by another institution."
+          },
+          "actor": {
+            "type": "string",
+            "description": "Who acts on this dimension under the law, in the nation's words (who appoints, who funds, who may dismiss)."
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "description": "The provisions it rests on, cited from the laws register."
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "protected"
+        ]
+      },
       "Inspection": {
         "type": "object",
         "properties": {
@@ -70456,6 +73267,27 @@
           "installedAt"
         ]
       },
+      "InstitutionProhibition": {
+        "description": "Something the law forbids (guidance §7.2.5).",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "data-access",
+              "direction",
+              "non-delegable"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "text"
+        ]
+      },
       "InstitutionReturn": {
         "type": "object",
         "properties": {
@@ -70520,6 +73352,129 @@
           "organisation",
           "period",
           "versions"
+        ]
+      },
+      "InstitutionTerms": {
+        "description": "The values a change to an institution's constitutional terms carries.",
+        "type": "object",
+        "properties": {
+          "standing": {
+            "type": "string",
+            "enum": [
+              "customary-or-religious",
+              "executive-agency",
+              "executive-ministry",
+              "head-of-state",
+              "independent-constitutional",
+              "independent-statutory",
+              "judiciary",
+              "legislature",
+              "subnational"
+            ]
+          },
+          "branch": {
+            "type": "string",
+            "enum": [
+              "crown",
+              "electoral",
+              "executive",
+              "federal-council",
+              "judiciary",
+              "legislature",
+              "oversight"
+            ]
+          },
+          "effectiveFrom": {
+            "type": "string"
+          },
+          "independence": {
+            "type": "object",
+            "properties": {
+              "appointment": {
+                "$ref": "#/components/schemas/IndependenceRule"
+              },
+              "decisions": {
+                "$ref": "#/components/schemas/IndependenceRule"
+              },
+              "dismissal": {
+                "$ref": "#/components/schemas/IndependenceRule"
+              },
+              "funding": {
+                "$ref": "#/components/schemas/IndependenceRule"
+              },
+              "instructions": {
+                "$ref": "#/components/schemas/IndependenceRule"
+              }
+            }
+          },
+          "prohibitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstitutionProhibition"
+            }
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "change": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "deactivate"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "merge"
+                  },
+                  "into": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "into"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "rename"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "name"
+                ]
+              }
+            ],
+            "description": "Renaming, deactivating or merging the institution, when this change does that."
+          }
+        },
+        "required": [
+          "standing",
+          "effectiveFrom",
+          "independence",
+          "prohibitions",
+          "records"
         ]
       },
       "IntegrationApprovalProposal": {
@@ -72484,6 +75439,216 @@
             "items": {
               "$ref": "#/components/schemas/ModuleActivation"
             }
+          },
+          "standing": {
+            "type": "string",
+            "enum": [
+              "customary-or-religious",
+              "executive-agency",
+              "executive-ministry",
+              "head-of-state",
+              "independent-constitutional",
+              "independent-statutory",
+              "judiciary",
+              "legislature",
+              "subnational"
+            ],
+            "description": "What kind of public body this is under the nation's law."
+          },
+          "branch": {
+            "type": "string",
+            "enum": [
+              "crown",
+              "electoral",
+              "executive",
+              "federal-council",
+              "judiciary",
+              "legislature",
+              "oversight"
+            ],
+            "description": "The branch of state it belongs to, when the nation says (branch keys of lib/gov/constitution.ts)."
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "description": "The law that establishes it, cited from the laws register."
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "description": "From when the recorded standing applies (YYYY-MM-DD)."
+          },
+          "independence": {
+            "type": "object",
+            "properties": {
+              "appointment": {
+                "$ref": "#/components/schemas/IndependenceRule"
+              },
+              "decisions": {
+                "$ref": "#/components/schemas/IndependenceRule"
+              },
+              "dismissal": {
+                "$ref": "#/components/schemas/IndependenceRule"
+              },
+              "funding": {
+                "$ref": "#/components/schemas/IndependenceRule"
+              },
+              "instructions": {
+                "$ref": "#/components/schemas/IndependenceRule"
+              }
+            },
+            "description": "Independence, one rule per dimension (never one flag, guidance §7.2.1–2)."
+          },
+          "prohibitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstitutionProhibition"
+            },
+            "description": "What the law forbids: directions it may not receive, data it may not reach, powers it may not delegate (§7.2.5)."
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The records it is the authoritative owner of, in the nation's words (§7.2.4)."
+          },
+          "terms": {
+            "type": "object",
+            "properties": {
+              "pending": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "$ref": "#/components/schemas/InstitutionTerms"
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    }
+                  },
+                  "by": {
+                    "type": "string"
+                  },
+                  "byId": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  },
+                  "confirmed": {
+                    "type": "object",
+                    "properties": {
+                      "by": {
+                        "type": "string"
+                      },
+                      "byId": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      },
+                      "independence": {
+                        "type": "string",
+                        "enum": [
+                          "accounts-only",
+                          "identity-provider",
+                          "unverified"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "by",
+                      "at",
+                      "independence"
+                    ]
+                  },
+                  "expiresAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "values",
+                  "basis",
+                  "by",
+                  "at",
+                  "expiresAt"
+                ],
+                "description": "A proposal waiting for its second official."
+              },
+              "history": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "values": {
+                      "$ref": "#/components/schemas/InstitutionTerms"
+                    },
+                    "basis": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Citation"
+                      }
+                    },
+                    "by": {
+                      "type": "string"
+                    },
+                    "byId": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "confirmed": {
+                      "type": "object",
+                      "properties": {
+                        "by": {
+                          "type": "string"
+                        },
+                        "byId": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "string"
+                        },
+                        "independence": {
+                          "type": "string",
+                          "enum": [
+                            "accounts-only",
+                            "identity-provider",
+                            "unverified"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "by",
+                        "at",
+                        "independence"
+                      ]
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "adopted",
+                        "lapsed",
+                        "withdrawn"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "values",
+                    "basis",
+                    "by",
+                    "at",
+                    "outcome"
+                  ]
+                },
+                "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+              }
+            },
+            "description": "Changes to the above: proposed citing the law, confirmed by a different official, every version kept."
           }
         },
         "required": [
@@ -77256,6 +80421,16 @@
           "name": {
             "type": "string"
           },
+          "role": {
+            "type": "string",
+            "enum": [
+              "administrator",
+              "auditor",
+              "officer",
+              "signatory"
+            ],
+            "description": "Absent on accounts made before roles: they keep everything (roleOf())."
+          },
           "institution": {
             "type": "string",
             "description": "Ministry id; absent for officials serving the whole government."
@@ -77277,16 +80452,6 @@
           },
           "lastSignIn": {
             "type": "string"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "administrator",
-              "auditor",
-              "officer",
-              "signatory"
-            ],
-            "description": "Absent on accounts made before roles: they keep everything (roleOf())."
           },
           "passwordChangedAt": {
             "type": "string",
@@ -78517,20 +81682,29 @@
                   "key": {
                     "type": "string",
                     "enum": [
+                      "anticorruption",
                       "businessRegister",
+                      "centralBank",
                       "civilRegistration",
+                      "constitutionalCourt",
                       "customs",
                       "dataProtection",
                       "education",
+                      "electoral",
+                      "headOfState",
                       "healthRegulation",
                       "higherEducationAccreditation",
+                      "humanRights",
                       "identity",
                       "immigration",
                       "judiciary",
                       "lawRegister",
+                      "legislature",
+                      "ombudsman",
                       "police",
                       "professionalRegulation",
                       "statistics",
+                      "supremeAudit",
                       "tax"
                     ]
                   }
@@ -79257,6 +82431,10 @@
           "proposedBy": {
             "type": "string"
           },
+          "proposedById": {
+            "type": "string",
+            "description": "The proposer's verified identity (session subject), when signed in: the oversight step compares persons, not names."
+          },
           "proposedAt": {
             "type": "string"
           },
@@ -79275,6 +82453,10 @@
           },
           "decidedBy": {
             "type": "string"
+          },
+          "decidedById": {
+            "type": "string",
+            "description": "The confirming administrator's verified identity, when signed in."
           },
           "decidedAt": {
             "type": "string"
@@ -81196,20 +84378,29 @@
               "key": {
                 "type": "string",
                 "enum": [
+                  "anticorruption",
                   "businessRegister",
+                  "centralBank",
                   "civilRegistration",
+                  "constitutionalCourt",
                   "customs",
                   "dataProtection",
                   "education",
+                  "electoral",
+                  "headOfState",
                   "healthRegulation",
                   "higherEducationAccreditation",
+                  "humanRights",
                   "identity",
                   "immigration",
                   "judiciary",
                   "lawRegister",
+                  "legislature",
+                  "ombudsman",
                   "police",
                   "professionalRegulation",
                   "statistics",
+                  "supremeAudit",
                   "tax"
                 ]
               },

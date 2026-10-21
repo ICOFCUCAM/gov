@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setSovereign, listMinistries } from '@/lib/data/store';
-import { resetLaw } from '@/lib/law/register';
+import { resetLaw, listInstruments } from '@/lib/law/register';
+import { DEMO_DESIGNATION_ACT_TITLE } from './demo';
+import { authorityFor } from '@/lib/data/store/sovereign';
 import { resetPackages } from './packages';
 import { resetCases, listCases } from './engine';
 import { resetOfficials, listAccounts } from '@/lib/auth/officials';
@@ -46,8 +48,12 @@ describe('the demo data pack', () => {
     expect(listCases({})).toHaveLength(0);
   });
 
-  it('says what is missing instead of choosing who is responsible', () => {
+  it('says what is missing instead of choosing who is responsible, and leaves a sample act to cite', () => {
     setSovereign({ deployment: { authorities: {} } }, 'Administrator');
-    expect(loadDemoPack('Administrator')).toEqual({ error: expect.stringMatching(/Who is responsible/) });
+    const r = loadDemoPack('Administrator');
+    expect(r).toEqual({ error: expect.stringMatching(/Who is responsible.*Public Administration Act \(sample/) });
+    const act = listInstruments({ state: 'confirmed' }).find(i => i.title === DEMO_DESIGNATION_ACT_TITLE);
+    expect(act?.versions[0]).toMatchObject({ state: 'confirmed', source: { kind: 'sample' } });
+    expect(authorityFor('civilRegistration')).toBeUndefined();
   });
 });

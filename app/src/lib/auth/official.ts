@@ -15,6 +15,14 @@ import { apiPermission, secondStepMissing, type CaseScope, type Scope } from './
 import { officerNow, substrateScope } from './substrate-officials';
 import { logger } from '@/lib/ops/log';
 import { providerMfaAccepted } from './sign-on-store';
+import { institutionBounds } from '@/lib/data/store/institutions';
+
+/** The signed-in official with where whole-government reach stops (lib/auth/roles.ts Boundaries), read at use. */
+export type CurrentOfficial = OfficialClaims & Pick<Scope, 'bounds'>;
+/** The institution register's boundaries now; none when it cannot be read (nothing is then treated as independent). */
+function bounds(): Scope['bounds'] {
+  try { return institutionBounds(); } catch (e) { logger.error('auth.bounds_unreadable', { error: (e as Error).message }); return undefined; }
+}
 
 /** The key an ended session is kept under (lib/auth/officials.ts revokeSession): the token's SHA-256. */
 export const sessionKey = (token: string) => createHash('sha256').update(token, 'utf8').digest('hex');
@@ -33,7 +41,7 @@ export async function sessionToken(): Promise<string | undefined> {
  * and institution come from the platform's records (review H-3,
  * lib/auth/substrate-officials.ts).
  */
-export async function currentOfficial(): Promise<OfficialClaims | null> {
+export async function currentOfficial(): Promise<CurrentOfficial | null> {
   let token: string | undefined;
   try { token = (await cookies()).get(OFFICIAL_COOKIE)?.value; } catch { return null; }
   // With sign-in enforced and no CIVICOS_SESSION_SECRET, no session is accepted (sessionSecretProblem()).
@@ -50,9 +58,9 @@ export async function currentOfficial(): Promise<OfficialClaims | null> {
     if (!row || !row.active) return null;
     const s = substrateScope(row);
     return { ...c, name: row.name, office: row.title ?? row.role, role: s.role, institution: s.institution,
-      twoStep: !!c.twoStep, twoStepRequired: s.twoStepRequired };
+      twoStep: !!c.twoStep, twoStepRequired: s.twoStepRequired, bounds: bounds() };
   }
-  if (c.method !== 'local') return c;
+  if (c.method !== 'local') return { ...c, bounds: bounds() };
   const a = accountById(c.sub.slice('local:'.length));
   if (!a || a.disabled) return null;
   // A demo cast account counts only while the installation may hold samples (lib/auth/demo-cast.ts).
@@ -63,7 +71,7 @@ export async function currentOfficial(): Promise<OfficialClaims | null> {
   // passkey, or, for an identity-provider sign-in, the provider's multi-factor sign-in while the policy accepts it.
   const secondStep = c.via === 'oidc' ? providerMfaAccepted() : a.secondStepOn;
   return { ...c, name: a.name, office: a.office, role: a.role, institution: a.institution,
-    twoStep: !!c.twoStep && secondStep, twoStepRequired: a.twoStepRequired };
+    twoStep: !!c.twoStep && secondStep, twoStepRequired: a.twoStepRequired, bounds: bounds() };
 }
 
 /**
@@ -76,7 +84,7 @@ export async function caseScope(): Promise<(CaseScope & { name: string; label: s
   const o = await currentOfficial();
   if (!o) return null;
   const twoStepAt = o.twoStep ? (o.twoStepAt ?? o.iat * 1000) : undefined;
-  return { id: o.sub, name: o.name, label: actorLabel(o), role: o.role, institution: o.institution, twoStep: o.twoStep, twoStepRequired: o.twoStepRequired, ...(twoStepAt ? { twoStepAt } : {}) };
+  return { id: o.sub, name: o.name, label: actorLabel(o), role: o.role, institution: o.institution, twoStep: o.twoStep, twoStepRequired: o.twoStepRequired, ...(o.bounds ? { bounds: o.bounds } : {}), ...(twoStepAt ? { twoStepAt } : {}) };
 }
 
 /** The name an action is recorded under: the verified official's, with their office. */
@@ -144,7 +152,9 @@ export async function officialId(): Promise<string | undefined> {
 export async function issueSession(res: NextResponse, claims: OfficialClaims, secure: boolean): Promise<NextResponse> {
   const problem = sessionSecretProblem();
   if (problem) return NextResponse.json({ error: problem }, { status: 503 });
-  res.cookies.set(OFFICIAL_COOKIE, await signClaims(claims, sessionSecret()), {
+  // Boundaries are read at each request, never carried in the signed session.
+  const { bounds: _bounds, ...signed } = claims as CurrentOfficial;
+  res.cookies.set(OFFICIAL_COOKIE, await signClaims(signed, sessionSecret()), {
     httpOnly: true, sameSite: 'lax', path: '/', maxAge: SESSION_HOURS * 3600, secure,
   });
   // The console's page gate (middleware) also accepts the official's session.

@@ -21,6 +21,6 @@ export async function POST(req: NextRequest) {
     if (why) return NextResponse.json({ error: why }, { status: 403 });
   }
   const actor = await routeActor(b.by);
-  const r = confirmByOversight(String(b.id ?? ''), actor.name);
+  const r = confirmByOversight(String(b.id ?? ''), actor.name, Date.now(), actor.id);
   return 'error' in r ? NextResponse.json(r, { status: r.error === 'No such proposal' ? 404 : 422 }) : NextResponse.json({ change: r });
 }

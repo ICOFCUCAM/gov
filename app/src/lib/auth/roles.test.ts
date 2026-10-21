@@ -60,7 +60,15 @@ describe('what an official may do', () => {
     expect(canSignDirective({ role: 'signatory' }, 'fed-health')).toBeNull();
     expect(canSeeDraft({ role: 'officer', institution: 'fed-treasury' }, 'fed-health')).toBe(false);
     expect(directiveIssuer({ role: 'officer', institution: 'fed-treasury' }, 'fed-health')).toBe('fed-treasury');
-    expect(directiveIssuer({ role: 'officer' }, 'fed-health')).toBe('fed-health');
+    // Whole government issues as the executive office, never in another institution's name (plan phase 2).
+    expect(directiveIssuer({ role: 'officer' }, 'fed-health')).toBe('executive-office');
+    expect(directiveIssuer(null, 'fed-health')).toBe('fed-health');
+    const bounds = { independent: ['court'], judicial: ['court'], institutions: ['court', 'fed-health', 'fed-treasury'] };
+    expect(canSignDirective({ role: 'signatory', bounds }, 'fed-health')).toMatch(/needs an account of that institution/);
+    expect(canSignDirective({ role: 'signatory', bounds }, 'executive-office')).toBeNull();
+    expect(canSignDirective({ role: 'administrator', bounds }, 'court')).toMatch(/needs an account/);
+    expect(canSeeDraft({ role: 'officer', bounds }, 'court')).toBe(false);
+    expect(canSeeDraft({ role: 'officer', bounds }, 'fed-health')).toBe(true);
   });
 
   it('maps the substrate\'s officer roles, and labels roles in plain words', () => {

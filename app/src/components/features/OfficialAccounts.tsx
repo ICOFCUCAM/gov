@@ -9,6 +9,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useSignIn, officialLabel, officialScope } from '@/lib/official';
 import { ROLES, roleOf, twoStepCovers, type OfficialRole, type TwoStepPolicy } from '@/lib/auth/roles';
+import { AccountChanges } from './AccountChanges';
 
 interface Account { resetPendingUntil?: string; id: string; email: string; name: string; office: string; createdAt: string; createdBy: string; disabled?: boolean; lastSignIn?: string; role?: OfficialRole; institution?: string; twoStepSince?: string; twoStepRequired?: boolean;
   passkeys?: { id: string }[]; identity?: { claim: string; value: string }; noPassword?: boolean }
@@ -55,11 +56,18 @@ export function OfficialAccounts() {
       const r = await fetch(`/api/auth/officials/${a.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ issueReset: true }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error((d as { error?: string }).error ?? `Request failed (${r.status})`);
-      setIssued({ name: a.name, ...(d as { code: string; expiresAt: string }) });
+      // An independent institution's account: the code goes to the official there who confirms (202).
+      const pending = (d as { pending?: { summary: string } }).pending;
+      if (pending) { setMsg({ ok: true, text: waitingText(pending) }); setChangesTick(t => t + 1); }
+      else setIssued({ name: a.name, ...(d as { code: string; expiresAt: string }) });
       await load();
     } catch (e) { setMsg({ ok: false, text: (e as Error).message }); }
     finally { setBusy(false); }
   }
+
+  // Account changes waiting for an independent institution to confirm (lib/auth/account-changes.ts).
+  const [changesTick, setChangesTick] = React.useState(0);
+  const waitingText = (p: { summary: string }) => `${p.summary}: this institution is independent, so the change waits for an official who can sign there to confirm it (below).`;
 
   async function call(url: string, body: unknown, done: string) {
     setBusy(true); setMsg(null);
@@ -67,7 +75,10 @@ export function OfficialAccounts() {
       const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error((d as { error?: string }).error ?? `Request failed (${r.status})`);
-      setMsg({ ok: true, text: done }); await load(); return true;
+      // 202: an independent institution's account; the change waits for an official who can sign there.
+      const pending = (d as { pending?: { summary: string } }).pending;
+      setMsg({ ok: true, text: pending ? waitingText(pending) : done }); if (pending) setChangesTick(t => t + 1);
+      await load(); return true;
     } catch (e) { setMsg({ ok: false, text: (e as Error).message }); return false; }
     finally { setBusy(false); }
   }
@@ -88,7 +99,7 @@ export function OfficialAccounts() {
           <p className="text-[13px] text-ink-soft">Signed in as <strong className="text-ink">{officialLabel(s.official)}</strong> ({officialScope(s.official)}).{admin ? '' : ' Only an administrator can add officials or change what they may do.'}</p>
           <dl className="grid gap-x-4 gap-y-1 rounded-[3px] border border-line bg-surface p-3 text-[13px] sm:grid-cols-[auto_1fr]">
             {ROLES.map(r => <React.Fragment key={r.id}><dt className="font-semibold">{r.label}</dt><dd className="text-ink-soft">{r.means}</dd></React.Fragment>)}
-            <dt className="font-semibold">Institution</dt><dd className="text-ink-soft">An official with an institution acts only for it: its workspace, and directives it issues. &ldquo;Whole government&rdquo; acts for every institution.</dd>
+            <dt className="font-semibold">Institution</dt><dd className="text-ink-soft">An official with an institution acts only for it: its workspace, and directives it issues. &ldquo;Whole government&rdquo; acts for every institution except independent ones (the legislature, courts, the head of state&rsquo;s office, independent bodies), whose accounts are managed by their own administrators or confirmed by them.</dd>
           </dl>
           {admin && policy && list ? (
             <TwoStepPolicyPanel state={policy} accounts={list} me={s.official} busy={busy}
@@ -113,6 +124,7 @@ export function OfficialAccounts() {
           ) : null}
           {admin && s.methods.substrate ? <SubstrateOfficers institutions={institutions} placeName={placeName} call={call} busy={busy} /> : null}
           {msg ? <p role="status" className={msg.ok ? 'text-ok' : 'text-alert'}>{msg.text}</p> : null}
+          <AccountChanges me={s.official} placeName={placeName} refresh={changesTick} onDone={() => void load()} />
           {issued ? (
             <div role="status" className="space-y-2 rounded-[3px] border border-warn bg-surface p-3">
               <p><strong>Reset code for {issued.name}.</strong> Give it to them in person (not by email). It works once, until {new Date(issued.expiresAt).toISOString().slice(0, 16).replace('T', ' ')} UTC, at the sign-in page under &ldquo;Forgot your password?&rdquo;. It is not shown again.</p>

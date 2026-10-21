@@ -588,6 +588,19 @@ export function setSubstrateAssignment(officerId: string, input: { role?: string
   return { officerId: id, ...a };
 }
 
+/**
+ * Whether an institution has its own officials who can sign or administer
+ * (enabled platform accounts, and substrate officers assigned there): an
+ * independent institution with such officials confirms changes made to it
+ * (its standing, its accounts) itself (lib/data/store/institutions.ts,
+ * lib/auth/account-changes.ts).
+ */
+export function hasOwnSigners(institution: string): boolean {
+  const can = (r?: OfficialRole) => r === 'signatory' || r === 'administrator';
+  return db().accounts.some(a => !a.disabled && a.institution === institution && can(roleOf(a)) && !demoAccountRefused(a))
+    || Object.values(db().substrateOfficers ?? {}).some(a => a.institution === institution && can(a.role));
+}
+
 // ── Ended sessions (review M-1) ──────────────────────────────────────
 // Signing out ends the session on the server, not only in the browser: the
 // token's SHA-256 is kept until the token would have expired, and
