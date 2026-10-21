@@ -1,6 +1,8 @@
 // The sovereign profile, cabinet overview, seed localisation, first-run setup and presets.
 import { locales } from '@/lib/i18n/config';
-import { checkDeployment, authorityIn, type AuthorityKey } from '@/lib/nation/deployment';
+import { checkDeployment, authorityIn, isAuthorityKey, AUTHORITIES, type AuthorityKey } from '@/lib/nation/deployment';
+import { proposePolicy, confirmPolicy, withdrawPolicy, lapsePolicy, type PolicyVersion } from '@/lib/law/policy-change';
+import { dualControlPendingHours } from '@/lib/data/dual-control';
 import { isWorldview } from '@/lib/map/disputed';
 import { applyNation, nationPaymentRail } from '@/lib/nation/registry';
 import type {
@@ -70,6 +72,11 @@ export function setSovereign(
   if (patch.deployment !== undefined) {
     const d = checkDeployment(patch.deployment, db.ministries.filter(m => m.status !== 'merged').map(m => m.id));
     if ('error' in d) return d;
+    // Once setup is complete, who is responsible changes only through the change process (plan phase 2,
+    // audit D): proposed citing the law, confirmed by a different official (proposeAuthorities()).
+    if (db.setup && d.authorities !== undefined && !sameAuthorities(d.authorities, db.sovereign.deployment?.authorities)) {
+      return { error: AUTHORITIES_AFTER_SETUP };
+    }
     // Each part sent replaces that part; parts not sent stay as they were.
     patch = { ...patch, deployment: { ...(db.sovereign.deployment ?? {}), ...d } };
   }
@@ -80,6 +87,77 @@ export function setSovereign(
     patch.stateForm ?? patch.stateName);
   return db.sovereign;
 }
+
+// ── Who is responsible, after setup (plan phase 2; audit D) ─────────────
+// During first-run setup the deployment profile's authorities are set through
+// /api/sovereign as before. Once setup is complete they change only through
+// the country's change process (lib/law/policy-change.ts): one administrator
+// serving the whole government proposes, citing the laws register; a
+// different official confirms within the waiting period; every version kept.
+
+/** Why a direct change to who is responsible is refused once setup is complete. */
+export const AUTHORITIES_AFTER_SETUP = 'Setup is complete: who is responsible for a register or power now changes only through the change process. Propose the change citing the law (Who is responsible → Propose a change); a different official confirms it.';
+
+type AuthorityMap = Partial<Record<AuthorityKey, string>>;
+const named = (a: AuthorityMap | undefined): AuthorityMap => Object.fromEntries(Object.entries(a ?? {}).filter(([, v]) => !!v)) as AuthorityMap;
+function sameAuthorities(a: AuthorityMap | undefined, b: AuthorityMap | undefined): boolean {
+  const x = named(a), y = named(b);
+  const keys = new Set([...Object.keys(x), ...Object.keys(y)]) as Set<AuthorityKey>;
+  return [...keys].every(k => x[k] === y[k]);
+}
+const AUTH_AUDIT = 'sovereign.authorities';
+const labelOf = (k: AuthorityKey) => AUTHORITIES.find(a => a.key === k)?.label ?? k;
+const nameOf = (id?: string) => (id ? db.ministries.find(m => m.id === id)?.name ?? id : 'not named');
+const describeAuthorities = (before: AuthorityMap) => (v: { authorities: AuthorityMap }) => {
+  const cur = before;
+  const diff = AUTHORITIES.filter(a => (v.authorities[a.key] ?? '') !== (cur[a.key] ?? ''))
+    .map(a => `${labelOf(a.key)}: ${nameOf(cur[a.key])} → ${nameOf(v.authorities[a.key])}`);
+  return diff.length ? diff.join('; ') : 'no change';
+};
+
+/** Changes to who is responsible: the waiting proposal (lapsed ones are moved to history at the next step) and every earlier version. Read only. */
+export function authorityChanges() {
+  return structuredClone(db.authorityChanges ?? {});
+}
+
+/**
+ * Propose who is responsible (registers left out keep their institution; ''
+ * un-names one), citing the law. Before setup is complete, use
+ * setSovereign() as setup does.
+ */
+export function proposeAuthorities(input: { authorities?: unknown; legalBasis?: unknown }, actor: { by: string; byId?: string }, now = new Date()) {
+  if (!db.setup) return { error: 'Setup is still running: name who is responsible in setup (it is saved directly until setup is complete)' };
+  const a = input.authorities;
+  if (!a || typeof a !== 'object' || Array.isArray(a)) return { error: 'Name the institution for each register that changes: { authorities: { register: institution id or "" } }' };
+  const next: AuthorityMap = { ...named(db.sovereign.deployment?.authorities) };
+  for (const [k, v] of Object.entries(a as Record<string, unknown>)) {
+    if (!isAuthorityKey(k)) return { error: `Unknown register: ${k}` };
+    if (v === '' || v === null) { delete next[k]; continue; }
+    if (typeof v !== 'string' || !db.ministries.some(m => m.id === v && m.status !== 'merged')) return { error: `No institution ${String(v)} for ${k}` };
+    next[k] = v;
+  }
+  const current = { authorities: named(db.sovereign.deployment?.authorities) };
+  return proposePolicy(db.authorityChanges, current, { authorities: next }, input.legalBasis, {
+    by: actor.by, ...(actor.byId ? { byId: actor.byId } : {}), now, pendingHours: dualControlPendingHours(), audit: AUTH_AUDIT,
+    context: 'Who is responsible for registers and powers', describe: describeAuthorities(current.authorities),
+    check: v => (sameAuthorities(v.authorities, current.authorities) ? 'This proposal changes nothing' : null),
+  });
+}
+
+/** A different official confirms the waiting proposal: the deployment profile names the new institutions. */
+export function confirmAuthorities(actor: { by: string; byId?: string }, now = new Date()) {
+  const before = named(db.sovereign.deployment?.authorities);
+  return confirmPolicy(db.authorityChanges, {
+    by: actor.by, ...(actor.byId ? { byId: actor.byId } : {}), now, audit: AUTH_AUDIT, describe: describeAuthorities(before),
+    adopt: (v: PolicyVersion<{ authorities: AuthorityMap }>) => {
+      db.sovereign = { ...db.sovereign, deployment: { ...(db.sovereign.deployment ?? {}), authorities: { ...v.values.authorities } } };
+      applyNation({ ...db.sovereign, configured: !!db.setup });
+    },
+  });
+}
+
+export const withdrawAuthorities = (by: string, reason?: string) => withdrawPolicy(db.authorityChanges, { by, ...(reason ? { reason } : {}), audit: AUTH_AUDIT });
+export const lapseAuthorities = (now = new Date()) => lapsePolicy(db.authorityChanges, now, AUTH_AUDIT);
 
 export function cabinetOverview(): CabinetOverview {
   const ministries = db.ministries.filter(m => m.status !== 'merged');
@@ -166,6 +244,9 @@ export const SOVEREIGN_PRESETS: SovereignPreset[] = [
     profile: { stateName: 'Union', stateForm: 'union', executiveTitle: 'High Representative', legislatureName: 'Union Council', currency: 'EUR', regionNoun: 'member state', locale: 'en', accent: '#1b3a5b', motto: 'United in diversity' } },
 ];
 
+/** Why a preset is refused once setup is complete. */
+export const PRESET_AFTER_SETUP = 'Setup is complete, so a preset can no longer be applied: it would change the form of state, titles and currency in one step. Edit each part of the profile under National settings instead; who is responsible and each institution\'s standing change through the change process (proposed citing the law, confirmed by a second official).';
+
 export function listSovereignPresets(): SovereignPreset[] {
   return SOVEREIGN_PRESETS;
 }
@@ -176,6 +257,14 @@ export function applySovereignPreset(
 ): SovereignProfile | { error: string } {
   const preset = SOVEREIGN_PRESETS.find(p => p.key === key);
   if (!preset) return { error: 'Unknown preset' };
+  // A preset is a first-run template (plan phase 0): once setup is complete it would change the
+  // form of state, titles and currency in one step by one administrator. Refused; each field is
+  // edited on its own under National settings (audited), and who is responsible and institutions'
+  // standing change only through the change process (two officials, citing the law).
+  if (db.setup) {
+    recordAudit(by, 'sovereign.preset', `Sovereign:${key}`, 'denied', 'Setup is complete');
+    return { error: PRESET_AFTER_SETUP };
+  }
   // A constitutional template never overwrites the nation's own facts.
   // Who is responsible for each register (the deployment profile), the further languages and the
   // assistant choice are the nation's own decisions too: a preset changing them would silently lift

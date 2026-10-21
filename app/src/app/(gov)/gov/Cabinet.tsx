@@ -47,6 +47,9 @@ export function Cabinet() {
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [editing, setEditing] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
+  // Presets are a first-run template: refused once setup is complete (lib/data/store/sovereign.ts).
+  const [setupDone, setSetupDone] = React.useState(false);
+  const [presetMsg, setPresetMsg] = React.useState<string | null>(null);
   const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => { const t = setInterval(() => setNow(Date.now()), 4000); return () => clearInterval(t); }, []);
 
@@ -57,6 +60,7 @@ export function Cabinet() {
       api.sovereign.presets(),
       api.cabinet.coordination().catch(() => null),
     ]);
+    api.setup.get().then(r => setSetupDone(!!r.setup)).catch(() => undefined);
     setOv(o);
     setNat(n);
     setPresets(p.presets);
@@ -70,9 +74,12 @@ export function Cabinet() {
 
   async function applyPreset(key: string) {
     setBusy(true);
+    setPresetMsg(null);
     try {
       await api.sovereign.applyPreset(key);
       await load();
+    } catch (e) {
+      setPresetMsg(e instanceof Error ? e.message : 'The preset could not be applied');
     } finally {
       setBusy(false);
     }
@@ -306,7 +313,7 @@ export function Cabinet() {
             <Button
               key={p.key}
               variant={s.stateForm === p.profile.stateForm ? 'primary' : 'secondary'}
-              disabled={busy}
+              disabled={busy || setupDone}
               onClick={() => applyPreset(p.key)}
             >
               {p.label}
@@ -319,6 +326,15 @@ export function Cabinet() {
           republic, federation, monarchy, emirate, city-state, or union
           identically.
         </p>
+        {setupDone ? (
+          <p className="mt-1 text-xs text-ink-muted">
+            Setup is complete, so presets are no longer applied: edit each part of the profile above instead.
+            Who is responsible and each institution&apos;s standing change through the change process
+            (<Link href="/gov/configuration/responsible" className="text-link underline underline-offset-2">Who is responsible</Link>,{' '}
+            <Link href="/ministries" className="text-link underline underline-offset-2">Ministries &amp; agencies</Link>).
+          </p>
+        ) : null}
+        {presetMsg ? <p role="status" className="mt-1 text-xs text-ink-muted">{presetMsg}</p> : null}
       </Section>
 
       <ResponsibleAuthorities />
