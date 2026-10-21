@@ -12,12 +12,23 @@
 //
 // Use the existing /api/substrate/digest endpoint for lightweight count
 // snapshots; this endpoint is the full dump.
+//
+// Every dump is recorded (baseline audit §3.3): an audit-chain entry and an
+// access-log entry (action `export`), naming the caller as the shared export
+// secret (it names no person) with table and row counts only, never a row.
+// The shared secret is to be replaced by named officials or two-official
+// approval (integration register 1.46).
 
 import { NextResponse } from 'next/server';
 import { secretAuthorized } from '@/lib/platform-auth';
 import { serverClient } from '@/lib/db/client';
+import { recordAudit } from '@/lib/data/store/audit';
+import { recordAccess } from '@/lib/records/access-log';
 
 export const dynamic = 'force-dynamic';
+
+/** How the audit chain and the access log name the caller: the shared export secret, which names no person. */
+const EXPORT_SECRET_ACTOR = 'Export automation (shared secret CIVICOS_EXPORT_SECRET; no named official)';
 
 const TABLES = [
   'civicos_institutions', 'civicos_officers', 'civicos_citizens',
@@ -58,6 +69,13 @@ export async function GET(req: Request) {
       error: null,
     };
   }
+
+  // Recorded before the dump leaves: one audit-chain entry and one access-log export entry, counts only.
+  const parts = Object.values(tables);
+  const rowCount = parts.reduce((n, t) => n + t.rows.length, 0);
+  const summary = `tables ${parts.length}; rows ${rowCount}; truncated ${parts.filter(t => t.truncated).length}; unreadable ${parts.filter(t => t.error).length}; cap ${cap}`;
+  recordAudit(EXPORT_SECRET_ACTOR, 'substrate.export', 'Substrate:export', 'ok', summary);
+  recordAccess({ by: { name: EXPORT_SECRET_ACTOR }, record: { register: 'substrate', query: summary }, action: 'export', result: 'allowed', rule: 'shared export secret CIVICOS_EXPORT_SECRET (to be replaced by named officials; integration register 1.46)' });
 
   return NextResponse.json({
     generated_at: new Date().toISOString(),

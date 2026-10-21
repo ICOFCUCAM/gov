@@ -9,6 +9,7 @@ vi.mock('@/lib/db/client', () => ({
 
 import { POST } from './route';
 import { parseOfficerCsv } from '@/lib/officer-csv';
+import { listAudit } from '@/lib/data/store/audit';
 
 const JWT = 'aaa.bbb.ccc'; // shape-only; the route checks 3 dot-parts then asks the substrate
 
@@ -197,6 +198,43 @@ describe('POST /api/admin/officers/bulk', () => {
       expect(res.status).toBe(401);
       // single-token bearer never reaches the substrate
       expect(tokenScopedClientMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('audit chain (baseline audit §3.3)', () => {
+    const rows = [{ email: 'amina@example.org', name: 'Amina Example', charter_id: 'MIN-X', role: 'officer' }];
+    const send = (authorization: string) => POST(new Request('http://x', {
+      method: 'POST', headers: { authorization, 'content-type': 'application/json' }, body: JSON.stringify({ rows }),
+    }));
+    const added = (before: number) => listAudit().slice(0, listAudit().length - before);
+
+    it('records each batch under the shared secret, named as such, with counts only', async () => {
+      process.env.CIVICOS_PROVISIONING_SECRET = 'correct';
+      serverClientMock.mockReturnValue({ rpc: async () => ({ data: [{ ...rows[0], officer_id: 'o-1', status: 'created', error: null }], error: null }) });
+      const before = listAudit().length;
+      expect((await send('Bearer correct')).status).toBe(200);
+      const [e, ...rest] = added(before);
+      expect(rest).toHaveLength(0);
+      expect(e).toMatchObject({ action: 'officers.bulk-create', resource: 'Substrate:officers', outcome: 'ok' });
+      expect(e!.actor).toMatch(/CIVICOS_PROVISIONING_SECRET; no named official/);
+      expect(e!.detail).toBe('received 1; created 1; failed 0; via provisioning secret');
+      expect(JSON.stringify(e)).not.toMatch(/amina|Amina/);
+    });
+
+    it('names the platform officer for a session, and records a refused batch without the substrate\'s message', async () => {
+      tokenScopedClientMock.mockReturnValue({ rpc: async () => ({ data: { kind: 'officer', role: 'platform-admin', id: 'u-9', name: 'Platform Admin' }, error: null }) });
+      serverClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'duplicate amina@example.org' } }) });
+      const before = listAudit().length;
+      expect((await send(`Bearer ${JWT}`)).status).toBe(500);
+      const [e] = added(before);
+      expect(e).toMatchObject({ action: 'officers.bulk-create', outcome: 'error', actor: 'Platform Admin, substrate platform-admin (officer:u-9)' });
+      expect(e!.detail).not.toContain('amina');
+    });
+
+    it('records nothing for an unauthorised caller', async () => {
+      const before = listAudit().length;
+      expect((await send('Bearer wrong')).status).toBe(401);
+      expect(listAudit()).toHaveLength(before);
     });
   });
 });

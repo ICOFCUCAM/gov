@@ -9,14 +9,25 @@
 // CIVICOS_PROVISIONING_SECRET as a bearer (so CLI/automation can use it without a UI sign-in).
 // The substrate enforces the platform-tier check separately, so this
 // route is a defense-in-depth gate, not the sole authorisation.
+//
+// Every batch that reaches the substrate is written to the platform audit
+// chain (baseline audit §3.3): who called (the platform officer, or the
+// provisioning secret named as such, since it names no person) and the counts
+// received, created and failed — never an email, name or other row content.
+// The shared secret is to be replaced by named officials (integration
+// register 1.46).
 
 import { readJson, readText, TOO_LARGE, tooLargeAnswer } from '@/lib/net/body-limit';
 import { NextResponse } from 'next/server';
 import { serverClient } from '@/lib/db/client';
-import { platformOrSecretAuthorized } from '@/lib/platform-auth';
+import { secretAuthorized, platformActor } from '@/lib/platform-auth';
 import { parseOfficerCsv, type OfficerInputRow as InputRow } from '@/lib/officer-csv';
+import { recordAudit } from '@/lib/data/store/audit';
 
 export const dynamic = 'force-dynamic';
+
+/** How the audit chain names a caller who presented the shared provisioning secret: a machine credential, no person. */
+const PROVISIONING_SECRET_ACTOR = 'Provisioning automation (shared secret CIVICOS_PROVISIONING_SECRET; no named official)';
 
 interface OutputRow {
   email: string;
@@ -29,7 +40,10 @@ interface OutputRow {
 }
 
 export async function POST(req: Request) {
-  if (!await platformOrSecretAuthorized(req, 'provisioning')) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const viaSecret = secretAuthorized(req, 'provisioning');
+  const officer = viaSecret ? null : await platformActor(req);
+  if (!viaSecret && !officer) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const actor = officer ? `${officer.name ?? 'Platform officer'}, substrate ${officer.role}${officer.id ? ` (officer:${officer.id})` : ''}` : PROVISIONING_SECRET_ACTOR;
   const sb = serverClient();
   if (!sb) return NextResponse.json({ error: 'substrate not configured' }, { status: 503 });
 
@@ -62,11 +76,17 @@ export async function POST(req: Request) {
   }
 
   const { data, error } = await sb.rpc('civicos_admin_bulk_create_officers', { p_rows: rows });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    // Counts only: the substrate's message can quote a row, so it stays out of the chain.
+    recordAudit(actor, 'officers.bulk-create', 'Substrate:officers', 'error', `received ${rows.length}; the substrate refused the batch; via ${viaSecret ? 'provisioning secret' : 'platform officer session'}`);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   const results = (data as OutputRow[]) ?? [];
   const created = results.filter(r => r.status === 'created').length;
   const failed = results.length - created;
+  recordAudit(actor, 'officers.bulk-create', 'Substrate:officers', failed === 0 ? 'ok' : 'partial',
+    `received ${rows.length}; created ${created}; failed ${failed}; via ${viaSecret ? 'provisioning secret' : 'platform officer session'}`);
 
   return NextResponse.json({
     ok: failed === 0,
