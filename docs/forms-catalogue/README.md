@@ -14,19 +14,13 @@ the same series.
 | `FIELD-SERIES-PARTS-05-07.md` | One series | 5–7 | Justice, courts, prosecution, corrections and legal aid; health, public health, hospitals, medicines and social care; education, research, universities, skills and workforce development (clinical, patient and individual student items kept and marked where a platform rule is stricter) |
 | `PARTS-08-11.md` | One series | 8–11 | Agriculture, land and natural resources; transport and infrastructure; public safety and emergencies; defence, security, cyber and critical infrastructure |
 | `PARTS-12-13.md` | One series | 12–13 | Legislature, elections, parties, constitutional offices and independent institutions; digital government, records, statistics and integration |
+| `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md` | Supplement | 14–22, contracts for 5–13 | Labour; social protection; foreign affairs, consular and diaspora; tourism, culture, youth and sports; professional licensing outside health; local and regional government; housing, planning and building control; shared internal administration; form design and governance standard; shared contract envelope, production gates, and baseline JSON contracts for the core forms of parts 5–13 |
 
 All 13 parts received.
 
-**Where the delivered parts drift from part 1's own plan.** Part 1 announced a
-13-part plan; from part 4 the parts were regrouped as delivered above. Topics the
-plan or the owner's request named that no delivered part catalogues in full
-(mentioned in passing at most): labour and employment; social protection and
-benefits; foreign affairs, consular and diaspora; tourism, culture, youth and
-sports; professional licensing beyond health; local and regional government;
-housing, planning and building control; shared internal administration of every
-institution (human resources, payroll, finance, internal procurement, assets,
-records, legal, ICT, communications, internal audit, planning); and the form
-design and governance standard planned as part 13. Parts 5–13 also give no JSON
-field contracts (parts 1–4 do). These are gaps in the received text, recorded as
-register rows to be closed, not left out.
-Every item of every file is a row of `docs/INSTITUTIONAL_REQUIREMENTS.md`.
+**Gaps.** The 13 parts left out several areas named in the owner's request; the
+supplement (parts 14–22) covers them and gives baseline JSON contracts for the
+core forms of parts 5–13. Still without their own contract, by the supplement's
+own statement: forms listed only in a catalogue table (in parts 1–22). Each is a
+register row marked "contract not yet given", closed form by form, never shown
+as complete.
