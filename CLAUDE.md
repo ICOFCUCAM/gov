@@ -180,7 +180,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   six parts, kept verbatim; binding). Assessment, upgrades, lower-priority
   items, mapping to the code and build order:
   `docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md`. Its implementation starts only
-  after the constitutional phases are complete and integrated. CivicOS enforces the
+  after the constitutional phases are complete and integrated.
+- The complete form system (ChatGPT, 13 parts; received so far: parts 8–11 in
+  `docs/forms-catalogue/`) is kept verbatim and binding (owner, 21 October 2026):
+  never summarise the owner's documents; every catalogue item (form, register,
+  configuration, exchange, safeguard, acceptance gate) is a row of the
+  requirements register and is closed step by step; forms are built to a higher
+  standard than the catalogue where we can, never lower. CivicOS enforces the
   nation's configuration and never invents, transfers or assumes authority:
   no institution is a child of a universal executive administrator, a seniority
   or a role never grants a power its institution lacks, independence is
