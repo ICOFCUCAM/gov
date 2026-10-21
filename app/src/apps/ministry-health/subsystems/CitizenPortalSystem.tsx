@@ -1,13 +1,19 @@
 'use client';
 
 // Domain 4 — Citizen Health Portal. The warm, human counterpoint to the
-// command surfaces: a consumer-grade health super-app. Soft navy + emerald
+// command surfaces: a consumer-grade health services app. Soft navy + emerald
 // accent, rounded cards, friendly rhythm. Mode C.
+// Services, not health data (CLAUDE.md, Health: no patient or clinical field
+// anywhere): bookings, certificates, scheme membership, facilities and
+// programmes; no score, medicine, result or condition of the person. Service
+// figures come from lib/gov/health-admin.ts (generated until returns answer).
 
 import * as React from 'react';
 import { NotYetButton } from '@/components/ui/NotYetButton';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { citizenPortalView } from '@/lib/gov/health-operations';
+import { portalUsage } from '@/lib/gov/health-admin';
+import { waveSeries } from '@/lib/telemetry';
 import { RingGauge, Sparkline, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import { EncounterThread } from '@/apps/_shared/InstitutionChain';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -15,7 +21,7 @@ import { IndexTag } from '@/components/ui/IndexTag';
 
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
 const ACC = ACCENT.citizen!;
-const NAV = ['Overview', 'Health Timeline', 'Appointments', 'Prescriptions', 'Lab Results', 'Immunizations', 'Telemedicine', 'Insurance', 'Health Wallet', 'Wearables', 'Family Health', 'Emergency', 'Health Records', 'Wellness', 'Settings'];
+const NAV = ['Overview', 'Service History', 'Appointments', 'Medicines & Pharmacies', 'Records Requests', 'Immunisation Programmes', 'Telemedicine', 'Insurance', 'Health Wallet', 'Service Overview', 'Family Membership', 'Emergency', 'Certificates', 'Wellness Programmes', 'Settings'];
 
 function Card({ title, action, children }: { title?: string; action?: string; children: React.ReactNode }) {
   return (
@@ -32,8 +38,12 @@ function Card({ title, action, children }: { title?: string; action?: string; ch
 }
 
 // Focused section view — every nav link routes here so each is genuinely
-// active (not a dead highlight). Surfaces the real engine slice per item.
-function PortalSection({ name, v }: { name: string; v: ReturnType<typeof citizenPortalView> }) {
+// active (not a dead highlight). Surfaces the engine slice per item.
+type View = ReturnType<typeof citizenPortalView>;
+type Usage = ReturnType<typeof portalUsage>;
+const RECORDS_NOTE = 'Facilities keep their own records under the health law; ask the facility for yours. The platform keeps none.';
+
+function PortalSection({ name, v, u }: { name: string; v: View; u: Usage }) {
   const Title = ({ t }: { t: string }) => <h2 className="mb-2 text-[15px] font-bold text-ink">{t}</h2>;
   const rows = (items: { a: string; b?: string; c?: string; tone?: Tone }[]) => (
     <div className="space-y-1">
@@ -48,24 +58,22 @@ function PortalSection({ name, v }: { name: string; v: ReturnType<typeof citizen
   );
   let body: React.ReactNode;
   switch (name) {
-    case 'Health Timeline':
-      body = rows(v.timeline.map(t => ({ a: `${t.kind} · ${t.detail}`, b: t.date, c: t.status, tone: t.tone })));
+    case 'Service History':
+      body = rows(u.requests.slice(0, 5).map(r => ({ a: `${r.kind} · request received`, c: r.tone === 'warn' ? 'Pending' : 'Answered', tone: r.tone === 'warn' ? 'warn' : 'ok' })));
       break;
     case 'Appointments':
       body = rows([{ a: `${v.upcoming.spec} · ${v.upcoming.doctor}`, b: `${v.upcoming.date} ${v.upcoming.time}`, c: 'Upcoming', tone: 'ok' }, { a: v.upcoming.place }]);
       break;
-    case 'Prescriptions':
-      body = rows(v.meds.list.map(m => ({ a: `${m.drug} · ${m.instr}`, b: `${m.daysLeft}d left`, c: m.daysLeft <= 5 ? 'Refill' : 'Active', tone: m.tone })));
+    case 'Medicines & Pharmacies':
+      body = rows(u.facilities.map(f => ({ a: `${f.name} · ${f.kind}`, c: f.tag, tone: 'ok' as Tone })));
       break;
-    case 'Lab Results':
-    case 'Health Records':
-      body = rows([
-        { a: 'Reports', b: `${v.records.reports}` }, { a: 'Lab Results', b: `${v.records.labs}` },
-        { a: 'Imaging', b: `${v.records.imaging}` }, { a: 'Documents', b: `${v.records.documents}` },
-      ]);
+    case 'Records Requests':
+    case 'Certificates':
+      body = <>{rows(u.requests.filter(r => /Records|Certificate/.test(r.kind)).map(r => ({ a: r.kind, b: `${r.count.toLocaleString('en')} this month (all citizens)` })))}<p className="mt-2 text-[10px] text-ink-muted">{RECORDS_NOTE}</p></>;
       break;
-    case 'Immunizations':
-      body = rows(v.immun.list.map(im => ({ a: im.vaccine, b: im.date, c: im.done ? 'Done' : 'Due', tone: im.done ? 'ok' : 'warn' })));
+    case 'Immunisation Programmes':
+    case 'Wellness Programmes':
+      body = rows(u.programmes.map(pg => ({ a: pg.name, b: `${pg.coveragePct}% coverage (national)`, tone: pg.tone === 'info' ? 'ok' : pg.tone })));
       break;
     case 'Telemedicine':
       body = rows(v.doctors.map(d => ({ a: `${d.name} · ${d.spec}`, b: `★ ${d.rating}`, c: d.available ? 'Available' : 'Busy', tone: d.available ? 'ok' : 'warn' })));
@@ -79,8 +87,13 @@ function PortalSection({ name, v }: { name: string; v: ReturnType<typeof citizen
     case 'Health Wallet':
       body = rows([{ a: 'Available balance', b: `${v.wallet.points.toLocaleString()} HS Points`, c: 'Redeem', tone: 'ok' }]);
       break;
-    case 'Wearables':
-      body = rows(v.overview.map(o => ({ a: o.label, b: `${o.value} ${o.sub}`, tone: o.tone })));
+    case 'Service Overview':
+      body = rows([
+        { a: 'Bookings this month (all citizens)', b: u.bookedThisMonth.toLocaleString('en') },
+        { a: 'Certificates issued', b: u.certificatesIssued.toLocaleString('en') },
+        { a: 'Facility searches', b: u.facilitySearches.toLocaleString('en') },
+        { a: 'Requests answered on time', b: `${u.onTimePct}%`, tone: u.onTimeTone === 'info' ? 'ok' : u.onTimeTone },
+      ]);
       break;
     case 'Emergency':
       body = rows([
@@ -90,24 +103,17 @@ function PortalSection({ name, v }: { name: string; v: ReturnType<typeof citizen
         ...v.services.slice(0, 3).map(s => ({ a: `Nearest: ${s.name}`, b: `${s.km} km`, c: s.tag, tone: 'ok' as Tone })),
       ]);
       break;
-    case 'Family Health': {
+    case 'Family Membership': {
       const FAM = ['Spouse', 'Child', 'Child', 'Parent'];
       const NM = ['Yusuf', 'Layla', 'Omar', 'Fatima', 'Hana', 'Idris'];
       const h = [...v.healthId].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7);
       const n = 2 + (Math.abs(h) % 3);
       body = rows(Array.from({ length: n }).map((_, i) => {
         const okk = Math.abs(h >> i) % 5 !== 0;
-        return { a: `${NM[Math.abs(h + i * 7) % NM.length]} · ${FAM[i % FAM.length]}`, b: okk ? 'Up to date' : 'Check-up due', c: okk ? 'OK' : 'Action', tone: (okk ? 'ok' : 'warn') as Tone };
+        return { a: `${NM[Math.abs(h + i * 7) % NM.length]} · ${FAM[i % FAM.length]}`, b: okk ? 'Scheme membership current' : 'Membership renewal due', c: okk ? 'OK' : 'Action', tone: (okk ? 'ok' : 'warn') as Tone };
       }));
       break;
     }
-    case 'Wellness':
-      body = rows([
-        { a: 'Health score', b: `${v.healthScore}/100`, c: v.healthBand, tone: v.healthScore >= 70 ? 'ok' : 'warn' },
-        ...v.overview.map(o => ({ a: o.label, b: `${o.value} ${o.sub}`, tone: o.tone })),
-        { a: 'Tip', b: v.healthScore >= 80 ? 'Maintain your routine' : 'Add a 20-min daily walk' },
-      ]);
-      break;
     case 'Settings':
       body = rows([
         { a: 'Name', b: v.name }, { a: 'Health ID', b: v.healthId },
@@ -142,10 +148,12 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
 }) {
   const ts = now / 4000;
   const v = citizenPortalView(id, ts);
+  const u = portalUsage(id, ts);
+  const spark = (k: string) => waveSeries(`cps:${k}:${id}`, ts, 12, 30, 90);
   const [navSel, setNavSel] = React.useState('Overview');
   const [navOpen, setNavOpen] = React.useState(false);
   const [booked, setBooked] = React.useState(false);
-  const scoreTone: Tone = v.healthScore >= 85 ? 'ok' : v.healthScore >= 70 ? 'ok' : v.healthScore >= 55 ? 'warn' : 'alert';
+  const onTimeTone: Tone = u.onTimeTone === 'info' ? 'ok' : u.onTimeTone;
 
   return (
     <div className="rounded-[12px] p-2" style={{ background: '#070b11' }}>
@@ -224,7 +232,7 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
 
         {/* Main */}
         <div className="space-y-2">
-          {navSel !== 'Overview' ? <PortalSection name={navSel} v={v} /> : null}
+          {navSel !== 'Overview' ? <PortalSection name={navSel} v={v} u={u} /> : null}
           <div className={navSel === 'Overview' ? 'space-y-2' : 'hidden'}>
           {/* Hero + upcoming */}
           <div className="grid gap-2 xl:grid-cols-3">
@@ -233,10 +241,10 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
               <div className="flex items-center gap-2 text-[22px] font-bold text-ink">{v.name} <span style={{ color: ACC }}>✓</span></div>
               <div className="mt-0.5 font-mono text-[10px] text-ink-muted">Health ID: {v.healthId}</div>
               <div className="mt-3 inline-flex items-center gap-3 rounded-[10px] border px-4 py-2.5" style={{ borderColor: `color-mix(in srgb,${ACC} 35%,transparent)`, background: '#0a0f17' }}>
-                <RingGauge value={v.healthScore} label={v.healthBand} tone={scoreTone} size={70} sub="/100" />
+                <RingGauge value={u.onTimePct} label="on time" tone={onTimeTone} size={70} sub="%" />
                 <div>
-                  <div className="text-[10px] text-ink-muted">Health score</div>
-                  <div className="text-[24px] font-bold" style={{ color: C(scoreTone) }}>{v.healthScore}<span className="text-[11px] text-ink-muted"> {v.healthBand}</span> <IndexTag index="health-operations.ts · healthScore" /></div>
+                  <div className="text-[10px] text-ink-muted">Requests answered on time (all citizens)</div>
+                  <div className="text-[24px] font-bold" style={{ color: C(onTimeTone) }}>{u.onTimePct}%<span className="text-[11px] text-ink-muted"> this month</span> <IndexTag index="health-admin.ts · onTimePct" /></div>
                   <div className="text-[9px]" style={{ color: ACC }}>View details →</div>
                 </div>
               </div>
@@ -259,43 +267,42 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
 
           {/* Timeline | Health overview | Medicines */}
           <div className="grid gap-2 xl:grid-cols-3">
-            <Card title="Health timeline" action="View Full Timeline">
+            <Card title="Service history" action="View Full History">
               <div className="space-y-2">
-                {v.timeline.map((e, i) => (
-                  <div key={i} className="flex gap-2">
-                    <div className="flex flex-col items-center"><span className="mt-1 h-2 w-2 rounded-full" style={{ background: C(e.tone) }} />{i < v.timeline.length - 1 ? <span className="w-px flex-1 bg-[#1c2733]" /> : null}</div>
+                {u.requests.slice(0, 5).map((e, i, all) => (
+                  <div key={e.kind} className="flex gap-2">
+                    <div className="flex flex-col items-center"><span className="mt-1 h-2 w-2 rounded-full" style={{ background: C(e.tone === 'warn' ? 'warn' : 'ok') }} />{i < all.length - 1 ? <span className="w-px flex-1 bg-[#1c2733]" /> : null}</div>
                     <div className="min-w-0 pb-1">
-                      <div className="text-[9px] text-ink-muted">{e.date}</div>
                       <div className="text-[11px] font-medium text-ink">{e.kind}</div>
-                      <div className="flex items-center gap-2 text-[9px] text-ink-soft">{e.detail}<span className="rounded-[3px] px-1 py-0.5 text-[7px] font-bold uppercase" style={{ background: `color-mix(in srgb,${C(e.tone)} 16%,transparent)`, color: C(e.tone) }}>{e.status}</span></div>
+                      <div className="flex items-center gap-2 text-[9px] text-ink-soft">Request received<span className="rounded-[3px] px-1 py-0.5 text-[7px] font-bold uppercase" style={{ background: `color-mix(in srgb,${C(e.tone === 'warn' ? 'warn' : 'ok')} 16%,transparent)`, color: C(e.tone === 'warn' ? 'warn' : 'ok') }}>{e.tone === 'warn' ? 'Pending' : 'Answered'}</span></div>
                     </div>
                   </div>
                 ))}
               </div>
             </Card>
-            <Card title="Health overview" action="This Week">
+            <Card title="Service overview" action="This Month">
               <div className="space-y-2.5">
-                {v.overview.map(o => (
-                  <div key={o.label} className="flex items-center gap-2">
+                {([['Bookings', u.bookedThisMonth, 'all citizens', 'bk'], ['Certificates issued', u.certificatesIssued, 'all citizens', 'ci'], ['Facility searches', u.facilitySearches, 'all citizens', 'fs']] as const).map(([label, value, sub, k]) => (
+                  <div key={label} className="flex items-center gap-2">
                     <div className="min-w-0 flex-1">
-                      <div className="text-[10px] text-ink-muted">{o.label}</div>
-                      <div className="text-[14px] font-semibold text-ink">{o.value} <span className="text-[9px] text-ink-muted">{o.sub}</span></div>
+                      <div className="text-[10px] text-ink-muted">{label}</div>
+                      <div className="text-[14px] font-semibold text-ink">{value.toLocaleString('en')} <span className="text-[9px] text-ink-muted">{sub}</span></div>
                     </div>
-                    <Sparkline points={o.series} tone={o.tone} width={70} height={20} />
+                    <Sparkline points={spark(k)} tone="ok" width={70} height={20} />
                   </div>
                 ))}
               </div>
             </Card>
-            <Card title="Medicines & prescriptions" action="View All">
+            <Card title="Medicines & pharmacies" action="View All">
               <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-[8px] border border-line-soft px-2 py-1.5"><div className="text-[9px] text-ink-muted">Active</div><div className="text-[18px] font-bold text-ink">{v.meds.active}</div></div>
-                <div className="rounded-[8px] border border-line-soft px-2 py-1.5"><div className="text-[9px] text-ink-muted">Pending refills</div><div className="text-[18px] font-bold" style={{ color: C('warn') }}>{v.meds.pendingRefills}</div></div>
+                <div className="rounded-[8px] border border-line-soft px-2 py-1.5"><div className="text-[9px] text-ink-muted">Licensed nearby</div><div className="text-[18px] font-bold text-ink">{u.facilities.length}</div></div>
+                <div className="rounded-[8px] border border-line-soft px-2 py-1.5"><div className="text-[9px] text-ink-muted">Advisories</div><div className="text-[18px] font-bold" style={{ color: C('warn') }}>{u.advisories.length}</div></div>
               </div>
               <div className="mt-2 space-y-1.5">
-                {v.meds.list.map(med => (
-                  <div key={med.drug} className="flex items-center justify-between rounded-[8px] border border-line-soft px-2 py-1.5">
-                    <div><div className="text-[11px] text-ink">{med.drug}</div><div className="text-[8px] text-ink-muted">{med.instr}</div></div>
-                    <span className="text-[9px] font-semibold" style={{ color: C(med.tone) }}>{med.daysLeft} days left</span>
+                {u.facilities.map(f => (
+                  <div key={f.name} className="flex items-center justify-between rounded-[8px] border border-line-soft px-2 py-1.5">
+                    <div><div className="text-[11px] text-ink">{f.name}</div><div className="text-[8px] text-ink-muted">{f.kind}</div></div>
+                    <span className="text-[9px] font-semibold" style={{ color: C('ok') }}>{f.tag}</span>
                   </div>
                 ))}
               </div>
@@ -305,12 +312,13 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
 
           {/* Records summary | Insurance */}
           <div className="grid gap-2 xl:grid-cols-2">
-            <Card title="Health records summary" action="View All Records">
-              <div className="grid grid-cols-4 gap-2">
-                {[['Reports', v.records.reports], ['Lab results', v.records.labs], ['Imaging', v.records.imaging], ['Documents', v.records.documents]].map(([l, n]) => (
-                  <div key={l as string} className="rounded-[8px] border border-line-soft px-2 py-2 text-center"><div className="text-[18px] font-bold text-ink">{n as number}</div><div className="text-[8px] text-ink-muted">{l as string}</div></div>
+            <Card title="Records and certificates" action="Request a Copy">
+              <div className="grid grid-cols-2 gap-2">
+                {u.requests.filter(r => /Records|Certificate/.test(r.kind)).map(r => (
+                  <div key={r.kind} className="rounded-[8px] border border-line-soft px-2 py-2 text-center"><div className="text-[18px] font-bold text-ink">{r.count.toLocaleString('en')}</div><div className="text-[8px] text-ink-muted">{r.kind} · this month</div></div>
                 ))}
               </div>
+              <p className="mt-2 text-[9px] text-ink-muted">{RECORDS_NOTE}</p>
             </Card>
             <Card title="Insurance & coverage" action="View Details">
               <div className="flex items-center gap-2">
@@ -328,14 +336,14 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
 
           {/* Immunization | Telemedicine | Wallet */}
           <div className="grid gap-2 xl:grid-cols-3">
-            <Card title="Immunization status" action="View All">
+            <Card title="Immunisation programmes" action="View All">
               <div className="flex items-center gap-3">
-                <RingGauge value={v.immun.uptoDatePct} label="up to date" tone={v.immun.uptoDatePct >= 80 ? 'ok' : 'warn'} size={76} sub="%" />
+                <RingGauge value={u.schemeMembershipPct} label="members" tone={u.schemeMembershipPct >= 80 ? 'ok' : 'warn'} size={76} sub="%" />
                 <div className="min-w-0 flex-1 space-y-1">
-                  {v.immun.list.map(im => (
-                    <div key={im.vaccine} className="flex items-center justify-between text-[9px]">
-                      <div><div className="text-ink-soft">{im.vaccine}</div><div className="text-[8px] text-ink-muted">{im.date}</div></div>
-                      <span style={{ color: im.done ? C('ok') : C('warn') }}>{im.done ? '✓' : '◷'}</span>
+                  {u.programmes.map(pg => (
+                    <div key={pg.name} className="flex items-center justify-between text-[9px]">
+                      <div><div className="text-ink-soft">{pg.name}</div><div className="text-[8px] text-ink-muted">national coverage</div></div>
+                      <span style={{ color: C(pg.tone === 'info' ? 'ok' : pg.tone) }}>{pg.coveragePct}%</span>
                     </div>
                   ))}
                 </div>
@@ -400,7 +408,7 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
 
           {/* Mobile-style tab bar */}
           <div className="flex items-center justify-around rounded-[10px] border px-2 py-2 text-[9px] text-ink-muted" style={{ borderColor: 'color-mix(in srgb,#1c2733 70%,transparent)', background: '#0c121b' }}>
-            {([['Home', 'Overview', '⌂'], ['Services', 'Appointments', '▦'], ['Health ID', 'Health Records', '▣'], ['Messages', 'Emergency', '✉'], ['Profile', 'Insurance', '◔']] as const).map(([tb, target, ic]) => {
+            {([['Home', 'Overview', '⌂'], ['Services', 'Appointments', '▦'], ['Health ID', 'Certificates', '▣'], ['Messages', 'Emergency', '✉'], ['Profile', 'Insurance', '◔']] as const).map(([tb, target, ic]) => {
               const on = navSel === target;
               return (
                 <button key={tb} type="button" onClick={() => { setNavSel(target); setNavOpen(false); }}

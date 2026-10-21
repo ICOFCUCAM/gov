@@ -1,15 +1,19 @@
 'use client';
 
-// Domain 3 — Doctor Systems · Clinical Workstation.
-// Patient-centric clinical command: queue spine + the selected patient's
-// deep live chart (timeline, diagnoses, vitals trend, care plan,
-// medications, labs, pending orders), an AI clinical assistant, active
-// alerts and a clinical action bar. Distinct clinician-blue rhythm.
+// Domain 3 — Doctor Systems · Workforce & Licensing Desk.
+// The professional's administrative desk, never a clinical chart (CLAUDE.md,
+// Health: no patient or clinical field anywhere): a team roster with each
+// professional's standing on the register, the selected professional's duty
+// timeline, establishment by cadre, facility licensing and returns, service
+// volumes and stock counted in aggregate, renewals and training, workforce
+// alerts and an administrative action bar. Generated (lib/gov/health-admin.ts)
+// until the professions register and the health regulator's returns answer.
+// Distinct clinician-blue rhythm.
 
 import * as React from 'react';
 import { NotYetButton } from '@/components/ui/NotYetButton';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
-import { clinicianWorkstation } from '@/lib/gov/health-operations';
+import { workforceDesk } from '@/lib/gov/health-admin';
 import { CommandHeader, CommandPanel, RingGauge, TrendChart, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import { InstitutionChainStrip, DispatchChannel, EncounterThread } from '@/apps/_shared/InstitutionChain';
 import { facilities, recordLineage, lineageAtStage, chainIntegrity } from '@/lib/gov/institution-chain';
@@ -21,8 +25,8 @@ import { aiLabel } from '@/lib/nation/registry';
 import { IndexTag } from '@/components/ui/IndexTag';
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
 const ACC = ACCENT.doctor!;
-const TABS = ['Overview', 'History', 'Examination', 'Diagnosis', 'Treatment plan', 'Results', 'Documents', 'Billing'];
-const ACTIONS = ['New consultation', 'Quick note', 'Order lab', 'Order imaging', 'Prescription', 'Referral', 'Discharge plan', 'Print summary', 'More actions'];
+const TABS = ['Overview', 'Registration', 'Rota', 'Establishment', 'Licensing', 'Returns', 'Documents', 'Payroll'];
+const ACTIONS = ['Request leave', 'Swap shift', 'Request locum cover', 'Log training', 'Renew registration', 'Report staffing gap', 'Requisition supplies', 'Print rota', 'More actions'];
 
 export function DoctorSystem({ id, now, role, withheld }: {
   id: string; now: number; role: SovereignRole; withheld: Capability[];
@@ -34,34 +38,34 @@ export function DoctorSystem({ id, now, role, withheld }: {
   const [actNote, setActNote] = React.useState('');
   const [actLog, setActLog] = React.useState<{ a: string; at: string }[]>([]);
   const clock = new Date(now).toLocaleTimeString('en-GB', { hour12: false });
-  const w = clinicianWorkstation(id, ts, sel);
-  const p = w.patient;
-  // The doctor serves the state THROUGH a hospital: enrolled at a facility,
-  // every clinical record held there first, then rolled to the Ministry of
+  const w = workforceDesk(id, ts, sel);
+  const p = w.member;
+  // The professional serves the state THROUGH a facility: on its rota, every
+  // administrative return held there first, then rolled to the Ministry of
   // Health and synchronised to the national system.
   const epoch = Math.max(0, Math.floor(ts));
   const hList = facilities('HEALTH', epoch);
   const myHospital = hList[pickIndex(id, hList.length, 7)] ?? hList[0]!;
-  const baseLineage = recordLineage(`MRN-${p.mrn}`, p.attending, myHospital, 'HEALTH', epoch);
+  const baseLineage = recordLineage(`RETURN-${p.number}`, p.name, myHospital, 'HEALTH', epoch);
   const hIntegrity = chainIntegrity('HEALTH', epoch);
   const dispatchScope = `health:${myHospital.id}`;
   const rv = React.useSyncExternalStore(recSub, recVer, () => 0);
-  const ptRecs = React.useMemo(() => recordsOf('HEALTH', myHospital.id, 'clinical record', now), [myHospital.id, now, rv]);
-  // Match the exact MRN token (with the ' · ' delimiter) so e.g. MRN-12
-  // does not collide with MRN-123.
-  const ptRec = ptRecs.find(r => r.subject === `MRN-${p.mrn}` || r.subject.startsWith(`MRN-${p.mrn} `));
+  const ptRecs = React.useMemo(() => recordsOf('HEALTH', myHospital.id, 'staffing return', now), [myHospital.id, now, rv]);
+  // Match the exact return token (with the ' · ' delimiter) so e.g. RETURN-12
+  // does not collide with RETURN-123.
+  const ptRec = ptRecs.find(r => r.subject === `RETURN-${p.number}` || r.subject.startsWith(`RETURN-${p.number} `));
   // When a real record has been committed, the lineage strip reflects its
   // live custody stage instead of the deterministic placeholder.
   const lineage = ptRec ? lineageAtStage(baseLineage, STAGE_ORDER.indexOf(ptRec.stage)) : baseLineage;
-  const rb: Tone = p.riskBand === 'High' ? 'alert' : p.riskBand === 'Moderate' ? 'warn' : 'ok';
+  const rb: Tone = p.cpdPct >= 80 ? 'ok' : p.cpdPct >= 50 ? 'warn' : 'alert';
   const norm = (s: number[]) => { const mn = Math.min(...s), sp = Math.max(...s) - mn || 1; return s.map(v => ((v - mn) / sp) * 100); };
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#070b12' }}>
-      <CommandHeader index={3} title="Doctor Workstation" subtitle="Sovereign Healthcare System"
+      <CommandHeader index={3} title="Workforce & Licensing Desk" subtitle="Sovereign Healthcare System"
         postureLabel="SHIFT · Morning" postureTone="ok" now={now} role={role} accent={ACC} />
 
-      {/* Patient header card */}
+      {/* Professional's card: standing on the register, never a condition */}
       <div className="flex flex-wrap items-center gap-4 rounded-[4px] border px-3 py-2.5"
         style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: `linear-gradient(100deg,#0a0f18,color-mix(in srgb,${ACC} 7%,#0a0f18))` }}>
         <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-[15px] font-bold"
@@ -71,15 +75,14 @@ export function DoctorSystem({ id, now, role, withheld }: {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-[14px] font-semibold text-ink">{p.name}</span>
-            {p.vip ? <span className="rounded-[2px] px-1.5 py-0.5 text-[7.5px] font-bold uppercase tracking-wider" style={{ background: `color-mix(in srgb,${ACC} 22%,transparent)`, color: ACC }}>VIP</span> : null}
-            {p.highRisk ? <span className="rounded-[2px] px-1.5 py-0.5 text-[7.5px] font-bold uppercase tracking-wider" style={{ background: `color-mix(in srgb,${C('alert')} 20%,transparent)`, color: C('alert') }}>High risk</span> : null}
+            <span className="rounded-[2px] px-1.5 py-0.5 text-[7.5px] font-bold uppercase tracking-wider" style={{ background: `color-mix(in srgb,${C(p.tone)} 20%,transparent)`, color: C(p.tone) }}>{p.standing}</span>
           </div>
-          <div className="text-[9px] text-ink-muted">MRN: {p.mrn} · {p.age}Y · {p.sex} · Blood {p.blood}</div>
-          <div className="text-[9px]" style={{ color: C('warn') }}>Allergies: {p.allergies}</div>
+          <div className="text-[9px] text-ink-muted">{p.profession} · {p.number}</div>
+          <div className="text-[9px]" style={{ color: C(p.shift === 'off duty' ? 'warn' : 'ok') }}>{p.shift} · {p.rota}</div>
         </div>
         {[
-          ['Location', `${p.ward} · ${p.bed}`], ['Attending', p.attending],
-          ['Admitted', `${p.admittedDaysAgo}d ago`], ['Insurance', p.insurance],
+          ['Facility', p.facility], ['Registration valid', p.validUntil],
+          ['Team on duty', `${w.kpis.onDuty} of ${w.team.length}`], ['Establishment filled', `${w.kpis.establishmentPct}%`],
         ].map(([l, v]) => (
           <div key={l} className="min-w-0">
             <div className="text-[7.5px] uppercase tracking-[0.16em] text-ink-muted">{l}</div>
@@ -87,23 +90,23 @@ export function DoctorSystem({ id, now, role, withheld }: {
           </div>
         ))}
         <div className="ml-auto flex flex-col items-center">
-          <RingGauge value={p.riskScore} label={`${p.riskBand} risk`} tone={rb} size={84} sub="score" />
-          <IndexTag index="health-operations.ts · riskScore" />
+          <RingGauge value={p.cpdPct} label="training" tone={rb} size={84} sub="% done" />
+          <IndexTag index="health-admin.ts · cpdPct" />
         </div>
       </div>
 
       {/* Bureaucratic chain — doctor → hospital → ministry → national */}
       <InstitutionChainStrip accent={ACC} ministryKey="HEALTH" facility={myHospital}
-        actorName={p.attending} lineage={lineage} integrity={hIntegrity} />
+        actorName={p.name} lineage={lineage} integrity={hIntegrity} />
 
-      {/* Commit this patient's record into the hospital register → chain */}
+      {/* Commit this professional's staffing return into the facility register → chain */}
       <div className="flex flex-wrap items-center gap-2 rounded-[4px] border px-3 py-2 text-[10px]"
         style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#0a0f18' }}>
         <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-ink-muted">Record custody</span>
         {ptRec ? (
           <>
             <span className="font-mono text-[8px] text-ink-muted">{ptRec.ref}</span>
-            <span className="text-ink-soft">{p.name} · MRN {p.mrn}</span>
+            <span className="text-ink-soft">{p.name} · {p.number}</span>
             <span className="text-[7.5px] uppercase tracking-wider" style={{ color: ptRec.stage === 'synced' ? C('ok') : ptRec.stage === 'rolled' ? C('warn') : C('info') }}>
               {STAGE_ORDER.indexOf(ptRec.stage) + 1}/5 · {ptRec.stage}
             </span>
@@ -117,8 +120,8 @@ export function DoctorSystem({ id, now, role, withheld }: {
           </>
         ) : (
           <>
-            <span className="text-ink-soft">No record committed for {p.name} at {myHospital.id}</span>
-            <button type="button" onClick={() => fileRecord('HEALTH', myHospital.id, `MRN-${p.mrn} · ${p.chiefComplaint}`, p.attending, 'clinical record', now)}
+            <span className="text-ink-soft">No staffing return committed for {p.name} at {myHospital.id}</span>
+            <button type="button" onClick={() => fileRecord('HEALTH', myHospital.id, `RETURN-${p.number} · ${p.rota}`, p.name, 'staffing return', now)}
               className="focus-ring ml-auto rounded-[3px] border px-2 py-1 text-[8px] font-bold uppercase tracking-wider"
               style={{ borderColor: ACC, color: ACC }}>
               Commit to {myHospital.id} register
@@ -127,7 +130,7 @@ export function DoctorSystem({ id, now, role, withheld }: {
         )}
       </div>
 
-      {/* Chart tabs */}
+      {/* Desk tabs */}
       <div className="flex flex-wrap gap-1 border-b" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
         {TABS.map(tn => (
           <button key={tn} onClick={() => setTab(tn)}
@@ -140,97 +143,93 @@ export function DoctorSystem({ id, now, role, withheld }: {
 
       {/* Body grid — spec 3-column composition (≈30 / 35 / 25) */}
       <div className="grid gap-[14px] xl:grid-cols-[1.1fr_1.5fr_1fr]">
-        {/* Col 1 — timeline + medications */}
+        {/* Col 1 — duty timeline + stock */}
         <div className="space-y-2">
-        <CommandPanel title="Patient timeline" meta="today" accent={ACC}>
+        <CommandPanel title="Duty timeline" meta="today" accent={ACC}>
           <div className="space-y-2">
-            {p.timeline.map((e, i) => (
+            {w.duty.map((e, i) => (
               <div key={i} className="flex gap-2">
                 <div className="flex flex-col items-center">
                   <span className="mt-1 h-2 w-2 rounded-full" style={{ background: C(e.tone) }} />
-                  {i < p.timeline.length - 1 ? <span className="w-px flex-1" style={{ background: 'rgb(var(--c-line))' }} /> : null}
+                  {i < w.duty.length - 1 ? <span className="w-px flex-1" style={{ background: 'rgb(var(--c-line))' }} /> : null}
                 </div>
                 <div className="min-w-0 pb-1">
-                  <div className="text-[9px] text-ink-muted">May 16, {e.at}</div>
+                  <div className="text-[9px] text-ink-muted">{e.at}</div>
                   <div className="text-[10px] font-medium text-ink">{e.kind}</div>
                   <div className="text-[9px] text-ink-soft">{e.detail}</div>
-                  <div className="text-[8px] text-ink-muted">{e.by}</div>
                 </div>
               </div>
             ))}
           </div>
         </CommandPanel>
-        <CommandPanel title="Medications" meta={`${p.medications.length}`} accent={ACC}>
+        <CommandPanel title="Stock cover" meta={`${w.stock.length} lines · days`} accent={ACC}>
           <div className="space-y-0.5">
-            {p.medications.map(m => (
-              <div key={m.drug} className="flex items-center gap-2 text-[9.5px]">
-                <span className="min-w-0 flex-1 truncate text-ink-soft">{m.drug}</span>
-                <span className="shrink-0 font-mono text-[8px] text-ink-muted">{m.route} · {m.freq}</span>
-                <span className="w-10 shrink-0 text-right font-mono text-[8px] tabular-nums text-ink-muted">{m.time}</span>
+            {w.stock.map(m => (
+              <div key={m.item} className="flex items-center gap-2 text-[9.5px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{m.item}</span>
+                <span className="w-14 shrink-0 text-right font-mono text-[8px] tabular-nums" style={{ color: C(m.tone) }}>{m.daysCover}d</span>
               </div>
             ))}
           </div>
         </CommandPanel>
         <DispatchChannel scope={dispatchScope} now={now} accent={ACC}
-          selfTier="ACTOR" selfName={`${p.attending} · ${myHospital.id}`} toTier="FACILITY"
-          title={`Hospital dispatch · ${myHospital.id}`} />
-        <EncounterThread scope={`enc:health:${myHospital.id}:${p.mrn}`} now={now} accent={ACC}
-          selfAuthor="OFFICIAL" officialName={p.attending} publicName={p.name}
-          title={`Patient encounter · ${p.mrn}`} />
+          selfTier="ACTOR" selfName={`${p.name} · ${myHospital.id}`} toTier="FACILITY"
+          title={`Facility dispatch · ${myHospital.id}`} />
+        <EncounterThread scope={`enc:health:${myHospital.id}:${p.number}`} now={now} accent={ACC}
+          selfAuthor="OFFICIAL" officialName={p.name} publicName="Facility administrator"
+          title={`Staffing thread · ${p.number}`} />
         <EncounterThread scope={`enc:health:careteam:${id}`} now={now} accent={ACC}
-          selfAuthor="OFFICIAL" officialName={p.attending} publicName="Enrolled citizen"
-          title="Primary care team ↔ citizen portal" />
+          selfAuthor="OFFICIAL" officialName={p.name} publicName="Enrolled citizen"
+          title="Facility service desk ↔ citizen portal" />
         <DispatchChannel scope={`health:labline:${id}`} now={now} accent={ACC}
-          selfTier="ACTOR" selfName={p.attending} toTier="FACILITY"
-          title="Laboratory liaison — order queries & results" />
+          selfTier="ACTOR" selfName={p.name} toTier="FACILITY"
+          title="Laboratory liaison — turnaround and supplies" />
         </div>
 
-        {/* Col 2 — complaint · diagnoses · notes · labs */}
+        {/* Col 2 — service lines · notes · turnaround · attendance · training · requests */}
         <div className="space-y-2">
-          <CommandPanel title="Chief complaint" accent={ACC}>
-            <p className="text-[10px] italic text-ink-soft">“{p.chiefComplaint}”</p>
+          <CommandPanel title="Rota note" accent={ACC}>
+            <p className="text-[10px] italic text-ink-soft">“{w.advisory.summary}”</p>
           </CommandPanel>
-          <CommandPanel title="Diagnoses" accent={ACC}>
+          <CommandPanel title="Attendances by service line" meta="counts · today" accent={ACC}>
             <div className="space-y-1">
-              {p.diagnoses.map((d, i) => (
-                <div key={d.code} className="flex items-center gap-2 text-[10px]">
+              {w.serviceLines.map((d, i) => (
+                <div key={d.line} className="flex items-center gap-2 text-[10px]">
                   <span className="w-4 text-center font-mono text-ink-muted">{i + 1}</span>
-                  <span className="w-12 shrink-0 font-mono text-ink-muted">{d.code}</span>
-                  <span className="min-w-0 flex-1 truncate text-ink-soft">{d.name}</span>
-                  <span className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[7.5px] font-bold uppercase" style={{ background: `color-mix(in srgb,${d.rank === 'Primary' ? C('alert') : C('info')} 16%,transparent)`, color: d.rank === 'Primary' ? C('alert') : C('info') }}>{d.rank}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{d.line}</span>
+                  <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">{d.attendances.toLocaleString('en')}</span>
+                  <span className="w-10 shrink-0 text-right text-[7.5px] font-bold uppercase" style={{ color: C('info') }}>{d.sharePct}%</span>
                 </div>
               ))}
             </div>
           </CommandPanel>
-          <CommandPanel title="Recent notes" accent={ACC}>
+          <CommandPanel title="Recent handover notes" accent={ACC}>
             <div className="space-y-1.5">
-              {p.notes.map((n, i) => (
+              {w.duty.filter(e => e.kind === 'Handover' || e.kind === 'Rota review' || e.kind === 'Supply check').map((n, i) => (
                 <div key={i} className="rounded-[3px] border border-line-soft bg-surface-2/30 px-2 py-1">
                   <div className="text-[8px] text-ink-muted">{n.at}</div>
-                  <div className="text-[9.5px] text-ink-soft">{n.text}</div>
-                  <div className="text-[8px] text-ink-muted">— {n.by}</div>
+                  <div className="text-[9.5px] text-ink-soft">{n.detail}</div>
+                  <div className="text-[8px] text-ink-muted">— {p.name}</div>
                 </div>
               ))}
             </div>
           </CommandPanel>
-          <CommandPanel title="Recent lab results" meta="View all" accent={ACC}>
+          <CommandPanel title="Laboratory turnaround" meta="median · within target" accent={ACC}>
             <div className="space-y-0.5">
-              {p.labs.map(l => (
+              {w.turnaround.map(l => (
                 <div key={l.test} className="flex items-center gap-2 text-[9.5px]">
                   <span className="min-w-0 flex-1 truncate text-ink-soft">{l.test}</span>
-                  <span className="shrink-0 font-mono tabular-nums text-ink-muted">{l.value} {l.unit}</span>
-                  <span className="w-16 shrink-0 text-right text-[8px] font-bold uppercase" style={{ color: C(l.tone) }}>{l.flag}</span>
-                  <span className="w-10 shrink-0 text-right text-[7.5px] text-ink-muted">{l.day}</span>
+                  <span className="shrink-0 font-mono tabular-nums text-ink-muted">{l.medianHrs} h</span>
+                  <span className="w-16 shrink-0 text-right text-[8px] font-bold uppercase" style={{ color: C(l.tone) }}>{l.withinTargetPct}%</span>
                 </div>
               ))}
             </div>
           </CommandPanel>
-          {/* center continues — vitals · care plan · pending orders */}
-          <CommandPanel title="Vital signs trend" meta="last 24h" accent={ACC} live>
+          <CommandPanel title="Facility activity trend" meta="last 12 hours" accent={ACC} live>
             <TrendChart height={150}
-              series={p.vitals.map(v => ({ name: v.label.split(' ')[0]!, points: norm(v.series), tone: v.tone }))} />
+              series={w.attendance.map(v => ({ name: v.label.split(' ')[0]!, points: norm(v.series), tone: v.tone === 'info' ? 'ok' : v.tone }))} />
             <div className="mt-1 grid grid-cols-2 gap-1">
-              {p.vitals.map(v => (
+              {w.attendance.map(v => (
                 <div key={v.label} className="flex items-center justify-between rounded-[2px] border border-line-soft px-1.5 py-0.5">
                   <span className="text-[8px] text-ink-muted">{v.label}</span>
                   <span className="font-mono text-[10px] tabular-nums" style={{ color: C(v.tone) }}>{v.value}</span>
@@ -238,43 +237,43 @@ export function DoctorSystem({ id, now, role, withheld }: {
               ))}
             </div>
           </CommandPanel>
-          <CommandPanel title="Care plan" meta={`${p.carePlanPct}% complete`} accent={ACC}>
+          <CommandPanel title="Registration and training" meta={`${p.cpdPct}% complete`} accent={ACC}>
             <div className="space-y-1">
-              {p.carePlan.map(c => (
+              {w.cpd.map(c => (
                 <div key={c.task} className="flex items-center gap-2 text-[9.5px]">
                   <span className="grid h-3 w-3 place-items-center rounded-[2px] border" style={{ borderColor: c.done ? C('ok') : 'rgb(var(--c-line))', background: c.done ? C('ok') : 'transparent' }}>{c.done ? <span className="text-[6px] text-black">✓</span> : null}</span>
                   <span className="min-w-0 flex-1 truncate text-ink-soft">{c.task}</span>
                   <span className="shrink-0 text-[8px] text-ink-muted">{c.done ? 'Completed' : `Due ${c.due}`}</span>
                 </div>
               ))}
-              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${p.carePlanPct}%`, background: C('ok') }} /></div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${p.cpdPct}%`, background: C('ok') }} /></div>
             </div>
           </CommandPanel>
-          <CommandPanel title="Pending orders" meta={`${p.orders.length}`} accent={ACC} live>
+          <CommandPanel title="Pending requests" meta={`${w.requests.length}`} accent={ACC} live>
             <div className="space-y-0.5">
-              {p.orders.map(o => (
+              {w.requests.map(o => (
                 <div key={o.name} className="flex items-center gap-2 text-[9.5px]">
                   <span className="min-w-0 flex-1 truncate text-ink-soft">{o.name}</span>
-                  <span className="shrink-0 text-[7.5px] font-bold uppercase" style={{ color: C(o.tone) }}>{o.priority}</span>
+                  <span className="shrink-0 text-[7.5px] font-bold uppercase" style={{ color: C(o.tone) }}>{o.kind}</span>
                 </div>
               ))}
             </div>
           </CommandPanel>
         </div>
 
-        {/* Col 3 — AI · alerts · queue */}
+        {/* Col 3 — assistant · alerts · team roster */}
         <div className="space-y-2">
-          <CommandPanel title={aiLabel('AI clinical assistant', 'Clinical assistant')} meta="beta" accent={ACC} live>
-            <div className="text-[9.5px] text-ink-soft">{p.ai.summary}</div>
-            <div className="mt-1 text-[8px] font-bold uppercase tracking-wider" style={{ color: C(rb) }}>Risk assessment</div>
-            <div className="text-[9px]" style={{ color: C(rb) }}>{p.ai.riskAssessment}</div>
+          <CommandPanel title={aiLabel('AI workforce assistant', 'Workforce assistant')} meta="beta" accent={ACC} live>
+            <div className="text-[9.5px] text-ink-soft">{w.advisory.summary}</div>
+            <div className="mt-1 text-[8px] font-bold uppercase tracking-wider" style={{ color: C(rb) }}>Training and registration</div>
+            <div className="text-[9px]" style={{ color: C(rb) }}>{p.cpdPct}% of this year&apos;s training done · registration valid {p.validUntil}</div>
             <div className="mt-1 text-[8px] font-bold uppercase tracking-wider text-ink-muted">Recommended</div>
-            <ul className="space-y-0.5">{p.ai.recommended.map((r, i) => <li key={i} className="flex items-center gap-1 text-[9px] text-ink-soft"><span style={{ color: C('ok') }}>✓</span>{r}</li>)}</ul>
-            <NotYetButton reason="the platform keeps no patient or clinical record, so there is nothing to analyse; this panel is a simulation" className="focus-ring mt-1.5 w-full rounded-[3px] border py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors" style={{ borderColor: ACC, color: ACC }}>Run full analysis</NotYetButton>
+            <ul className="space-y-0.5">{w.advisory.recommended.map((r, i) => <li key={i} className="flex items-center gap-1 text-[9px] text-ink-soft"><span style={{ color: C('ok') }}>✓</span>{r}</li>)}</ul>
+            <NotYetButton reason="workforce planning is not recorded on the platform yet; professionals are on the professions register, and this panel is a simulation" className="focus-ring mt-1.5 w-full rounded-[3px] border py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors" style={{ borderColor: ACC, color: ACC }}>Run full analysis</NotYetButton>
           </CommandPanel>
-          <CommandPanel title="Active alerts" meta={`${p.alerts.length}`} accent={ACC} live>
+          <CommandPanel title="Workforce alerts" meta={`${w.alerts.length}`} accent={ACC} live>
             <div className="space-y-1">
-              {p.alerts.map(a => (
+              {w.alerts.map(a => (
                 <div key={a.title} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/30 px-2 py-1" style={{ borderLeft: `3px solid ${C(a.tone)}` }}>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[9.5px] font-medium text-ink">{a.title}</div>
@@ -285,19 +284,19 @@ export function DoctorSystem({ id, now, role, withheld }: {
               ))}
             </div>
           </CommandPanel>
-          <CommandPanel title="Patient queue" meta="my patients" accent={ACC}>
+          <CommandPanel title="Team roster" meta="standing on the register" accent={ACC}>
             <div className="space-y-1">
-              {w.queue.map((q, i) => (
+              {w.team.map((q, i) => (
                 <button key={q.id} onClick={() => setSel(q.id)}
                   className="focus-ring flex w-full items-center gap-2 rounded-[3px] border px-2 py-1 text-left transition-colors"
                   style={{ borderColor: q.id === p.id ? C(q.tone) : 'rgb(var(--c-line-soft))', background: q.id === p.id ? 'rgb(var(--c-surface-2))' : 'transparent', borderLeft: `3px solid ${C(q.tone)}` }}>
                   <span className="w-4 text-center text-[8px] font-bold" style={{ color: C(q.tone) }}>{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[9.5px] text-ink">{q.name}</div>
-                    <div className="truncate text-[8px] text-ink-muted">{q.ward}</div>
+                    <div className="truncate text-[8px] text-ink-muted">{q.profession}</div>
                   </div>
-                  <span className="shrink-0 text-[7.5px] font-bold uppercase" style={{ color: C(q.tone) }}>{q.acuity}</span>
-                  <span className="shrink-0 font-mono text-[8px] tabular-nums text-ink-muted">{q.time}</span>
+                  <span className="shrink-0 text-[7.5px] font-bold uppercase" style={{ color: C(q.tone) }}>{q.standing}</span>
+                  <span className="shrink-0 font-mono text-[8px] tabular-nums text-ink-muted">{q.shift}</span>
                 </button>
               ))}
             </div>
@@ -305,7 +304,7 @@ export function DoctorSystem({ id, now, role, withheld }: {
         </div>
       </div>
 
-      {/* Clinical action bar — functional */}
+      {/* Administrative action bar — functional */}
       <div className="rounded-[3px] border px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 70%,transparent)', background: '#0a0f18' }}>
         <div className="flex flex-wrap gap-1.5">
           {ACTIONS.map(a => (
@@ -328,7 +327,7 @@ export function DoctorSystem({ id, now, role, withheld }: {
         ) : null}
       </div>
 
-      {/* Action modal — performs the clinical action */}
+      {/* Action modal — records the administrative request in this session */}
       {act ? (
         <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: 'rgba(2,5,10,0.72)' }}
           onClick={() => setAct(null)}>
@@ -338,7 +337,7 @@ export function DoctorSystem({ id, now, role, withheld }: {
               <div className="text-[12px] font-bold uppercase tracking-[0.16em]" style={{ color: ACC }}>{act}</div>
               <button type="button" onClick={() => setAct(null)} className="focus-ring text-[12px] text-ink-muted hover:text-ink">✕</button>
             </div>
-            <div className="mt-1 text-[9px] text-ink-muted">Patient · {p.name} · {p.mrn} · {p.ward} {p.bed}</div>
+            <div className="mt-1 text-[9px] text-ink-muted">Professional · {p.name} · {p.number} · {p.facility}</div>
             <textarea autoFocus value={actNote} onChange={e => setActNote(e.target.value)}
               placeholder={`Detail for "${act}"…`}
               className="focus-ring mt-2 h-24 w-full resize-none rounded-[3px] border bg-[#070b12] p-2 text-[10px] text-ink-soft"
@@ -361,8 +360,8 @@ export function DoctorSystem({ id, now, role, withheld }: {
       <RuntimeQueue
         scope={`${id}:doctor`}
         kind="encounter"
-        title="Clinical encounter runtime — triage → assess → treat → disposition"
-        by="Attending Clinician"
+        title="Workforce request runtime — submit → review → decide → close"
+        by="Licensing Officer"
         role={role}
         withheld={withheld}
       />

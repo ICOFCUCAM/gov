@@ -2,7 +2,7 @@
 
 // apps/ministry-health/shell — the sovereign Health layout engine.
 // Dispatches all 30 Health domain surfaces through the Health design
-// system. Subsystems with established UIs (Hospital, Doctor, Patient,
+// system. Subsystems with established UIs (Hospital, Workforce, Service access,
 // Pharma, Lab, Disease, Emergency, Ward/OR, Finance, Regulatory,
 // Citizen Portal, Research, Security, Simulation, Interoperability,
 // Healthcare Grid, Situation Room, Command Centre, Executive
@@ -14,7 +14,6 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { HEALTH_DS, ClinicalSeal } from '@/apps/ministry-health/design-system/health-ds';
 import { domainBySurface, type SurfaceId } from '@/apps/ministry-health/core/domains';
 import { FederationStrip } from '@/apps/ministry-health/federation/federation';
-import { PATIENT_ADMISSION } from '@/apps/ministry-health/workflows/health-workflows';
 
 // Existing subsystem surfaces
 import { HealthCommandCentre } from '@/apps/ministry-health/subsystems/HealthCommandCentre';
@@ -62,7 +61,7 @@ const RENDER: Record<SurfaceId, Render> = {
   // workforce
   'doctor-roster':            p => <DoctorSystem {...p} />,
   'community-health-workers': p => <WardSurgicalSystem {...p} />,
-  // patient
+  // service access and records exchange (keys kept)
   'master-patient-index':     p => <MasterPatientIndex id={p.id} now={p.now} />,
   'longitudinal-ehr':         p => <LongitudinalEHR id={p.id} now={p.now} />,
   'prescription-validation':  p => <PatientSystem {...p} />,
@@ -106,7 +105,7 @@ export function HealthShell({ id, surface, now, role, withheld = [] }: {
       <RuntimeQueue
         scope={`health:${surface}`}
         kind={domain?.archetype === 'pharmacy' ? 'procurement' : domain?.archetype === 'lab' ? 'lab' : domain?.archetype === 'epi' ? 'incident' : 'case'}
-        title={`${domain?.label ?? 'Health'} runtime — ${PATIENT_ADMISSION.title}`}
+        title={`${domain?.label ?? 'Health'} runtime — request → review → decide → close`}
         by="Clinical Officer"
         role={role}
         withheld={withheld} />

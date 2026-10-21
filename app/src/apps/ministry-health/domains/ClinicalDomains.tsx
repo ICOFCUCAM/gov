@@ -1,96 +1,77 @@
 'use client';
 
-// Nine new clinical domains lifting Health from 21 → 30 surfaces.
+// Nine new health domains lifting Health from 21 → 30 surfaces.
 // Each consumes existing engines and renders through HEALTH_DS.
+// Administrative and aggregate only (CLAUDE.md, Health: no patient or clinical field
+// anywhere, no national record of persons' health): boards show capacity,
+// status and waits counted per bay, theatre or acuity level, never who is in a
+// bed, what was done to them or how they are; lib/gov/health-admin.ts.
 
 import * as React from 'react';
 import {
-  doctorRoster, intakeQueue, hospitalOps, laboratoryOps,
-  nationalHealthcareCapacity, patientServices,
+  doctorRoster, hospitalOps, laboratoryOps,
+  nationalHealthcareCapacity,
 } from '@/lib/gov/health-systems';
+import { bayBoard, emergencyAttendance } from '@/lib/gov/health-admin';
 import {
-  ClinicalFrame, VitalStrip, FloorPlanBay, ChartLine, KpiBar, WardRule, HEALTH_DS,
+  ClinicalFrame, FloorPlanBay, ChartLine, KpiBar, WardRule, HEALTH_DS,
 } from '@/apps/ministry-health/design-system/health-ds';
 import { seed, wave } from '@/lib/telemetry';
 import type { BayStatus } from '@/apps/ministry-health/design-system/health-ds';
 
-// ◧ II — Ward Board
+// ◧ II — Ward Board (bay status and how long it has been so; never who is in it)
 export function WardBoard({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
-  const hops = hospitalOps(id, ts);
   const total = 16;
-  const occupiedCount = Math.floor((hops.beds.occupancyPct / 100) * total);
-  const bays = Array.from({ length: total }, (_, i) => {
-    const k = `wb:${id}:${i}:${Math.floor(ts / 4)}`;
-    const status: BayStatus = i < occupiedCount
-      ? (seed(`${k}:c`) > 0.92 ? 'critical' : 'occupied')
-      : (seed(`${k}:c`) > 0.8 ? 'cleaning' : 'available');
-    return {
-      id: `B-${String(i + 1).padStart(2, '0')}`,
-      occupant: status === 'occupied' || status === 'critical' ? `Patient ${1000 + Math.floor(seed(`${k}:p`) * 9000)}` : undefined,
-      status,
-      since: status === 'occupied' || status === 'critical' ? `${Math.floor(wave(`${k}:s`, ts, 1, 72))}h` : undefined,
-      note: status === 'critical' ? 'Sepsis protocol' : undefined,
-    };
-  });
+  const { occupancyPct, bays } = bayBoard(id, ts, total);
   return (
-    <ClinicalFrame archetype="floor-plan" code="FA-WRD-02" title="Ward Board" subtitle="inpatient bay layout · 16 beds">
+    <ClinicalFrame archetype="floor-plan" code="FA-WRD-02" title="Ward Board" subtitle="ward bay layout · 16 beds · status only">
       <KpiBar items={[
         { label: 'Beds', value: total, tone: HEALTH_DS.chart },
-        { label: 'Occupancy', value: `${hops.beds.occupancyPct}%`, tone: hops.beds.occupancyPct >= 92 ? HEALTH_DS.alert : HEALTH_DS.sterile },
-        { label: 'Critical bays', value: bays.filter(b => b.status === 'critical').length, tone: HEALTH_DS.alert },
+        { label: 'Occupancy', value: `${occupancyPct}%`, tone: occupancyPct >= 92 ? HEALTH_DS.alert : HEALTH_DS.sterile },
+        { label: 'Escalated bays', value: bays.filter(b => b.status === 'critical').length, tone: HEALTH_DS.alert },
         { label: 'Cleaning', value: bays.filter(b => b.status === 'cleaning').length, tone: HEALTH_DS.mut },
       ]} />
       <WardRule label="bay layout" />
       <div className="grid grid-cols-4 gap-2">
-        {bays.map(b => <FloorPlanBay key={b.id} id={b.id} occupant={b.occupant} status={b.status} since={b.since} note={b.note} />)}
+        {bays.map(b => <FloorPlanBay key={b.id} id={b.id} status={b.status} since={b.since} note={b.status === 'critical' ? 'Staffing escalation' : undefined} />)}
       </div>
     </ClinicalFrame>
   );
 }
 
-// ◧ III — ICU Board (vital signs per bay)
+// ◧ III — ICU Board (capacity, staffing and equipment per bay)
 export function ICUBoard({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const beds = 8;
   const bays = Array.from({ length: beds }, (_, i) => {
     const k = `icu:${id}:${i}`;
     const occupied = seed(`${k}:o`) > 0.18;
-    return {
-      id: `ICU-${String(i + 1).padStart(2, '0')}`,
-      occupied,
-      patient: occupied ? `Patient ${5000 + Math.floor(seed(`${k}:p`) * 4000)}` : null,
-      hr: Math.round(wave(`${k}:hr`, ts, 56, 124)),
-      bp: `${Math.round(wave(`${k}:bps`, ts, 92, 152))}/${Math.round(wave(`${k}:bpd`, ts, 56, 96))}`,
-      spo2: Math.round(wave(`${k}:sp`, ts, 88, 100)),
-      temp: Math.round(wave(`${k}:t`, ts, 36, 39.6) * 10) / 10,
-    };
+    const ventilator = occupied && seed(`${k}:v:${Math.floor(ts / 6)}`) > 0.45;
+    const nurseRatio = occupied ? (seed(`${k}:n:${Math.floor(ts / 6)}`) > 0.7 ? '1:2' : '1:1') : '—';
+    return { id: `ICU-${String(i + 1).padStart(2, '0')}`, occupied, ventilator, nurseRatio };
   });
+  const occ = bays.filter(b => b.occupied);
   return (
-    <ClinicalFrame archetype="vitals" code="FA-ICU-03" title="ICU Board" subtitle="critical care · live vital signs">
+    <ClinicalFrame archetype="floor-plan" code="FA-ICU-03" title="ICU Board" subtitle="critical care · capacity, staffing and equipment per bay">
       <KpiBar items={[
         { label: 'ICU beds', value: beds, tone: HEALTH_DS.chart },
-        { label: 'Occupied', value: bays.filter(b => b.occupied).length, tone: HEALTH_DS.sterile },
-        { label: 'Critical (HR<60 or >120)', value: bays.filter(b => b.occupied && (b.hr < 60 || b.hr > 120)).length, tone: HEALTH_DS.alert },
-        { label: 'Hypoxic (SpO₂<92)', value: bays.filter(b => b.occupied && b.spo2 < 92).length, tone: HEALTH_DS.alert },
+        { label: 'Occupied', value: occ.length, tone: HEALTH_DS.sterile },
+        { label: 'Ventilators in use', value: occ.filter(b => b.ventilator).length, tone: HEALTH_DS.triage },
+        { label: 'Bays below 1:1 nursing', value: occ.filter(b => b.nurseRatio !== '1:1').length, tone: HEALTH_DS.alert },
       ]} />
-      <WardRule label="vital signs per bay" />
-      <div className="space-y-2">
-        {bays.filter(b => b.occupied).map(b => (
-          <div key={b.id} className="grid grid-cols-[120px_1fr] gap-3">
-            <div className="border px-3 py-2" style={{ background: HEALTH_DS.wardDeep, borderColor: HEALTH_DS.ruleSoft, borderLeft: `3px solid ${b.hr < 60 || b.hr > 120 || b.spo2 < 92 ? HEALTH_DS.alert : HEALTH_DS.sterile}` }}>
-              <div className="text-[10.5px]" style={{ color: HEALTH_DS.chart, fontFamily: 'ui-monospace, monospace' }}>{b.id}</div>
-              <div className="text-[9.5px]" style={{ color: HEALTH_DS.ink }}>{b.patient}</div>
-            </div>
-            <VitalStrip heartRate={b.hr} bp={b.bp} spo2={b.spo2} temp={b.temp} />
-          </div>
+      <WardRule label="bays" />
+      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+        {bays.map(b => (
+          <FloorPlanBay key={b.id} id={b.id} status={b.occupied ? 'occupied' : 'available'}
+            note={b.occupied ? `Nursing ${b.nurseRatio}${b.ventilator ? ' · ventilator in use' : ''}` : undefined} />
         ))}
       </div>
     </ClinicalFrame>
   );
 }
 
-// ◧ IV — Operating Theatre Board
+// ◧ IV — Operating Theatre Board (sessions by list type, never a person or procedure)
 export function ORBoard({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const theatres = ['OR-1', 'OR-2', 'OR-3', 'OR-4', 'OR-5', 'OR-6'];
@@ -100,53 +81,50 @@ export function ORBoard({ id, now }: { id: string; now: number }) {
     const status: BayStatus = statusRoll > 0.78 ? 'occupied' : statusRoll > 0.5 ? 'pending' : statusRoll > 0.2 ? 'available' : 'cleaning';
     return {
       id: t,
-      patient: status === 'occupied' ? `Patient ${7000 + Math.floor(seed(`${k}:p`) * 2000)}` : status === 'pending' ? `Patient ${9000 + Math.floor(seed(`${k}:p`) * 1000)}` : undefined,
+      list: status === 'occupied' || status === 'pending' ? ['Elective list', 'Emergency list', 'Day-case list', 'Maternity list', 'Trauma list'][Math.floor(seed(`${k}:pr`) * 5)]! : undefined,
       status,
-      procedure: status === 'occupied' ? ['Appendectomy', 'C-section', 'Hernia repair', 'CABG', 'Cataract'][Math.floor(seed(`${k}:pr`) * 5)]! : undefined,
       since: status === 'occupied' ? `${Math.floor(wave(`${k}:s`, ts, 5, 320))}m` : undefined,
     };
   });
   return (
-    <ClinicalFrame archetype="floor-plan" code="FA-OR-04" title="Operating Theatre Board" subtitle="surgical scheduling · 6 OR suites">
+    <ClinicalFrame archetype="floor-plan" code="FA-OR-04" title="Operating Theatre Board" subtitle="theatre scheduling · 6 OR suites · sessions only">
       <KpiBar items={[
         { label: 'Theatres', value: 6, tone: HEALTH_DS.chart },
-        { label: 'In surgery', value: lineup.filter(l => l.status === 'occupied').length, tone: HEALTH_DS.sterile },
+        { label: 'In session', value: lineup.filter(l => l.status === 'occupied').length, tone: HEALTH_DS.sterile },
         { label: 'Pending', value: lineup.filter(l => l.status === 'pending').length, tone: HEALTH_DS.triage },
         { label: 'Available', value: lineup.filter(l => l.status === 'available').length, tone: HEALTH_DS.vital },
       ]} />
       <WardRule label="theatre line-up" />
       <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
         {lineup.map(l => (
-          <FloorPlanBay key={l.id} id={l.id} occupant={l.patient ? `${l.patient}${l.procedure ? ` · ${l.procedure}` : ''}` : undefined} status={l.status} since={l.since} />
+          <FloorPlanBay key={l.id} id={l.id} occupant={l.list} status={l.status} since={l.since} />
         ))}
       </div>
     </ClinicalFrame>
   );
 }
 
-// ◧ V — Emergency Department
+// ◧ V — Emergency Department (attendances counted by acuity level and wait)
 export function EmergencyDepartmentBoard({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
-  const intake = intakeQueue(id, ts, 12);
+  const ed = emergencyAttendance(id, ts);
   return (
-    <ClinicalFrame archetype="floor-plan" code="FA-ED-05" title="Emergency Department" subtitle="triage queue · live presentations">
+    <ClinicalFrame archetype="floor-plan" code="FA-ED-05" title="Emergency Department" subtitle="attendances by acuity level · counts and waits">
       <KpiBar items={[
-        { label: 'Presenting', value: intake.length, tone: HEALTH_DS.chart },
-        { label: 'ESI 1-2 (resus / emergent)', value: intake.filter(v => v.triage <= 2).length, tone: HEALTH_DS.alert },
-        { label: 'ESI 3 (urgent)', value: intake.filter(v => v.triage === 3).length, tone: HEALTH_DS.triage },
-        { label: 'Waiting >60m', value: intake.filter(v => v.waitMin > 60).length, tone: HEALTH_DS.alert },
+        { label: 'Present', value: ed.present, tone: HEALTH_DS.chart },
+        { label: 'Levels 1-2 (most urgent)', value: ed.levels.filter(l => l.level <= 2).reduce((a, l) => a + l.count, 0), tone: HEALTH_DS.alert },
+        { label: 'Level 3', value: ed.levels.find(l => l.level === 3)?.count ?? 0, tone: HEALTH_DS.triage },
+        { label: 'Waiting >60m', value: ed.waitingOverHour, tone: HEALTH_DS.alert },
       ]} />
-      <WardRule label="triage queue" />
+      <WardRule label="attendances by acuity level" />
       <div className="space-y-1">
-        {intake.map((v, i) => {
-          const col = v.triage <= 2 ? HEALTH_DS.alert : v.triage === 3 ? HEALTH_DS.triage : HEALTH_DS.vital;
+        {ed.levels.map(l => {
+          const col = l.level <= 2 ? HEALTH_DS.alert : l.level === 3 ? HEALTH_DS.triage : HEALTH_DS.vital;
           return (
-            <div key={v.id} className="grid grid-cols-[80px_1fr_120px_80px_120px] gap-3 border-b py-1.5 text-[11px]" style={{ borderColor: HEALTH_DS.ruleSoft, fontFamily: 'ui-monospace, monospace' }}>
-              <span className="tabular-nums" style={{ color: HEALTH_DS.mut }}>№ {String(i + 1).padStart(2, '0')}</span>
-              <span style={{ color: HEALTH_DS.chart }}>{v.complaint}</span>
-              <span style={{ color: HEALTH_DS.ink }}>Patient {v.id}</span>
-              <span className="text-right tabular-nums" style={{ color: v.waitMin > 60 ? HEALTH_DS.alert : HEALTH_DS.mut }}>{v.waitMin}m wait</span>
-              <span className="text-right uppercase tracking-[0.18em]" style={{ color: col }}>ESI {v.triage}</span>
+            <div key={l.level} className="grid grid-cols-[120px_1fr_120px] gap-3 border-b py-1.5 text-[11px]" style={{ borderColor: HEALTH_DS.ruleSoft, fontFamily: 'ui-monospace, monospace' }}>
+              <span className="uppercase tracking-[0.18em]" style={{ color: col }}>Level {l.level}</span>
+              <span style={{ color: HEALTH_DS.ink }}>{l.count} present</span>
+              <span className="text-right tabular-nums" style={{ color: l.meanWaitMin > 60 ? HEALTH_DS.alert : HEALTH_DS.mut }}>{l.meanWaitMin}m mean wait</span>
             </div>
           );
         })}
@@ -216,87 +194,86 @@ export function ContactTracing({ id, now }: { id: string; now: number }) {
   );
 }
 
-// ⊟ I — Master Patient Index
+// ⊟ I — Facility & Service Index (route key kept; the platform keeps no person index)
 export function MasterPatientIndex({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   return (
-    <ClinicalFrame archetype="registry" code="PT-MPI-01" title="Master Patient Index" subtitle="keyed to CivicID with privacy-preserving linkage">
+    <ClinicalFrame archetype="registry" code="PT-MPI-01" title="Facility & Service Index" subtitle="licensed facilities and the services they offer · no person index">
       <KpiBar items={[
-        { label: 'Patients enrolled (M)', value: Math.round(wave(`mpi:e:${id}`, ts, 4, 84) * 10) / 10, tone: HEALTH_DS.chart },
-        { label: 'CivicID-linked', value: `${Math.round(wave(`mpi:l:${id}`, ts, 88, 99.8) * 10) / 10}%`, tone: HEALTH_DS.vital },
-        { label: 'Duplicate suspicions', value: Math.round(wave(`mpi:d:${id}`, ts, 200, 12800)).toLocaleString(), tone: HEALTH_DS.triage },
-        { label: 'Resolution queue', value: Math.round(wave(`mpi:q:${id}`, ts, 80, 4800)).toLocaleString(), tone: HEALTH_DS.sterile },
+        { label: 'Facilities licensed', value: Math.round(wave(`mpi:e:${id}`, ts, 120, 4800)).toLocaleString(), tone: HEALTH_DS.chart },
+        { label: 'Location certified', value: `${Math.round(wave(`mpi:l:${id}`, ts, 60, 99.8) * 10) / 10}%`, tone: HEALTH_DS.vital },
+        { label: 'Services listed', value: Math.round(wave(`mpi:d:${id}`, ts, 400, 12800)).toLocaleString(), tone: HEALTH_DS.triage },
+        { label: 'Awaiting inspection', value: Math.round(wave(`mpi:q:${id}`, ts, 4, 480)).toLocaleString(), tone: HEALTH_DS.sterile },
       ]} />
-      <WardRule label="linkage doctrine" />
+      <WardRule label="index doctrine" />
       <p className="text-[10.5px] italic" style={{ color: HEALTH_DS.mut }}>
-        The MPI links to CivicID through a one-way cryptographic linkage. Health records are addressable by the
-        MPI key only; the CivicID is never stored in the EHR.
+        The platform keeps no national index or record of persons&apos; health. Facilities are organisations licensed in
+        the health regulator&apos;s registers and keep their own records under the health law; this index lists
+        facilities and services only.
       </p>
     </ClinicalFrame>
   );
 }
 
-// ⊟ II — Longitudinal EHR (chart view)
+// ⊟ II — Records Exchange Standards (route key kept; no record is held)
 export function LongitudinalEHR({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   void id;
   const events = [
-    { when: '08:42', action: 'Vitals recorded · HR 88 · BP 124/76 · SpO₂ 97%', by: 'Nurse Adamu', severity: 'routine' as const },
-    { when: '08:55', action: 'Differential: r/o appendicitis vs gastroenteritis', by: 'Dr. Petrov', severity: 'note' as const },
-    { when: '09:12', action: 'CBC + CRP + lipase ordered', by: 'Dr. Petrov', severity: 'routine' as const },
-    { when: '09:48', action: 'Lab result: CRP 84 (HIGH) · WBC 14.2', by: 'Lab system', severity: 'alert' as const },
-    { when: '10:05', action: 'Surgical consult requested (appendectomy r/o)', by: 'Dr. Petrov', severity: 'note' as const },
-    { when: '10:31', action: 'OR slot reserved · OR-3 · 11:00', by: 'OR scheduler', severity: 'note' as const },
-    { when: '10:42', action: 'Consent for appendectomy obtained', by: 'Patient', severity: 'note' as const },
-    { when: '11:05', action: 'Pre-operative checklist completed', by: 'Theatre nurse', severity: 'routine' as const },
+    { when: '08:42', action: 'Data-sharing agreement drafted · district hospitals ↔ referral centre', by: 'Records officer', severity: 'routine' as const },
+    { when: '08:55', action: 'Interface conformance test run · facility return format v2', by: 'Interoperability desk', severity: 'note' as const },
+    { when: '09:12', action: 'Conformance test passed · 3 of 4 facilities', by: 'Test harness', severity: 'routine' as const },
+    { when: '09:48', action: 'One facility failed validation: return file missing period', by: 'Test harness', severity: 'alert' as const },
+    { when: '10:05', action: 'Correction requested from the facility', by: 'Records officer', severity: 'note' as const },
+    { when: '10:31', action: 'Agreement sent for legal review', by: 'Legal unit', severity: 'note' as const },
+    { when: '10:42', action: 'Data-protection impact assessment attached', by: 'Data-protection officer', severity: 'note' as const },
+    { when: '11:05', action: 'Agreement confirmed by a second official', by: 'Director of records', severity: 'routine' as const },
   ];
   return (
-    <ClinicalFrame archetype="chart" code="PT-EHR-02" title="Longitudinal EHR" subtitle="encounter view · FHIR R5+ native">
-      <VitalStrip heartRate={88} bp="124/76" spo2={97} temp={37.4} label="Patient 8341 · admitted 08:42 · ESI 3" />
-      <WardRule label="encounter chart" />
+    <ClinicalFrame archetype="chart" code="PT-REX-02" title="Records Exchange Standards" subtitle="agreements and formats between facilities · no record held">
+      <WardRule label="exchange log" />
       {events.map((e, i) => <ChartLine key={i} when={e.when} action={e.action} by={e.by} severity={e.severity} />)}
       <WardRule label="audit trail" />
       <p className="text-[10.5px] italic" style={{ color: HEALTH_DS.mut, fontFamily: 'ui-monospace, monospace' }}>
-        Every clinical entry is cryptographically signed by the issuing clinician and replicated to the Audit Vault.
-        Patient may request access log at any time.
+        Facilities keep their own records. The platform records the agreements and formats they exchange under,
+        never the records themselves.
       </p>
       {void ts}
     </ClinicalFrame>
   );
 }
 
-// ◇ II — Break-Glass Audit
+// ◇ II — Emergency Access Reviews (who opened a facility system out of hours and whether it was reviewed)
 export function BreakGlassAudit({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const events = Array.from({ length: 6 }, (_, i) => {
     const k = `bg:${id}:${i}:${Math.floor(ts / 4)}`;
-    const reasons = ['Cardiac arrest — unknown patient', 'MVA mass casualty', 'Unconscious presentation', 'Psychiatric emergency', 'Suspected anaphylaxis', 'Paediatric trauma'];
+    const reasons = ['Emergency access invoked', 'Out-of-hours access', 'Access outside the assigned facility', 'Access by a locum', 'Bulk export requested', 'Restricted file opened'];
     const reviewed = seed(`${k}:r`) > 0.32;
     return {
       id: `BG-${(40000 + Math.floor(seed(`${k}:id`) * 50000))}`,
-      clinician: `Dr. ${['Adamu', 'Petrov', 'Mehta', 'Tanaka', 'Oduya', 'Brennan'][i]!}`,
+      official: `Dr. ${['Adamu', 'Petrov', 'Mehta', 'Tanaka', 'Oduya', 'Brennan'][i]!}`,
       reason: reasons[i]!,
-      patient: `Patient ${1000 + Math.floor(seed(`${k}:p`) * 9000)}`,
+      facility: ['North District Hospital', 'Central Polyclinic', 'Coastal Health Centre', 'Highland Clinic', 'Eastern Referral', 'Capital Hospital'][i]!,
       ageHrs: Math.round(wave(`${k}:a`, ts, 1, 168)),
       reviewed,
-      reviewerRole: reviewed ? 'Records Officer' : undefined,
     };
   });
   return (
-    <ClinicalFrame archetype="portal" code="PR-BGA-02" title="Break-Glass Audit" subtitle="emergency EHR access · mandatory post-hoc review">
+    <ClinicalFrame archetype="portal" code="PR-BGA-02" title="Emergency Access Reviews" subtitle="facility systems opened under emergency access · mandatory post-hoc review">
       <KpiBar items={[
         { label: 'Invocations (last 30d)', value: Math.round(wave(`bg:n:${id}`, ts, 8, 240)), tone: HEALTH_DS.triage },
         { label: 'Reviewed', value: events.filter(e => e.reviewed).length, tone: HEALTH_DS.vital },
         { label: 'Pending review', value: events.filter(e => !e.reviewed).length, tone: HEALTH_DS.alert },
-        { label: 'Patients notified', value: `${Math.round(wave(`bg:nt:${id}`, ts, 88, 100))}%`, tone: HEALTH_DS.sterile },
+        { label: 'Persons notified', value: `${Math.round(wave(`bg:nt:${id}`, ts, 88, 100))}%`, tone: HEALTH_DS.sterile },
       ]} />
       <WardRule label="invocation log" />
       <div className="space-y-1">
         {events.map(e => (
-          <div key={e.id} className="grid grid-cols-[110px_1fr_160px_70px_110px] gap-3 border-b py-1.5 text-[10.5px]" style={{ borderColor: HEALTH_DS.ruleSoft, fontFamily: 'ui-monospace, monospace' }}>
+          <div key={e.id} className="grid grid-cols-[110px_1fr_200px_70px_110px] gap-3 border-b py-1.5 text-[10.5px]" style={{ borderColor: HEALTH_DS.ruleSoft, fontFamily: 'ui-monospace, monospace' }}>
             <span className="tabular-nums" style={{ color: HEALTH_DS.triage }}>{e.id}</span>
             <span style={{ color: HEALTH_DS.chart }}>{e.reason}</span>
-            <span style={{ color: HEALTH_DS.ink }}>{e.clinician} · {e.patient}</span>
+            <span style={{ color: HEALTH_DS.ink }}>{e.official} · {e.facility}</span>
             <span className="text-right tabular-nums" style={{ color: HEALTH_DS.mut }}>{e.ageHrs}h</span>
             <span className="text-right uppercase tracking-[0.18em]" style={{ color: e.reviewed ? HEALTH_DS.vital : HEALTH_DS.alert }}>{e.reviewed ? '✓ reviewed' : '○ pending'}</span>
           </div>
@@ -304,12 +281,12 @@ export function BreakGlassAudit({ id, now }: { id: string; now: number }) {
       </div>
       <WardRule label="constitutional safeguard" />
       <p className="text-[10.5px] italic" style={{ color: HEALTH_DS.mut }}>
-        Break-glass access is allowed for true emergencies (§13.3). Every invocation triggers mandatory post-hoc
-        review and automatic patient notification. Unreviewed invocations escalate to the Records Officer SLA queue.
+        Emergency access is allowed for true emergencies (§13.3). Every invocation triggers mandatory post-hoc
+        review and notification of the person concerned. Unreviewed invocations escalate to the records officer&apos;s queue.
       </p>
     </ClinicalFrame>
   );
 }
 
 // Reference these engines so unused-import warnings don't fire
-void doctorRoster; void laboratoryOps; void nationalHealthcareCapacity; void patientServices;
+void doctorRoster; void laboratoryOps; void nationalHealthcareCapacity; void hospitalOps;

@@ -60,7 +60,7 @@ export function WardSurgicalSystem({ id, now, role, withheld }: {
         <AdvisoryPanel accent={ACC} severity={adv.severity} headline={adv.headline} recommended={adv.recommended} />
       </div>
 
-      <CommandPanel title="Surgical queue intelligence" meta="priority-ordered · expedite emergency cases" accent={ACC} live>
+      <CommandPanel title="Theatre slot queue" meta="priority-ordered slots · counts and waits, no procedure or person" accent={ACC} live>
         <div className="space-y-1.5">
           {w.surgical.map(s => {
             const done = s.status !== 'queued' || expedited.has(s.id);
@@ -68,7 +68,7 @@ export function WardSurgicalSystem({ id, now, role, withheld }: {
               <div key={s.id} className="flex flex-wrap items-center gap-2 rounded-[3px] border px-2.5 py-1.5" style={{ borderColor: 'rgba(63,214,168,0.18)', background: 'rgba(0,0,0,0.25)', borderLeft: `3px solid ${sc(s.tone)}` }}>
                 <span className="text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: sc(s.priority === 'emergency' ? 'alert' : s.priority === 'urgent' ? 'warn' : 'ok') }}>{s.priority}</span>
                 <span className="font-mono text-[8.5px] tabular-nums text-ink-muted">{s.id}</span>
-                <span className="text-[10px] font-medium text-ink">{s.procedure}</span>
+                <span className="text-[10px] font-medium text-ink">Theatre slot</span>
                 <span className="text-[8px] text-ink-muted">{s.status} · wait {s.waitHrs}h</span>
                 {s.priority === 'emergency' && s.status === 'queued' && !done ? (
                   <button onClick={() => setExpedited(prev => new Set(prev).add(s.id))}

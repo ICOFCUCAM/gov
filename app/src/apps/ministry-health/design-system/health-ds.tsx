@@ -5,8 +5,8 @@
 // renders through this system so the ministry is structurally
 // distinct from the chamber (Justice), the ledger (Treasury), and
 // the situation room (Interior). Primitives mirror what the
-// CivicHealth blueprint (§13) actually describes: facility OS, EHR,
-// public-health surveillance, surgical / ICU / ward boards, supply
+// CivicHealth blueprint (§13) describes, administrative and aggregate
+// only (no person's record): facility OS, records exchange, public-health surveillance, surgical / ICU / ward boards, supply
 // cold-chain, community health workers.
 
 import * as React from 'react';
@@ -18,10 +18,10 @@ export const HEALTH_DS = {
   ward: '#0c1419',           // ward background
   wardDeep: '#070b0e',
   trim: '#1a242c',
-  vital: '#2dd17c',          // vital signs green (heartbeat)
+  vital: '#2dd17c',          // pulse green
   vitalDim: '#1d8a52',
   alert: '#d63f47',          // emergency red
-  triage: '#e69830',         // triage amber
+  triage: '#e69830',         // amber (token name kept)
   sterile: '#3e9adb',        // sterile clinical blue
   pharma: '#c98a3a',         // pharmacy amber
   lab: '#3a9d8a',            // laboratory teal
@@ -36,18 +36,18 @@ export const HEALTH_DS = {
 export type HealthArchetype =
   | 'command'        // national health command (situation room flavour)
   | 'floor-plan'     // ward / OR / ICU / ER floor plan
-  | 'vitals'         // patient vital-signs strip
-  | 'chart'          // EHR chart / lab result / radiology
+  | 'vitals'         // pulse-line strip (key kept; no screen uses it)
+  | 'chart'          // log / exchange chart
   | 'epi'            // epidemiology / outbreak surveillance
   | 'pharmacy'       // drug supply / cold-chain
   | 'lab'            // laboratory pipeline
-  | 'registry'       // master patient index / facility / workforce
+  | 'registry'       // facility / service / workforce index
   | 'portal';        // citizen-facing
 
 const ARCHETYPE: Record<HealthArchetype, { tag: string; glyph: string; accent: string }> = {
   command:    { tag: 'NATIONAL HEALTH COMMAND',  glyph: '⊕', accent: HEALTH_DS.vital },
   'floor-plan': { tag: 'CLINICAL FLOOR PLAN',    glyph: '◧', accent: HEALTH_DS.sterile },
-  vitals:     { tag: 'VITAL SIGNS',              glyph: '♡', accent: HEALTH_DS.vital },
+  vitals:     { tag: 'PULSE STRIP',              glyph: '♡', accent: HEALTH_DS.vital },
   chart:      { tag: 'CLINICAL CHART',           glyph: '⊟', accent: HEALTH_DS.chart },
   epi:        { tag: 'EPIDEMIOLOGY SURVEILLANCE',glyph: '⌬', accent: HEALTH_DS.alert },
   pharmacy:   { tag: 'PHARMACY & COLD-CHAIN',    glyph: '⚕', accent: HEALTH_DS.pharma },
@@ -99,7 +99,8 @@ export function ClinicalFrame({
 }
 
 // ── VitalStrip ────────────────────────────────────────────────────
-// Live vital-signs reading. ECG-style line + numeric values.
+// A pulse-line display primitive, kept by the preservation rule. No screen
+// passes it a reading: the platform keeps no clinical reading (health-fields.test.ts).
 export function VitalStrip({ heartRate, bp, spo2, temp, label }: {
   heartRate?: number; bp?: string; spo2?: number; temp?: number; label?: string;
 }) {
@@ -170,7 +171,7 @@ export function FloorPlanBay({ id, occupant, status, since, note }: {
 }
 
 // ── ChartLine ─────────────────────────────────────────────────────
-// EHR chart row — a single line of clinical telemetry.
+// Chart row — a single line of an administrative log.
 export function ChartLine({ when, action, by, severity }: {
   when: string; action: string; by: string; severity?: 'routine' | 'note' | 'alert';
 }) {
