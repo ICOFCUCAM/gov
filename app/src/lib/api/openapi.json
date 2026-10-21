@@ -26346,6 +26346,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -28074,6 +28082,446 @@
         ],
         "x-permission-rule": "admin",
         "x-source": "src/app/api/org/ministries/route.ts"
+      }
+    },
+    "/api/org/relationships": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_relationships",
+        "summary": "GET /api/org/relationships",
+        "description": "/api/org/relationships — the relationships between institutions (lib/data/store/relationships.ts; plan phase 3; guidance §3.3): which institution appoints, funds, instructs, audits, requests information from … which other, within what scope, on which law, between which dates. GET (?institution=): every relationship (or those touching one institution) with its status, the version in force, a proposal waiting for its second official and every earlier version; the kinds; the institutions. POST { op }: 'propose' (administrators of the whole government or of either end) { id?, from, to, type, scope: { recordTypes, purposes, territories }, conditions, effectiveFrom?, effectiveTo?, note?, legalBasis: [{ instrument, eId }] }; with id, a new version of that relationship (values left out kept); 'suspend' / 'end' (the same administrators) { id, legalBasis, effectiveFrom? }: a new version suspending or ending it; 'confirm' { id } a different official (an administrator or one who can sign); when an end is independent and has officials who can sign, one of them for each such end; 'withdraw' { id, reason? } the proposer or an administrator withdraws the waiting proposal. Who acted comes from the sign-in. Nothing is approved without two officials; every step is audited, every version kept.",
+        "parameters": [
+          {
+            "name": "institution",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "relationships": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RelationshipView"
+                      }
+                    },
+                    "institutions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "independent": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "independent"
+                        ]
+                      }
+                    },
+                    "executiveOffice": {
+                      "type": "string"
+                    },
+                    "choices": {
+                      "type": "object",
+                      "properties": {
+                        "types": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "enum": [
+                                  "appoint",
+                                  "audit",
+                                  "dismiss",
+                                  "dissolve",
+                                  "fund",
+                                  "impeach",
+                                  "instruct",
+                                  "investigate",
+                                  "receive_reports",
+                                  "refer",
+                                  "request_information",
+                                  "review",
+                                  "veto"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "means": {
+                                "type": "string"
+                              },
+                              "enforced": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "means"
+                            ]
+                          }
+                        },
+                        "instructionKinds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "readTypes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "caseRecordTypes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "types",
+                        "instructionKinds",
+                        "readTypes",
+                        "caseRecordTypes"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "relationships",
+                    "institutions",
+                    "executiveOffice",
+                    "choices"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "relationships": [
+                        {
+                          "id": "ID-0001",
+                          "status": "approved",
+                          "inForce": true,
+                          "terms": {
+                            "from": "string",
+                            "to": "string",
+                            "type": "appoint",
+                            "scope": {},
+                            "conditions": [],
+                            "effectiveFrom": "2026-01-15",
+                            "status": "approved"
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "fromName": "Example",
+                          "toName": "Example",
+                          "pending": {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "expiresAt": "2026-01-15T09:30:00.000Z"
+                          },
+                          "confirmFrom": [
+                            {}
+                          ],
+                          "endorsed": [
+                            "string"
+                          ],
+                          "history": [
+                            {}
+                          ],
+                          "createdAt": "2026-01-15T09:30:00.000Z",
+                          "createdBy": "A. Official"
+                        }
+                      ],
+                      "institutions": [
+                        {
+                          "id": "ID-0001",
+                          "name": "Example",
+                          "independent": true
+                        }
+                      ],
+                      "executiveOffice": "string",
+                      "choices": {
+                        "types": [
+                          {
+                            "key": "appoint",
+                            "label": "Example",
+                            "means": "string"
+                          }
+                        ],
+                        "instructionKinds": [
+                          "string"
+                        ],
+                        "readTypes": [
+                          "string"
+                        ],
+                        "caseRecordTypes": [
+                          "string"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/org/relationships/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_relationships",
+        "summary": "POST /api/org/relationships",
+        "description": "/api/org/relationships — the relationships between institutions (lib/data/store/relationships.ts; plan phase 3; guidance §3.3): which institution appoints, funds, instructs, audits, requests information from … which other, within what scope, on which law, between which dates. GET (?institution=): every relationship (or those touching one institution) with its status, the version in force, a proposal waiting for its second official and every earlier version; the kinds; the institutions. POST { op }: 'propose' (administrators of the whole government or of either end) { id?, from, to, type, scope: { recordTypes, purposes, territories }, conditions, effectiveFrom?, effectiveTo?, note?, legalBasis: [{ instrument, eId }] }; with id, a new version of that relationship (values left out kept); 'suspend' / 'end' (the same administrators) { id, legalBasis, effectiveFrom? }: a new version suspending or ending it; 'confirm' { id } a different official (an administrator or one who can sign); when an end is independent and has officials who can sign, one of them for each such end; 'withdraw' { id, reason? } the proposer or an administrator withdraws the waiting proposal. Who acted comes from the sign-in. Nothing is approved without two officials; every step is audited, every version kept.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "id": "ID-0001",
+                    "reason": "Text"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "error"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "relationship": {
+                          "$ref": "#/components/schemas/RelationshipView"
+                        }
+                      },
+                      "required": [
+                        "relationship"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "relationship": {
+                          "$ref": "#/components/schemas/RelationshipView"
+                        },
+                        "waitingFor": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "relationship"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "error": "Text"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "relationship": {
+                      "$ref": "#/components/schemas/RelationshipView"
+                    }
+                  },
+                  "required": [
+                    "relationship"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "relationship": {
+                        "id": "ID-0001",
+                        "status": "approved",
+                        "inForce": true,
+                        "version": 1,
+                        "terms": {
+                          "from": "string",
+                          "to": "string",
+                          "type": "appoint",
+                          "scope": {
+                            "recordTypes": [],
+                            "purposes": [],
+                            "territories": []
+                          },
+                          "conditions": [
+                            "string"
+                          ],
+                          "effectiveFrom": "2026-01-15",
+                          "status": "approved"
+                        },
+                        "basis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string",
+                            "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "on": "string"
+                          }
+                        ],
+                        "fromName": "Example",
+                        "toName": "Example",
+                        "pending": {
+                          "values": {
+                            "from": "string",
+                            "to": "string",
+                            "type": "appoint",
+                            "scope": {},
+                            "conditions": [],
+                            "effectiveFrom": "2026-01-15",
+                            "status": "approved"
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "confirmFrom": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example"
+                          }
+                        ],
+                        "endorsed": [
+                          "string"
+                        ],
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "string"
+                          }
+                        ],
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "createdBy": "A. Official"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/org/relationships/route.ts"
       }
     },
     "/api/organisations/{id}": {
@@ -64598,6 +65046,13 @@
               "type": "string"
             },
             "description": "Every registered institution: directives are issued and signed for one only by its own officials."
+          },
+          "relationships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RelationshipGrant"
+            },
+            "description": "The approved relationships between institutions in force today (lib/data/store/relationships.ts relationshipGrants(); plan phase 3)."
           }
         },
         "required": [
@@ -81869,6 +82324,369 @@
         "required": [
           "id",
           "response"
+        ]
+      },
+      "RelationshipGrant": {
+        "description": "One approved relationship in force (docs/CONSTITUTIONAL_ARCHITECTURE.md §3.3): `from` holds the power `type` over `to`, within the record types (or, for an instruction, the kinds of directive) and purposes listed. The version is the adopted version in force, named in the access log.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "recordTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "purposes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "from",
+          "to",
+          "type",
+          "recordTypes",
+          "purposes"
+        ]
+      },
+      "RelationshipScope": {
+        "type": "object",
+        "properties": {
+          "recordTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Read relationships: the record types covered (`cases`, `queue`, or a procedure's key). Instruct: the kinds of directive covered (none listed: every kind that instructs)."
+          },
+          "purposes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Read relationships: the purposes a read may state."
+          },
+          "territories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Regions or territories it applies to, as the law says (recorded, not enforced)."
+          }
+        },
+        "required": [
+          "recordTypes",
+          "purposes",
+          "territories"
+        ]
+      },
+      "RelationshipTerms": {
+        "description": "What a version of a relationship says. A type alias so withDefaults() and policy-change take it as a plain record.",
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "appoint",
+              "audit",
+              "dismiss",
+              "dissolve",
+              "fund",
+              "impeach",
+              "instruct",
+              "investigate",
+              "receive_reports",
+              "refer",
+              "request_information",
+              "review",
+              "veto"
+            ]
+          },
+          "scope": {
+            "$ref": "#/components/schemas/RelationshipScope"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Conditions the law sets, in words (recorded and shown, not checked by the platform)."
+          },
+          "effectiveFrom": {
+            "type": "string"
+          },
+          "effectiveTo": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "suspended",
+              "withdrawn"
+            ],
+            "description": "What this version makes it: approved, suspended, or ended (withdrawn)."
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "type",
+          "scope",
+          "conditions",
+          "effectiveFrom",
+          "status"
+        ]
+      },
+      "RelationshipView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "draft",
+              "suspended",
+              "withdrawn"
+            ]
+          },
+          "inForce": {
+            "type": "boolean",
+            "description": "Whether it grants what it says today: approved, its dates covering today, both ends active, its law in force."
+          },
+          "version": {
+            "type": "number",
+            "description": "The adopted version in force (1, 2 …), when there is one."
+          },
+          "terms": {
+            "$ref": "#/components/schemas/RelationshipTerms"
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "fromName": {
+            "type": "string"
+          },
+          "toName": {
+            "type": "string"
+          },
+          "pending": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "$ref": "#/components/schemas/RelationshipTerms"
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Citation"
+                    }
+                  },
+                  "by": {
+                    "type": "string"
+                  },
+                  "byId": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  },
+                  "confirmed": {
+                    "type": "object",
+                    "properties": {
+                      "by": {
+                        "type": "string"
+                      },
+                      "byId": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "string"
+                      },
+                      "independence": {
+                        "type": "string",
+                        "enum": [
+                          "accounts-only",
+                          "identity-provider",
+                          "unverified"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "by",
+                      "at",
+                      "independence"
+                    ]
+                  },
+                  "expiresAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "values",
+                  "basis",
+                  "by",
+                  "at",
+                  "expiresAt"
+                ]
+              }
+            ]
+          },
+          "confirmFrom": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            },
+            "description": "Independent ends that confirm the waiting proposal, and those that already have."
+          },
+          "endorsed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "values": {
+                  "$ref": "#/components/schemas/RelationshipTerms"
+                },
+                "basis": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Citation"
+                  }
+                },
+                "by": {
+                  "type": "string"
+                },
+                "byId": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "confirmed": {
+                  "type": "object",
+                  "properties": {
+                    "by": {
+                      "type": "string"
+                    },
+                    "byId": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "independence": {
+                      "type": "string",
+                      "enum": [
+                        "accounts-only",
+                        "identity-provider",
+                        "unverified"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "by",
+                    "at",
+                    "independence"
+                  ]
+                },
+                "outcome": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "number"
+                },
+                "superseded": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "values",
+                "basis",
+                "by",
+                "at",
+                "outcome"
+              ]
+            },
+            "description": "Every version, newest first, adopted ones numbered; an adopted one no longer in force is superseded."
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "inForce",
+          "terms",
+          "basis",
+          "fromName",
+          "toName",
+          "pending",
+          "confirmFrom",
+          "endorsed",
+          "history",
+          "createdAt",
+          "createdBy"
         ]
       },
       "Release": {

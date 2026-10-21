@@ -45,6 +45,7 @@
   "/gov/civil",
   "/gov/configuration",
   "/gov/configuration/responsible",
+  "/gov/configuration/relationships",
   "/gov/constitutional",
   "/gov/coordination",
   "/gov/crons",

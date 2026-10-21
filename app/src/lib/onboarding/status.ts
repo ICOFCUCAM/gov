@@ -9,6 +9,7 @@
 import { AUTHORITIES, REQUIRED_AUTHORITIES } from '@/lib/nation/deployment';
 import { authorityFor, getSetup, getSovereign, authorityChanges } from '@/lib/data/store/sovereign';
 import { waitingInstitutionTerms } from '@/lib/data/store/institutions';
+import { listRelationships, waitingRelationships } from '@/lib/data/store/relationships';
 import { waitingAccountChanges } from '@/lib/auth/account-changes';
 import { listMinistries } from '@/lib/data/store/ministries';
 import { listAccounts, twoStepPolicy } from '@/lib/auth/officials';
@@ -94,10 +95,17 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       const named = REQUIRED_AUTHORITIES.filter(a => isActive(a.key));
       const bodies = AUTHORITIES.filter(a => a.optional && authorityFor(a.key) !== undefined);
       const inactiveBodies = bodies.filter(a => !isActive(a.key));
+      // Relationships between institutions are optional (plan phase 3): none is fine; one approved while an end is
+      // no longer active grants nothing and should be ended (or its institution reactivated).
+      const rels = listRelationships();
+      const approved = rels.filter(r => r.status === 'approved');
+      const stale = approved.filter(r => [r.terms.from, r.terms.to].some(x => x !== 'executive-office' && !ids.has(x)));
       return { checks: [
         { label: 'Institutions created', done: ids.size > 0, href: '/gov/configuration', detail: n(ids.size, 'active institution') },
         { label: 'Every responsibility assigned to an active institution', done: named.length === REQUIRED_AUTHORITIES.length, href: '/gov/configuration/responsible', detail: `${named.length} of ${REQUIRED_AUTHORITIES.length}${named.length < REQUIRED_AUTHORITIES.length ? ` · missing: ${REQUIRED_AUTHORITIES.filter(a => !named.includes(a)).map(a => a.label).join(', ')}` : ''}` },
         { label: 'Constitutional bodies the nation named are active', done: inactiveBodies.length === 0, href: '/gov/configuration/responsible', detail: bodies.length ? `${n(bodies.length, 'body', 'bodies')} named${inactiveBodies.length ? ` · not active: ${inactiveBodies.map(a => a.label).join(', ')}` : ''}` : 'None named (only those the nation has)' },
+        { label: 'Relationships between institutions are current (optional)', done: stale.length === 0, href: '/gov/configuration/relationships',
+          detail: rels.length ? `${n(approved.length, 'approved')} · ${n(rels.filter(r => r.status === 'draft').length, 'draft')}${stale.length ? ` · with an institution no longer active: ${stale.map(r => `${r.fromName} → ${r.toName}`).join(', ').slice(0, 200)}` : ''}` : 'None recorded (only those the nation\'s law sets)' },
       ] };
     }),
 
@@ -251,7 +259,8 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   const safe = (f: () => void) => { try { f(); } catch { /* a store that cannot be read adds nothing */ } };
   safe(() => { const p = authorityChanges().pending; if (p) wait({ what: 'Who is responsible: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/responsible' }); });
   safe(() => { for (const t of waitingInstitutionTerms()) wait({ what: `${t.name}: a change to its standing waiting for confirmation`, proposedBy: t.pending.by, at: t.pending.at, href: '/ministries' }); });
-  safe(() => { for (const c of waitingAccountChanges()) wait({ what: `${c.summary} (waiting for the institution to confirm)`, proposedBy: c.by, at: c.at, href: '/admin/officials' }); });
+  safe(() => { for (const r of waitingRelationships()) wait({ what: `Relationship: ${r.what} (waiting for confirmation)`, proposedBy: r.by, at: r.at, href: '/gov/configuration/relationships' }); });
+  safe(() => { for (const c of waitingAccountChanges())wait({ what: `${c.summary} (waiting for the institution to confirm)`, proposedBy: c.by, at: c.at, href: '/admin/officials' }); });
 
   waiting.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''));
   return { mode: installationMode(env), tracks, done: tracks.filter(t => t.state === 'done').length, total: tracks.length, waiting };
