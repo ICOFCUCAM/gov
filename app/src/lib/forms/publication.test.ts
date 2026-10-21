@@ -75,7 +75,10 @@ describe('form publication gates', () => {
     draftV2();
     const p = pub();
     expect(p.status).toBe('contract_draft');
-    expect(p.automatic.map(g => g.id)).toEqual(['schema', 'legal-basis', 'authority', 'privacy', 'evidence', 'accessibility', 'scope', 'values']);
+    expect(p.automatic.map(g => g.id)).toEqual(['schema', 'procedure-link', 'legal-basis', 'authority', 'privacy', 'evidence', 'accessibility', 'scope', 'values']);
+    // The procedure version carries its own form: its procedure link is never missing (a draft whose tests pass waits for review).
+    expect(p.procedure).toMatchObject({ state: 'under_review', required: true });
+    expect(p.automatic.find(g => g.id === 'procedure-link')).toMatchObject({ passed: true });
     expect(p.automatic.every(g => g.kind === 'automatic')).toBe(true);
     expect(p.human.map(g => g.id)).toEqual(['procedure-approval', 'legal-review', 'authority', 'privacy', 'scope-review', 'release-approval']);
     expect(p.human.every(g => g.kind === 'human')).toBe(true);

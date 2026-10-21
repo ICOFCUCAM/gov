@@ -34,7 +34,8 @@ import { caseActRefusal } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
 import { listPackages, draftPackage, approvePackage, getPackage, ownerInstitution, runPackageTests, editDraft, activePackage, unsetDays, type DraftChanges } from '@/lib/casework/packages';
 import { formView, valueSnapshot } from '@/lib/forms/server';
-import { findLibraryForm, libraryForms, libraryInfo } from '@/lib/forms/page-data';
+import { resolveLibraryForm, libraryForms, libraryInfo, libraryPublicationOf, entryInfo } from '@/lib/forms/page-data';
+import { catalogueEntries, DUPLICATE_IDS } from '@/lib/forms/identity';
 import { BLOCKS } from '@/lib/forms/blocks';
 import { DATA_CLASSES, CONFIDENTIALITY, FIELD_TYPES, TYPE_LABEL, PATTERNS, PROFILES, RULE_LABEL, VALUE_REGISTERS, REFERENCE_REGISTERS, LOCATION_KINDS, CONTACT_METHODS } from '@/lib/forms/contract';
 import { serviceDirectory } from '@/lib/exchange/services';
@@ -48,7 +49,7 @@ import { installReferenceProcedures } from '@/lib/casework/modules';
 import { adminOnly } from '@/lib/auth/roles';
 import { loadDemonstration } from '@/lib/casework/demo';
 import { draftReferralProcedure } from '@/lib/casework/referral';
-import { publicationOf, libraryPublication, recordApproval, approvalsOf, STATUS_LABEL, APPROVAL_LABEL, type ActInput } from '@/lib/forms/publication';
+import { publicationOf, recordApproval, approvalsOf, STATUS_LABEL, APPROVAL_LABEL, type ActInput } from '@/lib/forms/publication';
 import { envelopeOf } from '@/lib/forms/envelope';
 
 export const dynamic = 'force-dynamic';
@@ -73,10 +74,13 @@ export function GET(req: NextRequest) {
   if (pubKey) {
     const p = getPackage(pubKey, Number(q.get('version')));
     if (!p) {
-      // A library form no procedure carries yet: its gates as they stand (a contract draft); approvals are recorded on the procedure that carries it.
-      const lib = findLibraryForm(pubKey);
-      if (!lib) return NextResponse.json({ error: 'No such procedure version' }, { status: 404 });
-      const pub = libraryPublication(lib.def, lib.waitsFor);
+      // A library form no procedure carries yet, found by its identity (catalogue + form ID + version) or an unambiguous ID: its gates as they
+      // stand (a contract draft); approvals are recorded on the procedure that carries it. An ambiguous bare ID is refused with its candidates.
+      const r = resolveLibraryForm(pubKey);
+      if (r && 'ambiguous' in r) return NextResponse.json({ error: r.ambiguous.error, candidates: r.ambiguous.candidates }, { status: 409 });
+      if (r && 'entry' in r) return NextResponse.json({ error: `${r.entry.identity} has no contract in the form library: nothing to publish`, entry: entryInfo(r.entry) }, { status: 404 });
+      if (!r) return NextResponse.json({ error: 'No such procedure version' }, { status: 404 });
+      const pub = libraryPublicationOf(r.found);
       return NextResponse.json({ publication: pub, statusLabel: STATUS_LABEL[pub.status], approvalLabels: APPROVAL_LABEL, approvals: [], library: true });
     }
     const pub = publicationOf(p, new Date(), registeredEffects());
@@ -88,7 +92,10 @@ export function GET(req: NextRequest) {
   if (formKey) {
     const version = Number(q.get('version'));
     const p = version ? getPackage(formKey, version) : activePackage(formKey) ?? listPackages({ key: formKey }).sort((a, b) => b.version - a.version)[0];
-    const found = !p ? findLibraryForm(formKey) : undefined;
+    const r = !p ? resolveLibraryForm(formKey) : null;
+    if (r && 'ambiguous' in r) return NextResponse.json({ error: r.ambiguous.error, candidates: r.ambiguous.candidates }, { status: 409 });
+    if (r && 'entry' in r) return NextResponse.json({ entry: entryInfo(r.entry) });
+    const found = r && 'found' in r ? r.found : undefined;
     if (!p && !found) return NextResponse.json({ error: 'No such procedure or library form' }, { status: 404 });
     const src = p ?? { ...found!.def, version: 1, state: 'draft', library: true };
     return NextResponse.json({ form: formView(src, q.get('locale') ?? undefined), unsetDays: p ? unsetDays(p) : [], ...(found ? { library: libraryInfo(found) } : {}) });
@@ -105,10 +112,13 @@ export function GET(req: NextRequest) {
   }
   if (q.get('library')) {
     // A library form is a contract draft until a procedure carries it and its gates pass: its status comes from the publication gates, its scope as it stands.
-    return NextResponse.json({ forms: libraryForms().map(({ def: f, waitsFor, catalogue: c }) => {
-      const pub = libraryPublication(f, waitsFor);
+    // Each form carries its identity (catalogue + form ID + version) and its procedure link (computed, never stored); `duplicates` lists the IDs
+    // more than one catalogue uses, which a bare-ID lookup refuses.
+    return NextResponse.json({ duplicates: Object.keys(DUPLICATE_IDS).sort().map(id => ({ id, candidates: catalogueEntries(id).map(e => ({ identity: e.identity, title: e.title, ...(e.scope ? { scope: e.scope } : {}) })) })), forms: libraryForms().map(found => {
+      const { def: f, waitsFor, catalogue: c, identity } = found;
+      const pub = libraryPublicationOf(found);
       return {
-        key: f.key, specId: f.specId, title: f.title, owner: f.owner, attachesTo: 'attachesTo' in f ? f.attachesTo ?? null : c?.procedure?.key ?? null, awaits: waitsFor,
+        key: f.key, identity, specId: f.specId, title: f.title, owner: f.owner, ownerResolution: pub.owner, procedureLink: pub.procedure, attachesTo: 'attachesTo' in f ? f.attachesTo ?? null : c?.procedure?.key ?? null, awaits: waitsFor,
         fields: f.fields.length, notes: f.notes, deviations: 'deviations' in f ? f.deviations : [], status: pub.status, scope: pub.scope,
         source: c ? `catalogue batch ${c.batch}` : 'source' in f ? 'field series' : 'specification',
       };

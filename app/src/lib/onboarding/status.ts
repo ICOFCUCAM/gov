@@ -6,7 +6,7 @@
 // keeps them, so whoever opens the page can confirm what someone else began.
 // Read-only: nothing here changes a record.
 
-import { AUTHORITIES, REQUIRED_AUTHORITIES } from '@/lib/nation/deployment';
+import { AUTHORITIES, REQUIRED_AUTHORITIES, HEALTH_SLOTS, provisionalOwner } from '@/lib/nation/deployment';
 import { authorityFor, getSetup, getSovereign, authorityChanges, classificationChanges } from '@/lib/data/store/sovereign';
 import { waitingInstitutionTerms } from '@/lib/data/store/institutions';
 import { listRelationships, waitingRelationships } from '@/lib/data/store/relationships';
@@ -100,7 +100,12 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       // without such a body leaves them empty, so they never count as missing; those it names must be active.
       const isActive = (key: (typeof AUTHORITIES)[number]['key']) => { const id = authorityFor(key); return id !== undefined && ids.has(id); };
       const named = REQUIRED_AUTHORITIES.filter(a => isActive(a.key));
-      const bodies = AUTHORITIES.filter(a => a.optional && authorityFor(a.key) !== undefined);
+      const bodies = AUTHORITIES.filter(a => a.optional && !HEALTH_SLOTS.includes(a.key) && authorityFor(a.key) !== undefined);
+      // Health bodies the catalogue forms name (medicines, controlled substances, public health): named, or stood in for
+      // provisionally (lib/nation/deployment.ts provisionalOwner()). Production takes no provisional owner as competent.
+      const health = HEALTH_SLOTS.map(k => ({ a: AUTHORITIES.find(x => x.key === k)!, o: provisionalOwner(k, authorityFor) }));
+      const provisional = health.filter(h => h.o.provisional);
+      const uncovered = health.filter(h => !h.o.institution);
       const inactiveBodies = bodies.filter(a => !isActive(a.key));
       // Relationships between institutions are optional (plan phase 3): none is fine; one approved while an end is
       // no longer active grants nothing and should be ended (or its institution reactivated).
@@ -111,6 +116,8 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Institutions created', done: ids.size > 0, href: '/gov/configuration', detail: n(ids.size, 'active institution') },
         { label: 'Every responsibility assigned to an active institution', done: named.length === REQUIRED_AUTHORITIES.length, href: '/gov/configuration/responsible', detail: `${named.length} of ${REQUIRED_AUTHORITIES.length}${named.length < REQUIRED_AUTHORITIES.length ? ` · missing: ${REQUIRED_AUTHORITIES.filter(a => !named.includes(a)).map(a => a.label).join(', ')}` : ''}` },
         { label: 'Constitutional bodies the nation named are active', done: inactiveBodies.length === 0, href: '/gov/configuration/responsible', detail: bodies.length ? `${n(bodies.length, 'body', 'bodies')} named${inactiveBodies.length ? ` · not active: ${inactiveBodies.map(a => a.label).join(', ')}` : ''}` : 'None named (only those the nation has)' },
+        { label: 'Health bodies the forms name (medicines, controlled substances, public health)', done: uncovered.length === 0 && (samplesAllowed(env) || provisional.length === 0), href: '/gov/configuration/responsible#who-is-responsible',
+          detail: provisional.length ? `${provisional.map(h => `${h.a.label}: ${h.o.provisional}`).join(' · ')}`.slice(0, 600) : 'Each named' },
         { label: 'Relationships between institutions are current (optional)', done: stale.length === 0, href: '/gov/configuration/relationships',
           detail: rels.length ? `${n(approved.length, 'approved')} · ${n(rels.filter(r => r.status === 'draft').length, 'draft')}${stale.length ? ` · with an institution no longer active: ${stale.map(r => `${r.fromName} → ${r.toName}`).join(', ').slice(0, 200)}` : ''}` : 'None recorded (only those the nation\'s law sets)' },
       ] };

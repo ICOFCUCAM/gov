@@ -32,14 +32,17 @@ import { samplesAllowed } from '@/lib/ops/mode';
 import { cite, type Citation } from '@/lib/law/register';
 import { classifyDecision } from '@/lib/permits/decisions';
 import { mappingInForce } from '@/lib/permits/authority';
-import { isAuthorityKey } from '@/lib/nation/deployment';
+import { isAuthorityKey, provisionalOwner, type OwnerResolution } from '@/lib/nation/deployment';
+import { withDefaults } from '@/lib/data/defaults';
 import { nationLanguages } from '@/lib/nation/registry';
-import { checkPackage, getPackage, ownerInstitution, runPackageTests, unsetDays } from '@/lib/casework/packages';
+import { checkPackage, getPackage, runPackageTests, unsetDays } from '@/lib/casework/packages';
 import type { Case, CasePackage } from '@/lib/casework/types';
 import { registerIntakeGuard } from '@/lib/casework/engine';
 import { DATA_CLASSES, fieldClass, translationStatus, type ContractDocument, type ContractField, type FormSpec } from './contract';
 import { RULE_REGISTRY } from './rules';
 import { formScope, type ScopeFinding } from './scope';
+import { formIdentity, identityOfForm } from './identity';
+import { LINK_LABEL, packageLink, procedureLink, type LinkSubject, type ProcedureLinkView } from './procedure-link';
 
 /** The register statuses of the owner's direction (§2). */
 export type FormStatus = 'catalogued' | 'contract_missing' | 'contract_draft' | 'under_review' | 'blocked' | 'excluded' | 'approved' | 'production';
@@ -60,7 +63,16 @@ export const APPROVAL_LABEL: Record<ApprovalKind, string> = {
 };
 
 export interface PublicationAct {
-  key: string; version: number; kind: ApprovalKind; outcome: 'approved' | 'returned';
+  key: string; version: number;
+  /**
+   * The identity of the form the act was given on (lib/forms/identity.ts:
+   * catalogue + form ID + version, or PROCEDURE:key@version for a
+   * procedure's own form). An act counts only for that identity and the
+   * contract hash below; acts recorded before identities were kept take the
+   * identity of the version they were given on (db()).
+   */
+  form: string;
+  kind: ApprovalKind; outcome: 'approved' | 'returned';
   by: string; byId: string; institution?: string; role?: string; at: string;
   /** The contract the act was given on (its SHA-256): a later change voids it. */
   digest: string;
@@ -79,12 +91,28 @@ export interface PublicationAct {
 
 interface Db { acts: PublicationAct[] }
 const g = globalThis as unknown as { __civicosFormPublication?: Db };
-const db = (): Db => touch('__civicosFormPublication', g.__civicosFormPublication ??= { acts: [] });
+/** The identity a procedure version's form is approved and published under. */
+export function publicationIdentity(p: Pick<CasePackage, 'key' | 'version' | 'form'>): string {
+  const id = identityOfForm(p.form);
+  return id ? formIdentity(id) : formIdentity({ catalogue: 'PROCEDURE', formId: p.key, version: String(p.version) });
+}
+const db = (): Db => {
+  const d = touch('__civicosFormPublication', g.__civicosFormPublication = withDefaults(g.__civicosFormPublication as unknown as Record<string, unknown>, { acts: [] }) as unknown as Db);
+  // Acts saved before identities were kept: the identity of the version they were given on (their contract hash still binds them).
+  for (const a of d.acts) if (!a.form) { const p = getPackage(a.key, a.version); a.form = p ? publicationIdentity(p) : formIdentity({ catalogue: 'PROCEDURE', formId: a.key, version: String(a.version) }); }
+  return d;
+};
 export function resetPublication(): void { g.__civicosFormPublication = undefined; }
 
-export interface Gate { id: string; label: string; kind: 'automatic' | 'human'; passed: boolean; applies: boolean; detail: string[]; act?: Pick<PublicationAct, 'by' | 'at' | 'outcome' | 'note'> }
+export interface Gate { id: string; label: string; kind: 'automatic' | 'human'; passed: boolean; applies: boolean; detail: string[]; act?: Pick<PublicationAct, 'by' | 'at' | 'outcome' | 'note'>; notes?: string[] }
 export interface Publication {
   key: string; version: number; title: string; status: FormStatus; scope: ScopeFinding;
+  /** The form's identity: what approvals are recorded under. */
+  identity: string;
+  /** The link to the procedure that carries it (missing, draft, under review, approved), computed from the package register. */
+  procedure: Pick<ProcedureLinkView, 'state' | 'required' | 'detail' | 'carriedBy' | 'exchange'>;
+  /** Who owns it: the institution named for its slot, or a provisional stand-in (never proof of legal competence). */
+  owner: OwnerResolution | { institution?: string };
   automatic: Gate[]; human: Gate[];
   /** What stops the next status, in plain words. */
   blockers: string[];
@@ -112,8 +140,22 @@ export function packageScope(p: Pick<CasePackage, 'key' | 'fields' | 'form'>): S
   return formScope(p.key, p.form, p.fields);
 }
 
+/** Who owns a procedure or library form: the slot's institution, else a provisional stand-in (lib/nation/deployment.ts). */
+export function ownerOf(owner: string): OwnerResolution | { institution?: string } {
+  return isAuthorityKey(owner) ? provisionalOwner(owner, authorityFor) : { institution: owner };
+}
+
+/** The gate a required procedure that is missing cannot pass (owner's direction 2026-10-21, health integration §2). */
+function linkGate(link: ProcedureLinkView): Gate {
+  const label = `A procedure carries the form (procedure: ${LINK_LABEL[link.state]})`;
+  const detail: string[] = [];
+  if (link.required && link.state === 'missing') detail.push(`procedure: missing. ${link.detail}: the form cannot go live without it`);
+  if (!link.required && link.exchange && !link.exchange.exists) detail.push(`${link.detail}: the form cannot go live until it exists and two officials approve it`);
+  return { id: 'procedure-link', label, kind: 'automatic', applies: true, passed: detail.length === 0, detail, notes: [link.detail] };
+}
+
 /** The automatic gates: everything the platform verifies itself. */
-function automaticGates(p: CasePackage, now: Date, effects?: string[]): Gate[] {
+function automaticGates(p: CasePackage, now: Date, effects?: string[], link: ProcedureLinkView = packageLink(p)): Gate[] {
   const on = today(now);
   const gate = (id: string, label: string, detail: string[], applies = true): Gate => ({ id, label, kind: 'automatic', applies, passed: !applies || detail.length === 0, detail });
 
@@ -136,8 +178,16 @@ function automaticGates(p: CasePackage, now: Date, effects?: string[]): Gate[] {
 
   // 3. Competent authority: who is responsible names the institution, and each decision rests on an approved mapping or the deployment profile.
   const authority: string[] = [];
-  const owner = ownerInstitution(p.owner, authorityFor);
-  if (!owner) authority.push('Who is responsible does not name the institution for this procedure yet');
+  const resolved = ownerOf(p.owner);
+  const owner = resolved.institution;
+  const authorityNotes: string[] = [];
+  const provisional = 'provisional' in resolved ? resolved.provisional : undefined;
+  if (!owner) authority.push(provisional ? `Who is responsible does not name the institution for this procedure yet (${provisional})` : 'Who is responsible does not name the institution for this procedure yet');
+  else if (provisional) {
+    // A stand-in owner is recorded as provisional: never proof of legal competence; production refuses it.
+    if (samplesAllowed()) authorityNotes.push(`Owner ${provisional}`);
+    else authority.push(`Owner ${provisional}: production takes only the institution the nation names as competent`);
+  }
   // A case of this procedure with no answers yet: decisions whose authority depends on the case (a register, a profession) are classified when decided.
   const stub = { id: 'publication-check', fields: {}, procedure: p.key, package: { key: p.key, version: p.version }, history: [], links: [] } as unknown as Case;
   for (const a of p.actions.filter(x => x.decision)) {
@@ -185,10 +235,13 @@ function automaticGates(p: CasePackage, now: Date, effects?: string[]): Gate[] {
   const binding = [...new Set(flat(p.fields).flatMap(f => (f.rules ?? []).flatMap(r => (r.rule === 'registered' && RULE_REGISTRY[r.name]?.scope === 'binding' ? [`${f.label}: ${RULE_REGISTRY[r.name]!.label} needs ${RULE_REGISTRY[r.name]!.needs}`] : []))))];
   values.push(...binding);
 
+  const authorityGate = gate('authority', 'The competent authority resolves (who is responsible, permit mappings)', authority);
+  if (authorityNotes.length) authorityGate.notes = authorityNotes;
   return [
     gate('schema', 'Schema complete and its validation tests pass', schema),
+    linkGate(link),
     gate('legal-basis', 'Every law cited resolves to the confirmed version in force', legal),
-    gate('authority', 'The competent authority resolves (who is responsible, permit mappings)', authority),
+    authorityGate,
     gate('privacy', 'Institution-scoped permissions and a personal-data class on every field', privacy),
     gate('evidence', 'Evidence has a basis, a retention rule is set, every event is audited', evidence),
     gate('accessibility', 'Labels, options and translations complete (accessibility and localisation)', access),
@@ -197,7 +250,8 @@ function automaticGates(p: CasePackage, now: Date, effects?: string[]): Gate[] {
   ];
 }
 
-const latest = (key: string, version: number, kind: ApprovalKind) => [...db().acts].reverse().find(a => a.key === key && a.version === version && a.kind === kind);
+/** The latest act of a kind on a version, under the form identity it carries (an act given on another identity never counts). */
+const latest = (key: string, version: number, kind: ApprovalKind, form: string) => [...db().acts].reverse().find(a => a.key === key && a.version === version && a.kind === kind && a.form === form);
 
 /** Whether an act still holds: approved, on the contract as it stands, by someone other than whoever wrote or changed it. */
 function holds(a: PublicationAct | undefined, p: CasePackage, digest: string): boolean {
@@ -207,9 +261,9 @@ function holds(a: PublicationAct | undefined, p: CasePackage, digest: string): b
 }
 
 /** The human gates, read from the recorded acts. */
-function humanGates(p: CasePackage, digest: string, scope: ScopeFinding): Gate[] {
+function humanGates(p: CasePackage, digest: string, scope: ScopeFinding, form: string): Gate[] {
   const g1 = (kind: ApprovalKind, applies = true, extra: string[] = []): Gate => {
-    const a = latest(p.key, p.version, kind);
+    const a = latest(p.key, p.version, kind, form);
     const ok = holds(a, p, digest);
     const detail = !applies ? [] : ok ? extra : [a && a.digest !== digest ? 'Given on an earlier text of the form: it changed since, so it is needed again' : a?.outcome === 'returned' ? `Returned by ${a.by}: ${a.note}` : 'Waiting for an authorised official', ...extra];
     return { id: kind, label: APPROVAL_LABEL[kind], kind: 'human', applies, passed: !applies || (ok && extra.length === 0), detail, ...(a ? { act: { by: a.by, at: a.at, outcome: a.outcome, note: a.note } } : {}) };
@@ -220,18 +274,19 @@ function humanGates(p: CasePackage, digest: string, scope: ScopeFinding): Gate[]
     detail: p.state === 'draft' ? ['The procedure is a draft: a different official who can sign approves it'] : p.state === 'superseded' ? ['A later version replaces it'] : [],
     ...(p.approvedBy ? { act: { by: p.approvedBy, at: p.approvedAt ?? '', outcome: 'approved' as const, note: `Written by ${p.author}` } } : {}),
   };
-  const proposal = latest(p.key, p.version, 'release-proposal');
-  const approval = latest(p.key, p.version, 'release-approval');
+  const proposal = latest(p.key, p.version, 'release-proposal', form);
+  const approval = latest(p.key, p.version, 'release-approval', form);
   const release = g1('release-approval', true, approval && proposal && approval.at < proposal.at ? ['A newer proposal waits for approval'] : []);
   return [procedure, g1('legal-review'), g1('authority'), g1('privacy'), g1('scope-review', scope.status === 'legal_review'), release];
 }
 
 /** The publication of one procedure version: its gates, apart by kind, and the status they give. */
-export function publicationOf(p: CasePackage, now = new Date(), effects?: string[]): Publication {
+export function publicationOf(p: CasePackage, now = new Date(), effects?: string[], link: ProcedureLinkView = packageLink(p)): Publication {
   const digest = contractDigest(p);
   const scope = packageScope(p);
-  const automatic = automaticGates(p, now, effects);
-  const human = humanGates(p, digest, scope);
+  const identity = publicationIdentity(p);
+  const automatic = automaticGates(p, now, effects, link);
+  const human = humanGates(p, digest, scope, identity);
   const failA = automatic.filter(x => x.applies && !x.passed), failH = human.filter(x => x.applies && !x.passed);
   const release = human.find(x => x.id === 'release-approval')!;
   const others = failH.filter(x => x.id !== 'release-approval');
@@ -242,11 +297,13 @@ export function publicationOf(p: CasePackage, now = new Date(), effects?: string
     : others.length ? 'under_review'
     : release.passed ? 'production' : 'approved';
   const blockers = [...failA, ...failH].flatMap(x => x.detail.map(d => `${x.label}: ${d}`));
-  const proposal = latest(p.key, p.version, 'release-proposal');
-  const approved = latest(p.key, p.version, 'release-approval');
+  const proposal = latest(p.key, p.version, 'release-proposal', identity);
+  const approved = latest(p.key, p.version, 'release-approval', identity);
   const open = proposal && proposal.outcome === 'approved' && proposal.digest === digest && !(approved && approved.at >= proposal.at);
   return {
-    key: p.key, version: p.version, title: p.title, status, scope, automatic, human, blockers,
+    key: p.key, version: p.version, title: p.title, status, scope, identity, automatic, human, blockers,
+    procedure: { state: link.state, required: link.required, detail: link.detail, ...(link.carriedBy ? { carriedBy: link.carriedBy } : {}), ...(link.exchange ? { exchange: link.exchange } : {}) },
+    owner: ownerOf(p.owner),
     ...(open ? { pendingRelease: { by: proposal.by, at: proposal.at, ...(proposal.rollbackPlan ? { rollbackPlan: proposal.rollbackPlan } : {}), ...(proposal.releaseNotes ? { releaseNotes: proposal.releaseNotes } : {}), ...(proposal.environment ? { environment: proposal.environment } : {}) } } : {}),
     ...(status !== 'production' && samplesAllowed() ? { warning: 'Not released for production: a demonstration or training installation takes submissions anyway' } : {}),
   };
@@ -269,9 +326,29 @@ export function libraryPackage(lib: { key: string; title: string; owner: string;
   };
 }
 
-/** The publication of a library form: its gates as they stand, the first saying what it waits for. */
-export function libraryPublication(lib: Parameters<typeof libraryPackage>[0], waitsFor: string, now = new Date()): Publication {
-  const pub = publicationOf(libraryPackage(lib), now, []);
+/** What the procedure link reads of a library form of any source (a catalogue contract, a specification or field series form). */
+export function linkSubject(lib: object): LinkSubject {
+  const x = lib as { identity?: unknown; procedure?: unknown; attachesTo?: unknown; exchange?: unknown; deviations?: unknown };
+  const proc = x.procedure && typeof x.procedure === 'object' && typeof (x.procedure as { key?: unknown }).key === 'string' ? { key: (x.procedure as { key: string }).key }
+    : typeof x.attachesTo === 'string' ? { key: x.attachesTo, carried: true } : null;
+  return {
+    ...(typeof x.identity === 'string' ? { identity: x.identity } : {}), procedure: proc,
+    ...(typeof x.exchange === 'string' ? { exchange: x.exchange } : {}),
+    deviations: Array.isArray(x.deviations) ? (x.deviations as { id?: unknown }[]).map(d => (typeof d?.id === 'string' ? { id: d.id } : {})) : [],
+  };
+}
+
+/**
+ * The publication of a library form: its gates as they stand, the first
+ * saying what it waits for. Its procedure link is computed from the package
+ * register (lib/forms/procedure-link.ts); `services` are the exchange
+ * services that exist, for a form an exchange service answers.
+ */
+export function libraryPublication(lib: Parameters<typeof libraryPackage>[0] & { identity?: string }, waitsFor: string, now = new Date(), opts: { services?: string[]; link?: ProcedureLinkView } = {}): Publication {
+  const link = opts.link ?? procedureLink(linkSubject(lib), { ...(opts.services ? { services: opts.services } : {}) });
+  const pub = publicationOf(libraryPackage(lib), now, [], link);
+  // A library form is published under its own identity, never the bare key.
+  if (lib.identity) pub.identity = lib.identity;
   const schema = pub.automatic.find(x => x.id === 'schema')!;
   schema.detail = [`No procedure of this installation carries it yet: ${waitsFor}`, ...schema.detail.filter(d => !/procedure key|at least two stages|reference prefix/.test(d))];
   schema.passed = false;
@@ -305,8 +382,10 @@ export function recordApproval(key: string, version: number, input: ActInput, wh
   if (!p) return { error: 'No such procedure version' };
   if (!(input.kind in APPROVAL_LABEL)) return { error: `Unknown approval ${String(input.kind)}` };
   if (!who.scope || !who.id) return { error: 'An approval is an act of a signed-in official: sign in first' };
-  const owner = ownerInstitution(p.owner, authorityFor);
+  const resolved = ownerOf(p.owner);
+  const owner = resolved.institution;
   if (!owner) return { error: 'Name the responsible institution under Who is responsible first' };
+  const provisional = 'provisional' in resolved ? resolved.provisional : undefined;
   const refused = caseActRefusal(who.scope, { owner, sensitivity: 'normal', decision: true });
   if (refused) return { error: refused };
   const me = { by: who.name, byId: who.id };
@@ -320,7 +399,8 @@ export function recordApproval(key: string, version: number, input: ActInput, wh
   const pub = publicationOf(p, now);
   const autoGate = (id: string) => pub.automatic.find(x => x.id === id)!;
   const digest = contractDigest(p);
-  const act: PublicationAct = { key, version, kind: input.kind, outcome, by: who.name, byId: who.id, ...(who.scope.institution ? { institution: who.scope.institution } : {}), ...(who.scope.role ? { role: who.scope.role } : {}), at: now.toISOString(), digest, note };
+  const form = publicationIdentity(p);
+  const act: PublicationAct = { key, version, form, kind: input.kind, outcome, by: who.name, byId: who.id, ...(who.scope.institution ? { institution: who.scope.institution } : {}), ...(who.scope.role ? { role: who.scope.role } : {}), at: now.toISOString(), digest, note };
 
   if (outcome === 'approved') switch (input.kind) {
     case 'legal-review':
@@ -328,6 +408,8 @@ export function recordApproval(key: string, version: number, input: ActInput, wh
       act.citations = p.citations.map(c => ({ instrument: c.instrument, eId: c.eId, version: c.version }));
       break;
     case 'authority':
+      // A provisional owner is a stand-in, never proof of legal competence: nobody can confirm it as the competent authority.
+      if (provisional) return { error: `The owner is ${provisional}. Name the institution under Who is responsible first` };
       if (!autoGate('authority').passed) return { error: `The authority does not resolve: ${autoGate('authority').detail[0]}` };
       act.authority = owner;
       break;
@@ -352,7 +434,7 @@ export function recordApproval(key: string, version: number, input: ActInput, wh
       break;
     }
     case 'release-approval': {
-      const prop = latest(key, version, 'release-proposal');
+      const prop = latest(key, version, 'release-proposal', form);
       if (!prop || prop.outcome !== 'approved' || prop.digest !== digest) return { error: 'No release proposal is waiting for this version' };
       const same = dualControlRefusal({ by: prop.by, byId: prop.byId }, me);
       if (same) return { error: `${same} (they proposed the release)` };

@@ -22,6 +22,13 @@ export interface LibraryInfo {
   nationValues?: { key: string; kind: string; source: string; decision: string }[];
   countryDecisions?: string[];
   items?: number;
+  /** Catalogue + form ID + version (lib/forms/identity.ts). */
+  identity?: string;
+  ownerLabel?: string;
+  /** Who owns it as the profile stands: named, or a provisional stand-in. */
+  ownerResolution?: { slot?: string; actingSlot?: string; actingLabel?: string; institution?: string; provisional?: string };
+  /** Computed from the package register on every read; never stored. */
+  procedureLink?: { state: string; label: string; required: boolean; detail: string };
 }
 
 const KIND: Record<string, string> = { fee: 'Fee', days: 'Day count', period: 'Period', threshold: 'Threshold', hours: 'Continuing education' };
@@ -37,7 +44,9 @@ export function LibraryDetails({ title, library }: { title: string; library: Lib
             <dt className="font-medium">Belongs to</dt>
             <dd>{library.procedure ? <>the reference procedure <bdi dir="ltr">{library.procedure.key}</bdi>{library.procedure.also?.length ? <> (and <bdi dir="ltr">{library.procedure.also.join(', ')}</bdi>)</> : null}, stage <bdi dir="ltr">{library.procedure.stage}</bdi>{library.procedure.action ? <>, step <bdi dir="ltr">{library.procedure.action}</bdi></> : null}{library.procedure.document ? <>, as its document <bdi dir="ltr">{library.procedure.document}</bdi></> : null}</> : library.exchange ? <>the exchange service <bdi dir="ltr">{library.exchange}</bdi> and the public check</> : 'no procedure yet'}</dd>
             <dt className="font-medium">Waits for</dt><dd>{library.awaits}</dd>
-            <dt className="font-medium">Responsible</dt><dd>{library.owner} (from Who is responsible; never a ministry by name)</dd>
+            {library.identity ? <><dt className="font-medium">Identity</dt><dd><bdi dir="ltr">{library.identity}</bdi> (catalogue, form ID and version; the ID <bdi dir="ltr">{c.id}</bdi> alone names no form)</dd></> : null}
+            {library.procedureLink ? <><dt className="font-medium">Procedure</dt><dd data-procedure-state={library.procedureLink.state}><strong>procedure: {library.procedureLink.label}</strong>{library.procedureLink.required ? '' : ' (no procedure required)'} · {library.procedureLink.detail}</dd></> : null}
+            <dt className="font-medium">Responsible</dt><dd>{library.ownerLabel ? <>{library.ownerLabel} (<bdi dir="ltr">{library.owner}</bdi>)</> : library.owner} (from Who is responsible; never a ministry by name){library.ownerResolution?.provisional ? <> · <strong>{library.ownerResolution.provisional}</strong></> : null}</dd>
             {library.filledBy ? <><dt className="font-medium">Completed by</dt><dd>{library.filledBy}</dd></> : null}
           </dl>
           {library.nationValues?.length ? <div><strong>Values the nation&apos;s law decides (none set)</strong><ul className="list-disc ps-5">{library.nationValues.map(v => <li key={v.key}>{KIND[v.kind] ?? v.kind}: {v.decision} <span className="text-ink-muted">(<bdi dir="ltr">{v.key}</bdi>, {v.source === 'rule' ? 'an approved rule' : v.source === 'procedure' ? 'the procedure\'s day count' : 'a setting'}: unset)</span></li>)}</ul></div> : null}

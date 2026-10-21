@@ -23,9 +23,9 @@
  "library": {
   "title": "Apply for a controlled medicine authorisation",
   "intro": "Apply for the special authorisation the law requires to import, export, make, supply or hold a controlled medicine. The authorisation is for an organisation, a product and a quantity, never for a named patient. Quantities are checked against the limits the nation sets under its controlled-substances law.",
-  "owner": "healthRegulation",
+  "owner": "controlledSubstances",
   "filled_by": "A licensed organisation (a registered organisation) or someone acting for it.",
-  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "authority": "The medicines regulator the nation names under Who is responsible. Its slot is controlledSubstances, which ships empty: until the nation names it, the medicines regulator slot (medicinesRegulation) stands in, and while that is empty the health regulator slot (healthRegulation), as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
   "procedure": null,
   "intended": "A controlled-medicine authorisation procedure of the authority the nation's controlled-substances law names, under an approved permit mapping: not built; the form waits in the library (plan step I4).",
   "lists": {
@@ -84,7 +84,7 @@
    },
    {
     "id": "controlled-authority",
-    "what": "The controlled-substances authority may be another institution than the medicines regulator; the slot used is the health regulator's until the nation names it",
+    "what": "The controlled-substances authority may be another institution than the medicines regulator; the form names the controlled-substances slot (controlledSubstances), which ships empty: until the nation names it, the medicines regulator slot stands in, then the health regulator slot, as a provisional owner, never proof of legal competence",
     "why": "Who holds the power is the nation's law, recorded in the deployment profile and the permit authority registry.",
     "rule": "CLAUDE.md Government operating model: authorityFor(); never assume a ministry by name"
    },
@@ -96,7 +96,7 @@
    },
    {
     "id": "medicines-authority-slot",
-    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "what": "The form names the medicines-regulator slot (medicinesRegulation), which ships empty: until the nation names it, the health regulator slot (healthRegulation, \"Health facility regulation\") stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence; each power over a product type comes from the approved permit authority mapping",
     "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
     "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
    },

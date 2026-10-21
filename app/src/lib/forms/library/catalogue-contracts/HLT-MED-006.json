@@ -24,9 +24,9 @@
  "library": {
   "title": "Record a marketing authorisation decision",
   "intro": "What the decision-maker states when an application is decided: the outcome the law provides, what is authorised, its conditions, when it takes effect and ends, the provision relied on, the reasons and how to ask for a review. The decision is made and sealed in the case by an official who can sign, different from the one who proposed it.",
-  "owner": "healthRegulation",
+  "owner": "medicinesRegulation",
   "filled_by": "The official with the power to decide, signed in; a different official proposed it (four-eyes).",
-  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
   "procedure": null,
   "intended": "The decision step of the marketing authorisation procedure of the medicines regulator, sealed by the case engine and written to a product register: not built; the form waits in the library (plan step I4).",
   "lists": {},
@@ -69,7 +69,7 @@
    },
    {
     "id": "medicines-authority-slot",
-    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "what": "The form names the medicines-regulator slot (medicinesRegulation), which ships empty: until the nation names it, the health regulator slot (healthRegulation, \"Health facility regulation\") stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence; each power over a product type comes from the approved permit authority mapping",
     "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
     "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
    },

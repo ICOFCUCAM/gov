@@ -74,59 +74,61 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 
 **Batch 1** (health regulation, owner approved 21 October 2026): 25 contracts added; form status contract_draft 25.
 
-| Form | Register row | Fields | Form status | Scope |
-|---|---|---|---|---|
-| HLT-FAC-001 | HLT-FAC-001 | 34 | contract_draft | allowed |
-| HLT-FAC-002 | HLT-FAC-002 | 33 | contract_draft | allowed |
-| HLT-FAC-003 | HLT-FAC-003 | 20 | contract_draft | allowed |
-| HLT-FAC-004 | HLT-FAC-004 | 22 | contract_draft | allowed |
-| HLT-FAC-005 | HLT-FAC-005 | 31 | contract_draft | allowed |
-| HLT-FAC-006 | HLT-FAC-006 | 31 | contract_draft | allowed |
-| HLT-FAC-007 | HLT-FAC-007 | 21 | contract_draft | allowed |
-| HLT-FAC-008 | HLT-FAC-008 | 9 | contract_draft | allowed |
-| HLT-FAC-009 | HLT-FAC-009 | 18 | contract_draft | allowed |
-| HLT-FAC-010 | HLT-FAC-010 | 6 | contract_draft | allowed |
-| HLT-LIC-001 | HLT-LIC-001 | 32 | contract_draft | allowed |
-| HLT-LIC-002 | HLT-LIC-002 | 12 | contract_draft | allowed |
-| HLT-LIC-003 | HLT-LIC-003 | 13 | contract_draft | allowed |
-| HLT-LIC-004 | HLT-LIC-004 | 24 | contract_draft | allowed |
-| HLT-LIC-005 | HLT-LIC-005 | 29 | contract_draft | allowed |
-| HLT-LIC-006 | HLT-LIC-006 | 17 | contract_draft | allowed |
-| HLT-LIC-007 | HLT-LIC-007 | 22 | contract_draft | allowed |
-| HLT-LIC-008 | HLT-LIC-008 | 21 | contract_draft | allowed |
-| HLT-LIC-009 | HLT-LIC-009 | 11 | contract_draft | allowed |
-| HLT-LIC-010 | HLT-LIC-010 | 9 | contract_draft | allowed |
-| HLT-LIC-011 | HLT-LIC-011 | 15 | contract_draft | allowed |
-| HLT-LIC-012 | HLT-LIC-012 | 8 | contract_draft | allowed |
-| HLT-LIC-013 | HLT-LIC-013 | 25 | contract_draft | allowed |
-| HLT-LIC-014 | HLT-LIC-014 | 7 | contract_draft | allowed |
-| HLT-PH-015 | HLT-PH-015 | 22 | contract_draft | allowed |
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| HLT-FAC-001 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-001@1` | HLT-FAC-001 | 34 | contract_draft | allowed |
+| HLT-FAC-002 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-002@1` | HLT-FAC-002 | 33 | contract_draft | allowed |
+| HLT-FAC-003 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-003@1` | HLT-FAC-003 | 20 | contract_draft | allowed |
+| HLT-FAC-004 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-004@1` | HLT-FAC-004 | 22 | contract_draft | allowed |
+| HLT-FAC-005 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-005@1` | HLT-FAC-005 | 31 | contract_draft | allowed |
+| HLT-FAC-006 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-006@1` | HLT-FAC-006 | 31 | contract_draft | allowed |
+| HLT-FAC-007 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-007@1` | HLT-FAC-007 | 21 | contract_draft | allowed |
+| HLT-FAC-008 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-008@1` | HLT-FAC-008 | 9 | contract_draft | allowed |
+| HLT-FAC-009 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-009@1` | HLT-FAC-009 | 18 | contract_draft | allowed |
+| HLT-FAC-010 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-010@1` | HLT-FAC-010 | 6 | contract_draft | allowed |
+| HLT-LIC-001 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-001@1` | HLT-LIC-001 | 32 | contract_draft | allowed |
+| HLT-LIC-002 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-002@1` | HLT-LIC-002 | 12 | contract_draft | allowed |
+| HLT-LIC-003 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-003@1` | HLT-LIC-003 | 13 | contract_draft | allowed |
+| HLT-LIC-004 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-004@1` | HLT-LIC-004 | 24 | contract_draft | allowed |
+| HLT-LIC-005 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-005@1` | HLT-LIC-005 | 29 | contract_draft | allowed |
+| HLT-LIC-006 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-006@1` | HLT-LIC-006 | 17 | contract_draft | allowed |
+| HLT-LIC-007 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-007@1` | HLT-LIC-007 | 22 | contract_draft | allowed |
+| HLT-LIC-008 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-008@1` | HLT-LIC-008 | 21 | contract_draft | allowed |
+| HLT-LIC-009 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-009@1` | HLT-LIC-009 | 11 | contract_draft | allowed |
+| HLT-LIC-010 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-010@1` | HLT-LIC-010 | 9 | contract_draft | allowed |
+| HLT-LIC-011 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-011@1` | HLT-LIC-011 | 15 | contract_draft | allowed |
+| HLT-LIC-012 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-012@1` | HLT-LIC-012 | 8 | contract_draft | allowed |
+| HLT-LIC-013 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-013@1` | HLT-LIC-013 | 25 | contract_draft | allowed |
+| HLT-LIC-014 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-014@1` | HLT-LIC-014 | 7 | contract_draft | allowed |
+| HLT-PH-015 | `FIELD-SERIES-PARTS-05-07:HLT-PH-015@1` | HLT-PH-015 | 22 | contract_draft | allowed |
 
 **Batch 2** (medicines and medical devices regulation, owner approved 21 October 2026): 21 contracts added; form status contract_draft 21.
 
-| Form | Register row | Fields | Form status | Scope |
-|---|---|---|---|---|
-| HLT-MED-001 | HLT-MED-001 | 48 | contract_draft | allowed |
-| HLT-MED-002 | HLT-MED-002 | 26 | contract_draft | allowed |
-| HLT-MED-003 | HLT-MED-003 | 17 | contract_draft | allowed |
-| HLT-MED-004 | HLT-MED-004 | 12 | contract_draft | allowed |
-| HLT-MED-005 | HLT-MED-005 | 23 | contract_draft | allowed |
-| HLT-MED-006 | HLT-MED-006 | 17 | contract_draft | allowed |
-| HLT-MED-007 | HLT-MED-007 | 26 | contract_draft | allowed |
-| HLT-MED-008 | HLT-MED-008 | 32 | contract_draft | allowed |
-| HLT-MED-009 | HLT-MED-009 | 13 | contract_draft | allowed |
-| HLT-MED-010 | HLT-MED-010 | 35 | contract_draft | allowed |
-| HLT-MED-011 | HLT-MED-011 | 20 | contract_draft | allowed |
-| HLT-MED-012 | HLT-MED-012 | 24 | contract_draft | allowed |
-| HLT-MED-013 | HLT-MED-013 | 36 | contract_draft | allowed |
-| HLT-MED-014 | HLT-MED-014 | 33 | contract_draft | allowed |
-| HLT-MED-015 | HLT-MED-015 | 25 | contract_draft | allowed |
-| HLT-MED-017 | HLT-MED-017 | 41 | contract_draft | allowed |
-| HLT-MED-018 | HLT-MED-018 | 31 | contract_draft | allowed |
-| HLT-MED-019 | HLT-MED-019 | 40 | contract_draft | allowed |
-| HLT-MED-020 | HLT-MED-020 | 26 | contract_draft | allowed |
-| HLT-MED-023 | HLT-MED-023 | 29 | contract_draft | allowed |
-| HLT-MED-024 | HLT-MED-024 | 6 | contract_draft | allowed |
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| HLT-MED-001 | `FIELD-SERIES-PARTS-05-07:HLT-MED-001@1` | HLT-MED-001 | 48 | contract_draft | allowed |
+| HLT-MED-002 | `FIELD-SERIES-PARTS-05-07:HLT-MED-002@1` | HLT-MED-002 | 26 | contract_draft | allowed |
+| HLT-MED-003 | `FIELD-SERIES-PARTS-05-07:HLT-MED-003@1` | HLT-MED-003 | 17 | contract_draft | allowed |
+| HLT-MED-004 | `FIELD-SERIES-PARTS-05-07:HLT-MED-004@1` | HLT-MED-004 | 12 | contract_draft | allowed |
+| HLT-MED-005 | `FIELD-SERIES-PARTS-05-07:HLT-MED-005@1` | HLT-MED-005 | 23 | contract_draft | allowed |
+| HLT-MED-006 | `FIELD-SERIES-PARTS-05-07:HLT-MED-006@1` | HLT-MED-006 | 17 | contract_draft | allowed |
+| HLT-MED-007 | `FIELD-SERIES-PARTS-05-07:HLT-MED-007@1` | HLT-MED-007 | 26 | contract_draft | allowed |
+| HLT-MED-008 | `FIELD-SERIES-PARTS-05-07:HLT-MED-008@1` | HLT-MED-008 | 32 | contract_draft | allowed |
+| HLT-MED-009 | `FIELD-SERIES-PARTS-05-07:HLT-MED-009@1` | HLT-MED-009 | 13 | contract_draft | allowed |
+| HLT-MED-010 | `FIELD-SERIES-PARTS-05-07:HLT-MED-010@1` | HLT-MED-010 | 35 | contract_draft | allowed |
+| HLT-MED-011 | `FIELD-SERIES-PARTS-05-07:HLT-MED-011@1` | HLT-MED-011 | 20 | contract_draft | allowed |
+| HLT-MED-012 | `FIELD-SERIES-PARTS-05-07:HLT-MED-012@1` | HLT-MED-012 | 24 | contract_draft | allowed |
+| HLT-MED-013 | `FIELD-SERIES-PARTS-05-07:HLT-MED-013@1` | HLT-MED-013 | 36 | contract_draft | allowed |
+| HLT-MED-014 | `FIELD-SERIES-PARTS-05-07:HLT-MED-014@1` | HLT-MED-014 | 33 | contract_draft | allowed |
+| HLT-MED-015 | `FIELD-SERIES-PARTS-05-07:HLT-MED-015@1` | HLT-MED-015 | 25 | contract_draft | allowed |
+| HLT-MED-017 | `FIELD-SERIES-PARTS-05-07:HLT-MED-017@1` | HLT-MED-017 | 41 | contract_draft | allowed |
+| HLT-MED-018 | `FIELD-SERIES-PARTS-05-07:HLT-MED-018@1` | HLT-MED-018 | 31 | contract_draft | allowed |
+| HLT-MED-019 | `FIELD-SERIES-PARTS-05-07:HLT-MED-019@1` | HLT-MED-019 | 40 | contract_draft | allowed |
+| HLT-MED-020 | `FIELD-SERIES-PARTS-05-07:HLT-MED-020@1` | HLT-MED-020 | 26 | contract_draft | allowed |
+| HLT-MED-023 | `FIELD-SERIES-PARTS-05-07:HLT-MED-023@1` | HLT-MED-023 | 29 | contract_draft | allowed |
+| HLT-MED-024 | `FIELD-SERIES-PARTS-05-07:HLT-MED-024@1` | HLT-MED-024 | 6 | contract_draft | allowed |
+
+HLT-MED-024: its public answer is bound to a rule. Built only through publicProductView() (lib/health/products/public.ts): approved fields the approved classification lists; never dossier, personal data or unpublished enforcement
 
 **Totals beside the earlier ones** (the register without the library's contracts, after each batch, and now):
 
@@ -344,22 +346,24 @@ A contract is incomplete when a field lacks `type` or `required`, or the contrac
 
 **The same ID for different forms (14):**
 
+A form is identified by catalogue, form ID and version (`CATALOGUE:FORM-ID@VERSION`, `app/src/lib/forms/identity.ts`): a bare ID below names no form, a lookup by it is refused with both candidates, and each entry is evaluated for scope on its own (`app/src/lib/forms/catalogue-identity.test.ts`).
+
 | ID | Occurrences |
 |---|---|
-| EDU-ACC-008 | FIELD-SERIES-PARTS-05-07.md: Accreditation condition monitoring; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Programme accreditation |
-| EDU-RES-005 | FIELD-SERIES-PARTS-05-07.md: Grant agreement; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Assessment result |
-| ENV-PER-004 | PARTS-08-11.md: Environmental assessment completeness review; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Environmental permit application |
-| HLT-FAC-006 | FIELD-SERIES-PARTS-05-07.md: Service or capacity variation; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Health facility registration |
-| HLT-MED-004 | FIELD-SERIES-PARTS-05-07.md: Additional information request; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Medicine authorization or dispensing record |
-| JUS-COR-008 | FIELD-SERIES-PARTS-05-07.md: Disciplinary appeal or complaint; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Corrections case and sentence record |
-| JUS-PRO-006 | FIELD-SERIES-PARTS-05-07.md: Witness or expert coordination record; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Prosecution case referral |
-| LND-REG-003 | PARTS-08-11.md: Cadastral survey submission; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Land record registration or amendment |
-| SEC-INT-006 | PARTS-08-11.md: Classified information access request; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Intelligence product registration |
-| TRN-AVI-007 | PARTS-08-11.md: Airport infrastructure works application; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Aviation operator or facility application |
-| TRN-INF-008 | PARTS-08-11.md: Construction inspection; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Public infrastructure project submission |
-| TRN-MAR-006 | PARTS-08-11.md: Port access or operating permit; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Maritime vessel registration |
-| TRN-OPS-005 | PARTS-08-11.md: Freight operator licence; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Commercial transport operator registration |
-| TRN-ROAD-003 | PARTS-08-11.md: Road closure request; SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Road works permit |
+| EDU-ACC-008 | FIELD-SERIES-PARTS-05-07.md: Accreditation condition monitoring (`FIELD-SERIES-PARTS-05-07:EDU-ACC-008`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Programme accreditation (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:EDU-ACC-008`) |
+| EDU-RES-005 | FIELD-SERIES-PARTS-05-07.md: Grant agreement (`FIELD-SERIES-PARTS-05-07:EDU-RES-005`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Assessment result (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:EDU-RES-005`) |
+| ENV-PER-004 | PARTS-08-11.md: Environmental assessment completeness review (`PARTS-08-11:ENV-PER-004`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Environmental permit application (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ENV-PER-004`) |
+| HLT-FAC-006 | FIELD-SERIES-PARTS-05-07.md: Service or capacity variation (`FIELD-SERIES-PARTS-05-07:HLT-FAC-006`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Health facility registration (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HLT-FAC-006`) |
+| HLT-MED-004 | FIELD-SERIES-PARTS-05-07.md: Additional information request (`FIELD-SERIES-PARTS-05-07:HLT-MED-004`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Medicine authorization or dispensing record (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HLT-MED-004`) |
+| JUS-COR-008 | FIELD-SERIES-PARTS-05-07.md: Disciplinary appeal or complaint (`FIELD-SERIES-PARTS-05-07:JUS-COR-008`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Corrections case and sentence record (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:JUS-COR-008`) |
+| JUS-PRO-006 | FIELD-SERIES-PARTS-05-07.md: Witness or expert coordination record (`FIELD-SERIES-PARTS-05-07:JUS-PRO-006`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Prosecution case referral (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:JUS-PRO-006`) |
+| LND-REG-003 | PARTS-08-11.md: Cadastral survey submission (`PARTS-08-11:LND-REG-003`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Land record registration or amendment (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LND-REG-003`) |
+| SEC-INT-006 | PARTS-08-11.md: Classified information access request (`PARTS-08-11:SEC-INT-006`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Intelligence product registration (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SEC-INT-006`) |
+| TRN-AVI-007 | PARTS-08-11.md: Airport infrastructure works application (`PARTS-08-11:TRN-AVI-007`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Aviation operator or facility application (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:TRN-AVI-007`) |
+| TRN-INF-008 | PARTS-08-11.md: Construction inspection (`PARTS-08-11:TRN-INF-008`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Public infrastructure project submission (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:TRN-INF-008`) |
+| TRN-MAR-006 | PARTS-08-11.md: Port access or operating permit (`PARTS-08-11:TRN-MAR-006`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Maritime vessel registration (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:TRN-MAR-006`) |
+| TRN-OPS-005 | PARTS-08-11.md: Freight operator licence (`PARTS-08-11:TRN-OPS-005`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Commercial transport operator registration (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:TRN-OPS-005`) |
+| TRN-ROAD-003 | PARTS-08-11.md: Road closure request (`PARTS-08-11:TRN-ROAD-003`); SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md: Road works permit (`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:TRN-ROAD-003`) |
 
 **The same title under different IDs in one domain prefix (9; possibly the same form, to be reviewed):**
 

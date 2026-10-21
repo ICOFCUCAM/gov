@@ -12,8 +12,16 @@ import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
 import { RefusalText } from '@/components/ui/RefusalText';
 
-interface Gate { id: string; label: string; kind: 'automatic' | 'human'; passed: boolean; applies: boolean; detail: string[]; act?: { by: string; at: string; outcome: string; note: string } }
-interface Publication { status: string; scope: { status: string; reason?: string }; automatic: Gate[]; human: Gate[]; blockers: string[]; pendingRelease?: { by: string; at: string; rollbackPlan?: string; releaseNotes?: string }; warning?: string }
+interface Gate { id: string; label: string; kind: 'automatic' | 'human'; passed: boolean; applies: boolean; detail: string[]; act?: { by: string; at: string; outcome: string; note: string }; notes?: string[] }
+interface Publication {
+  status: string; scope: { status: string; reason?: string }; automatic: Gate[]; human: Gate[]; blockers: string[]; pendingRelease?: { by: string; at: string; rollbackPlan?: string; releaseNotes?: string }; warning?: string;
+  /** Catalogue + form ID + version: what approvals are recorded under. */
+  identity?: string;
+  /** The procedure link, computed from the package register on every read (missing, draft, under_review, approved). */
+  procedure?: { state: string; required: boolean; detail: string };
+  /** Who owns it: the slot's institution, or a provisional stand-in. */
+  owner?: { slot?: string; actingSlot?: string; institution?: string; provisional?: string };
+}
 interface Answer { publication: Publication; statusLabel: string; approvalLabels: Record<string, string>; approvals: { kind: string; outcome: string; by: string; at: string; note: string }[]; library?: boolean }
 
 const KINDS = ['legal-review', 'authority', 'privacy', 'scope-review', 'release-proposal', 'release-approval'] as const;
@@ -28,6 +36,7 @@ function GateList({ gates, title, meta }: { gates: Gate[]; title: string; meta: 
             <span className="font-medium">{g.passed ? 'Passed' : 'Not yet'}: {g.label}</span>
             {g.act ? <span className="block text-xs text-ink-muted">{g.act.outcome === 'approved' ? 'Given' : 'Returned'} by {g.act.by} · {g.act.at.slice(0, 16).replace('T', ' ')}{g.act.note ? ` · ${g.act.note}` : ''}</span> : null}
             {g.detail.length ? <ul className="mt-1 list-disc ps-5 text-xs">{g.detail.map(d => <li key={d}><RefusalText text={d} /></li>)}</ul> : null}
+            {g.passed && g.notes?.length ? <ul className="mt-1 list-disc ps-5 text-xs text-ink-muted">{g.notes.map(d => <li key={d}><RefusalText text={d} /></li>)}</ul> : null}
           </li>
         ))}
       </ul>
@@ -71,6 +80,11 @@ export function PublicationPanel({ pkgKey, version }: { pkgKey: string; version:
         <p className="text-sm">A form is published only when every check below passes. The platform verifies the first list itself, on every read. The second list are approvals only an official who can sign at the institution responsible gives, each a different person from whoever drafted or changed the form, each recorded in the audit chain. No status can be set by hand.</p>
         {p.scope.status !== 'allowed' ? <p className="mt-2 rounded-sm border-s-4 border-alert bg-surface-2 px-3 py-2 text-sm"><strong>{p.scope.status === 'excluded' ? 'Excluded by the approved scope' : 'Held for a legal review'}:</strong> {p.scope.reason}</p> : null}
         {p.warning ? <p className="mt-2 text-sm text-ink-muted">{p.warning}.</p> : null}
+        <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[10rem_1fr]">
+          {p.identity ? <><dt className="font-medium">Form identity</dt><dd><bdi dir="ltr">{p.identity}</bdi> <span className="text-ink-muted">(catalogue, form ID and version; a bare form ID names no form)</span></dd></> : null}
+          {p.procedure ? <><dt className="font-medium">Procedure</dt><dd data-procedure-state={p.procedure.state}><strong>procedure: {p.procedure.state.replace('_', ' ')}</strong>{p.procedure.required ? '' : ' (no procedure required)'} · {p.procedure.detail}</dd></> : null}
+          {p.owner ? <><dt className="font-medium">Owner</dt><dd data-owner-provisional={p.owner.provisional ? 'yes' : 'no'}>{p.owner.slot ? <bdi dir="ltr">{p.owner.slot}</bdi> : null}{p.owner.provisional ? <> · <strong>{p.owner.provisional}</strong></> : p.owner.institution ? ' · named under Who is responsible' : ' · not named yet'}</dd></> : null}
+        </dl>
       </Section>
       <div className="grid gap-4 xl:grid-cols-2">
         <GateList gates={p.automatic} title="Checked by the platform" meta={`${p.automatic.filter(g => g.applies && g.passed).length} of ${p.automatic.filter(g => g.applies).length} pass`} />

@@ -22,9 +22,9 @@
  "library": {
   "title": "Submit a corrective action plan after a good-practice inspection",
   "intro": "The site's plan to put right what a good-practice inspection found: for each finding, the cause, the corrective and preventive action, who in the site is responsible for it (a role, not a name) and the date it will be done. The regulator accepts the plan or sets other dates within the periods the law allows, and tracks each action to completion.",
-  "owner": "healthRegulation",
+  "owner": "medicinesRegulation",
   "filled_by": "The inspected site's manufacturer or someone acting for it; the regulator accepts it or sets the deadlines at a step of its own.",
-  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
   "procedure": null,
   "intended": "Follow-up of a good-practice inspection (HLT-MED-011) by the medicines regulator: a corrective-action follow-up procedure is not built; the form waits in the library (plan step I4).",
   "lists": {
@@ -69,7 +69,7 @@
    },
    {
     "id": "medicines-authority-slot",
-    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "what": "The form names the medicines-regulator slot (medicinesRegulation), which ships empty: until the nation names it, the health regulator slot (healthRegulation, \"Health facility regulation\") stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence; each power over a product type comes from the approved permit authority mapping",
     "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
     "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
    },

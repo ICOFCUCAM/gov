@@ -21,7 +21,7 @@
  "library": {
   "title": "Submit an aggregate public-health return",
   "intro": "Submit counts for an approved public-health reporting programme, by area and period. Counts only: never a person, a name, an identifier or anything about an individual. Say which counts are estimated or incomplete; a missing count is never read as zero. Small numbers are protected before anything is published, by the rule the nation sets.",
-  "owner": "healthRegulation",
+  "owner": "publicHealth",
   "filled_by": "A licensed facility or another reporter the programme authorises, online, at an office or on paper.",
   "procedure": null,
   "intended": "A public-health aggregate return of the receiving authority, kept like the capacity returns (lib/health/register.ts: versioned, always marked reported, corrections as new versions): the programme returns are not built; the form waits in the library (plan step I4).",
@@ -88,8 +88,8 @@
    },
    {
     "id": "receiving-authority",
-    "what": "Owner: the health regulator slot (healthRegulation) until the deployment profile names a public-health authority",
-    "why": "Authority comes only from the deployment profile; it has no public-health slot yet (integration register 20.8).",
+    "what": "Owner: the public-health authority slot (publicHealth), which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence",
+    "why": "Authority comes only from the deployment profile; the nation names its public-health authority there, or the health regulator where its law gives it the returns (integration register 20.8, 20.14).",
     "rule": "CLAUDE.md Government operating model: authorityFor(), never a ministry by name"
    },
    {

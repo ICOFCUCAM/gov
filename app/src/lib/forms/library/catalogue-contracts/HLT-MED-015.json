@@ -23,9 +23,9 @@
  "library": {
   "title": "Report a safety concern about a medicine",
   "intro": "Tell the medicines regulator about a problem with a medicine: a quality defect, a suspected falsified product, a labelling error or a storage or supply problem. This report is about the product. Do not give anyone's name, identity or medical details. The regulator assesses every report; a report is never a finding.",
-  "owner": "healthRegulation",
+  "owner": "medicinesRegulation",
   "filled_by": "Anyone: an authorisation holder, a health facility or pharmacy, a health professional, a supplier or a member of the public; online, at an office or on paper.",
-  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
   "procedure": null,
   "intended": "A safety-report intake of the medicines regulator that registers the signal and assigns it for assessment, possibly leading to a review (HLT-MED-009) or a recall (HLT-MED-017): not built; the form waits in the library (plan step I4).",
   "lists": {
@@ -119,7 +119,7 @@
    },
    {
     "id": "medicines-authority-slot",
-    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "what": "The form names the medicines-regulator slot (medicinesRegulation), which ships empty: until the nation names it, the health regulator slot (healthRegulation, \"Health facility regulation\") stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence; each power over a product type comes from the approved permit authority mapping",
     "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
     "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
    },

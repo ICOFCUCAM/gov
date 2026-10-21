@@ -17,6 +17,7 @@ import { isAuthorityKey, type AuthorityKey } from '@/lib/nation/deployment';
 import { withDefaults } from '@/lib/data/defaults';
 import { FIELD_KEY, fieldClass, fieldProblem, formProblem, PERSONAL_CLASSES } from '@/lib/forms/contract';
 import { formScope } from '@/lib/forms/scope';
+import { catalogueIdRefusal } from '@/lib/forms/identity';
 import type { CasePackage, ActionSpec, FieldSpec, PackageTest } from './types';
 
 interface PackageDb { packages: CasePackage[] }
@@ -129,7 +130,9 @@ const clone = <T,>(x: T): T => structuredClone(x);
  */
 function scopeRefusal(p: Pick<CasePackage, 'key' | 'fields' | 'form'>): string | null {
   const s = formScope(p.key, p.form, p.fields);
-  return s.status === 'excluded' ? `Outside the approved scope: ${s.reason}` : null;
+  if (s.status === 'excluded') return `Outside the approved scope: ${s.reason}`;
+  // A catalogue ID another catalogue reuses names no form on its own: the form says which catalogue it answers (lib/forms/identity.ts).
+  return catalogueIdRefusal(p.form);
 }
 
 /** Write a draft (a new procedure, or the next version of one). */

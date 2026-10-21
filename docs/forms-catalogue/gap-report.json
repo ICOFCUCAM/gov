@@ -32,28 +32,28 @@
   "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-012.json": "a98f5ab0265da453a42cc014982ae629d2b206cdf0c11bb3b3b964a1fd56cc80",
   "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-013.json": "05b0efc8245dcb2702248a0082b3addee974cd80b25a28aa86c9a8f5470ef32f",
   "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-014.json": "ec647aa1fe5858a4113cd05cbe9279abb83c154814c81c9e9e4aedf244363712",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-001.json": "aa0998cb526e21f01f18f1926a777d216490ff2f3cde4aec46b26a258faaea9d",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-002.json": "f939e662944d92e978e1be6da50630b0e25e29d8c254de0980d374e2f4b64d84",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-003.json": "f3dfc4545cb3aa290c837d858c8dce8498ae2f334fc3dd3b668a8072c098b1ba",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-004.json": "9e25c629ee926b6a0fc211278eaa5d1517e49d93cf0219bb4a2a3d7d56ddba23",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-005.json": "48132a1a62e008fd5cdca4451b8afb638a36a33c2bfc2e01bdd450a3b270e8d3",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-006.json": "8a575795e54525c552dea462c1037b556efd2f0513a346533ca5b826cd94c4fb",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-007.json": "cf320d602142a98d4f61bb73b5010ea6d3024c5a11f7ef296a4e585d18c50a5f",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-008.json": "e123ab900fc0c19d46eba01c1dacb9d73b7746d22c9ef37b575a7226d61ebdab",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-009.json": "68600bda55db55a73314a62dfc60e713d839aefdd45bc647d05868c45e7bfe72",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-010.json": "b3e8ea7ed3107a81e6b20bc742682a3a09e08a0ea1480214134211620c1164ac",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-011.json": "ed50f69d8b7b9687b7ac8ab61f05748fddf7ba34cd28720370cdfec0d03e8d4d",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-012.json": "23f0e9684526b47904245d2e57c35cad52c3ac4ece472398cdcb7e37227d32e0",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-013.json": "e7c8fe044859c0d9a49ea1197f003a4d94876eda4c6ed6f9605989dd7bb45e80",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-014.json": "057543c8c0685670c057b0c49a02aaf7357e7a22670d28038b17212185db6d6d",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-015.json": "b0384a726055083273e9413390ac62492d406325d5a3c938f34695d0ee0b45c4",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-017.json": "597e62be9d9f0f43043834bc806a706baf17cfbbb78168b0969a76caf745f7e1",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-018.json": "dcb85f16696b7607775bbd46f2f0d2183b71a4a2010d59b5574a2dd377d5fed2",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-019.json": "fdf02a0c526668c2c257c28dd92de0dc606204e899367b6a264d3069df1f0271",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-020.json": "b915109804b9d46dda2eb2782ad1b73232fdcbf13c1c4cb4efd516f81cf410bb",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-023.json": "86dc58f14192f9af63f8aa8611f3c4228fe6ba68cf73d71f39181531e953f283",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-024.json": "fdb7a61cbbc691193af0b53e5b17ff4b98a605ade43f94e7220c0bba9095d65d",
-  "app/src/lib/forms/library/catalogue-contracts/HLT-PH-015.json": "ec55fa8cb494c4f07f09c9040e6a8eaf51e3ae4b3cc620e31d65c3d3e180a2e4"
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-001.json": "41dbc939b2a855ff019c64ee747580f63a53d833721b6ae310417881990b3bef",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-002.json": "0e86e3b8fcd59454f6e6c0d88aefaf24c664ba978eb5077a051be27f558fe28a",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-003.json": "b3484005f105b41a678612afad4b5c7ec7c2d5db757cd59aba15b0bf65979b3a",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-004.json": "944e5ade50a2dbf1ac1285180a5cf965182893398edd7d27b65e3d1890cd5e7f",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-005.json": "fc005d014c2d8ef46dbab4ac537401ffec7fde171d22eb5ff06a3db48e1e34d7",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-006.json": "cb7672ec126cdace5d855dcbbf97653d875542be4c2dc8d46ba5d017af00749d",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-007.json": "67cd637950b305ddb1e0131feb46fa0588d9aad3b6d9b56ae59c4aeec165203a",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-008.json": "122dc934d5111834e853c772232299c93cb05148c93abad34b9e5a3b8cfe1f46",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-009.json": "c34bb3f272dd7e84ace18d3930912d1445b1befaaa8c57ecfdea4ff3e9f20bcd",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-010.json": "9f25f670565422903a2b87b7cc99fee118c29f1806608d448121a56439c20834",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-011.json": "1fc16a274006bc1241a4060e4e62148aa21e96011e26439e65c8c2b0106ed24a",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-012.json": "28d852b74b20f6d9dc0dee78ad8456e9f22a5e98d2c03a67f413cbef94186e4b",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-013.json": "46054c08ba64dd165d16bedacd3e6df93eeb2d2c95a72d9c76b2d771edbdb767",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-014.json": "79343c39c77216d4a619ed067097e0f9dc30928f51e47efba90a62b90f2cf569",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-015.json": "c10d1d21c45e499efee50ec62dbff8325c81e7cf21b2c17e801001ff60908755",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-017.json": "a1913c634a66235c739488ddd140e17eaef793d61d761fe22aa5b768ee21e63d",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-018.json": "d5f79e527a00c8ba460367adf1512a6cf1d1c0f8e93aef4798dbffead35fba62",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-019.json": "fedc298b1a44ebd565185b415e4f07d5198d52c4582b31b042c5b7df1bb1b24f",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-020.json": "1f27aba5d358d189258b25c1799dbdbb7e03b67967e7a5e2332ccd466cece8b2",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-023.json": "6a2847d6619aee990ec7dda1497b366170ff605f98c58cc42675afa78d97b370",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-MED-024.json": "56130d22410d7fd8f1b2976501dfb20c2e8bc978a0935d4765b858a3c1d90207",
+  "app/src/lib/forms/library/catalogue-contracts/HLT-PH-015.json": "93b40b9a5794684cf2c5186781ad446b48ba35940cda57f4aefeb579bc48188e"
  },
  "reported": {
   "listed forms, parts 14–22": 216,
@@ -134,6 +134,7 @@
     "contracts": [
      {
       "id": "HLT-FAC-001",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-FAC-001@1",
       "row": "HLT-FAC-001",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-001.json",
       "fields": 34,
@@ -142,6 +143,7 @@
      },
      {
       "id": "HLT-FAC-002",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-FAC-002@1",
       "row": "HLT-FAC-002",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-002.json",
       "fields": 33,
@@ -150,6 +152,7 @@
      },
      {
       "id": "HLT-FAC-003",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-FAC-003@1",
       "row": "HLT-FAC-003",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-003.json",
       "fields": 20,
@@ -158,6 +161,7 @@
      },
      {
       "id": "HLT-FAC-004",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-FAC-004@1",
       "row": "HLT-FAC-004",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-004.json",
       "fields": 22,
@@ -166,6 +170,7 @@
      },
      {
       "id": "HLT-FAC-005",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-FAC-005@1",
       "row": "HLT-FAC-005",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-005.json",
       "fields": 31,
@@ -174,6 +179,7 @@
      },
      {
       "id": "HLT-FAC-006",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-FAC-006@1",
       "row": "HLT-FAC-006",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-006.json",
       "fields": 31,
@@ -182,6 +188,7 @@
      },
      {
       "id": "HLT-FAC-007",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-FAC-007@1",
       "row": "HLT-FAC-007",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-007.json",
       "fields": 21,
@@ -190,6 +197,7 @@
      },
      {
       "id": "HLT-FAC-008",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-FAC-008@1",
       "row": "HLT-FAC-008",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-008.json",
       "fields": 9,
@@ -198,6 +206,7 @@
      },
      {
       "id": "HLT-FAC-009",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-FAC-009@1",
       "row": "HLT-FAC-009",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-009.json",
       "fields": 18,
@@ -206,6 +215,7 @@
      },
      {
       "id": "HLT-FAC-010",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-FAC-010@1",
       "row": "HLT-FAC-010",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-010.json",
       "fields": 6,
@@ -214,6 +224,7 @@
      },
      {
       "id": "HLT-LIC-001",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-001@1",
       "row": "HLT-LIC-001",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-001.json",
       "fields": 32,
@@ -222,6 +233,7 @@
      },
      {
       "id": "HLT-LIC-002",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-002@1",
       "row": "HLT-LIC-002",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-002.json",
       "fields": 12,
@@ -230,6 +242,7 @@
      },
      {
       "id": "HLT-LIC-003",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-003@1",
       "row": "HLT-LIC-003",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-003.json",
       "fields": 13,
@@ -238,6 +251,7 @@
      },
      {
       "id": "HLT-LIC-004",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-004@1",
       "row": "HLT-LIC-004",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-004.json",
       "fields": 24,
@@ -246,6 +260,7 @@
      },
      {
       "id": "HLT-LIC-005",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-005@1",
       "row": "HLT-LIC-005",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-005.json",
       "fields": 29,
@@ -254,6 +269,7 @@
      },
      {
       "id": "HLT-LIC-006",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-006@1",
       "row": "HLT-LIC-006",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-006.json",
       "fields": 17,
@@ -262,6 +278,7 @@
      },
      {
       "id": "HLT-LIC-007",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-007@1",
       "row": "HLT-LIC-007",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-007.json",
       "fields": 22,
@@ -270,6 +287,7 @@
      },
      {
       "id": "HLT-LIC-008",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-008@1",
       "row": "HLT-LIC-008",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-008.json",
       "fields": 21,
@@ -278,6 +296,7 @@
      },
      {
       "id": "HLT-LIC-009",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-009@1",
       "row": "HLT-LIC-009",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-009.json",
       "fields": 11,
@@ -286,6 +305,7 @@
      },
      {
       "id": "HLT-LIC-010",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-010@1",
       "row": "HLT-LIC-010",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-010.json",
       "fields": 9,
@@ -294,6 +314,7 @@
      },
      {
       "id": "HLT-LIC-011",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-011@1",
       "row": "HLT-LIC-011",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-011.json",
       "fields": 15,
@@ -302,6 +323,7 @@
      },
      {
       "id": "HLT-LIC-012",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-012@1",
       "row": "HLT-LIC-012",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-012.json",
       "fields": 8,
@@ -310,6 +332,7 @@
      },
      {
       "id": "HLT-LIC-013",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-013@1",
       "row": "HLT-LIC-013",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-013.json",
       "fields": 25,
@@ -318,6 +341,7 @@
      },
      {
       "id": "HLT-LIC-014",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-LIC-014@1",
       "row": "HLT-LIC-014",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-LIC-014.json",
       "fields": 7,
@@ -326,6 +350,7 @@
      },
      {
       "id": "HLT-PH-015",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-PH-015@1",
       "row": "HLT-PH-015",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-PH-015.json",
       "fields": 22,
@@ -342,6 +367,7 @@
     "contracts": [
      {
       "id": "HLT-MED-001",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-001@1",
       "row": "HLT-MED-001",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-001.json",
       "fields": 48,
@@ -350,6 +376,7 @@
      },
      {
       "id": "HLT-MED-002",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-002@1",
       "row": "HLT-MED-002",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-002.json",
       "fields": 26,
@@ -358,6 +385,7 @@
      },
      {
       "id": "HLT-MED-003",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-003@1",
       "row": "HLT-MED-003",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-003.json",
       "fields": 17,
@@ -366,6 +394,7 @@
      },
      {
       "id": "HLT-MED-004",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-004@1",
       "row": "HLT-MED-004",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-004.json",
       "fields": 12,
@@ -374,6 +403,7 @@
      },
      {
       "id": "HLT-MED-005",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-005@1",
       "row": "HLT-MED-005",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-005.json",
       "fields": 23,
@@ -382,6 +412,7 @@
      },
      {
       "id": "HLT-MED-006",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-006@1",
       "row": "HLT-MED-006",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-006.json",
       "fields": 17,
@@ -390,6 +421,7 @@
      },
      {
       "id": "HLT-MED-007",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-007@1",
       "row": "HLT-MED-007",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-007.json",
       "fields": 26,
@@ -398,6 +430,7 @@
      },
      {
       "id": "HLT-MED-008",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-008@1",
       "row": "HLT-MED-008",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-008.json",
       "fields": 32,
@@ -406,6 +439,7 @@
      },
      {
       "id": "HLT-MED-009",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-009@1",
       "row": "HLT-MED-009",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-009.json",
       "fields": 13,
@@ -414,6 +448,7 @@
      },
      {
       "id": "HLT-MED-010",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-010@1",
       "row": "HLT-MED-010",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-010.json",
       "fields": 35,
@@ -422,6 +457,7 @@
      },
      {
       "id": "HLT-MED-011",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-011@1",
       "row": "HLT-MED-011",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-011.json",
       "fields": 20,
@@ -430,6 +466,7 @@
      },
      {
       "id": "HLT-MED-012",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-012@1",
       "row": "HLT-MED-012",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-012.json",
       "fields": 24,
@@ -438,6 +475,7 @@
      },
      {
       "id": "HLT-MED-013",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-013@1",
       "row": "HLT-MED-013",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-013.json",
       "fields": 36,
@@ -446,6 +484,7 @@
      },
      {
       "id": "HLT-MED-014",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-014@1",
       "row": "HLT-MED-014",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-014.json",
       "fields": 33,
@@ -454,6 +493,7 @@
      },
      {
       "id": "HLT-MED-015",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-015@1",
       "row": "HLT-MED-015",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-015.json",
       "fields": 25,
@@ -462,6 +502,7 @@
      },
      {
       "id": "HLT-MED-017",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-017@1",
       "row": "HLT-MED-017",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-017.json",
       "fields": 41,
@@ -470,6 +511,7 @@
      },
      {
       "id": "HLT-MED-018",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-018@1",
       "row": "HLT-MED-018",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-018.json",
       "fields": 31,
@@ -478,6 +520,7 @@
      },
      {
       "id": "HLT-MED-019",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-019@1",
       "row": "HLT-MED-019",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-019.json",
       "fields": 40,
@@ -486,6 +529,7 @@
      },
      {
       "id": "HLT-MED-020",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-020@1",
       "row": "HLT-MED-020",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-020.json",
       "fields": 26,
@@ -494,6 +538,7 @@
      },
      {
       "id": "HLT-MED-023",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-023@1",
       "row": "HLT-MED-023",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-023.json",
       "fields": 29,
@@ -502,11 +547,13 @@
      },
      {
       "id": "HLT-MED-024",
+      "identity": "FIELD-SERIES-PARTS-05-07:HLT-MED-024@1",
       "row": "HLT-MED-024",
       "file": "app/src/lib/forms/library/catalogue-contracts/HLT-MED-024.json",
       "fields": 6,
       "form_status": "contract_draft",
-      "scope": "allowed"
+      "scope": "allowed",
+      "public_view": "Built only through publicProductView() (lib/health/products/public.ts): approved fields the approved classification lists; never dossier, personal data or unpublished enforcement"
      }
     ],
     "form_status": {

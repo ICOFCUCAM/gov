@@ -24,9 +24,9 @@
  "library": {
   "title": "Check a medicine's or device's authorisation",
   "intro": "Check whether a medicine or medical device is authorised. Give its authorisation or registration number and its name as on the pack. The answer shows only what the product's public information classification allows: the name, the number, the holder, the status and its dates. Dossier content is never shown.",
-  "owner": "healthRegulation",
+  "owner": "medicinesRegulation",
   "filled_by": "Anyone (a public check), or an institution through a product-status exchange service for an approved purpose.",
-  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
   "procedure": null,
   "intended": "A public product check and a product-status exchange service of the medicines regulator, answered from the product register; no case is opened. Not built: the form waits in the library (plan step I4).",
   "lists": {
@@ -44,7 +44,8 @@
    }
   },
   "policies": {
-   "answer.public_fields": "only what the product's public information classification allows (HLT-MED-006 decision.public_disclosure); never dossier, assessment, inspection or report content"
+   "answer.public_fields": "only what the product's public information classification allows (HLT-MED-006 decision.public_disclosure); never dossier, assessment, inspection or report content",
+   "answer.public_view": "Built only through publicProductView() (lib/health/products/public.ts): approved fields the approved classification lists; never dossier, personal data or unpublished enforcement"
   },
   "nation_values": [],
   "deviations": [
@@ -68,7 +69,7 @@
    },
    {
     "id": "medicines-authority-slot",
-    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "what": "The form names the medicines-regulator slot (medicinesRegulation), which ships empty: until the nation names it, the health regulator slot (healthRegulation, \"Health facility regulation\") stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence; each power over a product type comes from the approved permit authority mapping",
     "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
     "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
    },

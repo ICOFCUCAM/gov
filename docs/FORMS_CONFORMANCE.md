@@ -264,9 +264,9 @@ no procedure and no decision power was invented for it.
 **Authority.** Facility forms belong to `healthRegulation`, professional forms
 to `professionalRegulation` (each profession's register kept by the regulator
 the professions register names, under the approved permit mapping), never a
-ministry by name. HLT-PH-015 uses the `healthRegulation` slot until the
-deployment profile names a public-health authority (integration register
-20.8).
+ministry by name. HLT-PH-015 names the `publicHealth` slot; until the nation names it, the
+health regulator stands in as a provisional owner (§11; integration register
+20.8, 20.14).
 
 **Values the nation's law decides.** Fees come only from the field group
 `core.payment` (`derived_from_approved_rule`, set by the platform; no fee
@@ -449,11 +449,12 @@ inspection types, finding results, report stages, variation kinds, review
 triggers, concern and incident kinds, reporter kinds, recall levels,
 recipient kinds, disposal methods, device kinds) ship as proposed values.
 
-**Authority.** The deployment profile has no medicines-regulator slot, so
-every batch-2 form is owned by the `healthRegulation` slot (labelled "Health
-facility regulation") and carries the deviation `medicines-authority-slot`;
-each power comes from the permit authority mapping for the product type, of
-which none ships. Integration register 20.9.
+**Authority.** Every batch-2 form names the `medicinesRegulation` slot
+(HLT-MED-014 `controlledSubstances`), shipped empty; until the nation names
+it, the health regulator stands in as a provisional owner (§11) and the form
+carries the deviation `medicines-authority-slot`; each power comes from the
+permit authority mapping for the product type, of which none ships.
+Integration register 20.9, 20.14.
 
 **Deviations every batch-2 form shares.** The four of §8 (`no-patient-data`,
 here citing product, organisation and decision records as the allowed scope;
@@ -461,7 +462,7 @@ here citing product, organisation and decision records as the allowed scope;
 
 | Id | What | Why (binding rule) |
 |---|---|---|
-| medicines-authority-slot | The health regulator slot stands for the medicines regulator | Who is responsible comes only from the deployment profile and the permit authority registry (CLAUDE.md Government operating model) |
+| medicines-authority-slot | The medicines-regulator slot ships empty; until the nation names it the health regulator stands in as a provisional owner (§11) | Who is responsible comes only from the deployment profile and the permit authority registry (CLAUDE.md Government operating model) |
 | no-product-register | The regulated product record (Part 6 §5.2) is not on the platform: product references are recorded as given, their check as not performed, and a status is never inferred from an import, inventory or procurement record | Status comes only from the competent regulator's record; integration register 20.5, 20.9 |
 
 **Procedures.** No reference procedure of the medicines regulator exists, so
@@ -481,3 +482,90 @@ standard; the authority slot; dossier content restricted and the public check
 limited to public fields. The generated gap report shows each batch and the
 totals before the library, after each batch and now (contract_missing
 1723 → 1698 → 1677, contract_draft 129 → 154 → 175).
+
+## 11. Health integration: identity, procedure links, provisional owners, the public product view (21 October 2026)
+
+The owner's direction of 21 October 2026
+(`docs/forms-catalogue/DIRECTION-2026-10-21-HEALTH-INTEGRATION.md`) closes the
+gaps batch 2 left open. Health is not called the first complete institution
+before its I4 requirements and dependency register is finished
+(`docs/HEALTH_I4_DEPENDENCIES.md`).
+
+**Composite identity.** A form is identified by catalogue, form ID and
+version: `formIdentity()` in `lib/forms/identity.ts` writes
+`CATALOGUE:FORM-ID@VERSION` (the catalogue is the source document's file name
+without `.md`; a catalogue entry with no contract in the library has no
+version). A catalogue contract's library key is its identity. The form
+library and its pages, the API (`?library=` lists each form's `identity` and
+the reused IDs; `?form=` and `?publication=` take an identity), publication
+approvals (each act stores the identity and the contract's SHA-256 and counts
+only for both), drafting a procedure that names a catalogue ID, and the
+register and gap report (`form_identity` on the row) all use it. A bare ID
+that two catalogues use is refused (`409` in the API) with both candidates and
+never resolved to one; a bare ID never makes a form eligible for scope: read
+without its catalogue, it is held to the strictest entry. Approvals recorded
+before identities were kept take the identity of the version they were given
+on.
+
+**The fourteen reused IDs.** `lib/forms/catalogue-identity.test.ts` proves,
+for each ID the gap report lists (EDU-ACC-008, EDU-RES-005, ENV-PER-004,
+HLT-FAC-006, HLT-MED-004, JUS-COR-008, JUS-PRO-006, LND-REG-003, SEC-INT-006,
+TRN-AVI-007, TRN-INF-008, TRN-MAR-006, TRN-OPS-005, TRN-ROAD-003), that both
+entries coexist in the catalogue and the register, each is evaluated for
+scope on its own entry, a bare ID is refused in the library, on the page and
+in the API, each identity resolves to its own entry only, and a procedure
+draft must name its catalogue (an excluded entry is never drafted). For
+HLT-MED-004 it proves more: the supplement's dispensing record
+(`SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HLT-MED-004`) is excluded, has no
+contract, cannot be drafted and has nothing to publish; the field series'
+information request (`FIELD-SERIES-PARTS-05-07:HLT-MED-004@1`) is allowed, a
+contract draft with its procedure missing; it carries no patient-specific or
+dispensing field (the scope's words and an explicit list, in keys and
+labels); and neither can stand in for the other through an edit of the
+draft or an approval record.
+
+**Procedure-link states.** Each library contract's link to the procedure that
+carries it is `missing`, `draft`, `under_review` or `approved`, computed from
+the package register on every read (`lib/forms/procedure-link.ts`), never a
+status field and never set through the API. A version carries a contract when
+its form names the contract's identity. A required procedure that is missing
+fails the automatic gate `procedure-link`; a form answered by an exchange
+service and the public check (deviation `no-case`) needs that service instead
+(HLT-FAC-010 and HLT-LIC-014 have theirs; HLT-MED-024 has none yet). The state
+shows on the publication panel and the library details
+(`procedure-link.test.ts`).
+
+**Provisional owners.** The deployment profile has three more optional slots,
+shipped empty: `medicinesRegulation`, `controlledSubstances` and
+`publicHealth`. Batch 2 names `medicinesRegulation` (HLT-MED-014
+`controlledSubstances`); HLT-PH-015 names `publicHealth`; batch 1's facility
+and professional forms keep `healthRegulation` and `professionalRegulation`.
+While a named slot is empty, `provisionalOwner()` stands the health regulator
+in (the medicines regulator first for controlled substances): the panel, the
+library details and the API say "provisional: the nation has not named the
+medicines authority"; the competent-authority gate passes only in demo and
+training and fails in production; nobody can record an authority
+confirmation on a provisional owner. It is never proof of legal competence
+(`lib/nation/health-slots.test.ts`). This replaces the stand-in described in
+§8 and §9.
+
+**The public product view.** There is no product register yet. The rule the
+public product check, lists, exports, the twin and the product-status
+exchange service must meet is built: `publicProductView()` in
+`lib/health/products/public.ts` returns only attributes recorded by an
+approved decision, listed in the nation's approved public information
+classification and of the public class; never confidential regulatory
+submissions, personal data or unpublished enforcement records, whatever a
+classification lists; enforcement only as approved and published notices.
+HLT-MED-024 names it (`answer.public_view`); `public.test.ts` scans every
+output under every classification.
+
+| Item | Test |
+|---|---|
+| Composite identity, ambiguous IDs refused | `catalogue-identity.test.ts` "writes and reads one format…", "a bare ID is refused with both candidates…" |
+| The 14 reused IDs, table-driven | `catalogue-identity.test.ts` (`describe.each` over the gap report's list) |
+| HLT-MED-004 exclusion boundary | `catalogue-identity.test.ts` "keeps the excluded entry blocked…", "carries no patient-specific or dispensing field…", "cannot be substituted through an approval record…" |
+| Procedure-link states and gate | `procedure-link.test.ts` |
+| Provisional owners | `lib/nation/health-slots.test.ts` |
+| Public product view | `lib/health/products/public.test.ts` |
+| I4 dependency register | `lib/requirements/health-i4.test.ts` |

@@ -22,9 +22,9 @@
  "library": {
   "title": "Open a review to suspend or withdraw a product authorisation",
   "intro": "Opens the review of whether to suspend or withdraw a product's authorisation. The regulator records what started it, the grounds, the evidence and the provision relied on; preliminary concerns are kept apart from findings. The holder is given notice and may respond before an official with the power to decide does so, with reasons.",
-  "owner": "healthRegulation",
+  "owner": "medicinesRegulation",
   "filled_by": "An official of the medicines regulator; the decision is made later in the case by a different official who can sign.",
-  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
   "procedure": null,
   "intended": "A suspension and withdrawal procedure of the medicines regulator on the product register, under an approved permit mapping: not built; the form waits in the library (plan step I4).",
   "lists": {
@@ -91,7 +91,7 @@
    },
    {
     "id": "medicines-authority-slot",
-    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "what": "The form names the medicines-regulator slot (medicinesRegulation), which ships empty: until the nation names it, the health regulator slot (healthRegulation, \"Health facility regulation\") stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence; each power over a product type comes from the approved permit authority mapping",
     "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
     "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
    },

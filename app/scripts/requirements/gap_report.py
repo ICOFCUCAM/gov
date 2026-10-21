@@ -112,7 +112,8 @@ def build(repo, rows, checks):
     for c in lib:
         b = batches.setdefault(c['batch'], dict(batch=c['batch'], contracts=[], form_status=collections.Counter()))
         r = row_of.get(c['matches'][0]) if len(c['matches']) == 1 else None
-        b['contracts'].append(dict(id=c['id'], row=c['matches'][0] if r else None, file=c['path'], fields=len(c['fields']), form_status=r['form_status'] if r else None, scope=(r or {}).get('scope', 'allowed')))
+        b['contracts'].append(dict(id=c['id'], identity=c.get('identity'), row=c['matches'][0] if r else None, file=c['path'], fields=len(c['fields']), form_status=r['form_status'] if r else None, scope=(r or {}).get('scope', 'allowed'),
+                                   **({'public_view': c['public_view']} if c.get('public_view') else {})))
         if r:
             b['form_status'][r['form_status']] += 1
     # the register as it stood before CivicOS's contracts: the same forms, without the library (a library contract is the only thing that moved them),
@@ -221,9 +222,12 @@ def write(repo, rows, checks):
     for b in lc['batches']:
         md.append(f'\n**Batch {b["batch"]}** ({BATCH_LABEL.get(b["batch"], "controlled batch")}, owner approved 21 October 2026): {len(b["contracts"])} contracts added; form status '
                   + ', '.join(f'{k} {v}' for k, v in sorted(b['form_status'].items())) + '.\n')
-        md.append('| Form | Register row | Fields | Form status | Scope |\n|---|---|---|---|---|')
+        md.append('| Form | Identity | Register row | Fields | Form status | Scope |\n|---|---|---|---|---|---|')
         for x in b['contracts']:
-            md.append(f'| {x["id"]} | {x["row"] or "—"} | {x["fields"]} | {x["form_status"] or "—"} | {x["scope"]} |')
+            md.append(f'| {x["id"]} | `{x.get("identity") or "—"}` | {x["row"] or "—"} | {x["fields"]} | {x["form_status"] or "—"} | {x["scope"]} |')
+        for x in b['contracts']:
+            if x.get('public_view'):
+                md.append(f'\n{x["id"]}: its public answer is bound to a rule. {x["public_view"]}')
     md.append('\n**Totals beside the earlier ones** (the register without the library\'s contracts, after each batch, and now):\n')
     bs = list(lc['form_status_after_batch'])
     md.append('| Status | Before (without the library) | ' + ' | '.join(f'After batch {b}' for b in bs) + ' | Now |\n|---|---|' + '---|' * len(bs) + '---|')
@@ -241,9 +245,12 @@ def write(repo, rows, checks):
     for x in rep['incomplete_contracts']:
         md.append(f'| {x["id"]} | {x["source"].split("/")[-1]} {x["line"]} | {x["fields"]} | {", ".join(x["fields_missing_type_or_required"]) or "—"} | {x["legal_basis"]} |')
     md.append(f'\n## Duplicate IDs\n\n**The same ID for different forms ({len(rep["duplicate_ids"])}):**\n')
+    md.append('A form is identified by catalogue, form ID and version (`CATALOGUE:FORM-ID@VERSION`, `app/src/lib/forms/identity.ts`): a bare ID below '
+              'names no form, a lookup by it is refused with both candidates, and each entry is evaluated for scope on its own '
+              '(`app/src/lib/forms/catalogue-identity.test.ts`).\n')
     md.append('| ID | Occurrences |\n|---|---|')
     for k, v in sorted(rep['duplicate_ids'].items()):
-        md.append(f'| {k} | ' + '; '.join(f'{f}: {t}' for f, t in v) + ' |')
+        md.append(f'| {k} | ' + '; '.join(f'{f}: {t} (`{f.rsplit(".md", 1)[0]}:{k}`)' for f, t in v) + ' |')
     md.append(f'\n**The same title under different IDs in one domain prefix ({len(rep["same_title_different_ids"])}; possibly the same form, to be reviewed):**\n')
     md.append('| Title [prefix] | IDs |\n|---|---|')
     for k, v in sorted(rep['same_title_different_ids'].items()):

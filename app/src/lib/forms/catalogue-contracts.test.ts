@@ -282,8 +282,10 @@ describe('catalogue contracts, batches 1 (health regulation) and 2 (medicines an
       });
 
       it('reads as a contract draft in the publication gates, never approved', () => {
-        const lib = findLibraryForm(f.specId)!;
+        // Found by its identity (catalogue + form ID + version), which is its library key.
+        const lib = findLibraryForm(f.identity)!;
         expect(lib.def.key).toBe(f.key);
+        expect(f.key).toBe(f.identity);
         const pub = libraryPublication(f, lib.waitsFor);
         expect(['contract_draft', 'blocked']).toContain(pub.status);
         expect(pub.status).toBe('contract_draft');
@@ -307,7 +309,7 @@ describe('catalogue contracts, batches 1 (health regulation) and 2 (medicines an
           if (f.exchange) expect(SERVICES).toContain(f.exchange);
         }
         // Authority from the deployment profile, never a ministry by name.
-        expect(['healthRegulation', 'professionalRegulation']).toContain(f.owner);
+        expect(['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
         expect(JSON.stringify(f.json)).not.toMatch(/Ministry of/);
       });
     });
@@ -431,12 +433,13 @@ describe('catalogue contracts, batches 1 (health regulation) and 2 (medicines an
     expect(med('HLT-MED-006').fields.find(x => x.key === 'decision.expiry')!.rules!.some(r => r.rule === 'registered' && r.name === 'authorisation_validity_from_rule')).toBe(true);
   });
 
-  it('takes authority from the deployment profile: the health regulator slot stands for the medicines regulator until one exists', () => {
-    expect(AUTHORITIES.some(a => /medicine/i.test(`${a.key} ${a.label}`))).toBe(false);
+  it('takes authority from the deployment profile: the medicines slot, stood in for provisionally by the health regulator until the nation names it', () => {
+    // The slots ship empty, like every slot (owner's direction 2026-10-21, health integration §3).
+    for (const k of ['medicinesRegulation', 'controlledSubstances', 'publicHealth']) expect(AUTHORITIES.find(a => a.key === k), k).toMatchObject({ optional: true });
     for (const id of IDS_2) {
       const f = med(id);
-      expect(f.owner, id).toBe('healthRegulation');
-      expect(f.authorityNote ?? '', id).toMatch(/no medicines-regulator slot/);
+      expect(f.owner, id).toBe(id === 'HLT-MED-014' ? 'controlledSubstances' : 'medicinesRegulation');
+      expect(f.authorityNote ?? '', id).toMatch(/ships empty.*provisional owner.*never proof of legal competence/);
       expect(f.deviations.map(d => d.id), id).toContain('medicines-authority-slot');
       expect(f.procedure, id).toBeNull();
     }

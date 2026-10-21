@@ -42,6 +42,7 @@ import { importCanonicalForm, type CanonicalForm, type CanonicalDefinition, type
 import { fieldGroup } from './catalogue';
 import { IDENTITY_EVIDENCE, standardNotices } from '../blocks';
 import type { FormSpec } from '../contract';
+import { ambiguityRefusal, catalogueEntries, formIdentity, parseFormIdentity, sameForm } from '../identity';
 import common from './catalogue-contracts/shared/common-items.json';
 import fac001 from './catalogue-contracts/HLT-FAC-001.json';
 import fac002 from './catalogue-contracts/HLT-FAC-002.json';
@@ -122,8 +123,10 @@ export interface CatalogueContractJson extends CanonicalForm {
 }
 
 export interface CatalogueLibraryForm extends CanonicalDefinition {
-  /** The catalogue ID (the form's id in the register). */
+  /** The catalogue ID (the form's id in the register). Never the form's identity on its own: see `identity`. */
   specId: string;
+  /** Its identity, catalogue + form ID + version (lib/forms/identity.ts): also its library key. */
+  identity: string;
   catalogue: CatalogueContractJson['catalogue'];
   batch: number;
   owner: string;
@@ -167,12 +170,14 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
     catalogueSource: c.catalogue.source,
     ...(Object.keys(l.lists).length ? { lists: structuredClone(l.lists) } : {}),
     ...(l.policies ? { policies: { ...l.policies } } : {}),
-    notices: standardNotices({ institution: l.owner === 'professionalRegulation' ? 'The professional regulator' : batch === 2 ? 'The medicines regulator' : 'The health regulator' }),
+    notices: standardNotices({ institution: l.owner === 'professionalRegulation' ? 'The professional regulator' : l.owner === 'publicHealth' ? 'The public-health authority' : batch === 2 ? 'The medicines regulator' : 'The health regulator' }),
     channels: CHANNELS(l.filled_by),
     identityEvidence: IDENTITY_EVIDENCE,
   };
+  // The library key is the identity: a bare catalogue ID never identifies the form (owner's direction 2026-10-21, health integration §1).
+  const identity = formIdentity({ source: c.catalogue.source, formId: c.form_id, version: c.form_version });
   return {
-    ...definition, form, specId: c.form_id, catalogue: { ...c.catalogue }, batch,
+    ...definition, key: identity, identity, form, specId: c.form_id, catalogue: { ...c.catalogue }, batch,
     owner: l.owner, filledBy: l.filled_by, ...(l.authority ? { authorityNote: l.authority } : {}),
     procedure: l.procedure ? { ...l.procedure } : null, ...(l.exchange ? { exchange: l.exchange } : {}), ...(l.intended ? { awaits: l.intended } : {}),
     nationValues: l.nation_values.map(v => ({ ...v })), deviations: l.deviations.map(d => ({ ...d })),
@@ -184,5 +189,22 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 /** Every catalogue contract CivicOS has written, as library drafts. */
 export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2))];
 
-/** A catalogue contract by its catalogue ID or library key. */
-export const catalogueContract = (id: string): CatalogueLibraryForm | undefined => CATALOGUE_CONTRACTS.find(f => f.specId === id || f.key === id);
+/**
+ * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without
+ * the version, the one contract of that catalogue entry), or by a bare
+ * catalogue ID only where no other catalogue uses that ID. An ambiguous bare
+ * ID is refused with the candidates, never resolved to one of them.
+ */
+export function catalogueContract(ref: string): CatalogueLibraryForm | { error: string; candidates: string[] } | undefined {
+  const id = parseFormIdentity(ref);
+  if (id) {
+    const hits = CATALOGUE_CONTRACTS.filter(f => sameForm(parseFormIdentity(f.identity), id, { version: !!id.version }));
+    return hits.length === 1 ? hits[0] : undefined;
+  }
+  const bare = ref.replace(/^library\./, '').toUpperCase();
+  const mine = CATALOGUE_CONTRACTS.filter(f => f.specId.toUpperCase() === bare);
+  const entries = catalogueEntries(bare);
+  const candidates = [...new Set([...mine.map(f => f.identity), ...entries.filter(e => !mine.some(f => parseFormIdentity(f.identity)!.catalogue === e.catalogue)).map(e => e.identity)])];
+  if (candidates.length > 1) return { error: ambiguityRefusal(bare, candidates.map(identity => ({ ...(entries.find(e => identity.startsWith(`${e.catalogue}:`)) ?? {}), identity })))!, candidates };
+  return mine[0];
+}

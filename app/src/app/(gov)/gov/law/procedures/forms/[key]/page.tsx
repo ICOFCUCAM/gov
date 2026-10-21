@@ -3,6 +3,7 @@ import { CommandShell } from '@/components/ui/CommandShell';
 import { FormChannels } from '@/components/features/forms/FormChannels';
 import { LibraryDetails } from '@/components/features/forms/LibraryDetails';
 import { PublicationPanel } from '@/components/features/forms/PublicationPanel';
+import { AmbiguousForm, CatalogueEntryView } from '@/components/features/forms/CatalogueEntry';
 import { formPage } from '@/lib/forms/page-data';
 import { samplesAllowed } from '@/lib/ops/mode';
 
@@ -15,6 +16,14 @@ export default async function FormPage({ params, searchParams }: { params: Promi
   const q = await searchParams;
   const page = formPage(decodeURIComponent(key), Number(q.version) || undefined, q.locale);
   if (!page) notFound();
+  // A bare ID more than one catalogue uses is refused with its candidates; a catalogue entry with no contract shows its scope.
+  if ('ambiguous' in page || 'entry' in page) {
+    return (
+      <CommandShell active="law">
+        <div className="space-y-4 px-4 py-6">{'ambiguous' in page ? <AmbiguousForm ambiguous={page.ambiguous} /> : <CatalogueEntryView entry={page.entry} />}</div>
+      </CommandShell>
+    );
+  }
   const initial = q.channel === 'assisted' || q.channel === 'paper' || q.channel === 'print' ? q.channel : 'self-service';
   return (
     <CommandShell active="law">

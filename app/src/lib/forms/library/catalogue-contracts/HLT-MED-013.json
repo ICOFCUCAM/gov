@@ -23,9 +23,9 @@
  "library": {
   "title": "Apply for authorisation to import medicines or medical devices",
   "intro": "Apply for authorisation to import a consignment of medicines or medical devices. The importer must be an organisation in the register of organisations, licensed where the law requires. List each product by its authorisation number: an import never makes a product authorised. Customs learns only whether the goods may be released.",
-  "owner": "healthRegulation",
+  "owner": "medicinesRegulation",
   "filled_by": "The importer (a registered organisation) or someone acting for it.",
-  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
   "procedure": null,
   "intended": "An import authorisation procedure of the medicines regulator, with customs informed through an exchange service (customs learns only the decision; the customs declaration stays with customs): not built; the form waits in the library (plan step I4).",
   "lists": {},
@@ -64,7 +64,7 @@
    },
    {
     "id": "medicines-authority-slot",
-    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "what": "The form names the medicines-regulator slot (medicinesRegulation), which ships empty: until the nation names it, the health regulator slot (healthRegulation, \"Health facility regulation\") stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence; each power over a product type comes from the approved permit authority mapping",
     "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
     "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
    },

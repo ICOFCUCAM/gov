@@ -130,6 +130,19 @@ What has been built is locked. Work only upgrades it toward the vision in
   `lib/forms/scope.ts`; publication is `lib/forms/publication.ts` (automatic
   checks apart from approvals that are acts of different signed-in officials,
   bound to the contract's hash; no status field).
+- A catalogue form is identified by catalogue, form ID and version
+  (`formIdentity()`, `lib/forms/identity.ts`; owner, 21 October 2026): every
+  lookup, approval and publication uses it, and a bare ID two catalogues use is
+  refused with both candidates, never resolved to one. A library contract's
+  link to its procedure (`missing`, `draft`, `under_review`, `approved`) is
+  computed from the package register (`lib/forms/procedure-link.ts`), never
+  stored or set; a required procedure that is missing fails the go-live gate.
+  An empty `medicinesRegulation`, `controlledSubstances` or `publicHealth`
+  slot is stood in for only provisionally (`provisionalOwner()`): shown as
+  provisional, refused as competent in production, never confirmed. A product
+  record leaves the regulator only through `publicProductView()`
+  (`lib/health/products/public.ts`). Health is tracked in
+  `docs/HEALTH_I4_DEPENDENCIES.md` and not called complete before it is.
 - Every decision step is classified in `lib/permits/decisions.ts` (permit
   mapping, deployment-profile domain, or refused in production when
   unclassified); the case engine checks it when a decision is proposed and

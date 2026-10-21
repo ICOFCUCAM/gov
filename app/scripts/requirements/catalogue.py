@@ -73,6 +73,13 @@ LIBRARY_GIVEN = 'given (CivicOS library)'
 CONTRACT_GIVEN = ('given', LIBRARY_GIVEN)
 
 
+def form_identity(source, form_id, version=None):
+    """A form's identity, catalogue + form ID + version (owner's direction 2026-10-21, health integration §1; the same format as
+    app/src/lib/forms/identity.ts formIdentity()): CATALOGUE:FORM-ID@VERSION, the catalogue being the source file without .md."""
+    cat = (source or '').split('/')[-1].rsplit('.md', 1)[0]
+    return f'{cat}:{form_id}' + (f'@{version}' if version not in (None, '') else '')
+
+
 def library_contracts(repo):
     """The form library's catalogue contracts: path, the register row they name (source, id), batch and every field key (a field group's fields
     as the form uses them, a repeatable group's questions as key.question)."""
@@ -95,7 +102,9 @@ def library_contracts(repo):
                 keys += [f"{x['id']}.{i['id']}" for i in x.get('items') or []]
         cat = c.get('catalogue') or {}
         out.append(dict(path=f'{LIBRARY}/{f}', source=cat.get('source'), id=cat.get('id'), form_id=c.get('form_id'), fields=keys,
-                        batch=cat.get('batch', 1), title=(c.get('library') or {}).get('title', '')))
+                        batch=cat.get('batch', 1), title=(c.get('library') or {}).get('title', ''),
+                        version=c.get('form_version'), identity=form_identity(cat.get('source'), c.get('form_id'), c.get('form_version')),
+                        public_view=((c.get('library') or {}).get('policies') or {}).get('answer.public_view')))
     return out
 FORM_STATUSES = ['catalogued', 'contract_missing', 'contract_draft', 'under_review', 'blocked', 'excluded', 'approved', 'production']
 # field keys a contract may not carry outside an excluded or legal-review form (CLAUDE.md health, education, police rules)
@@ -241,11 +250,13 @@ def build(repo):
     # a form whose text gives no contract and whose contract CivicOS wrote (the form library): matched by source and ID to exactly one row
     checks['library'] = library_contracts(repo)
     for c in checks['library']:
-        match = [o for o in rows if o['category'] == 'form' and o['source'] == c['source'] and o['catalogue_id'] == c['id']]
+        # by identity: the row's catalogue and ID must be the contract's (a bare ID matches nothing on its own)
+        match = [o for o in rows if o['category'] == 'form' and form_identity(o['source'], o['catalogue_id']) == form_identity(c['source'], c['id'])]
         c['matches'] = [o['id'] for o in match]
         if len(match) == 1 and match[0]['contract'] != 'given':
             match[0]['contract'] = LIBRARY_GIVEN
             match[0]['contract_file'] = c['path']
+            match[0]['form_identity'] = c['identity']
     apply_scope(rows, checks, repo)
     # a contract and its fields follow the form they define (same file): its sector, step and, where CivicOS will not hold the form or
     # holds it only after legal review, its status; otherwise a field is Partial when the form is built (the field itself is not verified)
