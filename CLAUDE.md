@@ -200,7 +200,6 @@ What has been built is locked. Work only upgrades it toward the vision in
   records for a listed purpose only (`readRelationship()`), logged with the
   relationship and version, never a change, decision, secret case or a
   court's case. A new cross-institution power reads this register.
-  request, communication or referral.
 - Offices are records (`lib/nation/office-register.ts`, `/api/offices`):
   recorded directly only during setup, afterwards through `policy-change.ts`
   (cite the law, a different official confirms; an independent institution's

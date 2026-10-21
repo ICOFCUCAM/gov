@@ -294,7 +294,6 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { const p = constitutionOverview().process.changes.pending; if (p) wait({ what: 'Steps for changing the constitutional profile: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
   safe(() => { const p = classificationChanges().pending; if (p) wait({ what: 'Classification of the state: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/offices' }); });
   safe(() => { for (const h of waitingHoldings()) wait({ what: `${h.holderName} to hold an office — waiting for a second official`, proposedBy: h.proposedBy, at: h.proposedAt, href: '/gov/configuration/offices' }); });
-  safe(() => { for (const c of waitingAccountChanges()) wait({ what: `${c.summary} (waiting for the institution to confirm)`, proposedBy: c.by, at: c.at, href: '/admin/officials' }); });
 
   waiting.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''));
   return { mode: installationMode(env), tracks, done: tracks.filter(t => t.state === 'done').length, total: tracks.length, waiting };
