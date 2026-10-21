@@ -18,6 +18,10 @@ the same series.
 
 All 13 parts received.
 
+**Direction.** `DIRECTION-2026-10-21-REGISTER-FIRST.md` (owner, binding): register
+statuses, binding scope exclusions, publication gates, and a verified gap report
+before any further contracts are generated.
+
 **Gaps.** The 13 parts left out several areas named in the owner's request; the
 supplement (parts 14–22) covers them and gives baseline JSON contracts for the
 core forms of parts 5–13. Still without their own contract, by the supplement's
