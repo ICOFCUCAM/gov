@@ -30,7 +30,7 @@ import type {
 import { hash, citizen } from './shared';
 import { samplesAllowed } from '@/lib/ops/mode';
 import type { PolicyChanges } from '@/lib/law/policy-change';
-import type { AuthorityKey } from '@/lib/nation/deployment';
+import type { AuthorityKey, InstitutionalEdition } from '@/lib/nation/deployment';
 
 // Module-level singletons (process-lifetime).
 const g = globalThis as unknown as { __civicos?: ReturnType<typeof seed> };
@@ -192,7 +192,9 @@ export function seed() {
   const authorityChanges: PolicyChanges<{ authorities: Partial<Record<AuthorityKey, string>> }> = {};
   // Changes to the state's classification once setup is complete (plan phase 5; lib/data/store/sovereign.ts).
   const classificationChanges: PolicyChanges<{ classification: StateClassification | null }> = {};
-  return { setup, authorityChanges, classificationChanges, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, integrationKeys, webhookSecrets, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
+  // Changes to the Institutional Edition once setup is complete (Health I4 standalone-and-pilot; lib/data/store/sovereign.ts).
+  const editionChanges: PolicyChanges<{ edition: InstitutionalEdition | null }> = {};
+  return { setup, authorityChanges, classificationChanges, editionChanges, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, integrationKeys, webhookSecrets, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
 }
 
 // A store restored from a saved snapshot (lib/data/persist.ts) keeps its data; fields added to the

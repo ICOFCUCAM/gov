@@ -62,6 +62,9 @@ const PAGES = [
   { path: '/gov/law/procedures/forms/HLT-MED-017', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-MED-019', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-MED-024', map: false, text: /register status/i },
+  // Health I4, second step: forms now carried by their own procedures (procedure: draft once installed).
+  { path: '/gov/law/procedures/forms/HLT-MED-013', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-023', map: false, text: /register status/i },
   // Catalogue contracts, batch 3 (taxpayer registration and account).
   { path: '/gov/law/procedures/forms/taxpayer.registration.individual', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/taxpayer.registration.individual/print', map: false, text: /register status/i },
@@ -73,6 +76,8 @@ const PAGES = [
   { path: '/gov/law/procedures/forms/taxpayer.registration.further_information@P2', map: false, text: /register status/i },
   // The register of medicines and medical devices (Health I4): its public view and the regulator's full record.
   { path: '/gov/health-regulation/products', map: false, text: /medicines and medical devices/i },
+  // Public-health programmes, complaints and workforce counts (Health I4).
+  { path: '/gov/health-regulation/programmes', map: false, text: /public-health programmes and workforce/i },
   // The seal key register (lib/keys/seal-register.ts).
   { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
 ];

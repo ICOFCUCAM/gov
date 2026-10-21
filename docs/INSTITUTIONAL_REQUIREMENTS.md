@@ -1,6 +1,6 @@
 # Institutional requirements traceability register
 
-**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): 2827 rows, ids `S<part>-…`, below. (2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): 7548 rows (Met 103, Partial 2759, Not yet 3527, Legal review 250, Platform rule stricter 334, Country decision 266, Lower priority 309), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.
+**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): 2827 rows, ids `S<part>-…`, below. (2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): 7548 rows (Met 103, Partial 2775, Not yet 3508, Legal review 250, Platform rule stricter 337, Country decision 266, Lower priority 309), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.
 
 Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts) against the code in `app/src` on 21 October 2026 (main checkout, after step I0.1), with the plan step that delivers each one (`docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md` §5). Machine-readable rows: `docs/requirements/requirements.json`. Re-run from the repository root: `python3 -I app/scripts/requirements/extract.py .` (scripts in `app/scripts/requirements/`; status knowledge base `rules.py`, step reassignment under the revised plan `reassign.py`). Checked by `app/src/lib/requirements/requirements.test.ts`.
 
@@ -19,34 +19,34 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Part | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
 | 0 (intro) | 1 | 9 | 0 | 0 | 1 | 0 | 11 |
-| 1 | 71 | 127 | 290 | 5 | 11 | 48 | 552 |
-| 2 | 106 | 227 | 226 | 16 | 0 | 0 | 575 |
-| 3 | 55 | 146 | 271 | 23 | 2 | 85 | 582 |
-| 4 | 76 | 86 | 244 | 0 | 1 | 73 | 480 |
-| 5 | 50 | 191 | 57 | 0 | 18 | 0 | 316 |
-| 6 | 72 | 181 | 40 | 8 | 8 | 2 | 311 |
-| **All** | **431** | **967** | **1128** | **52** | **41** | **208** | **2827** |
+| 1 | 73 | 125 | 290 | 5 | 11 | 48 | 552 |
+| 2 | 108 | 231 | 220 | 16 | 0 | 0 | 575 |
+| 3 | 57 | 144 | 271 | 23 | 2 | 85 | 582 |
+| 4 | 77 | 88 | 241 | 0 | 1 | 73 | 480 |
+| 5 | 66 | 189 | 43 | 0 | 18 | 0 | 316 |
+| 6 | 74 | 184 | 35 | 8 | 8 | 2 | 311 |
+| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 431 | 0 | 0 | 39 | 4 | 0 | 474 |
+| — | 456 | 0 | 0 | 39 | 4 | 0 | 499 |
 | I0.2 | 0 | 2 | 0 | 0 | 0 | 0 | 2 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 66 | 40 | 0 | 1 | 0 | 107 |
 | I3 | 0 | 136 | 26 | 0 | 0 | 0 | 162 |
-| I4 | 0 | 52 | 11 | 0 | 8 | 0 | 71 |
-| I5 | 0 | 59 | 272 | 0 | 8 | 2 | 341 |
+| I4 | 0 | 53 | 1 | 0 | 8 | 0 | 62 |
+| I5 | 0 | 59 | 273 | 0 | 8 | 2 | 342 |
 | I6 | 0 | 43 | 203 | 4 | 0 | 0 | 250 |
 | I7 | 0 | 50 | 252 | 0 | 0 | 0 | 302 |
 | I8 | 0 | 60 | 234 | 0 | 0 | 0 | 294 |
-| I9 | 0 | 247 | 48 | 0 | 17 | 0 | 312 |
+| I9 | 0 | 249 | 29 | 0 | 17 | 0 | 295 |
 | I10 | 0 | 147 | 23 | 6 | 0 | 2 | 178 |
 | I11 | 0 | 42 | 5 | 3 | 0 | 195 | 245 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
-| **All** | **431** | **967** | **1128** | **52** | **41** | **208** | **2827** |
+| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ### By sector
@@ -54,7 +54,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Sector | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
 | Cross-cutting | 7 | 10 | 0 | 0 | 3 | 0 | 20 |
-| Institution contract | 3 | 13 | 0 | 0 | 1 | 0 | 17 |
+| Institution contract | 4 | 12 | 0 | 0 | 1 | 0 | 17 |
 | Standards | 1 | 4 | 4 | 0 | 0 | 11 | 20 |
 | Presidency and Cabinet | 11 | 21 | 31 | 0 | 4 | 0 | 67 |
 | Finance and Treasury | 0 | 4 | 80 | 0 | 0 | 0 | 84 |
@@ -66,10 +66,10 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Internal administration | 0 | 3 | 9 | 0 | 0 | 0 | 12 |
 | Forms (common contract) | 1 | 9 | 3 | 0 | 0 | 0 | 13 |
 | National twin | 14 | 29 | 22 | 0 | 0 | 2 | 67 |
-| Acceptance | 9 | 14 | 3 | 0 | 0 | 0 | 26 |
+| Acceptance | 13 | 11 | 2 | 0 | 0 | 0 | 26 |
 | Institution catalogue | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
 | Civil registration and identity | 20 | 48 | 0 | 0 | 0 | 0 | 68 |
-| Health | 8 | 38 | 8 | 3 | 0 | 0 | 57 |
+| Health | 10 | 42 | 2 | 3 | 0 | 0 | 57 |
 | Education | 10 | 24 | 4 | 5 | 0 | 0 | 43 |
 | Immigration | 22 | 16 | 1 | 7 | 0 | 0 | 46 |
 | Labour | 1 | 1 | 42 | 0 | 0 | 0 | 44 |
@@ -80,7 +80,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Institution workspace contract | 4 | 9 | 0 | 0 | 0 | 0 | 13 |
 | Exchange | 9 | 23 | 7 | 0 | 0 | 2 | 41 |
 | Fieldwork and legacy | 1 | 15 | 8 | 0 | 0 | 0 | 24 |
-| Readiness and acceptance | 24 | 31 | 22 | 0 | 0 | 0 | 77 |
+| Readiness and acceptance | 27 | 29 | 21 | 0 | 0 | 0 | 77 |
 | Judiciary | 13 | 43 | 0 | 0 | 0 | 0 | 56 |
 | Prosecution | 1 | 0 | 0 | 0 | 0 | 25 | 26 |
 | Corrections | 0 | 0 | 0 | 0 | 0 | 38 | 38 |
@@ -95,7 +95,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Environment | 0 | 5 | 32 | 0 | 0 | 0 | 37 |
 | Housing and building control | 0 | 0 | 30 | 0 | 0 | 0 | 30 |
 | Public works | 0 | 0 | 39 | 0 | 0 | 0 | 39 |
-| Implementation order and risks | 15 | 8 | 4 | 0 | 0 | 1 | 28 |
+| Implementation order and risks | 15 | 9 | 3 | 0 | 0 | 1 | 28 |
 | Independence (general) | 3 | 1 | 0 | 0 | 0 | 0 | 4 |
 | Legislature | 14 | 19 | 7 | 0 | 0 | 0 | 40 |
 | Electoral | 0 | 0 | 0 | 0 | 0 | 44 | 44 |
@@ -107,28 +107,28 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Statistics | 1 | 9 | 28 | 0 | 0 | 0 | 38 |
 | Regulators | 3 | 10 | 27 | 0 | 0 | 0 | 40 |
 | Public service commission | 0 | 4 | 30 | 0 | 0 | 0 | 34 |
-| Independence contract | 11 | 3 | 1 | 0 | 0 | 0 | 15 |
+| Independence contract | 11 | 4 | 0 | 0 | 0 | 0 | 15 |
 | Shared administration | 5 | 5 | 3 | 0 | 0 | 0 | 13 |
 | Authorisation and privileged roles | 19 | 6 | 0 | 0 | 0 | 0 | 25 |
-| Architecture | 5 | 15 | 0 | 0 | 0 | 0 | 20 |
+| Architecture | 6 | 14 | 0 | 0 | 0 | 0 | 20 |
 | Kernel | 4 | 8 | 0 | 0 | 0 | 0 | 12 |
 | Control plane | 2 | 19 | 0 | 0 | 0 | 0 | 21 |
-| Standalone deployment | 7 | 16 | 2 | 0 | 0 | 0 | 25 |
+| Standalone deployment | 9 | 15 | 1 | 0 | 0 | 0 | 25 |
 | Federation | 4 | 15 | 0 | 0 | 0 | 0 | 19 |
 | APIs and events | 5 | 33 | 18 | 0 | 0 | 0 | 56 |
-| Ownership and portability | 11 | 15 | 13 | 0 | 0 | 0 | 39 |
+| Ownership and portability | 21 | 17 | 1 | 0 | 0 | 0 | 39 |
 | Security and keys | 5 | 25 | 2 | 0 | 1 | 0 | 33 |
 | Hosting | 1 | 5 | 0 | 0 | 17 | 0 | 23 |
 | Migration | 0 | 28 | 0 | 0 | 0 | 0 | 28 |
 | Completeness model | 0 | 3 | 21 | 0 | 0 | 0 | 24 |
 | Design system | 2 | 39 | 19 | 7 | 0 | 2 | 69 |
-| Workspace shell and screens | 8 | 83 | 15 | 0 | 0 | 0 | 106 |
+| Workspace shell and screens | 8 | 86 | 12 | 0 | 0 | 0 | 106 |
 | Accessibility and localisation | 3 | 26 | 0 | 1 | 0 | 0 | 30 |
 | Production, training, demo | 10 | 7 | 0 | 0 | 0 | 0 | 17 |
-| Roadmap | 23 | 7 | 6 | 0 | 8 | 0 | 44 |
+| Roadmap | 23 | 9 | 4 | 0 | 8 | 0 | 44 |
 | Risks | 14 | 8 | 0 | 0 | 0 | 0 | 22 |
-| Launch checklist | 12 | 11 | 0 | 0 | 0 | 0 | 23 |
-| **All** | **431** | **967** | **1128** | **52** | **41** | **208** | **2827** |
+| Launch checklist | 14 | 9 | 0 | 0 | 0 | 0 | 23 |
+| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ### By category
@@ -136,22 +136,22 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Category | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
 | KPI | 0 | 49 | 119 | 1 | 0 | 26 | 195 |
-| acceptance | 34 | 43 | 14 | 0 | 0 | 0 | 91 |
-| architecture | 67 | 148 | 51 | 0 | 25 | 0 | 291 |
-| department | 0 | 92 | 234 | 13 | 0 | 52 | 391 |
-| design | 15 | 130 | 33 | 8 | 0 | 2 | 188 |
+| acceptance | 43 | 35 | 13 | 0 | 0 | 0 | 91 |
+| architecture | 81 | 150 | 35 | 0 | 25 | 0 | 291 |
+| department | 0 | 96 | 230 | 13 | 0 | 52 | 391 |
+| design | 15 | 133 | 30 | 8 | 0 | 2 | 188 |
 | exchange | 10 | 69 | 25 | 0 | 0 | 2 | 106 |
 | fieldwork | 1 | 15 | 8 | 0 | 0 | 0 | 24 |
 | form | 1 | 49 | 22 | 1 | 0 | 0 | 73 |
 | procedure | 76 | 50 | 269 | 4 | 0 | 43 | 442 |
-| prose-rule | 92 | 122 | 82 | 16 | 15 | 35 | 362 |
-| register | 49 | 53 | 217 | 8 | 0 | 42 | 369 |
+| prose-rule | 92 | 123 | 81 | 16 | 15 | 35 | 362 |
+| register | 50 | 54 | 215 | 8 | 0 | 42 | 369 |
 | risk | 18 | 11 | 0 | 0 | 0 | 0 | 29 |
 | role | 10 | 40 | 0 | 1 | 0 | 4 | 55 |
-| security | 41 | 39 | 3 | 0 | 1 | 0 | 84 |
+| security | 41 | 40 | 2 | 0 | 1 | 0 | 84 |
 | service | 3 | 5 | 20 | 0 | 0 | 0 | 28 |
-| twin | 14 | 52 | 31 | 0 | 0 | 2 | 99 |
-| **All** | **431** | **967** | **1128** | **52** | **41** | **208** | **2827** |
+| twin | 15 | 51 | 31 | 0 | 0 | 2 | 99 |
+| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ## Plan gaps closed by the revised plan
@@ -270,7 +270,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 ## Part 1
 
 
-### Institution contract — Met 3, Partial 13, Country decision 1
+### Institution contract — Met 4, Partial 12, Country decision 1
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -288,7 +288,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S1-1.1-10 | 102 | architecture | Oversight: Metrics derive from persisted records, carry a source and observation time, and disclose coverage and limitations. | Partial | lib/twin/register.ts (observations: validFrom/validTo, recordedAt, method, quality, source run, record lineage), lib/twin/signal.ts SignalKind; tests  | No indicator definitions (denominator, coverage, method version); most metrics generated | I3 |
 | S1-1.1-11 | 103 | architecture | Continuity: Backup restoration, identifier continuity, event replay and signature verification are tested. | Partial | lib/data/backups.ts (encrypted, verified by dry-run restore, four-eyes restore); tests lib/data/backups.test.ts, backups-installation.test.ts, repo/ba | Restore into a clean environment not run in CI (P5-10) | I9 |
 | S1-1.1-12 | 104 | architecture | Public service: Online, assisted, accessible and low-connectivity channels use the same authoritative procedures. | Partial | Online: citizen wallet (/wallet) on the same procedures; accessibility audits (app/scripts/audit-console.mjs, audit-public-sites.mjs); assisted only a | Assisted-mode forms recording the assisting official; low-connectivity path (P6-20) | I1 (+I6) |
-| S1-1.1-13 | 105 | architecture | Standalone deployment: The institution can operate using its own authorized services and can later federate without changing record identity. | Partial | lib/nation/deployment.ts, apps/deployment.test.ts, apps/federation-boundary.test.ts (acceptance P1-10) | Institutional Edition install test with other institutions absent | I4 (+I9) |
+| S1-1.1-13 | 105 | architecture | Standalone deployment: The institution can operate using its own authorized services and can later federate without changing record identity. | Met | lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, exchange answers not connected, a step needing another re |  | — |
 | S1-1.1-14 | 107 | prose-rule | Universal: these capabilities should be present in the institution kernel. | Partial | Kernel parts exist (audit A §1) | See capability rows | I9 |
 | S1-1.1-15 | 109 | prose-rule | Country-dependent: the exact decision powers, required evidence, fees, deadlines, public disclosure and appeal bodies must come from approved national configuration. | Country decision | Platform provides: procedures (packages.ts) with evidence, deadlines, appeal; rules (lib/law/rules.ts); authority mappings (lib/permits/authority.ts)  | Disclosure rules have no configuration record outside professions/sites; reference procedures pre-fill deadline and appeal day counts (e.g. lib/civil/ | I1 |
 
@@ -297,7 +297,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
 | S1-2-01 | 113 | prose-rule | CivicOS should use international standards where they solve interoperability or governance problems, rather than treating standards as decoration. | Lower priority | Plan §4 "Reference lists of standards. Informative; cited where a feature uses one." |  | Throughout |
-| S1-2-02 | 123 | prose-rule | CivicOS application: reusable institutional kernels, a sourced national twin and independently deployable service modules. | Partial | Kernel and twin exist; apps not independently deployable modules (apps/deployment.ts declares roots) | Institutional Edition profile | I9 (+I4) |
+| S1-2-02 | 123 | prose-rule | CivicOS application: reusable institutional kernels, a sourced national twin and independently deployable service modules. | Partial | Kernel and twin exist; apps/deployment.ts declares roots; lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, | Apps as independently deployable modules | I9 (+I4) |
 | S1-2-03 | 133 | prose-rule | CivicOS application: package sector applications around shared contracts, not duplicated infrastructure. | Partial | apps/_shared/register-sources.ts, AppKit | Workspace design system | I10 |
 | S1-2-04 | 137 | prose-rule | Its update process is ongoing, so the supported version should be tracked explicitly. | Not yet | No fiscal records; no GFSM mapping (grep GFSM = 0) | Versioned GFSM classification mapping beside the national chart of accounts | I5 |
 | S1-2-05 | 143 | prose-rule | CivicOS application: distinguish budgets, commitments, accruals, cash movements, liabilities and statistical reporting instead of merging them into one “finance” number. | Not yet | No fiscal records; no GFSM mapping (grep GFSM = 0) | Versioned GFSM classification mapping beside the national chart of accounts | I5 |
@@ -872,7 +872,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S1-12-26 | 1040 | twin | An estimate should also include its methodology version, assumptions and uncertainty information where available. | Partial | Scenarios keep assumptions and SHA-256 (lib/twin/scenarios.ts); ObservationQuality stdErr/ci95 | Methodology version on estimates | I3 |
 | S1-12-27 | 1040 | twin | A zero must mean an observed or calculated zero, not missing data. | Met | Acceptance P2-13: lib/twin/register.test.ts "leaves it not connected otherwise"; signal.test.ts |  | — |
 
-### Acceptance — Met 3, Partial 5, Not yet 2
+### Acceptance — Met 4, Partial 4, Not yet 2
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -885,7 +885,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S1-13-07 | 1052 | acceptance | Procurement decisions preserve the criteria, evidence, approvals and versions used at the time. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P1-07: None. | There is no procurement procedure or register (plan §2 lists it as a missing reference package). Sealed decisions do keep their mapping and rule versi | I5 |
 | S1-13-08 | 1053 | acceptance | Public disclosures use approved publication rules and do not leak restricted records. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P1-08: `app/src/lib/professions/disclosure.test.ts` "is proposed citing the law and applies only once a different off | Disclosure rules are proven for individual registers (professions, parcels, cause list, legislature, sites). There is no general approved-publication- | I5 |
 | S1-13-09 | 1054 | acceptance | Indicators are derived from persisted records and carry provenance, time period, source and coverage. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P1-09: `app/src/lib/proof/birth-registration.test.ts` "8. the dashboard count is a timestamped record that reconciles | Provenance, time and regional coverage are proven for twin observations. There are no indicator definitions (numerator, denominator, period, coverage, | I3 |
-| S1-13-10 | 1055 | acceptance | A standalone installation can perform its authorized services without silently assuming access to uninstalled national institutions. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P1-10: `app/src/lib/nation/deployment.test.ts` "runs a module once its authority is named, unless turned off"; `app/s | Module gating is proven. Nothing runs an Institutional Edition install with other institutions absent and checks that each service refuses or says "no | I4 (+I9) |
+| S1-13-10 | 1055 | acceptance | A standalone installation can perform its authorized services without silently assuming access to uninstalled national institutions. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P1-10: `app/src/lib/nation/edition.test.ts` "degrades explicitly: a service another institution owns answers "not con |  | — |
 
 ## Part 2
 
@@ -977,32 +977,32 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S2-C.1-54 | 1294 | twin | Every indicator needs a defined denominator, reporting period, source, freshness and coverage limitations. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Attributes requested vs returned, source-record version and freshness metadata in the response | I9 |
 | S2-C.1-55 | 1294 | twin | Missing data must display as missing, not zero. | Partial | lib/twin/register.ts (observations: validFrom/validTo, recordedAt, method, quality, source run, record lineage), lib/twin/signal.ts SignalKind; tests  | Indicator definitions with denominators | I3 |
 
-### Health — Met 8, Partial 38, Not yet 8, Platform rule stricter 3
+### Health — Met 10, Partial 42, Not yet 2, Platform rule stricter 3
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S2-A.3-01 | 1132 | prose-rule | Facilities, workforce, service capacity, public-health programmes and health administration. | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions | Provider authorisations beyond licences; programme records; health-system reporting definitions | I4 |
-| S2-A.3-02 | 1134 | register | Facility directory | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions | Provider authorisations beyond licences; programme records; health-system reporting definitions | I4 |
-| S2-A.3-03 | 1134 | register | Provider authorisations | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions | Provider authorisations beyond licences; programme records; health-system reporting definitions | I4 |
-| S2-A.3-04 | 1134 | register | Programme records | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions | Provider authorisations beyond licences; programme records; health-system reporting definitions | I4 |
-| S2-A.3-05 | 1134 | register | Health-system reporting | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions | Provider authorisations beyond licences; programme records; health-system reporting definitions | I4 |
+| S2-A.3-01 | 1132 | prose-rule | Facilities, workforce, service capacity, public-health programmes and health administration. | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions, public-health programmes (lib/healt | Provider authorisations beyond licences; health-system reporting definitions | I4 |
+| S2-A.3-02 | 1134 | register | Facility directory | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions, public-health programmes (lib/healt | Provider authorisations beyond licences; health-system reporting definitions | I4 |
+| S2-A.3-03 | 1134 | register | Provider authorisations | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions, public-health programmes (lib/healt | Provider authorisations beyond licences; health-system reporting definitions | I4 |
+| S2-A.3-04 | 1134 | register | Programme records | Partial | Programme register (lib/health/programmes/register.ts: through decided cases of the public-health authority; test lib/health/programmes/programmes.tes | Adoption by the nation: its public-health authority named, procedures and mappings approved | I4 |
+| S2-A.3-05 | 1134 | register | Health-system reporting | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions, public-health programmes (lib/healt | Provider authorisations beyond licences; health-system reporting definitions | I4 |
 | S2-A.3-06 | 1134 | prose-rule | Clinical records remain within separately authorised clinical systems. | Platform rule stricter | CLAUDE.md Health: "no patient or clinical field anywhere, no national patient record"; tests apps/ministry-health/health-fields.test.ts, health-surfac |  | — |
 | S2-C.2-01 | 1298 | prose-rule | CivicOS should first deliver a health administration and service-management workspace, not attempt to replace every hospital’s electronic medical record. | Met | Health workspace is administrative only (lib/health/register.ts header; health-surfaces.test.ts) |  | — |
-| S2-C.2-02 | 1308 | department | Health policy, planning and performance | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3) | Records and procedures; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
+| S2-C.2-02 | 1308 | department | Health policy, planning and performance | Partial | Policy instruments are recorded in the laws register (lib/law/register.ts; no second register); programmes with coverage definitions and indicators (l | Planning and performance frameworks with indicator definitions (I3); Department = {id, name} only (lib/api/types.ts:536): no accountable office, servi | I4 (+I2,I3) |
 | S2-C.2-03 | 1309 | department | Facility licensing and accreditation | Partial | health.facility/pharmacy licence with inspection report document (lib/health/procedures.ts via organisations sectorProcedures) | Inspection findings as structured records under the inspector's account; corrective actions; Department = {id, name} only (lib/api/types.ts:536): no a | I4 (+I2) |
 | S2-C.2-04 | 1310 | department | Health workforce registry | Partial | lib/professions/ (4 health professions) | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
-| S2-C.2-05 | 1311 | department | Public-health programme administration | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3) | Records and procedures; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
-| S2-C.2-06 | 1312 | department | Medicine and medical-supply logistics | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3) | Records and procedures; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
+| S2-C.2-05 | 1311 | department | Public-health programme administration | Partial | Programme register and procedures (lib/health/programmes/: establish, amend, suspend, close; interventions; aggregate returns; risk communications); t | Adoption by the nation; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
+| S2-C.2-06 | 1312 | department | Medicine and medical-supply logistics | Partial | Supply items of a programme: a product of the medicines register by its number and a unit (lib/health/programmes/register.ts); programme supply receiv | Logistics and inventory (lots, stock, locations, transactions): docs/INTEGRATION_REGISTER.md 20.36; Department = {id, name} only (lib/api/types.ts:536 | I4 (+I2) |
 | S2-C.2-07 | 1313 | department | Inspection and compliance | Partial | health.facility/pharmacy licence with inspection report document (lib/health/procedures.ts via organisations sectorProcedures) | Inspection findings as structured records under the inspector's account; corrective actions; Department = {id, name} only (lib/api/types.ts:536): no a | I4 (+I2) |
 | S2-C.2-08 | 1314 | department | Facility capacity and infrastructure | Partial | Capacity returns (lib/health/register.ts), facility register (lib/data/facilities.ts) | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
-| S2-C.2-09 | 1315 | department | Budget, procurement and grants | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3) | Records and procedures; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
+| S2-C.2-09 | 1315 | department | Budget, procurement and grants | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3); a programme carries a budget reference only | Budget, procurement and grants are plan step I5 (finance), recorded as a dependency (docs/INTEGRATION_REGISTER.md 20.37); Department = {id, name} only | I5 (+I2,I4) |
 | S2-C.2-10 | 1316 | department | Health statistics and reporting | Partial | Capacity returns versioned, marked reported | Indicator definitions; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2,I3) |
-| S2-C.2-11 | 1317 | department | Complaints and service-quality investigations | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3) | Records and procedures; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
+| S2-C.2-11 | 1317 | department | Complaints and service-quality investigations | Partial | Complaint intake (lib/health/complaints/procedures.ts: health.complaint, prof.complaint, referred into the licence or registration case); test lib/hea | Service-quality investigations beyond referral; adoption by the nation; Department = {id, name} only (lib/api/types.ts:536): no accountable office, se | I4 (+I2) |
 | S2-C.2-12 | 1323 | register | Health facility: Unique facility ID, name, type, location, operator, authorised services, operational status, verification date | Partial | lib/data/facilities.ts (id, name, category, operator, location, status, versions) + licence standing in health-facilities register | Authorised services and verification date on the record | I4 |
 | S2-C.2-13 | 1324 | register | Health professional: Professional reference, verified qualifications, registration authority, licence status, scope of practice where authorised | Met | lib/professions/register.ts (reference, qualifications verified, regulator, standing, conditions); test lib/professions/procedures.test.ts |  | — |
 | S2-C.2-14 | 1325 | register | Inspection: Facility, inspection type, findings, evidence, inspector, corrective action, due date defined by applicable rules | Partial | Inspection report as a document on licence cases; education inspections (edu.inspection) as model | Structured inspection register with findings, corrective action, due date | I4 |
-| S2-C.2-15 | 1326 | register | Supply item: Product identifier, unit, lot/batch where relevant, quantity, location, expiry where relevant, transaction reference | Not yet | absent: no module, register or procedure (audit A §3) | Register | I4 |
-| S2-C.2-16 | 1327 | register | Programme: Programme identifier, approved eligibility, coverage definition, budget reference, reporting period | Not yet | absent: no module, register or procedure (audit A §3) | Register | I4 |
+| S2-C.2-15 | 1326 | register | Supply item: Product identifier, unit, lot/batch where relevant, quantity, location, expiry where relevant, transaction reference | Partial | A programme's supply items: product identifier (a decided product of the medicines register) and unit (lib/health/programmes/register.ts); quantities  | Lot or batch, location, expiry and transaction reference: an inventory system with feeds (docs/INTEGRATION_REGISTER.md 20.36) | I4 |
+| S2-C.2-16 | 1327 | register | Programme: Programme identifier, approved eligibility, coverage definition, budget reference, reporting period | Met | lib/health/programmes/register.ts (programme number, approved eligibility cited from the laws register, coverage definition with denominator and its d |  | — |
 | S2-C.2-17 | 1328 | register | Facility report: Reporting facility, indicator definitions, period, submitted values, validation state, corrections and provenance | Partial | Capacity returns: facility, period, counts, versions, reported | Indicator definitions, validation state | I4 (+I3) |
 | S2-C.2-18 | 1330 | prose-rule | Clinical data should be held in a dedicated clinical system or segregated clinical domain with its own access policies. | Platform rule stricter | CLAUDE.md Health: "no patient or clinical field anywhere, no national patient record"; tests apps/ministry-health/health-fields.test.ts, health-surfac |  | — |
 | S2-C.2-19 | 1330 | prose-rule | A health ministry dashboard does not grant all ministry employees access to diagnoses, prescriptions or patient histories. | Met | No clinical data in platform (Platform rule stricter); acceptance P2-04 partial (no record to search) |  | — |
@@ -1032,11 +1032,11 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S2-C.2-43 | 1373 | twin | Active licensed facilities by type and region | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
 | S2-C.2-44 | 1374 | twin | Facility-list completeness and last verification | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
 | S2-C.2-45 | 1375 | twin | Facility-reported service availability | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
-| S2-C.2-46 | 1376 | twin | Workforce counts by approved professional category | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
-| S2-C.2-47 | 1377 | twin | Essential-supply availability where reliable inventory feeds exist | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
+| S2-C.2-46 | 1376 | twin | Workforce counts by approved professional category | Met | Derived from the professions register by profession, standing and region of practice, small cells suppressed by the nation's rule, published to the tw |  | — |
+| S2-C.2-47 | 1377 | twin | Essential-supply availability where reliable inventory feeds exist | Partial | Programme supply received and used as aggregate counts (lib/health/programmes/register.ts) | Reliable inventory feeds (docs/INTEGRATION_REGISTER.md 20.36) and indicator definitions (I3) | I4 (+I3) |
 | S2-C.2-48 | 1378 | twin | Inspection and corrective-action status | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
 | S2-C.2-49 | 1379 | twin | Reporting completeness and lateness | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
-| S2-C.2-50 | 1380 | twin | Programme coverage where the denominator and data source are documented | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
+| S2-C.2-50 | 1380 | twin | Programme coverage where the denominator and data source are documented | Partial | Coverage definition, denominator and its documented source on each programme; counts in the twin only as a registered source's observations (lib/healt | Coverage computed against an approved indicator definition (I3) | I4 (+I3) |
 | S2-C.2-51 | 1382 | twin | Never present a count of registered facilities as a count of operational facilities unless operational status has been verified to a defined standard. | Partial | Facility status and licence standings are separate records | Indicator definitions distinguishing registered from verified-operational | I3 |
 
 ### Education — Met 10, Partial 24, Not yet 4, Platform rule stricter 5
@@ -1411,7 +1411,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S2-B-08 | 1192 | architecture | Exchange: Purpose-limited, law-cited requests and responses to other institutions | Met | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in |  | — |
 | S2-B-09 | 1193 | architecture | Reporting: Aggregated indicators with source, timestamp, definition and quality status | Partial | lib/twin/register.ts (observations: validFrom/validTo, recordedAt, method, quality, source run, record lineage), lib/twin/signal.ts SignalKind; tests  | Indicator definitions with quality status | I3 |
 | S2-B-10 | 1194 | architecture | Administration: Staff, roles, locations, delegated authority, queues and operational configuration | Partial | Officials and roles per institution (/admin/officials), locations via facilities | Delegated authority for officials, queues per department | I2 |
-| S2-B-11 | 1195 | architecture | Audit: Record reads, exports, edits, decisions, failed access and privileged actions | Partial | lib/data/store/audit.ts (SHA-256 v2 chain), lib/audit/sign.ts (signed heads), anchors/TSA/witnesses; tests lib/data/audit-chain.test.ts, lib/audit/sig | Exports never written to the access log as `export` except substrate export (I0.1); institution-scoped export | I9 |
+| S2-B-11 | 1195 | architecture | Audit: Record reads, exports, edits, decisions, failed access and privileged actions | Partial | lib/data/store/audit.ts (SHA-256 v2 chain), lib/audit/sign.ts (signed heads), anchors/TSA/witnesses; tests lib/data/audit-chain.test.ts, lib/audit/sig | Exports written to the access log as `export` only for the substrate export (I0.1) and institution exports (lib/portability/export.ts, verify.ts, impo | I9 |
 | S2-B-12 | 1197 | prose-rule | Critical implementation rule: a case workflow cannot itself confer legal power. | Met | lib/permits/authority.ts powerRefusal(), lib/permits/decisions.ts (decision classification); tests lib/permits/authority.test.ts, decisions.test.ts, c |  | — |
 | S2-B-13 | 1197 | prose-rule | The workflow may only execute an action if the configured authority, applicable legal provision, effective date and required approvals are valid. | Met | lib/permits/authority.ts powerRefusal(), lib/permits/decisions.ts (decision classification); tests lib/permits/authority.test.ts, decisions.test.ts, c |  | — |
 
@@ -1445,7 +1445,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S2-D-24 | 1907 | prose-rule | Deny by default if the requester, purpose, authority or applicable relationship is not valid. | Met | callService() refuses unknown callers and unapproved purposes; federationCheck() default deny (lib/data/store/federation.ts) |  | — |
 | S2-D-25 | 1908 | prose-rule | Do not treat a ministry-wide account as sufficient authority to access another institution. | Met | lib/auth/roles.ts caseActRefusal()/caseReadRefusal()/reaches(); tests lib/auth/case-rules.test.ts, lib/auth/negative-authorization.test.ts; reaches()  |  | — |
 | S2-D-26 | 1909 | prose-rule | Use purpose-specific attributes and narrowly scoped service credentials. | Met | Scopes per service (service:<id>), declared returns |  | — |
-| S2-D-27 | 1910 | prose-rule | Log reads and exports, not only changes. | Partial | lib/records/access-log.ts recordAccess() (format 2, office and profile in hash), lib/records/refusal-log.ts; tests lib/records/access-log.test.ts, ref | Export action beyond substrate export; institution export (I9) | I9 |
+| S2-D-27 | 1910 | prose-rule | Log reads and exports, not only changes. | Partial | lib/records/access-log.ts recordAccess() (format 2, office and profile in hash), lib/records/refusal-log.ts; tests lib/records/access-log.test.ts, ref | Export action beyond the substrate and institution exports (I9) | I9 |
 | S2-D-28 | 1911 | prose-rule | Separate technical delivery from legal authorisation. | Met | Purposes approved by two officials (proposeIntegrationApproval/confirmIntegrationApproval) separate from keys/mTLS |  | — |
 | S2-D-29 | 1912 | prose-rule | Apply retention, correction and deletion rules according to applicable law. | Partial | lib/data/retention.ts | Retention on exchange log per law | I9 |
 | S2-D-30 | 1913 | prose-rule | Provide a controlled emergency-access procedure only where legally permitted, with mandatory review. | Partial | Break-glass needs a proposal and a different official's confirmation (lib/data/resilience.test.ts) | Mandatory review of emergency access to records | I9 |
@@ -2180,7 +2180,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S3-F-14 | 2715 | twin | All figures must have a provenance label—observed, reported, modelled, sample or not_connected—alongside the source and last-updated timestamp. | Partial | lib/twin/signal.ts; production folds generated figures (acceptance P3-14 proven; P6-10 partial) | Last-updated timestamp on every figure; surfaces outside scanned files proven only by review | I3 |
 | S3-F-15 | 2715 | twin | Production must not contain fabricated figures to make a dashboard appear complete. | Partial | lib/twin/signal.ts; production folds generated figures (acceptance P3-14 proven; P6-10 partial) | Last-updated timestamp on every figure; surfaces outside scanned files proven only by review | I3 |
 
-### Readiness and acceptance — Met 5, Partial 7, Not yet 6
+### Readiness and acceptance — Met 7, Partial 5, Not yet 6
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2199,9 +2199,9 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S3-G-13 | 2732 | acceptance | Environmental observations preserve source, sampling context and data quality. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P3-10: `app/src/lib/twin/register.test.ts` "reads optional end dates and quality columns…", "imports an uploaded CSV  | Source and stated quality are proven generically for twin observations. No environmental observation type carries sampling context. | I7 (+I3) |
 | S3-G-14 | 2733 | acceptance | Building approval, construction completion and occupancy remain distinct statuses. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P3-11: None. | There is no building-permit procedure (CityJSON building records exist: `cityjson.test.ts`). | I7 |
 | S3-G-15 | 2734 | acceptance | Public-works payments reference approved contracts, verified milestones and the authorised financial process. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P3-12: None. | There are no public-works contracts, milestones or payment linkage. | I5 (+I7) |
-| S3-G-16 | 2735 | acceptance | Sensitive searches and exports are auditable, including unsuccessful access attempts. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P3-13: `app/src/app/api/education/route.test.ts` "…logs every read and refusal"; `app/src/app/api/customs/route.test. | Sensitive reads, searches and refused attempts are proven. Exports are proven for the site archive, provenance downloads and the substrate export (und | I9 |
+| S3-G-16 | 2735 | acceptance | Sensitive searches and exports are auditable, including unsuccessful access attempts. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P3-13: `app/src/app/api/education/route.test.ts` "…logs every read and refusal"; `app/src/app/api/customs/route.test. |  | — |
 | S3-G-17 | 2736 | acceptance | A national-twin indicator without a connected source is visibly marked unavailable rather than populated with invented values. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P3-14: `app/src/lib/twin/register.test.ts` "…leaves it not connected otherwise"; `app/src/apps/ministry-interior/reco |  | — |
-| S3-G-18 | 2737 | acceptance | Each institution can be deployed independently without assuming that every other institution is already connected. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P3-15: `app/src/apps/deployment.test.ts`; `app/src/apps/federation-boundary.test.ts`; `app/src/lib/nation/deployment. | This is the same gap as P1-10: no standalone-install test with other institutions absent. | I4 (+I9) |
+| S3-G-18 | 2737 | acceptance | Each institution can be deployed independently without assuming that every other institution is already connected. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P3-15: `app/src/lib/nation/edition.test.ts` "runs facility licensing, professional registration and the medicines reg |  | — |
 
 ### Implementation order and risks — Met 9, Partial 6, Not yet 2
 
@@ -2670,7 +2670,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-C.10-30 | 3268 | procedure | The platform should not use inferred political affiliation, personal relationships or other unauthorised attributes to rank candidates. | Not yet | Officials are accounts, not a civil-service register (audit A §3) | Recruitment procedure | I8 |
 | S4-C.10-31 | 3268 | procedure | AI-assisted screening, if allowed at all, must be governed by national law, transparent criteria, human review and an appeal or correction mechanism where applicable. | Not yet | Officials are accounts, not a civil-service register (audit A §3) | Recruitment procedure | I8 |
 
-### Independence contract — Met 11, Partial 3, Not yet 1
+### Independence contract — Met 11, Partial 4
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2683,7 +2683,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-B-07 | 2850 | security | Controlled exchange: Cross-institution requests require a lawful purpose, approved authority and permitted fields | Met | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in |  | — |
 | S4-B-08 | 2851 | security | Protected audit: The institution can inspect its own audit history; privileged system operators cannot silently rewrite it | Partial | lib/data/store/audit.ts (SHA-256 v2 chain), lib/audit/sign.ts (signed heads), anchors/TSA/witnesses; tests lib/data/audit-chain.test.ts, lib/audit/sig | Institution inspecting its own audit history (audit entries have no institution field — audit C A-1) | I8 |
 | S4-B-09 | 2852 | security | Independent oversight: Oversight roles receive only the access authorised for their mandate | Met | Relationship-bound reads for audit/request_information, purpose, logged |  | — |
-| S4-B-10 | 2853 | security | Continuity: The institution can export its records, configurations and audit evidence without losing provenance | Not yet | No institution-scoped export (acceptance P4-13) | Institution export | I9 |
+| S4-B-10 | 2853 | security | Continuity: The institution can export its records, configurations and audit evidence without losing provenance | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Configuration beyond procedures and the institution's terms (authority mappings, rates, country rules) is not carried | I9 |
 | S4-B-11 | 2854 | security | Independent publication: Public reports, findings and releases follow the institution's authorised publication process | Met | Site editorial per institution (proposed and published by its own officials); legislature publication |  | — |
 | S4-B-12 | 2855 | security | Transparent delegation: Any lawful delegation or temporary appointment has a recorded scope, source and effective period | Partial | lib/transitions/ (acting, delegation, conflict/recusal, emergency, caretaker, court rulings); tests lib/transitions/*.test.ts (delegation and acting r | Delegations are recorded but not read by roles.ts for authority | I2 |
 | S4-B-13 | 2857 | security | These requirements should be tested technically, not merely stated in policy documentation. | Met | lib/auth/negative-authorization.test.ts; portability.test.ts |  | — |
@@ -2738,7 +2738,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-E-24 | 3334 | security | High-risk changes should require two distinct authorised people, with proposal and confirmation performed by different identities. | Met | dualControlRefusal() compares persons (acceptance P4-11) | Enforced only once the country adopts requireIdentityProvider | — |
 | S4-E-25 | 3334 | security | The system should verify that the identities are genuinely distinct and preserve the full approval chain. | Met | dualControlRefusal() compares persons (acceptance P4-11) | Enforced only once the country adopts requireIdentityProvider | — |
 
-### Readiness and acceptance — Met 10, Partial 10, Not yet 9
+### Readiness and acceptance — Met 11, Partial 10, Not yet 8
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2751,8 +2751,8 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-F-07 | 3358-3360 | architecture | Audit integrity tested: Accesses, exports, changes, approvals and privileged operations are recorded and protected from silent alteration. | Partial | Acceptance P4-12 (chain), P3-13 (reads, refusals) | Exports beyond substrate export; privileged operations reviewable independently (P5-12) | I9 |
 | S4-F-08 | 3362-3364 | architecture | Publication controls tested: Public releases require the institution's own authorised approval process. | Met | lib/data/site-editorial.test.ts; legislature publication |  | — |
 | S4-F-09 | 3366-3368 | architecture | Exchange controls tested: Cross-institution requests enforce purpose, legal basis, permitted fields and auditable refusals. | Met | Acceptance P4-12, P5-03, P4-11 |  | — |
-| S4-F-10 | 3370-3372 | architecture | Portability tested: Records, documents, configuration and audit evidence can be exported with provenance intact. | Not yet | No institution export or institution-specific recovery | I9 export and restore | I9 |
-| S4-F-11 | 3374-3376 | architecture | Continuity tested: Recovery, backups, key management, incident response and manual fallback procedures are exercised. | Not yet | No institution export or institution-specific recovery | I9 export and restore | I9 |
+| S4-F-10 | 3370-3372 | architecture | Portability tested: Records, documents, configuration and audit evidence can be exported with provenance intact. | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Configuration beyond procedures (authority mappings, rates, country rules) is not exported | I9 |
+| S4-F-11 | 3374-3376 | architecture | Continuity tested: Recovery, backups, key management, incident response and manual fallback procedures are exercised. | Not yet | No institution-specific recovery | I9 export and restore | I9 |
 | S4-F-12 | 3378 | architecture | Each item should be marked not_started, in_progress, verified, blocked or not_applicable, with evidence, an accountable owner, a verification date and the next corrective action. | Not yet | scoreInstitution() composite percentage gates activation (lib/institution/readiness.ts) | State per item with evidence, owner, date, next action | I2 |
 | S4-F-13 | 3378 | architecture | A high aggregate percentage must not conceal a failed critical safeguard. | Not yet | scoreInstitution() composite percentage gates activation (lib/institution/readiness.ts) | State per item with evidence, owner, date, next action | I2 |
 | S4-G-01 | 3382 | prose-rule | Before production, CivicOS should demonstrate that: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (34 proven, 42 partial, 15 not yet); plan §3.5 makes it the defin |  | — |
@@ -2762,17 +2762,17 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-G-05 | 3387 | acceptance | An audit finding remains under the audit institution's control when the audited entity submits a disagreement. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P4-04: None. | There is no audit-engagement or finding workflow. | I8 |
 | S4-G-06 | 3388 | acceptance | A privacy authority's investigation access is scoped and recorded. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-05: `app/src/lib/auth/negative-authorization.test.ts` "a request-information relationship grants a read-only, purp | Purpose-bound, logged reads under a relationship are proven. There is no privacy-investigation procedure for the data-protection authority. | I8 |
 | S4-G-07 | 3389 | acceptance | A human-rights complainant's protected identity is not exposed through ordinary case search. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-06: `app/src/lib/auth/case-rules.test.ts` "keeps restricted and secret cases to the assigned, signatories and supe | Restricted-case isolation is proven generically. There is no human-rights complaint procedure, no protected-identity field and no case-search test. | I8 |
-| S4-G-08 | 3390 | acceptance | A whistleblower identity is not automatically included in an ordinary case export. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P4-07: None. | There is no protected-disclosure procedure, and no case export to test against. | I8 (+I9) |
+| S4-G-08 | 3390 | acceptance | A whistleblower identity is not automatically included in an ordinary case export. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P4-07: None. | There is no protected-disclosure procedure. An institution-scoped export exists (`lib/portability/export.ts`, Health I4) for the test once the procedu | I8 (+I9) |
 | S4-G-09 | 3391 | acceptance | An official statistical release preserves its methodology, version and revision history. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-08: `app/src/lib/twin/register.test.ts` "withdrawing an import … supersedes its observations, never deletes them…" | Revision-keeping is proven for twin observations. There is no statistical-release procedure with methodology and version. | I8 |
 | S4-G-10 | 3392 | acceptance | A regulator cannot impose a sanction or alter an approved tariff without the applicable authority and workflow. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-09: `app/src/lib/professions/procedures.test.ts` "…suspends, reinstates and revokes with four eyes"; `app/src/app/ | Professional sanctions and tariffs that need an approved rule are proven. There is no general regulator supervision or enforcement procedure. | I8 |
 | S4-G-11 | 3393 | acceptance | Shared payroll or payment infrastructure cannot change the originating institution's approved decision. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-10: `app/src/app/api/payments/route.test.ts` "never marks a tax or customs bill paid…"; `app/src/lib/customs/regis | Proven for payments only. Payroll does not exist. | I5 |
 | S4-G-12 | 3394 | acceptance | A high-risk change requiring two-person approval is rejected when the same person attempts to perform both steps. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-11: `app/src/lib/casework/dual-control.test.ts` "…refuses two accounts of one person"; `app/src/lib/data/integrati |  | — |
 | S4-G-13 | 3395 | acceptance | A technical operator cannot silently rewrite protected audit history. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-12: `app/src/lib/audit/sign.test.ts` "fails verification when the tail is rewritten after a head was signed"; `app |  | — |
-| S4-G-14 | 3396 | acceptance | An institution can export its records, signed documents and provenance without losing the relationship to the original evidence. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-13: `app/src/lib/data/evidence.test.ts` "carry a digest over their contents"; `app/src/app/api/substrate/export/ro | Exports exist only for the whole platform or for evidence packs. There is no institution-scoped package of records, signed documents and provenance wi | I9 |
+| S4-G-14 | 3396 | acceptance | An institution can export its records, signed documents and provenance without losing the relationship to the original evidence. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-13: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
 | S4-G-15 | 3397 | acceptance | Failed authorisation attempts are logged without exposing the protected content to the requester. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-14: `app/src/app/api/education/route.test.ts` "…logs every read and refusal" (403 to the requester, log holds no r |  | — |
 | S4-G-16 | 3398 | acceptance | Demo records, simulated officials and test election results cannot enter a production register. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P4-15: `app/src/lib/data/store/seed-mode.test.ts`; `app/src/lib/auth/demo-cast.test.ts` "is refused everywhere in a p | Demo records and simulated officials are proven. Test election results cannot be tested because elections do not exist. | I11 |
 
-### Implementation order and risks — Met 6, Partial 2, Not yet 2, Lower priority 1
+### Implementation order and risks — Met 6, Partial 3, Not yet 1, Lower priority 1
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2782,7 +2782,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-H-04 | 3406 | prose-rule | Third: parliamentary and statistical services. Build legislative records, proceedings, official publication and statistical metadata with clear public/private boundaries. | Partial | Legislature record built; statistics release absent | Statistical metadata | I8 |
 | S4-H-05 | 3407 | prose-rule | Fourth: oversight workflows. Implement audit engagements, public complaints, privacy investigations, protected disclosures and recommendations. | Not yet | Oversight workflows absent |  | I8 |
 | S4-H-06 | 3408 | prose-rule | Fifth: electoral and regulatory workflows. Add event-specific permissions, temporary access, protected registers, result verification, licensing and enforcement. | Lower priority | Electoral (I11); regulatory partially |  | I11 (+I8) |
-| S4-H-07 | 3409 | prose-rule | Sixth: independent recovery and exit. Test institution-specific backups, data export, configuration portability, key recovery and service continuity before declaring the deployment production-ready. | Not yet | Institution-specific backups/export absent |  | I9 |
+| S4-H-07 | 3409 | prose-rule | Sixth: independent recovery and exit. Test institution-specific backups, data export, configuration portability, key recovery and service continuity before declaring the deployment production-ready. | Partial | Institution data export tested: lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, doc | Institution-specific backups; configuration portability beyond procedures | I9 |
 | S4-H-08 | 3413 | prose-rule | CivicOS should make independent institutions first-class sovereign tenants, not subordinate departments inside an executive-controlled application. | Met | Plan follows |  | — |
 | S4-H-09 | 3413 | prose-rule | Their independence must survive shared hosting, shared authentication, shared document services, shared payments and shared national dashboards. | Partial | lib/auth/roles.ts caseActRefusal()/caseReadRefusal()/reaches(); tests lib/auth/case-rules.test.ts, lib/auth/negative-authorization.test.ts (shared aut | Shared hosting keys are installation-wide (audit C K-1) | I9 |
 | S4-H-10 | 3415 | prose-rule | The platform should enforce the distinction between who provides a service, who owns a record, who may access it, and who has the legal power to decide. | Met | Plan follows |  | — |
@@ -2791,14 +2791,14 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 ## Part 5
 
 
-### Architecture — Met 5, Partial 15
+### Architecture — Met 6, Partial 14
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
 | S5-intro-01 | 3425 | architecture | Parts 1–4 defined what CivicOS must support across executive government, human services, justice, infrastructure and independent institutions. | Partial | Kernel exists |  | I9 |
 | S5-intro-02 | 3427 | architecture | The goal is not to build one enormous application with every government function embedded inside it. | Partial | Kernel exists |  | I9 |
-| S5-intro-03 | 3429 | architecture | A municipality, ministry or independent regulator must be able to install CivicOS and operate its own services before the rest of government is connected. | Partial | Acceptance P5-01/P5-02 | Institutional Edition, federation later | I9 (+I4) |
-| S5-intro-04 | 3429 | architecture | Later, it must be possible to federate that deployment with other institutions without recreating records, losing history or transferring authority by accident. | Partial | Acceptance P5-01/P5-02 | Institutional Edition, federation later | I9 (+I4) |
+| S5-intro-03 | 3429 | architecture | A municipality, ministry or independent regulator must be able to install CivicOS and operate its own services before the rest of government is connected. | Met | lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, exchange answers not connected, a step needing another re |  | — |
+| S5-intro-04 | 3429 | architecture | Later, it must be possible to federate that deployment with other institutions without recreating records, losing history or transferring authority by accident. | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | A live federation enabled later with the original installation (I9) | I9 |
 | S5-A-01 | 3433-3435 | architecture | CivicOS institutional workspaces: Executive · Justice · Health · Education · Local government · Regulators · Independent bodies | Met | Layers exist (audit A §1) |  | — |
 | S5-A-02 | 3437-3439 | architecture | Institutional boundary and policy enforcement: Identity · Role and attribute policies · Legal authority · Delegation · Purpose limitation · Audit | Met | Layers exist (audit A §1) |  | — |
 | S5-A-03 | 3441-3443 | architecture | Sovereign shared services: Legal registry, workflow, documents, signatures, notifications, payments, maps, search and reporting. | Met | Layers exist (audit A §1) |  | — |
@@ -2829,7 +2829,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-B.5-01 | 3481 | architecture | Captures access, reads, exports, changes, approvals, refusals, privileged operations and service-to-service disclosures. | Partial | lib/data/store/audit.ts (SHA-256 v2 chain), lib/audit/sign.ts (signed heads), anchors/TSA/witnesses; tests lib/data/audit-chain.test.ts, lib/audit/sig | Service-to-service disclosures and exports in the access log | I9 |
 | S5-B.5-02 | 3481 | architecture | Protects audit integrity and supports independent verification. | Partial | lib/data/store/audit.ts (SHA-256 v2 chain), lib/audit/sign.ts (signed heads), anchors/TSA/witnesses; tests lib/data/audit-chain.test.ts, lib/audit/sig | Service-to-service disclosures and exports in the access log | I9 |
 | S5-B.6-01 | 3485 | architecture | Provides versioned APIs, event contracts, legacy adapters, explicit exchange agreements, source references and reconciliation tools. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Versioned event contracts, reconciliation tools | I9 |
-| S5-B.7-01 | 3489 | architecture | Provides installation, environment configuration, migration, health checks, backup and restoration, software updates, schema versioning and verified export. | Partial | /setup, lib/data/updates.ts (compatibility, probation), backups, migrations, health checks (app/api/health) | Verified institution export | I9 |
+| S5-B.7-01 | 3489 | architecture | Provides installation, environment configuration, migration, health checks, backup and restoration, software updates, schema versioning and verified export. | Partial | /setup, lib/data/updates.ts (compatibility, probation), backups, migrations, health checks (app/api/health) | Migration manifest (I9); verified institution export since Health I4 (lib/portability/export.ts, verify.ts, import.ts (one institution's registers, pr | I9 |
 | S5-B.7-02 | 3491 | architecture | A payment gateway, national digital identity provider, GIS service or AI assistant may be essential to a particular deployment, but none should be a hard dependency for every institution's basic operation. | Partial | Messaging says not connected and never pretends to send (lib/messaging/messaging.test.ts); AI opt-in with rule-based fallback; maps bundled | Declared degraded state per service; a step that needs an unavailable check refuses (acceptance P5-13) | I9 |
 | S5-B.7-03 | 3491 | architecture | CivicOS should support a disconnected or partially connected installation with explicitly degraded capabilities. | Partial | Messaging says not connected and never pretends to send (lib/messaging/messaging.test.ts); AI opt-in with rule-based fallback; maps bundled | Declared degraded state per service; a step that needs an unavailable check refuses (acceptance P5-13) | I9 |
 
@@ -2859,13 +2859,13 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-C-20 | 3525 | architecture | Design recommendation: use distinct service identities, narrowly scoped administrative interfaces, protected keys and institution-specific policies. | Partial | Shared secrets for bulk officers and substrate export replaced/audited partly in I0.1 (integration register 1.46) | Distinct service identities; per-institution keys | I9 |
 | S5-C-21 | 3525 | architecture | High-risk operational actions should be auditable and require additional approval where appropriate. | Partial | Control-plane stores (updates, ops, federation) separate from registers in register-owners.ts | Explicit control/data plane boundary | I9 |
 
-### Standalone deployment — Met 7, Partial 16, Not yet 2
+### Standalone deployment — Met 9, Partial 15, Not yet 1
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
 | S5-D-01 | 3529 | architecture | Every CivicOS institution should be installable as an independent deployment root. | Partial | Deployment model |  | I9 |
-| S5-D-02 | 3529 | architecture | It must not require a central national server, national identity provider or a live connection to another ministry merely to process its own authorised records. | Partial | Acceptance P1-10/P5-01 | Institutional Edition test | I4 (+I9) |
-| S5-D-03 | 3533-3535 | architecture | CivicOS Institutional Edition: A self-contained installation for a ministry, municipality, regulator or independent institution. | Not yet | No declared Institutional Edition profile (plan §2) | Profile from the deployment profile | I4 (+I9) |
+| S5-D-02 | 3529 | architecture | It must not require a central national server, national identity provider or a live connection to another ministry merely to process its own authorised records. | Met | lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, exchange answers not connected, a step needing another re |  | — |
+| S5-D-03 | 3533-3535 | architecture | CivicOS Institutional Edition: A self-contained installation for a ministry, municipality, regulator or independent institution. | Met | lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, exchange answers not connected, a step needing another re |  | — |
 | S5-D-04 | 3537-3539 | architecture | Institutional workspace: Department navigation, dashboards, case queues, registers, forms and reporting. | Met | Kernel parts exist in one installation |  | — |
 | S5-D-05 | 3541-3543 | architecture | Local identity and access: Local identity provider or configured external identity integration, institution-managed roles and MFA. | Met | Kernel parts exist in one installation |  | — |
 | S5-D-06 | 3545-3547 | architecture | Legal and workflow engine: Versioned rules, delegated powers, case states, approvals and decision records. | Met | Kernel parts exist in one installation |  | — |
@@ -2974,7 +2974,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-F.3-09 | 3750 | exchange | Preserve source and correlation references for reconciliation. | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
 | S5-F.3-10 | 3752 | exchange | A message broker provides delivery infrastructure; it does not grant legal authority to process the message. | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
 
-### Ownership and portability — Met 11, Partial 15, Not yet 13
+### Ownership and portability — Met 21, Partial 17, Not yet 1
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3003,20 +3003,20 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-G-23 | 3790 | architecture | Indicator and dataset IDs | Met | uuid7 ids, refs per register, law instrument/version ids, event ids | Correlation ids and indicator ids | — |
 | S5-G-24 | 3792 | architecture | Avoid using national identity numbers as universal database keys. | Met | Internal opaque ids (uuid7); holderRef optional |  | — |
 | S5-G-25 | 3792 | architecture | Use opaque internal references and store links to external identifiers only where justified. | Partial | Ownership via register-owners.ts |  | I9 |
-| S5-G-26 | 3796 | architecture | An institution leaving a shared environment or moving to another hosting provider should be able to export: | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-27 | 3798 | architecture | Authoritative records and their versions | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-28 | 3799 | architecture | Documents, evidence and signatures | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-29 | 3800 | architecture | Relationships between records | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-30 | 3801 | architecture | Workflow history and decision states | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-31 | 3802 | architecture | Legal references and the versions used | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-32 | 3803 | architecture | Audit events and integrity-verification material | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-33 | 3804 | architecture | Register schemas and controlled vocabularies | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-34 | 3805 | architecture | Forms, rules and workflow configuration | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-35 | 3806 | architecture | Data dictionaries and API/event schemas | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-36 | 3807 | architecture | Export manifest, checksums and validation report | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
-| S5-G-37 | 3809 | architecture | A PDF-only export is not sufficient. | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
+| S5-G-26 | 3796 | architecture | An institution leaving a shared environment or moving to another hosting provider should be able to export: | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
+| S5-G-27 | 3798 | architecture | Authoritative records and their versions | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
+| S5-G-28 | 3799 | architecture | Documents, evidence and signatures | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
+| S5-G-29 | 3800 | architecture | Relationships between records | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
+| S5-G-30 | 3801 | architecture | Workflow history and decision states | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
+| S5-G-31 | 3802 | architecture | Legal references and the versions used | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
+| S5-G-32 | 3803 | architecture | Audit events and integrity-verification material | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
+| S5-G-33 | 3804 | architecture | Register schemas and controlled vocabularies | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Rates and rules (lib/law/rules.ts) and controlled vocabularies beyond register types are not exported | I9 |
+| S5-G-34 | 3805 | architecture | Forms, rules and workflow configuration | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Rates and rules (lib/law/rules.ts) and controlled vocabularies beyond register types are not exported | I9 |
+| S5-G-35 | 3806 | architecture | Data dictionaries and API/event schemas | Not yet | The export is self-describing JSON per part; no data dictionary or API/event schema travels with it | Data dictionaries and API/event schemas in the export | I9 |
+| S5-G-36 | 3807 | architecture | Export manifest, checksums and validation report | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
+| S5-G-37 | 3809 | architecture | A PDF-only export is not sufficient. | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
 | S5-G-38 | 3809 | architecture | It may preserve a readable view while losing the structured data, history and relationships needed for future operation. | Partial | Ownership via register-owners.ts |  | I9 |
-| S5-G-39 | 3811 | architecture | Where cryptographic verification depends on external keys or certificates, the export should include the relevant public verification material and metadata, while private keys remain protected under the agreed key-manage | Not yet | No institution-scoped export (acceptance P4-13, P5-08) | Portable record package | I9 |
+| S5-G-39 | 3811 | architecture | Where cryptographic verification depends on external keys or certificates, the export should include the relevant public verification material and metadata, while private keys remain protected under the agreed key-manage | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
 
 ### Security and keys — Met 5, Partial 25, Not yet 2, Country decision 1
 
@@ -3146,23 +3146,23 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-K-23 | 4035 | architecture | A gap should lead to a specific action: name an owner, explain what evidence is missing, state the dependency and define the acceptance test. | Not yet | No per-institution readiness dimensions | Readiness view (plan §3.4) | I2 |
 | S5-K-24 | 4035 | architecture | A single overall percentage is not enough, especially if a critical legal or security requirement remains unverified. | Not yet | scoreInstitution() percentage | Evidence-backed states | I2 |
 
-### Acceptance — Met 6, Partial 9, Not yet 1
+### Acceptance — Met 9, Partial 7
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S5-L-01 | 4041 | acceptance | An institution can install CivicOS, create its legal configuration and operate an authorised service without another institution being online. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-01: `app/src/lib/nation/deployment.test.ts`; `app/src/apps/deployment.test.ts`; `app/src/lib/proof/birth-registrat | No test installs a single institution (Institutional Edition profile) and operates a service with no other institution present. | I4 (+I9) |
-| S5-L-02 | 4042 | acceptance | A later federation can be enabled without changing the original institution or record identifiers. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P5-02: None. (Related: `app/src/lib/twin/uri.test.ts` "…keeps a real URI once given"; `app/src/lib/data/store-ids.tes | There is no "enable federation later" path and no test that identifiers survive it. | I9 |
+| S5-L-01 | 4041 | acceptance | An institution can install CivicOS, create its legal configuration and operate an authorised service without another institution being online. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-01: `app/src/lib/nation/edition.test.ts` "runs facility licensing, professional registration and the medicines reg |  | — |
+| S5-L-02 | 4042 | acceptance | A later federation can be enabled without changing the original institution or record identifiers. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-02: `app/src/lib/portability/export.test.ts` "goes back into an empty installation with every record identifier un | Record and institution identifiers survive an export and an import into another installation (proven). Enabling a live federation exchange with the or | I9 |
 | S5-L-03 | 4043 | acceptance | A remote institution cannot query protected records without a valid, purpose-limited authorisation. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-03: `app/src/lib/exchange/services.test.ts` "purposes approved per caller and service" (all four tests); `app/src/ |  | — |
 | S5-L-04 | 4044 | acceptance | An event retry cannot duplicate a legally material action. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-04: `app/src/lib/customs/idempotency.test.ts` "a repeated open, decision, notice, transfer and reconciliation each |  | — |
 | S5-L-05 | 4045 | acceptance | A revoked institutional relationship stops new exchanges while preserving prior records. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-05: `app/src/lib/data/store/relationships.test.ts` "suspending, ending or expiring stops the grant; earlier versio | Suspending or revoking an exchange integration is proven to stop `callService()` with earlier log entries and receipts intact. Exchange services are b | I9 |
 | S5-L-06 | 4046 | acceptance | A migrated record retains its source, transformation history and verification status. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-06: `app/src/lib/data/case-import.test.ts` "loads cases … audited with the file hash"; `app/src/lib/organisations/ | Source and file hash are proven for loads. There is no migration manifest (transformation history, verification status per record, reconciliation coun | I9 |
 | S5-L-07 | 4047 | acceptance | A correction produces an auditable new state rather than silently erasing history. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-07: `app/src/lib/records/decisions.test.ts` "…a correction supersedes"; `app/src/lib/civil/register.test.ts` "…cor |  | — |
-| S5-L-08 | 4048 | acceptance | An institution can export structured records, documents, schemas and audit evidence. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-08: `app/src/app/api/substrate/export/route.test.ts`; `app/src/lib/data/evidence.test.ts`; `app/src/app/api/org/mi | There is no institution-scoped export of records, documents, schemas and audit evidence. | I9 |
-| S5-L-09 | 4049 | acceptance | An exported record can be validated without depending on access to the original production interface. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-09: `app/src/lib/audit/replay.test.ts` "replayDump … reports ok:false when the chain is tampered" (offline verific | An audit dump and sealed decisions can be verified offline, and the seal's key against the published trust list. There is no test that a single export | I9 |
+| S5-L-08 | 4048 | acceptance | An institution can export structured records, documents, schemas and audit evidence. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-08: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
+| S5-L-09 | 4049 | acceptance | An exported record can be validated without depending on access to the original production interface. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-09: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
 | S5-L-10 | 4050 | acceptance | A backup can be restored into a clean environment using documented procedures. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-10: `app/src/lib/data/backups.test.ts` "takes an encrypted backup … and verifies it by a dry run" (scratch store); | The full fresh-standby drill (`dr-drill.mjs`) is documented but not run in CI; the tested restores go back into the same environment. | I9 |
 | S5-L-11 | 4051 | acceptance | The restored environment preserves record relationships and audit-integrity verification. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-11: `app/src/lib/data/backups.test.ts` "restores four-eyes … the replaced state kept and named" (`verifyAuditChain |  | — |
 | S5-L-12 | 4052 | acceptance | Privileged access and key-management operations are recorded and independently reviewable. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-12: `app/src/lib/keys/custody.test.ts` "names the key version that signed after a rotation in Vault", "signs audit | Key and privileged operations are recorded, bulk officer creation included, and the audit chain is read through the API only by auditors and the data- | I9 |
-| S5-L-13 | 4053 | acceptance | A service can operate in a declared degraded state without claiming that unavailable checks succeeded. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-13: `app/src/lib/messaging/messaging.test.ts` "keeps messages queued and says \"not connected\" while no provider  | Individual components report degradation honestly. There is no declared degraded state per service, and no test that a case step depending on an unava | I9 |
+| S5-L-13 | 4053 | acceptance | A service can operate in a declared degraded state without claiming that unavailable checks succeeded. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-13: `app/src/lib/messaging/messaging.test.ts` "keeps messages queued and says "not connected" while no provider is | Individual components report degradation honestly. There is no declared degraded state per service, and no test that a case step depending on an unava | I9 |
 | S5-L-14 | 4054 | acceptance | A software upgrade detects incompatible schema or policy changes before they corrupt production records. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-14: `app/src/lib/data/readiness.test.ts` "reports each customisation as compatible, needs change or blocking…", "b |  | — |
 | S5-L-15 | 4055 | acceptance | A disconnected institution can receive a controlled software update and verify its authenticity. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-15: `app/src/lib/data/mirror.test.ts` "each step is named, in order, audited; a matching seal makes the releases m | The controlled media chain is proven. Authenticity is not: the seal is a physical seal ID, and no test verifies the DSSE signature or artifact digest  | I9 |
 | S5-L-16 | 4056 | acceptance | Shared services cannot override institution-specific legal authority or decision ownership. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-16: `app/src/app/api/payments/route.test.ts` "never marks a tax or customs bill paid…"; `app/src/lib/casework/regi |  | — |
@@ -3244,7 +3244,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-H-22 | 4567 | design | Session expiry: preserve unsaved work where safe, explain what happened and provide secure re-authentication. | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
 | S6-H-23 | 4569 | design | A premium product is not one with no error states. | Partial | components/ui | Component inventory | I10 |
 
-### Workspace shell and screens — Met 8, Partial 83, Not yet 15
+### Workspace shell and screens — Met 8, Partial 86, Not yet 12
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3295,9 +3295,9 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-D.3-08 | 4332 | design | Display record freshness and verification status | Partial | RegisterRecords views; register pages | Saved views, freshness, correction request | I10 |
 | S6-D.3-09 | 4333 | design | Inspect the version and correction history | Partial | RegisterRecords views; register pages | Saved views, freshness, correction request | I10 |
 | S6-D.3-10 | 4334 | design | Request a correction or controlled amendment | Partial | RegisterRecords views; register pages | Saved views, freshness, correction request | I10 |
-| S6-D.3-11 | 4335 | design | Log reads, bulk exports and sensitive searches | Not yet | No export manifest; export access action unused outside substrate export | Bulk export purpose, second approval, manifest | I9 (+I10) |
-| S6-D.3-12 | 4337 | design | Bulk exports should require an explicit purpose and appropriate permission. | Not yet | No export manifest; export access action unused outside substrate export | Bulk export purpose, second approval, manifest | I9 (+I10) |
-| S6-D.3-13 | 4337 | design | Where the export is particularly sensitive, require a second approval and create an export manifest with the requester, scope, fields, time and destination. | Not yet | No export manifest; export access action unused outside substrate export | Bulk export purpose, second approval, manifest | I9 (+I10) |
+| S6-D.3-11 | 4335 | design | Log reads, bulk exports and sensitive searches | Partial | Institution exports: a stated purpose, an administrator and a second official who can sign, a sealed manifest with SHA-256 per part, the access log (l | Other bulk exports (the substrate export runs under a shared secret, integration register 1.46) | I9 (+I10) |
+| S6-D.3-12 | 4337 | design | Bulk exports should require an explicit purpose and appropriate permission. | Partial | Institution exports: a stated purpose, an administrator and a second official who can sign, a sealed manifest with SHA-256 per part, the access log (l | Other bulk exports (the substrate export runs under a shared secret, integration register 1.46) | I9 (+I10) |
+| S6-D.3-13 | 4337 | design | Where the export is particularly sensitive, require a second approval and create an export manifest with the requester, scope, fields, time and destination. | Partial | Institution exports: a stated purpose, an administrator and a second official who can sign, a sealed manifest with SHA-256 per part, the access log (l | Other bulk exports (the substrate export runs under a shared secret, integration register 1.46) | I9 (+I10) |
 | S6-D.4-01 | 4341 | design | CivicOS needs a form engine that can be configured without hardcoding every service. | Not yet | No form designer; packages authored as JSON drafts | Form engine features (conditional sections, repeatable groups, save-and-resume) | I1 |
 | S6-D.4-02 | 4343 | design | A form definition should support: | Not yet | No form designer; packages authored as JSON drafts | Form engine features (conditional sections, repeatable groups, save-and-resume) | I1 |
 | S6-D.4-03 | 4345 | design | Field types and validation | Partial | lib/casework/types.ts FieldSpec (text, longtext, date, number, choice, boolean, person, organisation, place; boolean `personal`); DocumentSpec; choice | valuesSource, named validation rules, evidence classes (I1) | I1 |
@@ -3404,7 +3404,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-F-08 | 4496 | security | Separate production and non-production data stores and credentials. | Partial | Demo backup refused in production (backups-installation.test.ts) | Separate credentials per mode | Throughout |
 | S6-F-09 | 4497 | security | Prevent training or demo credentials from authenticating to production services. | Met | Demo cast refused at every sign-in in production (demo-cast.test.ts) |  | — |
 | S6-F-10 | 4498 | security | Block real payments, notifications, signatures and legal issuance in simulation modes. | Partial | payBill() simulated; development keys refused only in production (developmentKeyRefusal()) | lib/messaging and lib/events/deliver.ts do not check the installation mode: a training or demo installation with a provider or webhook connected sends | I0.2 |
-| S6-F-11 | 4499 | security | Label sample records at the data level and preserve that label through exports. | Partial | Sample register entries marked sample:true (sample-isolation.test.ts) | No institution export yet to preserve it through | I9 |
+| S6-F-11 | 4499 | security | Label sample records at the data level and preserve that label through exports. | Partial | Sample register entries marked sample:true (sample-isolation.test.ts) | The institution export carries records as kept (sample markers included) and the installation mode in its manifest; no test asserts a sample marker th | I9 |
 | S6-F-12 | 4500 | security | Reject sample records when writing to production registers. | Met | payBill() refuses in production; sample cases refused; register entries marked sample (sample-isolation.test.ts) | Sample label preserved through exports (no institution export) | — |
 | S6-F-13 | 4501 | security | Ensure background jobs and webhooks also enforce the environment boundary. | Partial | Cron runs check samplesAllowed where they create data | Webhook delivery boundary per mode | I0.2 |
 | S6-F-14 | 4502 | security | Require an authorised deployment process to change an environment's mode. | Partial | CIVICOS_MODE decided only in lib/ops/mode.ts from the environment | Recorded authorised mode change | Throughout |
@@ -3412,7 +3412,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-F-16 | 4505 | security | Critical rule: a production dashboard must never silently fall back to demo data when a real integration fails. | Met | Production folds to Not connected (Generated.test.ts; lib/twin/read.test.ts) |  | — |
 | S6-F-17 | 4505 | security | It should display the missing data, the last successful update and the reason for the degraded state. | Partial | components/ui/SampleFold, Generated (production folds generated panels to Not connected); tests components/ui/Generated.test.ts, SampleFold.test.ts (N | Last successful update and reason on every degraded panel | I3 (+I10) |
 
-### Roadmap — Met 23, Partial 7, Not yet 6, Country decision 8
+### Roadmap — Met 23, Partial 9, Not yet 4, Country decision 8
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3425,8 +3425,8 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-I-07 | 4599 | architecture | Roadmap 03 — Exit gate: automated negative tests demonstrate that unauthorised actions are blocked. | Partial | Kernel and I0.1 |  | I9 |
 | S6-I-08 | 4601-4607 | architecture | Roadmap 04 — Premium design system and shared workspace: Implement the shell, casework, registers, forms, approval screens, documents, audit, empty/error states and accessible responsive patterns. | Not yet |  |  | I10 |
 | S6-I-09 | 4607 | architecture | Roadmap 04 — Exit gate: a representative workflow works end to end on desktop and mobile. | Not yet |  |  | I10 |
-| S6-I-10 | 4609-4615 | architecture | Roadmap 05 — One pilot institution: Select an institution with clear authority, manageable integrations and a meaningful operational service. Complete real workflow configuration, record ownership, migration and user acc | Not yet | Health chosen (plan I4) |  | I4 |
-| S6-I-11 | 4615 | architecture | Roadmap 05 — Exit gate: authorised users complete the service with real records and verifiable audit evidence. | Not yet | Health chosen (plan I4) |  | I4 |
+| S6-I-10 | 4609-4615 | architecture | Roadmap 05 — One pilot institution: Select an institution with clear authority, manageable integrations and a meaningful operational service. Complete real workflow configuration, record ownership, migration and user acc | Partial | Health chosen (plan I4); lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, exchange answers not connected,  | The nation's real workflow configuration, migration and user acceptance testing | I4 |
+| S6-I-11 | 4615 | architecture | Roadmap 05 — Exit gate: authorised users complete the service with real records and verifiable audit evidence. | Partial | Health chosen (plan I4); lib/pilot/exit-gate.ts (computed from records: approved procedures, real completed cases, verifying seals with approved keys, | Met only by a production installation's own records: authorised officials completing real cases (a deployment act, never shipped) | I4 |
 | S6-I-12 | 4617-4623 | architecture | Roadmap 06 — Federation and institutional expansion: Connect the pilot to one other authorised institution. Test requests, denials, events, reconciliation, revocation, export and failure recovery before expanding the net | Not yet |  |  | I9 |
 | S6-I-13 | 4623 | architecture | Roadmap 06 — Exit gate: the institutions exchange approved data without losing their separate authority or records. | Not yet |  |  | I9 |
 | S6-I-14 | 4627 | architecture | Choose the pilot based on: | Country decision | Plan I4 picks Health (owner's example) |  | I4 |
@@ -3488,7 +3488,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-J-21 | 4670 | risk | The AI service must be opt-in at the level specified by national policy and institution configuration. | Met | SovereignProfile.aiAssistant opt-in; /api/ai/advisory audited, behind the sovereignty gate, reads no records; aiLabel() | Institution-level opt-in (nation-level only) | — |
 | S6-J-22 | 4671 | risk | Sensitive data must not be sent to an external AI service unless the use, transfer and provider are specifically authorised. | Met | SovereignProfile.aiAssistant opt-in; /api/ai/advisory audited, behind the sovereignty gate, reads no records; aiLabel() | Institution-level opt-in (nation-level only) | — |
 
-### Launch checklist — Met 12, Partial 11
+### Launch checklist — Met 14, Partial 9
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3500,7 +3500,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-K-06 | 4689 | acceptance | Decision authorities and delegations verified | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-03: `app/src/lib/permits/authority.test.ts` "governs decisions only once a second official approves a version with |  | — |
 | S6-K-07 | 4691 | acceptance | Required dual approvals tested | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-04: `app/src/lib/casework/dual-control.test.ts` (all); `app/src/lib/data/integration-approval.test.ts`; `app/src/l |  | — |
 | S6-K-08 | 4695 | acceptance | Role and purpose policies tested | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-05: `app/src/lib/auth/roles.test.ts`; `app/src/lib/auth/case-rules.test.ts`; `app/src/lib/auth/api-permission-cove |  | — |
-| S6-K-09 | 4697 | acceptance | Sensitive reads and exports audited | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-06: See P3-13. | Reads and refusals are audited; there is no institution-scoped export to audit. | I9 |
+| S6-K-09 | 4697 | acceptance | Sensitive reads and exports audited | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-06: See P3-13; `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of anot |  | — |
 | S6-K-10 | 4699 | acceptance | Privileged access and key controls reviewed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-07: See P5-12. | Recorded, but no independent review is tested. | I9 |
 | S6-K-11 | 4701 | acceptance | Retention and privacy requirements configured | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-08: `app/src/lib/data/retention.test.ts` "keeps permits and cases unless two administrators confirm a rule…", "dis |  | — |
 | S6-K-12 | 4705 | acceptance | Representative workflow passes end-to-end testing | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-09: `app/src/lib/proof/birth-registration.test.ts` (nine steps, citizen notice to auditor reconstruction); also `a |  | — |
@@ -3510,7 +3510,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-K-16 | 4715 | acceptance | Backup restoration tested | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-13: `app/src/lib/data/backups.test.ts`; `app/src/lib/data/repo/backup-postgres.integration.test.ts`; `app/src/lib/ |  | — |
 | S6-K-17 | 4717 | acceptance | Incident response and support owners assigned | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-14: `app/src/app/api/ops/incidents/*/route.test.ts` (ack, escalate, resolve); `app/src/lib/data/support.test.ts`;  | Incident and support workflows exist. Nothing records or checks that named owners are assigned per institution (no onboarding check). | I2 |
 | S6-K-18 | 4719 | acceptance | Monitoring and integration failures tested | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-15: `app/src/lib/ops/cron-runs.test.ts` "retries a failed job … and alerts once after the last attempt"; `app/src/ |  | — |
-| S6-K-19 | 4721 | acceptance | Export and exit process verified | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-16: `app/src/lib/updates/hosting-model.test.ts` "switching paths adds a migration plan with export and no-lock-in  | There is no verified institution export or exit (see P5-08). | I9 |
+| S6-K-19 | 4721 | acceptance | Export and exit process verified | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-16: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
 | S6-K-20 | 4725 | acceptance | Keyboard and screen-reader testing completed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-17: `app/scripts/audit-console.mjs` (first Tab stop is the skip link; CI "console audit"); `app/scripts/audit-publ | Keyboard checks are automated (skip link only). No screen-reader testing is recorded, and institutional workspace screens are mostly outside the audit | I10 |
 | S6-K-21 | 4727 | acceptance | WCAG 2.2 AA assessment performed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-18: axe-core with `wcag22aa` tags in `app/scripts/audit-public-sites.mjs` and `app/scripts/audit-console.mjs` (CI) | This is an automated rule scan of the listed pages, not a WCAG 2.2 AA assessment of every screen. | I10 |
 | S6-K-22 | 4729 | acceptance | RTL and required languages reviewed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-19: `app/src/lib/public-sites/translation.test.ts` "is complete when every string is translated from its current t | Proven for public sites and for forms' translations as a publication gate. Console and workspace RTL are not tested. | I10 |
@@ -3526,9 +3526,9 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 
 *Platform rule stricter* means CivicOS will not hold the item at all (cited rule); the row says what it holds instead. Rows with basis `domain` are assessed at the level of their domain (no item-specific rule): the status is the domain's state and the step the domain's step; a contract and its fields follow the form they define. Every catalogue form carries `I1-catalogue` in `also_steps`: its field contract designed in the form library at or above the catalogue's standard, beside the sector step that builds its procedure. Steps I12 and I13 were added to the plan for the catalogue (plan §5).
 
-**Self-check.** Content lines not accounted for: 0. Headings (parts, sections, sub-sections) without a row: none. Catalogue IDs without a row: 0. Rows without a step: 0. Forms: 2072, with their own JSON contract: 145, with a contract CivicOS wrote (form library): 75, contract not yet given: 1852.
+**Self-check.** Content lines not accounted for: 0. Headings (parts, sections, sub-sections) without a row: none. Catalogue IDs without a row: 0. Rows without a step: 0. Forms: 2072, with their own JSON contract: 145, with a contract CivicOS wrote (form library): 77, contract not yet given: 1850.
 
-**Form status.** catalogued 0, contract_missing 1648, contract_draft 204, under_review 91, blocked 1, excluded 128, approved 0, production 0.
+**Form status.** catalogued 0, contract_missing 1646, contract_draft 206, under_review 91, blocked 1, excluded 128, approved 0, production 0.
 
 **Inputs.** All 13 parts and the supplement received. The topics the 13 parts left out are now catalogued by the supplement (table below); the earlier gap rows became the supplement's rows. Still missing from the received text: the field contract of every form listed only in a table (`contract: not yet given`).
 
@@ -3576,7 +3576,7 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 3 | 1 | 166 | 512 | 0 | 1 | 42 | 121 | 843 |
 | Part 4 | 11 | 153 | 148 | 4 | 1 | 19 | 0 | 336 |
 | Part 5 | 12 | 146 | 58 | 137 | 1 | 15 | 0 | 369 |
-| Part 6 | 13 | 93 | 99 | 0 | 144 | 16 | 0 | 365 |
+| Part 6 | 13 | 109 | 80 | 0 | 147 | 16 | 0 | 365 |
 | Part 7 | 9 | 122 | 120 | 0 | 70 | 18 | 0 | 339 |
 | Part 8 | 2 | 108 | 299 | 0 | 0 | 23 | 0 | 432 |
 | Part 9 | 2 | 78 | 270 | 0 | 3 | 18 | 0 | 371 |
@@ -3603,18 +3603,18 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 20 | 0 | 12 | 62 | 0 | 0 | 0 | 0 | 74 |
 | Part 21 | 1 | 40 | 76 | 0 | 0 | 0 | 0 | 117 |
 | Part 22 | 0 | 77 | 21 | 0 | 0 | 0 | 0 | 98 |
-| **All** | **103** | **2759** | **3527** | **250** | **334** | **266** | **309** | **7548** |
+| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Legal review | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|---|
-| — | 103 | 0 | 0 | 0 | 305 | 112 | 0 | 520 |
+| — | 103 | 0 | 0 | 0 | 308 | 115 | 0 | 526 |
 | I1 | 0 | 773 | 23 | 0 | 0 | 0 | 0 | 796 |
 | I2 | 0 | 91 | 75 | 0 | 6 | 0 | 0 | 172 |
 | I3 | 0 | 26 | 2 | 0 | 0 | 0 | 0 | 28 |
-| I4 | 0 | 99 | 54 | 0 | 0 | 6 | 0 | 159 |
+| I4 | 0 | 115 | 35 | 0 | 0 | 3 | 0 | 153 |
 | I5 | 0 | 308 | 984 | 0 | 0 | 55 | 121 | 1468 |
 | I6 | 0 | 320 | 803 | 0 | 0 | 21 | 0 | 1144 |
 | I7 | 0 | 246 | 957 | 0 | 0 | 43 | 0 | 1246 |
@@ -3624,7 +3624,7 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | I12 | 0 | 20 | 264 | 21 | 23 | 13 | 15 | 356 |
 | I13 | 0 | 93 | 138 | 0 | 0 | 0 | 0 | 231 |
 | Throughout | 0 | 309 | 1 | 0 | 0 | 0 | 0 | 310 |
-| **All** | **103** | **2759** | **3527** | **250** | **334** | **266** | **309** | **7548** |
+| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
 
 
 Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 3, I7 25, I8 15, I9 63, Throughout 13.
@@ -3665,7 +3665,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 
 | Defence administration | 0 | 2 | 0 | 0 | 3 | 3 | 51 | 59 |
 | Health regulation | 14 | 95 | 0 | 0 | 29 | 3 | 0 | 141 |
 | Patient and clinical administration | 0 | 5 | 0 | 0 | 117 | 0 | 0 | 122 |
-| Public health | 0 | 11 | 19 | 0 | 18 | 3 | 0 | 51 |
+| Public health | 0 | 27 | 0 | 0 | 21 | 3 | 0 | 51 |
 | Medicines and devices regulation | 0 | 3 | 35 | 0 | 4 | 3 | 0 | 45 |
 | Health financing | 0 | 3 | 19 | 0 | 10 | 3 | 0 | 35 |
 | Social care | 0 | 1 | 17 | 0 | 3 | 2 | 0 | 23 |
@@ -3724,7 +3724,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 
 | Local and regional government | 0 | 11 | 63 | 0 | 0 | 0 | 0 | 74 |
 | Housing, planning and building control | 0 | 12 | 62 | 0 | 0 | 0 | 0 | 74 |
 | Shared internal administration | 1 | 40 | 76 | 0 | 0 | 0 | 0 | 117 |
-| **All** | **103** | **2759** | **3527** | **250** | **334** | **266** | **309** | **7548** |
+| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
 
 
 ### By category
@@ -3733,24 +3733,24 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 
 |---|---|---|---|---|---|---|---|---|
 | acceptance gate | 11 | 117 | 25 | 3 | 10 | 0 | 0 | 166 |
 | configuration | 0 | 0 | 0 | 10 | 7 | 199 | 0 | 216 |
-| data contract | 0 | 1101 | 1125 | 34 | 77 | 1 | 86 | 2424 |
+| data contract | 0 | 1106 | 1117 | 34 | 80 | 1 | 86 | 2424 |
 | definition of done | 4 | 24 | 9 | 0 | 3 | 1 | 0 | 41 |
 | engineering deliverable | 0 | 77 | 42 | 4 | 9 | 2 | 0 | 134 |
 | exchange | 1 | 13 | 34 | 5 | 2 | 0 | 0 | 55 |
 | field group | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
-| form | 64 | 257 | 1403 | 91 | 128 | 0 | 129 | 2072 |
+| form | 64 | 259 | 1401 | 91 | 128 | 0 | 129 | 2072 |
 | permission | 0 | 53 | 0 | 4 | 0 | 0 | 0 | 57 |
 | register | 1 | 10 | 34 | 1 | 0 | 0 | 12 | 58 |
-| safeguard | 14 | 355 | 245 | 28 | 42 | 24 | 21 | 729 |
-| scope | 8 | 621 | 526 | 45 | 47 | 38 | 48 | 1333 |
+| safeguard | 14 | 360 | 240 | 28 | 42 | 24 | 21 | 729 |
+| scope | 8 | 625 | 522 | 45 | 47 | 38 | 48 | 1333 |
 | state | 0 | 12 | 17 | 11 | 0 | 0 | 0 | 40 |
 | table row | 0 | 68 | 28 | 14 | 9 | 1 | 1 | 121 |
 | values source | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 11 |
 | workflow stage | 0 | 39 | 39 | 0 | 0 | 0 | 12 | 90 |
-| **All** | **103** | **2759** | **3527** | **250** | **334** | **266** | **309** | **7548** |
+| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
 
 
-### Deviations: platform rule stricter and legal review (584 rows)
+### Deviations: platform rule stricter and legal review (587 rows)
 
 Every row where the catalogue goes beyond a binding platform rule. *Platform rule stricter*: CivicOS will not hold it; *Legal review*: drafts only after legal review (I11, I12). The columns give the rule and what CivicOS holds, and what it will not hold or what the review must settle.
 
@@ -4005,7 +4005,10 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | HLT-PH-016 | FIELD-SERIES-PARTS-05-07.md 619 | HLT-PH-016 — Public-health data correction — Source correction and revised version recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
 | HLT-PH-017 | FIELD-SERIES-PARTS-05-07.md 620 | HLT-PH-017 — Public-health investigation closure — Authorized closure recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
 | HLT-PH-018 | FIELD-SERIES-PARTS-05-07.md 621 | HLT-PH-018 — Public-health disclosure authorization — Data sharing assessed and approved where permitted | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
+| FC6-4.2-01 | FIELD-SERIES-PARTS-05-07.md 625 | Case reference — Stable identifier and source system | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts); docs/requirements/form-scope.json (HLT-PH-001 … 0 | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
+| FC6-4.2-05 | FIELD-SERIES-PARTS-05-07.md 629 | Event dates — Onset, specimen, report, and other relevant dates when available | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts); docs/requirements/form-scope.json (HLT-PH-001 … 0 | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
 | FC6-4.2-06 | FIELD-SERIES-PARTS-05-07.md 630 | Evidence references — Laboratory result, clinical report, or authorized source | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
+| FC6-4.2-07 | FIELD-SERIES-PARTS-05-07.md 631 | Investigation — Assigned officer, approved protocol, findings, and outstanding actions | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts); docs/requirements/form-scope.json (HLT-PH-001 … 0 | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
 | FC6-4.3-01 | FIELD-SERIES-PARTS-05-07.md 637 | A public-health report is not itself authority to impose a restriction, order treatment, or disclose identifiable information. | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
 | FC6-5-01 | FIELD-SERIES-PARTS-05-07.md 649 | The medicines regulator needs a separate workflow from clinical prescribing and hospital pharmacy operations. | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
 | HLT-MED-016 | FIELD-SERIES-PARTS-05-07.md 667 | HLT-MED-016 — Adverse drug reaction report — Report recorded and assessed | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | Adverse reaction reports and clinical trial safety data carry patient data: CivicOS holds only the regulator's administrative decision (authorisation, its conditions) without patient fields | — |
@@ -7322,7 +7325,7 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | HLT-FAC-006 | 718 | 6.2 | form | HLT-FAC-006 — Service or capacity variation — Variation assessment | Partial | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  | Establishment approval, corrective action plans, variations, closure notices and safety concerns as records | I4 (+I1-catalogue) |
 | HLT-FAC-007 | 719 | 6.2 | form | HLT-FAC-007 — Facility closure notification — Closure process initiated | Partial | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  | Establishment approval, corrective action plans, variations, closure notices and safety concerns as records | I4 (+I1-catalogue) |
 | HLT-FAC-008 | 720 | 6.2 | form | HLT-FAC-008 — Facility suspension or revocation review — Authorized review | Met | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  |  | — (+I1-catalogue) |
-| HLT-FAC-009 | 721 | 6.2 | form | HLT-FAC-009 — Facility complaint or safety concern — Complaint referred | Partial | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  | Establishment approval, corrective action plans, variations, closure notices and safety concerns as records | I4 (+I1-catalogue) |
+| HLT-FAC-009 | 721 | 6.2 | form | HLT-FAC-009 — Facility complaint or safety concern — Complaint referred | Partial | lib/health/complaints/procedures.ts (health.complaint, prof.complaint: intake, assessment by the assigned officer with reasons, referral int | Adoption by the nation: a version of the complaint procedure approved by a second official; its complaint kinds and relationships (configure | I4 (+I1-catalogue) |
 | HLT-FAC-010 | 722 | 6.2 | form | HLT-FAC-010 — Facility licence verification — Status response issued | Met | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  |  | — (+I1-catalogue) |
 | FC6-6.2-01 | 723 | 6.2 | safeguard | Professional or facility status should be disclosed only at the level authorized by law. | Partial | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  | The requirement as stated is not built for this domain beyond the cited records | I4 |
 | FC6-6.2-02 | 723 | 6.2 | scope | A public register might show that a licence is active, while investigation details or protected personal information remain restricted. | Partial | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  | The requirement as stated is not built for this domain beyond the cited records | I4 |
@@ -7496,12 +7499,12 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | FC6-3.3-08 | 599 | 3.3 | scope | Where AI is enabled, record the feature used, the output's status, the reviewing professional when required, and the final action. | Partial | AI is advisory only and off unless the nation opts in (SovereignProfile.aiAssistant); /api/ai/advisory refuses when off, callers fall back t | No test proves that no AI output can reach act(), a register change or a publication; no register of AI features (owner, permitted inputs, o | Throughout |
 | FC6-3.3-09 | 599 | 3.3 | scope | Country and institutional policy determines which AI functions are permitted. | Partial | AI is advisory only and off unless the nation opts in (SovereignProfile.aiAssistant); /api/ai/advisory refuses when off, callers fall back t | No test proves that no AI output can reach act(), a register change or a publication; no register of AI features (owner, permitted inputs, o | Throughout |
 
-##### Public health — Partial 3, Not yet 19, Platform rule stricter 18, Country decision 3
+##### Public health — Partial 19, Platform rule stricter 21, Country decision 3
 
 | ID | Lines | Section | Cat. | Item | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|---|
 | FC6-4-01 | 601 | 4 | safeguard | Public-health workflows may require data from hospitals, laboratories, clinicians, and other authorized sources. | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
-| FC6-4-02 | 601 | 4 | safeguard | They must distinguish an initial report, a suspected case, a confirmed case, a statistical aggregate, and a public-health determination. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
+| FC6-4-02 | 601 | 4 | safeguard | They must distinguish an initial report, a suspected case, a confirmed case, a statistical aggregate, and a public-health determination. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
 | HLT-PH-001 | 604 | 4.1 | form | HLT-PH-001 — Notifiable condition report — Report received | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-002 | 605 | 4.1 | form | HLT-PH-002 — Laboratory public-health notification — Test information received under configured rules | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-003 | 606 | 4.1 | form | HLT-PH-003 — Case investigation record — Authorized investigation opened | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
@@ -7512,37 +7515,37 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | HLT-PH-008 | 611 | 4.1 | form | HLT-PH-008 — Outbreak investigation — Investigation and evidence tracked | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-009 | 612 | 4.1 | form | HLT-PH-009 — Public-health intervention authorization — Required legal approval recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-010 | 613 | 4.1 | form | HLT-PH-010 — Public-health intervention review — Review and continuation decision recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
-| HLT-PH-011 | 614 | 4.1 | form | HLT-PH-011 — Vaccination programme administration — Eligible programme activity recorded | Not yet | absent: no module, register or procedure (audit A §3) | Programme administration and risk-communication approval (administrative, no individual data) | I4 (+I1-catalogue) |
+| HLT-PH-011 | 614 | 4.1 | form | HLT-PH-011 — Vaccination programme administration — Eligible programme activity recorded | Partial | lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, coverage with documented denominator, budget ref | Adoption by the nation: the procedure versions approved by a second official, the mappings public-health-programme and public-health-communi | I4 (+I1-catalogue) |
 | HLT-PH-012 | 615 | 4.1 | form | HLT-PH-012 — Vaccination record submission — Vaccination event recorded from an authorized source | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-013 | 616 | 4.1 | form | HLT-PH-013 — Adverse event following immunization report — Safety report submitted | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
-| HLT-PH-014 | 617 | 4.1 | form | HLT-PH-014 — Public-health risk communication approval — Authorized message approved for release | Not yet | absent: no module, register or procedure (audit A §3) | Programme administration and risk-communication approval (administrative, no individual data) | I4 (+I1-catalogue) |
-| HLT-PH-015 | 618 | 4.1 | form | HLT-PH-015 — Public-health aggregate data submission — Statistical dataset submitted | Partial | Aggregate returns (lib/health/register.ts) | Public-health aggregate submissions by programme | I4 (+I1-catalogue) |
+| HLT-PH-014 | 617 | 4.1 | form | HLT-PH-014 — Public-health risk communication approval — Authorized message approved for release | Partial | lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, coverage with documented denominator, budget ref | Adoption by the nation: the procedure versions approved by a second official, the mappings public-health-programme and public-health-communi | I4 (+I1-catalogue) |
+| HLT-PH-015 | 618 | 4.1 | form | HLT-PH-015 — Public-health aggregate data submission — Statistical dataset submitted | Partial | Programme returns (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, coverage with documented deno | Adoption by the nation (the return procedure approved, programmes established); the statistics exchange HX-009 | I4 (+I1-catalogue) |
 | HLT-PH-016 | 619 | 4.1 | form | HLT-PH-016 — Public-health data correction — Source correction and revised version recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-017 | 620 | 4.1 | form | HLT-PH-017 — Public-health investigation closure — Authorized closure recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-018 | 621 | 4.1 | form | HLT-PH-018 — Public-health disclosure authorization — Data sharing assessed and approved where permitted | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
-| FC6-4.2-01 | 625 | 4.2 | data contract | Case reference — Stable identifier and source system | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-02 | 626 | 4.2 | data contract | Reporting source — Facility or authorized reporter, with receipt time | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-03 | 627 | 4.2 | data contract | Condition classification — Configured code set and version | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-04 | 628 | 4.2 | data contract | Case status — Reported, suspected, probable, confirmed, ruled out, or other locally defined status | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-05 | 629 | 4.2 | data contract | Event dates — Onset, specimen, report, and other relevant dates when available | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
+| FC6-4.2-01 | 625 | 4.2 | data contract | Case reference — Stable identifier and source system | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — |
+| FC6-4.2-02 | 626 | 4.2 | data contract | Reporting source — Facility or authorized reporter, with receipt time | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.2-03 | 627 | 4.2 | data contract | Condition classification — Configured code set and version | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.2-04 | 628 | 4.2 | data contract | Case status — Reported, suspected, probable, confirmed, ruled out, or other locally defined status | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.2-05 | 629 | 4.2 | data contract | Event dates — Onset, specimen, report, and other relevant dates when available | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — |
 | FC6-4.2-06 | 630 | 4.2 | data contract | Evidence references — Laboratory result, clinical report, or authorized source | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
-| FC6-4.2-07 | 631 | 4.2 | data contract | Investigation — Assigned officer, approved protocol, findings, and outstanding actions | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-08 | 632 | 4.2 | data contract | Intervention — Type, legal authority, approval, effective dates, and review requirements | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-09 | 633 | 4.2 | data contract | Data provenance — Origin, transformation history, verification status, and correction links | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
+| FC6-4.2-07 | 631 | 4.2 | data contract | Investigation — Assigned officer, approved protocol, findings, and outstanding actions | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — |
+| FC6-4.2-08 | 632 | 4.2 | data contract | Intervention — Type, legal authority, approval, effective dates, and review requirements | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.2-09 | 633 | 4.2 | data contract | Data provenance — Origin, transformation history, verification status, and correction links | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
 | FC6-4.2-10 | 634 | 4.2 | data contract | Disclosure history — Recipient, legal purpose, data scope, and transfer reference | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | The domain's exchange services are not defined | I4 (+I9) |
-| FC6-4.2-11 | 635 | 4.2 | safeguard | The case classifications shown are examples; countries must configure the categories and criteria actually used by their public-health system. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
+| FC6-4.2-11 | 635 | 4.2 | safeguard | The case classifications shown are examples; countries must configure the categories and criteria actually used by their public-health system. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
 | FC6-4.3-01 | 637 | 4.3 | scope | A public-health report is not itself authority to impose a restriction, order treatment, or disclose identifiable information. | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
-| FC6-4.3-02 | 639 | 4.3 | safeguard | Any legally consequential intervention must be supported by the relevant law, the competent authority, the applicable evidence and procedure, and a recorded decision. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-03 | 639 | 4.3 | safeguard | Required notice, review, expiry, and reassessment rules must be configurable. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-04 | 642 | 4.3 | scope | Prefer aggregated or de-identified data where it meets the purpose. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-05 | 643 | 4.3 | scope | Label estimates, modelled values, and incomplete reports explicitly. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-06 | 644 | 4.3 | safeguard | Do not interpret a missing report as proof that no case exists. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-07 | 645 | 4.3 | scope | Apply small-cell disclosure protections where necessary. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-08 | 646 | 4.3 | scope | Restrict identifiable outbreak investigation data to authorized roles. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
+| FC6-4.3-02 | 639 | 4.3 | safeguard | Any legally consequential intervention must be supported by the relevant law, the competent authority, the applicable evidence and procedure, and a recorded decision. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-03 | 639 | 4.3 | safeguard | Required notice, review, expiry, and reassessment rules must be configurable. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-04 | 642 | 4.3 | scope | Prefer aggregated or de-identified data where it meets the purpose. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-05 | 643 | 4.3 | scope | Label estimates, modelled values, and incomplete reports explicitly. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-06 | 644 | 4.3 | safeguard | Do not interpret a missing report as proof that no case exists. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-07 | 645 | 4.3 | scope | Apply small-cell disclosure protections where necessary. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-08 | 646 | 4.3 | scope | Restrict identifiable outbreak investigation data to authorized roles. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
 | FC6-4.3-09 | 647 | 4.3 | scope | Preserve the original submitted report when a correction is received. | Partial | Registers built on the platform keep every version and change only through procedure effects (lib/casework/register-writes.test.ts (only the | This domain's register does not exist yet | I4 |
-| CFG-PH-001 | 859 | 11 | configuration | CFG-PH-001 — Notifiable conditions, reporting deadlines, and authorized sources | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde | The Public health records and procedures do not exist, so there is nothing yet to configure | I4 |
-| CFG-PH-002 | 860 | 11 | configuration | CFG-PH-002 — Public-health case definitions and classification versions | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde | The Public health records and procedures do not exist, so there is nothing yet to configure | I4 |
-| CFG-PH-003 | 861 | 11 | configuration | CFG-PH-003 — Intervention authority, review, and expiry requirements | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde | The Public health records and procedures do not exist, so there is nothing yet to configure | I4 |
+| CFG-PH-001 | 859 | 11 | configuration | CFG-PH-001 — Notifiable conditions, reporting deadlines, and authorized sources | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde |  | — |
+| CFG-PH-002 | 860 | 11 | configuration | CFG-PH-002 — Public-health case definitions and classification versions | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde |  | — |
+| CFG-PH-003 | 861 | 11 | configuration | CFG-PH-003 — Intervention authority, review, and expiry requirements | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde |  | — |
 
 ##### Medicines and devices regulation — Partial 3, Not yet 35, Platform rule stricter 4, Country decision 3
 

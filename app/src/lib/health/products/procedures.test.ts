@@ -214,7 +214,7 @@ describe('the medicines regulator\'s product procedures', () => {
       expect(p.appeal?.sampleDays).toBeUndefined();
       expect(p.fields.filter(f => f.type === 'money')).toEqual([]);
       for (const f of p.fields.filter(x => x.type === 'enum')) expect(f.valuesSource).toMatchObject({ kind: 'configured' });
-      expect(p.owner).toBe('medicinesRegulation');
+      expect(p.owner, p.key).toBe(p.key === 'medicines.controlled' ? 'controlledSubstances' : 'medicinesRegulation');
     }
   });
 });

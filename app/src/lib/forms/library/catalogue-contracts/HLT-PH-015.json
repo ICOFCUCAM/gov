@@ -3,10 +3,12 @@
  "form_id": "HLT-PH-015",
  "record_type": "health.public-health.aggregate-return",
  "form_version": 1,
+ "procedure_package_id": "public-health.programme-return",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "CFG-PH-001: notifiable conditions, reporting deadlines and authorised sources; the reporting programmes and their periods (none ship).",
-  "CFG-HLT-001: the institution that receives public-health aggregate returns (the deployment profile has no public-health slot yet; the health regulator receives capacity returns today).",
+  "CFG-HLT-001: the institution that keeps public-health programmes (the publicHealth slot of the deployment profile, shipped empty; the health regulator stands in only provisionally).",
   "CFG-DAT-001: the small-cell suppression threshold and the disclosure rules for aggregates (shipped unset).",
   "CFG-HX-001: the exchange that passes aggregates to the authorised statistics service."
  ],
@@ -23,8 +25,12 @@
   "intro": "Submit counts for an approved public-health reporting programme, by area and period. Counts only: never a person, a name, an identifier or anything about an individual. Say which counts are estimated or incomplete; a missing count is never read as zero. Small numbers are protected before anything is published, by the rule the nation sets.",
   "owner": "publicHealth",
   "filled_by": "A licensed facility or another reporter the programme authorises, online, at an office or on paper.",
-  "procedure": null,
-  "intended": "A public-health aggregate return of the receiving authority, kept like the capacity returns (lib/health/register.ts: versioned, always marked reported, corrections as new versions): the programme returns are not built; the form waits in the library (plan step I4).",
+  "procedure": {
+   "key": "public-health.programme-return",
+   "stage": "submitted",
+   "action": "register",
+   "document": "return-form"
+  },
   "lists": {
    "civicos.aggregate.count_status": {
     "values": [
@@ -57,6 +63,26 @@
       "label": "Partial: some sources have not reported"
      }
     ]
+   },
+   "civicos.public_health.count_basis": {
+    "values": [
+     {
+      "value": "reported",
+      "label": "Reported (an initial report)"
+     },
+     {
+      "value": "suspected",
+      "label": "Suspected"
+     },
+     {
+      "value": "confirmed",
+      "label": "Confirmed"
+     },
+     {
+      "value": "modelled",
+      "label": "Modelled"
+     }
+    ]
    }
   },
   "nation_values": [
@@ -76,7 +102,7 @@
   "deviations": [
    {
     "id": "aggregate-only",
-    "what": "Aggregate counts only: no case, suspected or confirmed case, individual report, outbreak investigation or determination",
+    "what": "Aggregate counts only, each marked reported, suspected, confirmed or modelled and kept apart: no case, individual report, outbreak investigation or determination",
     "why": "Approved aggregate public-health statistics are in scope; individual public-health records are not.",
     "rule": "Owner's direction 2026-10-21 §1; CLAUDE.md Health: returns are aggregates"
    },
@@ -359,7 +385,8 @@
       "return.counts",
       "return.dataset"
      ],
-     "deviation": "aggregate-only"
+     "deviation": "aggregate-only",
+     "procedure": "accept"
     }
    },
    {
@@ -434,7 +461,7 @@
   },
   {
    "id": "return.programme",
-   "type": "choice",
+   "type": "registry_reference",
    "required": true,
    "validation": [
     {
@@ -442,23 +469,31 @@
      "params": {}
     },
     {
-     "rule": "value_in_source",
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
      "params": {}
     }
    ],
-   "values_source": "health.country.public_health_programmes",
+   "values_source": "health.registry.programmes",
    "personal_data_class": "administrative",
    "evidence": [],
    "label": {
-    "en": "Reporting programme"
+    "en": "Reporting programme (its register number, PHP-…)"
+   },
+   "hint": {
+    "en": "The programme on the register of public-health programmes."
    },
    "error_text": {
     "en": {
-     "required": "Select the reporting programme.",
-     "value_in_source": "Select the reporting programme from the list."
+     "reference_exists": "There is no programme with that number on the register of public-health programmes.",
+     "REF-ACTIVE": "That programme is suspended or closed: it takes no return.",
+     "required": "Enter reporting programme (its register number, PHP-…)."
     }
    },
-   "country_decision": "CFG-PH-001: the reporting programmes, their reporting deadlines and the authorised sources (none ship).",
+   "country_decision": null,
    "section": {
     "en": "The return"
    }
@@ -582,7 +617,7 @@
     "en": "Counts"
    },
    "hint": {
-    "en": "One entry per indicator and breakdown. Whole numbers only. If a count is not available, say so rather than entering 0."
+    "en": "One entry per indicator, breakdown and class (reported, suspected, confirmed or modelled: kept apart). Whole numbers only. If a count is not available, say so rather than entering 0."
    },
    "error_text": {
     "en": {
@@ -627,6 +662,29 @@
       "en": "Breakdown, where the dataset defines one"
      },
      "country_decision": "The approved breakdowns (for example age band); none ship."
+    },
+    {
+     "id": "basis",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "civicos.public_health.count_basis",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Class of the count"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select an answer."
+      }
+     },
+     "country_decision": null
     },
     {
      "id": "count",

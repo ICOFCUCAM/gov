@@ -20,6 +20,11 @@
 // each part's name, IV, tag, offset and length). The manifest — what was
 // backed up, when, sizes, SHA-256 per part over the plaintext, schema and
 // release, the audit chain head — is itself a sealed part.
+//
+// An institution's portable export (lib/portability/export.ts) is sealed the
+// same way under its own format and magic ("CVINST1\n",
+// `civicos-institution-export/1`, key associated data `export:<id>`), so a
+// backup can never be opened as an export or the other way round.
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { gzipSync, gunzipSync } from 'node:zlib';
@@ -28,7 +33,12 @@ import { providerKind, remoteService, remoteKeyNames } from '@/lib/keys/custody'
 import type { InstallationMode } from '@/lib/ops/mode';
 
 export const ARCHIVE_FORMAT = 'civicos-backup/1';
-const MAGIC = Buffer.from('CVBKUP1\n', 'utf8');
+/** An institution's portable export (lib/portability/export.ts): the same sealing, its own format. */
+export const EXPORT_FORMAT = 'civicos-institution-export/1';
+type Format = typeof ARCHIVE_FORMAT | typeof EXPORT_FORMAT;
+const MAGICS: Record<Format, Buffer> = { [ARCHIVE_FORMAT]: Buffer.from('CVBKUP1\n', 'utf8'), [EXPORT_FORMAT]: Buffer.from('CVINST1\n', 'utf8') };
+/** The associated data the wrapped data key is sealed under (env provider). */
+const keyLabel = (format: Format, id: string) => `${format === ARCHIVE_FORMAT ? 'backup' : 'export'}:${id}`;
 
 /** Why a part exists and how it is restored. */
 export type PartKind = 'store' | 'table' | 'pg_dump';
@@ -74,7 +84,7 @@ export type BackupReason = 'scheduled' | 'manual' | 'restore-point' | 'pre-resto
 
 interface Sealed { name: string; iv: string; tag: string; offset: number; length: number }
 interface Header {
-  format: typeof ARCHIVE_FORMAT;
+  format: Format;
   id: string;
   createdAt: string;
   key: { scheme: 'aes-256-gcm'; provider: 'env' | 'vault' | 'kms-http'; keyName?: string; wrapped: string };
@@ -87,10 +97,10 @@ export const sha256 = (b: string | Uint8Array): string => createHash('sha256').u
 export const stateDigest = (parts: { name: string; sha256: string }[]): string =>
   sha256([...parts].sort((a, b) => (a.name < b.name ? -1 : 1)).map(p => `${p.name}:${p.sha256}`).join('\n'));
 
-const aad = (id: string, name: string) => Buffer.from(`${ARCHIVE_FORMAT}|${id}|${name}`, 'utf8');
+const aad = (format: Format, id: string, name: string) => Buffer.from(`${format}|${id}|${name}`, 'utf8');
 
 /** A fresh data key, and its wrapped form for the header. Refuses when no key is configured. */
-async function newDataKey(id: string): Promise<{ dek: Buffer; key: Header['key'] }> {
+async function newDataKey(id: string, format: Format = ARCHIVE_FORMAT): Promise<{ dek: Buffer; key: Header['key'] }> {
   const kind = providerKind();
   if (kind !== 'env') {
     const svc = remoteService();
@@ -103,12 +113,12 @@ async function newDataKey(id: string): Promise<{ dek: Buffer; key: Header['key']
     throw new Error('Backups are encrypted and no key is configured: set CIVICOS_DATA_KEK (or a key provider, CIVICOS_KEY_PROVIDER) before taking a backup');
   }
   const dek = randomBytes(32);
-  return { dek, key: { scheme: 'aes-256-gcm', provider: 'env', wrapped: seal(dek.toString('base64'), `backup:${id}`) } };
+  return { dek, key: { scheme: 'aes-256-gcm', provider: 'env', wrapped: seal(dek.toString('base64'), keyLabel(format, id)) } };
 }
 
 async function unwrapDataKey(h: Header): Promise<Buffer> {
   if (h.key.provider === 'env') {
-    const o = open(h.key.wrapped, `backup:${h.id}`);
+    const o = open(h.key.wrapped, keyLabel(h.format, h.id));
     if ('error' in o) throw new Error(`The backup's key does not open: ${o.error}`);
     const k = Buffer.from(o.plain, 'base64');
     if (k.length !== 32) throw new Error('The backup\'s key does not open (wrong key)');
@@ -119,19 +129,19 @@ async function unwrapDataKey(h: Header): Promise<Buffer> {
   return svc.unwrap(h.key.keyName ?? remoteKeyNames().data, h.key.wrapped);
 }
 
-function sealPart(dek: Buffer, id: string, name: string, plain: Buffer): { iv: Buffer; tag: Buffer; ct: Buffer } {
+function sealPart(dek: Buffer, format: Format, id: string, name: string, plain: Buffer): { iv: Buffer; tag: Buffer; ct: Buffer } {
   const iv = randomBytes(12);
   const c = createCipheriv('aes-256-gcm', dek, iv);
-  c.setAAD(aad(id, name));
+  c.setAAD(aad(format, id, name));
   const ct = Buffer.concat([c.update(gzipSync(plain)), c.final()]);
   return { iv, tag: c.getAuthTag(), ct };
 }
 
-function openPart(dek: Buffer, id: string, s: Sealed, payload: Buffer): Buffer {
+function openPart(dek: Buffer, format: Format, id: string, s: Sealed, payload: Buffer): Buffer {
   if (s.offset < 0 || s.length < 0 || s.offset + s.length > payload.length) throw new Error(`Part ${s.name} lies outside the archive`);
   try {
     const d = createDecipheriv('aes-256-gcm', dek, Buffer.from(s.iv, 'base64'));
-    d.setAAD(aad(id, s.name));
+    d.setAAD(aad(format, id, s.name));
     d.setAuthTag(Buffer.from(s.tag, 'base64'));
     return gunzipSync(Buffer.concat([d.update(payload.subarray(s.offset, s.offset + s.length)), d.final()]));
   } catch {
@@ -150,11 +160,16 @@ export async function packArchive(meta: Omit<Manifest, 'format' | 'parts' | 'sta
   }
   const listed: ManifestPart[] = parts.map(p => ({ name: p.name, kind: p.kind, bytes: p.data.length, sha256: sha256(p.data), ...(p.rows !== undefined ? { rows: p.rows } : {}), ...(p.columns ? { columns: p.columns } : {}) }));
   const manifest: Manifest = { format: ARCHIVE_FORMAT, ...meta, parts: listed, stateDigest: stateDigest(listed) };
-  const { dek, key } = await newDataKey(meta.id);
+  return { archive: await sealAll(ARCHIVE_FORMAT, meta.id, meta.createdAt, manifest, parts), manifest };
+}
+
+/** Seal parts and a manifest under a fresh data key, in the format given. */
+async function sealAll(format: Format, id: string, createdAt: string, manifest: object, parts: { name: string; data: Buffer }[]): Promise<Buffer> {
+  const { dek, key } = await newDataKey(id, format);
   const chunks: Buffer[] = [];
   let offset = 0;
   const place = (name: string, plain: Buffer): Sealed => {
-    const { iv, tag, ct } = sealPart(dek, meta.id, name, plain);
+    const { iv, tag, ct } = sealPart(dek, format, id, name, plain);
     chunks.push(ct);
     const s = { name, iv: iv.toString('base64'), tag: tag.toString('base64'), offset, length: ct.length };
     offset += ct.length;
@@ -163,27 +178,80 @@ export async function packArchive(meta: Omit<Manifest, 'format' | 'parts' | 'sta
   const sealedParts = parts.map(p => place(p.name, p.data));
   const sealedManifest = place('manifest', Buffer.from(JSON.stringify(manifest), 'utf8'));
   dek.fill(0);
-  const header: Header = { format: ARCHIVE_FORMAT, id: meta.id, createdAt: meta.createdAt, key, manifest: sealedManifest, parts: sealedParts };
+  const header: Header = { format, id, createdAt, key, manifest: sealedManifest, parts: sealedParts };
   const h = Buffer.from(JSON.stringify(header), 'utf8');
   const len = Buffer.alloc(4); len.writeUInt32BE(h.length);
-  return { archive: Buffer.concat([MAGIC, len, h, ...chunks]), manifest };
+  return Buffer.concat([MAGICS[format], len, h, ...chunks]);
 }
 
-function readHeader(archive: Buffer): { header: Header; payload: Buffer } {
-  if (archive.length < MAGIC.length + 4 || !archive.subarray(0, MAGIC.length).equals(MAGIC)) throw new Error('Not a CivicOS backup archive');
+function readHeader(archive: Buffer, format: Format = ARCHIVE_FORMAT): { header: Header; payload: Buffer } {
+  const MAGIC = MAGICS[format];
+  if (archive.length < MAGIC.length + 4 || !archive.subarray(0, MAGIC.length).equals(MAGIC)) throw new Error(format === ARCHIVE_FORMAT ? 'Not a CivicOS backup archive' : 'Not a CivicOS institution export');
   const n = archive.readUInt32BE(MAGIC.length);
   const start = MAGIC.length + 4;
   if (n <= 0 || start + n > archive.length) throw new Error('The archive header is damaged');
   let header: Header;
   try { header = JSON.parse(archive.subarray(start, start + n).toString('utf8')) as Header; } catch { throw new Error('The archive header is damaged'); }
-  if (header.format !== ARCHIVE_FORMAT || !header.manifest || !Array.isArray(header.parts) || !header.key?.wrapped) throw new Error('Unknown archive format');
+  if (header.format !== format || !header.manifest || !Array.isArray(header.parts) || !header.key?.wrapped) throw new Error('Unknown archive format');
   return { header, payload: archive.subarray(start + n) };
 }
 
 /** The archive's id and key provider, without opening it. */
-export function peekArchive(archive: Buffer): { id: string; createdAt: string; provider: string } {
-  const { header } = readHeader(archive);
+export function peekArchive(archive: Buffer, format: Format = ARCHIVE_FORMAT): { id: string; createdAt: string; provider: string } {
+  const { header } = readHeader(archive, format);
   return { id: header.id, createdAt: header.createdAt, provider: header.key.provider };
+}
+
+/** Open every sealed part of an archive (its manifest as raw JSON); the caller checks the manifest. */
+async function openAll(format: Format, archive: Buffer, expectId?: string): Promise<{ id: string; manifest: Buffer; parts: Map<string, Buffer> }> {
+  const { header, payload } = readHeader(archive, format);
+  if (expectId && header.id !== expectId) throw new Error(`The archive holds ${header.id}, not ${expectId}`);
+  const dek = await unwrapDataKey(header);
+  try {
+    if (header.manifest.name !== 'manifest') throw new Error('The archive header is damaged');
+    const manifest = openPart(dek, format, header.id, header.manifest, payload);
+    const parts = new Map<string, Buffer>();
+    for (const s of header.parts) parts.set(s.name, openPart(dek, format, header.id, s, payload));
+    return { id: header.id, manifest, parts };
+  } finally {
+    dek.fill(0);
+  }
+}
+
+/** Check opened parts against a manifest's list: the same names, sizes and SHA-256 (over the plaintext). */
+function checkParts(listed: { name: string; bytes: number; sha256: string }[], opened: Map<string, Buffer>): void {
+  if (opened.size !== listed.length) throw new Error(`The archive holds ${opened.size} parts; the manifest lists ${listed.length}`);
+  for (const p of listed) {
+    const plain = opened.get(p.name);
+    if (!plain) throw new Error(`Part ${p.name} is missing from the archive`);
+    if (plain.length !== p.bytes || sha256(plain) !== p.sha256) throw new Error(`Part ${p.name} does not match its SHA-256 in the manifest`);
+  }
+}
+
+// ── Institution exports (lib/portability/export.ts) ────────────────────────
+export interface ExportPartListing { name: string; bytes: number; sha256: string; records?: number }
+export interface ExportManifestBase { format: typeof EXPORT_FORMAT; id: string; createdAt: string; parts: ExportPartListing[]; digest: string }
+
+/** Seal an institution's export: each part listed with its SHA-256, the manifest itself a sealed part. */
+export async function packExport<M extends Omit<ExportManifestBase, 'format' | 'parts' | 'digest'>>(meta: M, parts: { name: string; data: Buffer; records?: number }[]): Promise<{ archive: Buffer; manifest: M & ExportManifestBase }> {
+  const names = new Set<string>();
+  for (const p of parts) {
+    if (names.has(p.name) || p.name === 'manifest') throw new Error(`Duplicate or reserved part name ${p.name}`);
+    names.add(p.name);
+  }
+  const listed = parts.map(p => ({ name: p.name, bytes: p.data.length, sha256: sha256(p.data), ...(p.records !== undefined ? { records: p.records } : {}) }));
+  const manifest = { ...meta, format: EXPORT_FORMAT, parts: listed, digest: stateDigest(listed) } as M & ExportManifestBase;
+  return { archive: await sealAll(EXPORT_FORMAT, meta.id, meta.createdAt, manifest, parts), manifest };
+}
+
+/** Open an institution's export: its key, the manifest, every part checked against the manifest's SHA-256. */
+export async function openExport<M extends ExportManifestBase>(archive: Buffer): Promise<{ manifest: M; parts: Map<string, Buffer> }> {
+  const o = await openAll(EXPORT_FORMAT, archive);
+  const manifest = JSON.parse(o.manifest.toString('utf8')) as M;
+  if (manifest.id !== o.id || manifest.format !== EXPORT_FORMAT) throw new Error('The manifest does not belong to this export');
+  checkParts(manifest.parts, o.parts);
+  if (stateDigest(manifest.parts) !== manifest.digest) throw new Error('The manifest\'s digest does not match its parts');
+  return { manifest, parts: o.parts };
 }
 
 export interface OpenedArchive { manifest: Manifest; parts: Map<string, Buffer> }
@@ -194,26 +262,11 @@ export interface OpenedArchive { manifest: Manifest; parts: Map<string, Buffer> 
  * Throws with the reason on the first problem.
  */
 export async function openArchive(archive: Buffer, expectId?: string): Promise<OpenedArchive> {
-  const { header, payload } = readHeader(archive);
-  if (expectId && header.id !== expectId) throw new Error(`The archive holds backup ${header.id}, not ${expectId}`);
-  const dek = await unwrapDataKey(header);
-  try {
-    if (header.manifest.name !== 'manifest') throw new Error('The archive header is damaged');
-    const manifest = JSON.parse(openPart(dek, header.id, header.manifest, payload).toString('utf8')) as Manifest;
-    if (manifest.id !== header.id || manifest.format !== ARCHIVE_FORMAT) throw new Error('The manifest does not belong to this archive');
-    const sealed = new Map(header.parts.map(p => [p.name, p]));
-    if (sealed.size !== manifest.parts.length) throw new Error(`The archive holds ${sealed.size} parts; the manifest lists ${manifest.parts.length}`);
-    const parts = new Map<string, Buffer>();
-    for (const p of manifest.parts) {
-      const s = sealed.get(p.name);
-      if (!s) throw new Error(`Part ${p.name} is missing from the archive`);
-      const plain = openPart(dek, header.id, s, payload);
-      if (plain.length !== p.bytes || sha256(plain) !== p.sha256) throw new Error(`Part ${p.name} does not match its SHA-256 in the manifest`);
-      parts.set(p.name, plain);
-    }
-    if (stateDigest(manifest.parts) !== manifest.stateDigest) throw new Error('The manifest\'s state digest does not match its parts');
-    return { manifest, parts };
-  } finally {
-    dek.fill(0);
-  }
+  const o = await openAll(ARCHIVE_FORMAT, archive);
+  if (expectId && o.id !== expectId) throw new Error(`The archive holds backup ${o.id}, not ${expectId}`);
+  const manifest = JSON.parse(o.manifest.toString('utf8')) as Manifest;
+  if (manifest.id !== o.id || manifest.format !== ARCHIVE_FORMAT) throw new Error('The manifest does not belong to this archive');
+  checkParts(manifest.parts, o.parts);
+  if (stateDigest(manifest.parts) !== manifest.stateDigest) throw new Error('The manifest\'s state digest does not match its parts');
+  return { manifest, parts: o.parts };
 }

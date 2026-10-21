@@ -46,6 +46,47 @@ const g = globalThis as unknown as { __civicosDocuments?: DocDb };
 const db = (): DocDb => touch('__civicosDocuments', g.__civicosDocuments ??= { docs: [] });
 export function resetDocuments(): void { g.__civicosDocuments = undefined; }
 
+/** A document as an export carries it: each version's content in the clear (inside the sealed export), with its SHA-256. */
+export type PortableDocument = Omit<DocumentRecord, 'versions'> & { versions: (Omit<DocumentVersion, 'content'> & { bytes?: string })[] };
+
+/** One institution's documents with their content opened, for an institution's portable export (lib/portability/export.ts). A disposed version carries no content. */
+export function portableDocuments(institution: string): PortableDocument[] | { error: string } {
+  const out: PortableDocument[] = [];
+  for (const doc of db().docs.filter(x => x.institution === institution)) {
+    const versions: PortableDocument['versions'] = [];
+    for (const v of doc.versions) {
+      const { content, ...meta } = v;
+      if (!content || doc.disposed) { versions.push(meta); continue; }
+      const o = open(content, aad(doc.id, v.n));
+      if ('error' in o) return { error: `Document ${doc.id} version ${v.n} does not open: ${o.error}` };
+      versions.push({ ...meta, bytes: o.plain });
+    }
+    out.push({ ...structuredClone({ ...doc, versions: [] }), versions });
+  }
+  return out;
+}
+
+/** Put back documents keeping their ids, each version's content sealed again under this installation's key after its SHA-256 is checked (lib/portability/import.ts only: the confirmed import of an institution's own export (two officials) into an installation that holds none of these records). */
+export function restoreDocuments(list: PortableDocument[]): { restored: number } | { error: string } {
+  const refused = documentsRefusal();
+  if (refused) return { error: refused };
+  const d = db();
+  const clash = list.find(x => d.docs.some(y => y.id === x.id));
+  if (clash) return { error: `Document ${clash.id} is already in this installation` };
+  const ready: DocumentRecord[] = [];
+  for (const doc of list) {
+    const versions: DocumentVersion[] = [];
+    for (const { bytes, ...v } of doc.versions) {
+      if (bytes === undefined) { versions.push({ ...v, content: '' }); continue; }
+      if (createHash('sha256').update(Buffer.from(bytes, 'base64')).digest('hex') !== v.sha256) return { error: `Document ${doc.id} version ${v.n} does not match its SHA-256` };
+      versions.push({ ...v, content: seal(bytes, aad(doc.id, v.n)) });
+    }
+    ready.push({ ...structuredClone({ ...doc, versions: [] }), versions });
+  }
+  d.docs.push(...ready);
+  return { restored: ready.length };
+}
+
 /** The media type a file's first bytes show, or null when it is not one the platform keeps. */
 export function sniffDocument(bytes: Uint8Array): MediaType | null {
   if (bytes.length >= 5 && Buffer.from(bytes.subarray(0, 5)).toString('latin1') === '%PDF-') return 'application/pdf';

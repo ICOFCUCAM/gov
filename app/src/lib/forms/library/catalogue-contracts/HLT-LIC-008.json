@@ -3,6 +3,8 @@
  "form_id": "HLT-LIC-008",
  "record_type": "professional.conduct.complaint",
  "form_version": 1,
+ "procedure_package_id": "prof.complaint",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "CFG-LIC-001: conduct complaint handling, who investigates and the bodies complaints are routed to.",
@@ -25,8 +27,12 @@
   "owner": "professionalRegulation",
   "filled_by": "Anyone: online, at an office or on paper. The regulator registers it and routes it to the body that can act.",
   "authority": "The regulator that keeps the chosen profession's register (lib/professions/register.ts, profession().authority), under the approved permit authority mapping of the profession's permit type; never a ministry by name.",
-  "procedure": null,
-  "intended": "A conduct-complaint intake of the professions regulator that registers and routes the complaint: to a conduct investigation (HLT-LIC-009) and fitness-to-practise case (prof.fitness, document \"grounds\") or by referral to another institution (lib/casework/referral.ts); the intake is not built; the form waits in the library (plan step I4).",
+  "procedure": {
+   "key": "prof.complaint",
+   "stage": "received",
+   "action": "register",
+   "document": "complaint"
+  },
   "lists": {
    "professional.country.concern_categories": {
     "values": [
@@ -261,7 +267,8 @@
       "complaint.routed_to",
       "complaint.routing_reason"
      ],
-     "deviation": "free-text-only"
+     "deviation": "free-text-only",
+     "procedure": "refer"
     }
    },
    {

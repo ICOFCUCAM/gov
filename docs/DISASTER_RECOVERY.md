@@ -312,6 +312,49 @@ second official's with `--cookie2`.
 Record each drill (date, output, RTO measured, problems) with the platform
 operations team; a drill that fails is an incident.
 
+## 8. An institution's portable export (moving host, standing alone, federating later)
+
+A backup is the whole platform; an **institution export** (`app/src/lib/portability/`, Health I4
+standalone-and-pilot) is one institution's own records, for an institution that moves to its own
+host, runs as a standalone Institutional Edition or federates later. It is not a substitute for
+backups.
+
+- **What it holds.** The institution's registry record and the slots it is named for, the registers
+  it keeps (its own register types' standings with the organisation's identity only, the
+  professions it keeps, the medicines registers, capacity returns), its procedure versions, cases,
+  sealed decisions (exactly as sealed), documents (each version's content with its SHA-256), the
+  audit chain and access log from their start to the head (its own entries in full, every other
+  entry only as sequence and hashes) and the seal key trust list. Nothing of another institution.
+- **Sealed like a backup.** Envelope encryption through key custody (`lib/backup/archive.ts`, its own
+  format `civicos-institution-export/1`, so it can never be restored as a backup), written to the
+  backup target as `EXP-….cvx` with a `.json` record. Never plaintext.
+- **Two officials.** Proposed by an administrator of the institution (an independent institution's
+  export is never set going from whole-government scope), confirmed by a different official who can
+  sign there; the export is in the access log (`export`) and the audit chain; every download too.
+  National settings → Institutional Edition → Portable export, or
+  `POST /api/org/ministries/{id}/export`.
+- **Verify offline.** On any machine with the checkout and the key custody's key, no server:
+
+  ```
+  cd app
+  CIVICOS_DATA_KEK=… node scripts/verify-institution-export.mjs /path/to/EXP-….cvx
+  ```
+
+  It checks every part's SHA-256 against the sealed manifest, the audit and access-log segments,
+  every decision's seal against its `decision.seal` entry and the trust list, every document
+  version, and that every reference resolves inside the export. Exit 0 only when all hold.
+- **Import elsewhere.** In the receiving installation (same key custody), two administrators serving
+  the whole government: `POST /api/platform/institution-import` (or the screen). The export is
+  verified again and must hold none of the receiving installation's records; every record goes in
+  with its own id, number and history; the evidence it carried is kept so its decisions still
+  verify, and travels on with its next export. Who is responsible, the institution's standing and
+  the authority mappings are decided by the receiving installation's own change process.
+- **Restores.** The catalogue of exports and imports (`__civicosInstitutionExports`) is kept as it
+  stands by a data restore (`KEPT_ON_RESTORE`), like the backup catalogue; the imported evidence is
+  the nation's data and goes back with the restore.
+- **Limits.** Not yet exercised under postgres mode, and certificates, notice deliveries, mappings
+  and rates are not carried (integration register 20.42, 20.43).
+
 ## Events and consumers across a restore (acceptance hardening)
 
 A restore puts the platform's records back to the backup's moment, but systems that already received events (the civic-api mirror, subscribed webhooks, partner systems) do not go back with it. What the platform guarantees:

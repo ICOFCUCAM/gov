@@ -1,6 +1,6 @@
 // The sovereign profile, cabinet overview, seed localisation, first-run setup and presets.
 import { locales } from '@/lib/i18n/config';
-import { checkDeployment, authorityIn, isAuthorityKey, AUTHORITIES, type AuthorityKey } from '@/lib/nation/deployment';
+import { checkDeployment, checkEdition, authorityIn, isAuthorityKey, AUTHORITIES, MODULES, type AuthorityKey, type InstitutionalEdition } from '@/lib/nation/deployment';
 import { proposePolicy, confirmPolicy, withdrawPolicy, lapsePolicy, type PolicyVersion } from '@/lib/law/policy-change';
 import { dualControlPendingHours } from '@/lib/data/dual-control';
 import { isWorldview } from '@/lib/map/disputed';
@@ -95,6 +95,10 @@ export function setSovereign(
     // audit D): proposed citing the law, confirmed by a different official (proposeAuthorities()).
     if (db.setup && d.authorities !== undefined && !sameAuthorities(d.authorities, db.sovereign.deployment?.authorities)) {
       return { error: AUTHORITIES_AFTER_SETUP };
+    }
+    // The Institutional Edition likewise (proposeEdition()): resending the same one is not a change.
+    if (db.setup && 'edition' in d && canonicalJson(d.edition ?? null) !== canonicalJson(db.sovereign.deployment?.edition ?? null)) {
+      return { error: EDITION_AFTER_SETUP };
     }
     // Each part sent replaces that part; parts not sent stay as they were.
     patch = { ...patch, deployment: { ...(db.sovereign.deployment ?? {}), ...d } };
@@ -230,6 +234,57 @@ export const lapseClassification = (now = new Date()) => lapsePolicy(db.classifi
 
 export const withdrawAuthorities = (by: string, reason?: string) => withdrawPolicy(db.authorityChanges, { by, ...(reason ? { reason } : {}), audit: AUTH_AUDIT });
 export const lapseAuthorities = (now = new Date()) => lapsePolicy(db.authorityChanges, now, AUTH_AUDIT);
+
+// ── The Institutional Edition, after setup (Health I4 standalone-and-pilot; spec Part 5 D) ──
+// During first-run setup the edition is saved through /api/sovereign with the rest of the deployment
+// profile. Once setup is complete it changes only through the change process: an administrator serving
+// the whole government proposes it (or `null`, no edition: every institution connected) citing the laws
+// register; a different official confirms; every version kept. None ships.
+
+/** Why a direct change to the Institutional Edition is refused once setup is complete. */
+export const EDITION_AFTER_SETUP = 'Setup is complete: the Institutional Edition now changes only through the change process. Propose it citing the law (National settings → Institutional Edition); a different official confirms it.';
+const EDITION_AUDIT = 'sovereign.edition';
+type EditionValues = { edition: InstitutionalEdition | null };
+const describeEdition = (v: EditionValues) => v.edition
+  ? `${v.edition.label}: ${v.edition.institutions.map(nameOf).join(', ')} · modules ${v.edition.modules.map(k => MODULES.find(m => m.key === k)?.label ?? k).join(', ')}`
+  : 'no Institutional Edition (every institution connected)';
+
+/** Changes to the Institutional Edition: the waiting proposal and every earlier version. Read only. */
+export function editionChanges() {
+  return structuredClone(db.editionChanges ?? {});
+}
+
+/** Propose an Institutional Edition (`null`: none), citing the law. Before setup is complete, use setSovereign() as setup does. */
+export function proposeEdition(input: { edition?: unknown; legalBasis?: unknown }, actor: { by: string; byId?: string }, now = new Date()) {
+  if (!db.setup) return { error: 'Setup is still running: record the Institutional Edition in setup (it is saved directly until setup is complete)' };
+  if (input.edition === undefined) return { error: 'Give the edition { label, institutions, modules }, or null for none' };
+  let edition: InstitutionalEdition | null = null;
+  if (input.edition !== null) {
+    const e = checkEdition(input.edition, db.ministries.filter(m => m.status !== 'merged').map(m => m.id));
+    if ('error' in e) return e;
+    edition = e;
+  }
+  const current: EditionValues = { edition: db.sovereign.deployment?.edition ?? null };
+  return proposePolicy(db.editionChanges ??= {}, current, { edition }, input.legalBasis, {
+    by: actor.by, ...(actor.byId ? { byId: actor.byId } : {}), now, pendingHours: dualControlPendingHours(), audit: EDITION_AUDIT,
+    context: 'The Institutional Edition this installation runs as', describe: describeEdition,
+    check: v => (canonicalJson(v.edition) === canonicalJson(current.edition) ? 'This proposal changes nothing' : null),
+  });
+}
+
+/** A different official confirms the waiting proposal: the deployment profile records the edition. */
+export function confirmEdition(actor: { by: string; byId?: string }, now = new Date()) {
+  return confirmPolicy(db.editionChanges ??= {}, {
+    by: actor.by, ...(actor.byId ? { byId: actor.byId } : {}), now, audit: EDITION_AUDIT, describe: describeEdition,
+    adopt: (v: PolicyVersion<EditionValues>) => {
+      const { edition: _old, ...rest } = db.sovereign.deployment ?? {};
+      db.sovereign = { ...db.sovereign, deployment: { ...rest, ...(v.values.edition ? { edition: structuredClone(v.values.edition) } : {}) } };
+      applyNation({ ...db.sovereign, configured: !!db.setup });
+    },
+  });
+}
+export const withdrawEdition = (by: string, reason?: string) => withdrawPolicy(db.editionChanges ??= {}, { by, ...(reason ? { reason } : {}), audit: EDITION_AUDIT });
+export const lapseEdition = (now = new Date()) => lapsePolicy(db.editionChanges ??= {}, now, EDITION_AUDIT);
 
 export function cabinetOverview(): CabinetOverview {
   const ministries = db.ministries.filter(m => m.status !== 'merged');

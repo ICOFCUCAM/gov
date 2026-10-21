@@ -104,6 +104,25 @@ export function createMinistry(input: {
   recordAudit('operator', 'ministry.create', `Ministry:${m.id}`, 'ok', `${input.archetype}/${input.slug}`);
   return m;
 }
+/**
+ * Take in an institution's registry record from its own export
+ * (lib/portability/import.ts, confirmed by two officials), keeping its id so
+ * every record that names it still resolves. Its constitutional terms are not
+ * taken from the export: this installation records them through its own
+ * change process. An institution already here with that id is kept as it is.
+ */
+export function adoptInstitution(r: { id: string; slug: string; name: string; archetype: ArchetypeKey; departments?: { id: string; name: string }[]; createdAt?: string }, by: string): Ministry | { error: string } {
+  const here = db.ministries.find(m => m.id === r.id);
+  if (here) return here;
+  if (!ARCHETYPES[r.archetype]) return { error: `Unknown archetype ${r.archetype}` };
+  if (!/^[a-z0-9-]+$/.test(r.slug) || db.ministries.some(m => m.slug === r.slug)) return { error: `The institution's short name ${r.slug} is already used here by another institution` };
+  const at = new Date().toISOString();
+  const m: Ministry = { id: r.id, slug: r.slug, name: r.name.slice(0, 200), archetype: r.archetype, status: 'active', standing: 'executive-ministry', createdAt: r.createdAt ?? at, activatedAt: at,
+    departments: (r.departments ?? []).map(d => ({ id: d.id, name: d.name })), modules: [] };
+  db.ministries.unshift(m);
+  recordAudit(by, 'ministry.adopt', `Ministry:${m.id}`, 'ok', `${m.name} taken in from its own export with its id; its standing is recorded here through the change process`);
+  return m;
+}
 export function renameMinistry(id: string, name: string): Ministry | { error: string } {
   const m = getMinistry(id);
   if (!m) return { error: 'Ministry not found' };

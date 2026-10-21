@@ -3,6 +3,8 @@
  "form_id": "HLT-MED-012",
  "record_type": "medicines.good-practice.corrective-action-plan",
  "form_version": 1,
+ "procedure_package_id": "medicines.corrective-action",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "CFG-MED-003: corrective-action procedures after an inspection and the periods within which each grade of deficiency must be corrected.",
@@ -25,8 +27,12 @@
   "owner": "medicinesRegulation",
   "filled_by": "The inspected site's manufacturer or someone acting for it; the regulator accepts it or sets the deadlines at a step of its own.",
   "authority": "The medicines regulator the nation names under Who is responsible. Its slot is medicinesRegulation, which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner, shown as provisional, refused as the competent authority in production and never proof of legal competence; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
-  "procedure": null,
-  "intended": "Follow-up of a good-practice inspection (HLT-MED-011) by the medicines regulator: a corrective-action follow-up procedure is not built; the form waits in the library (plan step I4).",
+  "procedure": {
+   "key": "medicines.corrective-action",
+   "stage": "submitted",
+   "action": "register",
+   "document": "corrective-action-plan"
+  },
   "lists": {
    "medicines.country.action_status": {
     "values": [
@@ -57,8 +63,8 @@
   "deviations": [
    {
     "id": "deadlines-assigned",
-    "what": "\"Corrective action tracked\": the site proposes the dates and reports progress; the regulator accepts them or sets others at its own step (officer field), within the periods the nation's rules set",
-    "why": "No corrective-action procedure exists yet, and a deadline is the regulator's act, never the site's.",
+    "what": "\"Corrective action tracked\": the site proposes the dates and reports progress; the regulator accepts the plan at its own step (medicines.corrective-action, accept-plan), which starts the period the nation's rules set for the deficiencies found (the procedure's deadline, whose day count ships unset), and closes it by a two-official decision",
+    "why": "A deadline is the regulator's act under the nation's rule, never the site's.",
     "rule": "CLAUDE.md Government operating model: a status change is an authorised action"
    },
    {
@@ -229,7 +235,8 @@
       "plan.actions",
       "plan.deadlines_set_by"
      ],
-     "deviation": "deadlines-assigned"
+     "deviation": "deadlines-assigned",
+     "procedure": "accept-plan"
     }
    },
    {

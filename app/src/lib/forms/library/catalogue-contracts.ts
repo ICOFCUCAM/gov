@@ -37,6 +37,17 @@
 // internal forms): the second contract takes the register row ID
 // (…@P2) as its form ID, and each names its line.
 //
+// Batch 4 (owner approved, as part of finishing the Health I4 dependency
+// public-health-programmes): public-health programme forms, the field series
+// Part 6 §4.1. HLT-PH-011 (vaccination programme administration: sessions
+// planned and held, doses administered and programme supply received and
+// used, as aggregates by area and period; never a vaccinee) and HLT-PH-014
+// (risk communication approval: the message, its audience, channels and
+// evidence basis, approved by two officials and released exactly as
+// approved). Both are linked by identity to the public-health procedures
+// (lib/health/programmes/procedures.ts); every individual public-health form
+// stays excluded (docs/requirements/form-scope.json).
+//
 // Each contract is a JSON file in the canonical format
 // (civicos.form-contract.v1, lib/forms/canonical.ts; never a second format),
 // with two blocks of its own beside the fields: `catalogue` names the one
@@ -86,6 +97,8 @@ import lic012 from './catalogue-contracts/HLT-LIC-012.json';
 import lic013 from './catalogue-contracts/HLT-LIC-013.json';
 import lic014 from './catalogue-contracts/HLT-LIC-014.json';
 import ph015 from './catalogue-contracts/HLT-PH-015.json';
+import ph011 from './catalogue-contracts/HLT-PH-011.json';
+import ph014 from './catalogue-contracts/HLT-PH-014.json';
 import med001 from './catalogue-contracts/HLT-MED-001.json';
 import med002 from './catalogue-contracts/HLT-MED-002.json';
 import med003 from './catalogue-contracts/HLT-MED-003.json';
@@ -205,6 +218,8 @@ export const BATCH_1 = [fac001, fac002, fac003, fac004, fac005, fac006, fac007, 
 export const BATCH_2 = [med001, med002, med003, med004, med005, med006, med007, med008, med009, med010, med011, med012, med013, med014, med015, med017, med018, med019, med020, med023, med024] as unknown as CatalogueContractJson[];
 /** Batch 3: taxpayer registration and account (owner approved, 21 October 2026). */
 export const BATCH_3 = [txIndividual, txPublicEntity, txNonresident, txBranch, txAmend, txDetailsChange, txObligationAdd, txObligationCancel, txTransfer, txCertificateRequest, txAccountStatement, txDuplicate, txSuspendRequest, txReactivateRequest, txObjection, txAppeal, txWithdraw, txDecision, txDecisionRecord, txInspection, txInspectionChecklist, txFurtherInformation, txFurtherInformationP2, txReferral, txReferralRecord, txAssessment, txVerificationRecord, txAppealAssessment, txClosureRecord] as unknown as CatalogueContractJson[];
+/** Batch 4: public-health programme forms (owner approved, 21 October 2026). */
+export const BATCH_4 = [ph011, ph014] as unknown as CatalogueContractJson[];
 /** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3). */
 export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; groups: Record<string, string[]>; items: (CatalogueItem & { for?: string })[] });
 /** The shared items that apply to one contract. */
@@ -240,7 +255,7 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 }
 
 /** Every catalogue contract CivicOS has written, as library drafts. */
-export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3))];
+export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4))];
 
 /**
  * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without

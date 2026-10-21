@@ -22,10 +22,13 @@ import { proposePolicy, confirmPolicy, withdrawPolicy, type PolicyChanges } from
 import { samplesAllowed } from '@/lib/ops/mode';
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
+import { slotConnection } from '@/lib/nation/edition';
+import { raiseCounter } from '@/lib/data/numbering';
 import { uuid7 } from '@/lib/data/uuid7';
 import { nextNumber, legacyMax } from '@/lib/data/numbering';
 import { getAward, sameName } from '@/lib/education/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
+import { nationRegions } from '@/lib/nation/registry';
 
 export interface Profession {
   key: string;
@@ -65,6 +68,8 @@ export interface Professional {
   personRef: string;
   name: string;
   qualifications: string[];
+  /** The region of practice the registration decision recorded (one of the nation's regions), for workforce counts; never public. */
+  region?: string;
   state: ProfessionalState;
   validUntil?: string;
   conditions: string[];
@@ -89,6 +94,19 @@ const db = (): Db => {
   return d;
 };
 export function resetProfessions(): void { g.__civicosProfessions = undefined; }
+
+/** Every registration as kept, with the professions defined, for an institution's portable export (lib/portability/export.ts). Read only. */
+export const professionalRecords = (): { professions: Profession[]; people: Professional[] } => ({ professions: db().professions.map(p => structuredClone(p)), people: db().people.map(p => structuredClone(p)) });
+/** Put back professions and registrations keeping their ids and numbers (lib/portability/import.ts only: the confirmed import of an institution's own export (two officials) into an installation that holds none of these records). A profession defined here already is kept as it is. */
+export function restoreProfessionals(input: { professions: Profession[]; people: Professional[] }): { restored: number } | { error: string } {
+  const d = db();
+  const clash = input.people.find(e => d.people.some(x => x.id === e.id || x.number === e.number));
+  if (clash) return { error: `Registration ${clash.number} is already in this installation's register` };
+  for (const p of input.professions) if (!d.professions.some(x => x.key === p.key)) d.professions.push(structuredClone(p));
+  d.people.push(...input.people.map(e => structuredClone(e)));
+  raiseCounter(d as unknown as Record<string, unknown>, 'prnSeq', input.people.map(e => e.number));
+  return { restored: input.people.length };
+}
 const clone = <T,>(x: T): T => structuredClone(x);
 const KEY = /^[a-z][a-z0-9-]{1,40}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -164,12 +182,16 @@ export const disclosureChanges = (key: string): PolicyChanges<Disclosure> => clo
 
 // ── Entries ───────────────────────────────────────────────────────────────────
 
-export interface NewProfessional { profession: string; personRef: string; name: string; qualifications?: string[]; validUntil?: string; conditions?: string[] }
+export interface NewProfessional { profession: string; personRef: string; name: string; qualifications?: string[]; validUntil?: string; conditions?: string[]; region?: string }
 
 /** Each qualification cited from the education register must be valid and the holder's (by name). Free-text ones (foreign degrees) are kept as stated. */
 export function checkQualifications(name: string, quals: string[]): string | null {
   for (const q of quals) {
     if (!/^QUA-\d{4}-\d{6}$/.test(q)) continue;
+    // An Institutional Edition without the education authority cannot check the register: the step pauses
+    // (spec Part 5 D), never taking the qualification as checked. Qualifications as stated are not affected.
+    const off = slotConnection('education');
+    if (off) return `${off} Record the qualification as stated with its evidence, or check it once the education authority is connected.`;
     const a = getAward(q);
     if (!a || a.state !== 'valid') return `Qualification ${q} is not a valid qualification in the education register`;
     if (!sameName(a.versions.at(-1)!.holderName, name)) return `Qualification ${q} is recorded for someone else`;
@@ -185,12 +207,14 @@ export function registerProfessional(input: NewProfessional, caseId: string, by:
   const bad = checkQualifications(input.name, quals);
   if (bad) return { error: bad };
   if (input.validUntil && (!DATE.test(input.validUntil) || input.validUntil <= now.toISOString().slice(0, 10))) return { error: 'Valid until is a future date (YYYY-MM-DD)' };
+  const region = input.region?.trim().slice(0, 120);
+  if (region && nationRegions().length && !nationRegions().includes(region)) return { error: `${region} is not one of the nation's regions` };
   if (db().people.some(x => x.profession === p.key && x.personRef === input.personRef.trim() && x.state !== 'revoked' && x.state !== 'lapsed')) return { error: `${input.name} is already on the register of ${p.title.toLowerCase()}` };
   const at = now.toISOString();
   const conditions = (input.conditions ?? []).map(c => c.trim()).filter(Boolean).slice(0, 20);
   const e: Professional = {
     id: uuid7(), number: next(now), profession: p.key, personRef: input.personRef.trim().slice(0, 80), name: input.name.trim().slice(0, 200),
-    qualifications: quals, state: 'registered', ...(input.validUntil ? { validUntil: input.validUntil } : {}), conditions,
+    qualifications: quals, ...(region ? { region } : {}), state: 'registered', ...(input.validUntil ? { validUntil: input.validUntil } : {}), conditions,
     history: [{ state: 'registered', at, by, reason: 'Registered', case: caseId, ...(input.validUntil ? { validUntil: input.validUntil } : {}), ...(conditions.length ? { conditions } : {}) }],
   };
   db().people.push(e);
@@ -276,4 +300,20 @@ export function professionCounts(): Record<string, Record<ProfessionalState, num
   const out: Record<string, Record<ProfessionalState, number>> = {};
   for (const e of db().people) { const c = out[e.profession] ??= { registered: 0, suspended: 0, revoked: 0, lapsed: 0 }; c[e.state] += 1; }
   return out;
+}
+
+/**
+ * The workforce as the register holds it, for counts only (lib/professions/workforce.ts): how many
+ * registrations there are by profession, standing and region of practice (null where the decision
+ * recorded none). No name, number or person reference leaves here.
+ */
+export function workforceTally(): { profession: string; state: ProfessionalState; region: string | null; count: number }[] {
+  const out = new Map<string, { profession: string; state: ProfessionalState; region: string | null; count: number }>();
+  for (const e of db().people) {
+    const k = `${e.profession}|${e.state}|${e.region ?? ''}`;
+    const c = out.get(k) ?? { profession: e.profession, state: e.state, region: e.region ?? null, count: 0 };
+    c.count += 1;
+    out.set(k, c);
+  }
+  return [...out.values()];
 }

@@ -356,7 +356,7 @@ source (below).
 | HLT-MED-013 | Medicine import authorisation | 30 (+6) | library; intended: an import authorisation procedure, customs told the decision by an exchange service (I4) | customs-apart |
 | HLT-MED-014 | Controlled medicine authorisation | 29 (+4) | library; intended: the procedure of the authority the controlled-substances law names (I4) | no-named-person, controlled-authority |
 | HLT-MED-015 | Medicine safety report | 25 | library; intended: a safety-report intake assigning each report for assessment (I4) | product-level-only, no-ai-finding |
-| HLT-MED-017 | Product recall notification | 33 (+8) | library; intended: a recall procedure (signal, risk, decision, notices, completion) (I4) | no-ai-finding, no-new-power, no-recall-exchange |
+| HLT-MED-017 | Product recall notification | 33 (+8) | library; intended: a recall procedure (signal, risk, decision, notices, completion) (I4) | no-ai-finding, no-new-power (no-recall-exchange until HX-005 was built, below) |
 | HLT-MED-018 | Recall completion report | 24 (+7) | library; intended: the completion step of the recall (I4) | — |
 | HLT-MED-019 | Medical device registration | 33 (+7) | library; intended: a device registration procedure on the product register (I4) | — |
 | HLT-MED-020 | Medical device safety incident | 26 | library; intended: a device incident intake opening an investigation (I4) | product-level-only, no-ai-finding |
@@ -495,14 +495,18 @@ platform:
 | HLT-MED-017 | `medicines.recall` | notified · assess-risk · recall-notification |
 | HLT-MED-018 | `medicines.recall` | supply-chain-notified · report-completion · completion-report |
 | HLT-MED-019 | `medicines.device-registration` | submitted · register-application · application-form |
+| HLT-MED-012 | `medicines.corrective-action` | submitted · register · corrective-action-plan |
+| HLT-MED-013 | `medicines.import-authorisation` | submitted · register · application-form |
+| HLT-MED-014 | `medicines.controlled` (the `controlledSubstances` slot) | submitted · register · application-form |
+| HLT-MED-015 | `medicines.safety-report` | received · register · report |
+| HLT-MED-020 | `medicines.device-incident` | received · register · report |
+| HLT-MED-023 | `medicines.reconsideration` | received · register · request-form |
 
 HLT-MED-024 is answered by the public product check and the `product.status`
 exchange service (`library.exchange`; deviation `no-product-service` removed,
-its catalogue passages met by the service). Six contracts have no fitting
-procedure and stay `missing`, each naming the stage it waits for: HLT-MED-012
-(corrective action), 013 (import authorisation), 014 (controlled medicines,
-the `controlledSubstances` slot), 015 and 020 (safety and incident intake) and
-023 (reconsideration). The deviation `no-product-register` now says the
+its catalogue passages met by the service). The last six rows were added in
+the second I4 step (below); when the product procedures were first built they
+had no fitting procedure and stayed `missing`. The deviation `no-product-register` now says the
 register exists and the forms' product references read it (decided records
 only); `no-manufacturer-register` says the reference register types exist with
 unapproved permit types. The procedures type no period, fee or outcome list;
@@ -513,6 +517,62 @@ and refused in production until the nation approves one. Integration register
 `app/api/health-regulation/products/products-privacy.test.ts` and
 `lib/forms/procedure-link.test.ts` ("is draft for each batch-2 form the
 product procedures carry …").
+
+**The second I4 step: the six forms without a procedure, and HX-005 (21
+October 2026).** Each of HLT-MED-012, 013, 014, 015, 020 and 023 now names its
+own reference procedure (a draft, `procedure_package_id` and its stage, step
+and document, the link computed `draft` once installed and never approved by
+the platform; `intended` removed):
+
+- HLT-MED-012, `medicines.corrective-action`: the plan is registered against a
+  recorded inspection case of the medicines authority with its inspection
+  report; the regulator accepts it (a decision), which starts the period the
+  nation's rules set (a deadline shipped without its day count), tracks
+  progress and closes it by two officials. Deviation `deadlines-assigned` now
+  names that step.
+- HLT-MED-013, `medicines.import-authorisation`: an importer holding the
+  `medicine-importers` standing, an authorised product, a quantity and a point
+  of entry from `medicines.country.entry_points` (shipped empty), decided by
+  two officials into the import authorisation register
+  (`lib/health/products/imports.ts`). Customs learns only whether it is valid
+  through `product.import-authorisation` (no caller approved; no customs
+  power); deviation `customs-apart` says so.
+- HLT-MED-014, `medicines.controlled` (the `controlledSubstances` slot): an
+  organisation, an authorised product, a schedule and activity from the
+  nation's lists and a quantity within the limits the nation adopts (a country
+  rule set, two officials citing the law, shipped unset; production refuses
+  without one). Never a named patient.
+- HLT-MED-015 and 020, `medicines.safety-report` and
+  `medicines.device-incident`: the same product-level fields (the concern
+  restricted with its hint, the reporter optional and restricted), assessed
+  by the assigned officer with reasons (never a score, no AI step), duplicates
+  linked by an official and never merged; the assessment may open the
+  product's own variation, suspension or recall case, or lead to a safety
+  alert two officials decide and publish.
+- HLT-MED-023, `medicines.reconsideration`: decided by officials other than
+  those who made or confirmed the decision (by person, as dual control
+  compares); an appeal to a court by reference only; the request period from
+  the nation's version of the original procedure (none ships). Deviation
+  `reviewer-differs` names the procedure.
+
+Every decision step is classified (`lib/permits/decisions.ts`) under a
+proposed, unapproved mapping (`good-practice-corrective-action`,
+`medicine-import-authorisation`, `controlled-medicine-authorisation`,
+`product-safety-assessment`, `medicines-decision-reconsideration`) and refused
+in production until the nation approves one. No period, fee or outcome is
+typed.
+
+HX-005 is the exchange service `product.safety-notice`
+(`lib/health/products/notices.ts`): a published recall or safety alert goes to
+the integrations two officials approved for it and a purpose (none ships),
+carrying the product's `publicProductView()`, the recall class, the case
+reference and its dates only; each delivery is recorded with its purpose and
+receipt. HLT-MED-017's deviation `no-recall-exchange` is removed and its HX-005
+passages are met by the service; the holder's supply-chain notice stays a
+document of the recall case. Batch 2 now has no form without a procedure but
+HLT-MED-024, which `product.status` answers. Integration register
+20.24–20.30; tests `lib/health/products/oversight.test.ts`,
+`lib/health/products/notices.test.ts`, `lib/forms/procedure-link.test.ts`.
 
 **Tests.** `app/src/lib/forms/catalogue-contracts.test.ts` now holds both
 batches: for batch 2 its own list of the lines each form answers, the same
@@ -751,3 +811,67 @@ output under every classification.
 | Provisional owners | `lib/nation/health-slots.test.ts` |
 | Public product view | `lib/health/products/public.test.ts` |
 | I4 dependency register | `lib/requirements/health-i4.test.ts` |
+
+## 12. Catalogue contracts, batch 4: public-health programme forms (21 October 2026)
+
+The owner approved two more contracts as part of finishing the Health I4
+dependency `public-health-programmes`: the programme forms of Part 6 §4.1
+that hold no individual. HLT-PH-011 and HLT-PH-014, which were
+`contract_missing`, now have a CivicOS contract (`contract: given (CivicOS
+library)`, `form_status: contract_draft`), with `batch: 4` in their
+`catalogue` block. Every individual public-health form (HLT-PH-001 … 010,
+012, 013, 016 … 018) stays excluded by `docs/requirements/form-scope.json`;
+HLT-PH-011 and 014 are now named there as allowed, beside HLT-PH-015. The
+format, loader, gates and test are batch 1's (§8): the conformance test holds
+the lines each form answers (Part 1's shared rules, the supplement's
+conventions and gates, Part 6's common health rules, the public-health
+family of §4, CFG-PH-001, the public-health integrity gate, deliverable 4 and
+the specification's facility-report record) and its row of §4.1.
+
+| Catalogue form | Title | Fields (and questions in repeatable groups) | Belongs to | Deviations (besides the six every health form shares) |
+|---|---|---|---|---|
+| HLT-PH-011 | Vaccination programme administration | 15 (+11) | `public-health.programme-return`, stage `submitted`, step `register`, document `return-form` | aggregate-only, no-vaccinee, supply-not-stock |
+| HLT-PH-014 | Public-health risk communication approval | 12 | `public-health.risk-communication`, stage `drafted`, step `register`, document `draft-message` | aggregate-only, two-official-approval, not-a-report |
+
+**Never a vaccinee.** HLT-PH-011's "eligible programme activity recorded" is
+recorded for the programme: sessions planned and held, doses administered by
+the breakdown the programme defines (none ship) and programme supply received
+and used for the programme's own supply items, each count marked reported,
+suspected, confirmed or modelled (`civicos.public_health.count_basis`) and
+counted, estimated, incomplete or not available; a missing count is never a
+zero. Eligibility is the programme's, cited from the nation's law when it is
+established (`public-health.programme`), never a check of a person. Deviation
+`no-vaccinee` names what the catalogue line could be read to ask for and why
+it is not held (HLT-PH-012 excluded); `supply-not-stock` names the lot, expiry,
+location and transactions that an inventory system would hold (integration
+register 20.36). The scope check now also refuses a procedure whose fields
+name a vaccinee, a vaccination record, a traced contact, a specimen or a
+laboratory result (`lib/forms/scope.ts`), stricter than the catalogue.
+
+**Approved by two officials.** HLT-PH-014's approval is the procedure's
+four-eyes decision (`approve-message`), never a status field: the sealed
+decision carries the digest of the message, its audience and channels, and the
+release step refuses a message changed after approval
+(`two-official-approval`). The approval-state field is the platform's, never
+asked of whoever drafts. The evidence basis names the aggregate figures the
+message rests on with their class; `not-a-report` answers the specification's
+facility-report line, which belongs to the returns.
+
+**HLT-PH-015 linked.** The aggregate return (batch 1) now belongs to
+`public-health.programme-return` (stage `submitted`, step `register`): its
+programme is a reference to the register of public-health programmes
+(`health.registry.programmes`, checked: an established programme), and each
+count carries its class beside its indicator and breakdown, so reported,
+suspected, confirmed and modelled counts stay apart (FC6-4-02, gate FC6-12-06).
+HLT-FAC-009 and HLT-LIC-008 (batch 1) are linked by identity to the complaint
+intake procedures `health.complaint` and `prof.complaint` (stage `received`,
+step `register`, document `complaint`). Each reads `draft` once its procedure
+is installed and is adopted only in a version a second official approves.
+
+| Check | Where |
+|---|---|
+| Both contracts quote and meet every piece of their lines; typed, classed, registered rules only; nothing a law decides set; three channels; contract draft | `catalogue-contracts.test.ts` (per form) |
+| Programme activity as aggregates, the four classes, supply as programme counts | `catalogue-contracts.test.ts` "keeps the vaccination programme record to aggregates…" |
+| Two-official approval and the links by identity | `catalogue-contracts.test.ts` "approves a risk communication by two officials, and links each public-health form…" |
+| Procedure-link states of the linked forms | `procedure-link.test.ts` "is draft for the public-health forms and the complaint forms…" |
+| Binding scope for public health | `lib/health/programmes/scope.test.ts` |

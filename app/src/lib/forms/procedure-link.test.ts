@@ -81,7 +81,9 @@ describe('procedure-link states', () => {
 
   it('is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it', () => {
     const med = CATALOGUE_CONTRACTS.filter(f => f.batch === 2 && f.procedure);
-    expect(med).toHaveLength(14);
+    // 14 since the product register, 6 more since corrective action, import and controlled-medicine authorisation, safety intake and reconsideration.
+    expect(med).toHaveLength(20);
+    for (const id of ['HLT-MED-012', 'HLT-MED-013', 'HLT-MED-014', 'HLT-MED-015', 'HLT-MED-020', 'HLT-MED-023']) expect(med.map(f => f.specId), id).toContain(id);
     // Not installed: the procedure each names is not in the register yet.
     for (const f of med) expect(libraryPublicationOf(findLibraryForm(f.identity)!).procedure.state, f.identity).toBe('missing');
     installAll('Administrator');
@@ -92,10 +94,24 @@ describe('procedure-link states', () => {
       expect(pub.status, f.identity).not.toBe('approved');
       expect(pub.human.filter(g => g.applies && g.passed), f.identity).toEqual([]);
     }
-    // The forms no procedure fits stay missing, each with the stage it waits for.
-    for (const f of CATALOGUE_CONTRACTS.filter(x => x.batch === 2 && !x.procedure && x.specId !== 'HLT-MED-024')) {
-      expect(libraryPublicationOf(findLibraryForm(f.identity)!).procedure.state, f.identity).toBe('missing');
-      expect(f.awaits, f.identity).toMatch(/not built/);
+    // Every batch-2 form now names a procedure, except the product check, which the product.status service answers.
+    expect(CATALOGUE_CONTRACTS.filter(x => x.batch === 2 && !x.procedure).map(f => f.specId)).toEqual(['HLT-MED-024']);
+  });
+
+  it('is draft for the public-health forms and the complaint forms once their procedures are in the register, linked by identity, never approved by it', () => {
+    const linked: Record<string, string> = { 'HLT-PH-011': 'public-health.programme-return', 'HLT-PH-015': 'public-health.programme-return', 'HLT-PH-014': 'public-health.risk-communication', 'HLT-FAC-009': 'health.complaint', 'HLT-LIC-008': 'prof.complaint' };
+    for (const [id, key] of Object.entries(linked)) {
+      expect(lib(id).procedure, id).toMatchObject({ key });
+      expect(lib(id).identity, id).toBe(`FIELD-SERIES-PARTS-05-07:${id}@1`);
+      expect(libraryPublicationOf(found(id)).procedure.state, id).toBe('missing');
+    }
+    installAll('Administrator');
+    for (const id of Object.keys(linked)) {
+      const pub = libraryPublicationOf(found(id));
+      expect(pub.procedure, id).toMatchObject({ state: 'draft' });
+      expect(procedureLink({ identity: lib(id).identity, procedure: lib(id).procedure }), id).toMatchObject({ state: 'draft', linked: { key: linked[id], inRegister: true } });
+      expect(pub.status, id).not.toBe('approved');
+      expect(pub.human.filter(g => g.applies && g.passed), id).toEqual([]);
     }
   });
 

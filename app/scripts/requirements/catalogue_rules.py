@@ -25,6 +25,8 @@ CIVEV = "lib/civil/procedures.ts (civil.birth, civil.death, civil.marriage, civi
 IMMEV = "lib/immigration/procedures.ts (immigration.visa, immigration.extension, immigration.revocation), lib/immigration/register.ts (visas and residence permits; canReadImmigration(); others learn status only through immigration.status); tests lib/immigration/procedures.test.ts, register.test.ts"
 TAXEV = "lib/tax/procedures.ts (tax.registration, tax.return with amendments, assessment with the approved rule or entered with reasons, objection; four-eyes decisions), lib/tax/register.ts (taxpayers, returns, assessments, account ledger, reconcileTaxPayments); canReadTax(); tests lib/tax/procedures.test.ts, register.test.ts"
 CUSEV = "lib/customs/procedures.ts (customs.declaration: declaration, officer's channel with reasons, duty from the approved customs.tariff rule or entered with reasons, release decision), lib/customs/register.ts; customs.release exchange; tests lib/customs/procedures.test.ts, register.test.ts"
+PHEV = "lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, coverage with documented denominator, budget reference, reporting period, supply items; interventions under the nation's rules CFG-PH-003; aggregate returns with reported, suspected, confirmed and modelled kept apart; risk communications approved by two officials), lib/health/small-cells.ts; tests lib/health/programmes/programmes.test.ts, scope.test.ts"
+COMPLAINTEV = "lib/health/complaints/procedures.ts (health.complaint, prof.complaint: intake, assessment by the assigned officer with reasons, referral into the licence's or registration's own case through refer(); complainant restricted, every read logged; no clinical field); test lib/health/complaints/complaints.test.ts"
 HEALTHEV = "lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers; premises as registered sites; referrals), lib/health/register.ts (aggregate capacity returns, no patient field); tests lib/health/procedures.test.ts"
 PROFEV = "lib/professions/procedures.ts (prof.registration, prof.renewal, prof.fitness), lib/professions/register.ts (each profession kept by its regulator; public check by full name, rate-limited, harvest watch; professional.standing exchange); tests lib/professions/*.test.ts"
 EDUEV = "lib/education/procedures.ts (edu.inspection, edu.qualification, edu.qualification-correction, edu.qualification-revocation), schools as organisations with a standing in the schools register, aggregate returns, qualification.verify; tests lib/education/procedures.test.ts"
@@ -84,7 +86,7 @@ D = {
     'justice-oversight': ('Justice oversight and complaints', 'I8', False, KB.ABSENT, 'Not yet'),
     'patients': ('Patient and clinical administration', '—', False, CLINRULE, 'Platform rule stricter'),
     'health-reg': ('Health regulation', 'I4', True, HEALTHEV + "; " + PROFEV, 'Not yet'),
-    'public-health': ('Public health', 'I4', False, "Aggregate returns only (lib/health/register.ts); " + CLINRULE, 'Not yet'),
+    'public-health': ('Public health', 'I4', True, "Programme administration and aggregates only (" + PHEV + "); " + CLINRULE, 'Not yet'),
     'medicines': ('Medicines and devices regulation', 'I4', False, KB.ABSENT + "; pharmacies licensed in the health regulator's register (" + HEALTHEV + ")", 'Not yet'),
     'health-finance': ('Health financing', 'I6', False, KB.ABSENT, 'Not yet'),
     'social-care': ('Social care', 'I6', False, KB.SCREENS, 'Not yet'),
@@ -397,11 +399,12 @@ I(r'^JUS-IND-00[12]$', 'Partial', COURTS + '; recusal (' + KB.TRANS + ')', 'Reco
 # Field series Part 6 (health)
 I(r'^HLT-LIC-00[1345]$|^HLT-LIC-01[124]$', 'Met', PROFEV, '', '—')
 I(r'^HLT-LIC-00[2678]$|^HLT-LIC-01[03]$|^HLT-LIC-009$', 'Partial', PROFEV, 'The catalogue step as its own record (qualification check, continuing education, good-standing certificate, conduct complaint and investigation, restoration)', 'I4')
+I(r'^HLT-FAC-009$|^HLT-LIC-008$', 'Partial', COMPLAINTEV, 'Adoption by the nation: a version of the complaint procedure approved by a second official; its complaint kinds and relationships (configured lists, none ship)', 'I4')
 I(r'^HLT-FAC-00[2358]$|^HLT-FAC-010$', 'Met', HEALTHEV, '', '—')
 I(r'^HLT-FAC-00[14679]$', 'Partial', HEALTHEV, 'Establishment approval, corrective action plans, variations, closure notices and safety concerns as records', 'I4')
-I(r'^HLT-PH-015$', 'Partial', 'Aggregate returns (lib/health/register.ts)', 'Public-health aggregate submissions by programme', 'I4')
+I(r'^HLT-PH-015$', 'Partial', 'Programme returns (' + PHEV + '): counts by area and period, small cells suppressed by the nation\'s rule', 'Adoption by the nation (the return procedure approved, programmes established); the statistics exchange HX-009', 'I4')
 I(r'^HLT-PH-00[1-9]$|^HLT-PH-01[02368]$|^HLT-PH-017$', 'Platform rule stricter', CLINRULE, 'Individual case, contact, laboratory and vaccination data stay in the health authority\'s own systems; CivicOS holds aggregates and the administrative decision records only', '—')
-I(r'^HLT-PH-01[14]$', 'Not yet', KB.ABSENT, 'Programme administration and risk-communication approval (administrative, no individual data)', 'I4')
+I(r'^HLT-PH-01[14]$', 'Partial', PHEV, 'Adoption by the nation: the procedure versions approved by a second official, the mappings public-health-programme and public-health-communication approved, its audiences, channels and breakdowns configured', 'I4')
 I(r'^HLT-MED-016$|^HLT-MED-02[12]$', 'Platform rule stricter', CLINRULE, 'Adverse reaction reports and clinical trial safety data carry patient data: CivicOS holds only the regulator\'s administrative decision (authorisation, its conditions) without patient fields', '—')
 I(r'^HLT-FIN-0(0[6-9]|1[0-2])$', 'Platform rule stricter', CLINRULE, 'Service claims carry diagnoses and treatments: CivicOS holds no claim; coverage registration and payments to providers by aggregate only', '—')
 I(r'^HLT-SOC-00[27]$|^HLT-SOC-008$', 'Platform rule stricter', CLINRULE, 'Care needs assessments and individual care plans are clinical or care records: held by the care provider, not CivicOS; the support decision is held without care details', '—')
@@ -479,6 +482,11 @@ T(r'CAT-08-11:10', r'custody|seiz|evidence item|forensic|Integrity information|C
 T(r'FLD-05-07:5', r'prosecut|custody|detention|sentence|parole|probation|inmate|prison', 'Legal review', LEGALREV, 'Prosecution, custody, corrections and supervision records: legal review first; courts stay the judiciary\'s alone; police stays intake and referral', 'I11', lr=True, forms=True)
 T(r'FLD-05-07:6', r'patient|clinical|diagnos|medication|prescri|allerg|laborator|imaging|treatment|care plan|discharge|admission|encounter|medical record|health record|case investigation|contact (tracing|investigation)|vaccination record|immuni[sz]ation record', 'Platform rule stricter',
   CLINRULE, 'CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only', '—', forms=True)
+# Part 6 §4.2's individual case record (a case reference, onset and specimen dates, an investigation of a case): never held; the
+# programme register keeps aggregates and administrative decisions only (lib/health/programmes/register.ts, scope.test.ts).
+T(r'FLD-05-07:6', r'^(Case reference|Event dates|Investigation|Evidence references) —', 'Platform rule stricter',
+  CLINRULE + '; docs/requirements/form-scope.json (HLT-PH-001 … 010, 012, 013, 016 … 018 excluded); test lib/health/programmes/scope.test.ts',
+  'Individual case, contact, laboratory and vaccination data stay in the health authority\'s own systems; CivicOS holds aggregates and the administrative decision records only', '—', doms=('public-health',))
 T(r'FLD-05-07:7', r'student record|enrol|attendance|transcript|learner record|individual student|student particulars|progression|matriculat|module registration|academic record', 'Platform rule stricter', STUDRULE, 'No student record system; qualifications through cases and aggregates only', '—', forms=True)
 T(r'FLD-03-04:4', r'biometric', 'Legal review', 'No biometric field exists anywhere in lib/; directions §15 (safeguards and independent legal review before any biometric or risk-scoring capability)', 'CivicOS holds no biometric template or match; any biometric step needs the country\'s law, a reviewed security design and legal review', 'I11', lr=True, forms=True)
 T(r'FLD-03-04:3', r'supervis(ory|ed entit)|confidential supervisory', 'Lower priority', "Plan §4 (central bank operations); the central bank is an independent institution (" + KB.INST + "): whole-government scope stops at it (roles.ts reaches())", 'Supervisory records stay in the bank\'s own systems unless separately authorised; legal review of what CivicOS may hold', 'I5', lr=True, forms=True)

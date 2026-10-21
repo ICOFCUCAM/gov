@@ -7,7 +7,11 @@
 // Read-only: nothing here changes a record.
 
 import { AUTHORITIES, REQUIRED_AUTHORITIES, HEALTH_SLOTS, provisionalOwner } from '@/lib/nation/deployment';
-import { authorityFor, getSetup, getSovereign, authorityChanges, classificationChanges } from '@/lib/data/store/sovereign';
+import { authorityFor, getSetup, getSovereign, authorityChanges, classificationChanges, editionChanges } from '@/lib/data/store/sovereign';
+import { currentEdition } from '@/lib/nation/edition';
+import { pilotExitGate } from '@/lib/pilot/exit-gate';
+import { listExports } from '@/lib/portability/export';
+import { listImports } from '@/lib/portability/import';
 import { waitingInstitutionTerms } from '@/lib/data/store/institutions';
 import { listRelationships, waitingRelationships } from '@/lib/data/store/relationships';
 import { waitingAccountChanges } from '@/lib/auth/account-changes';
@@ -28,7 +32,13 @@ import { registerTypes, listOrganisations } from '@/lib/organisations/register';
 import { professions, disclosureChanges } from '@/lib/professions/register';
 import { listIntegrations } from '@/lib/data/store/federation';
 import { productCounts, publicClassification, productDisclosureChanges } from '@/lib/health/products/register';
-import { PRODUCT_PROCEDURES, PRODUCT_PERMIT_TYPES } from '@/lib/health/products/procedures';
+import { PRODUCT_PROCEDURES, PRODUCT_PERMIT_TYPES, OVERSIGHT_PROCEDURES } from '@/lib/health/products/procedures';
+import { controlledLimits, controlledLimitChanges } from '@/lib/health/products/controlled';
+import { noticeSubscribers } from '@/lib/health/products/notices';
+import { programmeCounts, interventionRules, interventionRuleChanges } from '@/lib/health/programmes/register';
+import { PROGRAMME_PROCEDURES, PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
+import { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
+import { smallCellRule, smallCellChanges } from '@/lib/health/small-cells';
 import { SITE_IDS } from '@/lib/public-sites';
 import { siteEditorial } from '@/lib/data/site-editorial';
 import { listBoundaryVersions } from '@/lib/data/boundaries';
@@ -262,7 +272,15 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
     track({ key: 'products', title: 'Medicines and medical devices register', why: 'Authorised medicines and devices, recorded only by the medicines authority\'s decided cases; the public sees only what the nation\'s approved classification lists.', href: '/gov/health-regulation/products', seeded: true }, () => {
       const pending = productDisclosureChanges().pending;
       if (pending) wait({ what: 'What the public product check shows: a change waiting for a second official', proposedBy: pending.by, at: pending.at, href: '/gov/health-regulation/products' });
-      const keys = PRODUCT_PROCEDURES.filter(p => !p.key.startsWith('medicines.manufacturer') && !p.key.startsWith('medicines.importer') && !p.key.startsWith('medicines.wholesaler')).map(p => p.key);
+      const limitsPending = controlledLimitChanges().pending;
+      if (limitsPending) wait({ what: 'Controlled-medicine quantity limits: a change waiting for a second official', proposedBy: limitsPending.by, at: limitsPending.at, href: '/gov/health-regulation/products' });
+      const oversight = new Set(OVERSIGHT_PROCEDURES.map(p => p.key));
+      const keys = PRODUCT_PROCEDURES.filter(p => !oversight.has(p.key) && !p.key.startsWith('medicines.manufacturer') && !p.key.startsWith('medicines.importer') && !p.key.startsWith('medicines.wholesaler')).map(p => p.key);
+      const more = OVERSIGHT_PROCEDURES.map(p => p.key);
+      const moreApproved = more.filter(k => listPackages({ key: k, state: 'approved' }).length);
+      const service = (id: string) => listIntegrations().filter(i => i.status === 'approved' && i.approval && (i.purposes?.[id]?.length ?? 0) > 0).length;
+      const subscribers = noticeSubscribers().length, customs = service('product.import-authorisation');
+      const limits = controlledLimits();
       const approved = keys.filter(k => listPackages({ key: k, state: 'approved' }).length);
       const types = Object.values(PRODUCT_PERMIT_TYPES);
       const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
@@ -275,6 +293,46 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Who decides product powers approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
         { label: 'What the public product check shows, approved by two officials citing the law', done: cls.approved, href: '/gov/health-regulation/products', detail: cls.approved ? `Version ${cls.version}: ${cls.fields.join(', ') || 'no attribute'}` : 'Ships empty: the public sees only the number, kind and published notices' },
         { label: 'Products recorded through decided cases', done: c.total > 0, href: '/gov/health-regulation/products', detail: `${c.byKind.medicine} medicines · ${c.byKind.device} devices${c.samples ? ` (${c.samples} samples)` : ''}` },
+        { label: 'Oversight procedures approved (corrective action, import and controlled-medicine authorisation, safety reports, device incidents, reconsideration)', done: moreApproved.length === more.length, href: '/gov/law/procedures', detail: `${moreApproved.length} of ${more.length} approved; their lists (points of entry, schedules, report kinds) and periods are the nation's, none ship` },
+        { label: 'Controlled-substances authority named (Who is responsible)', done: !!authorityFor('controlledSubstances'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('controlledSubstances') ? undefined : 'Not named: nobody decides controlled-medicine authorisations until it is' },
+        { label: 'Controlled-medicine quantity limits adopted by two officials citing the law', done: limits.version > 0, href: '/gov/health-regulation/products', detail: limits.version ? `Version ${limits.version}: ${limits.limits.length} limit(s)` : 'Ship unset: production refuses a schedule no adopted limit covers' },
+        { label: 'Recall notices and safety alerts (HX-005): subscribers approved by two officials', done: subscribers > 0, href: '/integrations', detail: `${subscribers} approved subscriber(s); none ship. Each subscriber is approved for product.safety-notice with its purpose` },
+        { label: 'Import authorisation check for customs (product.import-authorisation) approved for a caller', done: customs > 0, href: '/integrations', detail: `${customs} approved caller(s); customs learns only whether an authorisation is valid` },
+      ] };
+    }),
+
+    // The pilot's exit gate (Health I4 standalone-and-pilot; S6-I-11), computed from the records: never a stored status.
+    track({ key: 'pilot', title: 'Pilot: the health institutions', why: 'Whether authorised users completed the health services with real records and verifiable audit evidence (the pilot\'s exit gate), and whether the installation runs as an Institutional Edition. Evidence only: it never declares Health complete.', href: '/gov/health-regulation/pilot' }, () => {
+      const gate = pilotExitGate();
+      const e = currentEdition();
+      return { checks: [
+        { label: 'Institutional Edition (optional: only when the institutions stand alone)', done: true, href: '/gov/configuration/edition', detail: e ? `${e.label}: ${e.institutions.length} institution(s), modules ${e.modules.join(', ')}` : 'None recorded: every institution is connected' },
+        ...gate.items.map(i => ({ label: `Exit gate: ${i.label}`, done: i.met, href: '/gov/health-regulation/pilot', detail: (i.met ? i.detail : i.missing.join(' · ')).slice(0, 600) })),
+      ] };
+    }),
+
+    // Public-health programmes, health complaints and workforce counts (Health I4): the nation's own body, procedures, mappings and rules.
+    track({ key: 'public-health', title: 'Public-health programmes, complaints and workforce counts', why: 'Programme records and aggregate returns of the public-health authority (never an individual), complaint intake of the health regulators, and workforce counts derived from the professions register; published figures pass the nation\'s small-cell rule.', href: '/gov/health-regulation/programmes', seeded: true }, () => {
+      const rulesPending = interventionRuleChanges().pending;
+      if (rulesPending) wait({ what: 'Public-health intervention authority rules: a change waiting for a second official', proposedBy: rulesPending.by, at: rulesPending.at, href: '/gov/health-regulation/programmes' });
+      const cellsPending = smallCellChanges().pending;
+      if (cellsPending) wait({ what: 'Small-cell rule for health aggregates: a change waiting for a second official', proposedBy: cellsPending.by, at: cellsPending.at, href: '/gov/health-regulation/programmes' });
+      const keys = PROGRAMME_PROCEDURES.map(p => p.key);
+      const approved = keys.filter(k => listPackages({ key: k, state: 'approved' }).length);
+      const complaints = COMPLAINT_PROCEDURES.map(p => p.key);
+      const complaintsApproved = complaints.filter(k => listPackages({ key: k, state: 'approved' }).length);
+      const types = [...new Set(Object.values(PROGRAMME_PERMITS))];
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const rules = interventionRules(), cells = smallCellRule(), c = programmeCounts();
+      const own = provisionalOwner('publicHealth', authorityFor);
+      return { checks: [
+        { label: 'Public-health authority named (Who is responsible)', done: !!authorityFor('publicHealth'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('publicHealth') ? undefined : (own.provisional ?? 'Not named: nobody keeps programmes until it is') },
+        { label: 'Programme procedures approved (establishment, change, intervention, returns, risk communication)', done: approved.length === keys.length, href: '/gov/law/procedures', detail: `${approved.length} of ${keys.length} approved` },
+        { label: 'Who decides public-health powers approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        { label: 'Intervention authority, review and expiry rules adopted by two officials citing the law (CFG-PH-003)', done: rules.version > 0, href: '/gov/health-regulation/programmes', detail: rules.version ? `Version ${rules.version}: ${rules.rules.length} kind(s)` : 'Ship empty: production refuses an intervention no adopted rule covers' },
+        { label: 'Small-cell rule for health aggregates adopted by two officials citing the law', done: !!cells, href: '/gov/health-regulation/programmes', detail: cells ? `Version ${cells.version}: threshold ${cells.threshold}` : 'Ships unset: no programme figure or workforce count is published until it is adopted' },
+        { label: 'Programmes established through decided cases', done: c.programmes.established > 0, href: '/gov/health-regulation/programmes', detail: `${c.programmes.established} established · ${c.returns} return(s)${c.samples ? ` (${c.samples} samples)` : ''}` },
+        { label: 'Complaint procedures approved (facility and pharmacy complaints, professional conduct complaints)', done: complaintsApproved.length === complaints.length, href: '/gov/law/procedures', detail: `${complaintsApproved.length} of ${complaints.length} approved` },
       ] };
     }),
 
@@ -375,6 +433,9 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const p of waitingProfileSteps()) wait({ what: p.what, proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
   safe(() => { for (const r of waitingReleases()) wait({ what: `Form release: ${r.key} version ${r.version} waiting for a second official`, proposedBy: r.by, at: r.at, href: '/gov/law/procedures/forms' }); });
   safe(() => { const p = constitutionOverview().process.changes.pending; if (p) wait({ what: 'Steps for changing the constitutional profile: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/constitution' }); });
+  safe(() => { const p = editionChanges().pending; if (p) wait({ what: 'Institutional Edition: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/edition' }); });
+  safe(() => { for (const x of listExports()) if (x.state === 'proposed') wait({ what: `Export of ${listMinistries().find(m => m.id === x.institution)?.name ?? x.institution}: waiting for an official who can sign there`, proposedBy: x.by, at: x.at, href: `/gov/configuration/edition?institution=${encodeURIComponent(x.institution)}#export` }); });
+  safe(() => { for (const x of listImports()) if (x.state === 'proposed') wait({ what: `Import of ${x.institutionName}'s export ${x.exportId}: waiting for a second administrator`, proposedBy: x.by, at: x.at, href: '/gov/configuration/edition#export' }); });
   safe(() => { const p = classificationChanges().pending; if (p) wait({ what: 'Classification of the state: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/offices' }); });
   safe(() => { for (const w of waitingLegislative()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: w.href }); });
   safe(() => {

@@ -46,7 +46,9 @@ import { sha256, type Manifest, type ManifestPart, type OpenedArchive, type Plai
 export const EXCLUDED_STORES = new Set(['__civicosBackups']);
 /** Left as they are by a restore: the backup system's records and the Update Center's install records (the software that runs). */
 // The access log is oversight evidence of who read what: a data restore never takes it back.
-export const KEPT_ON_RESTORE = ['__civicosBackups', '__civicosUpdates', '__civicosAccessLog', '__civicosEventOutbox', '__civicosCronRuns', '__civicosSealKeys'];
+// The catalogue of institution exports and imports (lib/portability/export.ts) is the backup system's kind of record:
+// what was exported, by whom, where the sealed archive lies; a restore never takes it back.
+export const KEPT_ON_RESTORE = ['__civicosBackups', '__civicosUpdates', '__civicosAccessLog', '__civicosEventOutbox', '__civicosCronRuns', '__civicosSealKeys', '__civicosInstitutionExports'];
 export const EXCLUDED_NOTES: Manifest['excluded'] = [
   { what: 'Vector tile archives (facilities, parcels, boundaries)', why: 'Derived from the published records; rebuilt after a restore' },
   { what: 'The backup catalogue, retention policy and restore proposals (__civicosBackups)', why: 'The backup system\'s own records; kept in the target and in the running server' },
@@ -54,6 +56,7 @@ export const EXCLUDED_NOTES: Manifest['excluded'] = [
   { what: 'civicos.outbox, civicos.platform_state_lease and civicos.cron_lease (postgres)', why: 'Runtime coordination between instances, not state' },
   { what: 'The seal key register (__civicosSealKeys) is backed up but kept as it stands on restore', why: 'A restore must never bring back trust in a key revoked since, nor drop a key approved since' },
   { what: 'The scheduled jobs\' run history (__civicosCronRuns)', why: 'What the running software did; a data restore keeps it as it stands in the running server' },
+  { what: 'The catalogue of institution exports and imports (__civicosInstitutionExports) is backed up but kept as it stands on restore', why: 'Like the backup catalogue: what was exported or imported, by whom, and where each sealed archive lies at the target' },
   { what: 'civicos.rate_bucket, register_watch, register_watch_flag and runtime_secret (postgres)', why: 'Shared rate limits and the register watch: protection, not records' },
   { what: 'Container images and release artifacts', why: 'Held by the Update Center\'s registry and mirror (and the restore kit); not part of the data' },
   { what: 'Keys (CIVICOS_DATA_KEK, the key provider\'s keys)', why: 'Held in key custody; recovered separately (docs/DISASTER_RECOVERY.md)' },

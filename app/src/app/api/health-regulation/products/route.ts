@@ -10,11 +10,18 @@
 // authority's officials only (canReadProduct()), and every read, allowed or
 // refused, goes to the access log; ?search=1 is the regulator's own list
 // (numbers, names and states, applications included), logged as a search.
+// ?view=oversight: the recall notices and safety alerts issued (HX-005, each
+// as subscribers receive it: the public view only), the subscribers two
+// officials approved for them (approved only, with their purposes), delivery
+// counts, the controlled-medicine quantity limits in force and their waiting
+// change, and counts of import and controlled-medicine authorisations.
 // POST (administrators): what the public check shows, by two officials citing
 // the law: { op: 'propose-disclosure', fields, legalBasis: [{ instrument,
 // eId }] }, then { op: 'confirm-disclosure' } by a different official, or
-// { op: 'withdraw-disclosure' }. Products change only through decided cases
-// (/api/cases).
+// { op: 'withdraw-disclosure' }; the controlled-medicine quantity limits the
+// same way: { op: 'propose-limits', limits: [{ schedule, unit, max }],
+// legalBasis }, { op: 'confirm-limits' }, { op: 'withdraw-limits' }. Products
+// and authorisations change only through decided cases (/api/cases).
 import { NextRequest, NextResponse } from 'next/server';
 import { caseScope } from '@/lib/auth/official';
 import { canReadProduct } from '@/lib/auth/roles';
@@ -27,6 +34,9 @@ import {
   getProduct, publicProduct, listPublicProducts, productCounts, findProducts, publicClassification, productDisclosureChanges, productRecord,
   proposeProductDisclosure, confirmProductDisclosure, withdrawProductDisclosure, PUBLISHABLE_ATTRIBUTES, ATTRIBUTE_CLASS, STATE_LABEL,
 } from '@/lib/health/products/register';
+import { importCounts } from '@/lib/health/products/imports';
+import { controlledLimits, controlledLimitChanges, controlledCounts, proposeControlledLimits, confirmControlledLimits, withdrawControlledLimits } from '@/lib/health/products/controlled';
+import { listNotices, noticeSubscribers, noticeCounts } from '@/lib/health/products/notices';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +56,13 @@ export async function GET(req: NextRequest) {
     if (!p) return NextResponse.json({ error: 'No such product' }, { status: 404 });
     return NextResponse.json({ product: p, record: productRecord(p), public: publicProduct(p), classes: ATTRIBUTE_CLASS, labels: STATE_LABEL });
   }
+  if (q.get('view') === 'oversight') {
+    return NextResponse.json({
+      notices: listNotices(50), subscribers: noticeSubscribers(), deliveries: noticeCounts(),
+      limits: controlledLimits(), limitChanges: controlledLimitChanges(), imports: importCounts(), controlled: controlledCounts(),
+      controlledAuthorityNamed: !!authorityFor('controlledSubstances'),
+    });
+  }
   const common = { classification: publicClassification(), changes: productDisclosureChanges(), publishable: PUBLISHABLE_ATTRIBUTES, counts: productCounts(), authorityNamed: !!authorityFor('medicinesRegulation') };
   if (number) {
     const one = listPublicProducts({ q: number }).find(p => p.productId === number);
@@ -61,6 +78,9 @@ export async function POST(req: NextRequest) {
   const r = b.op === 'propose-disclosure' ? proposeProductDisclosure(b.fields, b.legalBasis, actor.name, actor.id, new Date(), dc.pendingHours)
     : b.op === 'confirm-disclosure' ? confirmProductDisclosure(actor.name, actor.id, new Date(), dc.requireIdentityBinding)
     : b.op === 'withdraw-disclosure' ? withdrawProductDisclosure(actor.name, typeof b.reason === 'string' ? b.reason : undefined)
-    : { error: 'op is propose-disclosure, confirm-disclosure or withdraw-disclosure' };
-  return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json({ result: r, classification: publicClassification(), changes: productDisclosureChanges() });
+    : b.op === 'propose-limits' ? proposeControlledLimits(b.limits, b.legalBasis, actor.name, actor.id, new Date(), dc.pendingHours)
+    : b.op === 'confirm-limits' ? confirmControlledLimits(actor.name, actor.id, new Date(), dc.requireIdentityBinding)
+    : b.op === 'withdraw-limits' ? withdrawControlledLimits(actor.name, typeof b.reason === 'string' ? b.reason : undefined)
+    : { error: 'op is propose-disclosure, confirm-disclosure, withdraw-disclosure, propose-limits, confirm-limits or withdraw-limits' };
+  return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json({ result: r, classification: publicClassification(), changes: productDisclosureChanges(), limits: controlledLimits(), limitChanges: controlledLimitChanges() });
 }

@@ -17,6 +17,8 @@ import { publishStandingCounts } from '@/lib/organisations/twin';
 import { publishCaseCounts } from '@/lib/casework/twin';
 import { publishEducationReturns } from '@/lib/education/twin';
 import { publishHealthCapacity } from '@/lib/health/twin';
+import { publishProgrammeReturns } from '@/lib/health/programmes/twin';
+import { publishWorkforceCounts } from '@/lib/professions/workforce';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +34,9 @@ async function runJob(req: Request) {
   const cases = await publishCaseCounts('scheduler');
   const education = await publishEducationReturns('scheduler');
   const health = await publishHealthCapacity('scheduler');
-  return NextResponse.json({ ok: true, runs, civil, organisations, cases, education, health });
+  const programmes = await publishProgrammeReturns('scheduler');
+  const workforce = await publishWorkforceCounts('scheduler');
+  return NextResponse.json({ ok: true, runs, civil, organisations, cases, education, health, programmes, workforce });
 }
 
 // Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).

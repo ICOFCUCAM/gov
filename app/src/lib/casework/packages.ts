@@ -35,6 +35,14 @@ const db = (): PackageDb => {
 };
 export function resetPackages(): void { g.__civicosCasePackages = undefined; }
 
+/** Put back procedure versions as they were drafted and approved (lib/portability/import.ts only: the confirmed import of an institution's own export (two officials) into an installation that holds none of these records). A version already here is kept as it is. */
+export function restorePackages(list: CasePackage[]): { restored: number } {
+  const d = db();
+  const fresh = list.filter(p => !d.packages.some(x => x.key === p.key && x.version === p.version));
+  d.packages.push(...fresh.map(p => structuredClone(p)));
+  return { restored: fresh.length };
+}
+
 const KEY = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 /** Field keys are names a form and its data use: camelCase. */

@@ -432,7 +432,6 @@ export interface SealStanding {
 }
 
 const basisText = (k: SealKey) => k.basis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`);
-const covers = (k: SealKey, t: number) => !!k.validFrom && Date.parse(k.validFrom) <= t && (!k.validUntil || t <= Date.parse(k.validUntil));
 
 /**
  * What the register says about a seal made with `publicKeyPem` at `sealedAt`
@@ -445,29 +444,52 @@ const covers = (k: SealKey, t: number) => !!k.validFrom && Date.parse(k.validFro
  * register started.
  */
 export function sealStanding(purpose: SealPurpose, publicKeyPem: string, sealedAt: string, audited = true): SealStanding {
+  const d = db();
+  return standingAmong(d.keys.filter(k => k.purpose === purpose).map(k => ({
+    id: k.id, status: k.status, fingerprint: k.fingerprint, ...(k.validFrom ? { validFrom: k.validFrom } : {}), ...(k.validUntil ? { validUntil: k.validUntil } : {}),
+    basis: basisText(k), approvedBy: k.approvals.map(a => a.by), ...(k.sample ? { sample: true } : {}), ...(k.historic ? { historic: true } : {}),
+    ...(compromiseConfirmed(k) ? { compromisedFrom: k.compromise!.compromisedFrom } : {}),
+  })), d.since[purpose], publicKeyPem, sealedAt, audited);
+}
+
+/**
+ * The same judgement from a published trust list (GET /api/trust/keys, or the
+ * one an institution's export carries; lib/portability/export.ts), with no
+ * running server: what an offline verifier relies on.
+ */
+export function trustListStanding(list: { since: Partial<Record<SealPurpose, string>>; keys: TrustListEntry[] }, purpose: SealPurpose, publicKeyPem: string, sealedAt: string, audited = true): SealStanding {
+  return standingAmong(list.keys.filter(k => k.purpose === purpose).map(k => ({
+    id: k.keyId, status: k.status, fingerprint: k.fingerprint, ...(k.validFrom ? { validFrom: k.validFrom } : {}), ...(k.validUntil ? { validUntil: k.validUntil } : {}),
+    basis: k.legalBasis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`), approvedBy: [], ...(k.sample ? { sample: true } : {}), ...(k.historic ? { historic: true } : {}),
+    ...(k.compromisedFrom ? { compromisedFrom: k.compromisedFrom } : {}),
+  })), list.since[purpose], publicKeyPem, sealedAt, audited);
+}
+
+type KeyView = NonNullable<SealStanding['key']> & { fingerprint: string };
+const viewCovers = (k: KeyView, t: number) => !!k.validFrom && Date.parse(k.validFrom) <= t && (!k.validUntil || t <= Date.parse(k.validUntil));
+
+/** The rule both read: the key that covers the seal's time, its compromise, and keys from before the register. */
+function standingAmong(keys: KeyView[], since: string | undefined, publicKeyPem: string, sealedAt: string, audited: boolean): SealStanding {
   const fp = fingerprintOf(publicKeyPem);
   if (!fp) return { state: 'unregistered', trusted: false, keyId: 'unknown', note: 'The seal\'s key is not an Ed25519 public key' };
-  const d = db();
   const t = Date.parse(sealedAt);
-  const since = d.since[purpose];
   const before = !since || t < Date.parse(since);
-  const mine = d.keys.filter(k => k.purpose === purpose && k.fingerprint === fp.fingerprint);
+  const mine = keys.filter(k => k.fingerprint === fp.fingerprint);
   const base = { keyId: fp.keyId, fingerprint: fp.fingerprint };
-  const view = (k: SealKey): SealStanding['key'] => ({ id: k.id, status: k.status, ...(k.validFrom ? { validFrom: k.validFrom } : {}), ...(k.validUntil ? { validUntil: k.validUntil } : {}), basis: basisText(k), approvedBy: k.approvals.map(a => a.by),
-    ...(k.sample ? { sample: true } : {}), ...(k.historic ? { historic: true } : {}), ...(compromiseConfirmed(k) ? { compromisedFrom: k.compromise!.compromisedFrom } : {}) });
+  const view = ({ fingerprint: _f, ...k }: KeyView): SealStanding['key'] => k;
   if (!audited) {
     if (!mine.length && before) return { ...base, state: 'before-registration', trusted: true, note: 'Key not in the register (sealed before key registration); no audit-chain record of this seal' };
     return { ...base, state: 'no-audit-record', trusted: false, ...(mine[0] ? { key: view(mine[0]) } : {}), note: 'Not trusted: no audit-chain record of this seal' };
   }
   const approved = mine.filter(k => ['active', 'retired', 'revoked'].includes(k.status) && k.validFrom);
-  const hit = approved.find(k => covers(k, t));
+  const hit = approved.find(k => viewCovers(k, t));
   if (hit) {
-    if (compromiseConfirmed(hit) && t >= Date.parse(hit.compromise!.compromisedFrom)) {
-      return { ...base, state: 'after-compromise', trusted: false, key: view(hit), note: `Sealed after the key was reported compromised (from ${hit.compromise!.compromisedFrom}): not trusted` };
+    if (hit.compromisedFrom && t >= Date.parse(hit.compromisedFrom)) {
+      return { ...base, state: 'after-compromise', trusted: false, key: view(hit), note: `Sealed after the key was reported compromised (from ${hit.compromisedFrom}): not trusted` };
     }
     const period = `valid from ${hit.validFrom!.slice(0, 10)}${hit.validUntil ? ` until ${hit.validUntil.slice(0, 10)}` : ''}`;
-    const under = hit.sample ? 'a sample key of a demonstration or training installation' : `approved under ${basisText(hit).join('; ') || 'the nation\'s rules'}`;
-    const later = compromiseConfirmed(hit) ? `; the key was later reported compromised from ${hit.compromise!.compromisedFrom.slice(0, 10)}, after this seal` : '';
+    const under = hit.sample ? 'a sample key of a demonstration or training installation' : `approved under ${hit.basis.join('; ') || 'the nation\'s rules'}`;
+    const later = hit.compromisedFrom ? `; the key was later reported compromised from ${hit.compromisedFrom.slice(0, 10)}, after this seal` : '';
     return { ...base, state: 'trusted', trusted: true, key: view(hit), note: `Sealed by key ${fp.keyId} (${under}, ${period})${later}` };
   }
   if (before) return { ...base, state: 'before-registration', trusted: true, ...(mine[0] ? { key: view(mine[0]) } : {}), note: 'Key not in the register (sealed before key registration)' };

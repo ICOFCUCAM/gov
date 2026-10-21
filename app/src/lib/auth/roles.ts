@@ -239,6 +239,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/professions\/types$/,
   // What the public product check shows (the nation's public information classification): proposed citing the law, confirmed by a different official.
   /^\/api\/health-regulation\/products$/,
+  // The public-health country rule sets (intervention authority rules, CFG-PH-003; the small-cell threshold): proposed citing the law, confirmed by a different official.
+  /^\/api\/health-regulation\/programmes$/,
   /^\/api\/dual-control$/,
   // Which authority the law designates for each permit and licence type (four-eyes in the route).
   /^\/api\/permit-authorities$/,
@@ -449,6 +451,39 @@ export function accountChangeRule(s: Scope, institutions: (string | null | undef
   if (!outside.length) return null;
   if (!wholeGovernment(s)) return 'This account belongs to an independent institution: only its own administrators manage it (or an administrator serving the whole government, confirmed by an official who can sign there)';
   return { confirmBy: outside };
+}
+
+/**
+ * An institution's portable export (Health I4 standalone-and-pilot,
+ * lib/portability/export.ts): proposed by an administrator whose scope
+ * reaches the institution, its own or, for an institution that is not
+ * independent, the whole government's (reaches()). An independent
+ * institution's export is never set going from whole-government scope.
+ */
+export function exportProposeRefusal(s: Scope, institution: string): string | null {
+  if (roleOf(s) !== 'administrator') return 'Only an administrator proposes an institution\'s export';
+  if (reaches(s, institution)) return null;
+  if (!wholeGovernment(s)) return 'You can propose an export only for your own institution';
+  return isSubnational(s, institution) ? subnationalRefusal : 'This institution is independent: only its own administrators propose its export; serving the whole government does not reach it';
+}
+/** Confirming it: a different official who can sign at that institution (its own, or the whole government's where that reaches it). */
+export function exportConfirmRefusal(s: Scope, institution: string): string | null {
+  if (roleOf(s) !== 'signatory') return 'An official who can sign at the institution confirms its export';
+  if (reaches(s, institution)) return null;
+  return 'Only an official who can sign at this institution confirms its export';
+}
+/** Downloading the sealed archive: the institution's administrators and officials who can sign there (logged as an export). */
+export function exportDownloadRefusal(s: Scope, institution: string): string | null {
+  const role = roleOf(s);
+  if (role !== 'administrator' && role !== 'signatory') return 'Only the institution\'s administrators and officials who can sign there download its export';
+  return reaches(s, institution) ? null : 'Only officials of this institution download its export';
+}
+
+/** The pilot's exit gate (lib/pilot/exit-gate.ts, read only): administrators, auditors, the pilot institutions' own officials and the whole government. */
+export function canSeePilotGate(s: Scope, institutions: string[]): string | null {
+  const role = roleOf(s);
+  if (role === 'administrator' || role === 'auditor' || wholeGovernment(s) || institutions.includes(s.institution!)) return null;
+  return 'Only the pilot institutions\' officials, administrators and auditors see the pilot\'s exit gate';
 }
 
 /** Confirming an account change waiting for an independent institution: an official who can sign there, or its administrator. */
