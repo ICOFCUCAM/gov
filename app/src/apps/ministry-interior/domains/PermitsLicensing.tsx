@@ -12,6 +12,7 @@ import { interiorOps } from '@/lib/gov/interior-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { nameKeys } from '@/lib/map/names';
 import type { SignalKind } from '@/lib/twin/signal';
+import { SampleFold } from '@/components/ui/SampleFold';
 import { RegionMap, mapClock, skewed, useNationGeo, type MapValue, type NationUnit, type RegionLabel } from '@/apps/ministry-interior/domains/RegionMaps';
 
 const BG = '#f5f6fb';
@@ -125,16 +126,42 @@ function MultiLine({ series, height = 170 }: { series: { name: string; c: string
 const NO_UNITS: NationUnit[] = [];
 const HEAT = ['#d8cdf7', '#a78bf5', PURPLE, '#6d28d9', '#4c1d95'];
 
-interface PermitRow { municipality: string; submittedAt?: string }
+interface PermitRow { municipality: string; submittedAt?: string; status?: string }
 
-function useApplications(units: NationUnit[], id: string, ts: number): { values: MapValue[]; kind: SignalKind; source: string } {
-  const [rows, setRows] = React.useState<PermitRow[] | null>(null);
+/** What the permit register answered: its rows, or why it did not (read once). */
+type PermitRead = { rows: PermitRow[] } | { error: string } | null;
+
+function usePermitRead(): PermitRead {
+  const [read, setRead] = React.useState<PermitRead>(null);
   React.useEffect(() => {
     let live = true;
-    fetch('/api/permits', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null))
-      .then((j: { permits?: PermitRow[] } | null) => { if (live) setRows(j?.permits ?? []); }).catch(() => { if (live) setRows([]); });
+    fetch('/api/permits', { cache: 'no-store' })
+      .then(async r => { const j = await r.json().catch(() => null) as { permits?: PermitRow[]; error?: string } | null; if (live) setRead(r.ok ? { rows: j?.permits ?? [] } : { error: j?.error ?? 'Not readable here' }); })
+      .catch(() => { if (live) setRead({ error: 'Not connected' }); });
     return () => { live = false; };
   }, []);
+  return read;
+}
+
+/** The permit register's own counts (Record): what it holds now. */
+function PermitRegisterCounts({ read }: { read: PermitRead }) {
+  const month = new Date().toISOString().slice(0, 7);
+  const rows = read && 'rows' in read ? read.rows : null;
+  const waiting = rows?.filter(r => ['submitted', 'in-review', 'needs-info'].includes(String(r.status))).length ?? 0;
+  return (
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-lg border px-4 py-2 text-[11px]" style={{ borderColor: LINE, background: CARD, color: INK }}>
+      <span className="font-semibold uppercase tracking-[0.18em]" style={{ color: PURPLE }}>Permit register</span>
+      {rows ? <>
+        <span>{rows.length} permits</span><span>{waiting} waiting for a decision</span><span>{rows.filter(r => r.submittedAt?.startsWith(month)).length} submitted this month</span>
+        <span style={{ color: SOFT }}>Record: counted from the register</span>
+      </> : <span style={{ color: SOFT }}>{read && 'error' in read ? read.error : 'Reading the register…'}</span>}
+      <a href="/console" className="ml-auto underline" style={{ color: PURPLE }}>Open the permit desk</a>
+    </div>
+  );
+}
+
+function useApplications(units: NationUnit[], id: string, ts: number, read: PermitRead): { values: MapValue[]; kind: SignalKind; source: string } {
+  const rows = read && 'rows' in read ? read.rows : null;
   return React.useMemo(() => {
     const month = new Date().toISOString().slice(0, 7);
     const unitOf = new Map<string, string>();
@@ -173,7 +200,8 @@ export function PermitsLicensing({ id, now }: { id: string; now: number }) {
   const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const day = clock.toLocaleDateString('en-GB', { weekday: 'long' });
   const W = (k: string, lo: number, hi: number, n = 6) => waveSeries(`pl:${k}:${id}`, ts, n, lo, hi);
-  const apps = useApplications(useNationGeo()?.units ?? NO_UNITS, id, mapClock(ts));
+  const read = usePermitRead();
+  const apps = useApplications(useNationGeo()?.units ?? NO_UNITS, id, mapClock(ts), read);
 
   const active = 1_200_000 + Math.round(seed(`pl:ac:${id}`) * 90_000);
   const newApps = io.licensing.pending + Math.round(wave(`pl:na:${id}`, ts, 40000, 56000) - io.licensing.pending);
@@ -230,6 +258,11 @@ export function PermitsLicensing({ id, now }: { id: string; now: number }) {
         </div>
       </div>
 
+      <PermitRegisterCounts read={read} />
+
+      {/* Generated panels: marked Sample in demo and training, folded to Not connected in production. */}
+      <SampleFold what="Permit statistics and example applications" source="Interior simulation engine (lib/gov/interior-systems.ts); typed example figures">
+      <div className="space-y-3">
       {/* ── KPI strip ──────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         {kpis.map(([l, v, d, dn, ic, c]) => <Kpi key={l} label={l} value={v} delta={d} dn={dn} icon={ic} c={c} />)}
@@ -303,16 +336,22 @@ export function PermitsLicensing({ id, now }: { id: string; now: number }) {
         </Card>
       </div>
 
+      </div>
+      </SampleFold>
+
       {/* ── Row 3 ──────────────────────────────────────────────── */}
       <div className="grid gap-3 xl:grid-cols-3">
         <Card title="Permit Validity Overview">
+          <SampleFold what="Validity figures" source="Interior simulation engine (lib/gov/interior-systems.ts); typed example figures">
           <Donut top={active.toLocaleString()} segs={[
             { label: 'Valid', v: 72.1, n: '900,842', c: TEAL }, { label: 'Expiring Soon (≤30d)', v: 12.4, n: '154,786', c: AMBER },
             { label: 'Expired', v: 9.8, n: '122,438', c: RED }, { label: 'Suspended', v: 3.2, n: '39,852', c: PURPLE },
             { label: 'Revoked', v: 2.5, n: '30,816', c: '#c4cbd9' },
           ]} />
+          </SampleFold>
         </Card>
         <Card title="Expiring Soon" action="View All Expiring →">
+          <SampleFold what="Example expiring permits" source="Interior simulation engine (lib/gov/interior-systems.ts); typed example figures">
           <div className="flex text-[8.5px] uppercase tracking-wider" style={{ color: MUT }}>
             <span className="w-28">Permit ID</span><span className="flex-1">Type</span><span className="w-20">Expires</span><span className="w-12 text-right">Days</span>
           </div>
@@ -326,9 +365,11 @@ export function PermitsLicensing({ id, now }: { id: string; now: number }) {
               </div>
             ))}
           </div>
+          </SampleFold>
         </Card>
         <Card title="Application Heatmap" sub="By Region · This Month">
-          <Heatmap apps={apps} />
+          {/* Counted from the permit register when applications name the nation's regions; a sample otherwise. */}
+          {apps.kind === 'sample' ? <SampleFold what="Sample regional counts" source={apps.source}><Heatmap apps={apps} /></SampleFold> : <Heatmap apps={apps} />}
           <div className="mt-2 flex items-center gap-2 text-[8.5px]" style={{ color: MUT }}>
             <span>Low</span>
             <span className="h-2 flex-1 rounded-full" style={{ background: `linear-gradient(90deg,${HEAT.join(',')})` }} />
@@ -340,7 +381,7 @@ export function PermitsLicensing({ id, now }: { id: string; now: number }) {
       {/* ── Footer ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-[10px]" style={{ borderColor: LINE, color: MUT }}>
         <span>National Digital Governance Platform — One Nation. One System. One Future.</span>
-        <span>Service Availability 99.2% · Citizen Satisfaction 4.6/5 · Digital Service Index 87%</span>
+        <SampleFold what="Service figures" source="Typed example figures"><span>Service Availability 99.2% · Citizen Satisfaction 4.6/5 · Digital Service Index 87%</span></SampleFold>
       </div>
     </div>
   );

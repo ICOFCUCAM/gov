@@ -200,6 +200,16 @@ export const LEGACY_KEYS: Record<string, string> = {
 
 export const DEFAULT_DOMAIN = DOMAINS[0]!.key;
 
+/**
+ * Screens that read the platform's own records (the civil register, the permit
+ * register, the twin's observed population). The application host shows them
+ * outside its simulation fold, so a production installation shows the records;
+ * each screen folds its own generated panels (components/ui/SampleFold.tsx).
+ */
+export const RECORD_SURFACES: ReadonlySet<SurfaceId> = new Set<SurfaceId>(['civil-registry', 'population', 'permits']);
+/** Whether a nav key (new or legacy) opens a record screen. */
+export const isRecordDomain = (key: string | null | undefined): boolean => RECORD_SURFACES.has(resolveDomain(key).surface);
+
 const BY_KEY = new Map(DOMAINS.map(d => [d.key, d]));
 
 /** Resolve any incoming nav key (new or legacy) to a real domain. */

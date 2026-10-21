@@ -15,6 +15,7 @@ import { interiorOps } from '@/lib/gov/interior-systems';
 import { wave, waveSeries } from '@/lib/telemetry';
 import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
 import { SignalTag } from '@/components/ui/SignalTag';
+import { SampleFold } from '@/components/ui/SampleFold';
 
 const BG = '#060b12';
 const PANEL = '#0a1119';
@@ -201,6 +202,9 @@ export function CivilRegistryCommand({ id, now }: { id: string; now: number }) {
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: BG, boxShadow: 'inset 0 0 140px rgba(0,0,0,0.65)' }}>
       <RegisterCounts />
+      {/* Everything below is generated: marked Simulated above in demo and training, folded to Not connected in production. */}
+      <SampleFold what="Civil registry simulation panels" source="Interior simulation engine (lib/gov/interior-systems.ts)" marked>
+      <div className="space-y-2">
       {/* ── Header ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-[4px] border px-4 py-3"
         style={{ borderColor: LINE, background: 'linear-gradient(100deg,#0a1119,#0e1620)' }}>
@@ -357,6 +361,8 @@ export function CivilRegistryCommand({ id, now }: { id: string; now: number }) {
           ))}
         </div>
       </div>
+      </div>
+      </SampleFold>
     </div>
   );
 }

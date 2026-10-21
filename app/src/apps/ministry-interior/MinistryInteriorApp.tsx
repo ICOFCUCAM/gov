@@ -13,12 +13,20 @@ import { resolveDomain } from '@/apps/ministry-interior/core/domains';
 import { InteriorShell } from '@/apps/ministry-interior/shell/InteriorShell';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
-export function MinistryInteriorApp({ instanceId, domain, now, role, withheld }: {
+export { isRecordDomain } from '@/apps/ministry-interior/core/domains';
+
+/**
+ * `recordsView`: the application host shows this screen outside its simulation
+ * fold (a record screen, core/domains.ts RECORD_SURFACES); the shell then folds
+ * its own generated chrome.
+ */
+export function MinistryInteriorApp({ instanceId, domain, now, role, withheld, recordsView = false }: {
   instanceId: string;
   domain: string;
   now: number;
   role: SovereignRole;
   withheld: Capability[];
+  recordsView?: boolean;
 }) {
   const resolved = resolveDomain(domain);
   return (
@@ -28,6 +36,7 @@ export function MinistryInteriorApp({ instanceId, domain, now, role, withheld }:
       now={now}
       role={role}
       withheld={withheld}
+      recordsView={recordsView}
     />
   );
 }
