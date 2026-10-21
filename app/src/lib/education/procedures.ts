@@ -20,6 +20,7 @@ import { draftPackage, listPackages } from '@/lib/casework/packages';
 import { issueCertificate } from '@/lib/records/certificates';
 import { getOrganisation, current } from '@/lib/organisations/register';
 import { sectorProcedures } from '@/lib/organisations/procedures';
+import { libraryForm } from '@/lib/forms/library/definitions';
 import { recordInspection, recordAward, correctAward, revokeAward, attachAwardCertificate, awardOfCase, getAward } from './register';
 import type { CasePackage } from '@/lib/casework/types';
 
@@ -166,7 +167,8 @@ export const REFERENCE_QUALIFICATION_REVOCATION: Ref = {
 };
 
 export const EDUCATION_PROCEDURES: Ref[] = [
-  ...sectorProcedures({ prefix: 'edu.school', owner: 'education', register: 'schools', word: 'school registration', refPrefix: 'SCH' }),
+  // The specification's school registration form, attached to the registration application (lib/forms/library).
+  ...sectorProcedures({ prefix: 'edu.school', owner: 'education', register: 'schools', word: 'school registration', refPrefix: 'SCH', form: libraryForm('education.school-registration') }),
   REFERENCE_INSPECTION, REFERENCE_QUALIFICATION, REFERENCE_QUALIFICATION_CORRECTION, REFERENCE_QUALIFICATION_REVOCATION,
 ];
 

@@ -1,0 +1,18 @@
+{
+  "form_id": "labour.workplace-complaint",
+  "version": "1.0",
+  "fields": [
+    {"id": "workplace_reference", "type": "organisation_or_location_reference", "required": true},
+    {"id": "issue_category", "type": "controlled_vocabulary", "required": true},
+    {"id": "incident_period", "type": "date_or_date_range", "required": true},
+    {"id": "description", "type": "long_text", "required": true},
+    {"id": "evidence", "type": "evidence_collection", "required": false},
+    {"id": "contact_preference", "type": "contact_method", "required": true},
+    {"id": "confidentiality_request", "type": "restricted_flag", "required": false}
+  ],
+  "rules": {
+    "allegation_is_not_a_finding": true,
+    "case_visibility": "restricted_by_role_and_assignment",
+    "retaliation_protections": "configured_by_law"
+  }
+}

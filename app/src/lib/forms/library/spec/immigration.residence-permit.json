@@ -1,0 +1,18 @@
+{
+  "form_id": "immigration.residence-permit",
+  "version": "1.0",
+  "fields": [
+    {"id": "applicant_reference", "type": "person_reference", "required": true},
+    {"id": "permit_category", "type": "configured_permit_type", "required": true},
+    {"id": "travel_document", "type": "document_reference", "required": true},
+    {"id": "requested_validity", "type": "date_range", "required": true},
+    {"id": "purpose_and_basis", "type": "structured_claim", "required": true},
+    {"id": "supporting_evidence", "type": "evidence_collection", "required": true},
+    {"id": "fee_reference", "type": "approved_tariff_reference", "required": false}
+  ],
+  "decision": {
+    "legal_basis": "required",
+    "decision_authority": "configured_by_permit_category",
+    "automated_final_decision": false
+  }
+}

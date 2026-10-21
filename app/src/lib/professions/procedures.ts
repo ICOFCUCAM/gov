@@ -7,6 +7,8 @@
 // on it; when an approved permit authority mapping governs the profession's
 // permit type, that mapping decides, and a production installation needs it.
 
+import { libraryForm } from '@/lib/forms/library/definitions';
+import { attachForm } from '@/lib/forms/library/build';
 import { registerEffect, registeredEffects, type EffectContext } from '@/lib/casework/engine';
 import { draftPackage, listPackages, ownerInstitution } from '@/lib/casework/packages';
 import { authorityFor } from '@/lib/data/store';
@@ -141,6 +143,9 @@ export const REFERENCE_PROFESSIONAL_FITNESS: Ref = {
     { name: 'revoked', steps: [{ action: 'notify', fields: { professional: 'PRN-1' }, documents: ['grounds'], expect: 'hearing' }, { action: 'propose', expect: 'pending-approval' }, { action: 'revoke', expect: 'revoked' }] },
   ],
 };
+
+// The specification's form (professional-licensing.initial-application), attached to the procedure's own fields and documents (lib/forms/library); still a draft the nation approves.
+Object.assign(REFERENCE_PROFESSIONAL_REGISTRATION, attachForm(REFERENCE_PROFESSIONAL_REGISTRATION.fields, REFERENCE_PROFESSIONAL_REGISTRATION.documents, libraryForm('professional-licensing.initial-application')));
 
 export const PROFESSION_PROCEDURES: Ref[] = [REFERENCE_PROFESSIONAL_REGISTRATION, REFERENCE_PROFESSIONAL_RENEWAL, REFERENCE_PROFESSIONAL_FITNESS];
 

@@ -17,6 +17,8 @@
 import { registerEffect, registeredEffects, type EffectContext } from '@/lib/casework/engine';
 import { draftPackage, listPackages } from '@/lib/casework/packages';
 import type { CasePackage } from '@/lib/casework/types';
+import { libraryForm } from '@/lib/forms/library/definitions';
+import { attachForm } from '@/lib/forms/library/build';
 
 type Ref = Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'>;
 
@@ -82,6 +84,9 @@ export const REFERENCE_INCIDENT: Ref = {
     ] },
   ],
 };
+
+// The specification's form (police.incident-report), attached to the procedure's own fields and documents (lib/forms/library); still a draft the nation approves.
+Object.assign(REFERENCE_INCIDENT, attachForm(REFERENCE_INCIDENT.fields, REFERENCE_INCIDENT.documents, libraryForm('police.incident-report')));
 
 export const POLICE_PROCEDURES: Ref[] = [REFERENCE_INCIDENT];
 

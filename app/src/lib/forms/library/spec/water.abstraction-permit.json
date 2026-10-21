@@ -1,0 +1,18 @@
+{
+  "form_id": "water.abstraction-permit",
+  "version": "1.0",
+  "fields": [
+    {"id": "applicant", "type": "person_or_organisation_reference", "required": true},
+    {"id": "water_source", "type": "water_source_reference", "required": true},
+    {"id": "location", "type": "geospatial_geometry", "required": true},
+    {"id": "intended_use", "type": "controlled_vocabulary", "required": true},
+    {"id": "requested_quantity", "type": "quantity_with_unit", "required": true},
+    {"id": "requested_period", "type": "date_range", "required": true},
+    {"id": "technical_evidence", "type": "evidence_collection", "required": true}
+  ],
+  "decision": {
+    "legal_basis": "required",
+    "environmental_review": "configured_by_jurisdiction",
+    "permit_conditions": "structured_and_versioned"
+  }
+}

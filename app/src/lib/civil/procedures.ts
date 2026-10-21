@@ -11,6 +11,9 @@ import { registeredEffects } from '@/lib/casework/engine';
 import { issueCertificate } from '@/lib/records/certificates';
 import { findMatches, registerEvent, attachDecision, eventOfCase, getPerson, amendPerson, current, type Sex } from './register';
 import type { CasePackage } from '@/lib/casework/types';
+import { libraryForm } from '@/lib/forms/library/definitions';
+import { attachForm } from '@/lib/forms/library/build';
+import { locationRegion, locationText, partyName } from '@/lib/forms/contract';
 
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 /** Days after which a birth registration counts as late (a reference value; the nation's law sets its own in its procedure). */
@@ -28,10 +31,10 @@ registerEffect('civil.registerBirth', ({ case: c, actor, now }: EffectContext) =
   const late = !!date && (now.getTime() - Date.parse(`${date}T00:00:00Z`)) / 86_400_000 > LATE_AFTER_DAYS;
   const e = registerEvent({
     kind: 'birth', date, case: c.id, late, ...sampleMark(c),
-    place: { text: str(f.birthPlace), ...(str(f.region) ? { region: str(f.region) } : {}), ...(str(f.birthFacility) ? { facility: str(f.birthFacility) } : {}) },
+    place: { text: locationText(f.birthPlace), ...(str(f.region) || locationRegion(f.birthPlace) ? { region: str(f.region) || locationRegion(f.birthPlace) } : {}), ...(str(f.birthFacility) ? { facility: str(f.birthFacility) } : {}) },
     child: { given: str(f.childGiven), family: str(f.childFamily), sex: (['female', 'male', 'other'].includes(str(f.sex)) ? str(f.sex) : 'unknown') as Sex,
       mother: { given: str(f.motherGiven), family: str(f.motherFamily) }, ...(str(f.fatherFamily) ? { father: { given: str(f.fatherGiven), family: str(f.fatherFamily) } } : {}) },
-    ...(str(f.informantName) ? { informant: { name: str(f.informantName), ...(str(f.informantRelation) ? { relation: str(f.informantRelation) } : {}) } } : {}),
+    ...(partyName(f.informantName) ? { informant: { name: partyName(f.informantName), ...(str(f.informantRelation) ? { relation: str(f.informantRelation) } : {}) } } : {}),
   }, actor.name, now);
   if ('error' in e) return { error: e.error };
   return { facts: { registrationNumber: e.registrationNumber, dateOfBirth: e.date, late: e.late }, after: d => { if (d) attachDecision(e.id, d.id); } };
@@ -97,11 +100,11 @@ const BIRTH_FIELDS: CasePackage['fields'] = [
 export const REFERENCE_BIRTH: Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'> = {
   key: 'civil.birth', version: 1, owner: 'civilRegistration', title: 'Birth registration', refPrefix: 'BRA', reference: true,
   citations: [],
-  fields: BIRTH_FIELDS,
-  documents: [
+  // The specification's birth registration form (crvs.birth-registration), attached to the procedure's own fields (lib/forms/library).
+  ...attachForm(BIRTH_FIELDS, [
     { class: 'birth-notification', label: 'Birth notification (from the health facility or a witness)', required: true },
     { class: 'parent-identity', label: 'Parent\'s identity document', required: false },
-  ],
+  ], libraryForm('crvs.birth-registration')),
   stages: [
     { key: 'submitted', label: 'Submitted' }, { key: 'completeness', label: 'Completeness check' }, { key: 'returned', label: 'Returned for correction' },
     { key: 'verification', label: 'Verification' }, { key: 'adjudication', label: 'Referred for adjudication' }, { key: 'pending-approval', label: 'Pending approval' },

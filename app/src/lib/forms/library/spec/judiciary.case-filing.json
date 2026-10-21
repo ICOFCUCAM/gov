@@ -1,0 +1,19 @@
+{
+  "form_id": "judiciary.case-filing",
+  "version": "1.0",
+  "fields": [
+    {"id": "court_jurisdiction", "type": "configured_court_reference", "required": true},
+    {"id": "case_category", "type": "configured_case_type", "required": true},
+    {"id": "filing_party", "type": "person_or_organisation_reference", "required": true},
+    {"id": "other_parties", "type": "restricted_party_collection", "required": true},
+    {"id": "relief_sought", "type": "structured_text", "required": true},
+    {"id": "filing_documents", "type": "signed_document_collection", "required": true},
+    {"id": "confidentiality_request", "type": "restricted_flag", "required": false}
+  ],
+  "controls": {
+    "case_assignment": "judiciary_controlled",
+    "judicial_decision": "authorised_human_judge",
+    "external_executive_override": false,
+    "legal_basis": "required_for_material_actions"
+  }
+}

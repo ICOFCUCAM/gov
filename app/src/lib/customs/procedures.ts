@@ -14,6 +14,10 @@
 // powers stay with the nation's law and a later, reviewed module.
 
 import { registerEffect, registeredEffects, type EffectContext } from '@/lib/casework/engine';
+import { libraryForm } from '@/lib/forms/library/definitions';
+import { attachForm } from '@/lib/forms/library/build';
+import { groupLines } from '@/lib/forms/contract';
+import { GOODS_ITEMS } from '@/lib/forms/library/definitions';
 import { draftPackage, listPackages } from '@/lib/casework/packages';
 import { calculate } from '@/lib/law/rules';
 import { issueBill } from '@/lib/data/store/payments';
@@ -53,7 +57,7 @@ function dutyLines(c: Case, d: Declaration, on: string): LineDuty[] | { error: s
 
 registerEffect('customs.lodge', ({ case: c, actor, now }: EffectContext) => {
   const f = c.fields;
-  const d = lodgeDeclaration({ direction: str(f.direction), declarant: { kind: str(f.declarantKind), ref: str(f.declarantRef), name: str(f.declarantName) }, shipment: { mode: str(f.transportMode), transportRef: str(f.transportRef), from: str(f.dispatchCountry).toUpperCase(), to: str(f.destinationCountry).toUpperCase(), ...(str(f.arrival) ? { arrival: str(f.arrival) } : {}) }, currency: (str(f.currency) || nationCurrency()).toUpperCase(), goods: str(f.goods) }, c.id, actor.name, now);
+  const d = lodgeDeclaration({ direction: str(f.direction), declarant: { kind: str(f.declarantKind), ref: str(f.declarantRef), name: str(f.declarantName) }, shipment: { mode: str(f.transportMode), transportRef: str(f.transportRef), from: str(f.dispatchCountry).toUpperCase(), to: str(f.destinationCountry).toUpperCase(), ...(str(f.arrival) ? { arrival: str(f.arrival) } : {}) }, currency: (str(f.currency) || nationCurrency()).toUpperCase(), goods: groupLines(f.goods, GOODS_ITEMS) }, c.id, actor.name, now);
   if ('error' in d) return d;
   return { facts: { declaration: d.number, lines: linesOf(d).length } };
 });
@@ -61,7 +65,7 @@ registerEffect('customs.lodge', ({ case: c, actor, now }: EffectContext) => {
 registerEffect('customs.amend', ({ case: c, actor, now }: EffectContext) => {
   const d = declarationOf(c);
   if (!d) return { error: 'Lodge the declaration first' };
-  const r = amendGoods(d.number, str(c.fields.goods), str(c.fields.amendmentReason) || c.pending?.reason || '', c.id, actor.name, now);
+  const r = amendGoods(d.number, groupLines(c.fields.goods, GOODS_ITEMS), str(c.fields.amendmentReason) || c.pending?.reason || '', c.id, actor.name, now);
   if ('error' in r) return r;
   return { facts: { declaration: r.number, version: r.versions.length } };
 });
@@ -197,6 +201,9 @@ export const REFERENCE_CUSTOMS_DECLARATION: Ref = {
     ] },
   ],
 };
+
+// The specification's form (customs-declaration-v1), attached to the procedure's own fields and documents (lib/forms/library); still a draft the nation approves.
+Object.assign(REFERENCE_CUSTOMS_DECLARATION, attachForm(REFERENCE_CUSTOMS_DECLARATION.fields, REFERENCE_CUSTOMS_DECLARATION.documents, libraryForm('customs-declaration-v1')));
 
 export const CUSTOMS_PROCEDURES: Ref[] = [REFERENCE_CUSTOMS_DECLARATION];
 

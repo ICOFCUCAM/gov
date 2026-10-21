@@ -1,0 +1,80 @@
+{
+  "form_id": "taxpayer-registration-v1",
+  "record_type": "taxpayer_registration_application",
+  "fields": [
+    {
+      "id": "applicant_type",
+      "type": "enum",
+      "required": true,
+      "values_source": "approved_taxpayer_types",
+      "personal_data_class": "administrative"
+    },
+    {
+      "id": "national_identifier",
+      "type": "identifier_reference",
+      "required": false,
+      "validation": "verify_with_authorized_identity_service_if_lawful",
+      "personal_data_class": "restricted"
+    },
+    {
+      "id": "organisation_id",
+      "type": "registry_reference",
+      "required": false,
+      "validation": "must_reference_existing_organisation_or_authorized_pending_registration",
+      "personal_data_class": "restricted"
+    },
+    {
+      "id": "legal_name",
+      "type": "localized_text",
+      "required": true,
+      "validation": "trim_unicode_normalize_length_limit",
+      "personal_data_class": "business_confidential_or_personal"
+    },
+    {
+      "id": "tax_types_requested",
+      "type": "array<enum>",
+      "required": true,
+      "values_source": "approved_tax_type_register",
+      "personal_data_class": "tax_confidential"
+    },
+    {
+      "id": "business_address",
+      "type": "address_reference_or_structured_address",
+      "required": true,
+      "validation": "country_address_profile",
+      "personal_data_class": "restricted"
+    },
+    {
+      "id": "contact_channel",
+      "type": "verified_contact_reference",
+      "required": true,
+      "validation": "verified_channel",
+      "personal_data_class": "personal"
+    },
+    {
+      "id": "acting_capacity",
+      "type": "enum",
+      "required": true,
+      "values": [
+        "self",
+        "legal_representative",
+        "authorized_agent"
+      ],
+      "personal_data_class": "administrative"
+    },
+    {
+      "id": "representation_evidence",
+      "type": "document_reference",
+      "required_when": "acting_capacity != self",
+      "validation": "approved_evidence_policy",
+      "personal_data_class": "restricted"
+    },
+    {
+      "id": "declaration",
+      "type": "signed_attestation",
+      "required": true,
+      "validation": "valid_signature_and_versioned_text",
+      "personal_data_class": "restricted"
+    }
+  ]
+}

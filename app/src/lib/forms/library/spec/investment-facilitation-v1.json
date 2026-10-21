@@ -1,0 +1,67 @@
+{
+  "form_id": "investment-facilitation-v1",
+  "fields": [
+    {
+      "id": "applicant_organisation_id",
+      "type": "registry_reference",
+      "required": true,
+      "validation": "verify_existing_organization_or_approved_exception",
+      "personal_data_class": "restricted"
+    },
+    {
+      "id": "project_name",
+      "type": "localized_text",
+      "required": true,
+      "validation": "length_limit",
+      "personal_data_class": "commercial"
+    },
+    {
+      "id": "project_sector",
+      "type": "controlled_vocabulary",
+      "required": true,
+      "values_source": "national_industry_classification_mapping",
+      "personal_data_class": "commercial"
+    },
+    {
+      "id": "project_location",
+      "type": "jurisdiction_or_site_reference",
+      "required": true,
+      "validation": "valid_national_place_reference",
+      "personal_data_class": "commercial"
+    },
+    {
+      "id": "project_stage",
+      "type": "enum",
+      "required": true,
+      "values": [
+        "concept",
+        "feasibility",
+        "approved",
+        "under_development",
+        "operating"
+      ],
+      "personal_data_class": "commercial"
+    },
+    {
+      "id": "support_requested",
+      "type": "array<controlled_vocabulary>",
+      "required": true,
+      "values_source": "published_investor_services",
+      "personal_data_class": "administrative"
+    },
+    {
+      "id": "requested_agencies",
+      "type": "array<institution_reference>",
+      "required": false,
+      "validation": "active_institutions_only",
+      "personal_data_class": "administrative"
+    },
+    {
+      "id": "supporting_documents",
+      "type": "array<document_reference>",
+      "required": false,
+      "validation": "approved_document_policy",
+      "personal_data_class": "commercial_confidential"
+    }
+  ]
+}

@@ -25,7 +25,7 @@ import { getDocument } from '@/lib/records/documents';
 import { activePackage, getPackage, ownerInstitution } from './packages';
 import { addDays, lapsed } from './calendar';
 import type { Case, CasePackage, ActionSpec, Party, Step, Channel, Intake } from './types';
-import { serverCheck, serviceCheck, needsServiceCheck } from '@/lib/forms/server';
+import { serverCheck, serviceCheck, needsServiceCheck, recordsChecks } from '@/lib/forms/server';
 import { isPersonalField, shown, type FieldError } from '@/lib/forms/contract';
 import { queueMirror } from '@/lib/db/mirror';
 import { recusedOn } from '@/lib/transitions/state';
@@ -311,7 +311,7 @@ export async function submitForm(input: OpenInput, actor: Actor, now = new Date(
   if (!pkg) return { error: `No approved version of the procedure ${input.procedure} applies today` };
   const pre = checkFields(pkg, input.fields, { submit: !!input.channel && !!pkg.form, ...(input.locale ? { locale: input.locale } : {}), on: today(now) });
   if ('error' in pre) return pre;
-  if (!needsServiceCheck(pkg.fields, pre.values)) return openCase(input, actor, now);
+  if (!needsServiceCheck(pkg.fields, pre.values) && !recordsChecks(pkg.fields, pre.values)) return openCase(input, actor, now);
   const owner = ownerInstitution(pkg.owner, authorityFor) ?? '';
   // Who signs a declaration: the signed-in applicant (self-service), or the applicant identified by the official at an office or on a signed paper form.
   const identified = input.channel === 'self-service' ? !!actor.id : !!actor.scope || (!!input.channel && samplesAllowed());
@@ -368,7 +368,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   let fields = checked.values;
   // Answers that wait on another system (a position, a register read here, a checked identifier), as at opening.
   let verifications: NonNullable<Case['verifications']> = [];
-  if (!pending && needsServiceCheck(pkg.fields, fields)) {
+  if (!pending && (needsServiceCheck(pkg.fields, fields) || recordsChecks(pkg.fields, fields))) {
     const r = await serviceCheck(pkg.fields, fields, { procedure: pkg.key, institution: c.owner, signer: { identified: !!actor.scope || !!actor.id, name: actor.name } }, today(now));
     if (r.errors.length) return { error: r.errors[0]!.message, fieldErrors: r.errors };
     fields = r.values;

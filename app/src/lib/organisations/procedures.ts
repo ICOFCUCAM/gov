@@ -12,6 +12,7 @@
 // (with reinstatement) and a revocation. Four-eyes on registration, grants,
 // suspensions, reinstatements and revocations.
 
+import { attachForm, type LibraryForm } from '@/lib/forms/library/build';
 import { registerEffect, registeredEffects, sampleMark, type EffectContext } from '@/lib/casework/engine';
 import { draftPackage, listPackages, ownerInstitution } from '@/lib/casework/packages';
 import { authorityFor } from '@/lib/data/store';
@@ -380,6 +381,8 @@ export interface SectorFamily {
   documents?: { class: string; label: string; required: boolean }[];
   /** Name the premises as registered sites when sending for inspection (health facilities, pharmacies). */
   linkSites?: boolean;
+  /** The application form to attach to the licence application (lib/forms/library). */
+  form?: Pick<LibraryForm, 'fields' | 'documents' | 'form'>;
 }
 const SECTOR_REGISTERS = new Map<string, string>();
 
@@ -392,6 +395,7 @@ export function sectorProcedures(f: SectorFamily): Ref[] {
     licence.fields = [...licence.fields, { key: 'campuses', label: 'Premises (registered site ids)', type: 'text' }];
     licence.actions = licence.actions.map(a => a.key === 'inspect' ? { ...a, effects: [...(a.effects ?? []), 'org.linkCampuses'] } : a);
   }
+  if (f.form) Object.assign(licence, attachForm(licence.fields, licence.documents, f.form));
   const [renewal, suspension, revocation] = standingProcedures('licence', f.owner, f.register, f.refPrefix);
   return [
     licence,

@@ -1,0 +1,18 @@
+{
+  "form_id": "crvs.birth-registration",
+  "version": "1.0",
+  "fields": [
+    {"id": "child_name", "type": "text", "required": true},
+    {"id": "date_of_birth", "type": "date", "required": true},
+    {"id": "place_of_birth", "type": "location_reference", "required": true},
+    {"id": "informant", "type": "person_reference", "required": true},
+    {"id": "evidence", "type": "evidence_collection", "required": true},
+    {"id": "declaration", "type": "attestation", "required": true}
+  ],
+  "rules": {
+    "legal_basis": "required_from_national_law_registry",
+    "evidence_rules": "configured_by_authorised_jurisdiction",
+    "approval_policy": "configured_by_law_and_risk_policy",
+    "sample_data_in_production": false
+  }
+}

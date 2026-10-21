@@ -20,6 +20,8 @@ import { draftPackage, listPackages } from '@/lib/casework/packages';
 import { getMinistry } from '@/lib/data/store';
 import { scheduleHearing, concludeHearing } from './hearings';
 import type { CasePackage } from '@/lib/casework/types';
+import { libraryForm } from '@/lib/forms/library/definitions';
+import { attachForm } from '@/lib/forms/library/build';
 
 type Ref = Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'>;
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
@@ -112,6 +114,9 @@ export const REFERENCE_COURT_CASE: Ref = {
     ] },
   ],
 };
+
+// The specification's form (judiciary.case-filing), attached to the procedure's own fields and documents (lib/forms/library); still a draft the nation approves.
+Object.assign(REFERENCE_COURT_CASE, attachForm(REFERENCE_COURT_CASE.fields, REFERENCE_COURT_CASE.documents, libraryForm('judiciary.case-filing')));
 
 export const COURT_PROCEDURES: Ref[] = [REFERENCE_COURT_CASE];
 

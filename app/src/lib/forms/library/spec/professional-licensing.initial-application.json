@@ -1,0 +1,18 @@
+{
+  "form_id": "professional-licensing.initial-application",
+  "version": "1.0",
+  "fields": [
+    {"id": "applicant_reference", "type": "person_reference", "required": true},
+    {"id": "profession", "type": "configured_profession", "required": true},
+    {"id": "qualification_records", "type": "evidence_collection", "required": true},
+    {"id": "issuing_institutions", "type": "organisation_reference_list", "required": true},
+    {"id": "practice_category", "type": "configured_scope_category", "required": true},
+    {"id": "declarations", "type": "attestation_collection", "required": true}
+  ],
+  "decision": {
+    "licensing_authority": "configured_by_profession",
+    "qualification_verification": "recorded_with_source",
+    "legal_basis": "required",
+    "disciplinary_information": "separately_restricted"
+  }
+}

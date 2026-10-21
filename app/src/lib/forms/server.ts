@@ -23,8 +23,8 @@ import { cite } from '@/lib/law/register';
 import { ORG_KINDS, registerTypes, getOrganisation } from '@/lib/organisations/register';
 import { getPerson, current as personCurrent } from '@/lib/civil/register';
 import { getTaxpayer } from '@/lib/tax/register';
-import { getProfessional } from '@/lib/professions/register';
-import { getMinistry, listMinistries } from '@/lib/data/store';
+import { getProfessional, professions } from '@/lib/professions/register';
+import { getMinistry, listMinistries, institutionBounds } from '@/lib/data/store';
 import { locales } from '@/lib/i18n/config';
 import COUNTRIES from '@/lib/geo/countries.json';
 import {
@@ -34,6 +34,7 @@ import {
 import type { CasePackage, Verification } from '@/lib/casework/types';
 
 const today = (on?: string) => on ?? new Date().toISOString().slice(0, 10);
+const courts = () => { const judicial = new Set(institutionBounds().judicial); return listMinistries().filter(m => judicial.has(m.id)).map(m => ({ value: m.id, label: m.name })); };
 const COUNTRY_LIST = (COUNTRIES as { iso3: string; iso2: string; name: string }[]).filter(c => /^[A-Z]{2}$/.test(c.iso2) && /^[A-Z]{3}$/.test(c.iso3));
 
 function currencies(): { value: string; label: string }[] {
@@ -74,6 +75,10 @@ export function valueSnapshot(on?: string): ValueSnapshot {
     configured: {
       approved_country_code_list: COUNTRY_LIST.map(c => ({ value: c.iso2, label: `${c.name} (${c.iso2})` })),
       approved_currency_code: currencies(),
+      // The professions the regulators keep (lib/professions/register.ts).
+      configured_profession: professions().map(p => ({ value: p.key, label: p.title })),
+      // The courts: institutions the nation named for the judiciary or recorded with judicial standing.
+      configured_court_reference: courts(),
     },
   };
 }
@@ -234,7 +239,7 @@ export async function serviceCheck(fields: ContractField[], values: Record<strin
     }
     for (const rule of f.rules ?? []) {
       if (rule.rule === 'verifiedChannel') notPerformed(f.key, 'contact-verification', 'No contact-verification service is connected: the channel was recorded as given');
-      if (rule.rule === 'profile') notPerformed(f.key, `profile:${rule.profile}`, `${PROFILES[rule.profile] ?? rule.profile} is not configured yet: checked by an official`);
+      if (rule.rule === 'profile') notPerformed(f.key, `profile:${rule.profile}`, `${PROFILES[rule.profile] ?? rule.profile.replace(/_/g, ' ')} is not configured yet: checked by an official`);
     }
     // Identifiers checked with an exchange service, lawfully only.
     if (f.type === 'identifierReference' && typeof v === 'string') {
@@ -249,6 +254,7 @@ export async function serviceCheck(fields: ContractField[], values: Record<strin
 
 async function verifyWith(f: ContractField, rule: Extract<NamedRule, { rule: 'verifyWith' }>, v: string, out: Record<string, unknown>, caller: { procedure: string; institution: string }, on: string | undefined, verifications: Verification[], at: string) {
   // Lawful only: the provision the rule names must be in force today in the laws register.
+  if (!rule.basis) { verifications.push({ field: f.key, service: rule.service, result: 'not-performed', note: 'No provision of law is cited for this check yet', at }); return; }
   const basis = cite(rule.basis.instrument, rule.basis.eId, today(on));
   if ('error' in basis) { verifications.push({ field: f.key, service: rule.service, result: 'not-performed', note: `No provision in force allows it (${basis.error})`, at }); return; }
   const input = Object.fromEntries(Object.entries(rule.input).map(([k, from]) => [k, from === '$value' ? v : out[from]]));
@@ -264,12 +270,29 @@ async function verifyWith(f: ContractField, rule: Extract<NamedRule, { rule: 've
   }
 }
 
-/** Whether the server must look further than serverCheck() at these answers. */
+/**
+ * Whether answers carry a check that can refuse them and waits on another
+ * system: a position read against the map, a registered site or parcel, a
+ * signed declaration. openCase() refuses such answers unless submitForm()
+ * checked them. (Checks that only record a result, such as a verification
+ * with an exchange service, run in submitForm() and act().)
+ */
 export function needsServiceCheck(fields: ContractField[], values: Record<string, unknown>): boolean {
   return fields.some(f => {
     const v = values[f.key];
     if (v === undefined || v === '' || v === null) return false;
-    if (f.type === 'point' || f.type === 'location' || f.type === 'attestation' || f.type === 'contact') return true;
-    return (f.rules ?? []).some(r => r.rule === 'verifyWith' || r.rule === 'profile' || r.rule === 'existingRecord' || r.rule === 'signature' || r.rule === 'verifiedChannel');
+    if (f.type === 'point') return true;
+    if (f.type === 'location' && typeof v === 'object' && ['point', 'site'].includes(String((v as Location).kind))) return true;
+    if (f.type === 'attestation' && (f.rules ?? []).some(r => r.rule === 'signature')) return true;
+    return (f.rules ?? []).some(r => r.rule === 'existingRecord') && refsOf(f, v).some(x => x.register === 'parcel' || x.register === 'site');
+  });
+}
+
+/** Whether answers carry a check that only records its result (verification with a service, a configured check, a register not on the platform). */
+export function recordsChecks(fields: ContractField[], values: Record<string, unknown>): boolean {
+  return fields.some(f => {
+    const v = values[f.key];
+    if (v === undefined || v === '' || v === null) return false;
+    return (f.rules ?? []).some(r => r.rule === 'verifyWith' || r.rule === 'profile' || r.rule === 'verifiedChannel' || (r.rule === 'existingRecord' && refsOf(f, v).some(x => !REFERENCE_REGISTERS.find(q => q.key === x.register)?.connected)));
   });
 }

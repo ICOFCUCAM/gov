@@ -137,6 +137,8 @@ export const PATTERNS: Record<string, { label: string; re: string; flags?: strin
   year: { label: 'Year', re: '^[0-9]{4}$', message: 'must be a year, like 2026' },
   'tax-period': { label: 'Tax period', re: '^[0-9]{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$', message: 'must be a period, like 2026, 2026-03 or 2026-Q1' },
   'plain-language': { label: 'Plain words (no markup)', re: '^[^<>{}]*$', message: 'must be plain words without < > { or }' },
+  'partial-date': { label: 'A date, or only a month or year (YYYY, YYYY-MM or YYYY-MM-DD)', re: '^[0-9]{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12][0-9]|3[01]))?)?$', message: 'must be a year, a month (YYYY-MM) or a date (YYYY-MM-DD)' },
+  'account-number': { label: 'Bank account number or IBAN', re: '^[A-Za-z0-9][A-Za-z0-9 \\-]{5,40}$', message: 'must be an account number of letters and digits' },
 };
 
 /**
@@ -174,8 +176,10 @@ export type NamedRule =
   | { rule: 'unique' }
   | { rule: 'signature' }
   | { rule: 'verifiedChannel' }
+  /** A check the country configures, by name (PROFILES, or a name a loaded form contract uses). */
   | { rule: 'profile'; profile: string }
-  | { rule: 'verifyWith'; service: string; input: Record<string, string>; purpose: string; basis: { instrument: string; eId: string } };
+  /** `basis` is the provision that allows the check; until the nation cites one, the check is recorded as not performed. */
+  | { rule: 'verifyWith'; service: string; input: Record<string, string>; purpose: string; basis?: { instrument: string; eId: string } };
 export type RuleName = NamedRule['rule'] | 'required' | 'type' | 'values';
 export const RULE_LABEL: Record<RuleName, string> = {
   required: 'Required', type: 'Right kind of answer', values: 'From the approved list',
@@ -240,6 +244,8 @@ export interface ContractField {
   section?: string;
   /** The field of the specification's form contract this field carries (docs/FORMS_CONFORMANCE.md). */
   specField?: string | string[];
+  /** The building block it was made from (lib/forms/blocks.ts). */
+  block?: string;
 }
 
 export interface ContractDocument {
@@ -277,6 +283,8 @@ export interface FormSpec {
   lists?: Record<string, { values: { value: string; label: string }[]; proposed?: boolean }>;
   /** Rules the procedure follows, as the specification states them (legal basis, approval, controls); shown on the form. */
   policies?: Record<string, string | boolean>;
+  /** Standard notices shown with the form (how the information is used, rights, what happens next). */
+  notices?: { key: string; title: string; text: string }[];
   /** Notes for each channel: self-service, assisted, paper, low connectivity. */
   channels?: { selfService?: string; assisted?: string; paper?: string; lowConnectivity?: string };
   /** Translations by language, string by string, each with the English it was made from. */
@@ -315,6 +323,7 @@ export function formStrings(fields: ContractField[], documents: ContractDocument
   add('form.declaration', form?.declaration?.text);
   for (const e of form?.identityEvidence ?? []) add(`form.identity.${e.key}`, e.label);
   for (const [k, t] of Object.entries(form?.channels ?? {})) add(`form.channel.${k}`, t);
+  for (const n of form?.notices ?? []) { add(`form.notice.${n.key}.title`, n.title); add(`form.notice.${n.key}.text`, n.text); }
   for (const [name, l] of Object.entries(form?.lists ?? {})) for (const v of l.values) add(`list.${name}.${v.value}`, v.label);
   const walk = (prefix: string, fs: ContractField[]) => {
     for (const f of fs) {
@@ -595,7 +604,7 @@ function checkType(f: ContractField, v: unknown, ctx: CheckContext): { value: un
       return { value: { type: gm.type, coordinates: gm.coordinates } };
     }
     case 'party': {
-      if (text) return { value: { kind: (f.parties ?? ['person'])[0], name: normalise(v as string) } };
+      if (text) { const one = { kind: (f.parties ?? ['person'])[0], name: normalise(v as string) }; return { value: f.multiple ? [one] : one }; }
       const p = v as Partial<PartyRef> | null;
       const kinds = f.parties ?? ['person', 'organisation'];
       const one = (x: Partial<PartyRef> | null): { value: PartyRef } | { error: string } => {
@@ -655,7 +664,7 @@ function checkType(f: ContractField, v: unknown, ctx: CheckContext): { value: un
       if (!Array.isArray(rows) || rows.some(r => !r || typeof r !== 'object' || Array.isArray(r))) return { error: `${f.label} must be ${f.multiple ? 'a list of items' : 'a set of answers'}` };
       const out: Record<string, unknown>[] = [];
       for (const [i, row] of (rows as Record<string, unknown>[]).entries()) {
-        const sub = checkAnswers(items, row, { ...ctx, mode: 'submit', existing: undefined, options: Object.fromEntries(Object.entries(ctx.options ?? {}).filter(([k]) => k.startsWith(`${f.key}.`)).map(([k, x]) => [k.slice(f.key.length + 1), x])) }, `field.${f.key}.item.`);
+        const sub = checkAnswers(items, row, { ...ctx, mode: 'submit', existing: undefined, currency: undefined, options: Object.fromEntries(Object.entries(ctx.options ?? {}).filter(([k]) => k.startsWith(`${f.key}.`)).map(([k, x]) => [k.slice(f.key.length + 1), x])) }, `field.${f.key}.item.`);
         if (sub.errors.length) return { error: `${f.label}${f.multiple ? ` ${i + 1}` : ''}: ${sub.errors[0]!.message}` };
         out.push(sub.values);
       }
@@ -812,7 +821,7 @@ export function fieldProblem(f: ContractField, keys: string[], classes: string[]
   }
   if (f.type === 'party' && (!f.parties?.length || f.parties.some(p => !['person', 'organisation', 'institution'].includes(p)))) return `${at}: say who it may be (person, organisation, institution)`;
   if (f.type === 'location' && f.locationKinds && (!f.locationKinds.length || f.locationKinds.some(k => !LOCATION_KINDS.some(x => x.key === k)))) return `${at}: unknown way of giving a location`;
-  if (f.type === 'quantity' && (!f.units?.length || f.units.some(u => typeof u !== 'string' || !u.trim() || u.length > 20))) return `${at}: list the units a quantity may be given in`;
+  if (f.type === 'quantity' && f.units && (!f.units.length || f.units.some(u => typeof u !== 'string' || !u.trim() || u.length > 20))) return `${at}: list the units a quantity may be given in`;
   if (f.type === 'contact' && f.contactMethods && f.contactMethods.some(m => !CONTACT_METHODS.some(x => x.key === m))) return `${at}: unknown contact method`;
   if (f.type === 'group') {
     if (!f.items?.length || f.items.length > 30) return `${at}: a group has between 1 and 30 questions`;
@@ -838,12 +847,12 @@ export function fieldProblem(f: ContractField, keys: string[], classes: string[]
       case 'unique': if (!['text', 'identifierReference', 'registryReference'].includes(f.type)) return bad('applies to a reference'); break;
       case 'signature': if (f.type !== 'attestation') return bad('applies to a declaration'); break;
       case 'verifiedChannel': if (f.type !== 'contact') return bad('applies to a contact'); break;
-      case 'profile': if (!PROFILES[r.profile]) return bad(`names one of the configured checks (${Object.keys(PROFILES).join(', ')})`); break;
+      case 'profile': if (!PROFILES[r.profile] && !LIST_NAME.test(r.profile ?? '')) return bad('names a configured check'); break;
       case 'verifyWith':
         if (f.type !== 'identifierReference') return bad('applies to an identifier');
         if (!SERVICE_ID.test(r.service ?? '')) return bad('names an exchange service');
         if (!r.purpose?.trim()) return bad('states its purpose');
-        if (!r.basis?.instrument?.trim() || !r.basis?.eId?.trim()) return bad('cites the provision of law that allows it');
+        if (r.basis && (!r.basis.instrument?.trim() || !r.basis.eId?.trim())) return bad('cites the provision of law that allows it (instrument and provision)');
         if (!r.input || !Object.keys(r.input).length || Object.values(r.input).some(x => x !== '$value' && !keys.includes(x))) return bad('maps the service\'s inputs to this answer ($value) or other fields');
         break;
       default: return `${at}: unknown rule ${(r as { rule: string }).rule}`;
@@ -871,7 +880,8 @@ export function formProblem(form: FormSpec | undefined, fields: ContractField[],
     if (!LIST_NAME.test(name)) return `List ${name}: a list name is lowercase words`;
     if (!Array.isArray(l.values) || new Set(l.values.map(v => v.value)).size !== l.values.length || l.values.some(v => !/^[a-z0-9][a-z0-9_.-]{0,60}$/.test(v.value) || !v.label?.trim())) return `List ${name}: values are distinct lowercase words with a label`;
   }
-  for (const [k, v] of Object.entries(form.policies ?? {})) if (!/^[a-z][a-z0-9_]{1,60}$/.test(k) || (typeof v !== 'boolean' && (typeof v !== 'string' || v.length > 200))) return `Policy ${k}: a name and a short value`;
+  for (const [k, v] of Object.entries(form.policies ?? {})) if (!/^[a-z][a-z0-9_.]{1,60}$/.test(k) || (typeof v !== 'boolean' && (typeof v !== 'string' || v.length > 200))) return `Policy ${k}: a name and a short value`;
+  for (const n of form.notices ?? []) if (!/^[a-z][a-z0-9-]{0,40}$/.test(n.key) || !n.title?.trim() || !n.text?.trim() || n.text.length > 2000) return 'Each notice has a key, a title and its text (at most 2000 characters)';
   for (const [k, v] of Object.entries(form.channels ?? {})) if (!['selfService', 'assisted', 'paper', 'lowConnectivity'].includes(k) || typeof v !== 'string' || v.length > 600) return `Channel note ${k}: at most 600 characters`;
   const known = new Map(formStrings(fields, documents, form).map(s => [s.path, s.text]));
   for (const [locale, entries] of Object.entries(form.translations ?? {})) {
@@ -956,8 +966,8 @@ export function ruleText(f: ContractField, fields: ContractField[]): string[] {
       case 'unique': out.push('Not already used by an open application'); break;
       case 'signature': out.push('Confirmed by the applicant, signed in or identified at an office'); break;
       case 'verifiedChannel': out.push('A verified contact channel'); break;
-      case 'profile': out.push(PROFILES[r.profile] ?? r.profile); break;
-      case 'verifyWith': out.push(`Checked with ${r.service} where the law allows (${r.basis.eId})`); break;
+      case 'profile': out.push(PROFILES[r.profile] ?? `Checked against the country's configuration (${r.profile.replace(/_/g, ' ')})`); break;
+      case 'verifyWith': out.push(r.basis ? `Checked with ${r.service} where the law allows (${r.basis.eId})` : `Checked with ${r.service} once the nation cites the provision that allows it`); break;
     }
   }
   return out;
@@ -1002,6 +1012,7 @@ export function resolveForm(pkg: { key: string; version: number; title: string; 
       ...(rest.intro ? { intro: tr('form.intro', rest.intro) } : {}),
       ...(rest.declaration ? { declaration: { ...rest.declaration, text: tr('form.declaration', rest.declaration.text) } } : {}),
       ...(rest.identityEvidence ? { identityEvidence: rest.identityEvidence.map(e => ({ ...e, label: tr(`form.identity.${e.key}`, e.label) })) } : {}),
+      ...(rest.notices ? { notices: rest.notices.map(n => ({ ...n, title: tr(`form.notice.${n.key}.title`, n.title), text: tr(`form.notice.${n.key}.text`, n.text) })) } : {}),
       ...(rest.channels ? { channels: Object.fromEntries(Object.entries(rest.channels).map(([k, t]) => [k, tr(`form.channel.${k}`, t!)])) } : {}),
     };
   }
