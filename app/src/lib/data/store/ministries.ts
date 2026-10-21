@@ -93,6 +93,8 @@ export function createMinistry(input: {
     name: input.name,
     archetype: input.archetype,
     status: 'active',
+    // An executive ministry until the nation records otherwise (lib/data/store/institutions.ts).
+    standing: 'executive-ministry',
     createdAt: new Date().toISOString(),
     departments: deptNames.map(name => ({ id: uid('DEP'), name })),
     modules: bp.defaultModules.map(moduleKey => ({ moduleKey, enabled: true })),

@@ -79,6 +79,20 @@ describe('where setup stands', () => {
     resetCronRuns();
   });
 
+  // A nation without a legislature, audit office or central bank in the platform is not "missing" them (plan phase 1).
+  it('counts only the registers every installation fills; constitutional bodies count once named', async () => {
+    const { setSovereign } = await import('@/lib/data/store/sovereign');
+    const { listMinistries } = await import('@/lib/data/store/ministries');
+    const { REQUIRED_AUTHORITIES, AUTHORITIES } = await import('@/lib/nation/deployment');
+    const id = listMinistries().find(m => m.status === 'active')!.id;
+    setSovereign({ deployment: { authorities: Object.fromEntries(REQUIRED_AUTHORITIES.map(a => [a.key, id])) } }, 'test');
+    const checks = () => onboardingStatus(env('demo')).tracks.find(t => t.key === 'institutions')!.checks;
+    expect(AUTHORITIES.length).toBeGreaterThan(REQUIRED_AUTHORITIES.length);
+    expect(checks().find(c => c.label.startsWith('Every responsibility'))).toMatchObject({ done: true });
+    expect(checks().find(c => c.label.startsWith('Constitutional bodies'))).toMatchObject({ done: true, detail: expect.stringMatching(/None named/) });
+    setSovereign({ deployment: { authorities: {} } }, 'test');
+  });
+
   it('says which tracks may be done only because of samples', () => {
     expect(onboardingStatus(env('demo')).tracks.find(t => t.key === 'exchange')!.samplesCounted).toBe(true);
   });

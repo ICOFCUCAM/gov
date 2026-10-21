@@ -11,6 +11,7 @@ import { api } from '@/lib/api/client';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { instantiateMinistry, systemKindLabel } from '@/lib/institution/blueprint';
 import type { Archetype, ArchetypeKey, Ministry } from '@/lib/api/types';
+import { InstitutionStandingPanel } from '@/components/features/InstitutionStanding';
 import { useRenderNow } from '@/lib/clock/render-now';
 
 export function MinistriesConsole() {
@@ -289,6 +290,9 @@ export function MinistriesConsole() {
                     </div>
                   ) : null}
                 </Card>
+
+                {/* Constitutional standing (plan phase 1): changed only through the change process once setup is complete. */}
+                <InstitutionStandingPanel id={current.id} onChange={() => void load()} />
 
                 {(() => {
                   const eco = instantiateMinistry(current, now / 4000);

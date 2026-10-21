@@ -130,9 +130,9 @@ export const SUBSTRATE_INSPECTION: { file: string; why: string }[] = [
 const ANCHORS = 'src/app/api/cron/audit-anchor/route.ts';
 
 export const REGISTER_OWNERS: RegisterOwner[] = [
-  { id: 'nation', name: 'Nation profile and setup', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/sovereign, /api/setup',
+  { id: 'nation', name: 'Nation profile and setup; who is responsible and its changes after setup', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/sovereign, /api/setup',
     copies: [civicApi('tenancy', true, `${CIVIC_API_FED} It holds the platform's own tenant (platform:<name>, its state and lifecycle); provisioning another tenant has no platform route and answers 410.`)], storage: RECORD_DOCS('each field of the profile, the setup record') },
-  { id: 'institutions', name: 'Institutions (ministry registry)', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/org/ministries',
+  { id: 'institutions', name: 'Institutions (ministry registry): structure and constitutional terms (standing, independence per dimension, establishing law, records owned, every version)', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/org/ministries',
     copies: [{ where: 'substrate', what: 'institutions (civicos.institutions)', role: 'mirror', tables: ['civicos_institutions'], writes: ['civicos_mirror_institution', 'civicos_register_institution', 'civicos_activate_institution'], writer: MIRROR,
       reads: [], fallbackReaders: [],
       note: 'Charter rows the substrate needs for its own rows (officers, posture, work items) and its own SQL (the escalation cascade trigger, civicos.cascade_escalation, reads it): seeded by migration civicos_seed_institutions, then written by the platform after each registry change (create, rename, activate, deactivate, merge) and re-copied hourly; one row per charter, active while any of its ministries is. No app code reads it: the charter screens (charter list, profile and detail, catalogue, observatory, search) and the posture digest read the platform\'s register (/api/public/charters, lib/institution/charter-register.ts) and join the substrate\'s own rows by charter id.' }, civicApi('org', true)],
@@ -159,6 +159,9 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
   { id: 'identity', legal: { kind: 'authority', key: 'identity' }, name: 'Citizen and officer identity', owner: { where: 'substrate', objects: ['identities', 'officers', 'signing_keys'] }, api: '/sign-in (substrate auth)', copies: [civicApi('identity', false, 'Not fed: the substrate owns identity and the platform\'s mirror feed does not carry it; a write (POST /api/identity/citizens) has no platform route and answers 410.')] },
   { id: 'officials', name: 'Platform official accounts and sessions', owner: { where: 'platform', keys: ['__civicosOfficials'] }, api: '/api/auth/officials', copies: [],
     storage: RECORD_DOCS('each account; failed sign-in counts per hashed address, kept 15 minutes') },
+  // Account changes waiting for an independent institution (plan phase 2): its own institution confirms.
+  { id: 'account-changes', name: 'Account changes waiting for an independent institution to confirm (no passwords; reset codes go to the confirming official)', legal: { kind: 'institution', note: 'The independent institution whose officials\' accounts change confirms each one' }, owner: { where: 'platform', keys: ['__civicosAccountChanges'] }, api: '/api/auth/officials (proposed), /api/auth/account-changes (confirmed or withdrawn)', copies: [],
+    storage: RECORD_DOCS('each waiting, done, lapsed or withdrawn change') },
   { id: 'retention', name: 'Retention rules for personal data, and refusals counted for the audit chain', owner: { where: 'platform', keys: ['__civicosRetention', '__civicosAuditAggregate'] }, api: '/api/platform/retention, /api/cron/retention', copies: [],
     storage: RECORD_DOCS('the rules, their proposals and sweeps; the open windows of aggregated refusals') },
   { id: 'sign-on', name: 'Identity provider for officials and passkey challenges', owner: { where: 'platform', keys: ['__civicosSignOn'] }, api: '/api/auth/officials/identity-provider, /api/auth/oidc/*, /api/auth/passkeys', copies: [],

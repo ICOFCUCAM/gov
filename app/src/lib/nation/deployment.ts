@@ -3,14 +3,20 @@
 // modules run here and whether CivicOS or an external system holds their
 // records, the identity provider for citizens, the signature framework, the
 // working calendar legal deadlines count in. Part of the nation profile
-// (SovereignProfile.deployment), changed only through /api/sovereign and setup
-// (administrators, audited); the software never names an authority itself.
+// (SovereignProfile.deployment), set during first-run setup through
+// /api/sovereign; once setup is complete, who is responsible changes only
+// through /api/sovereign/authorities (two officials, citing the law,
+// lib/data/store/sovereign.ts); the software never names an authority itself.
 // Pure: no store imports, so the store and the client both use it.
 
 export type AuthorityKey =
   | 'lawRegister' | 'civilRegistration' | 'identity' | 'businessRegister' | 'higherEducationAccreditation'
   | 'immigration' | 'police' | 'judiciary' | 'statistics' | 'dataProtection'
-  | 'tax' | 'customs' | 'education' | 'healthRegulation' | 'professionalRegulation';
+  | 'tax' | 'customs' | 'education' | 'healthRegulation' | 'professionalRegulation'
+  // Constitutional bodies (docs/CONSTITUTIONAL_ARCHITECTURE.md §2.3–2.6): empty slots,
+  // named only when the nation has such a body. Nothing is assumed.
+  | 'legislature' | 'supremeAudit' | 'electoral' | 'centralBank' | 'ombudsman'
+  | 'anticorruption' | 'humanRights' | 'headOfState' | 'constitutionalCourt';
 
 export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts' | 'tax' | 'customs' | 'education' | 'health' | 'professions';
 
@@ -28,7 +34,13 @@ export interface DeploymentProfile {
   signature?: { framework: 'platform' | 'national'; trustList?: string };
 }
 
-export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string }[] = [
+/**
+ * Who may be named for each register or power. `optional`: a constitutional
+ * body not every nation has (a legislature, an audit office, a central
+ * bank…); its slot stays empty unless the nation names one, and setup does
+ * not count it as missing.
+ */
+export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string; optional?: true }[] = [
   { key: 'lawRegister', label: 'Laws register', registers: 'Laws, regulations and their versions; the legal rules procedures cite' },
   { key: 'civilRegistration', label: 'Civil registration', registers: 'Births, deaths, marriages and the people they record' },
   { key: 'identity', label: 'National identity', registers: 'National identity credentials' },
@@ -44,7 +56,28 @@ export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string 
   { key: 'education', label: 'Education', registers: 'Registered schools and education providers, qualifications awarded' },
   { key: 'healthRegulation', label: 'Health facility regulation', registers: 'Licensed health facilities and pharmacies' },
   { key: 'professionalRegulation', label: 'Professional regulation', registers: 'Licensed professionals (each profession may have its own council)' },
+  { key: 'legislature', label: 'Legislature', registers: 'Bills, votes and the official record of the chamber or chambers, kept by their clerk', optional: true },
+  { key: 'headOfState', label: 'Head of state', registers: 'Formal acts of the head of state: assent, appointments, proclamations', optional: true },
+  { key: 'constitutionalCourt', label: 'Constitutional court', registers: 'Constitutional cases and rulings (when separate from the other courts)', optional: true },
+  { key: 'supremeAudit', label: 'Public audit office', registers: 'Audits of public accounts: plans, findings and reports', optional: true },
+  { key: 'electoral', label: 'Electoral body', registers: 'Voter registers, candidates, polling and results', optional: true },
+  { key: 'centralBank', label: 'Central bank', registers: 'Monetary policy decisions and supervisory records', optional: true },
+  { key: 'ombudsman', label: 'Ombudsman', registers: 'Complaints about public bodies and their findings', optional: true },
+  { key: 'anticorruption', label: 'Anti-corruption body', registers: 'Corruption complaints, investigations and referrals', optional: true },
+  { key: 'humanRights', label: 'Human rights body', registers: 'Human rights complaints, inquiries and reports', optional: true },
 ];
+/** The slots every installation fills (the registers the platform runs). */
+export const REQUIRED_AUTHORITIES = AUTHORITIES.filter(a => !a.optional);
+/**
+ * Slots whose named institution stands outside whole-government reach in
+ * lib/auth/roles.ts whatever its recorded standing (the judiciary and data
+ * protection as before; the legislature, head of state and a constitutional
+ * court by their nature). Other bodies are independent only when their
+ * recorded standing says so (lib/data/store/institutions.ts).
+ */
+export const INDEPENDENT_SLOTS: AuthorityKey[] = ['judiciary', 'dataProtection', 'legislature', 'headOfState', 'constitutionalCourt'];
+/** Slots whose named institution is a court: its cases are closed to every other institution. */
+export const JUDICIAL_SLOTS: AuthorityKey[] = ['judiciary', 'constitutionalCourt'];
 export const isAuthorityKey = (v: unknown): v is AuthorityKey => AUTHORITIES.some(a => a.key === v);
 
 export const MODULES: { key: ModuleKey; label: string; authority: AuthorityKey }[] = [

@@ -13,6 +13,7 @@
 //   ministries    archetypes, ministries, modules, regions, queues,
 //                 ministry incidents, field operations, series
 //   sovereign     the nation profile, cabinet, setup, presets
+//   institutions  the constitutional terms of each institution (standing, independence)
 //   national      the national snapshot and the coordination fabric
 //
 // Every import of '@/lib/data/store' keeps working: this module re-exports
@@ -27,4 +28,5 @@ export * from './store/federation';
 export * from './store/platform-ops';
 export * from './store/ministries';
 export * from './store/sovereign';
+export * from './store/institutions';
 export * from './store/national';

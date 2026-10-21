@@ -43,6 +43,8 @@ export function federationSeed(): Ministry[] {
       name: s.name,
       archetype: s.archetype,
       status: 'active',
+      // An executive ministry until the nation records otherwise (lib/data/store/institutions.ts).
+      standing: 'executive-ministry',
       createdAt: new Date(BASE - i * 86_400_000).toISOString(),
       departments: groups.map(g => ({ id: `dep-${s.slug}-${g.key}`, name: g.name })),
       modules: [],

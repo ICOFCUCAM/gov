@@ -6,8 +6,10 @@
 // keeps them, so whoever opens the page can confirm what someone else began.
 // Read-only: nothing here changes a record.
 
-import { AUTHORITIES } from '@/lib/nation/deployment';
-import { authorityFor, getSetup, getSovereign } from '@/lib/data/store/sovereign';
+import { AUTHORITIES, REQUIRED_AUTHORITIES } from '@/lib/nation/deployment';
+import { authorityFor, getSetup, getSovereign, authorityChanges } from '@/lib/data/store/sovereign';
+import { waitingInstitutionTerms } from '@/lib/data/store/institutions';
+import { waitingAccountChanges } from '@/lib/auth/account-changes';
 import { listMinistries } from '@/lib/data/store/ministries';
 import { listAccounts, twoStepPolicy } from '@/lib/auth/officials';
 import { listInstruments } from '@/lib/law/register';
@@ -86,10 +88,16 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
 
     track({ key: 'institutions', title: 'Institutions and who is responsible', why: 'Which institution is legally responsible for each register and power. Cases and registers refuse work until this is named.', href: '/gov/configuration/responsible' }, () => {
       const ids = new Set(active().map(m => m.id));
-      const named = AUTHORITIES.filter(a => { const id = authorityFor(a.key); return id !== undefined && ids.has(id); });
+      // The constitutional bodies (legislature, audit office, central bank…) are optional slots: a nation
+      // without such a body leaves them empty, so they never count as missing; those it names must be active.
+      const isActive = (key: (typeof AUTHORITIES)[number]['key']) => { const id = authorityFor(key); return id !== undefined && ids.has(id); };
+      const named = REQUIRED_AUTHORITIES.filter(a => isActive(a.key));
+      const bodies = AUTHORITIES.filter(a => a.optional && authorityFor(a.key) !== undefined);
+      const inactiveBodies = bodies.filter(a => !isActive(a.key));
       return { checks: [
         { label: 'Institutions created', done: ids.size > 0, href: '/gov/configuration', detail: n(ids.size, 'active institution') },
-        { label: 'Every responsibility assigned to an active institution', done: named.length === AUTHORITIES.length, href: '/gov/configuration/responsible', detail: `${named.length} of ${AUTHORITIES.length}${named.length < AUTHORITIES.length ? ` · missing: ${AUTHORITIES.filter(a => !named.includes(a)).map(a => a.label).join(', ')}` : ''}` },
+        { label: 'Every responsibility assigned to an active institution', done: named.length === REQUIRED_AUTHORITIES.length, href: '/gov/configuration/responsible', detail: `${named.length} of ${REQUIRED_AUTHORITIES.length}${named.length < REQUIRED_AUTHORITIES.length ? ` · missing: ${REQUIRED_AUTHORITIES.filter(a => !named.includes(a)).map(a => a.label).join(', ')}` : ''}` },
+        { label: 'Constitutional bodies the nation named are active', done: inactiveBodies.length === 0, href: '/gov/configuration/responsible', detail: bodies.length ? `${n(bodies.length, 'body', 'bodies')} named${inactiveBodies.length ? ` · not active: ${inactiveBodies.map(a => a.label).join(', ')}` : ''}` : 'None named (only those the nation has)' },
       ] };
     }),
 
@@ -238,6 +246,12 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       ],
     })));
   }
+
+  // Changes to the constitutional configuration waiting for a second official (plan phases 1–2).
+  const safe = (f: () => void) => { try { f(); } catch { /* a store that cannot be read adds nothing */ } };
+  safe(() => { const p = authorityChanges().pending; if (p) wait({ what: 'Who is responsible: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/responsible' }); });
+  safe(() => { for (const t of waitingInstitutionTerms()) wait({ what: `${t.name}: a change to its standing waiting for confirmation`, proposedBy: t.pending.by, at: t.pending.at, href: '/ministries' }); });
+  safe(() => { for (const c of waitingAccountChanges()) wait({ what: `${c.summary} (waiting for the institution to confirm)`, proposedBy: c.by, at: c.at, href: '/admin/officials' }); });
 
   waiting.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''));
   return { mode: installationMode(env), tracks, done: tracks.filter(t => t.state === 'done').length, total: tracks.length, waiting };
