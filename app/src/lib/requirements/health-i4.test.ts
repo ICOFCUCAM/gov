@@ -94,7 +94,9 @@ describe('the Health I4 requirements and dependency register', () => {
     expect(REG.forms_without_procedure.map(x => x.identity).sort()).toEqual(none.map(f => f.identity).sort());
     // Batch 2: 20 contracts are linked to the product procedures (Health I4); only HLT-MED-024 names none, answered by product.status.
     expect(REG.forms_without_procedure.filter(x => x.batch === 2).map(x => x.identity)).toEqual(['FIELD-SERIES-PARTS-05-07:HLT-MED-024@1']);
-    expect(REG.forms_without_procedure.filter(x => x.batch === 1)).toHaveLength(12);
+    // Batch 1: 12 until the public-health return (HLT-PH-015) and the two complaint forms (HLT-FAC-009, HLT-LIC-008) were linked (Health I4, programmes and complaints).
+    expect(REG.forms_without_procedure.filter(x => x.batch === 1)).toHaveLength(9);
+    expect(REG.forms_without_procedure.filter(x => x.batch === 4)).toEqual([]);
     for (const x of REG.forms_without_procedure) {
       const f = none.find(y => y.identity === x.identity)!;
       expect(x.stage, x.identity).toBe(f.awaits);

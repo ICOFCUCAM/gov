@@ -811,3 +811,67 @@ output under every classification.
 | Provisional owners | `lib/nation/health-slots.test.ts` |
 | Public product view | `lib/health/products/public.test.ts` |
 | I4 dependency register | `lib/requirements/health-i4.test.ts` |
+
+## 12. Catalogue contracts, batch 4: public-health programme forms (21 October 2026)
+
+The owner approved two more contracts as part of finishing the Health I4
+dependency `public-health-programmes`: the programme forms of Part 6 §4.1
+that hold no individual. HLT-PH-011 and HLT-PH-014, which were
+`contract_missing`, now have a CivicOS contract (`contract: given (CivicOS
+library)`, `form_status: contract_draft`), with `batch: 4` in their
+`catalogue` block. Every individual public-health form (HLT-PH-001 … 010,
+012, 013, 016 … 018) stays excluded by `docs/requirements/form-scope.json`;
+HLT-PH-011 and 014 are now named there as allowed, beside HLT-PH-015. The
+format, loader, gates and test are batch 1's (§8): the conformance test holds
+the lines each form answers (Part 1's shared rules, the supplement's
+conventions and gates, Part 6's common health rules, the public-health
+family of §4, CFG-PH-001, the public-health integrity gate, deliverable 4 and
+the specification's facility-report record) and its row of §4.1.
+
+| Catalogue form | Title | Fields (and questions in repeatable groups) | Belongs to | Deviations (besides the six every health form shares) |
+|---|---|---|---|---|
+| HLT-PH-011 | Vaccination programme administration | 15 (+11) | `public-health.programme-return`, stage `submitted`, step `register`, document `return-form` | aggregate-only, no-vaccinee, supply-not-stock |
+| HLT-PH-014 | Public-health risk communication approval | 12 | `public-health.risk-communication`, stage `drafted`, step `register`, document `draft-message` | aggregate-only, two-official-approval, not-a-report |
+
+**Never a vaccinee.** HLT-PH-011's "eligible programme activity recorded" is
+recorded for the programme: sessions planned and held, doses administered by
+the breakdown the programme defines (none ship) and programme supply received
+and used for the programme's own supply items, each count marked reported,
+suspected, confirmed or modelled (`civicos.public_health.count_basis`) and
+counted, estimated, incomplete or not available; a missing count is never a
+zero. Eligibility is the programme's, cited from the nation's law when it is
+established (`public-health.programme`), never a check of a person. Deviation
+`no-vaccinee` names what the catalogue line could be read to ask for and why
+it is not held (HLT-PH-012 excluded); `supply-not-stock` names the lot, expiry,
+location and transactions that an inventory system would hold (integration
+register 20.36). The scope check now also refuses a procedure whose fields
+name a vaccinee, a vaccination record, a traced contact, a specimen or a
+laboratory result (`lib/forms/scope.ts`), stricter than the catalogue.
+
+**Approved by two officials.** HLT-PH-014's approval is the procedure's
+four-eyes decision (`approve-message`), never a status field: the sealed
+decision carries the digest of the message, its audience and channels, and the
+release step refuses a message changed after approval
+(`two-official-approval`). The approval-state field is the platform's, never
+asked of whoever drafts. The evidence basis names the aggregate figures the
+message rests on with their class; `not-a-report` answers the specification's
+facility-report line, which belongs to the returns.
+
+**HLT-PH-015 linked.** The aggregate return (batch 1) now belongs to
+`public-health.programme-return` (stage `submitted`, step `register`): its
+programme is a reference to the register of public-health programmes
+(`health.registry.programmes`, checked: an established programme), and each
+count carries its class beside its indicator and breakdown, so reported,
+suspected, confirmed and modelled counts stay apart (FC6-4-02, gate FC6-12-06).
+HLT-FAC-009 and HLT-LIC-008 (batch 1) are linked by identity to the complaint
+intake procedures `health.complaint` and `prof.complaint` (stage `received`,
+step `register`, document `complaint`). Each reads `draft` once its procedure
+is installed and is adopted only in a version a second official approves.
+
+| Check | Where |
+|---|---|
+| Both contracts quote and meet every piece of their lines; typed, classed, registered rules only; nothing a law decides set; three channels; contract draft | `catalogue-contracts.test.ts` (per form) |
+| Programme activity as aggregates, the four classes, supply as programme counts | `catalogue-contracts.test.ts` "keeps the vaccination programme record to aggregates…" |
+| Two-official approval and the links by identity | `catalogue-contracts.test.ts` "approves a risk communication by two officials, and links each public-health form…" |
+| Procedure-link states of the linked forms | `procedure-link.test.ts` "is draft for the public-health forms and the complaint forms…" |
+| Binding scope for public health | `lib/health/programmes/scope.test.ts` |

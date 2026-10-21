@@ -1,0 +1,704 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-PH-014",
+ "record_type": "health.public-health.risk-communication",
+ "form_version": 1,
+ "procedure_package_id": "public-health.risk-communication",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-PH-001: notifiable conditions, reporting deadlines and authorised sources; the reporting programmes and their periods (none ship).",
+  "CFG-HLT-001: the institution that keeps public-health programmes (the publicHealth slot of the deployment profile, shipped empty; the health regulator stands in only provisionally).",
+  "CFG-DAT-001: the small-cell suppression threshold and the disclosure rules for aggregates (shipped unset).",
+  "CFG-HX-001: the exchange that passes aggregates to the authorised statistics service.",
+  "CFG-PH-003: who may approve and release public-health communications, as the nation's law gives it (an intervention authority rule where the message is part of an intervention)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-PH-014",
+  "part": 6,
+  "section": "4.1",
+  "line": 617,
+  "batch": 4
+ },
+ "library": {
+  "title": "Approve a public-health risk communication",
+  "intro": "Propose a message about a risk to the public or to a group, its audience, channels and areas, and the evidence it rests on. Two officials of the public-health authority approve it, and it is released exactly as approved. It never names a person or gives anyone's health details.",
+  "owner": "publicHealth",
+  "filled_by": "An official of the public-health authority, at an office.",
+  "procedure": {
+   "key": "public-health.risk-communication",
+   "stage": "drafted",
+   "action": "register",
+   "document": "draft-message"
+  },
+  "lists": {
+   "civicos.communication.approval_state": {
+    "values": [
+     {
+      "value": "awaiting",
+      "label": "Awaiting approval"
+     },
+     {
+      "value": "approved",
+      "label": "Approved by two officials"
+     },
+     {
+      "value": "not-approved",
+      "label": "Not approved"
+     }
+    ]
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "aggregate-only",
+    "what": "A message about a risk to the public or a group, resting on aggregate figures: no case, contact or person named, and no individual report, finding or determination",
+    "why": "Approved aggregate public-health statistics and programme administration are in scope; individual public-health records are not.",
+    "rule": "Owner's direction 2026-10-21 §1; CLAUDE.md Health: returns are aggregates"
+   },
+   {
+    "id": "two-official-approval",
+    "what": "The approval is a decision of two officials of the public-health authority (the procedure's four-eyes step), neither of whom drafted the message; the message is released exactly as approved, its digest sealed with the approval",
+    "why": "An authorised message is approved by a recorded act of officials, never a status field.",
+    "rule": "CLAUDE.md: two officials for the platform minimum (lib/casework/dual-control-policy.ts); forms publication: human approvals are recorded acts of different signed-in officials"
+   },
+   {
+    "id": "not-a-report",
+    "what": "A risk communication is not a facility report: the figures it rests on are the programme's accepted returns (HLT-PH-015, HLT-PH-011), cited in the evidence basis",
+    "why": "The facility report record belongs to the returns, not to the message.",
+    "rule": "Institutional specification Part 2 §C.2 (Facility report): kept by the programme returns (lib/health/programmes/register.ts)"
+   },
+   {
+    "id": "statistics-exchange",
+    "what": "Passing aggregates to the statistics service is an exchange the nation approves (CFG-HX-001); none ships",
+    "why": "Exchange services answer only for an approved purpose.",
+    "rule": "CLAUDE.md Government operating model: exchange services (callService())"
+   },
+   {
+    "id": "receiving-authority",
+    "what": "Owner: the public-health authority slot (publicHealth), which ships empty: until the nation names it, the health regulator slot (healthRegulation) stands in as a provisional owner (lib/nation/deployment.ts provisionalOwner()), never proof of legal competence",
+    "why": "Authority comes only from the deployment profile; the nation names its public-health authority there, or the health regulator where its law gives it the returns (integration register 20.8, 20.14).",
+    "rule": "CLAUDE.md Government operating model: authorityFor(), never a ministry by name"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: health facility and professional regulation and aggregate statistics.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 502,
+    "quotes": [
+     "Public-health authority",
+     "Disease surveillance, prevention, and legally authorized public-health response",
+     "Collect and disclose only information authorized for the specific purpose"
+    ],
+    "met_by": {
+     "fields": [
+      "message.no_personal_data"
+     ],
+     "platform": {
+      "file": "app/src/lib/exchange/services.ts",
+      "how": "Aggregates only; disclosure only through an approved exchange for an approved purpose"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 601,
+    "quotes": [
+     "Public-health workflows may require data from hospitals, laboratories, clinicians, and other authorized sources.",
+     "They must distinguish an initial report, a suspected case, a confirmed case, a statistical aggregate, and a public-health determination."
+    ],
+    "met_by": {
+     "deviation": "aggregate-only",
+     "fields": [
+      "message.evidence_basis"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 626,
+    "quotes": [
+     "Reporting source",
+     "Facility or authorized reporter, with receipt time"
+    ],
+    "met_by": {
+     "fields": [
+      "message.received_at"
+     ],
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "Every case records who opened it and when, and every step after"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 633,
+    "quotes": [
+     "Data provenance",
+     "Origin, transformation history, verification status, and correction links"
+    ],
+    "met_by": {
+     "fields": [
+      "message.evidence_basis"
+     ],
+     "platform": {
+      "file": "app/src/lib/records/decisions.ts",
+      "how": "The approval is a sealed decision carrying the digest of the message approved"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 634,
+    "quotes": [
+     "Disclosure history",
+     "Recipient, legal purpose, data scope, and transfer reference"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/exchange/log.ts",
+      "how": "Every disclosure goes through the exchange log with recipient, purpose and scope"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 642,
+    "quotes": [
+     "Prefer aggregated or de-identified data where it meets the purpose."
+    ],
+    "met_by": {
+     "fields": [
+      "message.evidence_basis"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 643,
+    "quotes": [
+     "Label estimates, modelled values, and incomplete reports explicitly."
+    ],
+    "met_by": {
+     "fields": [
+      "message.estimates_labelled"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 644,
+    "quotes": [
+     "Do not interpret a missing report as proof that no case exists."
+    ],
+    "met_by": {
+     "fields": [
+      "message.evidence_basis"
+     ],
+     "deviation": "aggregate-only"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 645,
+    "quotes": [
+     "Apply small-cell disclosure protections where necessary."
+    ],
+    "met_by": {
+     "country_decision": "CFG-DAT-001",
+     "platform": {
+      "file": "app/src/lib/health/small-cells.ts",
+      "how": "The nation's small-cell rule applies to every published programme figure the message may cite"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 646,
+    "quotes": [
+     "Restrict identifiable outbreak investigation data to authorized roles."
+    ],
+    "met_by": {
+     "deviation": "aggregate-only"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 647,
+    "quotes": [
+     "Preserve the original submitted report when a correction is received."
+    ],
+    "met_by": {
+     "procedure": "approve",
+     "platform": {
+      "file": "app/src/lib/health/programmes/procedures.ts",
+      "how": "The message is released only exactly as approved (its digest is sealed with the approval); a change is a new approval"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 805,
+    "quotes": [
+     "HX-009",
+     "Health authority",
+     "Authorized statistics service",
+     "Aggregated or appropriately protected statistics"
+    ],
+    "met_by": {
+     "deviation": "statistics-exchange"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 807,
+    "quotes": [
+     "Each exchange must have a versioned contract, authenticated sender and recipient, documented purpose, permitted field list, and auditable receipt.",
+     "A connection between two institutions does not automatically authorize every possible data exchange between them."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/exchange/services.ts",
+      "how": "Exchange services are versioned, called only by approved integrations for an approved purpose, logged"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 849,
+    "quotes": [
+     "Public health",
+     "Unverified report or incomplete case data",
+     "Preserve the source status and uncertainty"
+    ],
+    "met_by": {
+     "fields": [
+      "message.evidence_basis",
+      "message.estimates_labelled"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 859,
+    "quotes": [
+     "CFG-PH-001",
+     "Notifiable conditions, reporting deadlines, and authorized sources"
+    ],
+    "met_by": {
+     "country_decision": "CFG-PH-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 880,
+    "quotes": [
+     "Public-health integrity: Reported, suspected, confirmed, and modelled information remain distinguishable."
+    ],
+    "met_by": {
+     "fields": [
+      "message.evidence_basis",
+      "message.estimates_labelled"
+     ],
+     "platform": {
+      "file": "app/src/lib/twin/signal.ts",
+      "how": "Every figure says whether it is observed, reported, modelled, sample or not connected"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 892,
+    "quotes": [
+     "Public-health reporting service — notification intake, case investigation, classifications, outbreak workflows, and protected statistics."
+    ],
+    "met_by": {
+     "deviation": "aggregate-only"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1328,
+    "quotes": [
+     "Facility report",
+     "Reporting facility, indicator definitions, period, submitted values, validation state, corrections and provenance"
+    ],
+    "met_by": {
+     "deviation": "not-a-report"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 617,
+    "quotes": [
+     "HLT-PH-014",
+     "Public-health risk communication approval",
+     "Authorized message approved for release"
+    ],
+    "met_by": {
+     "fields": [
+      "message.text",
+      "message.audience",
+      "message.evidence_basis",
+      "message.approval"
+     ],
+     "deviation": "two-official-approval",
+     "procedure": "approve"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "message.programme",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    }
+   ],
+   "values_source": "health.registry.programmes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Programme it belongs to, if any (PHP-…)"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no programme with that number on the register of public-health programmes.",
+     "REF-ACTIVE": "That programme is suspended or closed: it takes no return."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The message"
+   }
+  },
+  {
+   "id": "message.text",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "public",
+   "evidence": [],
+   "label": {
+    "en": "The message, exactly as it is to be released"
+   },
+   "hint": {
+    "en": "About a risk to the public or to a group. Never a named person, and never anyone's health details."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the message, exactly as it is to be released.",
+     "length": "The message, exactly as it is to be released must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The message"
+   }
+  },
+  {
+   "id": "message.audience",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "public-health.country.communication_audiences",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Audience"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "The nation's audiences for public-health communications; none ship.",
+   "section": {
+    "en": "Who it is for"
+   }
+  },
+  {
+   "id": "message.channels",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "public-health.country.communication_channels",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Channels"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "The nation's channels for public-health communications; none ship.",
+   "multiple": true,
+   "section": {
+    "en": "Who it is for"
+   }
+  },
+  {
+   "id": "message.areas",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.nation.regions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Areas (none: the whole nation)"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Who it is for"
+   }
+  },
+  {
+   "id": "message.evidence_basis",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Evidence basis"
+   },
+   "hint": {
+    "en": "The aggregate figures the message rests on, with their class (reported, suspected, confirmed or modelled) and source, and the assessment. Never anyone's identity or health details."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter evidence basis.",
+     "length": "Evidence basis must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "message.estimates_labelled",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Any estimate or modelled figure in the message is said to be one"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "must_be_true": "Confirm this statement to continue."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "message.no_personal_data",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The message names no person and gives no one's health details"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "must_be_true": "Confirm this statement to continue."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "message.release_on",
+   "type": "date",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Release on or after"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Who it is for"
+   }
+  },
+  {
+   "id": "message.approval",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    },
+    {
+     "rule": "APPROVER-DIFFERS-FROM-MAKER",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.communication.approval_state",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Approval state"
+   },
+   "hint": {
+    "en": "Set by the platform: approved only by two officials, neither of whom drafted it."
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "message.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

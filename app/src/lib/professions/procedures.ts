@@ -45,7 +45,7 @@ registerEffect('prof.check', ({ case: c }: EffectContext) => {
 registerEffect('prof.register', ({ case: c, actor, now }: EffectContext) => {
   const why = mayAct(c, str(c.fields.profession), 'issue');
   if (why) return { error: why };
-  const e = registerProfessional({ profession: str(c.fields.profession), personRef: str(c.fields.personRef), name: str(c.fields.name), qualifications: list(c.fields.qualifications), ...(str(c.fields.validUntil) ? { validUntil: str(c.fields.validUntil) } : {}), conditions: list(c.fields.conditions) }, c.id, actor.name, now);
+  const e = registerProfessional({ profession: str(c.fields.profession), personRef: str(c.fields.personRef), name: str(c.fields.name), qualifications: list(c.fields.qualifications), ...(str(c.fields.validUntil) ? { validUntil: str(c.fields.validUntil) } : {}), conditions: list(c.fields.conditions), ...(str(c.fields.region) ? { region: str(c.fields.region) } : {}) }, c.id, actor.name, now);
   if ('error' in e) return e;
   return { facts: { professional: e.number, profession: e.profession }, after: (d?: { id: string }) => { if (d) attachProfessionalDecision(e.number, d.id); } };
 });
@@ -91,6 +91,8 @@ export const REFERENCE_PROFESSIONAL_REGISTRATION: Ref = {
     { key: 'qualifications', label: 'Qualifications (QUA- numbers from the education register, or as stated)', type: 'longtext' },
     { key: 'validUntil', label: 'Valid until (as the law sets it; none: until revoked)', type: 'date' },
     { key: 'conditions', label: 'Conditions (one per line)', type: 'longtext' },
+    // Workforce counts by region (Institutional specification Part 2 §C.2): never on the public check.
+    { key: 'region', label: 'Region of practice (for workforce counts; never public)', type: 'enum', valuesSource: { kind: 'regions' }, personalDataClass: 'administrative' },
   ],
   documents: [{ class: 'qualification-evidence', label: 'Qualification evidence', required: true }, { class: 'identity-evidence', label: 'Identity evidence', required: true }, { class: 'good-standing', label: 'Certificate of good standing (registered elsewhere)', required: false }],
   stages: [{ key: 'submitted', label: 'Submitted' }, { key: 'verification', label: 'Verification' }, { key: 'pending-approval', label: 'Decision' }, { key: 'registered', label: 'Registered' }, { key: 'certificate-issued', label: 'Certificate issued', terminal: true }, { key: 'not-registered', label: 'Refused', terminal: true }],

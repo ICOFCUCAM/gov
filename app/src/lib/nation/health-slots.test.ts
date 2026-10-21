@@ -57,10 +57,10 @@ describe('health responsibility slots', () => {
     expect(provisionalOwner('medicinesRegulation', authorityFor).institution).toBeUndefined();
   });
 
-  it('name the batch-2 forms and the public-health return; batch 1 keeps the health and professional regulators', () => {
+  it('name the batch-2 forms and the public-health forms (the return, batch 4); batch 1 keeps the health and professional regulators', () => {
     for (const f of CATALOGUE_CONTRACTS.filter(x => x.specId.startsWith('HLT-'))) {
       if (f.batch === 2) expect(f.owner, f.specId).toBe(f.specId === 'HLT-MED-014' ? 'controlledSubstances' : 'medicinesRegulation');
-      else if (f.specId === 'HLT-PH-015') expect(f.owner).toBe('publicHealth');
+      else if (f.specId === 'HLT-PH-015' || f.batch === 4) expect(f.owner, f.specId).toBe('publicHealth');
       else expect(['healthRegulation', 'professionalRegulation'], f.specId).toContain(f.owner);
     }
     expect(med('HLT-FAC-002').owner).toBe('healthRegulation');

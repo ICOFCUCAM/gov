@@ -1992,6 +1992,24 @@
   },
   {
    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-011",
+   "title": "Vaccination programme administration",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (approved aggregate public-health statistics) and the owner's approval of batch 4 (public-health programme forms): programme administration only, never an individual; CLAUDE.md Health: returns are aggregates",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+   "id": "HLT-PH-014",
+   "title": "Public-health risk communication approval",
+   "scope": "allowed",
+   "flag": null,
+   "rule": "Allowed by the owner's direction 2026-10-21 §1 (approved aggregate public-health statistics) and the owner's approval of batch 4 (public-health programme forms): programme administration only, never an individual; CLAUDE.md Health: returns are aggregates",
+   "reason": ""
+  },
+  {
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
    "id": "HLT-FAC-001",
    "title": "Facility establishment application",
    "scope": "allowed",

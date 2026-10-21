@@ -1,6 +1,6 @@
 # Institutional requirements traceability register
 
-**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): 2827 rows, ids `S<part>-…`, below. (2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): 7548 rows (Met 103, Partial 2759, Not yet 3527, Legal review 250, Platform rule stricter 334, Country decision 266, Lower priority 309), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.
+**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): 2827 rows, ids `S<part>-…`, below. (2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): 7548 rows (Met 103, Partial 2775, Not yet 3508, Legal review 250, Platform rule stricter 337, Country decision 266, Lower priority 309), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.
 
 Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts) against the code in `app/src` on 21 October 2026 (main checkout, after step I0.1), with the plan step that delivers each one (`docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md` §5). Machine-readable rows: `docs/requirements/requirements.json`. Re-run from the repository root: `python3 -I app/scripts/requirements/extract.py .` (scripts in `app/scripts/requirements/`; status knowledge base `rules.py`, step reassignment under the revised plan `reassign.py`). Checked by `app/src/lib/requirements/requirements.test.ts`.
 
@@ -20,25 +20,25 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 |---|---|---|---|---|---|---|---|
 | 0 (intro) | 1 | 9 | 0 | 0 | 1 | 0 | 11 |
 | 1 | 73 | 125 | 290 | 5 | 11 | 48 | 552 |
-| 2 | 106 | 227 | 226 | 16 | 0 | 0 | 575 |
+| 2 | 108 | 231 | 220 | 16 | 0 | 0 | 575 |
 | 3 | 57 | 144 | 271 | 23 | 2 | 85 | 582 |
 | 4 | 77 | 88 | 241 | 0 | 1 | 73 | 480 |
 | 5 | 66 | 189 | 43 | 0 | 18 | 0 | 316 |
 | 6 | 74 | 184 | 35 | 8 | 8 | 2 | 311 |
-| **All** | **454** | **966** | **1106** | **52** | **41** | **208** | **2827** |
+| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 454 | 0 | 0 | 39 | 4 | 0 | 497 |
+| — | 456 | 0 | 0 | 39 | 4 | 0 | 499 |
 | I0.2 | 0 | 2 | 0 | 0 | 0 | 0 | 2 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 66 | 40 | 0 | 1 | 0 | 107 |
 | I3 | 0 | 136 | 26 | 0 | 0 | 0 | 162 |
-| I4 | 0 | 49 | 8 | 0 | 8 | 0 | 65 |
-| I5 | 0 | 59 | 272 | 0 | 8 | 2 | 341 |
+| I4 | 0 | 53 | 1 | 0 | 8 | 0 | 62 |
+| I5 | 0 | 59 | 273 | 0 | 8 | 2 | 342 |
 | I6 | 0 | 43 | 203 | 4 | 0 | 0 | 250 |
 | I7 | 0 | 50 | 252 | 0 | 0 | 0 | 302 |
 | I8 | 0 | 60 | 234 | 0 | 0 | 0 | 294 |
@@ -46,7 +46,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | I10 | 0 | 147 | 23 | 6 | 0 | 2 | 178 |
 | I11 | 0 | 42 | 5 | 3 | 0 | 195 | 245 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
-| **All** | **454** | **966** | **1106** | **52** | **41** | **208** | **2827** |
+| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ### By sector
@@ -69,7 +69,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Acceptance | 13 | 11 | 2 | 0 | 0 | 0 | 26 |
 | Institution catalogue | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
 | Civil registration and identity | 20 | 48 | 0 | 0 | 0 | 0 | 68 |
-| Health | 8 | 38 | 8 | 3 | 0 | 0 | 57 |
+| Health | 10 | 42 | 2 | 3 | 0 | 0 | 57 |
 | Education | 10 | 24 | 4 | 5 | 0 | 0 | 43 |
 | Immigration | 22 | 16 | 1 | 7 | 0 | 0 | 46 |
 | Labour | 1 | 1 | 42 | 0 | 0 | 0 | 44 |
@@ -128,7 +128,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Roadmap | 23 | 9 | 4 | 0 | 8 | 0 | 44 |
 | Risks | 14 | 8 | 0 | 0 | 0 | 0 | 22 |
 | Launch checklist | 14 | 9 | 0 | 0 | 0 | 0 | 23 |
-| **All** | **454** | **966** | **1106** | **52** | **41** | **208** | **2827** |
+| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ### By category
@@ -138,20 +138,20 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | KPI | 0 | 49 | 119 | 1 | 0 | 26 | 195 |
 | acceptance | 43 | 35 | 13 | 0 | 0 | 0 | 91 |
 | architecture | 81 | 150 | 35 | 0 | 25 | 0 | 291 |
-| department | 0 | 92 | 234 | 13 | 0 | 52 | 391 |
+| department | 0 | 96 | 230 | 13 | 0 | 52 | 391 |
 | design | 15 | 133 | 30 | 8 | 0 | 2 | 188 |
 | exchange | 10 | 69 | 25 | 0 | 0 | 2 | 106 |
 | fieldwork | 1 | 15 | 8 | 0 | 0 | 0 | 24 |
 | form | 1 | 49 | 22 | 1 | 0 | 0 | 73 |
 | procedure | 76 | 50 | 269 | 4 | 0 | 43 | 442 |
 | prose-rule | 92 | 123 | 81 | 16 | 15 | 35 | 362 |
-| register | 49 | 53 | 217 | 8 | 0 | 42 | 369 |
+| register | 50 | 54 | 215 | 8 | 0 | 42 | 369 |
 | risk | 18 | 11 | 0 | 0 | 0 | 0 | 29 |
 | role | 10 | 40 | 0 | 1 | 0 | 4 | 55 |
 | security | 41 | 40 | 2 | 0 | 1 | 0 | 84 |
 | service | 3 | 5 | 20 | 0 | 0 | 0 | 28 |
-| twin | 14 | 52 | 31 | 0 | 0 | 2 | 99 |
-| **All** | **454** | **966** | **1106** | **52** | **41** | **208** | **2827** |
+| twin | 15 | 51 | 31 | 0 | 0 | 2 | 99 |
+| **All** | **456** | **970** | **1100** | **52** | **41** | **208** | **2827** |
 
 
 ## Plan gaps closed by the revised plan
@@ -977,32 +977,32 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S2-C.1-54 | 1294 | twin | Every indicator needs a defined denominator, reporting period, source, freshness and coverage limitations. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Attributes requested vs returned, source-record version and freshness metadata in the response | I9 |
 | S2-C.1-55 | 1294 | twin | Missing data must display as missing, not zero. | Partial | lib/twin/register.ts (observations: validFrom/validTo, recordedAt, method, quality, source run, record lineage), lib/twin/signal.ts SignalKind; tests  | Indicator definitions with denominators | I3 |
 
-### Health — Met 8, Partial 38, Not yet 8, Platform rule stricter 3
+### Health — Met 10, Partial 42, Not yet 2, Platform rule stricter 3
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S2-A.3-01 | 1132 | prose-rule | Facilities, workforce, service capacity, public-health programmes and health administration. | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions | Provider authorisations beyond licences; programme records; health-system reporting definitions | I4 |
-| S2-A.3-02 | 1134 | register | Facility directory | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions | Provider authorisations beyond licences; programme records; health-system reporting definitions | I4 |
-| S2-A.3-03 | 1134 | register | Provider authorisations | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions | Provider authorisations beyond licences; programme records; health-system reporting definitions | I4 |
-| S2-A.3-04 | 1134 | register | Programme records | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions | Provider authorisations beyond licences; programme records; health-system reporting definitions | I4 |
-| S2-A.3-05 | 1134 | register | Health-system reporting | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions | Provider authorisations beyond licences; programme records; health-system reporting definitions | I4 |
+| S2-A.3-01 | 1132 | prose-rule | Facilities, workforce, service capacity, public-health programmes and health administration. | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions, public-health programmes (lib/healt | Provider authorisations beyond licences; health-system reporting definitions | I4 |
+| S2-A.3-02 | 1134 | register | Facility directory | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions, public-health programmes (lib/healt | Provider authorisations beyond licences; health-system reporting definitions | I4 |
+| S2-A.3-03 | 1134 | register | Provider authorisations | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions, public-health programmes (lib/healt | Provider authorisations beyond licences; health-system reporting definitions | I4 |
+| S2-A.3-04 | 1134 | register | Programme records | Partial | Programme register (lib/health/programmes/register.ts: through decided cases of the public-health authority; test lib/health/programmes/programmes.tes | Adoption by the nation: its public-health authority named, procedures and mappings approved | I4 |
+| S2-A.3-05 | 1134 | register | Health-system reporting | Partial | Facility and pharmacy licences (lib/health/procedures.ts), capacity returns (lib/health/register.ts), professions, public-health programmes (lib/healt | Provider authorisations beyond licences; health-system reporting definitions | I4 |
 | S2-A.3-06 | 1134 | prose-rule | Clinical records remain within separately authorised clinical systems. | Platform rule stricter | CLAUDE.md Health: "no patient or clinical field anywhere, no national patient record"; tests apps/ministry-health/health-fields.test.ts, health-surfac |  | — |
 | S2-C.2-01 | 1298 | prose-rule | CivicOS should first deliver a health administration and service-management workspace, not attempt to replace every hospital’s electronic medical record. | Met | Health workspace is administrative only (lib/health/register.ts header; health-surfaces.test.ts) |  | — |
-| S2-C.2-02 | 1308 | department | Health policy, planning and performance | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3) | Records and procedures; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
+| S2-C.2-02 | 1308 | department | Health policy, planning and performance | Partial | Policy instruments are recorded in the laws register (lib/law/register.ts; no second register); programmes with coverage definitions and indicators (l | Planning and performance frameworks with indicator definitions (I3); Department = {id, name} only (lib/api/types.ts:536): no accountable office, servi | I4 (+I2,I3) |
 | S2-C.2-03 | 1309 | department | Facility licensing and accreditation | Partial | health.facility/pharmacy licence with inspection report document (lib/health/procedures.ts via organisations sectorProcedures) | Inspection findings as structured records under the inspector's account; corrective actions; Department = {id, name} only (lib/api/types.ts:536): no a | I4 (+I2) |
 | S2-C.2-04 | 1310 | department | Health workforce registry | Partial | lib/professions/ (4 health professions) | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
-| S2-C.2-05 | 1311 | department | Public-health programme administration | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3) | Records and procedures; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
-| S2-C.2-06 | 1312 | department | Medicine and medical-supply logistics | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3) | Records and procedures; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
+| S2-C.2-05 | 1311 | department | Public-health programme administration | Partial | Programme register and procedures (lib/health/programmes/: establish, amend, suspend, close; interventions; aggregate returns; risk communications); t | Adoption by the nation; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
+| S2-C.2-06 | 1312 | department | Medicine and medical-supply logistics | Partial | Supply items of a programme: a product of the medicines register by its number and a unit (lib/health/programmes/register.ts); programme supply receiv | Logistics and inventory (lots, stock, locations, transactions): docs/INTEGRATION_REGISTER.md 20.36; Department = {id, name} only (lib/api/types.ts:536 | I4 (+I2) |
 | S2-C.2-07 | 1313 | department | Inspection and compliance | Partial | health.facility/pharmacy licence with inspection report document (lib/health/procedures.ts via organisations sectorProcedures) | Inspection findings as structured records under the inspector's account; corrective actions; Department = {id, name} only (lib/api/types.ts:536): no a | I4 (+I2) |
 | S2-C.2-08 | 1314 | department | Facility capacity and infrastructure | Partial | Capacity returns (lib/health/register.ts), facility register (lib/data/facilities.ts) | Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
-| S2-C.2-09 | 1315 | department | Budget, procurement and grants | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3) | Records and procedures; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
+| S2-C.2-09 | 1315 | department | Budget, procurement and grants | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3); a programme carries a budget reference only | Budget, procurement and grants are plan step I5 (finance), recorded as a dependency (docs/INTEGRATION_REGISTER.md 20.37); Department = {id, name} only | I5 (+I2,I4) |
 | S2-C.2-10 | 1316 | department | Health statistics and reporting | Partial | Capacity returns versioned, marked reported | Indicator definitions; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2,I3) |
-| S2-C.2-11 | 1317 | department | Complaints and service-quality investigations | Not yet | screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3) | Records and procedures; Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis | I4 (+I2) |
+| S2-C.2-11 | 1317 | department | Complaints and service-quality investigations | Partial | Complaint intake (lib/health/complaints/procedures.ts: health.complaint, prof.complaint, referred into the licence or registration case); test lib/hea | Service-quality investigations beyond referral; adoption by the nation; Department = {id, name} only (lib/api/types.ts:536): no accountable office, se | I4 (+I2) |
 | S2-C.2-12 | 1323 | register | Health facility: Unique facility ID, name, type, location, operator, authorised services, operational status, verification date | Partial | lib/data/facilities.ts (id, name, category, operator, location, status, versions) + licence standing in health-facilities register | Authorised services and verification date on the record | I4 |
 | S2-C.2-13 | 1324 | register | Health professional: Professional reference, verified qualifications, registration authority, licence status, scope of practice where authorised | Met | lib/professions/register.ts (reference, qualifications verified, regulator, standing, conditions); test lib/professions/procedures.test.ts |  | — |
 | S2-C.2-14 | 1325 | register | Inspection: Facility, inspection type, findings, evidence, inspector, corrective action, due date defined by applicable rules | Partial | Inspection report as a document on licence cases; education inspections (edu.inspection) as model | Structured inspection register with findings, corrective action, due date | I4 |
-| S2-C.2-15 | 1326 | register | Supply item: Product identifier, unit, lot/batch where relevant, quantity, location, expiry where relevant, transaction reference | Not yet | absent: no module, register or procedure (audit A §3) | Register | I4 |
-| S2-C.2-16 | 1327 | register | Programme: Programme identifier, approved eligibility, coverage definition, budget reference, reporting period | Not yet | absent: no module, register or procedure (audit A §3) | Register | I4 |
+| S2-C.2-15 | 1326 | register | Supply item: Product identifier, unit, lot/batch where relevant, quantity, location, expiry where relevant, transaction reference | Partial | A programme's supply items: product identifier (a decided product of the medicines register) and unit (lib/health/programmes/register.ts); quantities  | Lot or batch, location, expiry and transaction reference: an inventory system with feeds (docs/INTEGRATION_REGISTER.md 20.36) | I4 |
+| S2-C.2-16 | 1327 | register | Programme: Programme identifier, approved eligibility, coverage definition, budget reference, reporting period | Met | lib/health/programmes/register.ts (programme number, approved eligibility cited from the laws register, coverage definition with denominator and its d |  | — |
 | S2-C.2-17 | 1328 | register | Facility report: Reporting facility, indicator definitions, period, submitted values, validation state, corrections and provenance | Partial | Capacity returns: facility, period, counts, versions, reported | Indicator definitions, validation state | I4 (+I3) |
 | S2-C.2-18 | 1330 | prose-rule | Clinical data should be held in a dedicated clinical system or segregated clinical domain with its own access policies. | Platform rule stricter | CLAUDE.md Health: "no patient or clinical field anywhere, no national patient record"; tests apps/ministry-health/health-fields.test.ts, health-surfac |  | — |
 | S2-C.2-19 | 1330 | prose-rule | A health ministry dashboard does not grant all ministry employees access to diagnoses, prescriptions or patient histories. | Met | No clinical data in platform (Platform rule stricter); acceptance P2-04 partial (no record to search) |  | — |
@@ -1032,11 +1032,11 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S2-C.2-43 | 1373 | twin | Active licensed facilities by type and region | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
 | S2-C.2-44 | 1374 | twin | Facility-list completeness and last verification | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
 | S2-C.2-45 | 1375 | twin | Facility-reported service availability | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
-| S2-C.2-46 | 1376 | twin | Workforce counts by approved professional category | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
-| S2-C.2-47 | 1377 | twin | Essential-supply availability where reliable inventory feeds exist | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
+| S2-C.2-46 | 1376 | twin | Workforce counts by approved professional category | Met | Derived from the professions register by profession, standing and region of practice, small cells suppressed by the nation's rule, published to the tw |  | — |
+| S2-C.2-47 | 1377 | twin | Essential-supply availability where reliable inventory feeds exist | Partial | Programme supply received and used as aggregate counts (lib/health/programmes/register.ts) | Reliable inventory feeds (docs/INTEGRATION_REGISTER.md 20.36) and indicator definitions (I3) | I4 (+I3) |
 | S2-C.2-48 | 1378 | twin | Inspection and corrective-action status | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
 | S2-C.2-49 | 1379 | twin | Reporting completeness and lateness | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
-| S2-C.2-50 | 1380 | twin | Programme coverage where the denominator and data source are documented | Partial | Health records partly exist (facilities, licences, returns) | Indicator definitions (I3) and remaining health records | I4 (+I3) |
+| S2-C.2-50 | 1380 | twin | Programme coverage where the denominator and data source are documented | Partial | Coverage definition, denominator and its documented source on each programme; counts in the twin only as a registered source's observations (lib/healt | Coverage computed against an approved indicator definition (I3) | I4 (+I3) |
 | S2-C.2-51 | 1382 | twin | Never present a count of registered facilities as a count of operational facilities unless operational status has been verified to a defined standard. | Partial | Facility status and licence standings are separate records | Indicator definitions distinguishing registered from verified-operational | I3 |
 
 ### Education — Met 10, Partial 24, Not yet 4, Platform rule stricter 5
@@ -3526,9 +3526,9 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 
 *Platform rule stricter* means CivicOS will not hold the item at all (cited rule); the row says what it holds instead. Rows with basis `domain` are assessed at the level of their domain (no item-specific rule): the status is the domain's state and the step the domain's step; a contract and its fields follow the form they define. Every catalogue form carries `I1-catalogue` in `also_steps`: its field contract designed in the form library at or above the catalogue's standard, beside the sector step that builds its procedure. Steps I12 and I13 were added to the plan for the catalogue (plan §5).
 
-**Self-check.** Content lines not accounted for: 0. Headings (parts, sections, sub-sections) without a row: none. Catalogue IDs without a row: 0. Rows without a step: 0. Forms: 2072, with their own JSON contract: 145, with a contract CivicOS wrote (form library): 75, contract not yet given: 1852.
+**Self-check.** Content lines not accounted for: 0. Headings (parts, sections, sub-sections) without a row: none. Catalogue IDs without a row: 0. Rows without a step: 0. Forms: 2072, with their own JSON contract: 145, with a contract CivicOS wrote (form library): 77, contract not yet given: 1850.
 
-**Form status.** catalogued 0, contract_missing 1648, contract_draft 204, under_review 91, blocked 1, excluded 128, approved 0, production 0.
+**Form status.** catalogued 0, contract_missing 1646, contract_draft 206, under_review 91, blocked 1, excluded 128, approved 0, production 0.
 
 **Inputs.** All 13 parts and the supplement received. The topics the 13 parts left out are now catalogued by the supplement (table below); the earlier gap rows became the supplement's rows. Still missing from the received text: the field contract of every form listed only in a table (`contract: not yet given`).
 
@@ -3576,7 +3576,7 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 3 | 1 | 166 | 512 | 0 | 1 | 42 | 121 | 843 |
 | Part 4 | 11 | 153 | 148 | 4 | 1 | 19 | 0 | 336 |
 | Part 5 | 12 | 146 | 58 | 137 | 1 | 15 | 0 | 369 |
-| Part 6 | 13 | 93 | 99 | 0 | 144 | 16 | 0 | 365 |
+| Part 6 | 13 | 109 | 80 | 0 | 147 | 16 | 0 | 365 |
 | Part 7 | 9 | 122 | 120 | 0 | 70 | 18 | 0 | 339 |
 | Part 8 | 2 | 108 | 299 | 0 | 0 | 23 | 0 | 432 |
 | Part 9 | 2 | 78 | 270 | 0 | 3 | 18 | 0 | 371 |
@@ -3603,18 +3603,18 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 20 | 0 | 12 | 62 | 0 | 0 | 0 | 0 | 74 |
 | Part 21 | 1 | 40 | 76 | 0 | 0 | 0 | 0 | 117 |
 | Part 22 | 0 | 77 | 21 | 0 | 0 | 0 | 0 | 98 |
-| **All** | **103** | **2759** | **3527** | **250** | **334** | **266** | **309** | **7548** |
+| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Legal review | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|---|
-| — | 103 | 0 | 0 | 0 | 305 | 112 | 0 | 520 |
+| — | 103 | 0 | 0 | 0 | 308 | 115 | 0 | 526 |
 | I1 | 0 | 773 | 23 | 0 | 0 | 0 | 0 | 796 |
 | I2 | 0 | 91 | 75 | 0 | 6 | 0 | 0 | 172 |
 | I3 | 0 | 26 | 2 | 0 | 0 | 0 | 0 | 28 |
-| I4 | 0 | 99 | 54 | 0 | 0 | 6 | 0 | 159 |
+| I4 | 0 | 115 | 35 | 0 | 0 | 3 | 0 | 153 |
 | I5 | 0 | 308 | 984 | 0 | 0 | 55 | 121 | 1468 |
 | I6 | 0 | 320 | 803 | 0 | 0 | 21 | 0 | 1144 |
 | I7 | 0 | 246 | 957 | 0 | 0 | 43 | 0 | 1246 |
@@ -3624,7 +3624,7 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | I12 | 0 | 20 | 264 | 21 | 23 | 13 | 15 | 356 |
 | I13 | 0 | 93 | 138 | 0 | 0 | 0 | 0 | 231 |
 | Throughout | 0 | 309 | 1 | 0 | 0 | 0 | 0 | 310 |
-| **All** | **103** | **2759** | **3527** | **250** | **334** | **266** | **309** | **7548** |
+| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
 
 
 Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 3, I7 25, I8 15, I9 63, Throughout 13.
@@ -3665,7 +3665,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 
 | Defence administration | 0 | 2 | 0 | 0 | 3 | 3 | 51 | 59 |
 | Health regulation | 14 | 95 | 0 | 0 | 29 | 3 | 0 | 141 |
 | Patient and clinical administration | 0 | 5 | 0 | 0 | 117 | 0 | 0 | 122 |
-| Public health | 0 | 11 | 19 | 0 | 18 | 3 | 0 | 51 |
+| Public health | 0 | 27 | 0 | 0 | 21 | 3 | 0 | 51 |
 | Medicines and devices regulation | 0 | 3 | 35 | 0 | 4 | 3 | 0 | 45 |
 | Health financing | 0 | 3 | 19 | 0 | 10 | 3 | 0 | 35 |
 | Social care | 0 | 1 | 17 | 0 | 3 | 2 | 0 | 23 |
@@ -3724,7 +3724,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 
 | Local and regional government | 0 | 11 | 63 | 0 | 0 | 0 | 0 | 74 |
 | Housing, planning and building control | 0 | 12 | 62 | 0 | 0 | 0 | 0 | 74 |
 | Shared internal administration | 1 | 40 | 76 | 0 | 0 | 0 | 0 | 117 |
-| **All** | **103** | **2759** | **3527** | **250** | **334** | **266** | **309** | **7548** |
+| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
 
 
 ### By category
@@ -3733,24 +3733,24 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 57, I11 2, I12 1, I3 
 |---|---|---|---|---|---|---|---|---|
 | acceptance gate | 11 | 117 | 25 | 3 | 10 | 0 | 0 | 166 |
 | configuration | 0 | 0 | 0 | 10 | 7 | 199 | 0 | 216 |
-| data contract | 0 | 1101 | 1125 | 34 | 77 | 1 | 86 | 2424 |
+| data contract | 0 | 1106 | 1117 | 34 | 80 | 1 | 86 | 2424 |
 | definition of done | 4 | 24 | 9 | 0 | 3 | 1 | 0 | 41 |
 | engineering deliverable | 0 | 77 | 42 | 4 | 9 | 2 | 0 | 134 |
 | exchange | 1 | 13 | 34 | 5 | 2 | 0 | 0 | 55 |
 | field group | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
-| form | 64 | 257 | 1403 | 91 | 128 | 0 | 129 | 2072 |
+| form | 64 | 259 | 1401 | 91 | 128 | 0 | 129 | 2072 |
 | permission | 0 | 53 | 0 | 4 | 0 | 0 | 0 | 57 |
 | register | 1 | 10 | 34 | 1 | 0 | 0 | 12 | 58 |
-| safeguard | 14 | 355 | 245 | 28 | 42 | 24 | 21 | 729 |
-| scope | 8 | 621 | 526 | 45 | 47 | 38 | 48 | 1333 |
+| safeguard | 14 | 360 | 240 | 28 | 42 | 24 | 21 | 729 |
+| scope | 8 | 625 | 522 | 45 | 47 | 38 | 48 | 1333 |
 | state | 0 | 12 | 17 | 11 | 0 | 0 | 0 | 40 |
 | table row | 0 | 68 | 28 | 14 | 9 | 1 | 1 | 121 |
 | values source | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 11 |
 | workflow stage | 0 | 39 | 39 | 0 | 0 | 0 | 12 | 90 |
-| **All** | **103** | **2759** | **3527** | **250** | **334** | **266** | **309** | **7548** |
+| **All** | **103** | **2775** | **3508** | **250** | **337** | **266** | **309** | **7548** |
 
 
-### Deviations: platform rule stricter and legal review (584 rows)
+### Deviations: platform rule stricter and legal review (587 rows)
 
 Every row where the catalogue goes beyond a binding platform rule. *Platform rule stricter*: CivicOS will not hold it; *Legal review*: drafts only after legal review (I11, I12). The columns give the rule and what CivicOS holds, and what it will not hold or what the review must settle.
 
@@ -4005,7 +4005,10 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | HLT-PH-016 | FIELD-SERIES-PARTS-05-07.md 619 | HLT-PH-016 — Public-health data correction — Source correction and revised version recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
 | HLT-PH-017 | FIELD-SERIES-PARTS-05-07.md 620 | HLT-PH-017 — Public-health investigation closure — Authorized closure recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
 | HLT-PH-018 | FIELD-SERIES-PARTS-05-07.md 621 | HLT-PH-018 — Public-health disclosure authorization — Data sharing assessed and approved where permitted | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
+| FC6-4.2-01 | FIELD-SERIES-PARTS-05-07.md 625 | Case reference — Stable identifier and source system | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts); docs/requirements/form-scope.json (HLT-PH-001 … 0 | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
+| FC6-4.2-05 | FIELD-SERIES-PARTS-05-07.md 629 | Event dates — Onset, specimen, report, and other relevant dates when available | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts); docs/requirements/form-scope.json (HLT-PH-001 … 0 | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
 | FC6-4.2-06 | FIELD-SERIES-PARTS-05-07.md 630 | Evidence references — Laboratory result, clinical report, or authorized source | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
+| FC6-4.2-07 | FIELD-SERIES-PARTS-05-07.md 631 | Investigation — Assigned officer, approved protocol, findings, and outstanding actions | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts); docs/requirements/form-scope.json (HLT-PH-001 … 0 | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the administrative decision records only | — |
 | FC6-4.3-01 | FIELD-SERIES-PARTS-05-07.md 637 | A public-health report is not itself authority to impose a restriction, order treatment, or disclose identifiable information. | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
 | FC6-5-01 | FIELD-SERIES-PARTS-05-07.md 649 | The medicines regulator needs a separate workflow from clinical prescribing and hospital pharmacy operations. | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
 | HLT-MED-016 | FIELD-SERIES-PARTS-05-07.md 667 | HLT-MED-016 — Adverse drug reaction report — Report recorded and assessed | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts) | Adverse reaction reports and clinical trial safety data carry patient data: CivicOS holds only the regulator's administrative decision (authorisation, its conditions) without patient fields | — |
@@ -7322,7 +7325,7 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | HLT-FAC-006 | 718 | 6.2 | form | HLT-FAC-006 — Service or capacity variation — Variation assessment | Partial | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  | Establishment approval, corrective action plans, variations, closure notices and safety concerns as records | I4 (+I1-catalogue) |
 | HLT-FAC-007 | 719 | 6.2 | form | HLT-FAC-007 — Facility closure notification — Closure process initiated | Partial | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  | Establishment approval, corrective action plans, variations, closure notices and safety concerns as records | I4 (+I1-catalogue) |
 | HLT-FAC-008 | 720 | 6.2 | form | HLT-FAC-008 — Facility suspension or revocation review — Authorized review | Met | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  |  | — (+I1-catalogue) |
-| HLT-FAC-009 | 721 | 6.2 | form | HLT-FAC-009 — Facility complaint or safety concern — Complaint referred | Partial | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  | Establishment approval, corrective action plans, variations, closure notices and safety concerns as records | I4 (+I1-catalogue) |
+| HLT-FAC-009 | 721 | 6.2 | form | HLT-FAC-009 — Facility complaint or safety concern — Complaint referred | Partial | lib/health/complaints/procedures.ts (health.complaint, prof.complaint: intake, assessment by the assigned officer with reasons, referral int | Adoption by the nation: a version of the complaint procedure approved by a second official; its complaint kinds and relationships (configure | I4 (+I1-catalogue) |
 | HLT-FAC-010 | 722 | 6.2 | form | HLT-FAC-010 — Facility licence verification — Status response issued | Met | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  |  | — (+I1-catalogue) |
 | FC6-6.2-01 | 723 | 6.2 | safeguard | Professional or facility status should be disclosed only at the level authorized by law. | Partial | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  | The requirement as stated is not built for this domain beyond the cited records | I4 |
 | FC6-6.2-02 | 723 | 6.2 | scope | A public register might show that a licence is active, while investigation details or protected personal information remain restricted. | Partial | lib/health/procedures.ts (facility and pharmacy licence, renewal, suspension, revocation on the health-facilities and pharmacies registers;  | The requirement as stated is not built for this domain beyond the cited records | I4 |
@@ -7496,12 +7499,12 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | FC6-3.3-08 | 599 | 3.3 | scope | Where AI is enabled, record the feature used, the output's status, the reviewing professional when required, and the final action. | Partial | AI is advisory only and off unless the nation opts in (SovereignProfile.aiAssistant); /api/ai/advisory refuses when off, callers fall back t | No test proves that no AI output can reach act(), a register change or a publication; no register of AI features (owner, permitted inputs, o | Throughout |
 | FC6-3.3-09 | 599 | 3.3 | scope | Country and institutional policy determines which AI functions are permitted. | Partial | AI is advisory only and off unless the nation opts in (SovereignProfile.aiAssistant); /api/ai/advisory refuses when off, callers fall back t | No test proves that no AI output can reach act(), a register change or a publication; no register of AI features (owner, permitted inputs, o | Throughout |
 
-##### Public health — Partial 3, Not yet 19, Platform rule stricter 18, Country decision 3
+##### Public health — Partial 19, Platform rule stricter 21, Country decision 3
 
 | ID | Lines | Section | Cat. | Item | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|---|
 | FC6-4-01 | 601 | 4 | safeguard | Public-health workflows may require data from hospitals, laboratories, clinicians, and other authorized sources. | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
-| FC6-4-02 | 601 | 4 | safeguard | They must distinguish an initial report, a suspected case, a confirmed case, a statistical aggregate, and a public-health determination. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
+| FC6-4-02 | 601 | 4 | safeguard | They must distinguish an initial report, a suspected case, a confirmed case, a statistical aggregate, and a public-health determination. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
 | HLT-PH-001 | 604 | 4.1 | form | HLT-PH-001 — Notifiable condition report — Report received | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-002 | 605 | 4.1 | form | HLT-PH-002 — Laboratory public-health notification — Test information received under configured rules | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-003 | 606 | 4.1 | form | HLT-PH-003 — Case investigation record — Authorized investigation opened | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
@@ -7512,37 +7515,37 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | HLT-PH-008 | 611 | 4.1 | form | HLT-PH-008 — Outbreak investigation — Investigation and evidence tracked | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-009 | 612 | 4.1 | form | HLT-PH-009 — Public-health intervention authorization — Required legal approval recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-010 | 613 | 4.1 | form | HLT-PH-010 — Public-health intervention review — Review and continuation decision recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
-| HLT-PH-011 | 614 | 4.1 | form | HLT-PH-011 — Vaccination programme administration — Eligible programme activity recorded | Not yet | absent: no module, register or procedure (audit A §3) | Programme administration and risk-communication approval (administrative, no individual data) | I4 (+I1-catalogue) |
+| HLT-PH-011 | 614 | 4.1 | form | HLT-PH-011 — Vaccination programme administration — Eligible programme activity recorded | Partial | lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, coverage with documented denominator, budget ref | Adoption by the nation: the procedure versions approved by a second official, the mappings public-health-programme and public-health-communi | I4 (+I1-catalogue) |
 | HLT-PH-012 | 615 | 4.1 | form | HLT-PH-012 — Vaccination record submission — Vaccination event recorded from an authorized source | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-013 | 616 | 4.1 | form | HLT-PH-013 — Adverse event following immunization report — Safety report submitted | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
-| HLT-PH-014 | 617 | 4.1 | form | HLT-PH-014 — Public-health risk communication approval — Authorized message approved for release | Not yet | absent: no module, register or procedure (audit A §3) | Programme administration and risk-communication approval (administrative, no individual data) | I4 (+I1-catalogue) |
-| HLT-PH-015 | 618 | 4.1 | form | HLT-PH-015 — Public-health aggregate data submission — Statistical dataset submitted | Partial | Aggregate returns (lib/health/register.ts) | Public-health aggregate submissions by programme | I4 (+I1-catalogue) |
+| HLT-PH-014 | 617 | 4.1 | form | HLT-PH-014 — Public-health risk communication approval — Authorized message approved for release | Partial | lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, coverage with documented denominator, budget ref | Adoption by the nation: the procedure versions approved by a second official, the mappings public-health-programme and public-health-communi | I4 (+I1-catalogue) |
+| HLT-PH-015 | 618 | 4.1 | form | HLT-PH-015 — Public-health aggregate data submission — Statistical dataset submitted | Partial | Programme returns (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, coverage with documented deno | Adoption by the nation (the return procedure approved, programmes established); the statistics exchange HX-009 | I4 (+I1-catalogue) |
 | HLT-PH-016 | 619 | 4.1 | form | HLT-PH-016 — Public-health data correction — Source correction and revised version recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-017 | 620 | 4.1 | form | HLT-PH-017 — Public-health investigation closure — Authorized closure recorded | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
 | HLT-PH-018 | 621 | 4.1 | form | HLT-PH-018 — Public-health disclosure authorization — Data sharing assessed and approved where permitted | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — (+I1-catalogue) |
-| FC6-4.2-01 | 625 | 4.2 | data contract | Case reference — Stable identifier and source system | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-02 | 626 | 4.2 | data contract | Reporting source — Facility or authorized reporter, with receipt time | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-03 | 627 | 4.2 | data contract | Condition classification — Configured code set and version | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-04 | 628 | 4.2 | data contract | Case status — Reported, suspected, probable, confirmed, ruled out, or other locally defined status | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-05 | 629 | 4.2 | data contract | Event dates — Onset, specimen, report, and other relevant dates when available | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
+| FC6-4.2-01 | 625 | 4.2 | data contract | Case reference — Stable identifier and source system | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — |
+| FC6-4.2-02 | 626 | 4.2 | data contract | Reporting source — Facility or authorized reporter, with receipt time | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.2-03 | 627 | 4.2 | data contract | Condition classification — Configured code set and version | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.2-04 | 628 | 4.2 | data contract | Case status — Reported, suspected, probable, confirmed, ruled out, or other locally defined status | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.2-05 | 629 | 4.2 | data contract | Event dates — Onset, specimen, report, and other relevant dates when available | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — |
 | FC6-4.2-06 | 630 | 4.2 | data contract | Evidence references — Laboratory result, clinical report, or authorized source | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
-| FC6-4.2-07 | 631 | 4.2 | data contract | Investigation — Assigned officer, approved protocol, findings, and outstanding actions | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-08 | 632 | 4.2 | data contract | Intervention — Type, legal authority, approval, effective dates, and review requirements | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.2-09 | 633 | 4.2 | data contract | Data provenance — Origin, transformation history, verification status, and correction links | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
+| FC6-4.2-07 | 631 | 4.2 | data contract | Investigation — Assigned officer, approved protocol, findings, and outstanding actions | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | Individual case, contact, laboratory and vaccination data stay in the health authority's own systems; CivicOS holds aggregates and the admin | — |
+| FC6-4.2-08 | 632 | 4.2 | data contract | Intervention — Type, legal authority, approval, effective dates, and review requirements | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.2-09 | 633 | 4.2 | data contract | Data provenance — Origin, transformation history, verification status, and correction links | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
 | FC6-4.2-10 | 634 | 4.2 | data contract | Disclosure history — Recipient, legal purpose, data scope, and transfer reference | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | The domain's exchange services are not defined | I4 (+I9) |
-| FC6-4.2-11 | 635 | 4.2 | safeguard | The case classifications shown are examples; countries must configure the categories and criteria actually used by their public-health system. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
+| FC6-4.2-11 | 635 | 4.2 | safeguard | The case classifications shown are examples; countries must configure the categories and criteria actually used by their public-health system. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
 | FC6-4.3-01 | 637 | 4.3 | scope | A public-health report is not itself authority to impose a restriction, order treatment, or disclose identifiable information. | Platform rule stricter | CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests | CivicOS holds no patient or clinical field; facilities, professionals, medicines and aggregate returns only | — |
-| FC6-4.3-02 | 639 | 4.3 | safeguard | Any legally consequential intervention must be supported by the relevant law, the competent authority, the applicable evidence and procedure, and a recorded decision. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-03 | 639 | 4.3 | safeguard | Required notice, review, expiry, and reassessment rules must be configurable. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-04 | 642 | 4.3 | scope | Prefer aggregated or de-identified data where it meets the purpose. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-05 | 643 | 4.3 | scope | Label estimates, modelled values, and incomplete reports explicitly. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-06 | 644 | 4.3 | safeguard | Do not interpret a missing report as proof that no case exists. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-07 | 645 | 4.3 | scope | Apply small-cell disclosure protections where necessary. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
-| FC6-4.3-08 | 646 | 4.3 | scope | Restrict identifiable outbreak investigation data to authorized roles. | Not yet | Aggregate returns only (lib/health/register.ts); CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; retu | No Public health records or procedures exist | I4 |
+| FC6-4.3-02 | 639 | 4.3 | safeguard | Any legally consequential intervention must be supported by the relevant law, the competent authority, the applicable evidence and procedure, and a recorded decision. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-03 | 639 | 4.3 | safeguard | Required notice, review, expiry, and reassessment rules must be configurable. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-04 | 642 | 4.3 | scope | Prefer aggregated or de-identified data where it meets the purpose. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-05 | 643 | 4.3 | scope | Label estimates, modelled values, and incomplete reports explicitly. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-06 | 644 | 4.3 | safeguard | Do not interpret a missing report as proof that no case exists. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-07 | 645 | 4.3 | scope | Apply small-cell disclosure protections where necessary. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
+| FC6-4.3-08 | 646 | 4.3 | scope | Restrict identifiable outbreak investigation data to authorized roles. | Partial | Programme administration and aggregates only (lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, co | The requirement as stated is not built for this domain beyond the cited records | I4 |
 | FC6-4.3-09 | 647 | 4.3 | scope | Preserve the original submitted report when a correction is received. | Partial | Registers built on the platform keep every version and change only through procedure effects (lib/casework/register-writes.test.ts (only the | This domain's register does not exist yet | I4 |
-| CFG-PH-001 | 859 | 11 | configuration | CFG-PH-001 — Notifiable conditions, reporting deadlines, and authorized sources | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde | The Public health records and procedures do not exist, so there is nothing yet to configure | I4 |
-| CFG-PH-002 | 860 | 11 | configuration | CFG-PH-002 — Public-health case definitions and classification versions | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde | The Public health records and procedures do not exist, so there is nothing yet to configure | I4 |
-| CFG-PH-003 | 861 | 11 | configuration | CFG-PH-003 — Intervention authority, review, and expiry requirements | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde | The Public health records and procedures do not exist, so there is nothing yet to configure | I4 |
+| CFG-PH-001 | 859 | 11 | configuration | CFG-PH-001 — Notifiable conditions, reporting deadlines, and authorized sources | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde |  | — |
+| CFG-PH-002 | 860 | 11 | configuration | CFG-PH-002 — Public-health case definitions and classification versions | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde |  | — |
+| CFG-PH-003 | 861 | 11 | configuration | CFG-PH-003 — Intervention authority, review, and expiry requirements | Country decision | Configuration through the platform's approved records: laws register (lib/law/register.ts (instruments, versions, provisions by eId, recorde |  | — |
 
 ##### Medicines and devices regulation — Partial 3, Not yet 35, Platform rule stricter 4, Country decision 3
 

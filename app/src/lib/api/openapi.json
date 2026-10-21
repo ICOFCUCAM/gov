@@ -21052,6 +21052,1199 @@
         "x-source": "src/app/api/health-regulation/products/route.ts"
       }
     },
+    "/api/health-regulation/programmes": {
+      "get": {
+        "tags": [
+          "health-regulation"
+        ],
+        "operationId": "get_health_regulation_programmes",
+        "summary": "GET /api/health-regulation/programmes",
+        "description": "/api/health-regulation/programmes — the register of public-health programmes (lib/health/programmes/register.ts; Health I4 dependency public-health-programmes). Administrative records and aggregates only. GET: the programmes (number, standing, terms by version, history), the interventions decided (area or population measures), the accepted returns as they may be published (publishedReturn(): every count through the nation's small-cell rule, the four classes kept apart, a count not available shown as missing, never zero), the intervention authority rules in force (CFG-PH-003) and the small-cell rule, each with its waiting change; counts. POST (administrators): the country rule sets, by two officials citing the law: { op: 'propose-intervention-rules', rules: [{ kind, authority, reviewRequired, expiryRequired }], legalBasis: [{ instrument, eId }] }, then { op: 'confirm-intervention-rules' } by a different official, or { op: 'withdraw-intervention-rules' }; the small-cell threshold the same way: { op: 'propose-small-cells', threshold, legalBasis }, { op: 'confirm-small-cells' }, { op: 'withdraw-small-cells' }. Programmes, interventions and returns change only through decided cases (/api/cases).",
+        "parameters": [
+          {
+            "name": "programme",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "programmes": {
+                          "type": "object",
+                          "properties": {
+                            "closed": {
+                              "type": "number"
+                            },
+                            "established": {
+                              "type": "number"
+                            },
+                            "suspended": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "closed",
+                            "established",
+                            "suspended"
+                          ]
+                        },
+                        "interventions": {
+                          "type": "number"
+                        },
+                        "returns": {
+                          "type": "number"
+                        },
+                        "samples": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "programmes",
+                        "interventions",
+                        "returns",
+                        "samples"
+                      ]
+                    },
+                    "authorityNamed": {
+                      "type": "boolean"
+                    },
+                    "labels": {
+                      "type": "object",
+                      "properties": {
+                        "states": {
+                          "type": "object",
+                          "properties": {
+                            "closed": {
+                              "type": "string"
+                            },
+                            "established": {
+                              "type": "string"
+                            },
+                            "suspended": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "closed",
+                            "established",
+                            "suspended"
+                          ]
+                        },
+                        "bases": {
+                          "type": "object",
+                          "properties": {
+                            "confirmed": {
+                              "type": "string"
+                            },
+                            "modelled": {
+                              "type": "string"
+                            },
+                            "reported": {
+                              "type": "string"
+                            },
+                            "suspected": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "confirmed",
+                            "modelled",
+                            "reported",
+                            "suspected"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "states",
+                        "bases"
+                      ]
+                    },
+                    "rules": {
+                      "type": "object",
+                      "properties": {
+                        "rules": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/InterventionRule"
+                          }
+                        },
+                        "version": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "rules",
+                        "version"
+                      ]
+                    },
+                    "ruleChanges": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Rules"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/Rules"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    },
+                    "smallCells": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "threshold": {
+                              "type": "number"
+                            },
+                            "version": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "threshold",
+                            "version"
+                          ]
+                        }
+                      ]
+                    },
+                    "smallCellChanges": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Rule"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/Rule"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    },
+                    "programmes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Programme"
+                      }
+                    },
+                    "interventions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Intervention"
+                      }
+                    },
+                    "returns": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublishedReturn"
+                      }
+                    }
+                  },
+                  "required": [
+                    "counts",
+                    "authorityNamed",
+                    "labels",
+                    "rules",
+                    "ruleChanges",
+                    "smallCells",
+                    "smallCellChanges",
+                    "programmes",
+                    "interventions",
+                    "returns"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "counts": {
+                        "programmes": {
+                          "closed": 1,
+                          "established": 1,
+                          "suspended": 1
+                        },
+                        "interventions": 1,
+                        "returns": 1,
+                        "samples": 1
+                      },
+                      "authorityNamed": true,
+                      "labels": {
+                        "states": {
+                          "closed": "string",
+                          "established": "string",
+                          "suspended": "string"
+                        },
+                        "bases": {
+                          "confirmed": "string",
+                          "modelled": "string",
+                          "reported": "string",
+                          "suspected": "string"
+                        }
+                      },
+                      "rules": {
+                        "rules": [
+                          {
+                            "kind": "string",
+                            "authority": "string",
+                            "reviewRequired": true,
+                            "expiryRequired": true
+                          }
+                        ],
+                        "version": 1
+                      },
+                      "ruleChanges": {
+                        "pending": {
+                          "values": {
+                            "rules": []
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      },
+                      "smallCells": {
+                        "threshold": 1,
+                        "version": 1
+                      },
+                      "smallCellChanges": {
+                        "pending": {
+                          "values": {
+                            "threshold": 1
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      },
+                      "programmes": [
+                        {
+                          "id": "ID-0001",
+                          "number": "string",
+                          "state": "closed",
+                          "versions": [
+                            {}
+                          ],
+                          "history": [
+                            {}
+                          ],
+                          "case": "string",
+                          "createdAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "interventions": [
+                        {
+                          "id": "ID-0001",
+                          "number": "string",
+                          "kind": "string",
+                          "areas": [
+                            "string"
+                          ],
+                          "measure": "string",
+                          "from": "string",
+                          "rule": {
+                            "none": true
+                          },
+                          "state": "ended",
+                          "reviews": [
+                            {}
+                          ],
+                          "case": "string",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "by": "A. Official"
+                        }
+                      ],
+                      "returns": [
+                        {
+                          "number": "string",
+                          "programme": "string",
+                          "area": "string",
+                          "period": {
+                            "from": "string",
+                            "to": "string"
+                          },
+                          "version": 1,
+                          "complete": true,
+                          "corrected": true,
+                          "counts": [
+                            {}
+                          ],
+                          "rule": {
+                            "threshold": 1,
+                            "version": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/health-regulation/programmes/route.ts"
+      },
+      "post": {
+        "tags": [
+          "health-regulation"
+        ],
+        "operationId": "post_health_regulation_programmes",
+        "summary": "POST /api/health-regulation/programmes",
+        "description": "/api/health-regulation/programmes — the register of public-health programmes (lib/health/programmes/register.ts; Health I4 dependency public-health-programmes). Administrative records and aggregates only. GET: the programmes (number, standing, terms by version, history), the interventions decided (area or population measures), the accepted returns as they may be published (publishedReturn(): every count through the nation's small-cell rule, the four classes kept apart, a count not available shown as missing, never zero), the intervention authority rules in force (CFG-PH-003) and the small-cell rule, each with its waiting change; counts. POST (administrators): the country rule sets, by two officials citing the law: { op: 'propose-intervention-rules', rules: [{ kind, authority, reviewRequired, expiryRequired }], legalBasis: [{ instrument, eId }] }, then { op: 'confirm-intervention-rules' } by a different official, or { op: 'withdraw-intervention-rules' }; the small-cell threshold the same way: { op: 'propose-small-cells', threshold, legalBasis }, { op: 'confirm-small-cells' }, { op: 'withdraw-small-cells' }. Programmes, interventions and returns change only through decided cases (/api/cases).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rules": {
+                      "type": "object",
+                      "properties": {
+                        "rules": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/InterventionRule"
+                          }
+                        },
+                        "version": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "rules",
+                        "version"
+                      ]
+                    },
+                    "ruleChanges": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Rules"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/Rules"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    },
+                    "smallCells": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "threshold": {
+                              "type": "number"
+                            },
+                            "version": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "threshold",
+                            "version"
+                          ]
+                        }
+                      ]
+                    },
+                    "smallCellChanges": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Rule"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/Rule"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    },
+                    "result": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ok": {
+                              "type": "boolean",
+                              "const": true
+                            }
+                          },
+                          "required": [
+                            "ok"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Rule"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Rules"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "rules",
+                    "ruleChanges",
+                    "smallCells",
+                    "smallCellChanges",
+                    "result"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "rules": {
+                        "rules": [
+                          {
+                            "kind": "string",
+                            "authority": "string",
+                            "reviewRequired": true,
+                            "expiryRequired": true
+                          }
+                        ],
+                        "version": 1
+                      },
+                      "ruleChanges": {
+                        "pending": {
+                          "values": {
+                            "rules": []
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      },
+                      "smallCells": {
+                        "threshold": 1,
+                        "version": 1
+                      },
+                      "smallCellChanges": {
+                        "pending": {
+                          "values": {
+                            "threshold": 1
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      },
+                      "result": {
+                        "ok": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/health-regulation/programmes/route.ts"
+      }
+    },
     "/api/health-regulation": {
       "get": {
         "tags": [
@@ -21237,6 +22430,78 @@
         },
         "security": [],
         "x-source": "src/app/api/health-regulation/route.ts"
+      }
+    },
+    "/api/health-regulation/workforce": {
+      "get": {
+        "tags": [
+          "health-regulation"
+        ],
+        "operationId": "get_health_regulation_workforce",
+        "summary": "GET /api/health-regulation/workforce",
+        "description": "/api/health-regulation/workforce — health workforce counts, derived from the register of regulated professionals on every read (lib/professions/workforce.ts): by profession, standing and region of practice, every cell through the nation's small-cell rule (lib/health/small-cells.ts). Read only: nothing is typed, and no name, number or person reference is in a count.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkforceCounts"
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "cells": [
+                        {
+                          "profession": "string",
+                          "title": "Example",
+                          "state": "lapsed",
+                          "region": "string",
+                          "cell": {
+                            "missing": true
+                          }
+                        }
+                      ],
+                      "totals": [
+                        {
+                          "profession": "string",
+                          "title": "Example",
+                          "state": "lapsed",
+                          "cell": {
+                            "missing": true
+                          }
+                        }
+                      ],
+                      "rule": {
+                        "threshold": 1,
+                        "version": 1
+                      },
+                      "regionNotRecorded": {
+                        "missing": true
+                      },
+                      "source": "string",
+                      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/health-regulation/workforce/route.ts"
       }
     },
     "/api/health": {
@@ -89432,6 +90697,171 @@
           "name"
         ]
       },
+      "Intervention": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "description": "PHI-YYYY-NNNNNN."
+          },
+          "programme": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "description": "A kind from the nation's intervention authority rules (CFG-PH-003)."
+          },
+          "areas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The regions it applies to: an area or population measure, never a person."
+          },
+          "measure": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "reviewBy": {
+            "type": "string"
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "none": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "none"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number"
+                  },
+                  "authority": {
+                    "type": "string"
+                  },
+                  "reviewRequired": {
+                    "type": "boolean"
+                  },
+                  "expiryRequired": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "version",
+                  "authority",
+                  "reviewRequired",
+                  "expiryRequired"
+                ]
+              }
+            ],
+            "description": "The rule version it was checked against, or that none was adopted (demonstrations only)."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ended",
+              "in-force"
+            ]
+          },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "case": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "at",
+                "by",
+                "reason",
+                "case"
+              ]
+            }
+          },
+          "case": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "kind",
+          "areas",
+          "measure",
+          "from",
+          "rule",
+          "state",
+          "reviews",
+          "case",
+          "at",
+          "by"
+        ]
+      },
+      "InterventionRule": {
+        "description": "One kind of intervention in the nation's rules: who decides it (a slot of the deployment profile) and what each decision must carry.",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "authority": {
+            "type": "string"
+          },
+          "reviewRequired": {
+            "type": "boolean"
+          },
+          "expiryRequired": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "authority",
+          "reviewRequired",
+          "expiryRequired"
+        ]
+      },
       "Item": {
         "type": "object",
         "properties": {
@@ -98692,6 +100122,10 @@
               "type": "string"
             }
           },
+          "region": {
+            "type": "string",
+            "description": "The region of practice the registration decision recorded (one of the nation's regions), for workforce counts; never public."
+          },
           "state": {
             "type": "string",
             "enum": [
@@ -98993,6 +100427,218 @@
           "id",
           "version",
           "digest"
+        ]
+      },
+      "Programme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "description": "PHP-YYYY-NNNNNN."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "closed",
+              "established",
+              "suspended"
+            ]
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgrammeVersion"
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgrammeStep"
+            }
+          },
+          "case": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "state",
+          "versions",
+          "history",
+          "case",
+          "createdAt"
+        ]
+      },
+      "ProgrammeStep": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "closed",
+              "established",
+              "suspended"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "state",
+          "at",
+          "by",
+          "reason",
+          "case",
+          "version"
+        ]
+      },
+      "ProgrammeTerms": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "basis": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Citation"
+                }
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "basis"
+            ],
+            "description": "The approved eligibility: the provision of the nation's law, cited in the laws register (empty: none cited, a demonstration only)."
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "definition": {
+                "type": "string"
+              },
+              "denominator": {
+                "type": "string"
+              },
+              "denominatorSource": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "definition"
+            ]
+          },
+          "budgetReference": {
+            "type": "string",
+            "description": "A reference into the nation's budget (finance keeps it: plan step I5)."
+          },
+          "reportingPeriod": {
+            "type": "string",
+            "enum": [
+              "month",
+              "quarter",
+              "year"
+            ]
+          },
+          "indicators": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The indicators the programme reports (keys the nation approves; none ship)."
+          },
+          "areas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The regions the programme covers (empty: the whole nation)."
+          },
+          "supplyItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplyItem"
+            }
+          }
+        },
+        "required": [
+          "title",
+          "eligibility",
+          "coverage",
+          "reportingPeriod",
+          "indicators",
+          "areas",
+          "supplyItems"
+        ]
+      },
+      "ProgrammeVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "terms": {
+            "$ref": "#/components/schemas/ProgrammeTerms"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "terms",
+          "at",
+          "by",
+          "reason",
+          "case"
         ]
       },
       "Proposal": {
@@ -100686,6 +102332,168 @@
           "at",
           "digest",
           "note"
+        ]
+      },
+      "PublishedCount": {
+        "description": "A published count: its class and quality kept, the small-cell rule applied.",
+        "type": "object",
+        "properties": {
+          "indicator": {
+            "type": "string"
+          },
+          "breakdown": {
+            "type": "string"
+          },
+          "supplyItem": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "modelled",
+              "reported",
+              "suspected"
+            ]
+          },
+          "quality": {
+            "type": "string",
+            "enum": [
+              "counted",
+              "estimated",
+              "incomplete",
+              "not-available"
+            ]
+          },
+          "cell": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "missing": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "missing"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "suppressed": {
+                    "type": "string",
+                    "enum": [
+                      "below-threshold",
+                      "no-threshold"
+                    ]
+                  }
+                },
+                "required": [
+                  "suppressed"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "indicator",
+          "basis",
+          "quality",
+          "cell"
+        ]
+      },
+      "PublishedReturn": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "programme": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string"
+          },
+          "period": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          },
+          "version": {
+            "type": "number"
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "corrected": {
+            "type": "boolean"
+          },
+          "counts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishedCount"
+            }
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "threshold": {
+                    "type": "number"
+                  },
+                  "version": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "threshold",
+                  "version"
+                ]
+              }
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "programme",
+          "area",
+          "period",
+          "version",
+          "complete",
+          "corrected",
+          "counts",
+          "rule"
         ]
       },
       "PublisherKey": {
@@ -103157,6 +104965,17 @@
           "met"
         ]
       },
+      "Rule": {
+        "type": "object",
+        "properties": {
+          "threshold": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "threshold"
+        ]
+      },
       "RuleRef": {
         "description": "A rule version a decision calculated with.",
         "type": "object",
@@ -103312,6 +105131,20 @@
           "state",
           "draftedBy",
           "draftedAt"
+        ]
+      },
+      "Rules": {
+        "type": "object",
+        "properties": {
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterventionRule"
+            }
+          }
+        },
+        "required": [
+          "rules"
         ]
       },
       "Run": {
@@ -110215,6 +112048,25 @@
           "refused"
         ]
       },
+      "SupplyItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "product": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "product",
+          "unit"
+        ]
+      },
       "SupportTicket": {
         "type": "object",
         "properties": {
@@ -113380,6 +115232,248 @@
           "ageHours",
           "priority",
           "state"
+        ]
+      },
+      "WorkforceCell": {
+        "type": "object",
+        "properties": {
+          "profession": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "lapsed",
+              "registered",
+              "revoked",
+              "suspended"
+            ]
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "cell": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "missing": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "missing"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "suppressed": {
+                    "type": "string",
+                    "enum": [
+                      "below-threshold",
+                      "no-threshold"
+                    ]
+                  }
+                },
+                "required": [
+                  "suppressed"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "profession",
+          "title",
+          "state",
+          "region",
+          "cell"
+        ]
+      },
+      "WorkforceCounts": {
+        "type": "object",
+        "properties": {
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkforceCell"
+            },
+            "description": "Every cell by profession, standing and region, through the small-cell rule."
+          },
+          "totals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "profession": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "lapsed",
+                    "registered",
+                    "revoked",
+                    "suspended"
+                  ]
+                },
+                "cell": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "missing": {
+                          "type": "boolean",
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "missing"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "suppressed": {
+                          "type": "string",
+                          "enum": [
+                            "below-threshold",
+                            "no-threshold"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "suppressed"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "profession",
+                "title",
+                "state",
+                "cell"
+              ]
+            },
+            "description": "Totals by profession and standing (all regions), through the same rule."
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "threshold": {
+                    "type": "number"
+                  },
+                  "version": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "threshold",
+                  "version"
+                ]
+              }
+            ]
+          },
+          "regionNotRecorded": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "missing": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "missing"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "suppressed": {
+                    "type": "string",
+                    "enum": [
+                      "below-threshold",
+                      "no-threshold"
+                    ]
+                  }
+                },
+                "required": [
+                  "suppressed"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ]
+              }
+            ],
+            "description": "How many registrations carry no region of practice (as a cell)."
+          },
+          "source": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cells",
+          "totals",
+          "rule",
+          "regionNotRecorded",
+          "source",
+          "sha256"
         ]
       },
       "Workspace": {

@@ -35,6 +35,10 @@ import { productCounts, publicClassification, productDisclosureChanges } from '@
 import { PRODUCT_PROCEDURES, PRODUCT_PERMIT_TYPES, OVERSIGHT_PROCEDURES } from '@/lib/health/products/procedures';
 import { controlledLimits, controlledLimitChanges } from '@/lib/health/products/controlled';
 import { noticeSubscribers } from '@/lib/health/products/notices';
+import { programmeCounts, interventionRules, interventionRuleChanges } from '@/lib/health/programmes/register';
+import { PROGRAMME_PROCEDURES, PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
+import { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
+import { smallCellRule, smallCellChanges } from '@/lib/health/small-cells';
 import { SITE_IDS } from '@/lib/public-sites';
 import { siteEditorial } from '@/lib/data/site-editorial';
 import { listBoundaryVersions } from '@/lib/data/boundaries';
@@ -304,6 +308,31 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       return { checks: [
         { label: 'Institutional Edition (optional: only when the institutions stand alone)', done: true, href: '/gov/configuration/edition', detail: e ? `${e.label}: ${e.institutions.length} institution(s), modules ${e.modules.join(', ')}` : 'None recorded: every institution is connected' },
         ...gate.items.map(i => ({ label: `Exit gate: ${i.label}`, done: i.met, href: '/gov/health-regulation/pilot', detail: (i.met ? i.detail : i.missing.join(' · ')).slice(0, 600) })),
+      ] };
+    }),
+
+    // Public-health programmes, health complaints and workforce counts (Health I4): the nation's own body, procedures, mappings and rules.
+    track({ key: 'public-health', title: 'Public-health programmes, complaints and workforce counts', why: 'Programme records and aggregate returns of the public-health authority (never an individual), complaint intake of the health regulators, and workforce counts derived from the professions register; published figures pass the nation\'s small-cell rule.', href: '/gov/health-regulation/programmes', seeded: true }, () => {
+      const rulesPending = interventionRuleChanges().pending;
+      if (rulesPending) wait({ what: 'Public-health intervention authority rules: a change waiting for a second official', proposedBy: rulesPending.by, at: rulesPending.at, href: '/gov/health-regulation/programmes' });
+      const cellsPending = smallCellChanges().pending;
+      if (cellsPending) wait({ what: 'Small-cell rule for health aggregates: a change waiting for a second official', proposedBy: cellsPending.by, at: cellsPending.at, href: '/gov/health-regulation/programmes' });
+      const keys = PROGRAMME_PROCEDURES.map(p => p.key);
+      const approved = keys.filter(k => listPackages({ key: k, state: 'approved' }).length);
+      const complaints = COMPLAINT_PROCEDURES.map(p => p.key);
+      const complaintsApproved = complaints.filter(k => listPackages({ key: k, state: 'approved' }).length);
+      const types = [...new Set(Object.values(PROGRAMME_PERMITS))];
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const rules = interventionRules(), cells = smallCellRule(), c = programmeCounts();
+      const own = provisionalOwner('publicHealth', authorityFor);
+      return { checks: [
+        { label: 'Public-health authority named (Who is responsible)', done: !!authorityFor('publicHealth'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('publicHealth') ? undefined : (own.provisional ?? 'Not named: nobody keeps programmes until it is') },
+        { label: 'Programme procedures approved (establishment, change, intervention, returns, risk communication)', done: approved.length === keys.length, href: '/gov/law/procedures', detail: `${approved.length} of ${keys.length} approved` },
+        { label: 'Who decides public-health powers approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        { label: 'Intervention authority, review and expiry rules adopted by two officials citing the law (CFG-PH-003)', done: rules.version > 0, href: '/gov/health-regulation/programmes', detail: rules.version ? `Version ${rules.version}: ${rules.rules.length} kind(s)` : 'Ship empty: production refuses an intervention no adopted rule covers' },
+        { label: 'Small-cell rule for health aggregates adopted by two officials citing the law', done: !!cells, href: '/gov/health-regulation/programmes', detail: cells ? `Version ${cells.version}: threshold ${cells.threshold}` : 'Ships unset: no programme figure or workforce count is published until it is adopted' },
+        { label: 'Programmes established through decided cases', done: c.programmes.established > 0, href: '/gov/health-regulation/programmes', detail: `${c.programmes.established} established · ${c.returns} return(s)${c.samples ? ` (${c.samples} samples)` : ''}` },
+        { label: 'Complaint procedures approved (facility and pharmacy complaints, professional conduct complaints)', done: complaintsApproved.length === complaints.length, href: '/gov/law/procedures', detail: `${complaintsApproved.length} of ${complaints.length} approved` },
       ] };
     }),
 

@@ -11,7 +11,7 @@ import { samplesAllowed } from '@/lib/ops/mode';
 import { authorityFor, getSovereign } from '@/lib/data/store';
 import { recordAudit } from '@/lib/data/store/audit';
 import { recordVersion, confirmVersion, listInstruments } from '@/lib/law/register';
-import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
+import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, PROGRAMME_PROCEDURES, COMPLAINT_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 import { activePackage, approvePackage, draftPackage, listPackages, withSampleDeadlines } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
@@ -63,12 +63,13 @@ const MORE_ACTS: { title: string; number: string; authority: AuthorityKey; provi
     'edu.qualification-correction': P('sec_31', '31', 'An entry in the record of qualifications may be corrected on evidence of the error.'),
     'edu.qualification-revocation': P('sec_32', '32', 'After notice and representations, a qualification obtained by fraud or malpractice may be revoked.'),
   } },
-  { title: 'Health Professions Act (sample for demonstration)', number: 'sample-8', authority: 'professionalRegulation', procedures: PROFESSION_PROCEDURES, provisions: {
+  { title: 'Health Professions Act (sample for demonstration)', number: 'sample-8', authority: 'professionalRegulation', procedures: [...PROFESSION_PROCEDURES, ...COMPLAINT_PROCEDURES], provisions: {
     'prof.registration': P('sec_6', '6', 'A person holding a recognised qualification may be registered to practise a regulated profession.'),
     'prof.renewal': P('sec_9', '9', 'A registration may be renewed on evidence of continuing professional development.'),
     'prof.fitness': P('sec_15', '15', 'After notice and representations, a registration may be suspended, reinstated with conditions or revoked.'),
+    'prof.complaint': P('sec_14', '14', 'Any person may complain to the regulator about a registered professional\'s conduct; the regulator shall assess each complaint and may open fitness-to-practise proceedings.'),
   } },
-  { title: 'Health Facilities and Pharmacy Act (sample for demonstration)', number: 'sample-9', authority: 'healthRegulation', procedures: HEALTH_PROCEDURES, provisions: {
+  { title: 'Health Facilities and Pharmacy Act (sample for demonstration)', number: 'sample-9', authority: 'healthRegulation', procedures: [...HEALTH_PROCEDURES, ...COMPLAINT_PROCEDURES], provisions: {
     'health.facility': P('sec_10', '10', 'No health facility shall operate unless licensed after inspection of its premises.'),
     'health.facility-renewal': P('sec_11', '11', 'A facility licence may be renewed on evidence that its conditions are still met.'),
     'health.facility-suspension': P('sec_12', '12', 'After notice and representations, a facility licence may be suspended and later reinstated.'),
@@ -77,6 +78,15 @@ const MORE_ACTS: { title: string; number: string; authority: AuthorityKey; provi
     'health.pharmacy-renewal': P('sec_21', '21', 'A pharmacy licence may be renewed on evidence that its conditions are still met.'),
     'health.pharmacy-suspension': P('sec_22', '22', 'After notice and representations, a pharmacy licence may be suspended and later reinstated.'),
     'health.pharmacy-revocation': P('sec_23', '23', 'After notice and representations, a pharmacy licence may be revoked.'),
+    'health.complaint': P('sec_30', '30', 'Any person may raise a complaint or safety concern about a licensed facility or pharmacy; the regulator shall assess it and may act on the licence.'),
+  } },
+  // Public-health programme administration: only once the nation names its public-health authority. Programme-level and area-level only.
+  { title: 'Public Health Act (sample for demonstration)', number: 'sample-13', authority: 'publicHealth', procedures: PROGRAMME_PROCEDURES, provisions: {
+    'public-health.programme': P('sec_5', '5', 'The public-health authority may establish programmes, stating who is eligible, how coverage is measured and how they report.'),
+    'public-health.programme-change': P('sec_6', '6', 'The public-health authority may amend, suspend or close a programme it established.'),
+    'public-health.programme-return': P('sec_8', '8', 'Facilities taking part in a programme shall report aggregate counts for each reporting period.'),
+    'public-health.risk-communication': P('sec_10', '10', 'The public-health authority may issue communications about risks to the public, approved by two of its officials.'),
+    // Interventions (public-health.intervention) are not approved here: who may decide each kind is the nation's law (CFG-PH-003).
   } },
   // Medicines and medical devices: only once the nation names its medicines authority (provisional owners never run cases). Powers only: no period, fee or outcome list.
   { title: 'Medicines and Medical Devices Act (sample for demonstration)', number: 'sample-11', authority: 'medicinesRegulation', procedures: PRODUCT_PROCEDURES, provisions: {

@@ -28,6 +28,7 @@ import { uuid7 } from '@/lib/data/uuid7';
 import { nextNumber, legacyMax } from '@/lib/data/numbering';
 import { getAward, sameName } from '@/lib/education/register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
+import { nationRegions } from '@/lib/nation/registry';
 
 export interface Profession {
   key: string;
@@ -67,6 +68,8 @@ export interface Professional {
   personRef: string;
   name: string;
   qualifications: string[];
+  /** The region of practice the registration decision recorded (one of the nation's regions), for workforce counts; never public. */
+  region?: string;
   state: ProfessionalState;
   validUntil?: string;
   conditions: string[];
@@ -179,7 +182,7 @@ export const disclosureChanges = (key: string): PolicyChanges<Disclosure> => clo
 
 // ── Entries ───────────────────────────────────────────────────────────────────
 
-export interface NewProfessional { profession: string; personRef: string; name: string; qualifications?: string[]; validUntil?: string; conditions?: string[] }
+export interface NewProfessional { profession: string; personRef: string; name: string; qualifications?: string[]; validUntil?: string; conditions?: string[]; region?: string }
 
 /** Each qualification cited from the education register must be valid and the holder's (by name). Free-text ones (foreign degrees) are kept as stated. */
 export function checkQualifications(name: string, quals: string[]): string | null {
@@ -204,12 +207,14 @@ export function registerProfessional(input: NewProfessional, caseId: string, by:
   const bad = checkQualifications(input.name, quals);
   if (bad) return { error: bad };
   if (input.validUntil && (!DATE.test(input.validUntil) || input.validUntil <= now.toISOString().slice(0, 10))) return { error: 'Valid until is a future date (YYYY-MM-DD)' };
+  const region = input.region?.trim().slice(0, 120);
+  if (region && nationRegions().length && !nationRegions().includes(region)) return { error: `${region} is not one of the nation's regions` };
   if (db().people.some(x => x.profession === p.key && x.personRef === input.personRef.trim() && x.state !== 'revoked' && x.state !== 'lapsed')) return { error: `${input.name} is already on the register of ${p.title.toLowerCase()}` };
   const at = now.toISOString();
   const conditions = (input.conditions ?? []).map(c => c.trim()).filter(Boolean).slice(0, 20);
   const e: Professional = {
     id: uuid7(), number: next(now), profession: p.key, personRef: input.personRef.trim().slice(0, 80), name: input.name.trim().slice(0, 200),
-    qualifications: quals, state: 'registered', ...(input.validUntil ? { validUntil: input.validUntil } : {}), conditions,
+    qualifications: quals, ...(region ? { region } : {}), state: 'registered', ...(input.validUntil ? { validUntil: input.validUntil } : {}), conditions,
     history: [{ state: 'registered', at, by, reason: 'Registered', case: caseId, ...(input.validUntil ? { validUntil: input.validUntil } : {}), ...(conditions.length ? { conditions } : {}) }],
   };
   db().people.push(e);
@@ -295,4 +300,20 @@ export function professionCounts(): Record<string, Record<ProfessionalState, num
   const out: Record<string, Record<ProfessionalState, number>> = {};
   for (const e of db().people) { const c = out[e.profession] ??= { registered: 0, suspended: 0, revoked: 0, lapsed: 0 }; c[e.state] += 1; }
   return out;
+}
+
+/**
+ * The workforce as the register holds it, for counts only (lib/professions/workforce.ts): how many
+ * registrations there are by profession, standing and region of practice (null where the decision
+ * recorded none). No name, number or person reference leaves here.
+ */
+export function workforceTally(): { profession: string; state: ProfessionalState; region: string | null; count: number }[] {
+  const out = new Map<string, { profession: string; state: ProfessionalState; region: string | null; count: number }>();
+  for (const e of db().people) {
+    const k = `${e.profession}|${e.state}|${e.region ?? ''}`;
+    const c = out.get(k) ?? { profession: e.profession, state: e.state, region: e.region ?? null, count: 0 };
+    c.count += 1;
+    out.set(k, c);
+  }
+  return [...out.values()];
 }

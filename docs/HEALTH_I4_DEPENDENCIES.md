@@ -4,7 +4,7 @@ _Generated from `docs/requirements/health-i4.json` by `python3 -I app/scripts/re
 
 Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21-HEALTH-INTEGRATION.md`): track I4 as a dependency, not a completed capability, and finish this register before Health is called the first complete institution. **Health is not complete.** This register lists what it depends on; a dependency is "built and proven" only where a named test in an existing file proves it (the test fails otherwise).
 
-**Summary:** 27 dependencies: 2 not built, 16 partial, 9 built and proven.
+**Summary:** 27 dependencies: 0 not built, 18 partial, 9 built and proven.
 
 | Dependency | Status | Owner slot | Requirement rows | Release gate |
 |---|---|---|---|---|
@@ -29,10 +29,10 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 | `batch-1-adoption`: Adopting the linked batch-1 contracts into procedure versions (health.facility*, prof.*) | partial | `healthRegulation` | 28 (HLT-LIC-002, HLT-LIC-006, HLT-LIC-009, HLT-LIC-013 …) | Procedure link approved for each linked contract |
 | `facility-register`: The facility register's role: standings in the organisations register, premises in the national facility register | partial | `healthRegulation` | 8 (S2-A.3-02, S2-C.2-12, S2-C.2-07, S2-C.2-08 …) | The facility directory rows met from records |
 | `public-health-statistics`: The aggregate public-health return and its statistics exchange | partial | `publicHealth` | 13 (HLT-PH-015, HX-009, S2-A.3-05, S2-C.2-10 …) | HX-009 approved by two officials; the programme returns procedure approved |
-| `public-health-programmes`: Public-health programme administration (administrative records and aggregates only) | not built | `publicHealth` | 29 (S2-A.3-04, S2-C.2-05, S2-C.2-16, S2-C.2-50 …) | Programme records built; contracts approved |
+| `public-health-programmes`: Public-health programme administration (administrative records and aggregates only) | partial | `publicHealth` | 29 (S2-A.3-04, S2-C.2-05, S2-C.2-16, S2-C.2-50 …) | Programme records built; contracts approved |
 | `health-roles`: Roles scoped by facility, jurisdiction, task and data classification | partial | `healthRegulation` | 9 (S2-C.2-33, S2-C.2-34, S2-C.2-35, S2-C.2-36 …) | S2-C.2-42 met |
 | `health-access-and-audit`: Health access control, exchange contracts, audit and recovery | partial | `healthRegulation` | 54 (FC6-intro-01, FC6-intro-04, FC6-1-07, FC6-1-10 …) | FC6-12-02 and FC6-12-13 met for the health records |
-| `health-department-functions`: Department functions not yet represented (policy, logistics, budget, complaints, workforce counts) | not built | `healthRegulation` | 7 (S2-C.2-02, S2-C.2-06, S2-C.2-09, S2-C.2-11 …) | Each function has its record and procedure |
+| `health-department-functions`: Department functions not yet represented (policy, logistics, budget, complaints, workforce counts) | partial | `healthRegulation` | 7 (S2-C.2-02, S2-C.2-06, S2-C.2-09, S2-C.2-11 …) | Each function has its record and procedure |
 | `integration-controls`: Form identity, procedure-link states and the exclusion boundary | built and proven | `healthRegulation` | 2 (FC6-intro-05, FC6-10-01) | The identity and link checks run in every publication |
 | `standalone-and-pilot`: Standalone Institutional Edition, portable export and the pilot exit gate | built and proven | `healthRegulation` | 21 (S0-intro-04, S1-1-01, S1-1.1-13, S1-13-10 …) | S6-I-11 exit gate |
 
@@ -729,31 +729,54 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 ## `public-health-programmes`: Public-health programme administration (administrative records and aggregates only)
 
-**Status: not built.** Owner slot `publicHealth`.
+**Status: partial.** Owner slot `publicHealth`.
 
 **Requirement rows:** `S2-A.3-04`, `S2-C.2-05`, `S2-C.2-16`, `S2-C.2-50`, `HLT-PH-011`, `HLT-PH-014`, `CFG-PH-001`, `CFG-PH-002`, `CFG-PH-003`, `FC6-4-02`, `FC6-4.2-01`, `FC6-4.2-02`, `FC6-4.2-03`, `FC6-4.2-04`, `FC6-4.2-05`, `FC6-4.2-07`, `FC6-4.2-08`, `FC6-4.2-11`, `FC6-4.3-02`, `FC6-4.3-03`, `FC6-4.3-08`, `HLT-PUB-005`, `FCS6-intro-29`, `FCS6-intro-30`, `FCS6-intro-31`, `FCS6-intro-32`, `FCS6-intro-33`, `FCS6-intro-34`, `FCS6-intro-35`
 
 **What exists:**
 
-- The binding scope: no individual case, contact, laboratory or vaccination record; the transitions register for a declared emergency (`docs/requirements/form-scope.json`, `app/src/lib/forms/scope.ts`)
+- The binding scope: no individual case, contact, laboratory or vaccination record (HLT-PH-001 … 010, 012, 013, 016 … 018 excluded; HLT-PH-011, 014 and 015 named as allowed); the scope check refuses a procedure whose fields name a vaccinee, a vaccination record, a traced contact, a specimen or a laboratory result (`docs/requirements/form-scope.json`, `app/src/lib/forms/scope.ts`)
+- The register of public-health programmes kept for the publicHealth slot (in the register owners): each programme by version (programme number, approved eligibility cited from the laws register, coverage definition with its denominator and documented source, budget reference, reporting period, indicators, areas, supply items as decided products of the medicines register with their unit), standing and history; written only by the public-health procedures' effects (`app/src/lib/health/programmes/register.ts`, `app/src/lib/health/programmes/procedures.ts`, `app/src/lib/data/register-owners.ts`, `app/src/lib/casework/register-writes.test.ts`)
+- Reference procedures (drafts): public-health.programme and public-health.programme-change (establish, amend, suspend, reinstate, close by two officials), public-health.intervention (an area or population measure; production refuses a kind the nation's intervention authority rules, CFG-PH-003, do not cover; review and expiry as the rule requires), public-health.programme-return (HLT-PH-015 and HLT-PH-011: counts by area and period, reported, suspected, confirmed and modelled kept apart, a count not available never a zero, corrections as new versions) and public-health.risk-communication (HLT-PH-014: approved by two officials, released exactly as approved); every decision step classified under a proposed, unapproved mapping (public-health-programme, public-health-intervention, public-health-communication) (`app/src/lib/health/programmes/procedures.ts`, `app/src/lib/permits/decisions.ts`, `app/src/lib/permits/authority.ts`)
+- The intervention authority rules (CFG-PH-003) and the small-cell rule for health aggregates (CFG-DAT-001): country rule sets through policy-change.ts, shipped empty and unset; published returns pass the small-cell rule (nothing published until it is adopted) and reach the twin only as a registered source's observations of counted, non-modelled counts (`app/src/lib/health/programmes/register.ts`, `app/src/lib/health/small-cells.ts`, `app/src/lib/health/programmes/twin.ts`, `app/src/app/api/health-regulation/programmes/route.ts`)
+- Batch 4 contracts (owner approved): HLT-PH-011 (programme activity as aggregates; deviation no-vaccinee) and HLT-PH-014 (risk communication; deviation two-official-approval), and HLT-PH-015, linked by identity to their procedures (procedure link: draft once installed) (`app/src/lib/forms/library/catalogue-contracts/HLT-PH-011.json`, `app/src/lib/forms/library/catalogue-contracts/HLT-PH-014.json`, `app/src/lib/forms/library/catalogue-contracts/HLT-PH-015.json`)
 
 **What is missing:**
 
-- Programme records (identifier, approved eligibility, coverage definition, budget reference, reporting period)
-- Contracts for HLT-PH-011 and HLT-PH-014 (a later batch the owner approves)
-- Intervention authority rules (CFG-PH-003), from the nation
+- Adoption by the nation: its public-health authority named, the five procedure versions approved by a second official, the three mappings approved citing the law; the linked contracts adopted in those versions (the link reads draft until then)
+- The nation's intervention authority rules (CFG-PH-003) and small-cell threshold, adopted by two officials citing the law (none ship)
+- The nation's notifiable conditions and authorised sources (CFG-PH-001) and case-classification versions for aggregate breakdowns (CFG-PH-002): configured lists, none ship
+- Coverage computed against an approved indicator definition (plan step I3); the statistics exchange HX-009 (dependency public-health-statistics)
+- HLT-PUB-005 (the supplement's public-health incident, aggregate) as a library contract: a later batch the owner approves
+- The case data contract of Part 6 §4.2 (case reference, event dates, investigation, intervention on a person) stays outside the platform: individual records are excluded by the approved scope
+
+**Contracts that depend on it:** `FIELD-SERIES-PARTS-05-07:HLT-PH-011@1`, `FIELD-SERIES-PARTS-05-07:HLT-PH-014@1`, `FIELD-SERIES-PARTS-05-07:HLT-PH-015@1`
 
 **Access controls:**
 
-- Programme administrators of the public-health authority; identifiable outbreak data never held (scope)
+- Cases of the public-health authority only (caseActRefusal(), caseReadRefusal()); decisions need "Can sign" there; administrators get no domain authority
+- Programme records are administrative; returns leave only as publishedReturn() (small-cell rule applied); identifiable outbreak data never held (scope)
 
 **Provenance:**
 
-- Reported, suspected, confirmed and modelled kept apart (FC6-4-02, gate FC6-12-06)
+- Reported, suspected, confirmed and modelled kept apart (FC6-4-02, gate FC6-12-06); modelled figures never enter the twin as observations
+- Every programme change a new version with the sealed decision; a correction a new version of the return, the original kept; figures enter the twin only as observations of a registered source's run
 
 **Tests:**
 
-- To write: Programme register test; scope test that no individual public-health record can be drafted
+- `app/src/lib/health/programmes/programmes.test.ts` "establishes a programme with its terms, then amends, suspends, reinstates and closes it by two officials, keeping every version"
+- `app/src/lib/health/programmes/programmes.test.ts` "classifies every decision step under its own proposed, unapproved mapping, and refuses each in production until the nation approves one"
+- `app/src/lib/health/programmes/programmes.test.ts` "decides an intervention only under the nation's adopted rule in production, with the review and expiry the rule requires; never a person"
+- `app/src/lib/health/programmes/programmes.test.ts` "records aggregate returns by area and period, keeps reported, suspected, confirmed and modelled counts apart, never reads a missing count as zero, and keeps corrected versions"
+- `app/src/lib/health/programmes/programmes.test.ts` "suppresses small cells by the nation's threshold, publishes nothing before one is adopted, and puts only counted observations into the twin through a registered source"
+- `app/src/lib/health/programmes/programmes.test.ts` "approves a risk communication by two officials and releases it only exactly as approved"
+- `app/src/lib/health/programmes/scope.test.ts` "keeps the binding scope: every individual public-health form excluded, only the aggregate and programme forms allowed"
+- `app/src/lib/health/programmes/scope.test.ts` "refuses to draft a public-health procedure naming %s"
+- `app/src/lib/health/programmes/scope.test.ts` "stores nothing about a person: an unknown key in a count is refused, the terms keep only their own fields"
+- `app/src/lib/forms/catalogue-contracts.test.ts` "keeps the vaccination programme record to aggregates: no person vaccinated, the four classes kept apart, supply as programme counts"
+- `app/src/lib/forms/catalogue-contracts.test.ts` "approves a risk communication by two officials, and links each public-health form to its procedure by identity"
+- `app/src/lib/forms/procedure-link.test.ts` "is draft for the public-health forms and the complaint forms once their procedures are in the register, linked by identity, never approved by it"
+- To write: Once the nation adopts its versions: a production run under approved mappings and rules (the pilot exit gate)
 
 **Release gate:** Programme records built; contracts approved
 
@@ -816,31 +839,43 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 ## `health-department-functions`: Department functions not yet represented (policy, logistics, budget, complaints, workforce counts)
 
-**Status: not built.** Owner slot `healthRegulation`.
+**Status: partial.** Owner slot `healthRegulation`.
 
 **Requirement rows:** `S2-C.2-02`, `S2-C.2-06`, `S2-C.2-09`, `S2-C.2-11`, `S2-C.2-15`, `S2-C.2-46`, `S2-C.2-47`
 
 **What exists:**
 
-- Complaint forms as library drafts (HLT-FAC-009, HLT-LIC-008) and the referral procedure template (`app/src/lib/casework/referral.ts`)
+- Complaint intake (drafts): health.complaint (HLT-FAC-009, the health regulator) and prof.complaint (HLT-LIC-008, the regulator of the profession): intake, assessment by the assigned officer with reasons (no score, no AI), referral into the facility's or pharmacy's suspension case or a fitness-to-practise case through the engine's refer() (or another institution's referral procedure), or closed with reasons; restricted cases, the complainant and the complaint never in a list or the referred case, every read in the access log; no clinical field; both contracts linked by identity (`app/src/lib/health/complaints/procedures.ts`, `app/src/lib/casework/referral.ts`, `app/src/lib/forms/library/catalogue-contracts/HLT-FAC-009.json`, `app/src/lib/forms/library/catalogue-contracts/HLT-LIC-008.json`)
+- Workforce counts derived from the professions register on every read: by profession, standing and region of practice (recorded by the registration decision), small cells suppressed by the nation's threshold, no name, number or person reference; a read-only indicator (/api/health-regulation/workforce) and the twin as a registered source's observations (`app/src/lib/professions/workforce.ts`, `app/src/lib/professions/register.ts`, `app/src/lib/health/small-cells.ts`, `app/src/app/api/health-regulation/workforce/route.ts`)
+- Supply items at the administrative level: a programme's supply item is a decided product of the medicines register by its number and a unit; programme supply received and used as aggregate counts (HLT-PH-011) (`app/src/lib/health/programmes/register.ts`)
+- Policy: health policy instruments are recorded in the laws register (no second register); programmes carry their indicators and coverage definitions (`app/src/lib/law/register.ts`, `app/src/lib/health/programmes/register.ts`)
 
 **What is missing:**
 
-- Supply-item records and logistics; budget, procurement and grants (plan I5); complaint intake procedures; workforce counts from the professions register
+- Logistics and inventory (lots, stock, locations, expiry, transactions) and essential-supply availability from reliable inventory feeds: not built (integration register 20.36)
+- Budget, procurement and grants: plan step I5 (finance), recorded as a dependency (integration register 20.37); a programme carries a budget reference only
+- Service-quality investigations beyond the complaint's referral; planning and performance frameworks with indicator definitions (I3)
+- Adoption by the nation of the complaint procedures (a version approved by a second official; its complaint kinds and relationships configured)
 
 **Contracts that depend on it:** `FIELD-SERIES-PARTS-05-07:HLT-FAC-009@1`, `FIELD-SERIES-PARTS-05-07:HLT-LIC-008@1`
 
 **Access controls:**
 
-- Administrative records only
+- Administrative records only; complaint cases restricted to their assigned officials and supervisors, every read logged
+- Workforce counts: aggregates after the small-cell rule; the register's persons never leave it
 
 **Provenance:**
 
-- Counts derive from records, never typed
+- Counts derive from records, never typed; each workforce count carries the SHA-256 of the register rows it counts
 
 **Tests:**
 
-- To write: Complaint intake test; workforce count from the register
+- `app/src/lib/health/complaints/complaints.test.ts` "keeps both procedures free of clinical fields, the complainant and the complaint restricted, and links the contracts by identity"
+- `app/src/lib/health/complaints/complaints.test.ts` "takes a facility complaint, assessed by the assigned officer with reasons, and refers it to the facility's licence; every read logged"
+- `app/src/lib/health/complaints/complaints.test.ts` "takes a conduct complaint about a registered professional and refers it to a fitness-to-practise case, or closes it with reasons"
+- `app/src/lib/professions/workforce.test.ts` "records the region of practice through the registration decision, never on the public check"
+- `app/src/lib/professions/workforce.test.ts` "counts by profession, standing and region, suppresses small cells by the nation's threshold, and names nobody"
+- To write: Logistics: once an inventory feed exists, essential-supply availability from it (integration register 20.36)
 
 **Release gate:** Each function has its record and procedure
 
@@ -926,7 +961,7 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 
 ## Forms with no procedure link
 
-13 library contracts name no procedure: 12 of batch 1 and 1 of batch 2. 3 need none (an exchange service and the public check answer them); every other one is `missing` and fails its go-live gate until its procedure exists (`lib/forms/procedure-link.ts`). The stage each is intended for:
+10 library contracts name no procedure: 9 of batch 1 and 1 of batch 2. 3 need none (an exchange service and the public check answer them); every other one is `missing` and fails its go-live gate until its procedure exists (`lib/forms/procedure-link.ts`). The stage each is intended for:
 
 | Form | Batch | Owner slot | Procedure required | Intended stage |
 |---|---|---|---|---|
@@ -934,19 +969,16 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-004@1` Submit a corrective action plan for a health facility | 1 | `healthRegulation` | yes | Follow-up of an inspection (health.facility inspection stage, and inspections of licensed facilities): a corrective-action follow-up procedure is not built; the form waits in the library (plan step I4). |
 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-006@1` Apply to vary a health facility's services or capacity | 1 | `healthRegulation` | yes | A variation of a standing in the health-facilities register (assessment, then a decision under the approved permit mapping): not built; the form waits in the library (plan step I4). |
 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-007@1` Tell the regulator a health facility is closing | 1 | `healthRegulation` | yes | Closure or surrender of a standing in the health-facilities register (lib/organisations/procedures.ts effects): not built; the form waits in the library (plan step I4). |
-| `FIELD-SERIES-PARTS-05-07:HLT-FAC-009@1` Report a concern about a health facility | 1 | `healthRegulation` | yes | A complaint intake of the health regulator that registers the concern and refers it (lib/casework/referral.ts) or opens grounds for a review (health.facility-suspension, document "grounds"): the intake is not built; the form waits in the library (plan step I4). |
 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-010@1` Check a health facility's licence | 1 | `healthRegulation` | no (organisation.standing) | Answered by the public check (/registers) and the organisation.standing exchange service; no case is opened. |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-005@1` Apply to change your registration category or scope | 1 | `professionalRegulation` | yes | An amendment of a professional's standing (category, scope, conditions) on the professions register: not built (prof.renewal can change conditions only at renewal); the form waits in the library (plan step I4). |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-007@1` Ask for a certificate of good standing | 1 | `professionalRegulation` | yes | A good-standing certificate procedure of the professions register (entitlement check, then a certificate issued from the register, lib/records/certificates.ts): not built (prof.registration issues only the registration certificate); the form waits in the library (plan step I4). |
-| `FIELD-SERIES-PARTS-05-07:HLT-LIC-008@1` Complain about a health professional | 1 | `professionalRegulation` | yes | A conduct-complaint intake of the professions regulator that registers and routes the complaint: to a conduct investigation (HLT-LIC-009) and fitness-to-practise case (prof.fitness, document "grounds") or by referral to another institution (lib/casework/referral.ts); the intake is not built; the form waits in the library (plan step I4). |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-010@1` Review an interim restriction on a professional | 1 | `professionalRegulation` | yes | An interim-restriction review of the professions register, only once the nation's law provides interim restrictions and the permit authority registry maps the power: not built; the form waits in the library (plan step I4). |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-014@1` Check a health professional's registration | 1 | `professionalRegulation` | no (professional.standing) | Answered by the public check (/api/registers/professionals) and the professional.standing exchange service; no case is opened. |
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-024@1` Check a medicine's or device's authorisation | 2 | `medicinesRegulation` | no (product.status) | Answered by the public product check (/api/health-regulation/products, publicProductView()) and the product.status exchange service, called only by integrations two officials approve for a purpose; no case is opened. |
-| `FIELD-SERIES-PARTS-05-07:HLT-PH-015@1` Submit an aggregate public-health return | 1 | `publicHealth` | yes | A public-health aggregate return of the receiving authority, kept like the capacity returns (lib/health/register.ts: versioned, always marked reported, corrections as new versions): the programme returns are not built; the form waits in the library (plan step I4). |
 
 ## Linked contracts waiting for adoption (batches 1 and 2)
 
-33 contracts name a reference procedure. Each is linked, not adopted: the nation adopts it in a new procedure version a second official approves.
+38 contracts name a reference procedure. Each is linked, not adopted: the nation adopts it in a new procedure version a second official approves.
 
 | Form | Procedure | Stage | Step or document |
 |---|---|---|---|
@@ -954,11 +986,13 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-003@1` Record a health facility inspection | `health.facility` | `inspection` | inspected · inspection-report |
 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-005@1` Renew a health facility licence | `health.facility-renewal` | `submitted` | renewal-evidence |
 | `FIELD-SERIES-PARTS-05-07:HLT-FAC-008@1` Open a review to suspend or revoke a facility licence | `health.facility-suspension` | `opened` | notify · grounds |
+| `FIELD-SERIES-PARTS-05-07:HLT-FAC-009@1` Report a concern about a health facility | `health.complaint` | `received` | register · complaint |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-001@1` Apply to register as a health professional | `prof.registration` | `submitted` | qualification-evidence |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-002@1` Record the verification of a qualification | `prof.registration` | `verification` | verify |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-003@1` Record a professional licence decision | `prof.registration` | `pending-approval` | register |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-004@1` Renew a professional registration | `prof.renewal` | `submitted` | renewal-evidence |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-006@1` Record continuing education | `prof.renewal` | `submitted` | renewal-evidence |
+| `FIELD-SERIES-PARTS-05-07:HLT-LIC-008@1` Complain about a health professional | `prof.complaint` | `received` | register · complaint |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-009@1` Open a professional conduct investigation | `prof.fitness` | `opened` | grounds |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-011@1` Record a disciplinary decision | `prof.fitness` | `pending-approval` | suspend |
 | `FIELD-SERIES-PARTS-05-07:HLT-LIC-012@1` Open a review to suspend or revoke a registration | `prof.fitness` | `opened` | notify · grounds |
@@ -983,6 +1017,9 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-019@1` Register a medical device | `medicines.device-registration` | `submitted` | register-application · application-form |
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-020@1` Report a medical device incident | `medicines.device-incident` | `received` | register · report |
 | `FIELD-SERIES-PARTS-05-07:HLT-MED-023@1` Ask for a medicines regulatory decision to be reconsidered | `medicines.reconsideration` | `received` | register · request-form |
+| `FIELD-SERIES-PARTS-05-07:HLT-PH-011@1` Record vaccination programme activity | `public-health.programme-return` | `submitted` | register · return-form |
+| `FIELD-SERIES-PARTS-05-07:HLT-PH-014@1` Approve a public-health risk communication | `public-health.risk-communication` | `drafted` | register · draft-message |
+| `FIELD-SERIES-PARTS-05-07:HLT-PH-015@1` Submit an aggregate public-health return | `public-health.programme-return` | `submitted` | register · return-form |
 
 ## Acceptance rows for Health (`docs/INSTITUTIONAL_ACCEPTANCE.md` part 2)
 

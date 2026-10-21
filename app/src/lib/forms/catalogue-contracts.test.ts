@@ -2,8 +2,9 @@
 // regulation: HLT-FAC-001 … 010, HLT-LIC-001 … 014, HLT-PH-015; batch 2,
 // medicines and medical devices regulation: HLT-MED-001 … 015, 017 … 020,
 // 023, 024; batch 3, taxpayer registration and account: the 29
-// taxpayer.* rows of Part 2 §2.6) to the documents they answer
-// (docs/FORMS_CONFORMANCE.md §8, §9, §10). The test holds its
+// taxpayer.* rows of Part 2 §2.6; batch 4, public-health programme forms:
+// HLT-PH-011, HLT-PH-014) to the documents they answer
+// (docs/FORMS_CONFORMANCE.md §8, §9, §10, §12). The test holds its
 // own list of the catalogue lines each form must answer and reads the
 // documents themselves: every piece of every line (each table cell, list item
 // and sentence) is quoted verbatim by the contract and met by a field, a
@@ -18,7 +19,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
+import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
 import { CANONICAL_LIBRARY } from './library/catalogue';
 import SPEC_TAXPAYER from './library/spec/taxpayer-registration-v1.json';
 import { SPEC_CLASSES } from './spec-import';
@@ -33,6 +34,8 @@ import { HEALTH_PROCEDURES } from '@/lib/health/procedures';
 import { PROFESSION_PROCEDURES } from '@/lib/professions/procedures';
 import { TAX_PROCEDURES } from '@/lib/tax/procedures';
 import { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
+import { PROGRAMME_PROCEDURES } from '@/lib/health/programmes/procedures';
+import { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
 import { serviceDirectory } from '@/lib/exchange/services';
 import { AUTHORITIES } from '@/lib/nation/deployment';
 import { pagesOf } from '@/components/features/forms/answers';
@@ -65,8 +68,10 @@ const IDS_3 = [
   'taxpayer.registration.further_information@P2', 'taxpayer.registration.decision_record', 'taxpayer.registration.referral_record',
   'taxpayer.registration.appeal_assessment', 'taxpayer.registration.closure_record',
 ];
-const IDS = [...IDS_1, ...IDS_2, ...IDS_3];
-const batchOf = (id: string) => (id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : 1);
+// Batch 4: public-health programme forms (the individual public-health forms stay excluded by the approved scope).
+const IDS_4 = ['HLT-PH-011', 'HLT-PH-014'];
+const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4];
+const batchOf = (id: string) => (id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : 1);
 const sourceOf = (id: string): Src => (batchOf(id) === 3 ? 'B' : 'A');
 
 // ── The catalogue text each form answers (held here, apart from the contracts) ──
@@ -205,17 +210,18 @@ function linesFor(id: string): [Src, number][] {
 }
 
 const flat = (fs: ContractField[]): ContractField[] => fs.flatMap(f => [f, ...(f.items ? flat(f.items as ContractField[]) : [])]);
-const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES];
+const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES];
 const SERVICES = serviceDirectory().map(s => s.id);
 const applicantKeys = (f: CatalogueLibraryForm) => f.fields.filter(x => (x.audience ?? 'applicant') === 'applicant').map(x => x.key);
 /** No patient, clinical, treatment, diagnosis or individual health field: by key and by label. */
 const CLINICAL = /patient|clinical|clinician|diagnos|prescri|dispens|treatment|medication|symptom|medical record|health condition|care plan/i;
 
-describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation) and 3 (taxpayer registration and account)', () => {
-  it('holds exactly the 25 + 21 + 29 approved forms, one contract each, matched to the catalogue row it names', () => {
+describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account) and 4 (public-health programme forms)', () => {
+  it('holds exactly the 25 + 21 + 29 + 2 approved forms, one contract each, matched to the catalogue row it names', () => {
     expect(IDS_1.length).toBe(25);
     expect(IDS_2.length).toBe(21);
     expect(IDS_3.length).toBe(29);
+    expect(IDS_4.length).toBe(2);
     expect(CATALOGUE_CONTRACTS.map(f => f.specId).sort()).toEqual([...IDS].sort());
     const files = readdirSync(join(process.cwd(), 'src/lib/forms/library/catalogue-contracts')).filter(f => f.endsWith('.json'));
     expect(files.sort()).toEqual(IDS.map(i => `${i}.json`).sort());
@@ -232,7 +238,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
   });
 
   it('carries no status anywhere: the register status is derived, never written', () => {
-    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3]) {
+    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4]) {
       expect('status' in c, c.form_id).toBe(false);
       expect(JSON.stringify(c)).not.toMatch(/"(status|state|approved|approved_by|production)"\s*:/);
     }
@@ -416,7 +422,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     const f = CATALOGUE_CONTRACTS.find(x => x.specId === 'HLT-PH-015')!;
     const counts = f.fields.find(x => x.key === 'return.counts')!;
     expect(counts.type).toBe('group');
-    expect(counts.items!.map(i => i.key)).toEqual(['indicator', 'breakdown', 'count', 'status']);
+    expect(counts.items!.map(i => i.key)).toEqual(['indicator', 'breakdown', 'basis', 'count', 'status']);
     expect(flat(f.fields).filter(x => ['party', 'person', 'contact'].includes(x.type)).map(x => x.key)).toEqual([]);
     expect(f.fields.find(x => x.key === 'return.area')!.valuesSourceId).toBe('civicos.nation.regions');
     expect(f.fields.find(x => x.key === 'return.period')!.type).toBe('dateRange');
@@ -548,6 +554,35 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     expect(check.fields.find(x => x.key === 'check.answer')!).toMatchObject({ personalDataClass: 'public', audience: 'officer' });
     expect(check.form.policies?.['answer.public_fields']).toMatch(/public information classification/);
     expect(med('HLT-MED-006').fields.find(x => x.key === 'decision.public_disclosure')!.valuesSourceId).toBe('medicines.country.public_product_fields');
+  });
+
+  // ── Batch 4: public-health programme forms ──
+  const ph = (id: string) => CATALOGUE_CONTRACTS.find(x => x.specId === id)!;
+  it('keeps the vaccination programme record to aggregates: no person vaccinated, the four classes kept apart, supply as programme counts', () => {
+    const f = ph('HLT-PH-011');
+    expect(flat(f.fields).filter(x => ['party', 'person', 'contact'].includes(x.type) || x.personalDataClass === 'personal').map(x => x.key)).toEqual([]);
+    for (const x of flat(f.fields)) expect(words(x.key).filter(w => ['vaccinee', 'name', 'birth', 'age', 'sex', 'identity', 'reaction', 'adverse'].includes(w)), x.key).toEqual([]);
+    expect(f.fields.find(x => x.key === 'activity.doses')!.items!.map(i => i.key)).toEqual(['breakdown', 'basis', 'count', 'status']);
+    expect(f.form.lists?.['civicos.public_health.count_basis']?.values.map(v => v.value)).toEqual(['reported', 'suspected', 'confirmed', 'modelled']);
+    expect(f.fields.find(x => x.key === 'activity.supply')!.items!.map(i => i.key)).toEqual(['supplyItem', 'received', 'used', 'status']);
+    expect(f.fields.find(x => x.key === 'activity.programme')).toMatchObject({ type: 'registryReference', register: 'programme' });
+    expect((f.fields.find(x => x.key === 'activity.suppression')!.rules ?? []).some(r => r.rule === 'registered' && r.name === 'small_cell_suppression_from_policy')).toBe(true);
+    expect(f.deviations.map(d => d.id)).toEqual(expect.arrayContaining(['aggregate-only', 'no-vaccinee', 'supply-not-stock']));
+    // The return carries the same four classes (HLT-PH-015, linked to the same procedure).
+    expect(ph('HLT-PH-015').fields.find(x => x.key === 'return.counts')!.items!.find(i => i.key === 'basis')!.valuesSourceId).toBe('civicos.public_health.count_basis');
+  });
+
+  it('approves a risk communication by two officials, and links each public-health form to its procedure by identity', () => {
+    const f = ph('HLT-PH-014');
+    expect(f.fields.map(x => x.key)).toEqual(expect.arrayContaining(['message.text', 'message.audience', 'message.channels', 'message.evidence_basis']));
+    expect(f.fields.find(x => x.key === 'message.approval')!.audience).not.toBe('applicant');
+    expect(f.deviations.map(d => d.id)).toEqual(expect.arrayContaining(['two-official-approval', 'aggregate-only']));
+    const pkg = PROGRAMME_PROCEDURES.find(p => p.key === 'public-health.risk-communication')!;
+    expect(pkg.actions.find(a => a.key === 'approve')).toMatchObject({ decision: 'approve-message', needs: { role: 'signatory', fourEyes: true } });
+    expect(ph('HLT-PH-011').procedure).toMatchObject({ key: 'public-health.programme-return', stage: 'submitted', action: 'register', document: 'return-form' });
+    expect(ph('HLT-PH-015').procedure).toMatchObject({ key: 'public-health.programme-return', stage: 'submitted', action: 'register', document: 'return-form' });
+    expect(f.procedure).toMatchObject({ key: 'public-health.risk-communication', stage: 'drafted', action: 'register', document: 'draft-message' });
+    for (const id of ['HLT-PH-011', 'HLT-PH-014', 'HLT-PH-015']) expect(ph(id).owner, id).toBe('publicHealth');
   });
 
   // ── Batch 3: taxpayer registration and account ──
