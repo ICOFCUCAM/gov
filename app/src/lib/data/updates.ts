@@ -222,7 +222,8 @@ function productionUpdates(): UpdatesDb {
     nations: [{
       id: HOME_NATION, name: '', deliveryMode: 'self-hosted', channelKey: channelKey(),
       installedVersion: version, history: [], enrolledAt: at, home: true,
-      lkg: { version }, settings: { ...DEFAULT_SETTINGS }, estate: { servers: 0, endpoints: 0 },
+      // Production probation reads the nation's deployment agent, never the simulation (simulatedHealthAllowed).
+      lkg: { version }, settings: { ...DEFAULT_SETTINGS, healthSource: 'agent' }, estate: { servers: 0, endpoints: 0 },
     }],
     releases: [], installs: { [HOME_NATION]: {} }, requests: [], requestSeq: 1000, incidents: [], agentKeys: {},
   };
@@ -481,7 +482,9 @@ function viewNation(n: SubscribedNation): SubscribedNation {
   if (!n.home) return { ...n, history: [...n.history], agentCredential };
   const s = getSovereign();
   const configured = !!getSetup();
-  return { ...n, history: [...n.history], agentCredential, name: configured ? s.stateName : 'This installation', iso3: configured ? s.iso3 : undefined, currency: s.currency };
+  // Shown as the probation reads it: a stored `simulated` reads as `agent` in production.
+  const settings = { ...n.settings, healthSource: effectiveHealthSource(n) };
+  return { ...n, settings, history: [...n.history], agentCredential, name: configured ? s.stateName : 'This installation', iso3: configured ? s.iso3 : undefined, currency: s.currency };
 }
 
 function nationById(id: string): SubscribedNation | undefined {
@@ -1160,6 +1163,25 @@ export function simulatedRestorePoints(n: { id: string }, env: NodeJS.ProcessEnv
   return n.id !== HOME_NATION || (env.CIVICOS_RESTORE_POINTS ?? '').trim().toLowerCase() === 'simulated';
 }
 
+/**
+ * Whether simulated health reports may drive a probation: for the publisher's
+ * demonstration nations, in demo and training installations, or where the
+ * installation says so (CIVICOS_HEALTH_REPORTS=simulated: development and
+ * tests only). A production installation's own nation is judged only by its
+ * deployment agent: a probation there never passes on simulated reports, and
+ * a stored `simulated` setting (a snapshot from before, or from a demo run)
+ * is read as `agent`, so silence counts as missing reports.
+ */
+export function simulatedHealthAllowed(n: { id: string }, env: NodeJS.ProcessEnv = process.env): boolean {
+  return n.id !== HOME_NATION || samplesAllowed({ CIVICOS_MODE: env.CIVICOS_MODE, NODE_ENV: env.NODE_ENV })
+    || (env.CIVICOS_HEALTH_REPORTS ?? '').trim().toLowerCase() === 'simulated';
+}
+
+/** The health source a probation actually uses for a nation (see simulatedHealthAllowed). */
+export function effectiveHealthSource(n: SubscribedNation): ResilienceSettings['healthSource'] {
+  return n.settings.healthSource === 'simulated' && simulatedHealthAllowed(n) ? 'simulated' : 'agent';
+}
+
 /** The backups the installed nation's restore points name (retention never removes them). */
 export function restorePointBackups(): string[] {
   const out: string[] = [];
@@ -1393,7 +1415,7 @@ export function superviseProbations(now = Date.now()): WatchdogSummary {
     };
     const start = Date.parse(p.startedAt), end = Date.parse(p.endsAt);
     const horizon = Math.min(now, end);
-    if (n.settings.healthSource === 'simulated') {
+    if (effectiveHealthSource(n) === 'simulated') {
       const last = p.reports.length ? Date.parse(p.reports[p.reports.length - 1]!.at) : start;
       for (let t = last + 60_000; t <= horizon; t += 60_000) {
         const rep = simulatedReport(p, t);
@@ -1417,7 +1439,8 @@ export function superviseProbations(now = Date.now()): WatchdogSummary {
       }
       if (p.state !== 'running') { conclude(); continue; }
     }
-    if (now >= end) passProbation(n, r, inst, new Date(end).toISOString());
+    // Without the simulation, a pass needs at least one report from the deployment agent.
+    if (now >= end && (effectiveHealthSource(n) === 'simulated' || p.reports.some(x => x.source === 'agent'))) passProbation(n, r, inst, new Date(end).toISOString());
     conclude();
   }
   return out;
@@ -1570,7 +1593,11 @@ export function updateSettings(nationId: string, patch: Partial<ResilienceSettin
     next.probationMinutes = m;
   }
   if (patch.fallback !== undefined) { if (patch.fallback !== 'automatic' && patch.fallback !== 'ask') return { error: 'Fallback must be automatic or ask' }; next.fallback = patch.fallback; }
-  if (patch.healthSource !== undefined) { if (patch.healthSource !== 'simulated' && patch.healthSource !== 'agent') return { error: 'Health source must be simulated or agent' }; next.healthSource = patch.healthSource; }
+  if (patch.healthSource !== undefined) {
+    if (patch.healthSource !== 'simulated' && patch.healthSource !== 'agent') return { error: 'Health source must be simulated or agent' };
+    if (patch.healthSource === 'simulated' && !simulatedHealthAllowed(n)) return { error: 'A production installation is judged by its deployment agent: simulated health reports are for demonstration and training installations' };
+    next.healthSource = patch.healthSource;
+  }
   if (patch.ring !== undefined) { if (patch.ring !== 'pilot' && patch.ring !== 'general') return { error: 'Ring must be pilot or general' }; next.ring = patch.ring; }
   if (patch.definitionsPolicy !== undefined) { if (patch.definitionsPolicy !== 'automatic' && patch.definitionsPolicy !== 'manual') return { error: 'Definitions policy must be automatic or manual' }; next.definitionsPolicy = patch.definitionsPolicy; }
   if (patch.stagingRequired !== undefined) { if (typeof patch.stagingRequired !== 'boolean') return { error: 'Staging policy must be on or off' }; next.stagingRequired = patch.stagingRequired; }
