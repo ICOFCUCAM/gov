@@ -306,6 +306,10 @@ const OFFICIAL_WORK: RegExp[] = [
   // different official, by each independent end's own official who can sign (checked in the route,
   // lib/data/store/relationships.ts). Not ADMIN_ONLY: the confirmer may be an independent institution's signatory.
   /^\/api\/org\/relationships$/,
+  // Offices of state and who holds them (lib/nation/office-register.ts): proposed by an administrator citing the law,
+  // confirmed by a different official, by the office's institution when it is independent (checked in the store).
+  // Holding an office grants no permission: nothing in this file reads it.
+  /^\/api\/offices$/,
 ];
 
 export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official';

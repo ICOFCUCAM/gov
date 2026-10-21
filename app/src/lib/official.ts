@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { roleLabel, roleOf, type OfficialRole, type Boundaries } from '@/lib/auth/roles';
+import type { InstitutionStanding } from '@/lib/api/types';
 
 // The official acting at this desk. When someone has signed in
 // (/api/auth/official, register 15.4) that is their verified name, and the
@@ -17,7 +18,11 @@ const EVENT = 'civicos-actor';
 export interface VerifiedOfficial { sub: string; name: string; office?: string; method: 'local' | 'substrate'; role?: OfficialRole; institution?: string; institutionName?: string;
   via?: 'password' | 'passkey' | 'oidc'; twoStep?: boolean; twoStepRequired?: boolean;
   /** Where whole-government reach stops (lib/auth/roles.ts), so screens offer only what the server allows. */
-  bounds?: Boundaries }
+  bounds?: Boundaries;
+  /** Offices the official holds (lib/nation/office-register.ts): for the greeting and home page; they grant no permission. */
+  heldOffices?: { id: string; title: string; kind: string; acting?: boolean }[];
+  /** The constitutional standing of the official's institution (executive ministry, legislature, judiciary …). */
+  standing?: InstitutionStanding }
 export interface SignInState { official: VerifiedOfficial | null; enforced: boolean; accounts: boolean;
   /** oidc: the government's identity provider's name when one is set up; passkey: whether passkeys work here. */
   methods: { local: boolean; substrate: boolean; oidc?: { name: string } | null; passkey?: boolean } }

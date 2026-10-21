@@ -838,6 +838,94 @@ export interface NationalConstitution {
   emergencyDoctrine?: string;
   /** Where these facts come from, e.g. "Constitution of 1995, arts. 77–78". */
   source?: string;
+  /**
+   * The composable classification of the state (docs/CONSTITUTIONAL_ARCHITECTURE.md §1.2; plan
+   * phase 4, audit H): several values on each axis, with where they come from and from when.
+   * Absent: derived from `stateForm` (lib/nation/classification.ts classificationOf()).
+   */
+  classification?: StateClassification;
+}
+
+/** How the platform styles the state on the front door (`platformLabel`); absent: derived from `stateForm` as before. */
+export type PlatformStyle = 'republic' | 'kingdom' | 'emirate' | 'sultanate' | 'principality' | 'grand-duchy' | 'federation' | 'union' | 'government';
+
+/** The state's classification on independent axes (§1.2): arrays, never one enum; the nation's facts, never the platform's. */
+export interface StateClassification {
+  /** e.g. republic, monarchy, federal, city-state, union, theocratic … (open list). */
+  stateForms: string[];
+  /** e.g. presidential, parliamentary, semi-presidential, directorial, absolute … */
+  governmentForms: string[];
+  /** e.g. unitary, federal, devolved, confederal, union … */
+  territorialArrangements: string[];
+  /** e.g. civil_law, common_law, customary_law, religious_law … */
+  legalTraditions: string[];
+  /** e.g. constitutional, statutory, customary, religious … */
+  authorityTypes: string[];
+  /** How the platform styles itself for this state (front-door label). */
+  style?: PlatformStyle;
+  /** Where these facts come from: the instruments (laws-register references or text). */
+  sources?: string[];
+  /** From when this classification applies (YYYY-MM-DD). */
+  effectiveFrom?: string;
+}
+
+/**
+ * An office of state (docs/CONSTITUTIONAL_ARCHITECTURE.md §6, §7.1 `offices`; plan phase 4, audit F):
+ * a record, not a title. Its powers are references to powers recorded and enforced elsewhere (who is
+ * responsible, permit authority mappings, procedures); holding the office grants nothing by itself.
+ */
+export interface OfficeTerms {
+  /** The institution (registry id) the office belongs to; absent while the nation has not named one. */
+  institution?: string;
+  /** The official title in the nation's main language. */
+  title: string;
+  /** The title in further languages (language code → title). */
+  titles?: Record<string, string>;
+  /** What kind of office (OFFICE_KINDS is a starting list; the nation may name others). */
+  kind: string;
+  /** References to powers recorded elsewhere (e.g. "authority:judiciary", "permit:building", a law's eId). Enforced there, never here. */
+  powers: string[];
+  /** The term of office, as the law says. */
+  term?: { years?: number; limit?: number; note?: string };
+  /** Who acts when the office is vacant or its holder absent, as the law says. */
+  acting?: string;
+  /** How the office passes on, as the law says. */
+  succession?: string;
+  /** Other offices (ids) the constitution has held together with this one (one person as head of state and of government). */
+  heldWith?: string[];
+  effectiveFrom: string;
+  effectiveTo?: string;
+}
+
+export interface OfficeRecord {
+  id: string;
+  /** The terms recorded during first-run setup (the commissioning step); later versions are adopted through `changes`. */
+  recorded?: OfficeTerms;
+  basis?: Citation[];
+  createdAt: string;
+  createdBy: string;
+  /** Changes after setup: proposed citing the law, confirmed by a different official, every version kept. */
+  changes: PolicyChanges<OfficeTerms>;
+}
+
+/** An official account holding an office (plan phase 4): linked by one official, confirmed by another; history kept. */
+export interface OfficeHolding {
+  id: string;
+  officeId: string;
+  /** The platform account (official id) that holds it. */
+  accountId: string;
+  holderName: string;
+  from: string;
+  to?: string;
+  state: 'waiting' | 'active' | 'ended' | 'lapsed' | 'withdrawn';
+  /** Holds it in an acting capacity (the office's acting rule). */
+  acting?: boolean;
+  basis?: Citation[];
+  note?: string;
+  proposedBy: string; proposedById?: string; proposedAt: string; expiresAt: string;
+  confirmedBy?: string; confirmedById?: string; confirmedAt?: string;
+  independence?: 'identity-provider' | 'accounts-only' | 'unverified';
+  endedBy?: string; endedAt?: string; endReason?: string;
 }
 
 /** First-run platform setup. Null until a nation or ministry has completed

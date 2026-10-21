@@ -3,7 +3,8 @@ import { headers } from 'next/headers';
 import './globals.css';
 import { getSovereign, getSetup } from '@/lib/data/store';
 import { NationRegistry } from '@/components/features/NationRegistry';
-import { NATION_GLOBAL } from '@/lib/nation/registry';
+import { NATION_GLOBAL, applyHeadOffices } from '@/lib/nation/registry';
+import { headOfficeTitles } from '@/lib/nation/office-register';
 import { RenderNowProvider } from '@/lib/clock/render-now';
 import { StackTables } from '@/components/ui/StackTables';
 import { OpenModeBanner } from '@/components/ui/OpenModeBanner';
@@ -47,7 +48,10 @@ function messagesScript(langs: (string | undefined)[]): string {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { iso3, regions, currency, locale, languages, stateForm, constitution, stateName, executiveTitle, legislatureName, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant, seal, accent, map } = getSovereign();
   const configured = !!getSetup();
-  const facts = { iso3, regions, currency, locale, languages, stateForm, constitution, stateName, executiveTitle, legislatureName, configured, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant, seal, accent, map };
+  // The head of state and head of government the nation recorded as offices (plan phase 4); none: the profile's wording.
+  const headOffices = headOfficeTitles();
+  applyHeadOffices(headOffices);
+  const facts = { iso3, regions, currency, locale, languages, stateForm, constitution, stateName, executiveTitle, legislatureName, configured, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant, seal, accent, map, headOffices };
   // The request's script nonce (src/middleware.ts): the Content-Security-Policy runs no inline script without it.
   const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (

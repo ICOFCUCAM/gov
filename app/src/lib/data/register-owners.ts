@@ -165,6 +165,9 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
   // Relationships between institutions (plan phase 3): part of the institution register, changed through the change process.
   { id: 'relationships', name: 'Relationships between institutions (appoint, fund, instruct, audit, request information …): scope, conditions, legal basis, dates, every version', legal: { kind: 'institution', note: 'The nation\'s law; proposed by an administrator citing it, confirmed by a different official and by each independent institution at either end' }, owner: { where: 'platform', keys: ['__civicosRelationships'] }, api: '/api/org/relationships', copies: [],
     storage: RECORD_DOCS('each relationship with its waiting proposal and every version') },
+  // Offices of state and who holds them (plan phase 4): the office's institution confirms when it is independent.
+  { id: 'offices', name: 'Offices of state and who holds them (titles, kinds, power references, terms, acting and succession rules; holdings with their history)', legal: { kind: 'institution', note: 'The institution each office belongs to; changes cite the law and a different official confirms them' }, owner: { where: 'platform', keys: ['__civicosOffices'] }, api: '/api/offices', copies: [],
+    storage: RECORD_DOCS('each office with its change history; each holding, ended ones kept') },
   { id: 'retention', name: 'Retention rules for personal data, and refusals counted for the audit chain', owner: { where: 'platform', keys: ['__civicosRetention', '__civicosAuditAggregate'] }, api: '/api/platform/retention, /api/cron/retention', copies: [],
     storage: RECORD_DOCS('the rules, their proposals and sweeps; the open windows of aggregated refusals') },
   { id: 'sign-on', name: 'Identity provider for officials and passkey challenges', owner: { where: 'platform', keys: ['__civicosSignOn'] }, api: '/api/auth/officials/identity-provider, /api/auth/oidc/*, /api/auth/passkeys', copies: [],

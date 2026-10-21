@@ -4,6 +4,7 @@ import { checkDeployment, authorityIn, isAuthorityKey, AUTHORITIES, type Authori
 import { proposePolicy, confirmPolicy, withdrawPolicy, lapsePolicy, type PolicyVersion } from '@/lib/law/policy-change';
 import { dualControlPendingHours } from '@/lib/data/dual-control';
 import { isWorldview } from '@/lib/map/disputed';
+import { checkClassification } from '@/lib/nation/classification';
 import { applyNation, nationPaymentRail } from '@/lib/nation/registry';
 import type {
   SovereignProfile,
@@ -42,6 +43,12 @@ export function setSovereign(
   const ch = patch.constitution?.chambers;
   if (ch !== undefined && (!Array.isArray(ch) || ch.length > 2 || ch.some(c => typeof c?.name !== 'string' || !Number.isFinite(c?.seats) || c.seats < 1))) {
     return { error: 'Chambers must be one or two named chambers with a positive seat count' };
+  }
+  // The composable classification (§1.2, plan phase 4): lists of short keys, a known style, sources and a date.
+  if (patch.constitution?.classification !== undefined && patch.constitution.classification !== null) {
+    const c = checkClassification(patch.constitution.classification);
+    if ('error' in c) return c;
+    patch = { ...patch, constitution: { ...patch.constitution, classification: c } };
   }
   if (patch.timeZone) {
     try { new Intl.DateTimeFormat('en', { timeZone: patch.timeZone }); } catch { return { error: 'Unknown time zone' }; }
