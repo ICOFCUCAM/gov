@@ -1,0 +1,889 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-MED-011",
+ "record_type": "medicines.good-practice.inspection",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-MED-003: inspection procedures, the good-practice standards adopted, the approved checklists and whether deficiencies are graded.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records.",
+  "CFG-MED-001: medicines and medical-device classifications, each from the standard the nation adopts.",
+  "CFG-MED-002: marketing authorisation and product variation procedures."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-MED-011",
+  "part": 6,
+  "section": "5.1",
+  "line": 662,
+  "batch": 2
+ },
+ "library": {
+  "title": "Record a good-practice inspection",
+  "intro": "The inspection report of a manufacturing, testing or distribution site, completed by the lead inspector the regulator assigned, under their own sign-in. It records what was observed against the good-practice standard the nation adopted. A finding is never a score.",
+  "owner": "healthRegulation",
+  "filled_by": "The lead inspector assigned by the medicines regulator, signed in (recorded from the sign-in, never typed).",
+  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "procedure": null,
+  "intended": "An inspection step of the medicines regulator for registered sites and authorisation applications: not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "medicines.country.inspection_types": {
+    "values": [
+     {
+      "value": "pre-authorisation",
+      "label": "Before an authorisation or registration"
+     },
+     {
+      "value": "routine",
+      "label": "Routine"
+     },
+     {
+      "value": "for-cause",
+      "label": "For cause"
+     },
+     {
+      "value": "follow-up",
+      "label": "Follow-up of earlier findings"
+     }
+    ],
+    "proposed": true
+   },
+   "medicines.country.finding_results": {
+    "values": [
+     {
+      "value": "met",
+      "label": "Met"
+     },
+     {
+      "value": "partly-met",
+      "label": "Partly met"
+     },
+     {
+      "value": "not-met",
+      "label": "Not met"
+     },
+     {
+      "value": "not-assessed",
+      "label": "Not assessed"
+     }
+    ],
+    "proposed": true
+   },
+   "medicines.country.report_stages": {
+    "values": [
+     {
+      "value": "preliminary",
+      "label": "Preliminary"
+     },
+     {
+      "value": "final",
+      "label": "Final"
+     }
+    ],
+    "proposed": true
+   },
+   "medicines.country.inspection_recommendations": {
+    "values": [
+     {
+      "value": "compliant",
+      "label": "Complies with the standard"
+     },
+     {
+      "value": "compliant-with-actions",
+      "label": "Complies once corrective actions are done"
+     },
+     {
+      "value": "not-compliant",
+      "label": "Does not comply"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "inspector-from-sign-in",
+    "field": "lead_inspector",
+    "what": "The inspector is recorded from the sign-in (officer field), never typed",
+    "why": "Stricter: findings are entered under the inspector's own account.",
+    "rule": "CLAUDE.md Who acted: a signed-in official's verified name replaces any name in the request"
+   },
+   {
+    "id": "no-score",
+    "what": "A finding has a result, an observation and a grade only where the adopted standard grades; never a score",
+    "why": "Platform rule: no risk score anywhere; a finding is a prompt, never a conclusion.",
+    "rule": "CLAUDE.md Customs/Audit administration (never a score; a finding is a prompt)"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: records of products, of organisations (holders, manufacturers, importers) and of the regulator's decisions.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "medicines-authority-slot",
+    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
+    "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
+   },
+   {
+    "id": "no-product-register",
+    "what": "The regulated product record (Part 6 §5.2) is not on the platform yet: a reference to an authorised product is recorded as given and its check recorded as not performed, a product's status is shown nowhere until the regulator's product register exists, and it is never inferred from an import, inventory or procurement record",
+    "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
+    "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 505,
+    "quotes": [
+     "Medicines regulator",
+     "Medicines, medical devices, safety, and market authorization",
+     "Regulatory dossiers have their own access and disclosure rules"
+    ],
+    "met_by": {
+     "deviation": "medicines-authority-slot",
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Dossier, assessment, report and inspection content is restricted: read only at the institution responsible, every read of personal data in the access log"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 649,
+    "quotes": [
+     "The medicines regulator needs a separate workflow from clinical prescribing and hospital pharmacy operations.",
+     "Product authorization, manufacturing oversight, import authorization, safety reporting, and enforcement decisions must be managed under configured national law."
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002",
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "Apart from prescribing and pharmacy operations: no prescribing, dispensing or patient field in any form of this batch (the scope check runs on every key)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 688,
+    "quotes": [
+     "A marketing authorization must not be inferred from a product's appearance in an import record, hospital inventory, or procurement system.",
+     "Each status must derive from the competent regulator's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "An authorisation or licence reference must be active in its register (REF-ACTIVE); the approved permit mapping and its review path decide, and production refuses a power no approved mapping covers"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 862,
+    "quotes": [
+     "CFG-MED-001",
+     "Medicines and medical-device classifications"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 863,
+    "quotes": [
+     "CFG-MED-002",
+     "Marketing authorization and product variation procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 864,
+    "quotes": [
+     "CFG-MED-003",
+     "Inspection, safety reporting, and recall authority"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-003"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register",
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Holders, manufacturers and importers are organisations: their standing comes only from the register the competent authority keeps; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 893,
+    "quotes": [
+     "Medicines and devices regulatory service — applications, assessments, authorizations, inspections, safety reporting, and recalls."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Applications, assessments, authorisations, inspections, safety reporting and recalls are the contracts of batch 2; the service that runs them waits for plan step I4"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 681,
+    "quotes": [
+     "Manufacturing sites and relevant certificates."
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.site",
+      "inspection.site_registration"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 662,
+    "quotes": [
+     "HLT-MED-011",
+     "Good-practice inspection",
+     "Inspection evidence and findings recorded"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.findings",
+      "inspection.evidence"
+     ],
+     "deviation": "no-score"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3237,
+    "quotes": [
+     "Controls: a supervisory employee should not be able to change an approved tariff, impose a sanction or revoke a licence without the required authority and approvals.",
+     "Confidential commercial information and protected supervisory returns must not become public simply because the regulator has a public website."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A suspension, withdrawal or other sanction needs the power an approved mapping gives, decided in a case by an official who can sign; dossier, report and inspection content is restricted and never on a public page or list"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3231,
+    "quotes": [
+     "Record preliminary concerns separately from final findings."
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.stage",
+      "inspection.findings"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "inspection.site",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Site's organisation registration number"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the site's organisation registration number.",
+     "reference_exists": "There is no organisation with that number in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.site_registration",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Site registration reference"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.case",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Case the inspection is for, if any"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.type",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.inspection_types",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Type of inspection"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the type of inspection.",
+     "value_in_source": "Select the type of inspection from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.standard",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "classification_value_from_configured_standard",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.good_practice_standards",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Good-practice standard applied"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the good-practice standard applied.",
+     "value_in_source": "Select the good-practice standard applied from the list."
+    }
+   },
+   "country_decision": "CFG-MED-003: the good-practice standards the nation adopts. Expected source: the WHO good manufacturing and distribution practice texts or PIC/S, as the nation adopts them. None ships.",
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.checklist_version",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "approved_checklist_version",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Approved checklist and version used"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the approved checklist and version used."
+    }
+   },
+   "country_decision": "CFG-MED-003: the approved inspection checklists and their versions.",
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.dates",
+   "type": "date_range",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Dates of the inspection"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the dates of the inspection.",
+     "date_not_in_future": "Dates of the inspection must be today or in the past."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.lead_inspector",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_active_inspection_authority",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Lead inspector"
+   },
+   "hint": {
+    "en": "Recorded from the inspector's sign-in."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "inspection.interest_declared",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "I have no interest in this site that I have not declared to the regulator"
+   },
+   "hint": {
+    "en": "A declared interest takes you off the inspection."
+   },
+   "error_text": {
+    "en": {
+     "required": "Confirm this statement to continue.",
+     "must_be_true": "Confirm this statement to continue."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "inspection.scope",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Areas, activities and products covered"
+   },
+   "error_text": {
+    "en": {
+     "length": "Areas, activities and products covered must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Findings"
+   }
+  },
+  {
+   "id": "inspection.stage",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.report_stages",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Preliminary or final report?"
+   },
+   "hint": {
+    "en": "Preliminary observations at the closing meeting are kept apart from the final findings."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Findings"
+   }
+  },
+  {
+   "id": "inspection.findings",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Findings"
+   },
+   "hint": {
+    "en": "One entry per requirement of the standard. Describe the premises, equipment, records or procedures you saw."
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the findings."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "requirement",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Requirement of the standard"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the requirement of the standard.",
+       "length": "Requirement of the standard must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "result",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "medicines.country.finding_results",
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Result"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the result."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "observation",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 4000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "What you observed"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter what you observed.",
+       "length": "What you observed must be 4000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "grade",
+     "type": "choice",
+     "required": false,
+     "validation": [],
+     "values_source": "medicines.country.deficiency_grades",
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Grade, where the standard grades deficiencies"
+     },
+     "country_decision": "CFG-MED-003: whether and how deficiencies are graded under the adopted standard (none ship)."
+    }
+   ],
+   "section": {
+    "en": "Findings"
+   }
+  },
+  {
+   "id": "inspection.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "inspection_evidence",
+     "when": "when_the_inspector_records_evidence"
+    }
+   ],
+   "label": {
+    "en": "Evidence gathered"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Findings"
+   }
+  },
+  {
+   "id": "inspection.actions_required",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Are corrective actions required?"
+   },
+   "hint": {
+    "en": "The site then submits a corrective action plan (HLT-MED-012)."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Conclusion"
+   }
+  },
+  {
+   "id": "inspection.recommendation",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.inspection_recommendations",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspector's recommendation"
+   },
+   "hint": {
+    "en": "A recommendation only. The decision is made by the official with the power to decide."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the inspector's recommendation.",
+     "value_in_source": "Select the inspector's recommendation from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Conclusion"
+   }
+  },
+  {
+   "id": "inspection.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

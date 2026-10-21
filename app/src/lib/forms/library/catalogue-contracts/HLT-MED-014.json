@@ -1,0 +1,835 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-MED-014",
+ "record_type": "medicines.controlled.authorisation",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-MED-003: the controlled-substances law, its schedules, the activities that need an authorisation, the authority that grants it and the quantities that may be authorised.",
+  "The controlled-medicine authorisation fee: an approved fee rule (lib/law/rules.ts); none ships.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records.",
+  "CFG-MED-001: medicines and medical-device classifications, each from the standard the nation adopts.",
+  "CFG-MED-002: marketing authorisation and product variation procedures."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-MED-014",
+  "part": 6,
+  "section": "5.1",
+  "line": 665,
+  "batch": 2
+ },
+ "library": {
+  "title": "Apply for a controlled medicine authorisation",
+  "intro": "Apply for the special authorisation the law requires to import, export, make, supply or hold a controlled medicine. The authorisation is for an organisation, a product and a quantity, never for a named patient. Quantities are checked against the limits the nation sets under its controlled-substances law.",
+  "owner": "healthRegulation",
+  "filled_by": "A licensed organisation (a registered organisation) or someone acting for it.",
+  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "procedure": null,
+  "intended": "A controlled-medicine authorisation procedure of the authority the nation's controlled-substances law names, under an approved permit mapping: not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "medicines.country.controlled_activities": {
+    "values": [
+     {
+      "value": "import",
+      "label": "Import"
+     },
+     {
+      "value": "export",
+      "label": "Export"
+     },
+     {
+      "value": "manufacture",
+      "label": "Manufacture"
+     },
+     {
+      "value": "wholesale",
+      "label": "Wholesale supply"
+     },
+     {
+      "value": "hold",
+      "label": "Holding at licensed premises"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "medicines.controlled.fee",
+    "kind": "fee",
+    "source": "rule",
+    "decision": "The controlled-medicine authorisation fee."
+   },
+   {
+    "key": "medicines.controlled.validity",
+    "kind": "period",
+    "source": "setting",
+    "decision": "How long a controlled-medicine authorisation is valid."
+   },
+   {
+    "key": "medicines.controlled.quantity-limits",
+    "kind": "threshold",
+    "source": "setting",
+    "decision": "The quantities of each controlled substance the nation may authorise in a period (its estimates or limits under its controlled-substances law)."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "no-named-person",
+    "what": "Authorises an organisation, a product and a quantity, never a named patient; supply to a person is a dispensing record, which the approved scope excludes",
+    "why": "No patient or dispensing record on the platform.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere; owner's direction 2026-10-21 §1 (dispensing records excluded)"
+   },
+   {
+    "id": "controlled-authority",
+    "what": "The controlled-substances authority may be another institution than the medicines regulator; the slot used is the health regulator's until the nation names it",
+    "why": "Who holds the power is the nation's law, recorded in the deployment profile and the permit authority registry.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); never assume a ministry by name"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: records of products, of organisations (holders, manufacturers, importers) and of the regulator's decisions.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "medicines-authority-slot",
+    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
+    "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
+   },
+   {
+    "id": "no-product-register",
+    "what": "The regulated product record (Part 6 §5.2) is not on the platform yet: a reference to an authorised product is recorded as given and its check recorded as not performed, a product's status is shown nowhere until the regulator's product register exists, and it is never inferred from an import, inventory or procurement record",
+    "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
+    "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 505,
+    "quotes": [
+     "Medicines regulator",
+     "Medicines, medical devices, safety, and market authorization",
+     "Regulatory dossiers have their own access and disclosure rules"
+    ],
+    "met_by": {
+     "deviation": "medicines-authority-slot",
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Dossier, assessment, report and inspection content is restricted: read only at the institution responsible, every read of personal data in the access log"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 649,
+    "quotes": [
+     "The medicines regulator needs a separate workflow from clinical prescribing and hospital pharmacy operations.",
+     "Product authorization, manufacturing oversight, import authorization, safety reporting, and enforcement decisions must be managed under configured national law."
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002",
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "Apart from prescribing and pharmacy operations: no prescribing, dispensing or patient field in any form of this batch (the scope check runs on every key)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 688,
+    "quotes": [
+     "A marketing authorization must not be inferred from a product's appearance in an import record, hospital inventory, or procurement system.",
+     "Each status must derive from the competent regulator's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "An authorisation or licence reference must be active in its register (REF-ACTIVE); the approved permit mapping and its review path decide, and production refuses a power no approved mapping covers"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 862,
+    "quotes": [
+     "CFG-MED-001",
+     "Medicines and medical-device classifications"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 863,
+    "quotes": [
+     "CFG-MED-002",
+     "Marketing authorization and product variation procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 864,
+    "quotes": [
+     "CFG-MED-003",
+     "Inspection, safety reporting, and recall authority"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-003"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register",
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Holders, manufacturers and importers are organisations: their standing comes only from the register the competent authority keeps; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 893,
+    "quotes": [
+     "Medicines and devices regulatory service — applications, assessments, authorizations, inspections, safety reporting, and recalls."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Applications, assessments, authorisations, inspections, safety reporting and recalls are the contracts of batch 2; the service that runs them waits for plan step I4"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 665,
+    "quotes": [
+     "HLT-MED-014",
+     "Controlled medicine authorization",
+     "Special authorization under applicable law"
+    ],
+    "met_by": {
+     "fields": [
+      "controlled.schedule",
+      "controlled.lines",
+      "controlled.organisation"
+     ],
+     "country_decision": "CFG-MED-003",
+     "deviation": "no-named-person"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3237,
+    "quotes": [
+     "Controls: a supervisory employee should not be able to change an approved tariff, impose a sanction or revoke a licence without the required authority and approvals.",
+     "Confidential commercial information and protected supervisory returns must not become public simply because the regulator has a public website."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A suspension, withdrawal or other sanction needs the power an approved mapping gives, decided in a case by an official who can sign; dossier, report and inspection content is restricted and never on a public page or list"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1326,
+    "quotes": [
+     "Supply item",
+     "Product identifier, unit, lot/batch where relevant, quantity, location, expiry where relevant, transaction reference"
+    ],
+    "met_by": {
+     "fields": [
+      "controlled.lines",
+      "controlled.premises",
+      "controlled.period"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "controlled.organisation",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "organisation_identity_consistent",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "legal_entity_registration",
+     "when": "when_the_organisation_record_must_be_verified_under_the_approved_procedure"
+    }
+   ],
+   "label": {
+    "en": "Organisation's registration number"
+   },
+   "hint": {
+    "en": "The organisation as it stands in the register of organisations. A holder, manufacturer or importer is an organisation there, never a second identity."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the organisation's registration number.",
+     "reference_exists": "There is no organisation with that number in the register.",
+     "REF-ACTIVE": "That organisation is not active in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The organisation"
+   }
+  },
+  {
+   "use_group": "core.representation",
+   "version": 1,
+   "only": [
+    "representation.capacity",
+    "representation.actor",
+    "representation.authority_document"
+   ],
+   "section": {
+    "en": "Who is applying"
+   }
+  },
+  {
+   "id": "controlled.activity",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "configured_profile",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.controlled_activities",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What the authorisation is for"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select what the authorisation is for.",
+     "value_in_source": "Select what the authorisation is for from the list."
+    }
+   },
+   "country_decision": "CFG-MED-003: the activities the controlled-substances law requires an authorisation for.",
+   "multiple": true,
+   "section": {
+    "en": "The authorisation"
+   }
+  },
+  {
+   "id": "controlled.schedule",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "classification_value_from_configured_standard",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.controlled_schedules",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Schedule of the controlled substance"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the schedule of the controlled substance.",
+     "value_in_source": "Select the schedule of the controlled substance from the list."
+    }
+   },
+   "country_decision": "CFG-MED-003: the schedules of controlled substances. Expected source: the schedules of the Single Convention on Narcotic Drugs and the Convention on Psychotropic Substances as national law adopts them, as the nation adopts it. None ships.",
+   "section": {
+    "en": "The authorisation"
+   }
+  },
+  {
+   "id": "controlled.lines",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "controlled_quantity_limit_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Products and quantities"
+   },
+   "hint": {
+    "en": "One entry per product. Organisations, products and quantities only: never a patient."
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the products and quantities."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "product",
+     "type": "registry_reference",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "medicines.registry.products",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Authorisation or registration number"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the authorisation or registration number."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "substance",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Controlled substance"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the controlled substance.",
+       "length": "Controlled substance must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "strengthForm",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Strength and form"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the strength and form.",
+       "length": "Strength and form must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "quantity",
+     "type": "quantity",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Quantity"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the quantity."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "The authorisation"
+   }
+  },
+  {
+   "id": "controlled.period",
+   "type": "date_range",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "authorisation_validity_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Period the authorisation is for"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the period the authorisation is for."
+    }
+   },
+   "country_decision": "CFG-MED-003: how long a controlled-medicine authorisation is valid.",
+   "section": {
+    "en": "The authorisation"
+   }
+  },
+  {
+   "id": "controlled.counterparty",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Supplier or recipient abroad (for an import or export)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Supplier or recipient abroad (for an import or export) must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The other party"
+   }
+  },
+  {
+   "id": "controlled.counterparty_country",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "iso.3166-1.alpha2.current",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Their country"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select the their country from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The other party"
+   }
+  },
+  {
+   "id": "controlled.counterparty_permit",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "configured_profile",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The other country's import or export authorisation, where required"
+   },
+   "country_decision": "CFG-MED-003: when the other country's authorisation must be shown.",
+   "section": {
+    "en": "The other party"
+   }
+  },
+  {
+   "id": "controlled.premises",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Licensed premises where it will be held"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the licensed premises where it will be held.",
+     "reference_exists": "There is no organisation with that number in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Storage and responsibility"
+   }
+  },
+  {
+   "id": "controlled.responsible_professional",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "configured_profile",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.professionals",
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Registration number of the professional responsible"
+   },
+   "country_decision": "CFG-MED-003: which professional the law requires to be responsible for controlled medicines.",
+   "section": {
+    "en": "Storage and responsibility"
+   }
+  },
+  {
+   "id": "controlled.security",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "secure_storage_evidence",
+     "when": "as_required_by_the_approved_controlled_medicine_procedure"
+    }
+   ],
+   "label": {
+    "en": "Evidence of secure storage and record keeping"
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide evidence of secure storage and record keeping."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Storage and responsibility"
+   }
+  },
+  {
+   "id": "controlled.authorisation_number",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Authorisation number"
+   },
+   "hint": {
+    "en": "Given when the authorisation is granted."
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.payment",
+   "version": 1,
+   "section": {
+    "en": "Fee"
+   }
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "controlled.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

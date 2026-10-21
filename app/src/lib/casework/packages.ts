@@ -16,7 +16,7 @@ import { samplesAllowed } from '@/lib/ops/mode';
 import { isAuthorityKey, type AuthorityKey } from '@/lib/nation/deployment';
 import { withDefaults } from '@/lib/data/defaults';
 import { FIELD_KEY, fieldClass, fieldProblem, formProblem, PERSONAL_CLASSES } from '@/lib/forms/contract';
-import { formIds, scopeOf } from '@/lib/forms/scope';
+import { formScope } from '@/lib/forms/scope';
 import type { CasePackage, ActionSpec, FieldSpec, PackageTest } from './types';
 
 interface PackageDb { packages: CasePackage[] }
@@ -128,7 +128,7 @@ const clone = <T,>(x: T): T => structuredClone(x);
  * review may be drafted; it is not published until that review is recorded.
  */
 function scopeRefusal(p: Pick<CasePackage, 'key' | 'fields' | 'form'>): string | null {
-  const s = scopeOf(formIds(p.key, p.form), p.fields);
+  const s = formScope(p.key, p.form, p.fields);
   return s.status === 'excluded' ? `Outside the approved scope: ${s.reason}` : null;
 }
 

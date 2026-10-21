@@ -51,6 +51,14 @@ const PAGES = [
   { path: '/gov/law/procedures/forms/HLT-LIC-001', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-LIC-008', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/HLT-PH-015', map: false, text: /register status/i },
+  // Catalogue contracts, batch 2 (medicines and medical devices regulation).
+  { path: '/gov/law/procedures/forms/HLT-MED-001', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-001/print', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-004', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-015', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-017', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-019', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/HLT-MED-024', map: false, text: /register status/i },
   // The seal key register (lib/keys/seal-register.ts).
   { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
 ];

@@ -14,7 +14,8 @@
   "id": "HLT-FAC-007",
   "part": 6,
   "section": "6.2",
-  "line": 719
+  "line": 719,
+  "batch": 1
  },
  "library": {
   "title": "Tell the regulator a health facility is closing",

@@ -1,0 +1,961 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-MED-015",
+ "record_type": "medicines.safety.report",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-MED-003: safety reporting, who must report and within what time, and the authority that assesses reports.",
+  "Whether anonymous reports are accepted, and how a reporter is protected.",
+  "CFG-DAT-001: retention and disclosure of safety reports and of the reporter's identity.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-MED-001: medicines and medical-device classifications, each from the standard the nation adopts.",
+  "CFG-MED-002: marketing authorisation and product variation procedures."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-MED-015",
+  "part": 6,
+  "section": "5.1",
+  "line": 666,
+  "batch": 2
+ },
+ "library": {
+  "title": "Report a safety concern about a medicine",
+  "intro": "Tell the medicines regulator about a problem with a medicine: a quality defect, a suspected falsified product, a labelling error or a storage or supply problem. This report is about the product. Do not give anyone's name, identity or medical details. The regulator assesses every report; a report is never a finding.",
+  "owner": "healthRegulation",
+  "filled_by": "Anyone: an authorisation holder, a health facility or pharmacy, a health professional, a supplier or a member of the public; online, at an office or on paper.",
+  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "procedure": null,
+  "intended": "A safety-report intake of the medicines regulator that registers the signal and assigns it for assessment, possibly leading to a review (HLT-MED-009) or a recall (HLT-MED-017): not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "medicines.country.safety_concern_kinds": {
+    "values": [
+     {
+      "value": "quality-defect",
+      "label": "A quality defect (appearance, contamination, a failed pack)"
+     },
+     {
+      "value": "suspected-falsified",
+      "label": "Suspected falsified or substandard product"
+     },
+     {
+      "value": "labelling",
+      "label": "Labelling or product information error"
+     },
+     {
+      "value": "storage-supply",
+      "label": "Storage or supply problem"
+     },
+     {
+      "value": "other",
+      "label": "Something else"
+     }
+    ],
+    "proposed": true
+   },
+   "medicines.country.reporter_kinds": {
+    "values": [
+     {
+      "value": "holder",
+      "label": "The authorisation holder, manufacturer or importer"
+     },
+     {
+      "value": "institution",
+      "label": "A health facility or pharmacy"
+     },
+     {
+      "value": "professional",
+      "label": "A health professional"
+     },
+     {
+      "value": "supplier",
+      "label": "A wholesaler or distributor"
+     },
+     {
+      "value": "public",
+      "label": "A member of the public"
+     },
+     {
+      "value": "other",
+      "label": "Someone else"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "medicines.safety.holder-report-time",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The time within which an authorisation holder must report a safety concern."
+   },
+   {
+    "key": "medicines.safety.acknowledgement",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The days within which a report is acknowledged."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "product-level-only",
+    "what": "A product-level report: no patient identity and no structured clinical, diagnosis, treatment or outcome field. The concern is restricted free text with a hint not to give anyone's identity or medical details; an individual's reaction to a medicine is HLT-MED-016, which the approved scope excludes, and the shared patient reference and consent of Part 6 §9–§10 do not arise",
+    "why": "Where the catalogue would ask for patient or clinical detail, the platform holds none: the regulator records the product, the batch and the concern.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; docs/requirements/form-scope.json (HLT-MED-016 excluded)"
+   },
+   {
+    "id": "no-ai-finding",
+    "what": "No AI output is recorded as a finding: grouping reports, where a nation enables its assistant, is a prompt for an assessor; possible duplicates are linked by an official, never merged, and every original report is kept",
+    "why": "A medicine is declared unsafe, and a recall authorised, only by an official in a case.",
+    "rule": "CLAUDE.md Government operating model: AI never makes a legally material decision; Branding and AI (aiLabel)"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: records of products, of organisations (holders, manufacturers, importers) and of the regulator's decisions.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "medicines-authority-slot",
+    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
+    "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
+   },
+   {
+    "id": "no-product-register",
+    "what": "The regulated product record (Part 6 §5.2) is not on the platform yet: a reference to an authorised product is recorded as given and its check recorded as not performed, a product's status is shown nowhere until the regulator's product register exists, and it is never inferred from an import, inventory or procurement record",
+    "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
+    "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 505,
+    "quotes": [
+     "Medicines regulator",
+     "Medicines, medical devices, safety, and market authorization",
+     "Regulatory dossiers have their own access and disclosure rules"
+    ],
+    "met_by": {
+     "deviation": "medicines-authority-slot",
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Dossier, assessment, report and inspection content is restricted: read only at the institution responsible, every read of personal data in the access log"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 649,
+    "quotes": [
+     "The medicines regulator needs a separate workflow from clinical prescribing and hospital pharmacy operations.",
+     "Product authorization, manufacturing oversight, import authorization, safety reporting, and enforcement decisions must be managed under configured national law."
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002",
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "Apart from prescribing and pharmacy operations: no prescribing, dispensing or patient field in any form of this batch (the scope check runs on every key)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 688,
+    "quotes": [
+     "A marketing authorization must not be inferred from a product's appearance in an import record, hospital inventory, or procurement system.",
+     "Each status must derive from the competent regulator's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "An authorisation or licence reference must be active in its register (REF-ACTIVE); the approved permit mapping and its review path decide, and production refuses a power no approved mapping covers"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 862,
+    "quotes": [
+     "CFG-MED-001",
+     "Medicines and medical-device classifications"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 863,
+    "quotes": [
+     "CFG-MED-002",
+     "Marketing authorization and product variation procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 864,
+    "quotes": [
+     "CFG-MED-003",
+     "Inspection, safety reporting, and recall authority"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-003"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register",
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Holders, manufacturers and importers are organisations: their standing comes only from the register the competent authority keeps; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 893,
+    "quotes": [
+     "Medicines and devices regulatory service — applications, assessments, authorizations, inspections, safety reporting, and recalls."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Applications, assessments, authorisations, inspections, safety reporting and recalls are the contracts of batch 2; the service that runs them waits for plan step I4"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 690,
+    "quotes": [
+     "A safety report should trigger assessment, not an automatic finding of causation.",
+     "A recall may involve several distinct events: signal receipt, risk assessment, authorized decision, public notice, supply-chain notification, and completion verification."
+    ],
+    "met_by": {
+     "fields": [
+      "report.assessor",
+      "report.concern"
+     ],
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "Receiving a report changes no product status; a finding or decision is a step of a case by a signed-in official"
+     },
+     "deviation": "product-level-only"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 692,
+    "quotes": [
+     "AI may help group duplicate reports or identify emerging patterns.",
+     "It must preserve the original reports and must not independently declare a medicine unsafe or authorize a recall."
+    ],
+    "met_by": {
+     "fields": [
+      "report.linked_reports"
+     ],
+     "deviation": "no-ai-finding"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 666,
+    "quotes": [
+     "HLT-MED-015",
+     "Medicine safety report",
+     "Safety signal received"
+    ],
+    "met_by": {
+     "fields": [
+      "report.concern",
+      "report.category",
+      "report.batch"
+     ],
+     "platform": {
+      "file": "app/src/lib/forms/receipt.ts",
+      "how": "Registered: a reference and receipt on submission"
+     },
+     "deviation": "product-level-only"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3237,
+    "quotes": [
+     "Controls: a supervisory employee should not be able to change an approved tariff, impose a sanction or revoke a licence without the required authority and approvals.",
+     "Confidential commercial information and protected supervisory returns must not become public simply because the regulator has a public website."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A suspension, withdrawal or other sanction needs the power an approved mapping gives, decided in a case by an official who can sign; dossier, report and inspection content is restricted and never on a public page or list"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "report.product_named",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Name of the medicine, as on the pack"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the name of the medicine, as on the pack.",
+     "length": "Name of the medicine, as on the pack must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The medicine"
+   }
+  },
+  {
+   "id": "report.product",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.registry.products",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Marketing authorisation or registration number"
+   },
+   "hint": {
+    "en": "If the pack shows it."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no authorised product with that number."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The medicine"
+   }
+  },
+  {
+   "id": "report.strength_form",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Strength and form, as on the pack"
+   },
+   "error_text": {
+    "en": {
+     "length": "Strength and form, as on the pack must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The medicine"
+   }
+  },
+  {
+   "id": "report.batch",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 120
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Batch or lot number"
+   },
+   "error_text": {
+    "en": {
+     "length": "Batch or lot number must be 120 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The medicine"
+   }
+  },
+  {
+   "id": "report.expiry",
+   "type": "date",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Expiry date on the pack"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The medicine"
+   }
+  },
+  {
+   "id": "report.manufacturer",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Manufacturer or holder named on the pack"
+   },
+   "error_text": {
+    "en": {
+     "length": "Manufacturer or holder named on the pack must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The medicine"
+   }
+  },
+  {
+   "id": "report.obtained_from",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Where it was obtained, if you know (a pharmacy, facility or supplier)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Where it was obtained, if you know (a pharmacy, facility or supplier) must be 300 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The medicine"
+   }
+  },
+  {
+   "id": "report.category",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.safety_concern_kinds",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What kind of problem is it?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The problem"
+   }
+  },
+  {
+   "id": "report.concern",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Describe the problem"
+   },
+   "hint": {
+    "en": "Describe the product and what is wrong with it. Do not give anyone's name, identity or medical details. If someone may have been harmed, say only that: the regulator tells you how the person concerned or their health worker can report it."
+   },
+   "error_text": {
+    "en": {
+     "required": "Describe the problem.",
+     "length": "Describe the problem must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The problem"
+   }
+  },
+  {
+   "id": "report.noticed_on",
+   "type": "date",
+   "required": false,
+   "validation": [
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "When the problem was noticed"
+   },
+   "error_text": {
+    "en": {
+     "date_not_in_future": "When the problem was noticed must be today or in the past."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The problem"
+   }
+  },
+  {
+   "id": "report.aware_on",
+   "type": "date",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "reporter.kind",
+      "equals": "holder"
+     }
+    },
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    },
+    {
+     "rule": "safety_report_deadline_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "When your organisation became aware of it"
+   },
+   "hint": {
+    "en": "For authorisation holders, who must report within the time the law sets."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter when your organisation became aware of it.",
+     "date_not_in_future": "When your organisation became aware of it must be today or in the past."
+    }
+   },
+   "country_decision": "CFG-MED-003: the time within which a holder must report a safety concern.",
+   "section": {
+    "en": "The problem"
+   }
+  },
+  {
+   "id": "report.still_supplied",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Is the product still being supplied?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The problem"
+   }
+  },
+  {
+   "id": "report.sample_kept",
+   "type": "boolean",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Do you still have the product or its pack?"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The problem"
+   }
+  },
+  {
+   "id": "report.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "safety_report_evidence",
+     "when": "when_the_reporter_has_it"
+    }
+   ],
+   "label": {
+    "en": "Photographs of the product, pack and label"
+   },
+   "hint": {
+    "en": "Never a medical record or anything naming a person."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The problem"
+   }
+  },
+  {
+   "id": "reporter.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.reporter_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Who is reporting?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "reporter.organisation",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Your organisation's registration number, if you report for one"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no organisation with that number in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "reporter.anonymous",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "configured_profile",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Do you want to stay anonymous?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": "Whether the nation accepts anonymous safety reports, and how a reporter is protected (CFG-MED-003).",
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "reporter.name",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "reporter.anonymous",
+      "equals": false
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Your name"
+   },
+   "hint": {
+    "en": "Only so the regulator can ask you about the product. Never anyone else's name."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter your name.",
+     "length": "Your name must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "reporter.contact",
+   "type": "contact",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "reporter.anonymous",
+      "equals": false
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "How we can reach you"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter how we can reach you."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "report.assessor",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Assessor assigned"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "report.linked_reports",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Earlier reports it may duplicate (linked, never merged)"
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "report.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

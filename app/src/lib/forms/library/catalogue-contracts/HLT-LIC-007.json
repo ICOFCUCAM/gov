@@ -16,7 +16,8 @@
   "id": "HLT-LIC-007",
   "part": 6,
   "section": "6.1",
-  "line": 703
+  "line": 703,
+  "batch": 1
  },
  "library": {
   "title": "Ask for a certificate of good standing",

@@ -1,6 +1,7 @@
 // Conformance of the catalogue contracts CivicOS wrote (batch 1, health
-// regulation: HLT-FAC-001 … 010, HLT-LIC-001 … 014, HLT-PH-015) to the
-// documents they answer (docs/FORMS_CONFORMANCE.md §8). The test holds its
+// regulation: HLT-FAC-001 … 010, HLT-LIC-001 … 014, HLT-PH-015; batch 2,
+// medicines and medical devices regulation: HLT-MED-001 … 015, 017 … 020,
+// 023, 024) to the documents they answer (docs/FORMS_CONFORMANCE.md §8, §9). The test holds its
 // own list of the catalogue lines each form must answer and reads the
 // documents themselves: every piece of every line (each table cell, list item
 // and sentence) is quoted verbatim by the contract and met by a field, a
@@ -15,10 +16,10 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CATALOGUE_CONTRACTS, BATCH_1, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
+import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
 import { DATA_CLASSES, FIELD_TYPES, fieldProblem, formProblem, type ContractField } from './contract';
 import { isRegisteredRule, RULE_REGISTRY } from './rules';
-import { scopeOf, formIds } from './scope';
+import { scopeOf, formScope } from './scope';
 import { formView } from './server';
 import { libraryPublication } from './publication';
 import { findLibraryForm } from './page-data';
@@ -26,6 +27,7 @@ import { ruleInForce } from '@/lib/law/rules';
 import { HEALTH_PROCEDURES } from '@/lib/health/procedures';
 import { PROFESSION_PROCEDURES } from '@/lib/professions/procedures';
 import { serviceDirectory } from '@/lib/exchange/services';
+import { AUTHORITIES } from '@/lib/nation/deployment';
 import { pagesOf } from '@/components/features/forms/answers';
 import { FormRenderer } from '@/components/features/forms/FormRenderer';
 import { PrintForm } from '@/components/features/forms/PrintForm';
@@ -41,7 +43,11 @@ type Src = keyof typeof SRC;
 const DOC = Object.fromEntries(Object.entries(SRC).map(([k, p]) => [k, readFileSync(join(ROOT, p), 'utf8').split('\n')])) as Record<Src, string[]>;
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 
-const IDS = [...range(1, 10).map(n => `HLT-FAC-${String(n).padStart(3, '0')}`), ...range(1, 14).map(n => `HLT-LIC-${String(n).padStart(3, '0')}`), 'HLT-PH-015'];
+const IDS_1 = [...range(1, 10).map(n => `HLT-FAC-${String(n).padStart(3, '0')}`), ...range(1, 14).map(n => `HLT-LIC-${String(n).padStart(3, '0')}`), 'HLT-PH-015'];
+// Batch 2: HLT-MED-016, 021 and 022 are excluded by the approved scope (docs/requirements/form-scope.json) and have no contract.
+const IDS_2 = [...range(1, 15), ...range(17, 20), 23, 24].map(n => `HLT-MED-${String(n).padStart(3, '0')}`);
+const IDS = [...IDS_1, ...IDS_2];
+const batchOf = (id: string) => (id.startsWith('HLT-MED') ? 2 : 1);
 
 // ── The catalogue text each form answers (held here, apart from the contracts) ──
 // Every form: Part 6's common rules (clinical confidentiality, the access model, the common health schema, validation, configuration and
@@ -51,10 +57,13 @@ const COMMON: Partial<Record<Src, number[]>> = {
   B: [...range(1699, 1710), 1756, ...range(1760, 1764), ...range(1769, 1774), ...range(1779, 1784), 1787, 1789, ...range(1792, 1799)],
   C: [...range(144, 156), ...range(2390, 2399)],
 };
-const FAMILY: Record<'FAC' | 'LIC' | 'PH', Partial<Record<Src, number[]>>> = {
+const FAMILY: Record<'FAC' | 'LIC' | 'PH' | 'MED', Partial<Record<Src, number[]>>> = {
   FAC: { A: [694, 723, 847, 866, 881, 894], D: [1323] },
   LIC: { A: [504, 694, 723, 847, 865, 881, 894], D: [1324, 1805] },
   PH: { A: [502, 601, 626, 633, 634, ...range(642, 647), 805, 807, 849, 859, 880, 892], D: [1328] },
+  // Part 6 §1 (the medicines regulator), §5 and §5.2's closing rule, the regulatory-authority validation, CFG-MED-001 … 003, the
+  // regulatory-integrity gate, deliverable 4; the specification's sector-regulator controls (its §9: it has no medicines archetype).
+  MED: { A: [505, 649, 688, 847, 862, 863, 864, 881, 893], D: [3237] },
 };
 const EXTRA: Record<string, Partial<Record<Src, number[]>>> = {
   'HLT-FAC-001': { D: [1334, 1335, ...range(1350, 1356), ...range(1359, 1362)], C: range(1559, 1564) },
@@ -79,6 +88,28 @@ const EXTRA: Record<string, Partial<Record<Src, number[]>>> = {
   'HLT-LIC-012': { D: [1816], A: [800] },
   'HLT-LIC-013': { D: [1816] },
   'HLT-LIC-014': { D: [1815, 1841], A: [807, 884] },
+  // Batch 2: Part 6 §5.2 (the regulated product record), §5.3 (safety and recall), HX-005, the exchange rule and gate; the supplement's
+  // Stage B HLT-MED-004 (a different, excluded form); the specification's supply-item register and sector-regulator workflow, records and appeals.
+  'HLT-MED-001': { A: range(677, 682) },
+  'HLT-MED-002': { A: [682] },
+  'HLT-MED-003': { A: [683], D: [3231] },
+  'HLT-MED-004': { C: [1494] },
+  'HLT-MED-006': { A: [684, 686, 687], D: [3233, 3234] },
+  'HLT-MED-007': { A: [684] },
+  'HLT-MED-008': { A: [685] },
+  'HLT-MED-009': { A: [685, 686], D: range(3228, 3235) },
+  'HLT-MED-010': { A: [681] },
+  'HLT-MED-011': { A: [681], D: [3231] },
+  'HLT-MED-012': { D: [3235] },
+  'HLT-MED-013': { D: [1326] },
+  'HLT-MED-014': { D: [1326] },
+  'HLT-MED-015': { A: [690, 692] },
+  'HLT-MED-017': { A: [685, 690, 692, 801, 807, 884], D: [1326] },
+  'HLT-MED-018': { A: [690], D: [1326, 3235] },
+  'HLT-MED-019': { A: range(677, 681) },
+  'HLT-MED-020': { A: [690, 692] },
+  'HLT-MED-023': { D: [2830, 3211, 3224, 3234] },
+  'HLT-MED-024': { A: [684, 687, 807, 884] },
 };
 
 /** The pieces of a line a contract must quote: table cells, list items and sentences. */
@@ -91,7 +122,7 @@ function pieces(line: string): string[] {
 }
 
 function linesFor(id: string): [Src, number][] {
-  const fam = id.startsWith('HLT-FAC') ? FAMILY.FAC : id.startsWith('HLT-LIC') ? FAMILY.LIC : FAMILY.PH;
+  const fam = id.startsWith('HLT-FAC') ? FAMILY.FAC : id.startsWith('HLT-LIC') ? FAMILY.LIC : id.startsWith('HLT-MED') ? FAMILY.MED : FAMILY.PH;
   const row = DOC.A.findIndex(l => l.startsWith(`${id}\t`)) + 1;
   const out: [Src, number][] = [];
   for (const set of [COMMON, fam, EXTRA[id] ?? {}, { A: [row] }]) for (const [k, ns] of Object.entries(set)) for (const n of ns ?? []) if (!out.some(([a, b]) => a === k && b === n)) out.push([k as Src, n]);
@@ -105,21 +136,24 @@ const applicantKeys = (f: CatalogueLibraryForm) => f.fields.filter(x => (x.audie
 /** No patient, clinical, treatment, diagnosis or individual health field: by key and by label. */
 const CLINICAL = /patient|clinical|clinician|diagnos|prescri|dispens|treatment|medication|symptom|medical record|health condition|care plan/i;
 
-describe('catalogue contracts, batch 1 (health regulation)', () => {
-  it('holds exactly the 25 approved forms, one contract each, matched to the catalogue row it names', () => {
+describe('catalogue contracts, batches 1 (health regulation) and 2 (medicines and medical devices regulation)', () => {
+  it('holds exactly the 25 + 21 approved forms, one contract each, matched to the catalogue row it names', () => {
+    expect(IDS_1.length).toBe(25);
+    expect(IDS_2.length).toBe(21);
     expect(CATALOGUE_CONTRACTS.map(f => f.specId).sort()).toEqual([...IDS].sort());
     const files = readdirSync(join(process.cwd(), 'src/lib/forms/library/catalogue-contracts')).filter(f => f.endsWith('.json'));
     expect(files.sort()).toEqual(IDS.map(i => `${i}.json`).sort());
     for (const f of CATALOGUE_CONTRACTS) {
       expect(f.catalogue.source).toBe(SRC.A);
       expect(DOC.A[f.catalogue.line - 1]!.startsWith(`${f.specId}\t`), f.specId).toBe(true);
-      expect(f.batch).toBe(1);
+      expect(f.batch).toBe(batchOf(f.specId));
+      expect(f.catalogue.batch).toBe(f.batch);
     }
     expect([...COMMON_ITEMS.applies_to].sort()).toEqual([...IDS].sort());
   });
 
   it('carries no status anywhere: the register status is derived, never written', () => {
-    for (const c of BATCH_1) {
+    for (const c of [...BATCH_1, ...BATCH_2]) {
       expect('status' in c, c.form_id).toBe(false);
       expect(JSON.stringify(c)).not.toMatch(/"(status|state|approved|approved_by|production)"\s*:/);
     }
@@ -173,7 +207,7 @@ describe('catalogue contracts, batch 1 (health regulation)', () => {
       });
 
       it('stays inside the approved scope: no patient, clinical or individual health field', () => {
-        expect(scopeOf(formIds(f.key, f.form), f.fields).status).toBe('allowed');
+        expect(formScope(f.key, f.form, f.fields).status).toBe('allowed');
         for (const x of flat(f.fields)) {
           expect(x.key, x.key).not.toMatch(CLINICAL);
           expect(x.label, x.key).not.toMatch(CLINICAL);
@@ -197,8 +231,8 @@ describe('catalogue contracts, batch 1 (health regulation)', () => {
         const c = f.json as unknown as Record<string, unknown>;
         const numbers: string[] = [];
         const walk = (v: unknown, at: string) => {
-          // Allowed: a validation rule's own bounds (a length, a whole number from 0, coordinates), a field group's version, and the contract's versions and catalogue line.
-          if (typeof v === 'number') { if (!/\.validation\.\d+\.params\b|^fields\.\d+\.version$|^form_version$|^procedure_package_version$|^catalogue\.(part|line)$/.test(at)) numbers.push(`${at}=${v}`); return; }
+          // Allowed: a validation rule's own bounds (a length, a whole number from 0, coordinates), a field group's version, and the contract's versions, catalogue line and batch.
+          if (typeof v === 'number') { if (!/\.validation\.\d+\.params\b|^fields\.\d+\.version$|^form_version$|^procedure_package_version$|^catalogue\.(part|line|batch)$/.test(at)) numbers.push(`${at}=${v}`); return; }
           if (Array.isArray(v)) v.forEach((x, i) => walk(x, `${at}.${i}`));
           else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) if (!(at === 'library' && k === 'catalogue_items')) walk(x, at ? `${at}.${k}` : k);
         };
@@ -307,5 +341,117 @@ describe('catalogue contracts, batch 1 (health regulation)', () => {
     expect(f.fields.find(x => x.key === 'return.period')!.type).toBe('dateRange');
     expect((f.fields.find(x => x.key === 'return.suppression')!.rules ?? []).some(r => r.rule === 'registered' && r.name === 'small_cell_suppression_from_policy')).toBe(true);
     expect(f.nationValues.find(v => v.kind === 'threshold')).toMatchObject({ source: 'setting' });
+  });
+
+  // ── Batch 2: medicines and medical devices regulation ──
+  const med = (id: string) => CATALOGUE_CONTRACTS.find(x => x.specId === id)!;
+  const words = (k: string) => k.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase().split(/[^a-z0-9]+/);
+
+  it('writes no contract for the excluded forms, and keeps the two HLT-MED-004s apart', () => {
+    for (const id of ['HLT-MED-016', 'HLT-MED-021', 'HLT-MED-022']) {
+      expect(CATALOGUE_CONTRACTS.find(x => x.specId === id), id).toBeUndefined();
+      expect(scopeOf([id], []).status, id).toBe('excluded');
+    }
+    // The supplement's Stage B HLT-MED-004 (a dispensing record) stays excluded by its bare ID; the field series' HLT-MED-004 is read against Part 6.
+    expect(scopeOf(['HLT-MED-004'], []).status).toBe('excluded');
+    const f = med('HLT-MED-004');
+    expect(f.form.catalogueSource).toBe(SRC.A);
+    expect(formScope(f.key, f.form, f.fields).status).toBe('allowed');
+    expect(f.deviations.map(d => d.id)).toContain('stage-b-id');
+    // A form that names the supplement as its source is excluded under that ID.
+    expect(formScope(f.key, { ...f.form, catalogueSource: SRC.C }, f.fields).status).toBe('excluded');
+  });
+
+  it('keeps the safety and incident reports to the product: no person reported on, no structured clinical field, the concern restricted with a hint', () => {
+    for (const id of ['HLT-MED-015', 'HLT-MED-020']) {
+      const f = med(id);
+      expect(formScope(f.key, f.form, f.fields).status, id).toBe('allowed');
+      // The only person is the reporter (optional, restricted): no party or person question, no field about anyone else.
+      expect(flat(f.fields).filter(x => ['party', 'person'].includes(x.type)).map(x => x.key), id).toEqual([]);
+      for (const x of flat(f.fields)) {
+        expect(words(x.key).filter(w => ['reaction', 'outcome', 'harm', 'injury', 'death', 'age', 'sex', 'gender', 'birth', 'weight', 'dose', 'hospital', 'condition', 'history'].includes(w)), `${id} ${x.key}`).toEqual([]);
+        if (/^reporter\.(name|contact|anonymous)$/.test(x.key)) expect(x.personalDataClass, x.key).toBe('restricted');
+      }
+      const text = f.fields.find(x => x.key === (id === 'HLT-MED-015' ? 'report.concern' : 'incident.description'))!;
+      expect(text.type).toBe('longtext');
+      expect(text.personalDataClass).toBe('restricted');
+      expect(text.hint).toMatch(/Do not give anyone's name, identity or medical details/);
+      expect(f.fields.find(x => /\.(category)$/.test(x.key))!.personalDataClass).toBe('restricted');
+      const dev = f.deviations.find(d => d.id === 'product-level-only')!;
+      expect(dev.rule).toMatch(/no patient or clinical field anywhere/);
+      expect(dev.rule).toMatch(/HLT-MED-016/);
+      expect(f.deviations.map(d => d.id)).toContain('no-ai-finding');
+    }
+  });
+
+  it('authorises controlled medicines for an organisation, a product and a quantity, never a named patient', () => {
+    const f = med('HLT-MED-014');
+    expect(f.fields.find(x => x.key === 'controlled.organisation')!.type).toBe('registryReference');
+    const lines = f.fields.find(x => x.key === 'controlled.lines')!;
+    expect(lines.items!.map(i => i.key)).toEqual(['product', 'substance', 'strengthForm', 'quantity']);
+    expect((lines.rules ?? []).some(r => r.rule === 'registered' && r.name === 'controlled_quantity_limit_from_rule')).toBe(true);
+    // No person is named but whoever acts for the organisation (core.representation).
+    expect(flat(f.fields).filter(x => ['party', 'person'].includes(x.type)).map(x => x.key)).toEqual(['representation.actor']);
+    // The one person reference is the responsible professional, on the professional register.
+    expect(flat(f.fields).filter(x => x.personalDataClass === 'personal' && !x.group).map(x => [x.key, x.register])).toEqual([['controlled.responsible_professional', 'professional']]);
+    expect(f.deviations.map(d => d.id)).toContain('no-named-person');
+    expect(f.nationValues.find(v => v.kind === 'threshold')).toMatchObject({ key: 'medicines.controlled.quantity-limits', source: 'setting' });
+  });
+
+  it('ships no classification, power or period: each list the law decides is the nation\'s, named, with its standard', () => {
+    // Lists that are a classification or a power never ship values; each such field names the decision (and, for a classification, the standard).
+    const NATION_LISTS = ['medicines.country.application_kinds', 'medicines.country.product_categories', 'medicines.country.dosage_forms', 'medicines.country.routes', 'medicines.country.atc_codes',
+      'medicines.country.supply_categories', 'medicines.country.dossier_formats', 'medicines.country.authorisation_outcomes', 'medicines.country.public_product_fields', 'medicines.country.variation_categories',
+      'medicines.country.enforcement_measures', 'medicines.country.good_practice_standards', 'medicines.country.deficiency_grades', 'medicines.country.entry_points', 'medicines.country.controlled_schedules',
+      'medicines.country.recall_classes', 'medicines.country.device_risk_classes', 'medicines.country.device_nomenclature', 'medicines.country.review_routes'];
+    const STANDARDS: Record<string, RegExp> = {
+      'medicines.country.dosage_forms': /EDQM Standard Terms/, 'medicines.country.routes': /EDQM Standard Terms/, 'medicines.country.atc_codes': /WHO ATC/,
+      'medicines.country.device_risk_classes': /IMDRF/, 'medicines.country.device_nomenclature': /GMDN/, 'medicines.country.good_practice_standards': /WHO|PIC\/S/,
+      'medicines.country.controlled_schedules': /Single Convention/, 'medicines.country.dossier_formats': /Common Technical Document/,
+    };
+    const seen = new Set<string>();
+    for (const id of IDS_2) {
+      const f = med(id);
+      for (const name of NATION_LISTS) expect(f.form.lists?.[name], `${id} ships ${name}`).toBeUndefined();
+      for (const x of flat(f.fields)) {
+        if (!x.valuesSourceId || !NATION_LISTS.includes(x.valuesSourceId)) continue;
+        seen.add(x.valuesSourceId);
+        expect(x.countryDecision ?? '', `${id} ${x.key}`).toMatch(/none ship|CFG-|law/i);
+        if (STANDARDS[x.valuesSourceId]) expect(x.countryDecision ?? '', `${id} ${x.key}`).toMatch(STANDARDS[x.valuesSourceId]!);
+        if ((x.rules ?? []).some(r => r.rule === 'registered' && r.name === 'classification_value_from_configured_standard')) expect(x.countryDecision ?? '', x.key).toMatch(/Expected source:/);
+      }
+      // Fees, periods, timelines and deadlines are named as the nation's and none is set.
+      for (const v of f.nationValues) expect(['fee', 'days', 'period', 'threshold'], `${id} ${v.key}`).toContain(v.kind);
+    }
+    expect([...seen].sort()).toEqual([...NATION_LISTS].sort());
+    // The recall class is set by the regulator from the nation's classes; the recall's deadlines are a binding rule.
+    const recall = med('HLT-MED-017');
+    expect(recall.fields.find(x => x.key === 'recall.class_set')!.audience).toBe('officer');
+    expect(recall.fields.find(x => x.key === 'recall.deadlines')!.rules!.some(r => r.rule === 'registered' && r.name === 'recall_timeline_from_rule')).toBe(true);
+    expect(med('HLT-MED-006').fields.find(x => x.key === 'decision.expiry')!.rules!.some(r => r.rule === 'registered' && r.name === 'authorisation_validity_from_rule')).toBe(true);
+  });
+
+  it('takes authority from the deployment profile: the health regulator slot stands for the medicines regulator until one exists', () => {
+    expect(AUTHORITIES.some(a => /medicine/i.test(`${a.key} ${a.label}`))).toBe(false);
+    for (const id of IDS_2) {
+      const f = med(id);
+      expect(f.owner, id).toBe('healthRegulation');
+      expect(f.authorityNote ?? '', id).toMatch(/no medicines-regulator slot/);
+      expect(f.deviations.map(d => d.id), id).toContain('medicines-authority-slot');
+      expect(f.procedure, id).toBeNull();
+    }
+  });
+
+  it('keeps dossier content with the regulator and the public product check to what may be published', () => {
+    for (const [id, key] of [['HLT-MED-001', 'application.dossier'], ['HLT-MED-002', 'dossier.files'], ['HLT-MED-002', 'dossier.parts'], ['HLT-MED-001', 'product.composition'], ['HLT-MED-003', 'assessment.findings'], ['HLT-MED-010', 'site.master_file'], ['HLT-MED-019', 'device.technical_documentation']] as const) {
+      expect(med(id).fields.find(x => x.key === key)!.personalDataClass, `${id} ${key}`).toBe('restricted');
+    }
+    // Only names are public in the applications; everything else is published only as the product's public information classification allows.
+    for (const id of ['HLT-MED-001', 'HLT-MED-019']) expect(flat(med(id).fields).filter(x => x.personalDataClass === 'public').map(x => x.key), id).toEqual([id === 'HLT-MED-001' ? 'product.name' : 'device.name']);
+    const check = med('HLT-MED-024');
+    for (const x of flat(check.fields)) expect(['public', 'administrative'], x.key).toContain(x.personalDataClass);
+    expect(check.fields.find(x => x.key === 'check.answer')!).toMatchObject({ personalDataClass: 'public', audience: 'officer' });
+    expect(check.form.policies?.['answer.public_fields']).toMatch(/public information classification/);
+    expect(med('HLT-MED-006').fields.find(x => x.key === 'decision.public_disclosure')!.valuesSourceId).toBe('medicines.country.public_product_fields');
   });
 });

@@ -39,7 +39,7 @@ import type { Case, CasePackage } from '@/lib/casework/types';
 import { registerIntakeGuard } from '@/lib/casework/engine';
 import { DATA_CLASSES, fieldClass, translationStatus, type ContractDocument, type ContractField, type FormSpec } from './contract';
 import { RULE_REGISTRY } from './rules';
-import { formIds, scopeOf, type ScopeFinding } from './scope';
+import { formScope, type ScopeFinding } from './scope';
 
 /** The register statuses of the owner's direction (§2). */
 export type FormStatus = 'catalogued' | 'contract_missing' | 'contract_draft' | 'under_review' | 'blocked' | 'excluded' | 'approved' | 'production';
@@ -109,7 +109,7 @@ const CLASS_KEYS = DATA_CLASSES.map(c => c.key);
 
 /** The procedure's scope finding: its key, its specification and catalogue ids, its fields. */
 export function packageScope(p: Pick<CasePackage, 'key' | 'fields' | 'form'>): ScopeFinding {
-  return scopeOf(formIds(p.key, p.form), p.fields);
+  return formScope(p.key, p.form, p.fields);
 }
 
 /** The automatic gates: everything the platform verifies itself. */

@@ -1,0 +1,1401 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-MED-001",
+ "record_type": "medicines.marketing-authorisation.application",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-MED-002: the marketing authorisation procedure, the kinds of application, the evidence and dossier format required and the authority that decides.",
+  "The application fee: an approved fee rule (lib/law/rules.ts); none ships.",
+  "The time the law allows for assessment and decision, and whether the clock stops while the applicant answers: set by the nation (shipped unset).",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records.",
+  "CFG-MED-001: medicines and medical-device classifications, each from the standard the nation adopts.",
+  "CFG-MED-003: inspection, safety reporting and recall authority."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-MED-001",
+  "part": 6,
+  "section": "5.1",
+  "line": 652,
+  "batch": 2
+ },
+ "library": {
+  "title": "Apply for a marketing authorisation for a medicine",
+  "intro": "Apply for authorisation to place a medicine on the market. The applicant becomes the authorisation holder and must be an organisation in the register of organisations. The regulator registers the application, assesses the dossier and decides. The form asks about the product, its composition, presentation and manufacture, never about any patient.",
+  "owner": "healthRegulation",
+  "filled_by": "The proposed authorisation holder (a registered organisation) or someone acting for it, online, at an office or on paper.",
+  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "procedure": null,
+  "intended": "A marketing authorisation procedure of the medicines regulator (registration, dossier versions HLT-MED-002, assessment HLT-MED-003, requests and responses HLT-MED-004/005, decision HLT-MED-006) on a product register: not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "medicines.country.manufacturing_activities": {
+    "values": [
+     {
+      "value": "finished-product",
+      "label": "Manufacture of the finished product"
+     },
+     {
+      "value": "active-substance",
+      "label": "Manufacture of an active substance"
+     },
+     {
+      "value": "packaging",
+      "label": "Packaging and labelling"
+     },
+     {
+      "value": "testing",
+      "label": "Quality control testing"
+     },
+     {
+      "value": "batch-release",
+      "label": "Batch release"
+     },
+     {
+      "value": "sterilisation",
+      "label": "Sterilisation"
+     },
+     {
+      "value": "device-assembly",
+      "label": "Device manufacture or assembly"
+     }
+    ],
+    "proposed": true
+   },
+   "medicines.country.ingredient_roles": {
+    "values": [
+     {
+      "value": "active",
+      "label": "Active substance"
+     },
+     {
+      "value": "excipient",
+      "label": "Other ingredient (excipient)"
+     }
+    ],
+    "proposed": true
+   },
+   "medicines.country.other_authorisation_status": {
+    "values": [
+     {
+      "value": "granted",
+      "label": "Granted"
+     },
+     {
+      "value": "pending",
+      "label": "Pending"
+     },
+     {
+      "value": "refused",
+      "label": "Refused"
+     },
+     {
+      "value": "withdrawn",
+      "label": "Withdrawn"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "medicines.marketing-authorisation.application-fee",
+    "kind": "fee",
+    "source": "rule",
+    "decision": "The marketing authorisation application fee, by kind of application."
+   },
+   {
+    "key": "medicines.marketing-authorisation.assessment-time",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The time the law allows for assessment and decision, and when the clock stops."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: records of products, of organisations (holders, manufacturers, importers) and of the regulator's decisions.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "medicines-authority-slot",
+    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
+    "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
+   },
+   {
+    "id": "no-product-register",
+    "what": "The regulated product record (Part 6 §5.2) is not on the platform yet: a reference to an authorised product is recorded as given and its check recorded as not performed, a product's status is shown nowhere until the regulator's product register exists, and it is never inferred from an import, inventory or procurement record",
+    "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
+    "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 505,
+    "quotes": [
+     "Medicines regulator",
+     "Medicines, medical devices, safety, and market authorization",
+     "Regulatory dossiers have their own access and disclosure rules"
+    ],
+    "met_by": {
+     "deviation": "medicines-authority-slot",
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Dossier, assessment, report and inspection content is restricted: read only at the institution responsible, every read of personal data in the access log"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 649,
+    "quotes": [
+     "The medicines regulator needs a separate workflow from clinical prescribing and hospital pharmacy operations.",
+     "Product authorization, manufacturing oversight, import authorization, safety reporting, and enforcement decisions must be managed under configured national law."
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002",
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "Apart from prescribing and pharmacy operations: no prescribing, dispensing or patient field in any form of this batch (the scope check runs on every key)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 688,
+    "quotes": [
+     "A marketing authorization must not be inferred from a product's appearance in an import record, hospital inventory, or procurement system.",
+     "Each status must derive from the competent regulator's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "An authorisation or licence reference must be active in its register (REF-ACTIVE); the approved permit mapping and its review path decide, and production refuses a power no approved mapping covers"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 862,
+    "quotes": [
+     "CFG-MED-001",
+     "Medicines and medical-device classifications"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 863,
+    "quotes": [
+     "CFG-MED-002",
+     "Marketing authorization and product variation procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 864,
+    "quotes": [
+     "CFG-MED-003",
+     "Inspection, safety reporting, and recall authority"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-003"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register",
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Holders, manufacturers and importers are organisations: their standing comes only from the register the competent authority keeps; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 893,
+    "quotes": [
+     "Medicines and devices regulatory service — applications, assessments, authorizations, inspections, safety reporting, and recalls."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Applications, assessments, authorisations, inspections, safety reporting and recalls are the contracts of batch 2; the service that runs them waits for plan step I4"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 677,
+    "quotes": [
+     "Each regulated product should have:"
+    ],
+    "met_by": {
+     "fields": [
+      "product.name",
+      "product.category",
+      "application.applicant"
+     ],
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 678,
+    "quotes": [
+     "A stable product identifier and configured classification."
+    ],
+    "met_by": {
+     "fields": [
+      "product.category",
+      "product.atc",
+      "product.dosage_form"
+     ],
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 679,
+    "quotes": [
+     "The applicant and responsible authorization holder."
+    ],
+    "met_by": {
+     "fields": [
+      "application.applicant",
+      "application.local_representative"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 680,
+    "quotes": [
+     "Product name, ingredients or components where required, and presentation."
+    ],
+    "met_by": {
+     "fields": [
+      "product.name",
+      "product.composition",
+      "product.presentation"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 681,
+    "quotes": [
+     "Manufacturing sites and relevant certificates."
+    ],
+    "met_by": {
+     "fields": [
+      "manufacturing.sites",
+      "manufacturing.certificates"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 682,
+    "quotes": [
+     "Dossier references, versions, and submission history."
+    ],
+    "met_by": {
+     "fields": [
+      "application.dossier",
+      "application.dossier_format"
+     ],
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Later versions and the submission history are HLT-MED-002 (each version kept, never overwritten)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 652,
+    "quotes": [
+     "HLT-MED-001",
+     "Marketing authorization application",
+     "Product application registered"
+    ],
+    "met_by": {
+     "fields": [
+      "application.applicant",
+      "product.name"
+     ],
+     "platform": {
+      "file": "app/src/lib/forms/receipt.ts",
+      "how": "Registered: a reference and receipt on submission"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3237,
+    "quotes": [
+     "Controls: a supervisory employee should not be able to change an approved tariff, impose a sanction or revoke a licence without the required authority and approvals.",
+     "Confidential commercial information and protected supervisory returns must not become public simply because the regulator has a public website."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A suspension, withdrawal or other sanction needs the power an approved mapping gives, decided in a case by an official who can sign; dossier, report and inspection content is restricted and never on a public page or list"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "application.applicant",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "organisation_identity_consistent",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "legal_entity_registration",
+     "when": "when_the_organisation_record_must_be_verified_under_the_approved_procedure"
+    }
+   ],
+   "label": {
+    "en": "Applicant's organisation registration number"
+   },
+   "hint": {
+    "en": "The organisation as it stands in the register of organisations. A holder, manufacturer or importer is an organisation there, never a second identity."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the applicant's organisation registration number.",
+     "reference_exists": "There is no organisation with that number in the register.",
+     "REF-ACTIVE": "That organisation is not active in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The applicant"
+   }
+  },
+  {
+   "use_group": "core.representation",
+   "version": 1,
+   "only": [
+    "representation.capacity",
+    "representation.actor",
+    "representation.authority_document"
+   ],
+   "section": {
+    "en": "Who is applying"
+   }
+  },
+  {
+   "id": "application.local_representative",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "configured_profile",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Local representative's organisation registration number, if the law requires one"
+   },
+   "hint": {
+    "en": "Where the applicant is established abroad and the nation's law requires a local representative."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no organisation with that number in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The applicant"
+   }
+  },
+  {
+   "id": "application.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.application_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Kind of application"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the kind of application.",
+     "value_in_source": "Select the kind of application from the list."
+    }
+   },
+   "country_decision": "CFG-MED-002: the kinds of marketing authorisation application the nation's law provides (for example a new active substance, a generic or a reliance route); none ship.",
+   "section": {
+    "en": "The application"
+   }
+  },
+  {
+   "id": "product.name",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "public",
+   "evidence": [],
+   "label": {
+    "en": "Proposed product name"
+   },
+   "hint": {
+    "en": "The name it will be sold under. Once authorised, the name may be published."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the proposed product name.",
+     "length": "Proposed product name must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The product"
+   }
+  },
+  {
+   "id": "product.category",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "classification_value_from_configured_standard",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.product_categories",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Kind of product"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the kind of product.",
+     "value_in_source": "Select the kind of product from the list."
+    }
+   },
+   "country_decision": "CFG-MED-001: the kinds of medicinal product the law regulates. Expected source: the nation's own classification of medicinal products, as the nation adopts it. None ships.",
+   "section": {
+    "en": "The product"
+   }
+  },
+  {
+   "id": "product.dosage_form",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "classification_value_from_configured_standard",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.dosage_forms",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Dosage form"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the dosage form.",
+     "value_in_source": "Select the dosage form from the list."
+    }
+   },
+   "country_decision": "CFG-MED-001: the dosage forms. Expected source: EDQM Standard Terms (pharmaceutical dose forms), as the nation adopts it. None ships.",
+   "section": {
+    "en": "The product"
+   }
+  },
+  {
+   "id": "product.routes",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "classification_value_from_configured_standard",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.routes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Route of administration"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the route of administration.",
+     "value_in_source": "Select the route of administration from the list."
+    }
+   },
+   "country_decision": "CFG-MED-001: the routes of administration. Expected source: EDQM Standard Terms (routes and methods of administration), as the nation adopts it. None ships.",
+   "multiple": true,
+   "section": {
+    "en": "The product"
+   }
+  },
+  {
+   "id": "product.strength",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Strength"
+   },
+   "hint": {
+    "en": "As it will be on the label, for each strength applied for."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the strength.",
+     "length": "Strength must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The product"
+   }
+  },
+  {
+   "id": "product.atc",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "classification_value_from_configured_standard",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.atc_codes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Therapeutic classification code, if you know it"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select the therapeutic classification code, if you know it from the list."
+    }
+   },
+   "country_decision": "CFG-MED-001: the anatomical therapeutic chemical classification. Expected source: the WHO ATC classification, as the nation adopts it. None ships.",
+   "section": {
+    "en": "The product"
+   }
+  },
+  {
+   "id": "product.supply_category",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "classification_value_from_configured_standard",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.supply_categories",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Proposed legal supply category"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the proposed legal supply category.",
+     "value_in_source": "Select the proposed legal supply category from the list."
+    }
+   },
+   "country_decision": "CFG-MED-001: the legal supply categories. Expected source: the nation's medicines law (its schedules of supply), as the nation adopts it. None ships.",
+   "section": {
+    "en": "The product"
+   }
+  },
+  {
+   "id": "product.composition",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "configured_profile",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Composition"
+   },
+   "hint": {
+    "en": "Each ingredient, per unit. The full formula is commercially confidential and stays with the regulator; what is published is decided with the authorisation."
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the composition."
+    }
+   },
+   "country_decision": "CFG-MED-002: which ingredients must be declared and in what detail.",
+   "multiple": true,
+   "items": [
+    {
+     "id": "substance",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Ingredient"
+     },
+     "hint": {
+      "en": "The common name (INN) of an active substance, where it has one."
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the ingredient.",
+       "length": "Ingredient must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "role",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "medicines.country.ingredient_roles",
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Role"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the role."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "amount",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 120
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Amount per unit"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the amount per unit.",
+       "length": "Amount per unit must be 120 characters or fewer."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Composition"
+   }
+  },
+  {
+   "id": "product.presentation",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Presentations (packs)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the presentations (packs)."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "pack",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Pack"
+     },
+     "hint": {
+      "en": "For example a carton of blisters, a bottle or a vial, and how many units it holds."
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the pack.",
+       "length": "Pack must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "container",
+     "type": "text",
+     "required": false,
+     "validation": [
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Container and closure"
+     },
+     "error_text": {
+      "en": {
+       "length": "Container and closure must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "shelfLife",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 120
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Proposed shelf life"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the proposed shelf life.",
+       "length": "Proposed shelf life must be 120 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "storage",
+     "type": "text",
+     "required": false,
+     "validation": [
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Storage conditions"
+     },
+     "error_text": {
+      "en": {
+       "length": "Storage conditions must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Composition"
+   }
+  },
+  {
+   "id": "manufacturing.sites",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Manufacturing sites"
+   },
+   "hint": {
+    "en": "One entry for each site. Each site is an organisation in the register of organisations."
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the manufacturing sites."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "site",
+     "type": "registry_reference",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "civicos.registry.organisation",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Site's organisation registration number"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the site's organisation registration number."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "activity",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "medicines.country.manufacturing_activities",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "What the site does for this product"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select what the site does for this product."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "certificate",
+     "type": "text",
+     "required": false,
+     "validation": [
+      {
+       "rule": "length",
+       "params": {
+        "max": 120
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Good-practice certificate number, if it has one"
+     },
+     "error_text": {
+      "en": {
+       "length": "Good-practice certificate number, if it has one must be 120 characters or fewer."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Manufacture"
+   }
+  },
+  {
+   "id": "manufacturing.certificates",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "gmp_certificate",
+     "when": "for_each_site_as_required_by_the_approved_procedure"
+    }
+   ],
+   "label": {
+    "en": "Good-practice certificates of the sites"
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide the good-practice certificates of the sites."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Manufacture"
+   }
+  },
+  {
+   "id": "application.other_authorisations",
+   "type": "group",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Authorisations of this product elsewhere"
+   },
+   "hint": {
+    "en": "Other regulators that have authorised, refused or are assessing the same product."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "country",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "iso.3166-1.alpha2.current",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Country"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the country."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "authority",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Regulator"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the regulator.",
+       "length": "Regulator must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "number",
+     "type": "text",
+     "required": false,
+     "validation": [
+      {
+       "rule": "length",
+       "params": {
+        "max": 120
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Its number, if any"
+     },
+     "error_text": {
+      "en": {
+       "length": "Its number, if any must be 120 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "status",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "medicines.country.other_authorisation_status",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Status there"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the status there."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Manufacture"
+   }
+  },
+  {
+   "id": "application.dossier",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "dossier",
+     "when": "as_required_by_the_approved_marketing_authorisation_procedure"
+    }
+   ],
+   "label": {
+    "en": "The dossier"
+   },
+   "hint": {
+    "en": "Its first version. Later versions are submitted as dossier versions (HLT-MED-002). The content is commercially confidential and read only by the regulator."
+   },
+   "error_text": {
+    "en": {
+     "required": "Say how you will provide the the dossier."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Dossier"
+   }
+  },
+  {
+   "id": "application.dossier_format",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "classification_value_from_configured_standard",
+     "params": {}
+    }
+   ],
+   "values_source": "medicines.country.dossier_formats",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Format of the dossier"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select the format of the dossier.",
+     "value_in_source": "Select the format of the dossier from the list."
+    }
+   },
+   "country_decision": "CFG-MED-002: the dossier formats the regulator accepts. Expected source: the ICH M4 Common Technical Document or the nation's own format, as the nation adopts it. None ships.",
+   "section": {
+    "en": "Dossier"
+   }
+  },
+  {
+   "use_group": "core.payment",
+   "version": 1,
+   "section": {
+    "en": "Fee"
+   }
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "application.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

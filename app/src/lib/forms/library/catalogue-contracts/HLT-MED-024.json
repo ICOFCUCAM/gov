@@ -1,0 +1,483 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-MED-024",
+ "record_type": "medicines.product.verification.request",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-HX-001: the institutions and purposes approved for a product-status exchange service.",
+  "The public information classification of products: what the public check may show.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records.",
+  "CFG-MED-001: medicines and medical-device classifications, each from the standard the nation adopts.",
+  "CFG-MED-002: marketing authorisation and product variation procedures.",
+  "CFG-MED-003: inspection, safety reporting and recall authority."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-MED-024",
+  "part": 6,
+  "section": "5.1",
+  "line": 675,
+  "batch": 2
+ },
+ "library": {
+  "title": "Check a medicine's or device's authorisation",
+  "intro": "Check whether a medicine or medical device is authorised. Give its authorisation or registration number and its name as on the pack. The answer shows only what the product's public information classification allows: the name, the number, the holder, the status and its dates. Dossier content is never shown.",
+  "owner": "healthRegulation",
+  "filled_by": "Anyone (a public check), or an institution through a product-status exchange service for an approved purpose.",
+  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "procedure": null,
+  "intended": "A public product check and a product-status exchange service of the medicines regulator, answered from the product register; no case is opened. Not built: the form waits in the library (plan step I4).",
+  "lists": {
+   "civicos.verification.requester_kinds": {
+    "values": [
+     {
+      "value": "public",
+      "label": "A member of the public"
+     },
+     {
+      "value": "institution",
+      "label": "An institution, for an approved purpose"
+     }
+    ]
+   }
+  },
+  "policies": {
+   "answer.public_fields": "only what the product's public information classification allows (HLT-MED-006 decision.public_disclosure); never dossier, assessment, inspection or report content"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "no-case",
+    "what": "A status response, not a case: the check answers at once and logs the request",
+    "why": "A verification decides nothing; the regulator's product record is the authoritative record.",
+    "rule": "CLAUDE.md Organisations and Government operating model: the twin and checks never create authoritative facts"
+   },
+   {
+    "id": "no-product-service",
+    "what": "No product-status exchange service exists yet (lib/exchange/services.ts has none for products): when one is approved it is a versioned contract with its purpose and permitted fields, called only by approved integrations",
+    "why": "An exchange service needs the product register it reads and an approval by two officials.",
+    "rule": "CLAUDE.md Government operating model: exchange services and their approval; Integration register"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: records of products, of organisations (holders, manufacturers, importers) and of the regulator's decisions.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "medicines-authority-slot",
+    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
+    "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
+   },
+   {
+    "id": "no-product-register",
+    "what": "The regulated product record (Part 6 §5.2) is not on the platform yet: a reference to an authorised product is recorded as given and its check recorded as not performed, a product's status is shown nowhere until the regulator's product register exists, and it is never inferred from an import, inventory or procurement record",
+    "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
+    "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 505,
+    "quotes": [
+     "Medicines regulator",
+     "Medicines, medical devices, safety, and market authorization",
+     "Regulatory dossiers have their own access and disclosure rules"
+    ],
+    "met_by": {
+     "deviation": "medicines-authority-slot",
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Dossier, assessment, report and inspection content is restricted: read only at the institution responsible, every read of personal data in the access log"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 649,
+    "quotes": [
+     "The medicines regulator needs a separate workflow from clinical prescribing and hospital pharmacy operations.",
+     "Product authorization, manufacturing oversight, import authorization, safety reporting, and enforcement decisions must be managed under configured national law."
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002",
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "Apart from prescribing and pharmacy operations: no prescribing, dispensing or patient field in any form of this batch (the scope check runs on every key)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 688,
+    "quotes": [
+     "A marketing authorization must not be inferred from a product's appearance in an import record, hospital inventory, or procurement system.",
+     "Each status must derive from the competent regulator's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "An authorisation or licence reference must be active in its register (REF-ACTIVE); the approved permit mapping and its review path decide, and production refuses a power no approved mapping covers"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 862,
+    "quotes": [
+     "CFG-MED-001",
+     "Medicines and medical-device classifications"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 863,
+    "quotes": [
+     "CFG-MED-002",
+     "Marketing authorization and product variation procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 864,
+    "quotes": [
+     "CFG-MED-003",
+     "Inspection, safety reporting, and recall authority"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-003"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register",
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Holders, manufacturers and importers are organisations: their standing comes only from the register the competent authority keeps; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 893,
+    "quotes": [
+     "Medicines and devices regulatory service — applications, assessments, authorizations, inspections, safety reporting, and recalls."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Applications, assessments, authorisations, inspections, safety reporting and recalls are the contracts of batch 2; the service that runs them waits for plan step I4"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 684,
+    "quotes": [
+     "Authorization status, scope, conditions, effective date, and expiry where applicable."
+    ],
+    "met_by": {
+     "fields": [
+      "check.answer"
+     ],
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 687,
+    "quotes": [
+     "Public information classification and permitted disclosures."
+    ],
+    "met_by": {
+     "fields": [
+      "check.answer"
+     ],
+     "policy": "answer.public_fields"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 807,
+    "quotes": [
+     "Each exchange must have a versioned contract, authenticated sender and recipient, documented purpose, permitted field list, and auditable receipt.",
+     "A connection between two institutions does not automatically authorize every possible data exchange between them."
+    ],
+    "met_by": {
+     "deviation": "no-product-service",
+     "platform": {
+      "file": "app/src/lib/exchange/services.ts",
+      "how": "Exchange services are versioned, called only by approved integrations for an approved purpose, logged"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 884,
+    "quotes": [
+     "Interoperability: Every cross-institution exchange has a versioned contract and explicit authority."
+    ],
+    "met_by": {
+     "deviation": "no-product-service"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 675,
+    "quotes": [
+     "HLT-MED-024",
+     "Regulatory product-status verification",
+     "Authorized status response"
+    ],
+    "met_by": {
+     "fields": [
+      "check.answer"
+     ],
+     "deviation": "no-case",
+     "policy": "answer.public_fields"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3237,
+    "quotes": [
+     "Controls: a supervisory employee should not be able to change an approved tariff, impose a sanction or revoke a licence without the required authority and approvals.",
+     "Confidential commercial information and protected supervisory returns must not become public simply because the regulator has a public website."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A suspension, withdrawal or other sanction needs the power an approved mapping gives, decided in a case by an official who can sign; dossier, report and inspection content is restricted and never on a public page or list"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "check.number",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Authorisation or registration number"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the authorisation or registration number."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The product"
+   }
+  },
+  {
+   "id": "check.name",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "public",
+   "evidence": [],
+   "label": {
+    "en": "Name of the product, as on the pack"
+   },
+   "hint": {
+    "en": "The answer is given only when the name matches the register."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the name of the product, as on the pack.",
+     "length": "Name of the product, as on the pack must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The product"
+   }
+  },
+  {
+   "id": "check.requester_kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.verification.requester_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Who is asking?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The check"
+   }
+  },
+  {
+   "id": "check.institution",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "check.requester_kind",
+      "equals": "institution"
+     }
+    },
+    {
+     "rule": "actor_authorized_for_exchange",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Your institution"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter your institution."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The check"
+   }
+  },
+  {
+   "id": "check.purpose",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "check.requester_kind",
+      "equals": "institution"
+     }
+    },
+    {
+     "rule": "purpose_authorized_for_relationship",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.verification.purposes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Purpose of the check"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select the purpose of the check."
+    }
+   },
+   "country_decision": "CFG-HX-001: the purposes approved for each institution that calls the product-status service.",
+   "section": {
+    "en": "The check"
+   }
+  },
+  {
+   "id": "check.answer",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "public",
+   "evidence": [],
+   "label": {
+    "en": "Answer"
+   },
+   "hint": {
+    "en": "Given by the platform from the product register: only the fields the product's public information classification allows."
+   },
+   "country_decision": null
+  }
+ ]
+}

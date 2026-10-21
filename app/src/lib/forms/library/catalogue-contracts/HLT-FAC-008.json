@@ -17,7 +17,8 @@
   "id": "HLT-FAC-008",
   "part": 6,
   "section": "6.2",
-  "line": 720
+  "line": 720,
+  "batch": 1
  },
  "library": {
   "title": "Open a review to suspend or revoke a facility licence",

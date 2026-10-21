@@ -1,0 +1,667 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HLT-MED-012",
+ "record_type": "medicines.good-practice.corrective-action-plan",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-MED-003: corrective-action procedures after an inspection and the periods within which each grade of deficiency must be corrected.",
+  "CFG-HLT-001: the health institutions, their jurisdictions and which of them owns these records (named under Who is responsible).",
+  "CFG-DAT-001: the classification, retention and disclosure rules for these records.",
+  "CFG-MED-001: medicines and medical-device classifications, each from the standard the nation adopts.",
+  "CFG-MED-002: marketing authorisation and product variation procedures."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+  "id": "HLT-MED-012",
+  "part": 6,
+  "section": "5.1",
+  "line": 663,
+  "batch": 2
+ },
+ "library": {
+  "title": "Submit a corrective action plan after a good-practice inspection",
+  "intro": "The site's plan to put right what a good-practice inspection found: for each finding, the cause, the corrective and preventive action, who in the site is responsible for it (a role, not a name) and the date it will be done. The regulator accepts the plan or sets other dates within the periods the law allows, and tracks each action to completion.",
+  "owner": "healthRegulation",
+  "filled_by": "The inspected site's manufacturer or someone acting for it; the regulator accepts it or sets the deadlines at a step of its own.",
+  "authority": "The medicines regulator the nation names under Who is responsible. The deployment profile has no medicines-regulator slot yet, so the health regulator slot (healthRegulation) stands for it; each power over a product type comes from the approved permit authority mapping; never a ministry by name.",
+  "procedure": null,
+  "intended": "Follow-up of a good-practice inspection (HLT-MED-011) by the medicines regulator: a corrective-action follow-up procedure is not built; the form waits in the library (plan step I4).",
+  "lists": {
+   "medicines.country.action_status": {
+    "values": [
+     {
+      "value": "planned",
+      "label": "Planned"
+     },
+     {
+      "value": "in-progress",
+      "label": "In progress"
+     },
+     {
+      "value": "completed",
+      "label": "Completed"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "medicines.inspection.corrective-action-period",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The period within which each grade of deficiency must be corrected."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "deadlines-assigned",
+    "what": "\"Corrective action tracked\": the site proposes the dates and reports progress; the regulator accepts them or sets others at its own step (officer field), within the periods the nation's rules set",
+    "why": "No corrective-action procedure exists yet, and a deadline is the regulator's act, never the site's.",
+    "rule": "CLAUDE.md Government operating model: a status change is an authorised action"
+   },
+   {
+    "id": "no-patient-data",
+    "what": "Patient consent, emergency clinical access and a shared patient reference do not arise: the form carries no patient, clinical, treatment, diagnosis or individual health field",
+    "why": "Allowed scope only: records of products, of organisations (holders, manufacturers, importers) and of the regulator's decisions.",
+    "rule": "CLAUDE.md Health: no patient or clinical field anywhere, no national patient record; owner's direction 2026-10-21 §1"
+   },
+   {
+    "id": "medicines-authority-slot",
+    "what": "The deployment profile has no medicines-regulator slot: the health regulator slot (healthRegulation, \"Health facility regulation\") stands for the medicines regulator until one is added; each power over a product type comes from the approved permit authority mapping",
+    "why": "Who is responsible comes only from the deployment profile and the permit authority registry; the platform never names a ministry or assumes an institution (integration register 20.9).",
+    "rule": "CLAUDE.md Government operating model: authorityFor(), lib/permits/authority.ts; never assume a ministry by name"
+   },
+   {
+    "id": "no-product-register",
+    "what": "The regulated product record (Part 6 §5.2) is not on the platform yet: a reference to an authorised product is recorded as given and its check recorded as not performed, a product's status is shown nowhere until the regulator's product register exists, and it is never inferred from an import, inventory or procurement record",
+    "why": "Each status must come from the competent regulator's authoritative record; a register is built with its procedures, not stood in for by a form.",
+    "rule": "CLAUDE.md Integration register (20.5 registers a form references that are not on the platform; 20.9); Part 6 §5.2"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 505,
+    "quotes": [
+     "Medicines regulator",
+     "Medicines, medical devices, safety, and market authorization",
+     "Regulatory dossiers have their own access and disclosure rules"
+    ],
+    "met_by": {
+     "deviation": "medicines-authority-slot",
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "Dossier, assessment, report and inspection content is restricted: read only at the institution responsible, every read of personal data in the access log"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 649,
+    "quotes": [
+     "The medicines regulator needs a separate workflow from clinical prescribing and hospital pharmacy operations.",
+     "Product authorization, manufacturing oversight, import authorization, safety reporting, and enforcement decisions must be managed under configured national law."
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002",
+     "platform": {
+      "file": "app/src/lib/forms/scope.ts",
+      "how": "Apart from prescribing and pharmacy operations: no prescribing, dispensing or patient field in any form of this batch (the scope check runs on every key)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 688,
+    "quotes": [
+     "A marketing authorization must not be inferred from a product's appearance in an import record, hospital inventory, or procurement system.",
+     "Each status must derive from the competent regulator's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 847,
+    "quotes": [
+     "Regulatory authority",
+     "Expired or invalid licence",
+     "Apply the configured rule and review path"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "An authorisation or licence reference must be active in its register (REF-ACTIVE); the approved permit mapping and its review path decide, and production refuses a power no approved mapping covers"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 862,
+    "quotes": [
+     "CFG-MED-001",
+     "Medicines and medical-device classifications"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 863,
+    "quotes": [
+     "CFG-MED-002",
+     "Marketing authorization and product variation procedures"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-002"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 864,
+    "quotes": [
+     "CFG-MED-003",
+     "Inspection, safety reporting, and recall authority"
+    ],
+    "met_by": {
+     "country_decision": "CFG-MED-003"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 881,
+    "quotes": [
+     "Regulatory integrity: Product and professional status comes from the competent authority's authoritative record."
+    ],
+    "met_by": {
+     "deviation": "no-product-register",
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Holders, manufacturers and importers are organisations: their standing comes only from the register the competent authority keeps; forms point to it, never copy it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 893,
+    "quotes": [
+     "Medicines and devices regulatory service — applications, assessments, authorizations, inspections, safety reporting, and recalls."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "Applications, assessments, authorisations, inspections, safety reporting and recalls are the contracts of batch 2; the service that runs them waits for plan step I4"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md",
+    "line": 663,
+    "quotes": [
+     "HLT-MED-012",
+     "Inspection corrective action plan",
+     "Corrective action tracked"
+    ],
+    "met_by": {
+     "fields": [
+      "plan.actions",
+      "plan.deadlines_set_by"
+     ],
+     "deviation": "deadlines-assigned"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3237,
+    "quotes": [
+     "Controls: a supervisory employee should not be able to change an approved tariff, impose a sanction or revoke a licence without the required authority and approvals.",
+     "Confidential commercial information and protected supervisory returns must not become public simply because the regulator has a public website."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/permits/authority.ts",
+      "how": "A suspension, withdrawal or other sanction needs the power an approved mapping gives, decided in a case by an official who can sign; dossier, report and inspection content is restricted and never on a public page or list"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3235,
+    "quotes": [
+     "Track compliance and publish only the information legally disclosable."
+    ],
+    "met_by": {
+     "fields": [
+      "plan.actions",
+      "plan.evidence"
+     ],
+     "platform": {
+      "file": "app/src/lib/organisations/register.ts",
+      "how": "Public lists carry only what the law allows to be published (publicOrganisation()); corrective actions are restricted"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "plan.site",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Site's organisation registration number"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the site's organisation registration number.",
+     "reference_exists": "There is no organisation with that number in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "id": "plan.inspection",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspection report reference"
+   },
+   "hint": {
+    "en": "As shown on the inspection report the site received."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the inspection report reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The inspection"
+   }
+  },
+  {
+   "use_group": "core.representation",
+   "version": 1,
+   "only": [
+    "representation.capacity",
+    "representation.actor",
+    "representation.authority_document"
+   ],
+   "section": {
+    "en": "Who is submitting"
+   }
+  },
+  {
+   "id": "plan.actions",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Corrective and preventive actions"
+   },
+   "hint": {
+    "en": "One entry for each finding the inspection recorded."
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to the corrective and preventive actions."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "finding",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 200
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Finding it answers"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the finding it answers.",
+       "length": "Finding it answers must be 200 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "cause",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 2000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Cause found"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the cause found.",
+       "length": "Cause found must be 2000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "action",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 2000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Corrective action"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the corrective action.",
+       "length": "Corrective action must be 2000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "prevention",
+     "type": "long_text",
+     "required": false,
+     "validation": [
+      {
+       "rule": "length",
+       "params": {
+        "max": 2000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "What will stop it happening again"
+     },
+     "error_text": {
+      "en": {
+       "length": "What will stop it happening again must be 2000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "responsibleRole",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 120
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Role responsible in the site"
+     },
+     "hint": {
+      "en": "A role, for example head of quality. No names are needed."
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the role responsible in the site.",
+       "length": "Role responsible in the site must be 120 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "targetDate",
+     "type": "date",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "date_not_before",
+       "params": {
+        "reference": "submission_date"
+       }
+      },
+      {
+       "rule": "inspection_corrective_action_period_from_rule",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Date it will be done"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter the date it will be done.",
+       "date_not_before": "Date it will be done must be today or later."
+      }
+     },
+     "country_decision": "CFG-MED-003: the period within which each grade of deficiency must be corrected."
+    },
+    {
+     "id": "status",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "medicines.country.action_status",
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Progress"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select the progress."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Actions"
+   }
+  },
+  {
+   "id": "plan.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "corrective_action_evidence",
+     "when": "when_an_action_is_reported_completed"
+    }
+   ],
+   "label": {
+    "en": "Evidence of actions already completed"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Actions"
+   }
+  },
+  {
+   "id": "plan.deadlines_set_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Official who accepted the plan or set the deadlines"
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we contact you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "plan.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

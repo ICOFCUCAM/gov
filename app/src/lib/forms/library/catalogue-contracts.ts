@@ -9,6 +9,17 @@
 // aggregate return (HLT-PH-015, counts only), from the field series Part 6
 // (docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md).
 //
+// Batch 2 (owner approved): medicines and medical devices regulation, Part 6
+// §5, records of products, of organisations (holders, manufacturers,
+// importers: organisations in the register, never a second identity) and of
+// the regulator's decisions only. HLT-MED-001 … 015, 017 … 020, 023 and 024;
+// HLT-MED-016, 021 and 022 are excluded by the approved scope and have no
+// contract. The safety and incident reports (HLT-MED-015, 020) are about the
+// product: no patient identity, no structured clinical field. HLT-MED-004 is
+// the field series' additional information request, matched to that row and
+// read for scope against Part 6 (form.catalogueSource), never the
+// supplement's excluded Stage B form of the same ID.
+//
 // Each contract is a JSON file in the canonical format
 // (civicos.form-contract.v1, lib/forms/canonical.ts; never a second format),
 // with two blocks of its own beside the fields: `catalogue` names the one
@@ -57,6 +68,27 @@ import lic012 from './catalogue-contracts/HLT-LIC-012.json';
 import lic013 from './catalogue-contracts/HLT-LIC-013.json';
 import lic014 from './catalogue-contracts/HLT-LIC-014.json';
 import ph015 from './catalogue-contracts/HLT-PH-015.json';
+import med001 from './catalogue-contracts/HLT-MED-001.json';
+import med002 from './catalogue-contracts/HLT-MED-002.json';
+import med003 from './catalogue-contracts/HLT-MED-003.json';
+import med004 from './catalogue-contracts/HLT-MED-004.json';
+import med005 from './catalogue-contracts/HLT-MED-005.json';
+import med006 from './catalogue-contracts/HLT-MED-006.json';
+import med007 from './catalogue-contracts/HLT-MED-007.json';
+import med008 from './catalogue-contracts/HLT-MED-008.json';
+import med009 from './catalogue-contracts/HLT-MED-009.json';
+import med010 from './catalogue-contracts/HLT-MED-010.json';
+import med011 from './catalogue-contracts/HLT-MED-011.json';
+import med012 from './catalogue-contracts/HLT-MED-012.json';
+import med013 from './catalogue-contracts/HLT-MED-013.json';
+import med014 from './catalogue-contracts/HLT-MED-014.json';
+import med015 from './catalogue-contracts/HLT-MED-015.json';
+import med017 from './catalogue-contracts/HLT-MED-017.json';
+import med018 from './catalogue-contracts/HLT-MED-018.json';
+import med019 from './catalogue-contracts/HLT-MED-019.json';
+import med020 from './catalogue-contracts/HLT-MED-020.json';
+import med023 from './catalogue-contracts/HLT-MED-023.json';
+import med024 from './catalogue-contracts/HLT-MED-024.json';
 
 /** What meets a catalogue passage: fields of the contract, a documented deviation, a platform rule (with the file that enforces it), a country decision, a step of the linked procedure, an exchange service or a policy of the form. */
 export interface MetBy {
@@ -77,7 +109,7 @@ export interface NationValue { key: string; kind: 'fee' | 'days' | 'period' | 't
 export interface CatalogueDeviation { id: string; field?: string; what: string; why: string; rule: string }
 
 export interface CatalogueContractJson extends CanonicalForm {
-  catalogue: { source: string; id: string; part: number; section: string; line: number };
+  catalogue: { source: string; id: string; part: number; section: string; line: number; batch: number };
   library: {
     title: string; intro: string; owner: string; filled_by: string; authority?: string;
     procedure: ProcedureLink | null; exchange?: string; intended?: string;
@@ -120,6 +152,8 @@ const CHANNELS = (filledBy: string): FormSpec['channels'] => ({
 /** Batch 1: health regulation (owner approved, 21 October 2026). */
 export const BATCH_1 = [fac001, fac002, fac003, fac004, fac005, fac006, fac007, fac008, fac009, fac010,
   lic001, lic002, lic003, lic004, lic005, lic006, lic007, lic008, lic009, lic010, lic011, lic012, lic013, lic014, ph015] as unknown as CatalogueContractJson[];
+/** Batch 2: medicines and medical devices regulation (owner approved, 21 October 2026). */
+export const BATCH_2 = [med001, med002, med003, med004, med005, med006, med007, med008, med009, med010, med011, med012, med013, med014, med015, med017, med018, med019, med020, med023, med024] as unknown as CatalogueContractJson[];
 export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; items: CatalogueItem[] });
 
 function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
@@ -129,9 +163,11 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
     ...definition.form,
     intro: l.intro,
     catalogueIds: [c.catalogue.id],
+    // An ID the catalogue reuses for another form is read for scope against this document only (lib/forms/scope.ts).
+    catalogueSource: c.catalogue.source,
     ...(Object.keys(l.lists).length ? { lists: structuredClone(l.lists) } : {}),
     ...(l.policies ? { policies: { ...l.policies } } : {}),
-    notices: standardNotices({ institution: l.owner === 'professionalRegulation' ? 'The professional regulator' : 'The health regulator' }),
+    notices: standardNotices({ institution: l.owner === 'professionalRegulation' ? 'The professional regulator' : batch === 2 ? 'The medicines regulator' : 'The health regulator' }),
     channels: CHANNELS(l.filled_by),
     identityEvidence: IDENTITY_EVIDENCE,
   };
@@ -146,7 +182,7 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 }
 
 /** Every catalogue contract CivicOS has written, as library drafts. */
-export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = BATCH_1.map(c => load(c, 1));
+export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2))];
 
 /** A catalogue contract by its catalogue ID or library key. */
 export const catalogueContract = (id: string): CatalogueLibraryForm | undefined => CATALOGUE_CONTRACTS.find(f => f.specId === id || f.key === id);

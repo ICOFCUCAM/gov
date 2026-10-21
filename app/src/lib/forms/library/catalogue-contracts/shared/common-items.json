@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages every contract of batch 1 answers the same way (Part 6 common, Part 1 shared rules, the supplement's conventions and gates), with how each is met. Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages every contract of batches 1 and 2 answers the same way (Part 6 common, Part 1 shared rules, the supplement's conventions and gates), with how each is met. Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -25,7 +25,28 @@
   "HLT-LIC-012",
   "HLT-LIC-013",
   "HLT-LIC-014",
-  "HLT-PH-015"
+  "HLT-PH-015",
+  "HLT-MED-001",
+  "HLT-MED-002",
+  "HLT-MED-003",
+  "HLT-MED-004",
+  "HLT-MED-005",
+  "HLT-MED-006",
+  "HLT-MED-007",
+  "HLT-MED-008",
+  "HLT-MED-009",
+  "HLT-MED-010",
+  "HLT-MED-011",
+  "HLT-MED-012",
+  "HLT-MED-013",
+  "HLT-MED-014",
+  "HLT-MED-015",
+  "HLT-MED-017",
+  "HLT-MED-018",
+  "HLT-MED-019",
+  "HLT-MED-020",
+  "HLT-MED-023",
+  "HLT-MED-024"
  ],
  "items": [
   {

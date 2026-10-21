@@ -17,7 +17,8 @@
   "id": "HLT-LIC-013",
   "part": 6,
   "section": "6.1",
-  "line": 709
+  "line": 709,
+  "batch": 1
  },
  "library": {
   "title": "Ask for your registration to be restored",

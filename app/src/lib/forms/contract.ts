@@ -394,6 +394,8 @@ export interface FormSpec {
   dataUse?: { recipients: string[]; retentionRule: string; lawfulBasis: string };
   /** The catalogue identifiers this form answers (field series, e.g. CIV-BTH-002). */
   catalogueIds?: string[];
+  /** The catalogue document those identifiers come from, where the catalogue reuses an ID for different forms (lib/forms/scope.ts reads the scope of that document's entry). */
+  catalogueSource?: string;
   /**
    * The shared envelope's form-level properties (contract_version 1.0.0:
    * owning institution, competent-authority rule, legal basis with its

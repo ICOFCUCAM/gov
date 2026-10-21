@@ -10,17 +10,25 @@
 // (docs/requirements/form-scope.json, read here as it stands; the register
 // changes them, citing the rule). The field words below add a check of our
 // own: a form whose fields name a patient, a student, a suspect… falls in the
-// same scope even when no id says so. Pure: the designer loads it.
+// same scope even when no id says so. Where the catalogue reuses an ID for
+// two different forms (HLT-MED-004 is an additional information request in
+// Part 6 and an excluded dispensing record in the supplement's Stage B), a
+// form that names the catalogue document it answers (FormSpec.catalogueSource)
+// is matched against that document's entry only. Pure: the designer loads it.
 
 import FORM_SCOPE from '../../../../docs/requirements/form-scope.json';
 
 export type ScopeStatus = 'allowed' | 'excluded' | 'legal_review';
 export interface ScopeFinding { status: ScopeStatus; reason?: string; matched?: string }
 
-interface ScopeEntry { id: string; title?: string; scope: 'excluded' | 'requires_legal_review' | 'allowed'; rule?: string; reason?: string }
+interface ScopeEntry { source?: string; id: string; title?: string; scope: 'excluded' | 'requires_legal_review' | 'allowed'; rule?: string; reason?: string }
 const ENTRIES = (FORM_SCOPE as { forms: ScopeEntry[] }).forms;
 const listed = (scope: ScopeEntry['scope']): Record<string, string> =>
   Object.fromEntries(ENTRIES.filter(e => e.scope === scope).map(e => [e.id.toUpperCase(), `${e.title ? `${e.title}: ` : ''}${e.rule ?? e.reason ?? scope}`]));
+
+/** Whether an id's entry in a scope applies to a form from this catalogue document (every entry applies when the form names none). */
+const appliesTo = (id: string, scope: ScopeEntry['scope'], source?: string): boolean =>
+  !source || ENTRIES.some(e => e.id.toUpperCase() === id && e.scope === scope && (!e.source || e.source === source));
 
 /** Forms whose implementation the approved scope prohibits, by catalogue id (the register's `excluded`). */
 export const EXCLUDED_FORMS: Record<string, string> = listed('excluded');
@@ -67,15 +75,17 @@ function keysOf(fields: { key: string; items?: unknown }[]): string[] {
 
 /**
  * Where a form stands in the approved scope, from its catalogue ids and its
- * fields' keys. Exclusion wins over legal review.
+ * fields' keys. Exclusion wins over legal review. With `source` (the
+ * catalogue document the form answers), an id is matched against that
+ * document's entries only; the field words apply whatever the source.
  */
-export function scopeOf(ids: (string | undefined)[], fields: { key: string; items?: unknown }[]): ScopeFinding {
+export function scopeOf(ids: (string | undefined)[], fields: { key: string; items?: unknown }[], source?: string): ScopeFinding {
   const known = ids.filter((x): x is string => !!x).map(x => x.toUpperCase());
-  for (const id of known) if (EXCLUDED_FORMS[id]) return { status: 'excluded', reason: EXCLUDED_FORMS[id], matched: id };
+  for (const id of known) if (EXCLUDED_FORMS[id] && appliesTo(id, 'excluded', source)) return { status: 'excluded', reason: EXCLUDED_FORMS[id], matched: id };
   const keys = keysOf(fields);
   const ex = matchWords(keys, EXCLUDED_FIELD_WORDS);
   if (ex) return { status: 'excluded', reason: `The field ${ex.key} is ${ex.why}, which the approved scope excludes`, matched: ex.key };
-  for (const id of known) if (LEGAL_REVIEW_FORMS[id]) return { status: 'legal_review', reason: LEGAL_REVIEW_FORMS[id], matched: id };
+  for (const id of known) if (LEGAL_REVIEW_FORMS[id] && appliesTo(id, 'requires_legal_review', source)) return { status: 'legal_review', reason: LEGAL_REVIEW_FORMS[id], matched: id };
   const lr = matchWords(keys, LEGAL_REVIEW_FIELD_WORDS);
   if (lr) return { status: 'legal_review', reason: `The field ${lr.key} records ${lr.why}: a legal review by an authorised official comes first`, matched: lr.key };
   return { status: 'allowed' };
@@ -84,4 +94,9 @@ export function scopeOf(ids: (string | undefined)[], fields: { key: string; item
 /** The catalogue ids a form names (its specification id and the field series ids it answers). */
 export function formIds(key: string, form?: { spec?: { id?: string }; catalogueIds?: string[] }): string[] {
   return [key, form?.spec?.id, ...(form?.catalogueIds ?? [])].filter((x): x is string => !!x);
+}
+
+/** A form's scope finding: its key, its specification and catalogue ids (read against the catalogue document it names), its fields. */
+export function formScope(key: string, form: { spec?: { id?: string }; catalogueIds?: string[]; catalogueSource?: string } | undefined, fields: { key: string; items?: unknown }[]): ScopeFinding {
+  return scopeOf(formIds(key, form), fields, form?.catalogueSource);
 }
