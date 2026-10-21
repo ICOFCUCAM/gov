@@ -43,7 +43,7 @@ export const CONSOLE_NAV: NavSection[] = [
       tabs: [tab('Civil registry', '/gov/civil'), tab('Organisations', '/gov/organisations'), tab('Visas and permits', '/gov/immigration'), tab('Education', '/gov/education'), tab('Health regulation', '/gov/health-regulation')] },
     { key: 'law', icon: '¶', label: 'Laws', href: '/gov/law',
       purpose: 'The nation\'s laws as versioned texts that decisions cite, and the procedures that apply them.',
-      tabs: [tab('Laws', '/gov/law'), tab('Procedures', '/gov/law/procedures'), tab('Permit authorities', '/gov/law/permit-authorities'), tab('Rates and tariffs', '/gov/law/rules'), tab('How laws relate', '/gov/law/relations')] },
+      tabs: [tab('Laws', '/gov/law'), tab('Procedures', '/gov/law/procedures'), tab('Forms', '/gov/law/procedures/forms'), tab('Permit authorities', '/gov/law/permit-authorities'), tab('Rates and tariffs', '/gov/law/rules'), tab('How laws relate', '/gov/law/relations')] },
     { key: 'branches', icon: '⚖', label: 'Branches of government', href: '/gov/branches', match: /^\/gov\/branch\//,
       purpose: 'The branches the constitution sets up, their mandates and how they check each other.',
       tabs: [tab('All branches', '/gov/branches', 'Branches of Government'), tab('Bills and votes', '/gov/legislature'), tab('Legislative procedure', '/gov/legislature/procedure')] },

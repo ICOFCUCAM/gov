@@ -11,8 +11,9 @@
 import * as React from 'react';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
+import Link from 'next/link';
 
-interface Pkg { key: string; version: number; title: string; owner: string; ownerInstitution: string | null; state: string; activeFrom?: string; author: string; approvedBy?: string; reference?: boolean; stages: { key: string; label: string }[]; actions: { key: string; label: string; from: string[]; to: string; decision?: string; needs: { role: string; fourEyes?: boolean } }[]; testResult: { ok: boolean; failures: string[] } }
+interface Pkg { key: string; version: number; title: string; owner: string; ownerInstitution: string | null; state: string; activeFrom?: string; author: string; approvedBy?: string; reference?: boolean; stages: { key: string; label: string }[]; actions: { key: string; label: string; from: string[]; to: string; decision?: string; needs: { role: string; fourEyes?: boolean } }[]; testResult: { ok: boolean; failures: string[] }; publicationStatus?: string; form?: { version: string }; deadlines?: { label: string; days?: number }[]; appeal?: { days?: number } }
 
 export function ProceduresBoard({ demonstration = false }: { demonstration?: boolean }) {
   const [list, setList] = React.useState<Pkg[]>([]);
@@ -35,7 +36,7 @@ export function ProceduresBoard({ demonstration = false }: { demonstration?: boo
   return (
     <div className="space-y-4 p-4">
       <h1 className="text-xl font-semibold">Procedures</h1>
-      <p className="max-w-3xl text-sm text-ink-muted">How each kind of case is handled: its steps, who may take them, its deadlines and the laws it rests on. A procedure runs only after the responsible institution approves it.</p>
+      <p className="max-w-3xl text-sm text-ink-muted">How each kind of case is handled: its steps, who may take them, its deadlines and the laws it rests on. A procedure runs only after the responsible institution approves it. Its form is designed, checked and released under <Link className="underline" href="/gov/law/procedures/forms">Forms</Link>.</p>
       {msg ? <p role="status" className="text-sm">{msg}</p> : null}
       <Section title="Reference procedures" meta="shipped with the platform, as drafts">
         <p className="text-sm text-ink-muted">Civil records (birth, late birth, death, marriage, correction), organisations (registration, licences and accreditation with their renewal, suspension and revocation), visas and residence permits, police incident reports and court cases. They arrive as drafts: the responsible authority adapts them to its law (a new version citing it) and approves them before any case runs.</p>
@@ -76,6 +77,8 @@ export function ProceduresBoard({ demonstration = false }: { demonstration?: boo
               <li key={`${p.key}@${p.version}`} className="py-2 text-sm">
                 <div><strong>{p.title}</strong> · {p.key} version {p.version} · {p.state}{p.activeFrom ? ` from ${p.activeFrom}` : ''}{p.reference ? ' · reference' : ''}</div>
                 <div className="text-xs text-ink-muted">Responsible: {p.ownerInstitution ?? `${p.owner} (not named yet)`} · written by {p.author}{p.approvedBy ? ` · approved by ${p.approvedBy}` : ''} · tests {p.testResult.ok ? 'pass' : `fail: ${p.testResult.failures.join('; ')}`}</div>
+                {p.form || p.publicationStatus ? <div className="text-xs">Form {p.form?.version ?? 'none'} · register status {String(p.publicationStatus ?? '').replace(/_/g, ' ')} · <Link className="underline" href={`/gov/law/procedures/forms/${encodeURIComponent(p.key)}?version=${p.version}`}>open the form</Link></div> : null}
+                {(p.deadlines ?? []).some(d => d.days === undefined) || (p.appeal && p.appeal.days === undefined) ? <div className="text-xs">Day counts the nation&apos;s law gives, still to set: {[...(p.deadlines ?? []).filter(d => d.days === undefined).map(d => d.label), ...(p.appeal && p.appeal.days === undefined ? ['appeal'] : [])].join(', ')}</div> : null}
                 <div className="mt-1 text-xs">{p.actions.map(a => `${a.label} (${a.from.join('/')} → ${a.to}${a.decision ? ', decision' : ''}${a.needs.fourEyes ? ', two officials' : ''})`).join(' · ')}</div>
                 {p.state === 'draft' ? <Button className="mt-1" disabled={!p.testResult.ok || !p.ownerInstitution} onClick={() => approve(p)}>Approve</Button> : null}
               </li>

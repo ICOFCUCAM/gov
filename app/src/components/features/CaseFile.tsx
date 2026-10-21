@@ -12,10 +12,14 @@ import { RefusalText } from '@/components/ui/RefusalText';
 import { SwitchToSecondOfficial } from '@/components/ui/SwitchToSecondOfficial';
 import { FieldInputs, type FieldSpecView, type FieldValues } from './casework/FieldInputs';
 import { CaseControls } from './casework/CaseControls';
+import { answerText } from './forms/answers';
 
 interface Citation { instrument: string; eId: string; version: string; digest: string; title?: string; num?: string }
 interface Answer {
-  case: { id: string; ref: string; version: number; stage: string; owner: string; sensitivity: string; priority: string; fields: Record<string, unknown>; deadlines: { key: string; label: string; due: string; met?: string; lapsed?: string }[]; history: { seq: number; action: string; from: string; to: string; by: { name: string }; confirmedBy?: { name: string }; at: string; reason?: string; citations?: Citation[]; decision?: string }[]; pending?: { action: string; by: { id?: string; name: string }; reason?: string; at: string }; links: { kind: string; case: string }[]; legalHold?: { reason: string }; closedAt?: string; assignee?: { name: string } };
+  case: { id: string; ref: string; version: number; stage: string; owner: string; sensitivity: string; priority: string; fields: Record<string, unknown>; deadlines: { key: string; label: string; due: string; met?: string; lapsed?: string }[]; history: { seq: number; action: string; from: string; to: string; by: { name: string }; confirmedBy?: { name: string }; at: string; reason?: string; citations?: Citation[]; decision?: string }[]; pending?: { action: string; by: { id?: string; name: string }; reason?: string; at: string }; links: { kind: string; case: string }[]; legalHold?: { reason: string }; closedAt?: string; assignee?: { name: string };
+    intake?: { channel: string; at: string; form: { version: string; declaration?: string; evidencePolicy?: string }; declaration?: { version: string; confirmedAt: string }; locale?: string; assisted?: { by: { name: string }; servicePoint?: string; identityEvidence: string }; paper?: { receivedOn?: string } };
+    verifications?: { field: string; service: string; result: string; note?: string; at: string }[];
+    fieldSources?: Record<string, { source: 'entered' | 'verified'; at: string; by?: string; channel?: string; service?: string }> };
   procedure: { title: string; version: number; stages: { key: string; label: string }[]; actions: { key: string; label: string; from: string[]; decision?: string; needs: { role: string; fourEyes?: boolean }; requires?: { reasons?: boolean; documents?: string[]; fields?: string[]; citations?: boolean } }[]; documents: { class: string; label: string; required: boolean }[]; fields: FieldSpecView[]; citations?: Citation[] } | null;
   documents: { id: string; class: string; title: string; versions: { n: number; sha256: string; at: string; by: string }[] }[];
   decisions: { id: string; sha256: string; seal: { keyId: string }; content: { decision: string; reasons: string; citations: Citation[]; officials: { role: string; name: string }[]; facts?: Record<string, unknown>; at: string } }[];
@@ -121,9 +125,32 @@ export function CaseFile({ id }: { id: string }) {
 
       <Section title="Details" meta={`${Object.keys(c.fields).length} fields`}>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-          {(p?.fields ?? []).map(f => <div key={f.key} className="contents"><dt className="font-medium">{f.label}</dt><dd>{c.fields[f.key] === undefined || c.fields[f.key] === '' ? '—' : String(c.fields[f.key])}</dd></div>)}
+          {(p?.fields ?? []).map(f => {
+            const v = c.fields[f.key];
+            const src = c.fieldSources?.[f.key];
+            return (
+              <div key={f.key} className="contents">
+                <dt className="font-medium">{f.label}</dt>
+                <dd>{v === undefined || v === '' ? '—' : typeof v === 'object' ? answerText(f as never, v) : String(v)}{src ? <span className="ms-2 text-xs text-ink-muted">{src.source === 'verified' ? `verified with ${src.service ?? 'a register'}` : `entered${src.channel ? ` (${src.channel})` : ''}${src.by ? ` by ${src.by}` : ''}`}</span> : null}</dd>
+              </div>
+            );
+          })}
         </dl>
       </Section>
+
+      {c.intake ? (
+        <Section title="How it was received" meta={c.intake.channel}>
+          <ul className="text-sm">
+            <li>{c.intake.channel === 'assisted' ? 'Assisted at an office' : c.intake.channel === 'paper' ? 'From a paper form' : 'Self-service'} · {c.intake.at.slice(0, 16).replace('T', ' ')} · form {c.intake.form.version}{c.intake.form.evidencePolicy ? ` · evidence policy ${c.intake.form.evidencePolicy}` : ''}</li>
+            {c.intake.declaration ? <li>Declaration version {c.intake.declaration.version} confirmed {c.intake.declaration.confirmedAt.slice(0, 16).replace('T', ' ')}</li> : null}
+            {c.intake.assisted ? <li>Assisted by {c.intake.assisted.by.name}{c.intake.assisted.servicePoint ? ` at ${c.intake.assisted.servicePoint}` : ''} · identity evidence seen: {c.intake.assisted.identityEvidence}</li> : null}
+            {c.intake.paper?.receivedOn ? <li>Paper form received on {c.intake.paper.receivedOn}</li> : null}
+          </ul>
+          {c.verifications?.length ? (
+            <ul className="mt-2 text-sm">{c.verifications.map(v => <li key={`${v.field}-${v.service}-${v.at}`}>{v.field}: {v.result.replace('-', ' ')} with {v.service}{v.note ? ` · ${v.note}` : ''}</li>)}</ul>
+          ) : null}
+        </Section>
+      ) : null}
 
       <Section title="Documents" meta={`${a.documents.length} attached`}>
         <ul className="text-sm">{a.documents.map(d => <li key={d.id}><a className="underline" href={`/api/cases/${c.id}/documents/${d.id}`}>{d.title}</a> · {d.class} · version {d.versions.length} · <span className="font-mono text-xs">{d.versions.at(-1)?.sha256.slice(0, 12)}</span></li>)}</ul>

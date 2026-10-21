@@ -184,7 +184,7 @@ describe('the shared envelope standard (contract_version 1.0.0)', () => {
     // Mapped, not loaded as a batch (owner's direction: no batch of contracts before the verified gap report): each maps without an unregistered rule.
     for (const d of domains) for (const c of d.contracts as EnvelopeContract[]) {
       if (EXCLUDED_CONTRACTS[c.form_id]) continue;
-      const r = importEnvelopeContract(c, d.domain as string);
+      const r = importEnvelopeContract(c as EnvelopeContract & Record<string, unknown>, d.domain as string);
       expect(r.notes.filter(n => n.kind === 'problem' && /not registered/.test(n.note)), c.form_id).toEqual([]);
     }
   });

@@ -31,14 +31,14 @@ describe('field checks', () => {
       { key: 'name', label: 'Name', type: 'text', required: true, personal: true },
       { key: 'kind', label: 'Kind', type: 'choice', options: ['a', 'b'] },
     ];
-    const r = checkAnswers(old, { age: 'x', born: '31/12/2020', kind: 'c' }, { today: TODAY });
+    const r = checkAnswers(old, { age: 'x', born: '31/12/2020', kind: 'c' }, { mode: 'partial', today: TODAY });
     expect(r.errors.map(e => e.message)).toEqual(['Age must be a number', 'Date of birth must be a date (YYYY-MM-DD)', 'Kind must be one of a, b']);
     expect(r.errors.find(e => e.field === 'born')).toBeDefined();
     expect(r.errors.find(e => e.field === 'kind')).toBeDefined();
     // The old personal flag reads as the personal class; anything else as administrative.
     expect(fieldClass(old[2]!)).toBe('personal');
     expect(fieldClass(old[0]!)).toBe('administrative');
-    expect(checkAnswers(old, { age: 4, name: 'A' }, { today: TODAY }).errors).toEqual([]);
+    expect(checkAnswers(old, { age: 4, name: 'A' }, { mode: 'partial', today: TODAY }).errors).toEqual([]);
   });
 
   it('runs the registered rules, failing closed on one it does not know', () => {
@@ -47,9 +47,9 @@ describe('field checks', () => {
       { key: 'maker_id', label: 'Maker', type: 'text' },
       { key: 'approver_id', label: 'Approver', type: 'text', rules: [{ rule: 'registered', name: 'APPROVER-DIFFERS-FROM-MAKER' }] },
     ];
-    const r = checkAnswers(f, { weekly_hours: -1, maker_id: 'u1', approver_id: 'U1 ' }, { today: TODAY });
+    const r = checkAnswers(f, { weekly_hours: -1, maker_id: 'u1', approver_id: 'U1 ' }, { mode: 'partial', today: TODAY });
     expect(r.errors.map(e => e.field).sort()).toEqual(['approver_id', 'weekly_hours']);
-    expect(checkAnswers(f, { weekly_hours: 40, maker_id: 'u1', approver_id: 'u2' }, { today: TODAY }).errors).toEqual([]);
+    expect(checkAnswers(f, { weekly_hours: 40, maker_id: 'u1', approver_id: 'u2' }, { mode: 'partial', today: TODAY }).errors).toEqual([]);
   });
 });
 
@@ -80,8 +80,8 @@ describe('a form in its procedure', () => {
   it('refuses on the server with the same message the browser shows', async () => {
     const view = formView(getPackage('civil.birth', 2)!);
     const bad = { ...valid, birthDate: '2999-01-01', childGiven: '' };
-    const client = checkAnswers(getPackage('civil.birth', 2)!.fields, bad, { today: TODAY, options: optionsOf(view), submit: true });
-    const server = await submitForm({ procedure: 'civil.birth', channel: 'assisted', assisted: { identityEvidence: view.identityEvidence?.[0]?.value ?? 'national-id' }, fields: bad, declaration: { version: '1' } }, official('o1'));
+    const client = checkAnswers(getPackage('civil.birth', 2)!.fields, bad, { mode: 'submit', today: TODAY, options: optionsOf(view) });
+    const server = await submitForm({ procedure: 'civil.birth', channel: 'assisted', assisted: { identityEvidence: view.form?.identityEvidence?.[0]?.key ?? 'national-id' }, fields: bad, declaration: { version: '1' } }, official('o1'));
     expect('error' in server).toBe(true);
     const sm = new Map(('fieldErrors' in server ? server.fieldErrors ?? [] : []).map(e => [e.field, e.message]));
     expect(client.errors.length).toBeGreaterThan(0);
@@ -91,7 +91,7 @@ describe('a form in its procedure', () => {
 
   it('records an assisted application: who assisted, the identity evidence seen, in the audit chain', async () => {
     const view = formView(getPackage('civil.birth', 2)!);
-    const evidence = view.identityEvidence?.[0]?.value ?? 'national-id';
+    const evidence = view.form?.identityEvidence?.[0]?.key ?? 'national-id';
     const without = await submitForm({ procedure: 'civil.birth', channel: 'assisted', fields: valid, declaration: { version: '1' } }, official('o1'));
     expect(without).toMatchObject({ error: expect.stringMatching(/identity/i) });
     const c = await submitForm({ procedure: 'civil.birth', channel: 'assisted', assisted: { identityEvidence: evidence, servicePoint: 'North office' }, fields: valid, declaration: { version: '1' } }, official('o1'));
@@ -104,7 +104,7 @@ describe('a form in its procedure', () => {
 
   it('keeps personal classes out of lists and events', async () => {
     const view = formView(getPackage('civil.birth', 2)!);
-    const c = await submitForm({ procedure: 'civil.birth', channel: 'assisted', assisted: { identityEvidence: view.identityEvidence?.[0]?.value ?? 'national-id' }, fields: valid, declaration: { version: '1' } }, official('o1'));
+    const c = await submitForm({ procedure: 'civil.birth', channel: 'assisted', assisted: { identityEvidence: view.form?.identityEvidence?.[0]?.key ?? 'national-id' }, fields: valid, declaration: { version: '1' } }, official('o1'));
     if ('error' in c) throw new Error(c.error);
     const personal = getPackage('civil.birth', 2)!.fields.filter(isPersonalField).map(f => f.key);
     expect(personal).toEqual(expect.arrayContaining(['childGiven', 'motherFamily']));

@@ -26,10 +26,11 @@ import {
 } from '@/lib/forms/contract';
 import { FormRenderer } from './FormRenderer';
 import { PrintForm } from './PrintForm';
+import { PublicationPanel } from './PublicationPanel';
 
 interface Deadline { key: string; label: string; from: string; days?: number; sampleDays?: number; calendar: string }
-interface Pkg { key: string; version: number; title: string; state: string; owner: string; ownerInstitution: string | null; reference?: boolean; fields: ContractField[]; documents: ContractDocument[]; form?: FormSpec; deadlines: Deadline[]; appeal?: { days?: number; sampleDays?: number; body: string; suspensive: boolean }; sensitivity: string; author: string; editors?: { by: string; what: string }[]; testResult: { ok: boolean; failures: string[] }; [k: string]: unknown }
-interface LibraryRow { key: string; specId: string; title: string; owner: string; attachesTo: string | null; awaits: string | null; fields: number; notes: { field?: string; kind: string; note: string }[]; deviations: { field?: string; what: string; why: string }[] }
+interface Pkg { key: string; version: number; title: string; state: string; owner: string; ownerInstitution: string | null; reference?: boolean; fields: ContractField[]; documents: ContractDocument[]; form?: FormSpec; deadlines: Deadline[]; appeal?: { days?: number; sampleDays?: number; body: string; suspensive: boolean }; sensitivity: string; author: string; editors?: { by: string; what: string }[]; testResult: { ok: boolean; failures: string[] }; publicationStatus?: string; [k: string]: unknown }
+interface LibraryRow { key: string; specId: string; title: string; owner: string; attachesTo: string | null; awaits: string | null; fields: number; notes: { field?: string; kind: string; note: string }[]; deviations: { field?: string; what: string; why: string }[]; status?: string }
 interface Contract { snapshot: ValueSnapshot; currency: string; languages: string[]; blocks: { key: string; label: string; description: string; example: { fields: ContractField[]; documents?: ContractDocument[] } }[]; services: { id: string; title: string }[] }
 
 const input = 'mt-1 block w-full min-h-tap rounded-sm border border-line bg-surface px-2 py-1 text-sm text-ink focus-ring';
@@ -65,6 +66,9 @@ export function FormDesigner() {
   const [err, setErr] = React.useState<string | null>(null);
   const [lang, setLang] = React.useState('');
   const [libView, setLibView] = React.useState<{ form: unknown } | null>(null);
+  // Hundreds of forms: one filter over procedures and the library (title, key, specification id).
+  const [q, setQ] = React.useState('');
+  const match = (...xs: (string | null | undefined)[]) => !q.trim() || xs.some(x => (x ?? '').toLowerCase().includes(q.trim().toLowerCase()));
 
   const load = React.useCallback(() => {
     Promise.all([
@@ -126,16 +130,19 @@ export function FormDesigner() {
 
       <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
         <nav aria-label="Procedures and library forms" className="space-y-4">
+          <label className="block text-sm">Find a form
+            <input type="search" className="mt-1 block w-full min-h-tap rounded-sm border border-line bg-surface px-2 py-1 text-sm text-ink focus-ring" value={q} onChange={e => setQ(e.target.value)} />
+          </label>
           <Section title="Procedures" meta={pkgs ? `${latest.length}` : 'loading'}>
             {pkgs && !latest.length ? <p className="text-sm text-ink-muted">No procedures yet: add the reference procedures under <Link className="underline" href="/gov/law/procedures">Procedures</Link>.</p> : null}
             <ul className="space-y-1">
-              {latest.map(p => (
+              {latest.filter(p => match(p.title, p.key, p.form?.spec?.id)).map(p => (
                 <li key={p.key}>
                   <button type="button" aria-current={selected === `${p.key}@${p.version}` ? 'true' : undefined}
                     className={`w-full rounded-sm border px-2 py-1.5 text-start text-sm focus-ring ${selected === `${p.key}@${p.version}` ? 'border-ink bg-surface-2' : 'border-line'}`}
                     onClick={() => { setSelected(`${p.key}@${p.version}`); setLibSel(''); }}>
                     <span className="block font-medium">{p.title}</span>
-                    <span className="block text-xs text-ink-muted">version {p.version} · {p.state}{p.form ? ` · form ${p.form.version}` : ' · no form yet'}</span>
+                    <span className="block text-xs text-ink-muted">version {p.version} · {p.state}{p.form ? ` · form ${p.form.version}` : ' · no form yet'}{p.publicationStatus ? ` · ${p.publicationStatus.replace(/_/g, ' ')}` : ''}</span>
                   </button>
                 </li>
               ))}
@@ -143,11 +150,11 @@ export function FormDesigner() {
           </Section>
           <Section title="Form library" meta={`${library.length} from the specification`}>
             <ul className="space-y-1">
-              {library.map(l => (
+              {library.filter(l => match(l.title, l.key, l.specId, l.owner)).map(l => (
                 <li key={l.key}>
                   <button type="button" aria-current={libSel === l.key ? 'true' : undefined} className={`w-full rounded-sm border px-2 py-1.5 text-start text-sm focus-ring ${libSel === l.key ? 'border-ink bg-surface-2' : 'border-line'}`} onClick={() => { setLibSel(l.key); setSelected(''); }}>
                     <span className="block font-medium">{l.title}</span>
-                    <span className="block text-xs text-ink-muted"><bdi dir="ltr">{l.specId}</bdi> · {l.attachesTo ? `attached to ${l.attachesTo}` : `waits for ${l.awaits}`}</span>
+                    <span className="block text-xs text-ink-muted"><bdi dir="ltr">{l.specId}</bdi> · {(l.status ?? 'contract_draft').replace(/_/g, ' ')} · {l.attachesTo ? `attached to ${l.attachesTo}` : `waits for ${l.awaits}`}</span>
                   </button>
                 </li>
               ))}
@@ -167,6 +174,8 @@ export function FormDesigner() {
                   {!work.testResult.ok ? <p className="mt-1">Its own tests fail: {work.testResult.failures.join('; ')}</p> : null}
                 </div>
               </Section>
+
+              <PublicationPanel key={`${work.key}@${work.version}`} pkgKey={work.key} version={work.version} />
 
               <div className="grid gap-4 xl:grid-cols-[16rem_1fr]">
                 <Section title="Questions" meta={`${work.fields.length}`}>

@@ -3,6 +3,8 @@
 import * as React from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { FormRenderer, type Submission, type SubmitResult } from '@/components/features/forms/FormRenderer';
+import type { FormView } from '@/lib/forms/contract';
 
 interface App { id: string; ref: string; procedure: string; stage: string; openedAt: string; closedAt: string | null; certificates: { code: string; title: string; status: string }[] }
 const field = 'mt-1 block w-full rounded border border-line bg-surface px-2 py-1.5 text-sm';
@@ -10,9 +12,11 @@ const field = 'mt-1 block w-full rounded border border-line bg-surface px-2 py-1
 export function Applications() {
   const [apps, setApps] = React.useState<App[] | null>(null);
   const [msg, setMsg] = React.useState<string | null>(null);
+  // Each procedure's form in force (null: no approved version). A procedure with a form is asked through it: one question per page, check your answers, the declaration, a receipt.
+  const [forms, setForms] = React.useState<Record<string, FormView | null>>({});
   const [f, setF] = React.useState({ childGiven: '', childFamily: '', sex: 'unknown', birthDate: '', birthPlace: '', motherGiven: '', motherFamily: '', fatherGiven: '', fatherFamily: '' });
   const load = React.useCallback(() => {
-    fetch('/api/citizen/applications', { cache: 'no-store' }).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error); setApps(j.applications); }).catch(e => setMsg((e as Error).message));
+    fetch('/api/citizen/applications', { cache: 'no-store' }).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error); setApps(j.applications); setForms(j.forms ?? {}); }).catch(e => setMsg((e as Error).message));
   }, []);
   React.useEffect(load, [load]);
   const submit = async () => {
@@ -30,6 +34,14 @@ export function Applications() {
     setMsg(r.ok ? `Reported. Your reference is ${j.application.ref}. The police will triage it and contact you if they need more.` : j.error);
     if (r.ok) { load(); setInc({ occurredOn: '', place: '', account: '', contact: '' }); }
   };
+  const sendForm = (procedure: string) => async (x: Submission): Promise<SubmitResult> => {
+    const r = await fetch('/api/citizen/applications', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ procedure, fields: x.fields, declaration: x.declaration, locale: x.locale, idempotencyKey: x.idempotencyKey }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) load();
+    return r.ok ? { ok: true, receipt: j.receipt } : { ok: false, error: j.error ?? `Not sent (${r.status})`, ...(j.fieldErrors ? { fieldErrors: j.fieldErrors } : {}) };
+  };
+  const birthForm = forms['civil.birth']?.form ? forms['civil.birth'] : null;
+  const incidentForm = forms['police.incident']?.form ? forms['police.incident'] : null;
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF(x => ({ ...x, [k]: e.target.value }));
   return (
     <div className="space-y-3">
@@ -42,7 +54,13 @@ export function Applications() {
           </ul>
         ) : <p className="mt-1 text-sm text-ink-muted">{apps ? 'You have no applications yet.' : 'Loading…'}</p>}
       </Card>
-      <Card tight>
+      {birthForm ? (
+        <Card tight>
+          <h2 className="font-semibold">Notify a birth</h2>
+          <div className="mt-2"><FormRenderer view={birthForm} channel="self-service" submit={sendForm('civil.birth')} /></div>
+        </Card>
+      ) : null}
+      {birthForm ? null : <Card tight>
         <h2 className="font-semibold">Notify a birth</h2>
         <div className="mt-2 grid gap-2">
           <label className="text-sm">Child&apos;s given names<input className={field} value={f.childGiven} onChange={set('childGiven')} /></label>
@@ -56,8 +74,15 @@ export function Applications() {
           <label className="text-sm">Father&apos;s family name (if declared)<input className={field} value={f.fatherFamily} onChange={set('fatherFamily')} /></label>
         </div>
         <Button className="mt-3" variant="primary" disabled={!f.childGiven || !f.childFamily || !f.birthDate || !f.motherFamily} onClick={submit}>Send to the civil registry</Button>
-      </Card>
-      <Card tight>
+      </Card>}
+      {incidentForm ? (
+        <Card tight>
+          <h2 className="font-semibold">Report an incident to the police</h2>
+          <p className="mt-1 text-sm"><strong>If someone is in danger now, call the emergency number.</strong> This form is for things that have already happened and need recording. Your report is read only by the police officers handling it.</p>
+          <div className="mt-2"><FormRenderer view={incidentForm} channel="self-service" submit={sendForm('police.incident')} /></div>
+        </Card>
+      ) : null}
+      {incidentForm ? null : <Card tight>
         <h2 className="font-semibold">Report an incident to the police</h2>
         <p className="mt-1 text-sm"><strong>If someone is in danger now, call the emergency number.</strong> This form is for things that have already happened and need recording. Your report is read only by the police officers handling it.</p>
         <div className="mt-2 grid gap-2">
@@ -67,7 +92,7 @@ export function Applications() {
           <label className="text-sm">How the police can reach you<input className={field} value={inc.contact} onChange={e => setInc(x => ({ ...x, contact: e.target.value }))} /></label>
         </div>
         <Button className="mt-3" variant="primary" disabled={!inc.occurredOn || !inc.place || !inc.account} onClick={report}>Send to the police</Button>
-      </Card>
+      </Card>}
     </div>
   );
 }
