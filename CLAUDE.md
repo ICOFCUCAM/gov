@@ -144,6 +144,20 @@ What has been built is locked. Work only upgrades it toward the vision in
   (`confirmByOversight()`). Unusual access is raised by
   `lib/records/access-watch.ts`; a finding is a prompt, never a conclusion.
 
+## Constitutional architecture
+
+- Branches, institutions, offices, powers and the relationships between them
+  follow `docs/CONSTITUTIONAL_ARCHITECTURE.md` (external guidance kept verbatim;
+  binding). How it applies to the code, phase by phase:
+  `docs/CONSTITUTIONAL_ARCHITECTURE_PLAN.md`; the code as audited:
+  `docs/reviews/2026-10-separation-of-powers-audit.md`. CivicOS enforces the
+  nation's configuration and never invents, transfers or assumes authority:
+  no institution is a child of a universal executive administrator, a seniority
+  or a role never grants a power its institution lacks, independence is
+  recorded per dimension (decisions, appointment, dismissal, funding,
+  instructions), and constitution-dependent powers ship as slots or unapproved
+  drafts until the nation's legal process approves them.
+
 ## Entry flow
 
 - `/` is the cover page, Plaza (`app/src/components/features/cover/CoverPlaza.tsx`):
@@ -160,6 +174,15 @@ What has been built is locked. Work only upgrades it toward the vision in
   records completion; every later sign-in lands on `/welcome` directly.
   `/setup` stays reachable afterwards to review and edit the live configuration.
 - `/command` is the Sovereign Command Center (formerly `/`), unchanged.
+- `/admin/onboarding` is the setup hub: `lib/onboarding/status.ts` reads each
+  track (nation, who is responsible, officials, laws, mappings, country rules,
+  procedures, rates, registers, data sharing, sites, maps, operations,
+  updates; the demo track only where `samplesAllowed()`) from the systems that
+  hold it, never a copy, and lists changes waiting for a second official
+  (`GET /api/onboarding/status`, `canSeeOnboarding()`). A new register, rule
+  set or two-official store adds its check or waiting item there. Refusals
+  naming "Who is responsible" link to `/gov/configuration#who-is-responsible`
+  through `RefusalText`.
 - Sign-in surfaces: `/sign-in` (substrate email + password) and `/login`
   (citizen verification). The cover hands off to them; it does not replace them.
 
@@ -486,6 +509,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   accessor passes its object through `touch()` (`lib/data/repo/track.ts`;
   `tracked()` for a store held at module level), so its changes are written
   with the audit entry they belong to; a new store does the same.
+- A request finishes its own durable writes (register 18.37): every route
+  handler is wrapped at build by `scripts/durable-route-loader.cjs` with
+  `durableRoute()` (`lib/data/repo/settle.ts`), so a changing request commits
+  before its response and a stale instance pulls before it answers. Export
+  route methods only as `export (async) function METHOD` or `export const
+  METHOD` (`durable-route.test.ts` checks); a serverless host never relies on
+  a timer between requests.
 
 ## Backups and disaster recovery
 
@@ -506,6 +536,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   first, and the audit chain gets one entry naming both and the replaced
   state's hash. A new store holding the backup system's or the running
   software's own records joins `KEPT_ON_RESTORE` (`lib/backup/state.ts`).
+- Scheduled jobs (register 18.39): every `/api/cron/*` route exports its
+  handler through `cronRoute()` (`lib/ops/cron-runs.ts`: run record, run key,
+  overlap guard, retries, alert); a new job joins `scripts/cron-jobs.json`,
+  `RETRY_POLICY` (`lib/ops/cron-jobs.ts`), the Helm values, `schedule.sql`
+  and the pg_cron migration (`cron-jobs.test.ts`). On Vercel pg_cron drives
+  them; a serverless server backs up only to S3.
 
 ## Who acted
 
@@ -539,9 +575,18 @@ What has been built is locked. Work only upgrades it toward the vision in
   `SELF_AUTHENTICATED` / `BEARER_ROUTES` that verify it themselves. Under
   `enforce`, reads need the signed `civicos_official` session; the demo
   `civicos_session` cookie opens only `/wallet`.
+- The demo data pack (`lib/casework/demo-pack.ts`, `POST /api/demo/pack`,
+  administrators, demo and training only) runs through the real engine: the
+  cast, the sample acts and procedures, one sample case per procedure opened by
+  that institution's demo officer (`source: 'sample'`); it never decides a step
+  and never names who is responsible.
 - The second sign-in step (authenticator codes, `lib/auth/totp.ts`, `/api/auth/two-step`)
   is part of the same rules: a session records whether it passed it, and an
   official the policy requires it for makes no changes until it has.
+- The demo cast (`lib/auth/demo-cast.ts`, `/api/demo/*`) exists only while
+  `samplesAllowed()`: separate `demo` accounts per responsible institution,
+  reached only by switching (`act-as`, audited, admin or cast member), refused
+  at every sign-in path and in `currentOfficial()` in production.
 
 ## API description
 

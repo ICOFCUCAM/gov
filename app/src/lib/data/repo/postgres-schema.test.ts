@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { RECORDS_SCHEMA, RECORDS_MIGRATION, DOCS_SCHEMA, DOCS_MIGRATION, PARCELS_SCHEMA, PARCELS_MIGRATION, LIMITS_SCHEMA, LIMITS_MIGRATION } from './postgres-schema';
+import { RECORDS_SCHEMA, RECORDS_MIGRATION, DOCS_SCHEMA, DOCS_MIGRATION, PARCELS_SCHEMA, PARCELS_MIGRATION, LIMITS_SCHEMA, LIMITS_MIGRATION, CRON_LEASE_SCHEMA, CRON_LEASE_MIGRATION } from './postgres-schema';
 
 const migration = (name: string) => readFileSync(path.join(__dirname, '../../../../supabase/migrations', name), 'utf8');
 
@@ -12,6 +12,7 @@ describe('the records schema', () => {
     expect(migration(DOCS_MIGRATION)).toBe(DOCS_SCHEMA);
     expect(migration(PARCELS_MIGRATION)).toBe(PARCELS_SCHEMA);
     expect(migration(LIMITS_MIGRATION)).toBe(LIMITS_SCHEMA);
+    expect(migration(CRON_LEASE_MIGRATION)).toBe(CRON_LEASE_SCHEMA);
   });
 
   it('keeps parcels in a table with their box, a PostGIS multipolygon and GiST index where it can, closed to everyone but the service role', () => {

@@ -56,6 +56,8 @@ import { withSpan } from '@/lib/ops/trace';
 import { encode, decode } from '@/lib/data/encode';
 import { useBackend } from '@/lib/data/repo';
 import type { Records, RecordsStatus } from '@/lib/data/repo/postgres';
+import { installSettle } from '@/lib/data/repo/settle';
+import { log } from '@/lib/ops/log';
 
 /** Who holds the writer's lease, and whether the caller now does. */
 export interface Lease { holder: string; expiresAt: string; acquired: boolean }
@@ -394,6 +396,47 @@ export const recordsBackend = (): Records | undefined => g.__persistRecords;
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+/** A serverless host (Vercel, or CIVICOS_SERVERLESS=on): no timer runs between requests. */
+export const serverless = (env: Record<string, string | undefined> = process.env): boolean =>
+  !!env.VERCEL || /^(on|1|true)$/i.test(env.CIVICOS_SERVERLESS ?? '');
+
+/**
+ * Every request finishes its durable writes (lib/data/repo/settle.ts, wiring
+ * audit §13): a changing request's changes are committed before its response,
+ * a request on an instance that follows others only by the poll pulls first
+ * when its last pull is older than CIVICOS_READ_FRESH_MS (default 250; 0 off,
+ * waiting at most CIVICOS_READ_FRESH_TIMEOUT_MS, default 300), and on a
+ * serverless host the snapshot of file/supabase modes is saved with the
+ * request instead of by the 5 s timer. CIVICOS_SETTLE=off turns it off;
+ * CIVICOS_SETTLE_TIMEOUT_MS (default 5000) bounds the wait for a commit.
+ */
+export function installRequestSettle(env: Record<string, string | undefined> = process.env): boolean {
+  if (/^off$/i.test(env.CIVICOS_SETTLE ?? '')) { installSettle(undefined); return false; }
+  const onServerless = serverless(env);
+  if (!g.__persistRecords && !(onServerless && g.__persistAdapter)) { installSettle(undefined); return false; }
+  const settleMs = Number(env.CIVICOS_SETTLE_TIMEOUT_MS) || 5000;
+  const freshMs = env.CIVICOS_READ_FRESH_MS !== undefined ? Math.max(0, Number(env.CIVICOS_READ_FRESH_MS) || 0) : 250;
+  const freshWait = Number(env.CIVICOS_READ_FRESH_TIMEOUT_MS) || 300;
+  // A snapshot save is needed with the request only where the save loop's timer does not run (and the records do not hold every store).
+  const snapshots = () => onServerless && !!g.__persistSave && !g.__persistRecords?.ownsAll;
+  installSettle({
+    async before() {
+      const r = g.__persistRecords;
+      // With LISTEN other instances' commits arrive as they happen; behind a transaction pooler only the poll brings them.
+      if (r && freshMs > 0 && !r.listening) await r.freshen(freshMs, freshWait);
+    },
+    async settle() {
+      const r = g.__persistRecords;
+      const ok = r ? await r.settle(settleMs) : true;
+      if (!ok) log('warn', 'records.settle.timeout', { timeoutMs: settleMs, queued: r?.status().queueDepth, message: r?.status().error });
+      if (snapshots()) await g.__persistSave!();
+      return ok;
+    },
+    pending: () => onServerless && (!!g.__persistRecords?.pending() || (snapshots() && (g.__persistChanges ?? 0) !== (g.__persistSeen ?? -1))),
+  });
+  return true;
+}
+
 // ── Data restore (lib/data/backups.ts) ────────────────────────────────────
 /** Mark a data restore as running (changes refused) or ended. */
 export function setRestoring(on: boolean): void {
@@ -541,6 +584,8 @@ export async function startFromEnv(env = process.env): Promise<Status> {
       status.error = `the per-record tables could not be started: ${(e as Error).message}; this server refuses changes`;
     }
   }
+  // Requests finish their own writes (postgres, or any saved mode on a serverless host); the save loop is read when called.
+  installRequestSettle(env);
 
   // Baseline: what was just restored needs no immediate write.
   const last = (g.__persistLast ??= new Map());

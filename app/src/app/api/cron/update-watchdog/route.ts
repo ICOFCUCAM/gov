@@ -16,13 +16,16 @@
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
+import { cronRoute } from '@/lib/ops/cron-runs';
 import { superviseProbations } from '@/lib/data/updates';
 
 export const dynamic = 'force-dynamic';
 
-export function GET(req: Request) {
+function runJob(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   return NextResponse.json({ ok: true, summary: superviseProbations() });
 }
 
+// Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).
+export const GET = cronRoute('update-watchdog', runJob);
 export const POST = GET;

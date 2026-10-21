@@ -1,7 +1,7 @@
 // Approving an outside caller takes two officials (lib/data/store/federation.ts):
 // one proposes the integration's scopes and purposes per service, a different
 // one confirms; an unconfirmed proposal lapses and is kept.
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { registerIntegration, setIntegrationStatus, proposeIntegrationApproval, confirmIntegrationApproval, withdrawIntegrationApproval, listIntegrations, integrationPurposes, listAudit } from './store';
 import { proposeDualControlPolicy, confirmDualControlPolicy, resetDualControl } from '@/lib/casework/dual-control-policy';
 import { recordVersion, confirmVersion } from '@/lib/law/register';
@@ -112,5 +112,40 @@ describe('approving an integration', () => {
     expect(get(id).approvalHistory).toEqual([]);
     ok(confirmIntegrationApproval(id, 'Admin B'));
     expect(integrationPurposes(id, 'person.verify')).toEqual({ kind: 'approved', purposes: ['enrolment'] });
+  });
+});
+
+
+describe('approving an integration in production', () => {
+  afterEach(() => { vi.unstubAllEnvs(); resetDualControl(); });
+  const law = () => {
+    const v = ok(recordVersion({ instrument: { title: 'Data Sharing Act', type: 'act', jurisdiction: 'X', year: 2026, number: `${++n}`, issuingAuthority: 'Parliament' }, dates: { inForce: '2026-01-01' }, provisions: [{ eId: 'sec_5', num: '5', text: 'Sharing.' }] }, 'L1', 'l1'));
+    confirmVersion(v.instrument.id, v.version.id, 'L2', 'l2');
+    return [{ instrument: v.instrument.id, eId: 'sec_5' }];
+  };
+
+  it('needs the law that permits the sharing, cited from the laws register', () => {
+    vi.stubEnv('CIVICOS_MODE', 'production');
+    const id = client();
+    expect(proposeIntegrationApproval(id, { purposes: { 'person.verify': ['enrolment'] } }, 'Admin A', 'a')).toMatchObject({ error: expect.stringMatching(/laws register/) });
+    const r = ok(proposeIntegrationApproval(id, { purposes: { 'person.verify': ['enrolment'] }, legalBasis: law() }, 'Admin A', 'a'));
+    expect(r.pendingApproval!.basis).toEqual([expect.objectContaining({ eId: 'sec_5' })]);
+  });
+
+  it('is confirmed by an official of each institution that owns a service it opens, each a different person', () => {
+    vi.stubEnv('CIVICOS_MODE', 'production');
+    const id = client(['service:person.verify', 'service:taxpayer.status']);
+    ok(proposeIntegrationApproval(id, { purposes: { 'person.verify': ['enrolment'], 'taxpayer.status': ['procurement'] }, legalBasis: law(), owners: ['MIN-CIVIL', 'MIN-TAX'] }, 'Admin A', 'a'));
+    // An official of an institution that owns none of the data, or not signed in to one, cannot agree for it.
+    expect(confirmIntegrationApproval(id, 'Admin B', 'b', new Date(), 'MIN-HEALTH')).toMatchObject({ error: expect.stringMatching(/MIN-CIVIL, MIN-TAX/) });
+    expect(confirmIntegrationApproval(id, 'Admin B', 'b', new Date())).toMatchObject({ error: expect.stringMatching(/owners confirm/) });
+    const first = ok(confirmIntegrationApproval(id, 'Admin B', 'b', new Date(), 'MIN-CIVIL'));
+    expect(first.status).not.toBe('approved');
+    expect(first.pendingApproval!.consents).toEqual([expect.objectContaining({ institution: 'MIN-CIVIL', by: 'Admin B' })]);
+    // The same person cannot agree for the second owner too.
+    expect(confirmIntegrationApproval(id, 'Admin B', 'b', new Date(), 'MIN-TAX')).toMatchObject({ error: expect.stringMatching(/different person/) });
+    const done = ok(confirmIntegrationApproval(id, 'Admin C', 'c', new Date(), 'MIN-TAX'));
+    expect(done.status).toBe('approved');
+    expect(integrationPurposes(id, 'taxpayer.status')).toEqual({ kind: 'approved', purposes: ['procurement'] });
   });
 });

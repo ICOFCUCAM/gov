@@ -7,6 +7,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Section } from '@/components/ui/DataSystem';
+import { RefusalText } from '@/components/ui/RefusalText';
+import { OpenCaseForm } from './casework/OpenCaseForm';
 
 interface Row { id: string; ref: string; package: { key: string; version: number }; stage: string; priority: string; owner: string; deadlines: { key: string; label: string; due: string; met?: string; lapsed?: string }[]; pending?: { action: string }; assignee?: { name: string }; openedAt: string; closedAt?: string }
 
@@ -22,8 +24,9 @@ export function CasesBoard() {
     <div className="space-y-4 p-4">
       <h1 className="text-xl font-semibold">Cases</h1>
       <p className="max-w-3xl text-sm text-ink-muted">Applications and other cases under the procedures your institution has approved. Each step is taken by an authorised official and kept in the case&apos;s history.</p>
+      <OpenCaseForm />
       <label className="text-sm"><input type="checkbox" checked={open} onChange={e => setOpen(e.target.checked)} /> Open cases only</label>
-      {err ? <p role="alert" className="text-sm text-alert">{err}</p> : null}
+      {err ? <p role="alert" className="text-sm text-alert"><RefusalText text={err} /></p> : null}
       <Section title={open ? 'Open' : 'All'} meta={rows ? `${rows.length} cases` : 'loading'}>
         {rows?.length ? (
           <table className="w-full text-left text-sm">

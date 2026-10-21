@@ -200,9 +200,9 @@ export function NationalOverview() {
   ] as [string, string, string, string][];
 
   const alerts = [
-    ['Multiple Threats Detected', 'Northern Corridor', '12:35', 'CRITICAL'],
+    ['Multiple Threats Detected', regionName(1, 'Northern Region'), '12:35', 'CRITICAL'],
     ['Suspicious Activity Reported', regionName(3, 'West District'), '12:18', 'HIGH'],
-    ['Unusual Border Movement', 'Southern Border', '11:57', 'HIGH'],
+    ['Unusual Border Movement', 'A border crossing', '11:57', 'HIGH'],
     ['Infrastructure Vulnerability', 'Power Grid', '11:22', 'MEDIUM'],
     ['Public Safety Warning', regionName(0, 'Central Region'), '10:41', 'MEDIUM'],
   ] as [string, string, string, string][];

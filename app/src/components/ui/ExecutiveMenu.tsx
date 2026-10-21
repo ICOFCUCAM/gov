@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSignIn, refreshSignIn, officialScope } from '@/lib/official';
 import { TONE } from '@/lib/tone-palette';
+import { DemoCastMenu } from './DemoCast';
 
 const ITEMS: { l: string; href: string; k?: boolean }[] = [
   { l: 'Executive profile', href: '/gov/configuration' },
@@ -23,6 +24,8 @@ const ITEMS: { l: string; href: string; k?: boolean }[] = [
  * briefings, audit, continuity, settings, sign in or out). When an official
  * is signed in it shows them (name, office, what they may do) and Sign out
  * ends their session on the server; otherwise it says so and offers Sign in.
+ * On a demonstration or training installation it also lists the demo cast
+ * ("Switch to…", grouped by institution; components/ui/DemoCast.tsx).
  */
 export function ExecutiveMenu({
   title = 'Head of Government',
@@ -118,6 +121,8 @@ export function ExecutiveMenu({
               </button>
             )}
           </div>
+          {/* Demonstration and training installations only (nothing renders on a production one). */}
+          <DemoCastMenu onDone={() => setOpen(false)} />
         </div>
       ) : null}
     </div>

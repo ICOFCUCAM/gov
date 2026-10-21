@@ -293,7 +293,7 @@ export const api = {
           body: JSON.stringify(body),
         }),
       /** Propose approving (or changing) an integration's scopes and purposes per service; a different official confirms. */
-      approve: (id: string, terms: { scopes?: string[]; purposes?: Record<string, string[]>; note?: string } = {}) =>
+      approve: (id: string, terms: { scopes?: string[]; purposes?: Record<string, string[]>; note?: string; legalBasis?: { instrument: string; eId: string }[] } = {}) =>
         req<{ integration: IntegrationClient }>(`/api/integrations/${id}/approve`, { method: 'POST', body: JSON.stringify({ op: 'propose', ...terms }) }),
       confirmApproval: (id: string) =>
         req<{ integration: IntegrationClient }>(`/api/integrations/${id}/approve`, { method: 'POST', body: JSON.stringify({ op: 'confirm' }) }),

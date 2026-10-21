@@ -370,6 +370,7 @@ export const fr: Messages = {
     contact: 'Contact',
     contactText: 'Service des relations publiques, en semaine de 9 h à 17 h. Rendez-vous dans l’antenne la plus proche ou utilisez le portail citoyen.',
     contactUs: 'Nous contacter →',
+    notAvailable: 'Pas encore disponible',
     enterEmail: 'Saisissez votre e-mail',
     email: 'E-mail',
     subscribe: 'S’abonner',

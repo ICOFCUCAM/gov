@@ -7,14 +7,20 @@
 //
 // CIVICOS_BACKUP_TARGET:
 //   dir (default)  CIVICOS_BACKUP_DIR (default <cwd>/.civicos-backups), files
-//                  written atomically, mode 0600
-//   s3             S3-compatible object storage (./s3.ts)
+//                  written atomically, mode 0600. Refused on a serverless host
+//                  (Vercel, CIVICOS_SERVERLESS=on): its disk is read-only or
+//                  wiped between invocations, so a backup there would be lost
+//                  with the instance (register 18.39).
+//   s3             S3-compatible object storage (./s3.ts); the only target on a
+//                  serverless host. Nothing touches the local disk: the archive
+//                  is built and read back in memory.
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { secretFrom } from '@/lib/keys/remote';
 import { S3Client } from './s3';
+import { serverless } from '@/lib/data/persist';
 
 export interface BackupTarget {
   kind: 'dir' | 's3';
@@ -85,6 +91,7 @@ export function targetFromEnv(env: NodeJS.ProcessEnv = process.env): BackupTarge
     }));
   }
   if (kind !== 'dir') throw new Error(`CIVICOS_BACKUP_TARGET must be dir or s3, not ${kind}`);
+  if (serverless(env)) throw new Error('This server is serverless (Vercel): it has no lasting local directory, so backups need CIVICOS_BACKUP_TARGET=s3 with CIVICOS_BACKUP_S3_ENDPOINT, CIVICOS_BACKUP_S3_BUCKET and its keys (docs/DISASTER_RECOVERY.md)');
   return dirTarget(env.CIVICOS_BACKUP_DIR?.trim() || path.join(process.cwd(), '.civicos-backups'));
 }
 

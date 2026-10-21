@@ -8,7 +8,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useSignIn, officialLabel, officialScope } from '@/lib/official';
-import { ROLES, roleOf, type OfficialRole } from '@/lib/auth/roles';
+import { ROLES, roleOf, twoStepCovers, type OfficialRole, type TwoStepPolicy } from '@/lib/auth/roles';
 
 interface Account { resetPendingUntil?: string; id: string; email: string; name: string; office: string; createdAt: string; createdBy: string; disabled?: boolean; lastSignIn?: string; role?: OfficialRole; institution?: string; twoStepSince?: string; twoStepRequired?: boolean;
   passkeys?: { id: string }[]; identity?: { claim: string; value: string }; noPassword?: boolean }
@@ -29,7 +29,10 @@ export function OfficialAccounts() {
 
   const load = React.useCallback(async () => {
     const r = await fetch('/api/auth/officials', { cache: 'no-store' });
-    if (r.ok) { const d = (await r.json()) as { accounts: Account[]; full?: boolean }; setList(d.accounts); setFull(d.full !== false); }
+    if (r.ok) {
+      const d = (await r.json()) as { accounts: Account[]; full?: boolean; twoStep?: PolicyState };
+      setList(d.accounts); setFull(d.full !== false); setPolicy(d.twoStep ?? null);
+    }
   }, []);
   // Only administrators get the full list (email, sign-ins, second step); others see a directory (review L-3).
   const [full, setFull] = React.useState(false);
@@ -39,11 +42,8 @@ export function OfficialAccounts() {
       .then((d: { ministries: Institution[] }) => setInstitutions(d.ministries.filter(m => m.status === 'active').sort((a, b) => a.name.localeCompare(b.name))));
   }, []);
   const admin = !!s?.official && roleOf(s.official) === 'administrator';
-  const [policy, setPolicy] = React.useState<string | null>(null);
-  React.useEffect(() => {
-    if (s?.official?.method !== 'local') return;
-    void fetch('/api/auth/two-step', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).then((d: { policy?: string } | null) => setPolicy(d?.policy ?? null));
-  }, [s?.official?.method]);
+  // The installation's two-step policy: sent with the full account list (administrators only).
+  const [policy, setPolicy] = React.useState<PolicyState | null>(null);
   const placeName = (id?: string) => (id ? institutions.find(m => m.id === id)?.name ?? id : 'Whole government');
 
   // A one-time reset code to hand over in person: shown here once, never stored in clear.
@@ -90,20 +90,9 @@ export function OfficialAccounts() {
             {ROLES.map(r => <React.Fragment key={r.id}><dt className="font-semibold">{r.label}</dt><dd className="text-ink-soft">{r.means}</dd></React.Fragment>)}
             <dt className="font-semibold">Institution</dt><dd className="text-ink-soft">An official with an institution acts only for it: its workspace, and directives it issues. &ldquo;Whole government&rdquo; acts for every institution.</dd>
           </dl>
-          {admin && policy ? (
-            <label className="flex flex-wrap items-center gap-2 rounded-[3px] border border-line bg-surface p-3 text-[13px]">
-              <span className="font-semibold">Second sign-in step</span>
-              <span className="text-ink-soft">(a code from an authenticator app after the password) is required for</span>
-              <select className={`${input} w-auto`} value={policy} disabled={busy}
-                onChange={async e => {
-                  const v = e.currentTarget.value;
-                  if (await call('/api/auth/two-step', { action: 'policy', policy: v }, v === 'none' ? 'Second step is now optional' : `Second step now required for ${v === 'all' ? 'every official' : 'officials who can sign and administrators'}`)) setPolicy(v);
-                }}>
-                <option value="none">nobody (each official chooses)</option>
-                <option value="signers">officials who can sign, and administrators</option>
-                <option value="all">every official</option>
-              </select>
-            </label>
+          {admin && policy && list ? (
+            <TwoStepPolicyPanel state={policy} accounts={list} me={s.official} busy={busy}
+              change={(v, done) => call('/api/auth/two-step', { action: 'policy', policy: v }, done)} />
           ) : null}
           {admin ? (
           <form className="grid gap-2 rounded-[3px] border border-line bg-surface p-3 md:grid-cols-5"
@@ -196,6 +185,92 @@ export function OfficialAccounts() {
         </>
       )}
     </div>
+  );
+}
+
+interface PolicyState { policy: TwoStepPolicy; set: { by: string; at: string } | null }
+
+const POLICY_CHOICES: { id: TwoStepPolicy; label: string; means: string }[] = [
+  { id: 'none', label: 'Nobody', means: 'Each official chooses whether to use it. This is how an installation starts.' },
+  { id: 'signers', label: 'Officials who can sign, and administrators', means: 'Required for the roles Can sign and Administrator; optional for officers and auditors.' },
+  { id: 'all', label: 'Every official', means: 'Required for every official, whatever their role.' },
+];
+const policyLabel = (p: TwoStepPolicy) => POLICY_CHOICES.find(c => c.id === p)?.label ?? p;
+
+/**
+ * Who must use the second sign-in step (an authenticator code or a passkey
+ * after the password). Read from the account list, changed through
+ * POST /api/auth/two-step { action: 'policy' } (setTwoStepPolicy(), audited).
+ * One administrator changes it; the panel says so.
+ */
+function TwoStepPolicyPanel({ state, accounts, me, busy, change }: {
+  state: PolicyState; accounts: Account[]; busy: boolean;
+  me: { sub: string; method?: string };
+  change: (policy: TwoStepPolicy, done: string) => Promise<boolean>;
+}) {
+  const [choice, setChoice] = React.useState<TwoStepPolicy>(state.policy);
+  React.useEffect(() => setChoice(state.policy), [state.policy]);
+  const canChange = me.method === 'local';
+  const active = accounts.filter(a => !a.disabled);
+  const on = (a: Account) => !!a.twoStepSince || !!a.passkeys?.length;
+  const setUp = active.filter(on);
+  const covered = (p: TwoStepPolicy) => active.filter(a => twoStepCovers(p, roleOf(a)));
+  const missingNow = covered(state.policy).filter(a => !on(a));
+  const missingIfChosen = covered(choice).filter(a => !on(a));
+  const self = accounts.find(a => me.sub === `local:${a.id}`);
+  const selfBlocked = !!self && twoStepCovers(choice, roleOf(self)) && !on(self);
+
+  async function save() {
+    if (choice === state.policy) return;
+    const warn = choice === 'none'
+      ? 'Make the second step optional for every official? Officials who have set it up keep it; the others can then make changes without it.'
+      : `Require the second step for ${policyLabel(choice).toLowerCase()}? ${missingIfChosen.length} active official${missingIfChosen.length === 1 ? ' has' : 's have'} not set it up and will make no changes until they do.`;
+    if (!window.confirm(`${warn}\n\nThis takes effect at once, on your decision alone, and is recorded in the audit chain.`)) return;
+    await change(choice, choice === 'none' ? 'Second step is now optional' : `Second step now required for ${policyLabel(choice).toLowerCase()}`);
+  }
+
+  return (
+    <section className="space-y-3 rounded-[3px] border border-line bg-surface p-3 text-[13px]" aria-labelledby="two-step-policy">
+      <div>
+        <h2 id="two-step-policy" className="text-[15px] font-semibold">Second sign-in step</h2>
+        <p className="mt-1 max-w-3xl text-ink-soft">
+          After the password, a code from an authenticator app or a passkey. An official the rule covers makes no changes until they have set it up under <Link href="/gov/me" className="text-link underline">My account</Link> and signed in with it.
+        </p>
+      </div>
+      <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
+        <dt className="font-semibold">Required now for</dt>
+        <dd>{policyLabel(state.policy)}</dd>
+        <dt className="font-semibold">Last set</dt>
+        <dd className="text-ink-soft">{state.set ? <>by {state.set.by}, {day(state.set.at)}</> : 'Never set: the starting rule (nobody required) applies'}</dd>
+        <dt className="font-semibold">Set up</dt>
+        <dd className="text-ink-soft">{setUp.length} of {active.length} active platform account{active.length === 1 ? '' : 's'}</dd>
+        <dt className="font-semibold">Required, not set up</dt>
+        <dd className={missingNow.length ? 'text-warn' : 'text-ink-soft'}>{missingNow.length ? missingNow.map(a => a.name).join(', ') : 'Nobody'}</dd>
+      </dl>
+      <fieldset className="space-y-1.5" disabled={busy || !canChange}>
+        <legend className="mb-1 font-semibold">Required for</legend>
+        {POLICY_CHOICES.map(c => (
+          <label key={c.id} className="flex items-start gap-2">
+            <input type="radio" name="two-step-policy" className="focus-ring mt-1" value={c.id} checked={choice === c.id} onChange={() => setChoice(c.id)} />
+            <span><span className="font-semibold">{c.label}</span>{c.id === state.policy ? <span className="text-ink-muted"> (current)</span> : null}<span className="block text-ink-soft">{c.means}</span></span>
+          </label>
+        ))}
+      </fieldset>
+      {choice !== state.policy && choice !== 'none' ? (
+        <p className="text-ink-soft">
+          {missingIfChosen.length ? <>Not set up yet and would be blocked from making changes: <span className="text-warn">{missingIfChosen.map(a => a.name).join(', ')}</span>.</> : 'Every official this covers has already set it up.'}
+          {selfBlocked ? <strong className="block text-warn">This includes you: set up your own second step under My account first, or you will make no further changes until you have.</strong> : null}
+        </p>
+      ) : null}
+      {canChange ? (
+        <button type="button" className={btn} disabled={busy || choice === state.policy} onClick={() => void save()}>Save the rule</button>
+      ) : (
+        <p className="text-ink-soft">Only an administrator signed in with a platform account can change this rule here.</p>
+      )}
+      <p className="text-[12px] text-ink-muted">
+        Who decides: <strong className="text-ink-soft">one administrator.</strong> A change takes effect at once and is recorded in the audit chain; no second official confirms it, including turning the requirement off. Officers who sign in through the substrate are covered by the same rule; their second step is checked by the substrate&rsquo;s sign-in and is not counted above.
+      </p>
+    </section>
   );
 }
 

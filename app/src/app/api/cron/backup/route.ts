@@ -12,14 +12,23 @@
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
+import { cronRoute } from '@/lib/ops/cron-runs';
 import { runScheduled } from '@/lib/data/backups';
 
 export const dynamic = 'force-dynamic';
+// On a serverless host (Vercel) the function may run this long: capture, seal,
+// upload, read back and dry-run restore in one invocation (60 s fits every plan).
+export const maxDuration = 60;
 
-export async function GET(req: Request) {
+async function runJob(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const summary = await runScheduled(new Date(), { now: new URL(req.url).searchParams.has('now') });
-  return NextResponse.json({ ok: !summary.error, summary }, { status: summary.error ? 503 : 200 });
+  // A backup taken but not verified protects nothing: the run fails (and is retried and alerted on).
+  const unverified = !!summary.took && !summary.verified;
+  const failed = !!summary.error || unverified;
+  return NextResponse.json({ ok: !failed, summary, ...(unverified ? { error: `Backup ${summary.took} was taken but did not verify` } : {}) }, { status: failed ? 503 : 200 });
 }
 
+// Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).
+export const GET = cronRoute('backup', runJob);
 export const POST = GET;

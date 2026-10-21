@@ -10,6 +10,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
+import { ScheduledJobRuns } from '@/components/features/ScheduledJobRuns';
 
 const KNOWN_CRONS = [
   {
@@ -124,7 +125,14 @@ export function CronStatus() {
   );
 
   if (!available) {
-    return <SubstrateNotConfigured title="Cron status" />;
+    // The platform's own run history needs no substrate; the telemetry signals below do.
+    return (
+      <div className="space-y-3">
+        <SurfaceHeading title="Cron status" badge="run history" />
+        <ScheduledJobRuns />
+        <SubstrateNotConfigured title="Cron status" />
+      </div>
+    );
   }
 
   function staleness(samples: TelemetrySampleRow[] | undefined, expectedMin: number): { lastAt: number | null; ageMin: number | null; stale: boolean } {
@@ -148,6 +156,8 @@ export function CronStatus() {
           </span>
         </div>
       </div>
+
+      <ScheduledJobRuns />
 
       <Panel title="Scheduled workers" meta={`${KNOWN_CRONS.length}`} bodyClass="!p-0">
         {KNOWN_CRONS.map(c => {
@@ -194,7 +204,8 @@ export function CronStatus() {
 
       <p className="text-[10px] text-ink-muted">
         Cron secret: <span className="font-mono">CIVICOS_CRON_SECRET</span> env
-        var, sent as a Bearer header (it opens the scheduled jobs only). Recipes for Vercel Cron / Supabase pg_cron in supabase/README.md.
+        var, sent as a Bearer header (it opens the scheduled jobs only). Recipes for Vercel Cron / Supabase pg_cron in supabase/README.md;
+        on Vercel Hobby (daily crons only) the database scheduler calls every job (docs/DISASTER_RECOVERY.md, scheduled jobs).
       </p>
     </div>
   );

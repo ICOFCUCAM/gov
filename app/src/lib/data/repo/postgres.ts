@@ -59,7 +59,7 @@ import { auditHashV2 } from '@/lib/data/store/audit';
 import { auditCommitted } from '@/lib/data/store/audit-committed';
 import { log } from '@/lib/ops/log';
 import { memoryAudit, memoryBoundaries, memoryFacilities, memoryParcels, memoryTwin } from './memory';
-import { RECORDS_SCHEMA, DOCS_SCHEMA, PARCELS_SCHEMA, LIMITS_SCHEMA } from './postgres-schema';
+import { RECORDS_SCHEMA, DOCS_SCHEMA, PARCELS_SCHEMA, LIMITS_SCHEMA, CRON_LEASE_SCHEMA } from './postgres-schema';
 import { applyRow, build, counterFields, decompose, diff, isCounterPath, mergeAt, normalise, removeAt, replaceInPlace, rowAt, segsOf, type Change, type DocRow, type Kind, type Known } from './documents';
 import { followed, listenForUse } from './track';
 import type { Backend, BoundaryStore, FacilityStore, ParcelStore } from './types';
@@ -105,14 +105,14 @@ const iso = (col: string) => `to_char(${col} at time zone 'UTC', ${ISO})`;
 /** Apply the records schema (idempotent; one instance at a time). Returns whether PostGIS is in use. */
 export async function ensureSchema(sql: Sql): Promise<{ postgis: boolean }> {
   // Applied once per version of the schema: re-running its DDL while other instances write would take their tables' locks.
-  const version = createHash('sha256').update(RECORDS_SCHEMA).update(DOCS_SCHEMA).update(PARCELS_SCHEMA).update(LIMITS_SCHEMA).digest('hex');
+  const version = createHash('sha256').update(RECORDS_SCHEMA).update(DOCS_SCHEMA).update(PARCELS_SCHEMA).update(LIMITS_SCHEMA).update(CRON_LEASE_SCHEMA).digest('hex');
   const applied = async (s: Sql) => (await q(s, `select to_regclass('civicos.records_schema') is not null as t`))[0]!.t
     && (await q(s, `select 1 from civicos.records_schema where version = $1`, [version])).length > 0;
   if (!(await applied(sql))) {
     await sql.begin(async tx => {
       await q(tx, `select pg_advisory_xact_lock(hashtext('civicos.records.schema'))`);
       if (await applied(tx)) return;
-      for (const schema of [RECORDS_SCHEMA, DOCS_SCHEMA, PARCELS_SCHEMA, LIMITS_SCHEMA]) {
+      for (const schema of [RECORDS_SCHEMA, DOCS_SCHEMA, PARCELS_SCHEMA, LIMITS_SCHEMA, CRON_LEASE_SCHEMA]) {
         const all = tx.unsafe(schema);
         await (all.simple ? all.simple() : all);
       }
@@ -631,6 +631,23 @@ export interface Records {
   drain(timeoutMs?: number): Promise<boolean>;
   /** Apply other instances' changes now (the poll and LISTEN do this on their own). */
   pull(): Promise<number>;
+  /**
+   * Write what this instance changed up to now: the queue and the stores used since the
+   * last write (not a full sweep). Resolves true once committed, false after `timeoutMs`
+   * (the changes stay queued and journaled, and are retried). Called before a changing
+   * request's response (lib/data/repo/settle.ts), so a serverless function is not frozen
+   * with the change still in memory.
+   */
+  settle(timeoutMs?: number): Promise<boolean>;
+  /**
+   * Pull other instances' changes first when the last pull is older than `maxAgeMs`,
+   * waiting at most `timeoutMs`. True when this instance is that fresh (or became so).
+   */
+  freshen(maxAgeMs: number, timeoutMs: number): Promise<boolean>;
+  /** Something is waiting to be written or compared (queued changes, stores used, a retry). */
+  pending(): boolean;
+  /** Other instances' commits arrive by LISTEN (false behind a transaction pooler: by the poll only). */
+  listening: boolean;
   stateAsOf: (q?: Parameters<typeof stateAsOfSql>[1]) => Promise<Observation[]>;
   stop(): Promise<void>;
   sql: Sql;
@@ -1294,6 +1311,8 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
   // below one already read can still appear: such gaps are asked for again for a
   // minute (after that the id belonged to a transaction that rolled back).
   let pulling: Promise<number> | null = null;
+  /** When the last pull finished (ms): a request may pull first when it is older (freshen). */
+  let lastPullMs = 0;
   const pullOnce = async (): Promise<number> => {
     let applied = 0;
     const take = async (r: Row): Promise<void> => {
@@ -1315,7 +1334,8 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
       }
       if (rows.length < 500) break;
     }
-    status.lastPullAt = new Date().toISOString();
+    lastPullMs = Date.now();
+    status.lastPullAt = new Date(lastPullMs).toISOString();
     if (!applied) status.lagMs = 0;
     for (const s of followedStores) runFollow(s);
     followedStores.clear();
@@ -1356,6 +1376,31 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
         await new Promise(r => setTimeout(r, 50));
       }
     },
+    async settle(timeoutMs = 5000) {
+      const until = Date.now() + timeoutMs;
+      for (;;) {
+        if (stopped) return queue.length === 0;
+        if (!retryTimer) {
+          // A flush already running may have taken its stores before this request's change and be
+          // ending: the second flush starts after it and takes what is left.
+          await flush();
+          if (!retryTimer) await flush();
+          if (!retryTimer) return true;
+        }
+        // A failed write waits for its retry (the timer flushes): wait with it, up to the timeout.
+        if (Date.now() >= until) return false;
+        await new Promise(r => setTimeout(r, 50));
+      }
+    },
+    async freshen(maxAgeMs, timeoutMs) {
+      if (stopped || Date.now() - lastPullMs < maxAgeMs) return true;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const late = new Promise<false>(r => { timer = setTimeout(() => r(false), timeoutMs); timer.unref?.(); });
+      try { return await Promise.race([pull().then(() => true as const), late]); }
+      finally { if (timer) clearTimeout(timer); }
+    },
+    pending: () => queue.length > 0 || touched.size > 0 || !!retryTimer || !!flushing,
+    listening: !!listener,
     pull,
     stateAsOf: (query = {}) => stateAsOfSql(sql, query),
     owns: (key: string) => DOCS && STORE_KEY.test(key),

@@ -59,6 +59,9 @@
       "name": "customs"
     },
     {
+      "name": "demo"
+    },
+    {
       "name": "directives"
     },
     {
@@ -117,6 +120,9 @@
     },
     {
       "name": "oauth"
+    },
+    {
+      "name": "onboarding"
     },
     {
       "name": "openapi"
@@ -415,6 +421,12 @@
                         ]
                       }
                     },
+                    "raised": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RaisedFinding"
+                      }
+                    },
                     "awaiting": {
                       "type": "array",
                       "items": {
@@ -449,6 +461,7 @@
                     "entries",
                     "chain",
                     "unusual",
+                    "raised",
                     "awaiting"
                   ]
                 },
@@ -484,6 +497,16 @@
                           "name": "Example",
                           "reason": "Text",
                           "count": 1
+                        }
+                      ],
+                      "raised": [
+                        {
+                          "seq": 1,
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "watch": "string",
+                          "kind": "string",
+                          "subject": "string",
+                          "detail": "string"
                         }
                       ],
                       "awaiting": [
@@ -2697,7 +2720,7 @@
         ],
         "operationId": "get_auth_officials",
         "summary": "GET /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
         "parameters": [],
         "responses": {
           "200": {
@@ -2718,11 +2741,51 @@
                         "full": {
                           "type": "boolean",
                           "const": true
+                        },
+                        "twoStep": {
+                          "type": "object",
+                          "properties": {
+                            "policy": {
+                              "type": "string",
+                              "enum": [
+                                "all",
+                                "none",
+                                "signers"
+                              ]
+                            },
+                            "set": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "by",
+                                    "at"
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "policy",
+                            "set"
+                          ]
                         }
                       },
                       "required": [
                         "accounts",
-                        "full"
+                        "full",
+                        "twoStep"
                       ]
                     },
                     {
@@ -2784,7 +2847,14 @@
                           "secondStepOn": true
                         }
                       ],
-                      "full": true
+                      "full": true,
+                      "twoStep": {
+                        "policy": "all",
+                        "set": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        }
+                      }
                     }
                   }
                 }
@@ -2815,7 +2885,7 @@
         ],
         "operationId": "post_auth_officials",
         "summary": "POST /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes): in full for an administrator, as a directory (name, office, institution) for any other signed-in official. An administrator also gets the installation's two-step policy (`twoStep`: who must use the second sign-in step, who last set it), so the Official accounts screen shows it to substrate administrators too. POST creates one: the first account at installation, with the one-time setup code (`setupToken`, lib/auth/setup-token.ts: CIVICOS_SETUP_TOKEN or the code the server wrote to its output at start), every later one by an administrator. While the substrate is the sign-in method no platform account is created (409).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -2904,6 +2974,7 @@
                           "linkedBy": "A. Official"
                         },
                         "noPassword": true,
+                        "demo": true,
                         "twoStepSince": "string",
                         "twoStepRequired": true,
                         "resetPendingUntil": "string",
@@ -3959,6 +4030,28 @@
                         "signers"
                       ]
                     },
+                    "policySet": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "by": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "by",
+                            "at"
+                          ]
+                        }
+                      ]
+                    },
                     "passkeys": {
                       "type": "number"
                     }
@@ -3969,6 +4062,7 @@
                     "required",
                     "thisSession",
                     "policy",
+                    "policySet",
                     "passkeys"
                   ]
                 },
@@ -3981,6 +4075,10 @@
                       "required": true,
                       "thisSession": true,
                       "policy": "all",
+                      "policySet": {
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z"
+                      },
                       "passkeys": 1
                     }
                   }
@@ -7548,333 +7646,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "ok": {
-                          "type": "boolean",
-                          "const": true
-                        },
-                        "at": {
-                          "type": "string"
-                        },
-                        "platform": {
-                          "anyOf": [
-                            {
-                              "type": "null"
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "timestamp": {
-                                  "anyOf": [
-                                    {
-                                      "type": "null"
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "error": {
-                                          "type": "string"
-                                        },
-                                        "tsa": {},
-                                        "gen_time": {},
-                                        "serial": {}
-                                      },
-                                      "required": [
-                                        "error"
-                                      ]
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "tsa": {
-                                          "type": "string"
-                                        },
-                                        "gen_time": {
-                                          "type": "string"
-                                        },
-                                        "serial": {
-                                          "type": "string"
-                                        },
-                                        "error": {}
-                                      },
-                                      "required": [
-                                        "tsa",
-                                        "gen_time",
-                                        "serial"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                "anchored_to": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  }
-                                },
-                                "error": {
-                                  "type": "string"
-                                },
-                                "head_seq": {
-                                  "type": "number"
-                                },
-                                "head_hash": {
-                                  "type": "string"
-                                },
-                                "signed_at": {
-                                  "type": "string"
-                                },
-                                "key_id": {
-                                  "type": "string"
-                                },
-                                "production": {
-                                  "type": "boolean"
-                                },
-                                "file": {
-                                  "anyOf": [
-                                    {
-                                      "type": "null"
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "path": {
-                                          "type": "string"
-                                        },
-                                        "written": {
-                                          "type": "boolean"
-                                        },
-                                        "error": {
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": [
-                                        "path",
-                                        "written"
-                                      ]
-                                    }
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "timestamp",
-                                "anchored_to",
-                                "head_seq",
-                                "head_hash",
-                                "signed_at",
-                                "key_id",
-                                "production",
-                                "file"
-                              ]
-                            }
-                          ]
-                        },
-                        "substrate": {
-                          "type": "string"
-                        },
-                        "scopes_anchored": {
-                          "type": "number"
-                        },
-                        "scopes_swept": {
-                          "type": "number"
-                        },
-                        "results": {
-                          "type": "array",
-                          "items": {
-                            "not": {}
-                          }
-                        }
-                      },
-                      "required": [
-                        "ok",
-                        "at",
-                        "platform",
-                        "substrate",
-                        "scopes_anchored",
-                        "scopes_swept",
-                        "results"
-                      ]
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "ok": {
-                          "type": "boolean",
-                          "const": true
-                        },
-                        "at": {
-                          "type": "string"
-                        },
-                        "platform": {
-                          "anyOf": [
-                            {
-                              "type": "null"
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "timestamp": {
-                                  "anyOf": [
-                                    {
-                                      "type": "null"
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "error": {
-                                          "type": "string"
-                                        },
-                                        "tsa": {},
-                                        "gen_time": {},
-                                        "serial": {}
-                                      },
-                                      "required": [
-                                        "error"
-                                      ]
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "tsa": {
-                                          "type": "string"
-                                        },
-                                        "gen_time": {
-                                          "type": "string"
-                                        },
-                                        "serial": {
-                                          "type": "string"
-                                        },
-                                        "error": {}
-                                      },
-                                      "required": [
-                                        "tsa",
-                                        "gen_time",
-                                        "serial"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                "anchored_to": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  }
-                                },
-                                "error": {
-                                  "type": "string"
-                                },
-                                "head_seq": {
-                                  "type": "number"
-                                },
-                                "head_hash": {
-                                  "type": "string"
-                                },
-                                "signed_at": {
-                                  "type": "string"
-                                },
-                                "key_id": {
-                                  "type": "string"
-                                },
-                                "production": {
-                                  "type": "boolean"
-                                },
-                                "file": {
-                                  "anyOf": [
-                                    {
-                                      "type": "null"
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "path": {
-                                          "type": "string"
-                                        },
-                                        "written": {
-                                          "type": "boolean"
-                                        },
-                                        "error": {
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": [
-                                        "path",
-                                        "written"
-                                      ]
-                                    }
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "timestamp",
-                                "anchored_to",
-                                "head_seq",
-                                "head_hash",
-                                "signed_at",
-                                "key_id",
-                                "production",
-                                "file"
-                              ]
-                            }
-                          ]
-                        },
-                        "scopes_anchored": {
-                          "type": "number"
-                        },
-                        "scopes_swept": {
-                          "type": "number"
-                        },
-                        "results": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/AnchorResult"
-                          }
-                        }
-                      },
-                      "required": [
-                        "ok",
-                        "at",
-                        "platform",
-                        "scopes_anchored",
-                        "scopes_swept",
-                        "results"
-                      ]
-                    }
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "at": "2026-01-15T09:30:00.000Z",
-                      "platform": {
-                        "timestamp": {
-                          "error": "Text"
-                        },
-                        "anchored_to": [
-                          "string"
-                        ],
-                        "error": "Text",
-                        "head_seq": 1,
-                        "head_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                        "signed_at": "string",
-                        "key_id": "string",
-                        "production": true,
-                        "file": {
-                          "path": "string",
-                          "written": true
-                        }
-                      },
-                      "substrate": "string",
-                      "scopes_anchored": 1,
-                      "scopes_swept": 1,
-                      "results": [
-                        null
-                      ]
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -7961,51 +7733,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "at": {
-                      "type": "string"
-                    },
-                    "seq": {
-                      "anyOf": [
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "number"
-                        }
-                      ]
-                    },
-                    "open_work_items": {
-                      "type": "number"
-                    },
-                    "audit_entries": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "at",
-                    "seq",
-                    "open_work_items",
-                    "audit_entries"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "at": "2026-01-15T09:30:00.000Z",
-                      "seq": 1,
-                      "open_work_items": 1,
-                      "audit_entries": 1
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -8092,69 +7820,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean"
-                    },
-                    "summary": {
-                      "type": "object",
-                      "properties": {
-                        "took": {
-                          "type": "string"
-                        },
-                        "verified": {
-                          "type": "boolean"
-                        },
-                        "skipped": {
-                          "type": "string"
-                        },
-                        "pruned": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "rpo": {
-                          "$ref": "#/components/schemas/RpoStatus"
-                        },
-                        "error": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "pruned",
-                        "rpo"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "summary"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "summary": {
-                        "took": "string",
-                        "verified": true,
-                        "skipped": "string",
-                        "pruned": [
-                          "string"
-                        ],
-                        "rpo": {
-                          "targetMinutes": 1,
-                          "newestVerifiedAt": "2026-01-15T09:30:00.000Z",
-                          "ageMinutes": 1,
-                          "met": true
-                        },
-                        "error": "Text"
-                      }
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -8241,129 +7907,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "lapsed": {
-                      "type": "number"
-                    },
-                    "cases": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "ref": {
-                            "type": "string"
-                          },
-                          "deadline": {
-                            "type": "string"
-                          },
-                          "onLapse": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "ref",
-                          "deadline",
-                          "onLapse"
-                        ]
-                      }
-                    },
-                    "expired": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "organisation": {
-                            "type": "string"
-                          },
-                          "register": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "organisation",
-                          "register"
-                        ]
-                      }
-                    },
-                    "immigrationExpired": {
-                      "type": "number"
-                    },
-                    "unusualAccessRaised": {
-                      "type": "number"
-                    },
-                    "taxPaymentsPosted": {
-                      "type": "number"
-                    },
-                    "taxPaymentsUnmatched": {
-                      "type": "number"
-                    },
-                    "professionalsLapsed": {
-                      "type": "number"
-                    },
-                    "customsPaymentsPosted": {
-                      "type": "number"
-                    },
-                    "customsPaymentsUnmatched": {
-                      "type": "number"
-                    },
-                    "suspensionAlerts": {
-                      "type": "number"
-                    },
-                    "proposalsLapsed": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "lapsed",
-                    "cases",
-                    "expired",
-                    "immigrationExpired",
-                    "unusualAccessRaised",
-                    "taxPaymentsPosted",
-                    "taxPaymentsUnmatched",
-                    "professionalsLapsed",
-                    "customsPaymentsPosted",
-                    "customsPaymentsUnmatched",
-                    "suspensionAlerts",
-                    "proposalsLapsed"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "lapsed": 1,
-                      "cases": [
-                        {
-                          "ref": "string",
-                          "deadline": "string",
-                          "onLapse": "string"
-                        }
-                      ],
-                      "expired": [
-                        {
-                          "organisation": "string",
-                          "register": "string"
-                        }
-                      ],
-                      "immigrationExpired": 1,
-                      "unusualAccessRaised": 1,
-                      "taxPaymentsPosted": 1,
-                      "taxPaymentsUnmatched": 1,
-                      "professionalsLapsed": 1,
-                      "customsPaymentsPosted": 1,
-                      "customsPaymentsUnmatched": 1,
-                      "suspensionAlerts": 1,
-                      "proposalsLapsed": 1
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -8450,54 +7994,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean"
-                    },
-                    "at": {
-                      "type": "string"
-                    },
-                    "webhooks_processed": {
-                      "type": "number"
-                    },
-                    "total_delivered": {
-                      "type": "number"
-                    },
-                    "results": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/DeliveryRun"
-                      }
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "at",
-                    "webhooks_processed",
-                    "total_delivered",
-                    "results"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "at": "2026-01-15T09:30:00.000Z",
-                      "webhooks_processed": 1,
-                      "total_delivered": 1,
-                      "results": [
-                        {
-                          "webhookId": "ID-0001",
-                          "topic": "string",
-                          "delivered": 1,
-                          "failed": true,
-                          "detail": "string"
-                        }
-                      ]
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -8584,85 +8081,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean"
-                    },
-                    "at": {
-                      "type": "string"
-                    },
-                    "webhooks_processed": {
-                      "type": "number"
-                    },
-                    "total_delivered": {
-                      "type": "number"
-                    },
-                    "results": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "channel": {
-                            "type": "string"
-                          },
-                          "delivered": {
-                            "type": "number"
-                          },
-                          "failed": {
-                            "type": "boolean"
-                          },
-                          "detail": {
-                            "anyOf": [
-                              {
-                                "type": "null"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "channel",
-                          "delivered",
-                          "failed",
-                          "detail"
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "at",
-                    "webhooks_processed",
-                    "total_delivered",
-                    "results"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "at": "2026-01-15T09:30:00.000Z",
-                      "webhooks_processed": 1,
-                      "total_delivered": 1,
-                      "results": [
-                        {
-                          "id": "ID-0001",
-                          "channel": "string",
-                          "delivered": 1,
-                          "failed": true,
-                          "detail": "string"
-                        }
-                      ]
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -8749,84 +8168,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "at": {
-                      "type": "string"
-                    },
-                    "attempted": {
-                      "type": "number"
-                    },
-                    "sent": {
-                      "type": "number"
-                    },
-                    "retrying": {
-                      "type": "number"
-                    },
-                    "dead": {
-                      "type": "number"
-                    },
-                    "waiting": {
-                      "type": "object",
-                      "properties": {
-                        "notConnected": {
-                          "type": "number"
-                        },
-                        "noPublicAddress": {
-                          "type": "number"
-                        },
-                        "rateLimited": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "notConnected",
-                        "noPublicAddress",
-                        "rateLimited"
-                      ],
-                      "description": "Messages due but waiting: no provider connected for their channel, or no public address for their links."
-                    },
-                    "expired": {
-                      "type": "number"
-                    },
-                    "cleared": {
-                      "type": "number"
-                    },
-                    "ok": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "at",
-                    "attempted",
-                    "sent",
-                    "retrying",
-                    "dead",
-                    "waiting",
-                    "expired",
-                    "cleared",
-                    "ok"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "at": "2026-01-15T09:30:00.000Z",
-                      "attempted": 1,
-                      "sent": 1,
-                      "retrying": 1,
-                      "dead": 1,
-                      "waiting": {
-                        "notConnected": 1,
-                        "noPublicAddress": 1,
-                        "rateLimited": 1
-                      },
-                      "expired": 1,
-                      "cleared": 1,
-                      "ok": true
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -8913,69 +8255,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "at": {
-                      "type": "string"
-                    },
-                    "expired_count": {
-                      "type": "number"
-                    },
-                    "rows": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "consent_id": {
-                            "type": "string"
-                          },
-                          "citizen_id": {
-                            "type": "string"
-                          },
-                          "target_charter_id": {
-                            "type": "string"
-                          },
-                          "expired_at": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "consent_id",
-                          "citizen_id",
-                          "target_charter_id",
-                          "expired_at"
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "at",
-                    "expired_count",
-                    "rows"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "at": "2026-01-15T09:30:00.000Z",
-                      "expired_count": 1,
-                      "rows": [
-                        {
-                          "consent_id": "string",
-                          "citizen_id": "string",
-                          "target_charter_id": "string",
-                          "expired_at": "string"
-                        }
-                      ]
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -9062,86 +8342,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "at": {
-                      "type": "string"
-                    },
-                    "snapshots": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "charter_id": {
-                            "type": "string"
-                          },
-                          "posture": {
-                            "type": "string",
-                            "enum": [
-                              "crisis",
-                              "elevated",
-                              "national-emergency",
-                              "recovery",
-                              "steady"
-                            ]
-                          },
-                          "readiness": {
-                            "type": "number"
-                          },
-                          "stress": {
-                            "type": "number"
-                          },
-                          "open": {
-                            "type": "number"
-                          },
-                          "urgent": {
-                            "type": "number"
-                          },
-                          "openEsc": {
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "charter_id",
-                          "posture",
-                          "readiness",
-                          "stress",
-                          "open",
-                          "urgent",
-                          "openEsc"
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "at",
-                    "snapshots"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "at": "2026-01-15T09:30:00.000Z",
-                      "snapshots": [
-                        {
-                          "charter_id": "string",
-                          "posture": "crisis",
-                          "readiness": 1,
-                          "stress": 1,
-                          "open": 1,
-                          "urgent": 1,
-                          "openEsc": 1
-                        }
-                      ]
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -9275,175 +8476,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "ok": {
-                          "type": "boolean",
-                          "const": true
-                        },
-                        "promoted": {
-                          "type": "number"
-                        },
-                        "refs": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "substrate": {
-                          "type": "string"
-                        },
-                        "at": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "ok",
-                        "promoted",
-                        "refs",
-                        "substrate",
-                        "at"
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "error": {
-                              "type": "string"
-                            },
-                            "ok": {
-                              "type": "boolean"
-                            },
-                            "promoted": {
-                              "type": "number"
-                            },
-                            "refs": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "mirror": {
-                              "type": "object",
-                              "properties": {
-                                "pending": {
-                                  "type": "number"
-                                },
-                                "written": {
-                                  "type": "number"
-                                },
-                                "failed": {
-                                  "type": "number"
-                                },
-                                "lastError": {
-                                  "anyOf": [
-                                    {
-                                      "type": "null"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "pending",
-                                "written",
-                                "failed",
-                                "lastError"
-                              ]
-                            },
-                            "at": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "error",
-                            "ok",
-                            "promoted",
-                            "refs",
-                            "mirror",
-                            "at"
-                          ]
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "ok": {
-                              "type": "boolean"
-                            },
-                            "promoted": {
-                              "type": "number"
-                            },
-                            "refs": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "mirror": {
-                              "type": "object",
-                              "properties": {
-                                "pending": {
-                                  "type": "number"
-                                },
-                                "written": {
-                                  "type": "number"
-                                },
-                                "failed": {
-                                  "type": "number"
-                                },
-                                "lastError": {
-                                  "anyOf": [
-                                    {
-                                      "type": "null"
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "pending",
-                                "written",
-                                "failed",
-                                "lastError"
-                              ]
-                            },
-                            "at": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "ok",
-                            "promoted",
-                            "refs",
-                            "mirror",
-                            "at"
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "promoted": 1,
-                      "refs": [
-                        "string"
-                      ],
-                      "substrate": "string",
-                      "at": "2026-01-15T09:30:00.000Z"
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -9483,56 +8516,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "run": {
-                      "$ref": "#/components/schemas/RetentionRun"
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "run"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "run": {
-                        "at": "2026-01-15T09:30:00.000Z",
-                        "permits": {
-                          "anonymised": 1,
-                          "deleted": 1
-                        },
-                        "cases": {
-                          "anonymised": 1,
-                          "deleted": 1
-                        },
-                        "procedureCases": {
-                          "anonymised": 1
-                        },
-                        "documents": {
-                          "disposed": 1,
-                          "held": 1
-                        },
-                        "accessLog": {
-                          "removed": 1
-                        },
-                        "subscriptions": {
-                          "expired": 1
-                        },
-                        "signInFailures": {
-                          "expired": 1
-                        },
-                        "auditSummaries": 1
-                      }
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -9619,57 +8603,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "sites": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "siteId": {
-                            "type": "string"
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "error",
-                              "never",
-                              "ok"
-                            ]
-                          },
-                          "error": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "siteId",
-                          "status"
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "sites"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "sites": [
-                        {
-                          "siteId": "ID-0001",
-                          "status": "error"
-                        }
-                      ]
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -9812,37 +8746,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "escalated": {},
-                    "threshold_hours": {
-                      "type": "number"
-                    },
-                    "at": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "escalated",
-                    "threshold_hours",
-                    "at"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "escalated": null,
-                      "threshold_hours": 1,
-                      "at": "2026-01-15T09:30:00.000Z"
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -9882,64 +8786,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "at": {
-                      "type": "string"
-                    },
-                    "samples": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "stream_id": {
-                            "type": "string"
-                          },
-                          "value": {
-                            "type": "number"
-                          },
-                          "defined": {
-                            "type": "boolean"
-                          },
-                          "sampled": {
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "stream_id",
-                          "value",
-                          "defined",
-                          "sampled"
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "at",
-                    "samples"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "at": "2026-01-15T09:30:00.000Z",
-                      "samples": [
-                        {
-                          "stream_id": "string",
-                          "value": 1,
-                          "defined": true,
-                          "sampled": true
-                        }
-                      ]
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -10082,37 +8929,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "escalated": {},
-                    "stale_minutes": {
-                      "type": "number"
-                    },
-                    "at": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "escalated",
-                    "stale_minutes",
-                    "at"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "escalated": null,
-                      "stale_minutes": 1,
-                      "at": "2026-01-15T09:30:00.000Z"
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -10152,222 +8969,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "runs": {
-                      "type": "array",
-                      "items": {
-                        "anyOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "source": {
-                                "type": "string"
-                              },
-                              "error": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "source"
-                            ]
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "source": {
-                                "type": "string"
-                              },
-                              "status": {
-                                "type": "string",
-                                "enum": [
-                                  "failed",
-                                  "ok",
-                                  "partial"
-                                ]
-                              },
-                              "accepted": {
-                                "type": "number"
-                              },
-                              "rows": {
-                                "type": "number"
-                              }
-                            },
-                            "required": [
-                              "source",
-                              "status",
-                              "accepted",
-                              "rows"
-                            ]
-                          }
-                        ]
-                      }
-                    },
-                    "civil": {
-                      "type": "object",
-                      "properties": {
-                        "published": {
-                          "type": "boolean"
-                        },
-                        "run": {
-                          "type": "string"
-                        },
-                        "accepted": {
-                          "type": "number"
-                        },
-                        "rejected": {
-                          "type": "number"
-                        },
-                        "error": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "published"
-                      ]
-                    },
-                    "organisations": {
-                      "type": "object",
-                      "properties": {
-                        "published": {
-                          "type": "boolean"
-                        },
-                        "entities": {
-                          "type": "number"
-                        },
-                        "run": {
-                          "type": "string"
-                        },
-                        "accepted": {
-                          "type": "number"
-                        },
-                        "error": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "published"
-                      ]
-                    },
-                    "cases": {
-                      "type": "object",
-                      "properties": {
-                        "published": {
-                          "type": "boolean"
-                        },
-                        "run": {
-                          "type": "string"
-                        },
-                        "accepted": {
-                          "type": "number"
-                        },
-                        "error": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "published"
-                      ]
-                    },
-                    "education": {
-                      "type": "object",
-                      "properties": {
-                        "published": {
-                          "type": "boolean"
-                        },
-                        "run": {
-                          "type": "string"
-                        },
-                        "accepted": {
-                          "type": "number"
-                        },
-                        "error": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "published"
-                      ]
-                    },
-                    "health": {
-                      "type": "object",
-                      "properties": {
-                        "published": {
-                          "type": "boolean"
-                        },
-                        "run": {
-                          "type": "string"
-                        },
-                        "accepted": {
-                          "type": "number"
-                        },
-                        "error": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "published"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "runs",
-                    "civil",
-                    "organisations",
-                    "cases",
-                    "education",
-                    "health"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "runs": [
-                        {
-                          "source": "string"
-                        }
-                      ],
-                      "civil": {
-                        "published": true,
-                        "run": "string",
-                        "accepted": 1,
-                        "rejected": 1,
-                        "error": "Text"
-                      },
-                      "organisations": {
-                        "published": true,
-                        "entities": 1,
-                        "run": "string",
-                        "accepted": 1,
-                        "error": "Text"
-                      },
-                      "cases": {
-                        "published": true,
-                        "run": "string",
-                        "accepted": 1,
-                        "error": "Text"
-                      },
-                      "education": {
-                        "published": true,
-                        "run": "string",
-                        "accepted": 1,
-                        "error": "Text"
-                      },
-                      "health": {
-                        "published": true,
-                        "run": "string",
-                        "accepted": 1,
-                        "error": "Text"
-                      }
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -10454,59 +9056,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "summary": {
-                      "$ref": "#/components/schemas/WatchdogSummary"
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "summary"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "summary": {
-                        "at": "2026-01-15T09:30:00.000Z",
-                        "nations": 1,
-                        "watching": [
-                          {
-                            "nationId": "ID-0001",
-                            "version": "string",
-                            "degraded": true
-                          }
-                        ],
-                        "passed": [
-                          {
-                            "nationId": "ID-0001",
-                            "version": "string"
-                          }
-                        ],
-                        "fellBack": [
-                          {
-                            "nationId": "ID-0001",
-                            "from": "string",
-                            "to": "string"
-                          }
-                        ],
-                        "awaitingDecision": [
-                          {
-                            "nationId": "ID-0001",
-                            "version": "string"
-                          }
-                        ],
-                        "missingReports": 1
-                      }
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -10593,55 +9143,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean"
-                    },
-                    "at": {
-                      "type": "string"
-                    },
-                    "scopes_checked": {
-                      "type": "number"
-                    },
-                    "alarmed": {
-                      "type": "number"
-                    },
-                    "results": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/DivergenceResult"
-                      }
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "at",
-                    "scopes_checked",
-                    "alarmed",
-                    "results"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "at": "2026-01-15T09:30:00.000Z",
-                      "scopes_checked": 1,
-                      "alarmed": 1,
-                      "results": [
-                        {
-                          "scope": "string",
-                          "latestLiveSeq": 1,
-                          "latestLiveHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                          "conflictingAttestations": 1,
-                          "unverified": 1,
-                          "alarmed": true
-                        }
-                      ]
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -10737,84 +9239,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
-                    },
-                    "at": {
-                      "type": "string"
-                    },
-                    "witness_label": {
-                      "type": "string"
-                    },
-                    "scopes_swept": {
-                      "type": "number"
-                    },
-                    "attested": {
-                      "type": "number"
-                    },
-                    "results": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "scope": {
-                            "type": "string"
-                          },
-                          "latestSeq": {
-                            "anyOf": [
-                              {
-                                "type": "null"
-                              },
-                              {
-                                "type": "number"
-                              }
-                            ]
-                          },
-                          "attested": {
-                            "type": "boolean"
-                          },
-                          "already": {
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "scope",
-                          "latestSeq",
-                          "attested"
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "at",
-                    "witness_label",
-                    "scopes_swept",
-                    "attested",
-                    "results"
-                  ]
-                },
-                "examples": {
-                  "schema": {
-                    "summary": "Generated from the schema",
-                    "value": {
-                      "ok": true,
-                      "at": "2026-01-15T09:30:00.000Z",
-                      "witness_label": "string",
-                      "scopes_swept": 1,
-                      "attested": 1,
-                      "results": [
-                        {
-                          "scope": "string",
-                          "latestSeq": 1,
-                          "attested": true
-                        }
-                      ]
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -11074,6 +9499,451 @@
           }
         ],
         "x-source": "src/app/api/customs/route.ts"
+      }
+    },
+    "/api/demo/act-as": {
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "operationId": "post_demo_act_as",
+        "summary": "POST /api/demo/act-as",
+        "description": "Switch to a member of the demo cast (lib/auth/demo-cast.ts): POST { accountId } ends the current session and issues one for the cast account through the ordinary session code (issueSession()), so everything after it is recorded under that account and four-eyes steps still need two different accounts. Only an administrator or a member of the cast, signed in now, may switch; each switch is written to the audit chain as `demo.act-as`, naming the official who switched and the account they now act as. A production installation has no cast: 404 (and the middleware refuses /api/demo/* there before this runs).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accountId": {}
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "accountId": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "official": {
+                      "$ref": "#/components/schemas/OfficialClaims"
+                    }
+                  },
+                  "required": [
+                    "official"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "official": {
+                        "sub": "string",
+                        "name": "Example",
+                        "office": "string",
+                        "method": "local",
+                        "role": "administrator",
+                        "institution": "string",
+                        "twoStep": true,
+                        "twoStepAt": 1,
+                        "twoStepRequired": true,
+                        "via": "oidc",
+                        "sid": "string",
+                        "iat": 1,
+                        "exp": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "any-role",
+        "x-source": "src/app/api/demo/act-as/route.ts"
+      }
+    },
+    "/api/demo/cast": {
+      "get": {
+        "tags": [
+          "demo"
+        ],
+        "operationId": "get_demo_cast",
+        "summary": "GET /api/demo/cast",
+        "description": "The demo cast (lib/auth/demo-cast.ts): officials for showing a demonstration or training installation end to end. GET lists the cast, grouped by institution, for the header menu's \"Switch to…\" list (names, offices and roles only, never addresses), with whether the viewer may switch. POST creates or refreshes the cast from the deployment profile (who is responsible for each register): administrators only, audited. A production installation has no cast: both answer 404 (and the middleware refuses /api/demo/* there before this runs).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "demo",
+                        "production",
+                        "training"
+                      ]
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "institution": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "members": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/CastMember"
+                            }
+                          }
+                        },
+                        "required": [
+                          "institution",
+                          "name",
+                          "members"
+                        ]
+                      }
+                    },
+                    "institutions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      }
+                    },
+                    "viewer": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "sub": {
+                              "type": "string"
+                            },
+                            "cast": {
+                              "type": "boolean"
+                            },
+                            "administrator": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "sub",
+                            "cast",
+                            "administrator"
+                          ]
+                        }
+                      ]
+                    },
+                    "canSwitch": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "groups",
+                    "institutions",
+                    "viewer",
+                    "canSwitch"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "mode": "demo",
+                      "groups": [
+                        {
+                          "institution": "string",
+                          "name": "Example",
+                          "members": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "institutions": [
+                        {
+                          "id": "ID-0001",
+                          "name": "Example"
+                        }
+                      ],
+                      "viewer": {
+                        "sub": "string",
+                        "cast": true,
+                        "administrator": true
+                      },
+                      "canSwitch": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/demo/cast/route.ts"
+      },
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "operationId": "post_demo_cast",
+        "summary": "POST /api/demo/cast",
+        "description": "The demo cast (lib/auth/demo-cast.ts): officials for showing a demonstration or training installation end to end. GET lists the cast, grouped by institution, for the header menu's \"Switch to…\" list (names, offices and roles only, never addresses), with whether the viewer may switch. POST creates or refreshes the cast from the deployment profile (who is responsible for each register): administrators only, audited. A production installation has no cast: both answer 404 (and the middleware refuses /api/demo/* there before this runs).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "institution": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "members": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/CastMember"
+                            }
+                          }
+                        },
+                        "required": [
+                          "institution",
+                          "name",
+                          "members"
+                        ]
+                      }
+                    },
+                    "created": {
+                      "type": "number"
+                    },
+                    "updated": {
+                      "type": "number"
+                    },
+                    "retired": {
+                      "type": "number"
+                    },
+                    "skipped": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "groups",
+                    "created",
+                    "updated",
+                    "retired",
+                    "skipped"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "groups": [
+                        {
+                          "institution": "string",
+                          "name": "Example",
+                          "members": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "created": 1,
+                      "updated": 1,
+                      "retired": 1,
+                      "skipped": [
+                        "string"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/demo/cast/route.ts"
+      }
+    },
+    "/api/demo/pack": {
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "operationId": "post_demo_pack",
+        "summary": "POST /api/demo/pack",
+        "description": "The demo data pack (lib/casework/demo-pack.ts): the demo cast, the sample acts and procedures, and one sample case per approved procedure, in one step. Administrators only, demo and training installations only: a production installation answers 404 (and the middleware refuses /api/demo/* there before this runs).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoPackResult"
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "cast": {
+                        "created": 1,
+                        "updated": 1,
+                        "retired": 1
+                      },
+                      "procedures": [
+                        "string"
+                      ],
+                      "cases": [
+                        {
+                          "ref": "string",
+                          "id": "ID-0001",
+                          "procedure": "string"
+                        }
+                      ],
+                      "skipped": [
+                        {
+                          "procedure": "string",
+                          "why": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/demo/pack/route.ts"
       }
     },
     "/api/directives/{ref}": {
@@ -12083,6 +10953,260 @@
         "x-source": "src/app/api/education/route.ts"
       }
     },
+    "/api/events/outbox": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "get_events_outbox",
+        "summary": "GET /api/events/outbox",
+        "description": "GET /api/events/outbox — the event outbox at a glance (lib/events/overview.ts): per webhook subscription its cursor, events waiting, delivery attempts and last result; the restore epoch and events voided by a data restore (docs/DISASTER_RECOVERY.md). Events by type, time and sequence only (never actor, subject or detail). ?limit= (≤ 200) for the recent lists. Read only: delivery and its retries are the scheduled job's (/api/cron/deliver-cloudevents).",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "epoch": {
+                      "type": "number"
+                    },
+                    "events": {
+                      "type": "object",
+                      "properties": {
+                        "kept": {
+                          "type": "number"
+                        },
+                        "voided": {
+                          "type": "number"
+                        },
+                        "byEpoch": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "epoch": {
+                                "type": "number"
+                              },
+                              "count": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "epoch",
+                              "count"
+                            ]
+                          }
+                        },
+                        "oldestAt": {
+                          "type": "string"
+                        },
+                        "newestAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kept",
+                        "voided",
+                        "byEpoch"
+                      ]
+                    },
+                    "voidedBy": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "backup": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "backup",
+                          "count"
+                        ]
+                      },
+                      "description": "Events voided by each restore (the backup restored from)."
+                    },
+                    "consumers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConsumerOverview"
+                      }
+                    },
+                    "orphanCursors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "cursor": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "cursor"
+                        ]
+                      },
+                      "description": "Cursors kept for subscriptions no longer registered."
+                    },
+                    "recentEvents": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "time": {
+                            "type": "string"
+                          },
+                          "auditseq": {
+                            "type": "number"
+                          },
+                          "restoreepoch": {
+                            "type": "number"
+                          },
+                          "voided": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "type",
+                          "time",
+                          "auditseq",
+                          "restoreepoch"
+                        ]
+                      }
+                    },
+                    "recentDeliveries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Delivery"
+                      }
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "epoch",
+                    "events",
+                    "voidedBy",
+                    "consumers",
+                    "orphanCursors",
+                    "recentEvents",
+                    "recentDeliveries"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "at": "2026-01-15T09:30:00.000Z",
+                      "epoch": 1,
+                      "events": {
+                        "kept": 1,
+                        "voided": 1,
+                        "byEpoch": [
+                          {
+                            "epoch": 1,
+                            "count": 1
+                          }
+                        ],
+                        "oldestAt": "2026-01-15T09:30:00.000Z",
+                        "newestAt": "2026-01-15T09:30:00.000Z"
+                      },
+                      "voidedBy": [
+                        {
+                          "backup": "string",
+                          "count": 1
+                        }
+                      ],
+                      "consumers": [
+                        {
+                          "id": "ID-0001",
+                          "topic": "string",
+                          "host": "string",
+                          "status": "active",
+                          "cursor": 1,
+                          "pending": 1,
+                          "delivered": 1,
+                          "failed": 1,
+                          "failures": 1
+                        }
+                      ],
+                      "orphanCursors": [
+                        {
+                          "id": "ID-0001",
+                          "cursor": 1
+                        }
+                      ],
+                      "recentEvents": [
+                        {
+                          "id": "ID-0001",
+                          "type": "string",
+                          "time": "string",
+                          "auditseq": 1,
+                          "restoreepoch": 1
+                        }
+                      ],
+                      "recentDeliveries": [
+                        {
+                          "webhookId": "ID-0001",
+                          "eventId": "ID-0001",
+                          "type": "string",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "ok": true,
+                          "detail": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/events/outbox/route.ts"
+      }
+    },
     "/api/events": {
       "get": {
         "tags": [
@@ -12365,6 +11489,98 @@
           }
         ],
         "x-source": "src/app/api/exchange/log/route.ts"
+      }
+    },
+    "/api/exchange/overview": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_overview",
+        "summary": "GET /api/exchange/overview",
+        "description": "GET /api/exchange/overview — the data-sharing services at a glance (lib/exchange/overview.ts): every exchange service with the authority responsible for it (deployment profile), the register it answers from, the integrations approved for it and their purposes, and aggregate call counts and refusal reasons from the exchange log. Counts only: never a request's input, purpose text or answer. Read only; approvals are made on /integrations by two officials.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "services": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ServiceOverview"
+                      }
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "services",
+                    "at"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "services": [
+                        {
+                          "id": "ID-0001",
+                          "version": 1,
+                          "kind": "event",
+                          "title": "Example",
+                          "scope": "string",
+                          "returns": {
+                            "key": "string"
+                          },
+                          "dataClass": "personal",
+                          "owner": {
+                            "key": "businessRegister",
+                            "label": "Example",
+                            "named": true
+                          },
+                          "integrations": [
+                            {}
+                          ],
+                          "calls": {
+                            "total": 1,
+                            "answered": 1,
+                            "refused": 1,
+                            "failed": 1,
+                            "reasons": [],
+                            "byCaller": [],
+                            "unauthenticated": 1
+                          }
+                        }
+                      ],
+                      "at": "2026-01-15T09:30:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/exchange/overview/route.ts"
       }
     },
     "/api/exchange/services/{service}": {
@@ -17517,7 +16733,7 @@
         ],
         "operationId": "post_integrations_id_approve",
         "summary": "POST /api/integrations/{id}/approve",
-        "description": "POST /api/integrations/<id>/approve — approving an outside caller takes two officials (lib/data/store/federation.ts). { op: 'propose', scopes?, purposes?, note? } (the default op): one administrator proposes the integration's scopes and, per exchange service it may call (scope service:<id>), the purposes it may state, e.g. { \"person.verify\": [\"identity-card-enrolment\"] }; a change to an approved integration's scopes or purposes is proposed the same way. { op: 'confirm' }: a different official confirms the waiting proposal (dual control on verified sessions); it lapses after the country's dual-control waiting period. { op: 'withdraw' }: withdraws a waiting proposal. Who acted comes from the sign-in, never the request; audited.",
+        "description": "POST /api/integrations/<id>/approve — approving an outside caller takes two officials (lib/data/store/federation.ts). { op: 'propose', scopes?, purposes?, note? } (the default op): one administrator proposes the integration's scopes and, per exchange service it may call (scope service:<id>), the purposes it may state, e.g. { \"person.verify\": [\"identity-card-enrolment\"] }; a change to an approved integration's scopes or purposes is proposed the same way. { op: 'confirm' }: a different official confirms the waiting proposal (dual control on verified sessions); it lapses after the country's dual-control waiting period. { op: 'withdraw' }: withdraws a waiting proposal. Who acted comes from the sign-in, never the request; audited. A proposal cites the law that permits the sharing (legalBasis: [{ instrument, eId }] from the laws register; required in production), and in production an official of every institution that owns a service the terms open confirms it (the owners are worked out here from the directory and the deployment profile, never taken from the request).",
         "parameters": [
           {
             "name": "id",
@@ -17541,6 +16757,7 @@
                   "scopes": {},
                   "purposes": {},
                   "note": {},
+                  "legalBasis": {},
                   "by": {
                     "type": "string"
                   }
@@ -17554,6 +16771,7 @@
                     "scopes": null,
                     "purposes": null,
                     "note": null,
+                    "legalBasis": null,
                     "by": "A. Official"
                   }
                 }
@@ -20162,7 +19380,9 @@
                         "label": "Example",
                         "nationalRisk": 1,
                         "coordinatingMinistries": 1,
-                        "cascadeRisks": 1
+                        "cascadeRisks": 1,
+                        "basis": "records",
+                        "source": "string"
                       },
                       "nodes": [
                         {
@@ -20308,6 +19528,7 @@
                       "generatedAt": "2026-01-15T09:30:00.000Z",
                       "classification": "string",
                       "environment": "string",
+                      "samples": true,
                       "indicators": [
                         {
                           "label": "Example",
@@ -20531,6 +19752,73 @@
         ],
         "x-permission-rule": "self-authenticated",
         "x-source": "src/app/api/oauth/token/route.ts"
+      }
+    },
+    "/api/onboarding/status": {
+      "get": {
+        "tags": [
+          "onboarding"
+        ],
+        "operationId": "get_onboarding_status",
+        "summary": "GET /api/onboarding/status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatus"
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "mode": "string",
+                      "tracks": [
+                        {
+                          "key": "string",
+                          "title": "Example",
+                          "why": "string",
+                          "href": "https://example.gov/",
+                          "state": "blocked",
+                          "checks": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "done": 1,
+                      "total": 1,
+                      "waiting": [
+                        {
+                          "what": "string",
+                          "proposedBy": "A. Official",
+                          "href": "https://example.gov/"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/onboarding/status/route.ts"
       }
     },
     "/api/openapi": {
@@ -35183,6 +34471,134 @@
         "x-source": "src/app/api/platform/retention/route.ts"
       }
     },
+    "/api/platform/scheduled-jobs": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "get_platform_scheduled_jobs",
+        "summary": "GET /api/platform/scheduled-jobs",
+        "description": "The platform's scheduled jobs (register 18.39; lib/ops/cron-runs.ts). GET: each job under /api/cron with its schedule, whether this installation runs it, the last run and its outcome, the next expected run, the failures in a row and retry state, and its recent run history (newest first). Read-only: the jobs themselves are called by the scheduler (pg_cron, the self-host scheduler or the Helm chart) with CIVICOS_CRON_SECRET.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "jobs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/JobOverview"
+                      }
+                    },
+                    "healthy": {
+                      "type": "object",
+                      "properties": {
+                        "done": {
+                          "type": "boolean"
+                        },
+                        "total": {
+                          "type": "number"
+                        },
+                        "missing": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "done",
+                        "total",
+                        "missing"
+                      ]
+                    },
+                    "scheduler": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "jobs",
+                    "healthy",
+                    "scheduler"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "at": "2026-01-15T09:30:00.000Z",
+                      "jobs": [
+                        {
+                          "name": "Example",
+                          "schedule": "string",
+                          "method": "GET",
+                          "substrate": true,
+                          "applies": true,
+                          "intervalMinutes": 1,
+                          "retryPolicy": {
+                            "attempts": 1,
+                            "backoffMinutes": 1,
+                            "leaseMinutes": 1
+                          },
+                          "deferred": 1,
+                          "totals": {
+                            "ok": 1,
+                            "failed": 1
+                          },
+                          "recent": true,
+                          "runs": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "healthy": {
+                        "done": true,
+                        "total": 1,
+                        "missing": [
+                          "string"
+                        ]
+                      },
+                      "scheduler": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/platform/scheduled-jobs/route.ts"
+      }
+    },
     "/api/platform/state": {
       "get": {
         "tags": [
@@ -35560,7 +34976,7 @@
         ],
         "operationId": "get_professions_types",
         "summary": "GET /api/professions/types",
-        "description": "/api/professions/types — the regulated professions (lib/professions/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, authority, permitType?, publicCheck? } configures one, naming the regulator that keeps its register (administrators, audited).",
+        "description": "/api/professions/types — the regulated professions (lib/professions/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, authority, permitType?, publicCheck? } configures one, naming the regulator that keeps its register (administrators, audited). What its public check shows changes by two officials citing the law: { op: 'propose-disclosure', key, publicFields, legalBasis: [{ instrument, eId }] }, then { op: 'confirm-disclosure', key } by a different official, or { op: 'withdraw-disclosure', key }. GET lists each profession with its waiting proposal and earlier versions.",
         "parameters": [],
         "responses": {
           "200": {
@@ -35573,7 +34989,197 @@
                     "professions": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Profession"
+                        "type": "object",
+                        "properties": {
+                          "disclosureChanges": {
+                            "type": "object",
+                            "properties": {
+                              "pending": {
+                                "type": "object",
+                                "properties": {
+                                  "values": {
+                                    "$ref": "#/components/schemas/Disclosure"
+                                  },
+                                  "basis": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/Citation"
+                                    }
+                                  },
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "confirmed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "by": {
+                                        "type": "string"
+                                      },
+                                      "byId": {
+                                        "type": "string"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "independence": {
+                                        "type": "string",
+                                        "enum": [
+                                          "accounts-only",
+                                          "identity-provider",
+                                          "unverified"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "by",
+                                      "at",
+                                      "independence"
+                                    ]
+                                  },
+                                  "expiresAt": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "values",
+                                  "basis",
+                                  "by",
+                                  "at",
+                                  "expiresAt"
+                                ],
+                                "description": "A proposal waiting for its second official."
+                              },
+                              "history": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "values": {
+                                      "$ref": "#/components/schemas/Disclosure"
+                                    },
+                                    "basis": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "#/components/schemas/Citation"
+                                      }
+                                    },
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "confirmed": {
+                                      "type": "object",
+                                      "properties": {
+                                        "by": {
+                                          "type": "string"
+                                        },
+                                        "byId": {
+                                          "type": "string"
+                                        },
+                                        "at": {
+                                          "type": "string"
+                                        },
+                                        "independence": {
+                                          "type": "string",
+                                          "enum": [
+                                            "accounts-only",
+                                            "identity-provider",
+                                            "unverified"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "by",
+                                        "at",
+                                        "independence"
+                                      ]
+                                    },
+                                    "outcome": {
+                                      "type": "string",
+                                      "enum": [
+                                        "adopted",
+                                        "lapsed",
+                                        "withdrawn"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "values",
+                                    "basis",
+                                    "by",
+                                    "at",
+                                    "outcome"
+                                  ]
+                                },
+                                "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                              }
+                            }
+                          },
+                          "key": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "authority": {
+                            "type": "string",
+                            "description": "Who keeps its register: a deployment-profile authority or an institution id."
+                          },
+                          "permitType": {
+                            "type": "string",
+                            "description": "The permit type whose approved authority mapping governs it."
+                          },
+                          "publicCheck": {
+                            "type": "boolean",
+                            "description": "Anyone may check a professional's standing in it."
+                          },
+                          "publicFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "conditions",
+                                "name",
+                                "number",
+                                "profession",
+                                "state",
+                                "validUntil"
+                              ]
+                            },
+                            "description": "What the public check shows (the country's disclosure profile). By default name, number, profession, standing and validity; conditions (which can reveal a disciplinary history) only when the country's law makes them public. The person reference and qualifications never."
+                          },
+                          "reference": {
+                            "type": "boolean"
+                          },
+                          "createdBy": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "disclosureChanges",
+                          "key",
+                          "title",
+                          "authority",
+                          "permitType",
+                          "publicCheck",
+                          "reference",
+                          "createdBy",
+                          "createdAt"
+                        ]
                       }
                     }
                   },
@@ -35587,6 +35193,7 @@
                     "value": {
                       "professions": [
                         {
+                          "disclosureChanges": {},
                           "key": "string",
                           "title": "Example",
                           "authority": "string",
@@ -35627,7 +35234,7 @@
         ],
         "operationId": "post_professions_types",
         "summary": "POST /api/professions/types",
-        "description": "/api/professions/types — the regulated professions (lib/professions/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, authority, permitType?, publicCheck? } configures one, naming the regulator that keeps its register (administrators, audited).",
+        "description": "/api/professions/types — the regulated professions (lib/professions/register.ts): GET lists them (the shipped references and the nation's own); POST { key, title, authority, permitType?, publicCheck? } configures one, naming the regulator that keeps its register (administrators, audited). What its public check shows changes by two officials citing the law: { op: 'propose-disclosure', key, publicFields, legalBasis: [{ instrument, eId }] }, then { op: 'confirm-disclosure', key } by a different official, or { op: 'withdraw-disclosure', key }. GET lists each profession with its waiting proposal and earlier versions.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -35647,6 +35254,261 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ok": {
+                              "type": "boolean",
+                              "const": true
+                            }
+                          },
+                          "required": [
+                            "ok"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Disclosure"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at"
+                          ]
+                        }
+                      ]
+                    },
+                    "disclosureChanges": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/Disclosure"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/Disclosure"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "disclosureChanges"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {
+                        "ok": true
+                      },
+                      "disclosureChanges": {
+                        "pending": {
+                          "values": {
+                            "publicFields": []
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "201": {
             "description": "Created",
             "content": {
@@ -60163,43 +60025,6 @@
           "goodWhenUp"
         ]
       },
-      "AnchorResult": {
-        "type": "object",
-        "properties": {
-          "scope": {
-            "type": "string"
-          },
-          "head_seq": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              }
-            ]
-          },
-          "head_hash": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "anchored": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "scope",
-          "head_seq",
-          "head_hash",
-          "anchored"
-        ]
-      },
       "ApiError": {
         "type": "object",
         "properties": {
@@ -63494,6 +63319,42 @@
           "reason"
         ]
       },
+      "CastMember": {
+        "description": "What the switch menu shows of a cast account: never its address.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "office": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "administrator",
+              "auditor",
+              "officer",
+              "signatory"
+            ]
+          },
+          "institution": {
+            "type": "string"
+          },
+          "institutionName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "office",
+          "role"
+        ]
+      },
       "CategoryStandards": {
         "type": "object",
         "properties": {
@@ -64010,6 +63871,28 @@
           "fourEyes"
         ]
       },
+      "Check": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "href": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "done",
+          "href"
+        ]
+      },
       "ChronologyEvent": {
         "type": "object",
         "properties": {
@@ -64353,6 +64236,80 @@
           "active",
           "expiring30d",
           "revoked"
+        ]
+      },
+      "ConsumerOverview": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string",
+            "description": "The receiving address's host only."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "disabled",
+              "paused"
+            ]
+          },
+          "cursor": {
+            "type": "number",
+            "description": "The audit sequence delivered up to."
+          },
+          "pending": {
+            "type": "number",
+            "description": "Events past the cursor for its topic, not voided."
+          },
+          "oldestPendingAt": {
+            "type": "string"
+          },
+          "delivered": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number"
+          },
+          "lastAttempt": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "ok": {
+                "type": "boolean"
+              },
+              "detail": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "ok",
+              "detail"
+            ]
+          },
+          "failures": {
+            "type": "number",
+            "description": "Consecutive failed runs (resets on success)."
+          }
+        },
+        "required": [
+          "id",
+          "topic",
+          "host",
+          "status",
+          "cursor",
+          "pending",
+          "delivered",
+          "failed",
+          "failures"
         ]
       },
       "Contract": {
@@ -65004,6 +64961,73 @@
           "applicantName",
           "municipality",
           "fields"
+        ]
+      },
+      "CronRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "job": {
+            "type": "string"
+          },
+          "runKey": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "scheduler"
+            ]
+          },
+          "scheduler": {
+            "type": "string",
+            "description": "Who called, as the scheduler named itself (pg_cron, self-host, kubernetes)."
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "endedAt": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "failed",
+              "not-configured",
+              "ok",
+              "refused-overlap",
+              "running",
+              "skipped-duplicate"
+            ]
+          },
+          "attempt": {
+            "type": "number",
+            "description": "1 for a first try; n for the n-th try after n-1 failures in a row."
+          },
+          "status": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "flagged": {
+            "type": "boolean",
+            "description": "The job ran but answered `ok: false` (a finding it reports, such as undelivered messages)."
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "job",
+          "runKey",
+          "trigger",
+          "startedAt",
+          "outcome"
         ]
       },
       "CrossMinistryIncident": {
@@ -65846,38 +65870,80 @@
           "detail"
         ]
       },
-      "DeliveryRun": {
+      "DemoPackResult": {
         "type": "object",
         "properties": {
-          "webhookId": {
-            "type": "string"
-          },
-          "topic": {
-            "type": "string"
-          },
-          "delivered": {
-            "type": "number"
-          },
-          "failed": {
-            "type": "boolean"
-          },
-          "detail": {
-            "anyOf": [
-              {
-                "type": "null"
+          "cast": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "number"
               },
-              {
-                "type": "string"
+              "updated": {
+                "type": "number"
+              },
+              "retired": {
+                "type": "number"
               }
+            },
+            "required": [
+              "created",
+              "updated",
+              "retired"
             ]
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "procedure": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref",
+                "id",
+                "procedure"
+              ]
+            }
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "procedure": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "procedure",
+                "why"
+              ]
+            }
           }
         },
         "required": [
-          "webhookId",
-          "topic",
-          "delivered",
-          "failed",
-          "detail"
+          "cast",
+          "procedures",
+          "cases",
+          "skipped"
         ]
       },
       "Department": {
@@ -66777,6 +66843,28 @@
           "medianSignToEffectiveDays"
         ]
       },
+      "Disclosure": {
+        "type": "object",
+        "properties": {
+          "publicFields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "conditions",
+                "name",
+                "number",
+                "profession",
+                "state",
+                "validUntil"
+              ]
+            }
+          }
+        },
+        "required": [
+          "publicFields"
+        ]
+      },
       "DistributionRelease": {
         "type": "object",
         "properties": {
@@ -67109,52 +67197,6 @@
           "warnings",
           "installedBy",
           "unitCount"
-        ]
-      },
-      "DivergenceResult": {
-        "type": "object",
-        "properties": {
-          "scope": {
-            "type": "string"
-          },
-          "latestLiveSeq": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              }
-            ]
-          },
-          "latestLiveHash": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "conflictingAttestations": {
-            "type": "number"
-          },
-          "unverified": {
-            "type": "number",
-            "description": "Signed rows at the live seq whose signature did not verify (ignored)."
-          },
-          "alarmed": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "scope",
-          "latestLiveSeq",
-          "latestLiveHash",
-          "conflictingAttestations",
-          "unverified",
-          "alarmed"
         ]
       },
       "DocumentRecord": {
@@ -70495,6 +70537,76 @@
           "note": {
             "type": "string"
           },
+          "basis": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "instrument": {
+                  "type": "string"
+                },
+                "eId": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "digest": {
+                  "type": "string"
+                },
+                "on": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "num": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "instrument",
+                "eId",
+                "version",
+                "digest",
+                "on"
+              ]
+            },
+            "description": "The law that permits the sharing, cited from the laws register (required in production)."
+          },
+          "owners": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The institutions that own the services the terms open (each must agree, in production)."
+          },
+          "consents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "institution": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "byId": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "institution",
+                "by",
+                "at"
+              ]
+            },
+            "description": "Each owning institution's confirmation so far."
+          },
           "scopes": {
             "type": "array",
             "items": {
@@ -70561,6 +70673,76 @@
           },
           "note": {
             "type": "string"
+          },
+          "basis": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "instrument": {
+                  "type": "string"
+                },
+                "eId": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "digest": {
+                  "type": "string"
+                },
+                "on": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "num": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "instrument",
+                "eId",
+                "version",
+                "digest",
+                "on"
+              ]
+            },
+            "description": "The law that permits the sharing, cited from the laws register (required in production)."
+          },
+          "owners": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The institutions that own the services the terms open (each must agree, in production)."
+          },
+          "consents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "institution": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "byId": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "institution",
+                "by",
+                "at"
+              ]
+            },
+            "description": "Each owning institution's confirmation so far."
           },
           "scopes": {
             "type": "array",
@@ -70818,6 +71000,134 @@
         "required": [
           "id",
           "name"
+        ]
+      },
+      "JobOverview": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "schedule": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "GET",
+              "POST"
+            ]
+          },
+          "substrate": {
+            "type": "boolean"
+          },
+          "applies": {
+            "type": "boolean",
+            "description": "Whether this installation runs it (substrate jobs need the substrate)."
+          },
+          "intervalMinutes": {
+            "type": "number"
+          },
+          "retryPolicy": {
+            "$ref": "#/components/schemas/RetryPolicy"
+          },
+          "lastRun": {
+            "$ref": "#/components/schemas/CronRun"
+          },
+          "lastOkAt": {
+            "type": "string"
+          },
+          "nextExpectedAt": {
+            "type": "string"
+          },
+          "running": {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string"
+              },
+              "since": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "runId",
+              "since"
+            ]
+          },
+          "retry": {
+            "type": "object",
+            "properties": {
+              "since": {
+                "type": "string",
+                "description": "When the first failure of this streak happened."
+              },
+              "failures": {
+                "type": "number"
+              },
+              "nextAt": {
+                "type": "string",
+                "description": "The earliest a scheduled invocation retries."
+              },
+              "lastError": {
+                "type": "string"
+              },
+              "alertedAt": {
+                "type": "string",
+                "description": "Officials were alerted (once per streak)."
+              },
+              "exhausted": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "since",
+              "failures",
+              "nextAt",
+              "exhausted"
+            ]
+          },
+          "deferred": {
+            "type": "number"
+          },
+          "totals": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "number"
+              },
+              "failed": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "ok",
+              "failed"
+            ]
+          },
+          "recent": {
+            "type": "boolean",
+            "description": "Succeeded within twice its interval."
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CronRun"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "schedule",
+          "method",
+          "substrate",
+          "applies",
+          "intervalMinutes",
+          "retryPolicy",
+          "deferred",
+          "totals",
+          "recent",
+          "runs"
         ]
       },
       "KpiValue": {
@@ -73252,6 +73562,18 @@
               },
               "cascadeRisks": {
                 "type": "number"
+              },
+              "basis": {
+                "type": "string",
+                "enum": [
+                  "records",
+                  "sample"
+                ],
+                "description": "What the posture rests on: 'records' (recorded incidents and real queue items only; a production installation) or 'sample' (also the generated pressure model; demo and training). Screens mark a 'sample' posture."
+              },
+              "source": {
+                "type": "string",
+                "description": "Where the posture comes from, in words (lib/twin/signal.ts)."
               }
             },
             "required": [
@@ -73454,6 +73776,10 @@
           },
           "environment": {
             "type": "string"
+          },
+          "samples": {
+            "type": "boolean",
+            "description": "Whether this installation may show sample figures (lib/ops/mode.ts samplesAllowed()); false in production."
           },
           "indicators": {
             "type": "array",
@@ -74214,6 +74540,39 @@
           "versions",
           "rightsCount",
           "rightsHidden"
+        ]
+      },
+      "OnboardingStatus": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "tracks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Track"
+            }
+          },
+          "done": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "waiting": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Waiting"
+            }
+          }
+        },
+        "required": [
+          "mode",
+          "tracks",
+          "done",
+          "total",
+          "waiting"
         ]
       },
       "OpenSource": {
@@ -76965,6 +77324,11 @@
             "type": "boolean",
             "description": "Made for an identity-provider sign-in: no platform password (the hash matches nothing)."
           },
+          "demo": {
+            "type": "boolean",
+            "const": true,
+            "description": "One of the demo cast (lib/auth/demo-cast.ts): made only in a demo or training installation, reached only by switching to it (/api/demo/act-as), never by a password; refused everywhere once samples are not allowed (a demo snapshot restored into production signs nobody in as the cast). Absent on every other account (and on snapshots saved before the cast existed), which reads as \"not the cast\"."
+          },
           "twoStepSince": {
             "type": "string"
           },
@@ -77918,6 +78282,37 @@
           "oldestAgeHours",
           "slaHours",
           "breaching"
+        ]
+      },
+      "RaisedFinding": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string"
+          },
+          "watch": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "at",
+          "watch",
+          "kind",
+          "subject",
+          "detail"
         ]
       },
       "RecordsStatus": {
@@ -79037,6 +79432,32 @@
           "subscriptions",
           "signInFailures",
           "auditSummaries"
+        ]
+      },
+      "RetryPolicy": {
+        "type": "object",
+        "properties": {
+          "attempts": {
+            "type": "number",
+            "description": "Failures in a row before the run counts as failed for good and officials are alerted."
+          },
+          "backoffMinutes": {
+            "type": "number",
+            "description": "Wait before the first retry; doubled after each further failure."
+          },
+          "leaseMinutes": {
+            "type": "number",
+            "description": "How long one run may hold the job."
+          },
+          "items": {
+            "type": "string",
+            "description": "The field of the job's answer that counts the items it processed (a number, or a list counted)."
+          }
+        },
+        "required": [
+          "attempts",
+          "backoffMinutes",
+          "leaseMinutes"
         ]
       },
       "Ring": {
@@ -80498,6 +80919,98 @@
           "authority"
         ]
       },
+      "ServiceCalls": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "answered": {
+            "type": "number"
+          },
+          "refused": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number",
+            "description": "Not answered for another reason: input missing, no such service."
+          },
+          "firstAt": {
+            "type": "string"
+          },
+          "lastAt": {
+            "type": "string"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "reason",
+                "count"
+              ]
+            },
+            "description": "Refusals and failures by reason, most frequent first (reason text without the caller's purpose)."
+          },
+          "byCaller": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "caller": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "integration",
+                    "module",
+                    "other"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "total": {
+                  "type": "number"
+                },
+                "refused": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "caller",
+                "kind",
+                "name",
+                "total",
+                "refused"
+              ]
+            },
+            "description": "Calls per caller (an integration or a module inside the installation)."
+          },
+          "unauthenticated": {
+            "type": "number",
+            "description": "Calls without a recognised key, or refused by a rate limit (counted, not logged one by one)."
+          }
+        },
+        "required": [
+          "total",
+          "answered",
+          "refused",
+          "failed",
+          "reasons",
+          "byCaller",
+          "unauthenticated"
+        ]
+      },
       "ServiceHealth": {
         "type": "object",
         "properties": {
@@ -80633,6 +81146,227 @@
           "nations",
           "startedAt",
           "updates"
+        ]
+      },
+      "ServiceOverview": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "event",
+              "query"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "returns": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dataClass": {
+            "type": "string",
+            "enum": [
+              "personal",
+              "public",
+              "restricted"
+            ]
+          },
+          "legalBasis": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "businessRegister",
+                  "civilRegistration",
+                  "customs",
+                  "dataProtection",
+                  "education",
+                  "healthRegulation",
+                  "higherEducationAccreditation",
+                  "identity",
+                  "immigration",
+                  "judiciary",
+                  "lawRegister",
+                  "police",
+                  "professionalRegulation",
+                  "statistics",
+                  "tax"
+                ]
+              },
+              "label": {
+                "type": "string"
+              },
+              "institution": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ]
+              },
+              "named": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "key",
+              "label",
+              "named"
+            ]
+          },
+          "register": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "integrations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "ownerOrg": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "approved",
+                    "pending",
+                    "revoked",
+                    "suspended"
+                  ]
+                },
+                "purposes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Purposes approved for this service (two officials)."
+                },
+                "legacy": {
+                  "type": "boolean",
+                  "description": "Approved before purposes were recorded: refused in production until two officials approve them."
+                },
+                "waiting": {
+                  "type": "object",
+                  "properties": {
+                    "purposes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "by": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "purposes",
+                    "at",
+                    "by"
+                  ],
+                  "description": "A proposal waiting for a second official that names this service."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "ownerOrg",
+                "status",
+                "purposes",
+                "legacy"
+              ]
+            }
+          },
+          "webhooks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "topic": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "disabled",
+                    "paused"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "topic",
+                "status"
+              ]
+            },
+            "description": "Event services: the webhook subscriptions whose topic receives it."
+          },
+          "calls": {
+            "$ref": "#/components/schemas/ServiceCalls"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "kind",
+          "title",
+          "scope",
+          "returns",
+          "dataClass",
+          "owner",
+          "integrations",
+          "calls"
         ]
       },
       "ServiceSlaStat": {
@@ -86088,6 +86822,59 @@
           "detail"
         ]
       },
+      "Track": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string",
+            "description": "What the track is for, in one plain sentence."
+          },
+          "href": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "blocked",
+              "done",
+              "in-progress",
+              "not-started"
+            ]
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Check"
+            }
+          },
+          "blockedBy": {
+            "type": "string",
+            "description": "What outside the platform stops it (the environment, another track)."
+          },
+          "samplesOnly": {
+            "type": "boolean",
+            "description": "Only in demo and training installations."
+          },
+          "samplesCounted": {
+            "type": "boolean",
+            "description": "Its checks read records that demo and training installations seed with samples, so \"done\" may rest on them."
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "why",
+          "href",
+          "state",
+          "checks"
+        ]
+      },
       "TranslationEntries": {
         "type": "object",
         "additionalProperties": {
@@ -86863,110 +87650,26 @@
           "amendments"
         ]
       },
-      "WatchdogSummary": {
-        "description": "The watchdog. For every probation still running: fill in simulated health (prototype), treat a silent deployment agent as a failure, and pass the release when its window ends healthy. Never installs anything newer.",
+      "Waiting": {
         "type": "object",
         "properties": {
+          "what": {
+            "type": "string"
+          },
+          "proposedBy": {
+            "type": "string"
+          },
           "at": {
             "type": "string"
           },
-          "nations": {
-            "type": "number"
-          },
-          "watching": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "nationId": {
-                  "type": "string"
-                },
-                "version": {
-                  "type": "string"
-                },
-                "degraded": {
-                  "type": "boolean"
-                }
-              },
-              "required": [
-                "nationId",
-                "version",
-                "degraded"
-              ]
-            },
-            "description": "Probations still running after this pass."
-          },
-          "passed": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "nationId": {
-                  "type": "string"
-                },
-                "version": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "nationId",
-                "version"
-              ]
-            }
-          },
-          "fellBack": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "nationId": {
-                  "type": "string"
-                },
-                "from": {
-                  "type": "string"
-                },
-                "to": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "nationId",
-                "from",
-                "to"
-              ]
-            }
-          },
-          "awaitingDecision": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "nationId": {
-                  "type": "string"
-                },
-                "version": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "nationId",
-                "version"
-              ]
-            }
-          },
-          "missingReports": {
-            "type": "number",
-            "description": "Health reports recorded as missing in this pass."
+          "href": {
+            "type": "string"
           }
         },
         "required": [
-          "at",
-          "nations",
-          "watching",
-          "passed",
-          "fellBack",
-          "awaitingDecision",
-          "missingReports"
+          "what",
+          "proposedBy",
+          "href"
         ]
       },
       "WebhookCreated": {

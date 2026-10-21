@@ -229,7 +229,8 @@ async function start(o, dataDir) {
     try {
       const res = await get(`${run.internal}/api/cron/${job.name}`, {
         method: job.method,
-        headers: { authorization: `Bearer ${env.CIVICOS_CRON_SECRET}`, 'content-type': 'application/json' },
+        // The app records the run against the job's scheduled slot (lib/ops/cron-runs.ts).
+        headers: { authorization: `Bearer ${env.CIVICOS_CRON_SECRET}`, 'content-type': 'application/json', 'x-civicos-scheduler': 'self-host' },
         body: job.method === 'POST' ? '{}' : undefined,
       }, JOB_TIMEOUT_MS);
       status = res.status;

@@ -10,6 +10,7 @@
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
+import { cronRoute } from '@/lib/ops/cron-runs';
 import { dueSources, runSource } from '@/lib/twin/register';
 import { publishCivilCounts } from '@/lib/civil/twin';
 import { publishStandingCounts } from '@/lib/organisations/twin';
@@ -19,7 +20,7 @@ import { publishHealthCapacity } from '@/lib/health/twin';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+async function runJob(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const runs = [];
   for (const s of dueSources()) {
@@ -34,4 +35,6 @@ export async function GET(req: Request) {
   return NextResponse.json({ ok: true, runs, civil, organisations, cases, education, health });
 }
 
+// Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).
+export const GET = cronRoute('twin-ingest', runJob);
 export const POST = GET;

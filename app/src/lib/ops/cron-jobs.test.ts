@@ -1,11 +1,14 @@
 // One list of scheduled jobs (scripts/cron-jobs.json) for every scheduler:
 // the self-host script reads it, and the Helm chart's values (cron.jobs) and
-// pg_cron's schedule (supabase/cron/schedule.sql) must say the same thing.
+// pg_cron's schedule (supabase/cron/schedule.sql, and the migration that
+// sets it on the substrate, 20261027010000_civicos_cron_schedule.sql) must say
+// the same thing; every job has a retry policy (src/lib/ops/cron-jobs.ts).
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadJobs, jobsFor, parseCron, type CronJob as Job } from '../../../scripts/self-host-lib.mjs';
+import { CRON_JOBS, RETRY_POLICY } from './cron-jobs';
 
 const app = join(__dirname, '..', '..', '..');
 const jobs: Job[] = loadJobs(app);
@@ -25,8 +28,8 @@ function helmJobs(): Job[] {
   return out;
 }
 
-function pgCronJobs(): Omit<Job, 'substrate'>[] {
-  const sql = readFileSync(join(app, 'supabase', 'cron', 'schedule.sql'), 'utf8').split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+function pgCronJobs(file = join('supabase', 'cron', 'schedule.sql')): Omit<Job, 'substrate'>[] {
+  const sql = readFileSync(join(app, file), 'utf8').split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
   return [...sql.matchAll(/cron\.schedule\('civicos-([a-z0-9-]+)', '([^']+)', \$\$select civicos\.cron_call\('[^']+', '\/api\/cron\/[a-z0-9-]+'(, 'POST')?\)\$\$\)/g)]
     .map(m => ({ name: m[1]!, schedule: m[2]!, method: m[3] ? 'POST' : 'GET' }));
 }
@@ -50,6 +53,15 @@ describe('scripts/cron-jobs.json', () => {
 
   it('matches pg_cron (supabase/cron/schedule.sql)', () => {
     expect(byName(pgCronJobs())).toEqual(byName(jobs.map(j => ({ name: j.name, schedule: j.schedule, method: j.method }))));
+  });
+
+  it('matches the pg_cron migration (supabase/migrations/20261027010000_civicos_cron_schedule.sql)', () => {
+    expect(byName(pgCronJobs(join('supabase', 'migrations', '20261027010000_civicos_cron_schedule.sql')))).toEqual(byName(jobs.map(j => ({ name: j.name, schedule: j.schedule, method: j.method }))));
+  });
+
+  it('is the list the app reads, with a retry policy for every job', () => {
+    expect(byName([...CRON_JOBS])).toEqual(byName(jobs));
+    expect(Object.keys(RETRY_POLICY).sort()).toEqual(jobs.map(j => j.name).sort());
   });
 
   it('leaves the substrate-only jobs out when the substrate is not configured', () => {

@@ -30,6 +30,12 @@ export function secondStepMissing(s: Scope): string | null {
   return s.twoStepRequired && !s.twoStep ? 'Set up the second sign-in step under My account, then sign in again, before making changes' : null;
 }
 
+/** Who must use the second sign-in step: nobody (default), officials who can sign (and administrators), or everyone. */
+export type TwoStepPolicy = 'none' | 'signers' | 'all';
+/** Whether a two-step policy covers an official with this role (the one rule; lib/auth/officials.ts and the accounts screen read it). */
+export const twoStepCovers = (policy: TwoStepPolicy, role: OfficialRole): boolean =>
+  policy === 'all' || (policy === 'signers' && (role === 'administrator' || role === 'signatory'));
+
 /** When roles were introduced (seconds since 1970): sessions and accounts dated before it carry no role. */
 export const ROLES_SINCE = Date.parse('2026-10-18T10:37:47Z') / 1000;
 /**
@@ -147,6 +153,10 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/dual-control$/,
   // Which authority the law designates for each permit and licence type (four-eyes in the route).
   /^\/api\/permit-authorities$/,
+  // Creating or refreshing the demo cast (demo and training installations only; lib/auth/demo-cast.ts).
+  /^\/api\/demo\/cast$/,
+  // Loading the demo data pack: cast, sample acts and procedures, sample cases (lib/casework/demo-pack.ts).
+  /^\/api\/demo\/pack$/,
 ];
 /**
  * The nation's Update Center work that any official who is not an auditor may
@@ -169,8 +179,11 @@ const UPDATE_CENTER_WORK: RegExp[] = [/^\/api\/releases\/(requests|support)(\/|$
  */
 const INSTALLATION: RegExp[] = [/^\/api\/releases(\/|$)/];
 /** Signing in and out, one's own second step (authenticator app or passkeys, and the passkey
- *  sign-in challenge) and one's own password stay open to every role; the health probe is public. */
-const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/passkeys(\/options)?\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/];
+ *  sign-in challenge) and one's own password stay open to every role; the health probe is public.
+ *  Switching to a member of the demo cast is a sign-in too: the route lets only a signed-in
+ *  administrator or cast member (any role, so the cast's auditor can switch back) do it, and
+ *  answers 404 outside demo and training installations (lib/auth/demo-cast.ts actAsRefusal()). */
+const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/passkeys(\/options)?\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/, /^\/api\/demo\/act-as$/];
 /** Inside one ministry's workspace: officials of that ministry, or of the whole government. */
 const MINISTRY = /^\/api\/org\/ministries\/([^/]+)\//;
 /**
@@ -639,4 +652,10 @@ export function canResolveTwinConflict(s: Scope, statistics: string | undefined)
   if (role === 'auditor') return 'Auditors can read records but not change them';
   if (statistics) return s.institution === statistics && role === 'signatory' ? null : 'Only an official who can sign at the statistics authority decides which figure stands';
   return wholeGovernment(s) && role === 'administrator' ? null : 'Name the statistics authority under Who is responsible first';
+}
+
+/** Reading where setup stands (/admin/onboarding): administrators, and auditors who read every record. */
+export function canSeeOnboarding(s: Scope): string | null {
+  const role = roleOf(s);
+  return role === 'administrator' || role === 'auditor' ? null : 'Only administrators and auditors can see where setup stands';
 }

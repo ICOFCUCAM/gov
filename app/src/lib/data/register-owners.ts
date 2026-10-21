@@ -239,6 +239,8 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each entry, hash-chained') },
   { id: 'backups', name: 'Backups: retention policy, RPO/RTO targets, restore proposals and restores (the catalogue itself is the backup target)', owner: { where: 'platform', keys: ['__civicosBackups'] }, api: '/api/platform/backups', copies: [],
     storage: RECORD_DOCS('the policy, each restore proposal and each restore record; kept as they are by a restore (lib/backup/state.ts KEPT_ON_RESTORE)') },
+  { id: 'cron-runs', name: 'Scheduled jobs: the run history of each job under /api/cron (outcome, items, scrubbed error), its retry state and alerts (register 18.39)', owner: { where: 'platform', keys: ['__civicosCronRuns'] }, api: 'cronRoute() (lib/ops/cron-runs.ts) around every /api/cron/* route; read at /api/platform/scheduled-jobs and /gov/crons', copies: [],
+    storage: RECORD_DOCS('the run history per job; kept as it stands by a restore (lib/backup/state.ts KEPT_ON_RESTORE); the shared hold on a running job is civicos.cron_lease, coordination, never backed up') },
 ];
 
 /** The register a store key belongs to. */

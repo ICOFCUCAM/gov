@@ -8,7 +8,9 @@ import { useNeighbours } from '@/components/map/useNeighbours';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
-import { regionName } from '@/lib/nation/registry';
+import { regionName, formatMoney } from '@/lib/nation/registry';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { useRenderNow } from '@/lib/clock/render-now';
 
 // Decisions are not taken from this panel: each opens a draft directive on the
@@ -91,8 +93,8 @@ const DOMAIN: Record<DomainKey, Cfg> = {
     ],
     strip: v => [
       { l: 'Fiscal posture', v: v('fp', 0, 1) > 0.5 ? 'STABLE' : 'WATCH', t: 'ok' },
-      { l: 'Liquidity', v: `$${v('lq', 16, 30).toFixed(1)}B`, t: 'ok' },
-      { l: 'Deficit', v: `-$${v('df', 1, 6).toFixed(1)}B`, t: 'warn' },
+      { l: 'Liquidity', v: formatMoney(v('lq', 16, 30) * 1e9, { digits: 1 }), t: 'ok' },
+      { l: 'Deficit', v: formatMoney(-v('df', 1, 6) * 1e9, { digits: 1 }), t: 'warn' },
       { l: 'Debt-to-GDP', v: `${v('dg', 36, 50).toFixed(1)}%`, t: 'warn' },
       { l: 'Treasury', v: 'OPERATIONAL', t: 'ok' },
     ],
@@ -246,10 +248,10 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
         {cfg.tele.map(m => {
           const raw = w(m.k, m.lo, m.hi);
           const t = m.good ? tone3(m.pct ? raw : ((raw - m.lo) / (m.hi - m.lo)) * 100, m.good) : 'ok';
-          const disp = m.unit === 'B' ? `$${raw.toFixed(1)}B` : m.unit === 'd' ? `${Math.round(raw)}d` : m.unit === 'm' ? `${Math.round(raw)}m` : m.pct ? `${raw.toFixed(1)}%` : `${Math.round(raw)}`;
+          const disp = m.unit === 'B' ? formatMoney(raw * 1e9, { digits: 1 }) : m.unit === 'd' ? `${Math.round(raw)}d` : m.unit === 'm' ? `${Math.round(raw)}m` : m.pct ? `${raw.toFixed(1)}%` : `${Math.round(raw)}`;
           return (
             <div key={m.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-              <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
+              <div className="flex items-center justify-between gap-1"><span className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</span><SignalTag kind="sample" source={REFERENCE_MODEL} /></div>
               <div className="font-mono text-lg leading-tight tabular-nums" style={{ color: TONE[t] }}>{disp}</div>
               <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={waveSeries(`${domain}:sp:${m.k}`, ts, 16, 35, 92)} tone={t} /></div>
             </div>
@@ -449,7 +451,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {cfg.strip(w).map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}<SignalTag kind="sample" source={REFERENCE_MODEL} /></span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
               <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} />{s.v}
             </span>

@@ -42,6 +42,8 @@ import { IncidentPlace } from '@/components/features/sites/IncidentPlace';
 import { MinistrySites } from '@/components/features/sites/MinistrySites';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
+import { RegisterRecords } from '@/apps/_shared/RegisterRecords';
+import { useInstallationMode } from '@/lib/ops/mode-context';
 
 const EXAMPLE_CASE = 'An example case from the platform. Load this institution\'s own cases under My work › Load cases.';
 
@@ -84,6 +86,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
   // the workspace renders real identity on first paint — no skeleton loop.
   const seedInst = React.useMemo(() => resolveInstitution(id), [id]);
   const [tab, setTab] = React.useState<Tab>('command');
+  const installMode = useInstallationMode();
   const [name, setName] = React.useState(seedInst.name);
   const [archetype, setArchetype] = React.useState<string>(seedInst.archetype);
   const [labels, setLabels] = React.useState({ unit: 'Operational', capacity: 'Capacity', cases: 'Open cases' });
@@ -516,6 +519,8 @@ export function MinistryWorkspace({ id }: { id: string }) {
       <div id="ws-panel" role="tabpanel" aria-labelledby={`ws-tab-${tab}`} tabIndex={0} className="space-y-4 focus:outline-none">
       {tab === 'command' && (
         <div className="space-y-5">
+          {/* What the platform's real registers hold for this institution, read under each register's own rules. */}
+          <RegisterRecords app={{ id: `ministry:${id}`, domain: '', kind: 'ministry', archetypeOrBranch: archetype || 'GENERIC', instanceId: id }} mode={installMode} />
           <InstitutionInTwin ministryId={id} />
           {(() => {
             const fab = ministryFabric({ id, archetype: (archetype || 'GENERIC') as ArchetypeKey });

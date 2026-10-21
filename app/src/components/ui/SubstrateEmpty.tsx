@@ -23,6 +23,64 @@ export function Spinner({ className = '' }: { className?: string }) {
 }
 
 /**
+ * Standard panel for a page that works on the shared database's work items
+ * and needs an officer's sign-in there (wiring audit §10). The platform's own
+ * accounts (/sign-in with email and password, or the identity provider) are
+ * a separate system: an official signed in that way is told so, plainly,
+ * and sent to the platform's own case work instead of to a sign-in they have
+ * already done. Nothing is decided here; the page still reads the shared
+ * database only with its own session.
+ */
+export function OfficerSignInNeeded({ title, from, signedOut, what }: {
+  title: string;
+  /** The page to come back to after signing in. */
+  from: string;
+  /** The sentence shown to someone not signed in at all. */
+  signedOut: string;
+  /** What the page does, after "This page" (e.g. "lists your work items"). */
+  what: string;
+}) {
+  const [platform, setPlatform] = React.useState<{ name: string } | null>(null);
+  React.useEffect(() => {
+    let live = true;
+    fetch('/api/auth/official', { cache: 'no-store' })
+      .then(r => r.json())
+      .then((j: { official?: { name?: string; method?: string } | null }) => {
+        if (live && j.official && j.official.method !== 'substrate') setPlatform({ name: j.official.name ?? 'an official' });
+      })
+      .catch(() => undefined);
+    return () => { live = false; };
+  }, []);
+  const button = 'inline-block focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2';
+  const signIn = `/sign-in?from=${encodeURIComponent(from)}`;
+  return (
+    <Panel title={title} meta={platform ? 'needs an officer sign-in' : 'signed out'} bodyClass="!p-3 space-y-2">
+      {platform ? (
+        <>
+          <p className="text-[12px] text-ink-soft" data-testid="platform-account-notice">
+            You are signed in as {platform.name} with a platform account. This page {what} from the shared database, where officers sign in
+            with their own officer account; the two are separate. Cases, registers and decisions on this platform are under My work.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a href="/gov/work/cases/open" className={button}>Open my cases</a>
+            <a href="/gov/work" className={button}>Waiting on officials</a>
+            <a href={signIn} className={button}>Sign in as a database officer</a>
+          </div>
+          <p className="text-[11px] text-ink-muted">
+            What a database officer may do on the platform is set by an administrator under Staff → Sign-in accounts.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="text-[11px] text-ink-muted">{signedOut}</p>
+          <a href={signIn} className={button}>Sign in</a>
+        </>
+      )}
+    </Panel>
+  );
+}
+
+/**
  * Standard panel for a part of the platform that needs the shared database
  * (the substrate), which this installation has not connected. Officials read
  * a plain sentence; the technical detail stays behind "Technical details".

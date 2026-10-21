@@ -1,5 +1,5 @@
 import { authEnforced } from '@/lib/auth/mode';
-import { samplesAllowed } from '@/lib/ops/mode';
+import { samplesAllowed, installationMode } from '@/lib/ops/mode';
 import { verifyCitizen, CITIZEN_COOKIE } from '@/lib/auth/citizen-session';
 import { PUBLIC_SITES } from '@/lib/auth/public-paths';
 import { NextResponse } from 'next/server';
@@ -61,6 +61,8 @@ const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/, /^\/api\
 // browser to the provider, the callback does nothing without the state this browser started with.
 const IDP_SIGN_IN = /^\/api\/auth\/oidc\/(start|callback)$/;
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+// The demo cast and switching to it (demo and training installations only).
+const DEMO_API = /^\/api\/demo(\/|$)/;
 
 /**
  * With enforcement on, a change through the API needs a verified official
@@ -231,6 +233,11 @@ function handle(req: NextRequest, requestId: string, nonce: string): NextRespons
   // nothing, so skipping the middleware there skips no check.
   if (req.headers.has(SUBREQUEST_HEADER) && !(req.method === 'GET' && req.nextUrl.pathname === '/api/auth/official')) {
     return NextResponse.json({ error: 'Refused' }, { status: 400 });
+  }
+  // A production installation has no demo cast (lib/auth/demo-cast.ts): its routes are not there,
+  // whoever asks and however (the routes answer 404 too when samples are not allowed).
+  if (DEMO_API.test(req.nextUrl.pathname) && installationMode() === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
   const crossSite = crossSiteRefusal(req);
   if (crossSite) return crossSite;

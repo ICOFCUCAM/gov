@@ -1,4 +1,7 @@
 // Interoperability: integration clients, federation grants and webhooks.
+import { samplesAllowed } from '@/lib/ops/mode';
+import { citeBasis } from '@/lib/law/policy-change';
+import type { Citation } from '@/lib/law/register';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { take } from '@/lib/exchange/rate-limit';
 import { usageRefusal, obligations, parsePurposes, type UsageRequest } from '@/lib/exchange/usage-policy';
@@ -232,7 +235,7 @@ const termsText = (t: { scopes: string[]; purposes: Record<string, string[]> }) 
  * approved one may do): its scopes and, per service, its purposes. A waiting
  * proposal it replaces is kept as superseded. Audited.
  */
-export function proposeIntegrationApproval(id: string, input: { scopes?: unknown; purposes?: unknown; note?: unknown }, by: string, byId?: string, now = new Date()): IntegrationClient | { error: string } {
+export function proposeIntegrationApproval(id: string, input: { scopes?: unknown; purposes?: unknown; note?: unknown; legalBasis?: unknown; owners?: string[] }, by: string, byId?: string, now = new Date()): IntegrationClient | { error: string } {
   lapseIntegrationApprovals(now.getTime());
   const c = db.integrations.find(i => i.id === id);
   if (!c) return { error: 'Integration not found' };
@@ -240,18 +243,27 @@ export function proposeIntegrationApproval(id: string, input: { scopes?: unknown
   const terms = parseTerms(input, c);
   if ('error' in terms) return terms;
   const note = typeof input.note === 'string' ? input.note.trim().slice(0, 300) : '';
+  // The law that permits the sharing, cited from the laws register: required in production, checked whenever given.
+  const given = Array.isArray(input.legalBasis) && input.legalBasis.length > 0;
+  let basis: Citation[] = [];
+  if (given || !samplesAllowed()) {
+    const b = citeBasis(input.legalBasis, now.toISOString().slice(0, 10), `Data sharing with ${c.name}`);
+    if ('error' in b) return b;
+    basis = b;
+  }
+  const owners = [...new Set((input.owners ?? []).filter(Boolean))];
   if (c.pendingApproval) {
     closeProposal(c, 'superseded', now);
     recordAudit(by, 'integration.approval.supersede', `Integration:${id}`, 'ok', 'replaced by a new proposal');
   }
-  c.pendingApproval = { ...terms, by, ...(byId ? { byId } : {}), at: now.toISOString(), ...(note ? { note } : {}) };
+  c.pendingApproval = { ...terms, by, ...(byId ? { byId } : {}), at: now.toISOString(), ...(note ? { note } : {}), ...(basis.length ? { basis } : {}), ...(owners.length ? { owners, consents: [] } : {}) };
   normalise(c);
   recordAudit(by, 'integration.approval.propose', `Integration:${id}`, 'ok', `${c.name} · ${termsText(terms)} · waiting for a second official`);
   return c;
 }
 
 /** A different official confirms the waiting proposal: from then the integration is approved for those terms. */
-export function confirmIntegrationApproval(id: string, by: string, byId?: string, now = new Date()): IntegrationClient | { error: string } {
+export function confirmIntegrationApproval(id: string, by: string, byId?: string, now = new Date(), institution?: string): IntegrationClient | { error: string } {
   lapseIntegrationApprovals(now.getTime());
   const c = db.integrations.find(i => i.id === id);
   if (!c) return { error: 'Integration not found' };
@@ -260,6 +272,19 @@ export function confirmIntegrationApproval(id: string, by: string, byId?: string
   if (c.status === 'revoked') return { error: 'This integration is revoked' };
   const why = dualControlRefusal(p, { by, byId });
   if (why) return { error: why };
+  // In production, every institution that owns a service the terms open agrees: an official of
+  // each confirms (a different person from the proposer and from each other).
+  if (p.owners?.length && !samplesAllowed()) {
+    const consents = p.consents ??= [];
+    const waiting = p.owners.filter(o => !consents.some(x => x.institution === o));
+    if (!institution || !waiting.includes(institution)) return { error: `The data's owners confirm this sharing: an official of ${waiting.join(', ')} confirms it${institution && consents.some(x => x.institution === institution) ? ' (your institution already has)' : ''}` };
+    for (const x of consents) { const same = dualControlRefusal({ by: x.by, ...(x.byId ? { byId: x.byId } : {}) }, { by, byId }); if (same) return { error: `${x.by} already confirmed for ${x.institution}: a different person confirms for ${institution}` }; }
+    consents.push({ institution, by, ...(byId ? { byId } : {}), at: now.toISOString() });
+    if (waiting.length > 1) {
+      recordAudit(by, 'integration.approval.consent', `Integration:${id}`, 'ok', `${institution} agreed · still waiting for ${waiting.filter(o => o !== institution).join(', ')}`);
+      return c;
+    }
+  }
   const independence = independenceOf(p.byId, byId);
   const rec = closeProposal(c, 'confirmed', now, { confirmedBy: by, ...(byId ? { confirmedById: byId } : {}), independence })!;
   c.scopes = [...rec.scopes];

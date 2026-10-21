@@ -10,7 +10,7 @@ vi.mock('@/lib/auth/official', () => ({
 }));
 
 import { GET } from './route';
-import { resetOfficials, createAccount } from '@/lib/auth/officials';
+import { resetOfficials, createAccount, setTwoStepPolicy } from '@/lib/auth/officials';
 
 const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
 process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
@@ -36,6 +36,16 @@ describe('GET /api/auth/officials', () => {
     expect(d.full).toBe(true);
     expect(d.accounts.map(a => a.email)).toEqual(['admin@gov.example', 'officer@gov.example']);
     expect(d.accounts[0]).toHaveProperty('twoStepRequired');
+  });
+
+  it('gives administrators the two-step policy and who last set it (the Official accounts screen)', async () => {
+    official.mockReturnValue({ sub: 'officer:7', name: 'S. Admin', role: 'administrator' });
+    const before = (await list()) as unknown as { twoStep: unknown };
+    expect(before.twoStep).toEqual({ policy: 'none', set: null });
+    setTwoStepPolicy('signers', 'A. Admin');
+    const after = (await list()) as unknown as { twoStep: { policy: string; set: { by: string; at: string } }; accounts: Record<string, unknown>[] };
+    expect(after.twoStep).toMatchObject({ policy: 'signers', set: { by: 'A. Admin', at: expect.any(String) } });
+    expect(after.accounts.map(a => a.twoStepRequired)).toEqual([true, false]);
   });
 
   it('gives any other official name, office and institution only', async () => {

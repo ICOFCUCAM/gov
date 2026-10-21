@@ -36,6 +36,9 @@ import { useRenderNow } from '@/lib/clock/render-now';
 import { useTwinPrimed } from '@/lib/twin/read';
 import { ENGINE_METRIC_IDS } from '@/lib/twin/engine-metrics';
 import { IndexTag } from '@/components/ui/IndexTag';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL } from '@/lib/twin/signal';
+import { formatMoney } from '@/lib/nation/registry';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 
@@ -759,12 +762,12 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Liquidity runway" v={`${fc.liquidityDays}d`} t={fc.liquidityDays >= 30 ? 'ok' : fc.liquidityDays >= 14 ? 'warn' : 'alert'} />
-          <Stat l="Debt / GDP" v={`${fc.debtToGdp}%`} t={fc.debtToGdp >= 65 ? 'alert' : fc.debtToGdp >= 50 ? 'warn' : 'ok'} />
-          <Stat l="Primary balance" v={`${fc.primaryBalancePct}%`} t={fc.primaryBalancePct < 0 ? 'warn' : 'ok'} />
-          <Stat l="FX reserves" v={`$${fc.fxReservesBn}B`} t={fc.fxReservesBn >= 30 ? 'ok' : 'warn'} />
-          <Stat l="Macro stability" v={`${fc.macroStability}`} t={fc.tone} />
-          <Stat l="TSA balance" v={`$${br.tsaBalanceBn}B`} t={br.tsaBalanceBn >= 12 ? 'ok' : 'warn'} />
+          <Stat l="Liquidity runway" v={`${fc.liquidityDays}d`} t={fc.liquidityDays >= 30 ? 'ok' : fc.liquidityDays >= 14 ? 'warn' : 'alert'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="Debt / GDP" v={`${fc.debtToGdp}%`} t={fc.debtToGdp >= 65 ? 'alert' : fc.debtToGdp >= 50 ? 'warn' : 'ok'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="Primary balance" v={`${fc.primaryBalancePct}%`} t={fc.primaryBalancePct < 0 ? 'warn' : 'ok'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="FX reserves" v={formatMoney(fc.fxReservesBn * 1e9, { digits: 1 })} t={fc.fxReservesBn >= 30 ? 'ok' : 'warn'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="Macro stability" v={`${fc.macroStability}`} t={fc.tone} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="TSA balance" v={formatMoney(br.tsaBalanceBn * 1e9, { digits: 1 })} t={br.tsaBalanceBn >= 12 ? 'ok' : 'warn'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
           <Panel signal="sample" title="Banking rails" meta="disbursement · settlement · reconciliation" bodyClass="!p-2">
@@ -794,12 +797,12 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Collection rate" v={`${rv.collectionRatePct}%`} t={rv.collectionRatePct >= 85 ? 'ok' : rv.collectionRatePct >= 72 ? 'warn' : 'alert'} />
-          <Stat l="Customs throughput" v={`${rv.customsThroughputPct}%`} t={rv.customsThroughputPct >= 80 ? 'ok' : 'warn'} />
-          <Stat l="Taxpayers" v={`${rv.taxpayersM}M`} t="ok" />
-          <Stat l="Arrears" v={`$${rv.arrearsBn}B`} t={rv.arrearsBn >= 24 ? 'alert' : 'warn'} />
-          <Stat l="Budget execution" v={`${bg.executionPct}%`} t={bg.executionPct >= 80 ? 'ok' : bg.executionPct >= 60 ? 'warn' : 'alert'} />
-          <Stat l="Blocked allocations" v={`${bg.blockedAllocations}`} t={bg.blockedAllocations ? 'alert' : 'ok'} />
+          <Stat l="Collection rate" v={`${rv.collectionRatePct}%`} t={rv.collectionRatePct >= 85 ? 'ok' : rv.collectionRatePct >= 72 ? 'warn' : 'alert'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="Customs throughput" v={`${rv.customsThroughputPct}%`} t={rv.customsThroughputPct >= 80 ? 'ok' : 'warn'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="Taxpayers" v={`${rv.taxpayersM}M`} t="ok" tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="Arrears" v={formatMoney(rv.arrearsBn * 1e9, { digits: 1 })} t={rv.arrearsBn >= 24 ? 'alert' : 'warn'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="Budget execution" v={`${bg.executionPct}%`} t={bg.executionPct >= 80 ? 'ok' : bg.executionPct >= 60 ? 'warn' : 'alert'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
+          <Stat l="Blocked allocations" v={`${bg.blockedAllocations}`} t={bg.blockedAllocations ? 'alert' : 'ok'} tag={<SignalTag kind="sample" source={REFERENCE_MODEL} />} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
           <Panel signal="sample" title="Revenue streams" meta="taxation · customs · collection" bodyClass="!p-2">
@@ -1983,7 +1986,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
           <Panel signal="sample" title="Social insurance" meta="contributory funds" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
-              <Stat l="Funds" v={`$${o.socialInsurance.fundsBn}B`} t="ok" />
+              <Stat l="Funds" v={formatMoney(o.socialInsurance.fundsBn * 1e9, { digits: 1 })} t="ok" />
               <Stat l="Contributors" v={`${o.socialInsurance.contributorsM}M`} t="ok" />
               <Stat l="Claims pending" v={o.socialInsurance.claimsPending.toLocaleString()} t={o.socialInsurance.claimsPending > 6000 ? 'alert' : 'warn'} />
               <Stat l="Payout on-time" v={`${o.socialInsurance.payoutOnTimePct}%`} t={o.socialInsurance.payoutOnTimePct >= 90 ? 'ok' : 'warn'} />

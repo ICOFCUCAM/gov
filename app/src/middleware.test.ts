@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { NextRequest } from 'next/server';
@@ -406,5 +406,25 @@ describe('request ids', () => {
     expect(made.headers.get('x-request-id')).toMatch(/^[0-9a-f-]{36}$/);
     // Route handlers see the same id on the request.
     expect(made.headers.get('x-middleware-request-x-request-id')).toBe(made.headers.get('x-request-id'));
+  });
+});
+
+describe('the demo cast routes (lib/auth/demo-cast.ts)', () => {
+  afterEach(() => { vi.unstubAllEnvs(); });
+  const req = (p: string, method = 'GET', cookie?: string) => middleware(new NextRequest(`http://localhost${p}`, { method, headers: cookie ? { cookie } : {} }));
+
+  it('are refused in a production installation, whoever asks', async () => {
+    vi.stubEnv('CIVICOS_MODE', 'production');
+    const cookie = await officialCookie({ role: 'administrator' });
+    for (const [p, m] of [['/api/demo/cast', 'GET'], ['/api/demo/cast', 'POST'], ['/api/demo/act-as', 'POST'], ['/api/demo', 'GET']] as const) {
+      expect((await req(p, m, cookie)).status, `${m} ${p}`).toBe(404);
+    }
+  });
+
+  it('pass to their routes in a demonstration or training installation', async () => {
+    for (const mode of ['demo', 'training']) {
+      vi.stubEnv('CIVICOS_MODE', mode);
+      expect((await req('/api/demo/cast')).status, mode).toBe(200);
+    }
   });
 });

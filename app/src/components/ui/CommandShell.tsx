@@ -25,6 +25,7 @@ import { CONSOLE_NAV, HEADER_LINKS, locate } from '@/lib/nav/console-nav';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
 import { SkipLink } from '@/components/ui/SkipLink';
 import { useSignIn } from '@/lib/official';
+import { executivePosture } from '@/lib/gov/executive-posture';
 
 // Adapter from substrate search hits → CommandPalette items.
 const substrateSearchAsCommands: CommandSearchFn = async (query) => {
@@ -89,12 +90,14 @@ export function CommandShell({
     return () => { clearInterval(poll); clearInterval(tick); };
   }, []);
 
-  const posture = coord?.posture;
   const t = nat?.totals;
   const incidents = nat?.crossMinistryIncidents ?? [];
   const crit = incidents.filter(i => i.severity === 'sev1' || i.severity === 'sev2').length;
-  const level = posture?.level ?? 'ok';
-  const emergency = level === 'alert' || crit >= 4;
+  // What the header may say about the nation (lib/gov/executive-posture.ts):
+  // recorded data only in production, marked samples in demo and training.
+  const view = executivePosture(nat, coord);
+  const level = view.risk.t === 'neutral' ? 'ok' : view.risk.t;
+  const emergency = view.banner.show;
   const accent = emergency ? TONE.alert : ACCENT;
   const railCount: Record<string, number> = {
     sr: incidents.length, ops: t?.queuesBreaching ?? 0, cab: crit, aud: t?.auditIntact === false ? 1 : 0,
@@ -116,14 +119,16 @@ export function CommandShell({
   // Each figure says where it comes from (lib/twin/signal.ts); samples and model outputs are marked.
   // p: priority. As many figures are shown as fit, lowest priority hidden first (fitTelemetry).
   const tele: { p: 1 | 2 | 3; l: string; v: string; t?: string; dot?: boolean; kind: SignalKind; src: string }[] = [
-    { p: 3, l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true, kind: 'reported', src: 'Platform configuration' },
-    { p: 2, l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone, kind: 'sample', src: `Resilience model over ${REFERENCE_MODEL.toLowerCase()}` },
+    { p: 3, l: 'Environment', v: nat?.environment ?? '—', t: 'ok', dot: true, kind: 'reported', src: 'Platform configuration' },
+    view.generated.show
+      ? { p: 2, l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone, kind: 'sample', src: `Resilience model over ${REFERENCE_MODEL.toLowerCase()}` }
+      : { p: 2, l: 'Resilience', v: 'Not connected', t: 'neutral', kind: 'unavailable', src: view.generated.src },
     { p: 3, l: 'Practice queue', v: hydrated ? `${liveRt.open} open` : '—', t: 'ok', kind: 'reported', src: 'Practice queue in this browser only; not a government record' },
     { p: 3, l: 'Connected systems', v: hydrated ? `${fedStats.activated} of ${fedStats.registered}` : '—', t: 'ok', kind: 'reported', src: 'Registry of connected systems' },
     { p: 2, l: 'Institutions', v: String(t?.institutions ?? 0), kind: 'reported', src: 'Ministry registry (/api/org)' },
-    { p: 1, l: 'Active incidents', v: String(incidents.length), t: incidents.length ? 'alert' : 'ok', kind: 'sample', src: `Seeded ministry incidents · ${REFERENCE_MODEL}` },
-    { p: 2, l: 'Queues breaching', v: String(t?.queuesBreaching ?? 0), t: (t?.queuesBreaching ?? 0) > 0 ? 'warn' : 'ok', kind: 'sample', src: `Seeded ministry queues · ${REFERENCE_MODEL}` },
-    { p: 1, l: 'National risk', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok', kind: 'sample', src: `Posture computed from seeded incidents · ${REFERENCE_MODEL}` },
+    { p: 1, l: 'Active incidents', v: view.incidents.v, t: view.incidents.t, kind: view.incidents.kind, src: view.incidents.src },
+    { p: 2, l: 'Queues breaching', v: view.queues.v, t: view.queues.t, kind: view.queues.kind, src: view.queues.src },
+    { p: 1, l: 'National risk', v: view.risk.v, t: view.risk.t, kind: view.risk.kind, src: view.risk.src },
     { p: 1, l: 'Audit integrity', v: t?.auditIntact === false ? 'Review' : 'Intact', t: t?.auditIntact === false ? 'alert' : 'ok', kind: 'observed', src: 'Verification of the audit chain' },
   ];
   const teleRef = React.useRef<HTMLDivElement>(null);
@@ -152,7 +157,8 @@ export function CommandShell({
           style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, borderBottom: `1px solid ${TONE.alert}` }}>
           <span className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]" style={{ color: TONE.alert }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
-            {crit} serious incident{crit === 1 ? '' : 's'} recorded (example data) · cabinet coordination advised
+            {view.banner.text}
+            <SignalTag kind={view.banner.kind} source={view.banner.src} className="!text-[8px]" />
           </span>
           <Link href="/gov/coordination" className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest" style={{ borderColor: TONE.alert, color: TONE.alert }}>Coordinate →</Link>
         </div>
@@ -185,7 +191,8 @@ export function CommandShell({
           <span className="hidden items-center gap-1.5 rounded-[3px] border px-2 py-1 text-[10px] sm:flex"
             style={{ borderColor: emergency ? TONE.alert : 'rgb(var(--c-line))', color: emergency ? TONE.alert : 'rgb(var(--c-ink-soft))' }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[level] }} />
-            {posture?.label ?? 'STABLE'}
+            {view.risk.v}
+            <SignalTag kind={view.risk.kind} source={view.risk.src} className="!text-[7px]" />
           </span>
           <span className="relative grid h-7 w-7 place-items-center rounded-[3px] border border-line text-[12px] text-ink-soft" title={`${incidents.length} active incidents`}>
             ⌁
@@ -269,9 +276,9 @@ export function CommandShell({
               ))}
             </div>
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
-              <div className="text-ink-muted">Status</div><div className="truncate text-right font-mono" style={{ color: TONE[level] }}>{posture?.label ?? 'STABLE'}</div>
+              <div className="text-ink-muted">Status</div><div className="truncate text-right font-mono" style={{ color: TONE[level] }} title={view.risk.src}>{view.risk.v}</div>
               <div className="text-ink-muted">Incidents</div><div className="text-right font-mono" style={{ color: incidents.length ? TONE.alert : TONE.ok }}>{incidents.length}</div>
-              <div className="text-ink-muted">Environment</div><div className="truncate text-right text-ink-soft">{nat?.environment ?? 'Production'}</div>
+              <div className="text-ink-muted">Environment</div><div className="truncate text-right text-ink-soft">{nat?.environment ?? '—'}</div>
               <div className="text-ink-muted">Connection</div><div className="text-right" style={{ color: secure === false ? TONE.warn : TONE.ok }}>{secure === null ? '—' : secure ? 'Encrypted' : 'Not encrypted'}</div>
               <PoweredBy />
             </div>

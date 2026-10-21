@@ -454,6 +454,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      cron_lease: {
+        Row: {
+          done_key: string | null
+          holder: string | null
+          job: string
+          run_key: string
+          until_ms: number
+        };
+        Insert: {
+          done_key?: string | null
+          holder?: string | null
+          job: string
+          run_key: string
+          until_ms?: number
+        };
+        Update: {
+          done_key?: string | null
+          holder?: string | null
+          job?: string
+          run_key?: string
+          until_ms?: number
+        };
+        Relationships: [];
+      };
       cron_skips: {
         Row: {
           first_at: string

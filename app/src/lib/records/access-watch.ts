@@ -7,7 +7,7 @@
 // receive as an event. A finding is a prompt to look, never a conclusion
 // about the official.
 
-import { recordAudit } from '@/lib/data/store/audit';
+import { recordAudit, listAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { unusualAccess } from './access-log';
 
@@ -30,4 +30,30 @@ export function watchAccess(now = new Date()): { raised: number } {
     raised++;
   }
   return { raised };
+}
+
+/** The watches whose findings oversight reads: unusual access (above) and harvesting of the public professional check (lib/professions/watch.ts). */
+export const WATCH_ACTIONS: Record<string, string> = {
+  'access.unusual': 'Unusual access to records',
+  'register.harvest.suspected': 'Possible harvesting of the public professional check',
+};
+
+export interface RaisedFinding { seq: number; at: string; watch: string; kind: string; subject: string; detail: string }
+
+/**
+ * Findings the watches have raised on the audit chain since `since` (default
+ * the last 30 days), newest first, at most `limit`. Each is what the audit
+ * entry says (who or which caller, the reason and count; never the records),
+ * a prompt to look, never a conclusion.
+ */
+export function raisedFindings(since = new Date(Date.now() - 30 * 86_400_000).toISOString(), limit = 100): RaisedFinding[] {
+  const out: RaisedFinding[] = [];
+  for (const e of listAudit()) {
+    if (e.at < since) break;
+    const kind = WATCH_ACTIONS[e.action];
+    if (!kind) continue;
+    out.push({ seq: e.seq, at: e.at, watch: e.actor, kind, subject: e.resource, detail: e.detail ?? '' });
+    if (out.length >= limit) break;
+  }
+  return out;
 }

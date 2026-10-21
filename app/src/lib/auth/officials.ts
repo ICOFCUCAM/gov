@@ -9,11 +9,12 @@
 
 import { registerPersonResolver } from '@/lib/data/dual-control';
 import { authEnforced } from './mode';
+import { samplesAllowed } from '@/lib/ops/mode';
 import { randomBytes, scrypt, timingSafeEqual, randomUUID, createHash, type ScryptOptions } from 'node:crypto';
 import { matchStep, newSecret, otpauthUri } from './totp';
 import { seal, open as openSealed } from '@/lib/crypto/envelope';
 import { recordAudit, getMinistry } from '@/lib/data/store';
-import { isRole, roleLabel, roleOf, type OfficialRole } from './roles';
+import { isRole, roleLabel, roleOf, twoStepCovers, type OfficialRole, type TwoStepPolicy } from './roles';
 import { touch } from '@/lib/data/repo/track';
 import { recordAggregated } from '@/lib/audit/aggregate';
 import { checkSetupCode, consumeSetupCode, localAccountsAllowed, LOCAL_ACCOUNTS_REFUSED } from './setup-token';
@@ -50,6 +51,11 @@ export interface OfficialAccount {
   identity?: { issuer: string; claim: string; value: string; linkedAt: string; linkedBy: string };
   /** Made for an identity-provider sign-in: no platform password (the hash matches nothing). */
   noPassword?: boolean;
+  /** One of the demo cast (lib/auth/demo-cast.ts): made only in a demo or training installation, reached only by
+   *  switching to it (/api/demo/act-as), never by a password; refused everywhere once samples are not allowed
+   *  (a demo snapshot restored into production signs nobody in as the cast). Absent on every other account
+   *  (and on snapshots saved before the cast existed), which reads as "not the cast". */
+  demo?: true;
 }
 
 export interface StoredPasskey {
@@ -72,10 +78,12 @@ const passkeySummary = (p: StoredPasskey): PasskeySummary => ({ id: p.id, name: 
 /** What screens see of an account: never the password hash or the second-step secret. */
 export type PublicAccount = Omit<OfficialAccount, 'passwordHash' | 'twoStep' | 'twoStepPending' | 'reset' | 'passkeys'> & { twoStepSince?: string; twoStepRequired: boolean; resetPendingUntil?: string; passkeys: PasskeySummary[]; secondStepOn: boolean };
 
-/** Who must use the second sign-in step: nobody (default), officials who can sign (and administrators), or everyone. */
-export type TwoStepPolicy = 'none' | 'signers' | 'all';
+/** Who must use the second sign-in step (the type and the rule live in roles.ts). */
+export type { TwoStepPolicy } from './roles';
 interface Db {
   accounts: OfficialAccount[]; failures: Record<string, number[]>; secret?: string; twoStepPolicy?: TwoStepPolicy;
+  /** Who last set the two-step policy and when (absent until it is first set; the audit chain keeps every change). */
+  twoStepPolicySet?: { by: string; at: string };
   /** SHA-256 (hex) of each CIVICOS_SETUP_TOKEN already used for a first account: never accepted again (lib/auth/setup-token.ts). */
   setupTokensUsed?: string[];
   /** What substrate officers may do on the platform, set by an administrator (keyed by officer id; lib/auth/substrate-officials.ts). */
@@ -149,6 +157,8 @@ const pub = ({ passwordHash: _h, twoStep, twoStepPending: _p, reset, passkeys, .
     passkeys: (passkeys ?? []).map(passkeySummary), secondStepOn: !!twoStep || !!passkeys?.length });
 /** Whether the account has a second step (authenticator app or a passkey). */
 const hasSecondStep = (a: OfficialAccount) => !!a.twoStep || !!a.passkeys?.length;
+/** A demo cast account on an installation that may not hold samples (production): it signs nobody in. */
+export const demoAccountRefused = (a: { demo?: boolean }): boolean => !!a.demo && !samplesAllowed();
 
 // At most this many password hashes at once (go-live review M-9): each takes 128 MiB and a thread of the
 // libuv pool, which DNS lookups and file reads share; the rest wait their turn.
@@ -327,7 +337,7 @@ export async function checkPassword(emailRaw: string, password: string, now = Da
   const good = await matches(password, a?.passwordHash ?? dummyHash());
   // Counted after the hash: attempts made meanwhile are in the count too.
   const recent = recentFailures(d, email, now);
-  if (!a || a.disabled || !good) {
+  if (!a || a.disabled || !good || demoAccountRefused(a)) {
     noteFailure(d, email, recent, now);
     // Filed against the account it targeted (never the address), so its owner sees it in their sign-in activity.
     auditRefusal('sign-in attempt', 'auth.sign-in', a ? `Official:${a.id}` : 'Official:?', 'wrong email or password', now);
@@ -411,16 +421,17 @@ function useRecovery(a: OfficialAccount, code: string): boolean {
 }
 
 export const twoStepPolicy = (): TwoStepPolicy => db().twoStepPolicy ?? 'none';
+/** Who last set the policy and when; null while it has never been set (the default, nobody required). */
+export const twoStepPolicySet = (): { by: string; at: string } | null => db().twoStepPolicySet ?? null;
 /** Whether the installation's policy requires this account to use the second step. */
 export function twoStepRequiredFor(a: Pick<OfficialAccount, 'role'>): boolean {
-  const p = twoStepPolicy();
-  const r = roleOf(a);
-  return p === 'all' || (p === 'signers' && (r === 'administrator' || r === 'signatory'));
+  return twoStepCovers(twoStepPolicy(), roleOf(a));
 }
 
 export function setTwoStepPolicy(policy: string, by: string): { policy: TwoStepPolicy } | { error: string } {
   if (policy !== 'none' && policy !== 'signers' && policy !== 'all') return { error: 'Policy must be none, signers or all' };
   db().twoStepPolicy = policy;
+  db().twoStepPolicySet = { by, at: new Date().toISOString() };
   recordAudit(by, 'auth.two-step.policy', 'Officials:two-step', 'ok', policy);
   return { policy };
 }
@@ -683,7 +694,7 @@ export function passkeySignInOptions(rp: RelyingParty, now = Date.now()) {
 export function signInWithPasskey(input: { challengeId?: string; response?: AssertionJSON }, rp: RelyingParty, now = Date.now()): (PublicAccount & { secondStep: boolean }) | { error: string } {
   const credId = typeof input.response?.id === 'string' ? input.response.id : '';
   const a = credId ? db().accounts.find(x => x.passkeys?.some(p => p.id === credId)) : undefined;
-  if (!a || a.disabled) {
+  if (!a || a.disabled || demoAccountRefused(a)) {
     takeChallenge(input.challengeId ?? '', 'sign-in', undefined, now);
     auditRefusal('sign-in attempt', 'auth.sign-in', a ? `Official:${a.id}` : 'Official:?', 'passkey not registered to an active account', now);
     return { error: 'That passkey is not registered to an active account here' };
@@ -713,7 +724,7 @@ registerPersonResolver(sub => {
 
 export function accountByIdentity(issuer: string, claim: string, value: string): PublicAccount | undefined {
   const a = db().accounts.find(x => x.identity && x.identity.issuer === issuer && x.identity.claim === claim && x.identity.value === value);
-  return a ? pub(a) : undefined;
+  return a && !demoAccountRefused(a) ? pub(a) : undefined;
 }
 
 export function accountByEmail(email: string): PublicAccount | undefined {
@@ -774,4 +785,65 @@ export function createAccountForIdentity(input: { email?: string; name?: string;
 export function noteIdentitySignIn(id: string, now = Date.now()): void {
   const a = db().accounts.find(x => x.id === id);
   if (a) a.lastSignIn = new Date(now).toISOString();
+}
+
+// ── The demo cast (lib/auth/demo-cast.ts) ────────────────────────────
+// Accounts for showing a demonstration or training installation end to end:
+// one per role an institution's work needs, each a separate account, so a
+// four-eyes step still needs two different accounts. Made only while samples
+// are allowed (lib/ops/mode.ts); no password (the hash matches nothing), so
+// they are reached only by switching to them (/api/demo/act-as, audited).
+
+/** One account of the cast, as lib/auth/demo-cast.ts plans it. `key` stays the same across refreshes. */
+export interface DemoCastSpec { key: string; name: string; office: string; role: OfficialRole; institution?: string }
+/** Cast accounts' addresses are under a reserved domain (RFC 2606): no mail ever reaches anyone. */
+export const DEMO_CAST_DOMAIN = 'demo-cast.invalid';
+const castEmail = (key: string) => `${key}@${DEMO_CAST_DOMAIN}`;
+
+/** The cast as it stands, retired (disabled) accounts included. */
+export const listDemoAccounts = (): PublicAccount[] => db().accounts.filter(a => a.demo).map(pub);
+
+/**
+ * Create or refresh the cast to match `specs`: new accounts are made, existing
+ * ones (by key) take the planned name, office, role and institution and are
+ * enabled again, and cast accounts no longer planned are disabled (never
+ * deleted: the audit chain names them). Every change is audited under `by`.
+ * Refused while samples are not allowed.
+ */
+export function syncDemoCast(specs: DemoCastSpec[], by: string): { created: number; updated: number; retired: number; skipped: string[] } | { error: string } {
+  if (!samplesAllowed()) return { error: 'A production installation has no demo cast' };
+  const d = db();
+  const now = new Date().toISOString();
+  const planned = new Set(specs.map(s => castEmail(s.key)));
+  const where = (s: { institution?: string }) => (s.institution ? getMinistry(s.institution)?.name ?? s.institution : 'whole government');
+  let created = 0, updated = 0, retired = 0;
+  const skipped: string[] = [];
+  for (const s of specs) {
+    const email = castEmail(s.key);
+    const a = d.accounts.find(x => x.email === email);
+    if (a && !a.demo) { skipped.push(`${email} belongs to an account that is not part of the cast`); continue; }
+    if (!a) {
+      const n: OfficialAccount = { id: randomUUID(), email, name: s.name.slice(0, 120), office: s.office.slice(0, 160), passwordHash: 'none', noPassword: true, demo: true,
+        createdAt: now, createdBy: by, role: s.role, ...(s.institution ? { institution: s.institution } : {}) };
+      d.accounts.push(n);
+      created++;
+      recordAudit(by, 'demo.cast.create', `Official:${n.id}`, 'ok', `${n.name} · ${roleLabel(s.role)} · ${where(s)} · sample`);
+      continue;
+    }
+    if (a.name === s.name && a.office === s.office && a.role === s.role && a.institution === s.institution && !a.disabled) continue;
+    a.name = s.name.slice(0, 120);
+    a.office = s.office.slice(0, 160);
+    a.role = s.role;
+    delete a.disabled;
+    if (s.institution) a.institution = s.institution; else delete a.institution;
+    updated++;
+    recordAudit(by, 'demo.cast.update', `Official:${a.id}`, 'ok', `${a.name} · ${roleLabel(s.role)} · ${where(s)} · sample`);
+  }
+  for (const a of d.accounts) {
+    if (!a.demo || a.disabled || planned.has(a.email)) continue;
+    a.disabled = true;
+    retired++;
+    recordAudit(by, 'demo.cast.retire', `Official:${a.id}`, 'ok', `${a.name} · no longer in the cast (its institution is no longer named as responsible)`);
+  }
+  return { created, updated, retired, skipped };
 }

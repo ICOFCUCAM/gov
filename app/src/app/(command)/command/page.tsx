@@ -13,9 +13,13 @@ import { subsystemsFor, subsystemHealth } from '@/lib/institution/operational-ca
 import { buildCascade } from '@/lib/institution/cascade';
 import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
 import { constitutionFor } from '@/lib/gov/constitution';
-import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
-import { nationTime, nationTimeZoneLabel, currentOffices } from '@/lib/nation/registry';
+import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry, PaymentReceipt } from '@/lib/api/types';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { formatMinor } from '@/lib/utils';
+import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
+import { nationTime, nationTimeZoneLabel, currentOffices, formatMoney, nationCurrency } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { executivePosture } from '@/lib/gov/executive-posture';
 
 // A function so the executive office's name follows the installed nation at render.
 const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] => [
@@ -88,6 +92,9 @@ export default function SovereignCommandCenter() {
   const [mins, setMins] = React.useState<Ministry[]>([]);
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
+  // Receipts the signed-in official may see (/api/payments): the one real money
+  // figure on this screen, counted from the payments register.
+  const [receipts, setReceipts] = React.useState<PaymentReceipt[] | null>(null);
   const [now, setNow] = React.useState(useRenderNow());
 
   React.useEffect(() => {
@@ -99,6 +106,7 @@ export default function SovereignCommandCenter() {
         api.org.ministries().then(r => r.ministries).catch(() => [] as Ministry[]),
       ]);
       setSov(s); setNat(n); setCoord(c); setMins(m);
+      api.payments.list().then(r => setReceipts(r.receipts)).catch(() => setReceipts(null));
     };
     void load();
     const poll = setInterval(() => void load(), 12_000);
@@ -111,15 +119,23 @@ export default function SovereignCommandCenter() {
   const incidents = nat?.crossMinistryIncidents ?? [];
   const sev = (s: string) => incidents.filter(i => i.severity === s).length;
   const epoch = Math.floor((coord?.tick ?? 0) / 2);
-  const riskLabel = posture ? posture.label : 'STABLE';
-  const readiness = posture?.level === 'alert' ? 'CRITICAL' : posture?.level === 'warn' ? 'ELEVATED' : 'OPERATIONAL';
+  // What this screen may say about the nation (lib/gov/executive-posture.ts):
+  // in production only what is recorded, otherwise "Not connected"; in demo
+  // and training the generated posture, marked Sample.
+  const view = executivePosture(nat, coord);
+  const gen = view.generated;
+  const riskLabel = view.risk.v;
+  const readiness = view.readiness.v;
+  const readinessTone = view.readiness.t;
+  const [secure, setSecure] = React.useState<boolean | null>(null);
+  React.useEffect(() => { setSecure(window.location.protocol === 'https:'); }, []);
 
-  const tele = [
-    { l: 'Executive environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true },
-    { l: 'Institutions', v: String(t?.institutions ?? 248) },
-    { l: 'Active incidents', v: String(incidents.length || sev('sev1') + sev('sev2')), t: incidents.length ? 'alert' : 'ok' },
-    { l: 'Queues breaching', v: String(t?.queuesBreaching ?? 14), t: 'warn' },
-    { l: 'National risk', v: riskLabel, t: posture?.level ?? 'ok' },
+  const tele: { l: string; v: string; t?: string; dot?: boolean; kind?: SignalKind; src?: string }[] = [
+    { l: 'Executive environment', v: nat?.environment ?? '—', t: 'ok', dot: true },
+    { l: 'Institutions', v: t ? String(t.institutions) : '—' },
+    { l: 'Active incidents', v: view.incidents.v, t: view.incidents.t, kind: view.incidents.kind, src: view.incidents.src },
+    { l: 'Queues breaching', v: view.queues.v, t: view.queues.t, kind: view.queues.kind, src: view.queues.src },
+    { l: 'National risk', v: riskLabel, t: view.risk.t, kind: view.risk.kind, src: view.risk.src },
     { l: 'Audit integrity', v: t?.auditIntact === false ? 'Review' : 'Intact', t: t?.auditIntact === false ? 'alert' : 'ok' },
   ];
 
@@ -149,13 +165,28 @@ export default function SovereignCommandCenter() {
     { i: '✦', l: 'Verify Document', s: 'Tamper-evident verification', href: '/wallet/documents' },
     { i: '⊞', l: 'Municipal Onboarding', s: 'Set up a municipality', href: '/admin/onboarding' },
   ];
-  const brief = [
-    `National stability: ${posture && posture.level !== 'ok' ? 'Elevated' : 'Stable'}`,
-    `${sev('sev1')} critical escalations require attention`,
-    'Energy sector pressure in Northern Corridor',
-    `Healthcare capacity at ${74 + (epoch % 8)}%`,
-    'Treasury liquidity adequate for 28 days',
+  // The first two lines read the coordination posture and the incident list;
+  // the rest come from the reference model and carry the Sample marker.
+  const brief: { text: string; kind?: SignalKind; src?: string }[] = [
+    view.risk.kind === 'unavailable'
+      ? { text: 'National stability: not connected', kind: 'unavailable', src: view.risk.src }
+      : { text: `National stability: ${posture && posture.level !== 'ok' ? 'Elevated' : posture?.label === 'NONE RECORDED' ? 'no incidents recorded' : 'Stable'}`, kind: view.risk.kind, src: view.risk.src },
+    { text: `${sev('sev1')} critical escalations require attention`, kind: view.incidents.kind, src: view.incidents.src },
+    ...(gen.show
+      ? [
+        { text: 'Energy sector pressure in one region', kind: 'sample' as SignalKind },
+        { text: `Healthcare capacity at ${74 + (epoch % 8)}%`, kind: 'sample' as SignalKind },
+        { text: 'Treasury liquidity adequate for 28 days', kind: 'sample' as SignalKind },
+      ]
+      : [{ text: 'Energy, health capacity and treasury liquidity: not connected', kind: 'unavailable' as SignalKind, src: gen.src }]),
   ];
+  // Receipts recorded in the last 24 hours, in the nation's currency; stand-in
+  // payments (no money moved) are counted apart and marked as simulation.
+  const dayAgo = now - 24 * 3600_000;
+  const recent = (receipts ?? []).filter(r => Date.parse(r.paidAt) >= dayAgo);
+  const sumMinor = (rs: PaymentReceipt[]) => rs.filter(r => r.currency === nationCurrency()).reduce((a, r) => a + r.amountMinor, 0);
+  const realRecent = recent.filter(r => !r.simulated);
+  const standInRecent = recent.filter(r => r.simulated);
   const integ = ['Health', 'Treasury', 'Transport', 'Security', 'Energy', 'Emergency Comms', 'National Registry']
     .map((s, i) => ({ s, p: (98 + seed(`ig:${i}:${epoch}`) * 1.9) }));
   const rev = waveSeries('home:rev', now / 4000, 20, 70, 120);
@@ -176,7 +207,7 @@ export default function SovereignCommandCenter() {
         <div className="ml-2 hidden flex-1 items-stretch lg:flex">
           {tele.map(m => (
             <div key={m.l} className="border-l border-line px-4 py-1 first:border-l-0">
-              <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
+              <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}<SignalTag kind={m.kind} source={m.src} className="!text-[7px] !leading-none" /></div>
               <div className="flex items-center gap-1.5 font-mono text-sm tabular-nums" style={{ color: m.t ? TONE[m.t] : 'rgb(var(--c-ink))' }}>
                 {m.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[m.t ?? 'ok'] }} /> : null}
                 {m.v}
@@ -186,8 +217,8 @@ export default function SovereignCommandCenter() {
         </div>
         <div className="ml-auto flex items-center gap-3">
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{nationTime(new Date(now), undefined)}<span className="ml-1 text-[9px] text-ink-muted">{nationTimeZoneLabel('UTC+3')}</span></span>
-          <span className="hidden items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-[10px] text-ink-soft sm:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Secure Comms</span>
-          <span className="relative grid h-7 w-7 place-items-center rounded-sm text-ink-soft" title="Notifications">⌁<span className="absolute -right-0.5 -top-0.5 grid h-3.5 w-3.5 place-items-center rounded-full text-[8px] text-white" style={{ backgroundColor: TONE.alert }}>{incidents.length || 7}</span></span>
+          {secure ? <span className="hidden items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-[10px] text-ink-soft sm:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Secure Comms</span> : null}
+          <span className="relative grid h-7 w-7 place-items-center rounded-sm text-ink-soft" title="Notifications">⌁<span className="absolute -right-0.5 -top-0.5 grid h-3.5 w-3.5 place-items-center rounded-full text-[8px] text-white" style={{ backgroundColor: TONE.alert }}>{incidents.length}</span></span>
           <span className="border-l border-line pl-3">
             <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="National Executive" accent={ACCENT} />
           </span>
@@ -219,7 +250,7 @@ export default function SovereignCommandCenter() {
           </Link>
           <div className="border-t border-line px-4 py-2.5 text-[10px] leading-relaxed">
             <div className="flex justify-between"><span className="uppercase tracking-widest text-ink-muted">System</span><span style={{ color: TONE.ok }}>Operational</span></div>
-            <div className="flex justify-between"><span className="uppercase tracking-widest text-ink-muted">Environment</span><span className="text-ink-soft">{nat?.environment ?? 'Production'}</span></div>
+            <div className="flex justify-between"><span className="uppercase tracking-widest text-ink-muted">Environment</span><span className="text-ink-soft">{nat?.environment ?? '—'}</span></div>
             <div className="flex justify-between"><span className="uppercase tracking-widest text-ink-muted">Version</span><span className="text-ink-soft">v2.1.0</span></div>
             <div className="mt-1 text-ink-muted">© 2025 CivicOS</div>
           </div>
@@ -238,17 +269,26 @@ export default function SovereignCommandCenter() {
 
           {/* Posture + readiness */}
           <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
-            <div className="flex items-center gap-5 rounded-[3px] border border-line bg-surface px-4 py-3">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-[3px] border border-line bg-surface px-4 py-3">
               <div className="flex items-center gap-2.5">
                 <span className="grid h-9 w-9 place-items-center rounded-sm" style={{ backgroundColor: `color-mix(in srgb, ${TONE[posture?.level ?? 'ok']} 18%, transparent)`, color: TONE[posture?.level ?? 'ok'] }}>⛨</span>
-                <div><div className="text-[9px] uppercase tracking-[0.16em] text-ink-muted">Executive status</div><div className="text-lg font-semibold" style={{ color: TONE[posture?.level ?? 'ok'] }}>{riskLabel}</div></div>
+                <div><div className="text-[9px] uppercase tracking-[0.16em] text-ink-muted">Executive status</div><div className="flex items-center gap-1.5 text-lg font-semibold" style={{ color: TONE[view.risk.t] }}>{riskLabel}<SignalTag kind={view.risk.kind} source={view.risk.src} /></div></div>
               </div>
-              <p className="max-w-md text-xs text-ink-muted">National status is {riskLabel.toLowerCase()} because of active incidents and regional pressures. <Link href="/gov" className="text-link underline underline-offset-2">View executive briefing →</Link></p>
+              <p className="min-w-0 max-w-md text-xs text-ink-muted">
+                {view.risk.kind === 'unavailable'
+                  ? 'No national posture is shown: nothing recorded on this installation measures it yet. '
+                  : view.risk.kind === 'sample'
+                    ? `National status is ${riskLabel.toLowerCase()} in the sample model (seeded incidents and generated regional pressure). `
+                    : riskLabel === 'NONE RECORDED'
+                      ? 'No incident or overdue case has been recorded by any institution. '
+                      : `National status is ${riskLabel.toLowerCase()} because of incidents and cases recorded by the institutions. `}
+                <Link href="/gov" className="text-link underline underline-offset-2">View executive briefing →</Link>
+              </p>
               <div className="ml-auto text-right">
-                <div className="text-[9px] uppercase tracking-[0.16em] text-ink-muted">Readiness status</div>
-                <div className="font-semibold" style={{ color: TONE[readiness === 'CRITICAL' ? 'alert' : readiness === 'ELEVATED' ? 'warn' : 'ok'] }}>{readiness}</div>
+                <div className="flex items-center justify-end gap-1 text-[9px] uppercase tracking-[0.16em] text-ink-muted">Readiness status<SignalTag kind={view.readiness.kind} source={view.readiness.src} /></div>
+                <div className="font-semibold" style={{ color: TONE[readinessTone] }}>{readiness}</div>
               </div>
-              <div className="hidden w-40 sm:block"><Spark pts={waveSeries('home:pst', now / 4000, 22, 40, 90)} tone="ok" /></div>
+              {gen.show ? <div className="hidden w-40 sm:block"><Spark pts={waveSeries('home:pst', now / 4000, 22, 40, 90)} tone="ok" /></div> : null}
             </div>
           </div>
 
@@ -269,11 +309,13 @@ export default function SovereignCommandCenter() {
             </div>
           </Section>
 
-          <Section label="Constitutional status · Separation of powers">
+          <Section label="Constitutional status · Separation of powers" tag={gen.show ? <SignalTag kind="sample" source={`Branch readiness and separation checks: ${REFERENCE_MODEL}`} /> : <SignalTag kind="unavailable" source={`Branch readiness and separation checks: ${gen.src}`} />}>
             {(() => {
               const t = now / 4000;
-              const sep = separationIntegrity(t);
+              // Generated checks only where samples are allowed; production keeps every branch link, without a percentage.
+              const sep = gen.show ? separationIntegrity(t) : null;
               const cells = constitutionFor(sov?.stateForm ?? 'republic', sov?.constitution).branches.map(b => {
+                if (!gen.show) return { l: b.name, v: 'Not connected', c: 'rgb(var(--c-ink-muted))', href: `/gov/branch/${b.key}` };
                 const r = branchReadiness(b.key, t);
                 return { l: b.name, v: `${r.total}% · ${r.posture}`, c: r.total >= 85 ? 'rgb(var(--c-ok))' : r.total >= 65 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))', href: `/gov/branch/${b.key}` };
               });
@@ -287,10 +329,12 @@ export default function SovereignCommandCenter() {
                   ))}
                   <div className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
                     <span className="uppercase tracking-[0.14em] text-ink-muted">Separation</span>
-                    <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: sep.intact ? 'rgb(var(--c-ok))' : 'rgb(var(--c-alert))' }}>
-                      <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: sep.intact ? 'rgb(var(--c-ok))' : 'rgb(var(--c-alert))' }} />
-                      {sep.intact ? 'INTACT' : 'STRAINED'}
-                    </span>
+                    {sep ? (
+                      <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: sep.intact ? 'rgb(var(--c-ok))' : 'rgb(var(--c-alert))' }}>
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: sep.intact ? 'rgb(var(--c-ok))' : 'rgb(var(--c-alert))' }} />
+                        {sep.intact ? 'INTACT' : 'STRAINED'}
+                      </span>
+                    ) : <span className="font-mono text-ink-muted">Not connected</span>}
                   </div>
                 </div>
               );
@@ -299,8 +343,9 @@ export default function SovereignCommandCenter() {
 
           <Section label="Activated Institutions · Deployment Directory">
             {(() => {
-              const casc = buildCascade(mins, (mid) => Math.round(waveSeries(`nh:${mid}`, now / 4000, 1, 58, 99).at(-1)!));
-              const cascById = new Map(casc.map(c => [c.id, c.totalStress]));
+              // Cascade stress is generated: it shapes readiness only where samples are allowed.
+              const casc = gen.show ? buildCascade(mins, (mid) => Math.round(waveSeries(`nh:${mid}`, now / 4000, 1, 58, 99).at(-1)!)) : [];
+              const cascById = gen.show ? new Map(casc.map(c => [c.id, c.totalStress])) : undefined;
               const dir = deployableInstitutions(mins, cascById);
               if (dir.length === 0) {
                 return (
@@ -320,7 +365,9 @@ export default function SovereignCommandCenter() {
                 { l: 'Deployable', v: `${deployable}/${dir.length}`, c: deployable === dir.length ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' },
                 { l: 'Mean readiness', v: `${meanReady}%`, c: meanReady >= 70 ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' },
                 { l: 'Subsystem classes', v: String(subsClasses), c: 'rgb(var(--c-ink))' },
-                { l: 'Mean subsystem health', v: `${meanSsHealth}%`, c: meanSsHealth >= 85 ? 'rgb(var(--c-ok))' : meanSsHealth >= 70 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))' },
+                gen.show
+                  ? { l: 'Mean subsystem health', kind: 'sample' as SignalKind, v: `${meanSsHealth}%`, c: meanSsHealth >= 85 ? 'rgb(var(--c-ok))' : meanSsHealth >= 70 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))' }
+                  : { l: 'Mean subsystem health', kind: 'unavailable' as SignalKind, v: '—', c: 'rgb(var(--c-ink-muted))' },
                 { l: 'Crisis-capable', v: String(crisisCapable), c: 'rgb(var(--c-ok))' },
               ];
               return (
@@ -328,7 +375,7 @@ export default function SovereignCommandCenter() {
                 <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-6">
                   {roll.map(s => (
                     <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-                      <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+                      <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}{'kind' in s ? <SignalTag kind={s.kind} source={s.kind === 'unavailable' ? gen.src : REFERENCE_MODEL} /> : null}</span>
                       <span className="font-mono font-semibold tabular-nums" style={{ color: s.c }}>{s.v}</span>
                     </div>
                   ))}
@@ -451,10 +498,11 @@ export default function SovereignCommandCenter() {
           <div className="flex flex-wrap items-center gap-x-8 gap-y-1 rounded-[3px] border border-line bg-surface px-4 py-2 text-[10px]">
             {[
               { l: 'Classification', v: 'OFFICIAL', t: ACCENT },
-              { l: 'National readiness', v: readiness, t: TONE[readiness === 'CRITICAL' ? 'alert' : readiness === 'ELEVATED' ? 'warn' : 'ok'] },
+              { l: 'National readiness', v: readiness, t: TONE[readinessTone] },
               { l: 'Cabinet status', v: 'Active', t: TONE.ok },
               { l: 'Last sync', v: new Date(now).toLocaleTimeString(), t: 'rgb(var(--c-ink-soft))' },
-              { l: 'Secure channel', v: 'Encrypted', t: TONE.ok },
+              // Only an encrypted connection is called encrypted.
+              { l: 'Secure channel', v: secure === null ? '—' : secure ? 'Encrypted' : 'Not encrypted', t: secure === false ? TONE.warn : TONE.ok },
             ].map(s => (
               <span key={s.l} className="flex items-center gap-2">
                 <span className="uppercase tracking-[0.16em] text-ink-muted">{s.l}</span>
@@ -469,7 +517,7 @@ export default function SovereignCommandCenter() {
         <aside className="hidden w-[300px] shrink-0 flex-col gap-3 overflow-y-auto border-l border-line bg-bg p-3 2xl:flex">
           <Panel label="Executive Briefing (Morning)" meta="Updated live">
             <ul className="space-y-1.5 text-[11px] leading-snug">
-              {brief.map((b, i) => <li key={i} className="flex gap-1.5"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: ACCENT }} /><span className="text-ink-soft">{b}</span></li>)}
+              {brief.map((b, i) => <li key={i} className="flex gap-1.5"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: ACCENT }} /><span className="text-ink-soft">{b.text}</span>{b.kind ? <SignalTag kind={b.kind} source={b.src ?? REFERENCE_MODEL} className="ml-auto self-start" /> : null}</li>)}
             </ul>
             <Link href="/gov" className="focus-ring mt-2 inline-block text-[11px] text-link underline underline-offset-2">Read full briefing →</Link>
           </Panel>
@@ -482,23 +530,27 @@ export default function SovereignCommandCenter() {
                 <Link key={i} href={`/gov/ministry/${c.ministryId}`} className="focus-ring block border-b border-line-soft py-2 no-underline last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}`, paddingLeft: 8 }}>
                   <div className="flex items-center justify-between">
                     <span className="rounded px-1 text-[8px] font-bold tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 20%, transparent)`, color: TONE[tn] }}>{c.severity === 'sev1' ? <span className="animate-pulse">{lbl}</span> : lbl}</span>
-                    <span className="font-mono text-[9px] tabular-nums text-ink-muted">{17 + (i % 3)}:{(32 - i * 3 + 60) % 60 || 12}</span>
+                    {gen.show
+                      ? <span className="flex items-center gap-1 font-mono text-[9px] tabular-nums text-ink-muted">{17 + (i % 3)}:{(32 - i * 3 + 60) % 60 || 12}<SignalTag kind="sample" source={`Time and region count: ${REFERENCE_MODEL}`} /></span>
+                      : null}
                   </div>
                   <div className="mt-0.5 truncate text-[11px] font-medium text-ink">{c.label}</div>
-                  <div className="truncate text-[9px] text-ink-muted">{c.ministry} · {1 + (i * 3) % 14} regions · Cabinet L{c.severity === 'sev1' ? 3 : 2}</div>
+                  <div className="truncate text-[9px] text-ink-muted">{c.ministry} · {gen.show ? `${1 + (i * 3) % 14} regions` : (c.place?.region ?? 'place not recorded')} · Cabinet L{c.severity === 'sev1' ? 3 : 2}</div>
                 </Link>
               );
             })}
             <Link href="/gov/coordination" className="focus-ring mt-1 block text-center text-[11px] text-link underline underline-offset-2">View all escalations →</Link>
           </Panel>
 
-          <Panel label="System Integrity" meta={<span style={{ color: TONE.ok }}>✓ all operational</span>}>
+          <Panel label="System Integrity" meta={gen.show
+            ? <span className="flex items-center gap-1"><span style={{ color: TONE.ok }}>✓ all operational</span><SignalTag kind="sample" source={REFERENCE_MODEL} /></span>
+            : <SignalTag kind="unavailable" source={gen.src} />}>
             <ul className="space-y-1 text-[11px]">
               {integ.map(s => (
                 <li key={s.s} className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} />
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: gen.show ? TONE.ok : 'rgb(var(--c-ink-muted))' }} />
                   <span className="text-ink-soft">{s.s} System</span>
-                  <span className="ml-auto font-mono tabular-nums text-ink-muted">{s.p.toFixed(1)}%</span>
+                  <span className="ml-auto font-mono tabular-nums text-ink-muted">{gen.show ? `${s.p.toFixed(1)}%` : 'Not connected'}</span>
                 </li>
               ))}
             </ul>
@@ -508,15 +560,38 @@ export default function SovereignCommandCenter() {
           <Panel label="Treasury Overview" meta={<Link href="/gov" className="text-link underline">View details</Link>}>
             <div className="space-y-2">
               <div>
-                <div className="flex items-baseline justify-between text-[10px]"><span className="uppercase tracking-wide text-ink-muted">Revenue 24h</span><span className="font-mono tabular-nums" style={{ color: TONE.ok }}>+3.2%</span></div>
-                <div className="flex items-end justify-between"><span className="font-mono text-sm tabular-nums text-ink">${(120 + seed(`r:${epoch}`) * 16).toFixed(1)}B</span></div>
-                <Spark pts={rev} tone="ok" />
+                <div className="flex items-baseline justify-between text-[10px]"><span className="uppercase tracking-wide text-ink-muted">Receipts recorded 24h</span><Link href="/wallet/payments" className="text-link underline">Payments</Link></div>
+                {receipts === null ? (
+                  <div className="text-[11px] text-ink-muted">Payments register not readable here</div>
+                ) : (
+                  <>
+                    <div className="font-mono text-sm tabular-nums text-ink">{formatMinor(sumMinor(realRecent))} <span className="text-[10px] text-ink-muted">· {realRecent.length} receipt{realRecent.length === 1 ? '' : 's'}</span></div>
+                    {standInRecent.length ? (
+                      <div className="flex items-center gap-1 text-[10px] text-ink-muted">{formatMinor(sumMinor(standInRecent))} in {standInRecent.length} stand-in payment{standInRecent.length === 1 ? '' : 's'}<SignalTag kind="simulated" source="Platform stand-in payment: no money moved (integration register 1.8)" /></div>
+                    ) : null}
+                  </>
+                )}
               </div>
-              <div>
-                <div className="flex items-baseline justify-between text-[10px]"><span className="uppercase tracking-wide text-ink-muted">Expenditure 24h</span><span className="font-mono tabular-nums" style={{ color: TONE.warn }}>-1.8%</span></div>
-                <div className="font-mono text-sm tabular-nums text-ink">${(90 + seed(`e:${epoch}`) * 12).toFixed(1)}M</div>
-                <Spark pts={exp} tone="warn" />
-              </div>
+              {gen.show ? (
+                <>
+                  <div>
+                    <div className="flex items-baseline justify-between text-[10px]"><span className="flex items-center gap-1 uppercase tracking-wide text-ink-muted">Revenue 24h<SignalTag kind="sample" source={REFERENCE_MODEL} /></span><span className="font-mono tabular-nums" style={{ color: TONE.ok }}>+3.2%</span></div>
+                    <div className="flex items-end justify-between"><span className="font-mono text-sm tabular-nums text-ink">{formatMoney((120 + seed(`r:${epoch}`) * 16) * 1e9, { digits: 1 })}</span></div>
+                    <Spark pts={rev} tone="ok" />
+                  </div>
+                  <div>
+                    <div className="flex items-baseline justify-between text-[10px]"><span className="flex items-center gap-1 uppercase tracking-wide text-ink-muted">Expenditure 24h<SignalTag kind="sample" source={REFERENCE_MODEL} /></span><span className="font-mono tabular-nums" style={{ color: TONE.warn }}>-1.8%</span></div>
+                    <div className="font-mono text-sm tabular-nums text-ink">{formatMoney((90 + seed(`e:${epoch}`) * 12) * 1e6, { digits: 1 })}</div>
+                    <Spark pts={exp} tone="warn" />
+                  </div>
+                </>
+              ) : (
+                <div className="text-[10px] text-ink-muted">
+                  <div className="flex items-center gap-1 uppercase tracking-wide">Revenue and expenditure 24h<SignalTag kind="unavailable" source="No treasury ledger connected (integration register)" /></div>
+                  <div className="mt-0.5">Not connected. Recorded receipts are counted above; tax and customs accounts are kept by their own authorities.</div>
+                </div>
+              )}
+
             </div>
           </Panel>
         </aside>
@@ -525,10 +600,10 @@ export default function SovereignCommandCenter() {
   );
 }
 
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+function Section({ label, tag, children }: { label: string; tag?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className="space-y-2">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">{label}</h2>
+      <h2 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">{label}{tag}</h2>
       {children}
     </section>
   );

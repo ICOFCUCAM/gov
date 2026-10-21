@@ -5,6 +5,7 @@
 // accent, rounded cards, friendly rhythm. Mode C.
 
 import * as React from 'react';
+import { NotYetButton } from '@/components/ui/NotYetButton';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { citizenPortalView } from '@/lib/gov/health-operations';
 import { RingGauge, Sparkline, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
@@ -298,7 +299,7 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
                   </div>
                 ))}
               </div>
-              <button className="focus-ring mt-2 w-full rounded-[8px] py-1.5 text-[10px] font-semibold" style={{ background: ACC, color: '#04130d' }}>⛟ Order medicines</button>
+              <NotYetButton reason="there is no medicine ordering service on the platform; pharmacies are licensed in the health regulator's registers, not supplied through it" className="focus-ring mt-2 w-full rounded-[8px] py-1.5 text-[10px] font-semibold" style={{ background: ACC, color: '#04130d' }}>⛟ Order medicines</NotYetButton>
             </Card>
           </div>
 
@@ -350,7 +351,7 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
                   </div>
                 ))}
               </div>
-              <button className="focus-ring mt-2 w-full rounded-[8px] py-1.5 text-[10px] font-semibold" style={{ background: ACC, color: '#04130d' }}>Start consultation</button>
+              <NotYetButton reason="no consultation service is connected; the platform keeps no clinical record" className="focus-ring mt-2 w-full rounded-[8px] py-1.5 text-[10px] font-semibold" style={{ background: ACC, color: '#04130d' }}>Start consultation</NotYetButton>
               <div className="mt-2">
                 <EncounterThread scope={`enc:health:careteam:${id}`} now={now} accent={ACC}
                   selfAuthor="PUBLIC" officialName={v.upcoming.doctor} publicName={v.name}
@@ -363,7 +364,7 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
               <div className="mt-2 grid grid-cols-4 gap-1 text-center text-[8px] text-ink-muted">
                 {['Medicines', 'Lab tests', 'Consults', 'Wellness'].map(r => <div key={r} className="rounded-[6px] border border-line-soft py-1.5">{r}</div>)}
               </div>
-              <button className="focus-ring mt-2 w-full rounded-[8px] border py-1.5 text-[10px] font-semibold" style={{ borderColor: ACC, color: ACC }}>View rewards store</button>
+              <NotYetButton reason="there is no health rewards scheme on the platform; this wallet is a simulation" className="focus-ring mt-2 w-full rounded-[8px] border py-1.5 text-[10px] font-semibold" style={{ borderColor: ACC, color: ACC }}>View rewards store</NotYetButton>
             </Card>
           </div>
 

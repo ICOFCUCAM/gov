@@ -7,6 +7,7 @@
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
+import { cronRoute } from '@/lib/ops/cron-runs';
 import { serverClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
@@ -33,7 +34,7 @@ const METRICS: MetricDef[] = [
 /** The cron secret, compared in constant time (lib/platform-auth.ts). */
 const authorized = (req: Request): boolean => cronAuthorized(req);
 
-export async function GET(req: Request) {
+async function runJob(req: Request) {
   if (!authorized(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
@@ -82,4 +83,6 @@ export async function GET(req: Request) {
   });
 }
 
+// Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).
+export const GET = cronRoute('substrate-metrics', runJob);
 export const POST = GET;

@@ -1,5 +1,7 @@
 import { CommandShell } from '@/components/ui/CommandShell';
 import { OfficerWorkspace } from './OfficerWorkspace';
+import { RegisterRecords } from '@/apps/_shared/RegisterRecords';
+import { installationMode } from '@/lib/ops/mode';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Officer Console' };
@@ -13,6 +15,8 @@ export default function ConsolePage() {
         Review applications, decide, and move on. Breaks are protected; the
         queue does not push work at you.
       </p>
+      {/* Permits and the cases this official may read, from the platform's registers (read under their rules). */}
+      <RegisterRecords app={{ id: 'officer-console', domain: '', kind: 'officer', archetypeOrBranch: '' }} mode={installationMode()} />
       <OfficerWorkspace />
     </CommandShell>
   );

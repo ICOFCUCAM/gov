@@ -370,6 +370,7 @@ export const yo: Messages = {
     contact: 'Olùbásọ̀rọ̀',
     contactText: 'Ọ́fíìsì ìbáṣepọ̀ gbogbogbò, ọjọ́ iṣẹ́ láti agogo 9 àárọ̀ sí 5 ìrọ̀lẹ́. Lọ sí ẹ̀ka tó súnmọ́ ọ jù lọ tàbí lo ẹnu-ọ̀nà ará ìlú.',
     contactUs: 'Kàn sí Wa →',
+    notAvailable: 'Kò tíì sí ní àrọ́wọ́tó',
     enterEmail: 'Tẹ ímeèlì rẹ',
     email: 'Ímeèlì',
     subscribe: 'Forúkọ sílẹ̀',

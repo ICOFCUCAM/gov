@@ -18,6 +18,8 @@
 // reference stays on the full record. No clinical or patient data, ever.
 // Held in platform state.
 
+import { proposePolicy, confirmPolicy, withdrawPolicy, type PolicyChanges } from '@/lib/law/policy-change';
+import { samplesAllowed } from '@/lib/ops/mode';
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
 import { uuid7 } from '@/lib/data/uuid7';
@@ -77,11 +79,12 @@ export const REFERENCE_PROFESSIONS: Omit<Profession, 'createdBy' | 'createdAt'>[
   { key: 'pharmacist', title: 'Pharmacists', authority: 'professionalRegulation', permitType: 'health-professional-licence', publicCheck: true, reference: true },
 ];
 
-interface Db { people: Professional[]; professions: Profession[]; seq: Record<string, number>; prnSeq: number }
+type Disclosure = { publicFields: PublicField[] };
+interface Db { people: Professional[]; professions: Profession[]; seq: Record<string, number>; prnSeq: number; disclosure?: Record<string, PolicyChanges<Disclosure>> }
 const g = globalThis as unknown as { __civicosProfessions?: Db };
 const db = (): Db => {
   const d = touch('__civicosProfessions', g.__civicosProfessions ??= { people: [], professions: [], seq: {}, prnSeq: 0 });
-  d.people ??= []; d.professions ??= []; d.seq ??= {};
+  d.people ??= []; d.professions ??= []; d.seq ??= {}; d.disclosure ??= {};
   d.prnSeq ??= legacyMax(d.seq);
   return d;
 };
@@ -108,7 +111,12 @@ export function defineProfession(input: Partial<Profession>, by: string, now = n
   const authority = String(input.authority ?? '').trim().slice(0, 80);
   if (!authority) return { error: 'Name the authority that keeps its register' };
   const permitType = KEY.test(String(input.permitType ?? '')) ? String(input.permitType) : 'health-professional-licence';
-  const fields = Array.isArray(input.publicFields) ? input.publicFields.filter((f): f is PublicField => (PUBLIC_FIELDS as readonly string[]).includes(f)) : DEFAULT_PUBLIC_FIELDS;
+  // What the public check shows changes only through proposeDisclosure (two officials, citing the law):
+  // redefining a profession keeps its fields; a new one starts with the default in production.
+  const existing = profession(key);
+  const asked = Array.isArray(input.publicFields) ? input.publicFields.filter((f): f is PublicField => (PUBLIC_FIELDS as readonly string[]).includes(f)) : undefined;
+  if (existing && asked && [...new Set(asked)].sort().join() !== [...(existing.publicFields ?? DEFAULT_PUBLIC_FIELDS)].sort().join()) return { error: 'What the public check shows is changed by two officials citing the law: propose it (op propose-disclosure)' };
+  const fields = existing ? (existing.publicFields ?? DEFAULT_PUBLIC_FIELDS) : asked && samplesAllowed() ? asked : DEFAULT_PUBLIC_FIELDS;
   if (!fields.includes('name') || !fields.includes('state')) return { error: 'The public check shows at least the name and the standing' };
   const p: Profession = { key, title, authority, permitType, publicCheck: input.publicCheck !== false, publicFields: [...new Set(fields)], reference: false, createdBy: by, createdAt: now.toISOString() };
   const d = db();
@@ -116,6 +124,43 @@ export function defineProfession(input: Partial<Profession>, by: string, now = n
   recordAudit(by, 'profession.define', `Profession:${key}`, 'ok', `${title} · kept by ${authority} · public check shows ${p.publicCheck ? (p.publicFields ?? []).join(', ') : 'nothing (not on the public check)'}`);
   return clone(p);
 }
+
+// ── What the public check shows: two officials, citing the law ───────────────
+
+const DISCLOSURE_AUDIT = 'profession.disclosure';
+const checkDisclosure = (v: Disclosure): string | null => {
+  if (!Array.isArray(v.publicFields) || v.publicFields.some(f => !(PUBLIC_FIELDS as readonly string[]).includes(f))) return `Public fields are chosen from ${PUBLIC_FIELDS.join(', ')}`;
+  return v.publicFields.includes('name') && v.publicFields.includes('state') ? null : 'The public check shows at least the name and the standing';
+};
+const describeDisclosure = (key: string) => (v: Disclosure) => `${key}: the public check shows ${v.publicFields.join(', ')}`;
+
+/** One administrator proposes what a profession's public check shows, citing the law; a different official confirms. */
+export function proposeDisclosure(key: string, publicFields: unknown, legalBasis: unknown, by: string, byId?: string, now = new Date(), pendingHours = 24) {
+  const p = profession(key);
+  if (!p) return { error: `No profession ${key}` };
+  const fields = Array.isArray(publicFields) ? [...new Set(publicFields.map(String))] as PublicField[] : [];
+  return proposePolicy(db().disclosure![key] ??= {}, { publicFields: p.publicFields ?? DEFAULT_PUBLIC_FIELDS }, { publicFields: fields }, legalBasis, {
+    by, ...(byId ? { byId } : {}), now, pendingHours, audit: DISCLOSURE_AUDIT, context: `What the public check of ${p.title} shows`, check: checkDisclosure, describe: describeDisclosure(key),
+  });
+}
+
+/** A different official confirms: the public check shows those fields from now (a reference profession becomes the country's own). */
+export function confirmDisclosure(key: string, by: string, byId?: string, now = new Date(), requireIdentityBinding = false) {
+  const p = profession(key);
+  if (!p) return { error: `No profession ${key}` };
+  const d = db();
+  return confirmPolicy(d.disclosure![key] ??= {}, {
+    by, ...(byId ? { byId } : {}), now, audit: DISCLOSURE_AUDIT, requireIdentityBinding, describe: describeDisclosure(key),
+    adopt: v => {
+      const own = d.professions.find(x => x.key === key);
+      if (own) own.publicFields = [...v.values.publicFields];
+      else d.professions.push({ ...p, publicFields: [...v.values.publicFields], reference: false, createdBy: v.by, createdAt: now.toISOString() });
+    },
+  });
+}
+export const withdrawDisclosure = (key: string, by: string, reason?: string) => withdrawPolicy(db().disclosure![key] ??= {}, { by, ...(reason ? { reason } : {}), audit: DISCLOSURE_AUDIT });
+/** A profession's waiting proposal and earlier versions. */
+export const disclosureChanges = (key: string): PolicyChanges<Disclosure> => clone(db().disclosure![key] ?? {});
 
 // ── Entries ───────────────────────────────────────────────────────────────────
 

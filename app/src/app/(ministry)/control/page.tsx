@@ -12,6 +12,8 @@ import { TONE } from '@/lib/tone-palette';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { instantiateMinistry, systemKindLabel } from '@/lib/institution/blueprint';
 import { listMinistries, ministryOperations } from '@/lib/data/store';
+import { RegisterRecords } from '@/apps/_shared/RegisterRecords';
+import { installationMode } from '@/lib/ops/mode';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry Control' };
@@ -81,6 +83,9 @@ export default async function MinistryControlPage(
                   {selected.modules.filter(m => m.enabled).length} active modules
                 </p>
               </Card>
+
+              {/* The institution's records in the platform's real registers, read under each register's own rules. */}
+              <RegisterRecords app={{ id: `ministry:${selected.id}`, domain: '', kind: 'ministry', archetypeOrBranch: selected.archetype, instanceId: selected.id }} mode={installationMode()} />
 
               {(() => {
                 const ops = ministryOperations(selected.id);

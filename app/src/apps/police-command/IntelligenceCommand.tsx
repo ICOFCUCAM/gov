@@ -209,7 +209,7 @@ export function IntelligenceCommand({ id, now }: { id: string; now: number }) {
     ['Operation Silent Shield', regionName(1, 'Northern Region'), 'CRITICAL'],
     ['Operation Coastal Watch', regionName(2, 'Eastern Seaboard'), 'HIGH'],
     ['Operation Cyber Sentinel', 'National Network', 'HIGH'],
-    ['Operation Border Guard', regionName(3, 'Western Corridor'), 'MEDIUM'],
+    ['Operation Border Guard', regionName(3, 'Western Region'), 'MEDIUM'],
     ['Operation Deep Scan', regionName(0, 'Central Region'), 'LOW'],
   ];
   const timeline: [string, string, string][] = [

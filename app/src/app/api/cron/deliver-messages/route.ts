@@ -6,14 +6,17 @@
 // Auth: CIVICOS_CRON_SECRET (Authorization: Bearer). Cadence: every minute.
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
+import { cronRoute } from '@/lib/ops/cron-runs';
 import { deliverMessages } from '@/lib/messaging/deliver';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+async function runJob(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const run = await deliverMessages();
   return NextResponse.json({ ok: run.dead === 0, ...run });
 }
 
+// Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).
+export const GET = cronRoute('deliver-messages', runJob);
 export const POST = GET;

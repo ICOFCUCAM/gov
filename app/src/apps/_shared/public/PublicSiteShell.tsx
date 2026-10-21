@@ -124,11 +124,17 @@ export interface PublicSiteShellProps {
 const itemLabel = (i: PublicSiteLinkItem) => (typeof i === 'string' ? i : i.label);
 const itemHref = (i: PublicSiteLinkItem, fallback: string) => (typeof i === 'string' ? fallback : i.href);
 
-/** A link when the action has a destination, otherwise the original button. */
-function Action({ href, className, style, children }: { href?: string; className: string; style?: React.CSSProperties; children: React.ReactNode }) {
+/** A link when the action has a destination; otherwise the original button, disabled and saying it is not available yet. */
+function Action({ href, className, style, children, notAvailable }: { href?: string; className: string; style?: React.CSSProperties; children: React.ReactNode; notAvailable: string }) {
   return href
     ? <Link href={href} className={className} style={style}>{children}</Link>
-    : <button className={className} style={style}>{children}</button>;
+    : <button type="button" disabled title={notAvailable} className={`${className} cursor-not-allowed opacity-70`} style={style}>{children}<span className="sr-only"> ({notAvailable})</span></button>;
+}
+
+/** The emergency number in a button label once its placeholders are filled (the digits of "{emergency.police}"), or null. */
+export function emergencyNumber(label: string): string | null {
+  const m = label.match(/\+?\d[\d\s-]*\d|\d/);
+  return m ? m[0].replace(/[\s-]/g, '') : null;
 }
 
 export function PublicSiteShell({
@@ -181,12 +187,16 @@ export function PublicSiteShell({
           </nav>
           <div className="flex items-center gap-4">
             <Link href={`/search?site=${institution.href.slice(1)}`} aria-label={t.search} className="grid h-8 w-8 place-items-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"><span aria-hidden>⌕</span></Link>
-            {institution.emergencyButton ? (
-              <button className="flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white"
-                style={{ background: `linear-gradient(90deg, ${theme.emergencyA}, ${theme.emergencyB})` }}>
-                <span aria-hidden>{institution.emergencyButton.icon}</span> {institution.emergencyButton.label}
-              </button>
-            ) : null}
+            {institution.emergencyButton ? (() => {
+              // The emergency button calls the number its label carries; without one it says it is not available yet.
+              const tel = emergencyNumber(institution.emergencyButton.label);
+              const cls = 'flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white no-underline';
+              const st = { background: `linear-gradient(90deg, ${theme.emergencyA}, ${theme.emergencyB})` };
+              const body = <><span aria-hidden>{institution.emergencyButton.icon}</span> {institution.emergencyButton.label}</>;
+              return tel
+                ? <a href={`tel:${tel}`} className={cls} style={st}>{body}</a>
+                : <button type="button" disabled title={t.notAvailable} className={`${cls} cursor-not-allowed opacity-70`} style={st}>{body}<span className="sr-only"> ({t.notAvailable})</span></button>;
+            })() : null}
           </div>
         </div>
       </header>
@@ -201,11 +211,11 @@ export function PublicSiteShell({
             <h1 className="text-[44px] font-extrabold leading-[1.08]">{hero.headline}</h1>
             <p className="mt-3 max-w-sm text-[15px] text-slate-600">{hero.subhead}</p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Action href={hero.primaryCta.href} className="flex items-center gap-2 rounded-lg px-5 py-2.5 text-[13px] font-semibold text-white"
+              <Action href={hero.primaryCta.href} notAvailable={t.notAvailable} className="flex items-center gap-2 rounded-lg px-5 py-2.5 text-[13px] font-semibold text-white"
                 style={{ background: theme.primary }}>
                 <span aria-hidden>{hero.primaryCta.icon}</span> {hero.primaryCta.label}
               </Action>
-              <Action href={hero.secondaryCta.href} className="flex items-center gap-2 rounded-lg border bg-white px-5 py-2.5 text-[13px] font-semibold"
+              <Action href={hero.secondaryCta.href} notAvailable={t.notAvailable} className="flex items-center gap-2 rounded-lg border bg-white px-5 py-2.5 text-[13px] font-semibold"
                 style={{ borderColor: theme.line, color: theme.ink }}>
                 <span aria-hidden>{hero.secondaryCta.icon}</span> {hero.secondaryCta.label}
               </Action>
@@ -360,8 +370,8 @@ export function PublicSiteShell({
                 </div>
               ))}
             </div>
-            <button className="mt-3 w-full rounded-md border py-1.5 text-[11px] font-semibold"
-              style={{ borderColor: theme.primary, color: theme.primary }}>{t.allPrograms}</button>
+            <button type="button" disabled title={t.notAvailable} className="mt-3 w-full cursor-not-allowed rounded-md border py-1.5 text-[11px] font-semibold opacity-70"
+              style={{ borderColor: theme.primary, color: theme.primary }}>{t.allPrograms}<span className="sr-only"> ({t.notAvailable})</span></button>
           </div>
           {locator ? (
             <div id="contact" className="scroll-mt-24 rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: theme.line }}>
@@ -376,8 +386,8 @@ export function PublicSiteShell({
             <div id="contact" className="scroll-mt-24 rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: theme.line }}>
               <div className="mb-3 text-[15px] font-bold" style={{ color: theme.ink }}>{t.contact}</div>
               <p className="text-[12px] text-slate-600">{t.contactText}</p>
-              <button className="mt-3 w-full rounded-md py-1.5 text-[12px] font-semibold text-white"
-                style={{ background: theme.primary }}>{t.contactUs}</button>
+              <Link href="/portal" className="mt-3 block w-full rounded-md py-1.5 text-center text-[12px] font-semibold text-white no-underline"
+                style={{ background: theme.primary }}>{t.contactUs}</Link>
             </div>
           )}
         </div>

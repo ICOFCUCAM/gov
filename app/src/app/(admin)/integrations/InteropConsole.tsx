@@ -8,6 +8,7 @@ import { Plain } from '@/components/ui/Plain';
 import { TextField } from '@/components/ui/Field';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { api } from '@/lib/api/client';
+import { GrantCertificate } from '@/components/features/GrantCertificate';
 import type {
   FederationGrant,
   IntegrationClient,
@@ -91,6 +92,7 @@ function IntegrationApproval({ i, onChange }: { i: IntegrationClient; onChange: 
       scopes: String(f.get('scopes')).split(',').map(s => s.trim()).filter(Boolean),
       purposes: parsePurposeLines(String(f.get('purposes') ?? '')),
       note: String(f.get('note') ?? ''),
+      ...(String(f.get('instrument') ?? '').trim() ? { legalBasis: [{ instrument: String(f.get('instrument')).trim(), eId: String(f.get('eId') ?? '').trim() }] } : {}),
     }));
   }
   if (i.status === 'revoked') return null;
@@ -106,6 +108,8 @@ function IntegrationApproval({ i, onChange }: { i: IntegrationClient; onChange: 
         <div className="mt-1">
           <Pill tone="warn">Waiting for a second official</Pill>{' '}
           Proposed by {p.by} on {p.at.slice(0, 16).replace('T', ' ')}: {termsLine(p)}{p.note ? ` · ${p.note}` : ''}
+          {p.basis?.length ? <div className="text-xs text-ink-muted">Legal basis: {p.basis.map(c => `${c.title ?? c.instrument} ${c.num ?? c.eId}`).join('; ')}</div> : null}
+          {p.owners?.length ? <div className="text-xs text-ink-muted">The data&apos;s owners confirm (an official of each, in a production installation): {p.owners.map(o => `${o}${p.consents?.some(c => c.institution === o) ? ' ✓' : ''}`).join(', ')}</div> : null}
           <div className="mt-1 flex gap-2">
             <Button disabled={busy} onClick={() => act(() => api.interop.integrations.confirmApproval(i.id))}>Confirm approval</Button>
             <Button variant="secondary" disabled={busy} onClick={() => act(() => api.interop.integrations.withdrawApproval(i.id))}>Withdraw proposal</Button>
@@ -117,9 +121,12 @@ function IntegrationApproval({ i, onChange }: { i: IntegrationClient; onChange: 
         <form onSubmit={propose} className="mt-2">
           <TextField label="Scopes (comma-separated)" name="scopes" required defaultValue={(p ?? i).scopes.join(', ')} />
           <label className="mb-3 block text-sm">
-            Purposes per exchange service, one line each (service: purpose, purpose)
+            Purposes per exchange service, one line each (service: purpose, purpose; service ids are listed on{' '}
+            <a className="text-link underline underline-offset-2" href="/gov/exchange">Data-sharing services</a>)
             <textarea name="purposes" rows={3} className="mt-1 block w-full rounded border border-line p-2 font-mono text-xs" defaultValue={purposeLines(p?.purposes ?? i.purposes)} placeholder="person.verify: identity-card-enrolment" />
           </label>
+          <TextField label="Legal basis: law (id from Laws; required in a production installation)" name="instrument" placeholder="/eli/…" />
+          <TextField label="Provision (e.g. sec_5)" name="eId" />
           <TextField label="Note (optional)" name="note" />
           <Button type="submit" disabled={busy}>{i.status === 'pending' ? 'Approve' : 'Propose'}</Button>
         </form>
@@ -297,7 +304,7 @@ export function InteropConsole() {
             <EmptyState title="No integrations yet" />
           ) : (
             ints.map(i => (
-              <Card tight key={i.id}>
+              <Card tight key={i.id} id={`integration-${i.id}`} className="scroll-mt-16">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <strong>{i.name}</strong>
                   <span className="font-mono text-xs text-ink-muted">{i.id}</span>
@@ -400,6 +407,7 @@ export function InteropConsole() {
                   </Button>
                 )}
               </div>
+              {g.status !== 'revoked' ? <GrantCertificate grantId={g.id} /> : null}
             </Card>
           ))}
           <FederationExchanges />

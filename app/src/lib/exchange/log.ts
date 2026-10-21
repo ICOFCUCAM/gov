@@ -194,6 +194,11 @@ export async function loadExchangePublicKey(): Promise<{ keyId: string; publicKe
   return { keyId: k.keyId, publicKey: k.publicKeyPem, production: s.production };
 }
 
+/** Every kept entry of one channel, oldest first (copies; for aggregate counts such as lib/exchange/overview.ts). */
+export function exchangeEntries(channel: ExchangeChannel): ExchangeEntry[] {
+  return db().entries.filter(e => e.channel === channel).map(e => ({ ...e }));
+}
+
 /** The most recent exchanges, newest first, optionally for one channel and feed. */
 export function listExchanges(filter: { channel?: ExchangeChannel; feedId?: string; ministryId?: string; limit?: number } = {}): ExchangeEntry[] {
   const out: ExchangeEntry[] = [];

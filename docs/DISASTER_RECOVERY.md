@@ -128,7 +128,70 @@ Backups are useless without the key that wrapped their data key.
 The schedule (`/api/cron/backup`, hourly via `supabase/cron/schedule.sql` or
 the nation's scheduler) takes, verifies and prunes. Watch the status in
 Platform Operations › Backups: "Recovery point target … met". Alert when it
-is not met (the cron answers 503 when a backup could not be taken).
+is not met (the cron answers 503 when a backup could not be taken, or was
+taken but did not verify). Every run of every scheduled job is recorded at
+Scheduled jobs (`/gov/crons`); a backup run that fails is retried and, after
+its last attempt, the officials subscribed to incidents in the Update Center
+are alerted (see "Scheduled jobs on Vercel with Supabase" below).
+
+### 6.1a Scheduled jobs on Vercel with Supabase
+
+Vercel's Hobby plan runs only daily cron jobs, and the platform's jobs run
+every minute to every hour (`app/scripts/cron-jobs.json`). On Vercel the
+database drives them: migration `20261027010000_civicos_cron_schedule.sql`
+schedules every job in Supabase `pg_cron`, and each run calls
+`<deployment>/api/cron/<job>` through `pg_net` with the cron secret
+(`civicos.cron_call()`), sending `X-CivicOS-Scheduler: pg_cron` and the
+scheduled minute as `X-CivicOS-Run-Key`. Do not also add Vercel crons for the
+same jobs. The address and the secret are read from Supabase Vault at run
+time and never stored in a job, a migration or this repository.
+
+Operator steps, once per deployment:
+
+1. In Vercel (Project › Settings › Environment Variables, Production):
+   `CIVICOS_CRON_SECRET` (a long random value), `CIVICOS_STATE=postgres` with
+   `DATABASE_URL` (the Supabase pooler URL), `CIVICOS_DATA_KEK`, and the S3
+   target: `CIVICOS_BACKUP_TARGET=s3`, `CIVICOS_BACKUP_S3_ENDPOINT`,
+   `CIVICOS_BACKUP_S3_BUCKET`, `CIVICOS_BACKUP_S3_REGION`,
+   `CIVICOS_BACKUP_S3_ACCESS_KEY_ID`, `CIVICOS_BACKUP_S3_SECRET_ACCESS_KEY`.
+   Leave `CIVICOS_BACKUP_PG_DUMP` unset (there is no `pg_dump` binary on
+   Vercel; the record tables are exported over the connection). A serverless
+   server refuses the `dir` target: its disk is read-only or wiped between
+   invocations, so a backup there would be lost with the instance. Nothing
+   in a backup run touches the local disk (`serverless-backup.test.ts`).
+2. Apply the migrations (`supabase db push`); the pg_cron and pg_net
+   extensions are enabled by the migration where Supabase offers them.
+3. In the Supabase SQL editor, privately (never in a shared transcript):
+
+   ```sql
+   select vault.create_secret('https://<your deployment host>', 'civicos_base_url');
+   select vault.create_secret('<the same value as CIVICOS_CRON_SECRET>', 'civicos_cron_secret');
+   ```
+
+   The base URL is the deployment's origin only (no path, user or query).
+   Rotate: `select vault.update_secret((select id from vault.secrets where name = 'civicos_cron_secret'), '<new>')`
+   together with the Vercel variable.
+4. Check: `select jobname, schedule, active from cron.job order by jobid;`,
+   `select * from cron.job_run_details order by start_time desc limit 20;`
+   (pg_cron's side), `select job, reason, skipped from civicos.cron_skips;`
+   (jobs that sent nothing, with the reason) and `/gov/crons` (the platform's
+   side: last run, outcome, next expected, failures, retry state, history).
+   The onboarding hub shows "Scheduled jobs recorded running" once every job
+   this installation runs has a successful run within twice its interval.
+5. Take one backup at once (`/gov/crons` shows it) by calling
+   `/api/cron/backup?now` with the cron secret, then run the drill (§7)
+   against the bucket from a second machine.
+
+What each run guarantees (`app/src/lib/ops/cron-runs.ts`): one run record
+per call (start, end, outcome, items, error text scrubbed of addresses and
+numbers); a call with a run key that already succeeded, or is running, is
+recorded as skipped-duplicate and changes nothing; a second run of a job
+while one holds it is refused (the hold is a row every instance shares,
+`civicos.cron_lease`); a failed job is retried by its next invocation after
+its backoff (`RETRY_POLICY` in `app/src/lib/ops/cron-jobs.ts`), never sooner;
+after its last attempt the officials subscribed to incidents are alerted once
+through the nation's own email and SMS providers. Other schedulers do the
+same: the self-host script and the Helm chart send `X-CivicOS-Scheduler`.
 
 ### 6.2 Data damaged, server fine (in-place restore)
 

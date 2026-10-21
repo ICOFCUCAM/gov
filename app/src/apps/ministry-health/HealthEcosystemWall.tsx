@@ -6,6 +6,7 @@
 // maps. Built to the reference concept; not a dashboard, not a website.
 
 import * as React from 'react';
+import { NotYetButton } from '@/components/ui/NotYetButton';
 import Link from 'next/link';
 import { GeoMap } from '@/apps/_shared/GeoMap';
 import { PropagationMap } from '@/apps/ministry-health/PropagationMap';
@@ -376,7 +377,7 @@ export function HealthEcosystemWall() {
                 <IndexTag index="health-operations.ts · riskScore" />
                 <div className="min-w-0 flex-1 text-[6.5px] text-ink-soft">{cw.patient.ai.recommended.slice(0, 3).map(r => <div key={r} className="truncate">▸ {r}</div>)}</div>
               </div>
-              <button className="mt-auto rounded-[2px] py-1 text-[7px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>{aiLabel('Run AI Analysis', 'Run Analysis')}</button>
+              <NotYetButton reason="the platform keeps no patient or clinical record, so there is nothing to analyse; this panel is a simulation" className="mt-auto rounded-[2px] py-1 text-[7px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>{aiLabel('Run AI Analysis', 'Run Analysis')}</NotYetButton>
             </div>
           </div>
           {/* today's schedule */}
@@ -559,8 +560,8 @@ export function HealthEcosystemWall() {
               ))}
             </div>
             <div className="flex gap-1">
-              <button className="flex-1 rounded-[3px] text-[7px] font-bold uppercase tracking-[0.12em]" style={{ background: `color-mix(in srgb,${sc('ok')} 20%,transparent)`, color: sc('ok') }}>Approve</button>
-              <button className="flex-1 rounded-[3px] text-[7px] font-bold uppercase tracking-[0.12em]" style={{ background: `color-mix(in srgb,${sc('alert')} 20%,transparent)`, color: sc('alert') }}>Reject</button>
+              <NotYetButton reason="decisions on emergency resources are not recorded on the platform yet; this recommendation comes from the simulation" className="flex-1 rounded-[3px] text-[7px] font-bold uppercase tracking-[0.12em]" style={{ background: `color-mix(in srgb,${sc('ok')} 20%,transparent)`, color: sc('ok') }}>Approve</NotYetButton>
+              <NotYetButton reason="decisions on emergency resources are not recorded on the platform yet; this recommendation comes from the simulation" className="flex-1 rounded-[3px] text-[7px] font-bold uppercase tracking-[0.12em]" style={{ background: `color-mix(in srgb,${sc('alert')} 20%,transparent)`, color: sc('alert') }}>Reject</NotYetButton>
             </div>
           </div>
         </Tile>
@@ -629,8 +630,8 @@ export function HealthEcosystemWall() {
                 <div className="text-[6px] uppercase tracking-wider text-ink-muted">Emergency Redistribution</div>
                 <div className="truncate text-[7.5px] text-ink-soft">Transfer 1,100 units Insulin · Coastal → Highland</div>
               </div>
-              <button className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[6.5px] font-bold uppercase" style={{ border: `1px solid ${sc('ok')}`, color: sc('ok') }}>Approve</button>
-              <button className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[6.5px] font-bold uppercase" style={{ border: `1px solid ${sc('alert')}`, color: sc('alert') }}>Reject</button>
+              <NotYetButton reason="medicine redistribution is not recorded on the platform yet; this transfer comes from the simulation" className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[6.5px] font-bold uppercase" style={{ border: `1px solid ${sc('ok')}`, color: sc('ok') }}>Approve</NotYetButton>
+              <NotYetButton reason="medicine redistribution is not recorded on the platform yet; this transfer comes from the simulation" className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[6.5px] font-bold uppercase" style={{ border: `1px solid ${sc('alert')}`, color: sc('alert') }}>Reject</NotYetButton>
             </div>
           </div>
         </Tile>
