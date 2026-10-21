@@ -10,7 +10,7 @@
 //   'withdraw' { version, reason? } an official of the legislature.
 // Who acted comes from the sign-in; every step is audited and every version kept.
 import { NextRequest, NextResponse } from 'next/server';
-import { refusal } from '@/lib/auth/official';
+import { refusal, withOfficial } from '@/lib/auth/official';
 import { legislativeRecordRefusal } from '@/lib/auth/roles';
 import { authorityFor, getMinistry } from '@/lib/data/store';
 import {
@@ -34,7 +34,7 @@ export function GET() {
 
 /** @example request {"op":"draft","fromReference":true,"title":"Standing orders of the National Assembly","chambers":["National Assembly"]} */
 export async function POST(req: NextRequest) {
-  const b = (await req.json().catch(() => ({}))) as Partial<LegislativeProcedure> & { op?: string; by?: string; version?: unknown; activeFrom?: unknown; reason?: unknown; legalBasis?: unknown; fromReference?: unknown };
+  const b = (await withOfficial(await req.json().catch(() => ({})))) as Partial<LegislativeProcedure> & { op?: string; by?: string; version?: unknown; activeFrom?: unknown; reason?: unknown; legalBasis?: unknown; fromReference?: unknown };
   const op = b.op ?? 'draft';
   const refused = await refusal(s => legislativeRecordRefusal(s, legislatureId(), op === 'approve' ? 'sign' : 'record'));
   if (refused) return refused;

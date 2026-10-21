@@ -251,6 +251,8 @@ describe('what the public sees', () => {
     expect(publicBill(b.id)).toBeNull();
     expect(readsFullRecord(wgAdmin.scope, getBill(b.id)!)).toBe(false);
     expect(readsFullRecord(president.scope, getBill(b.id)!)).toBe(false);
+    expect(readsFullRecord(null, getBill(b.id)!)).toBe(false);
+    expect(readsFullRecord(staff.scope, getBill(b.id)!)).toBe(true);
   });
 });
 

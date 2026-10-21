@@ -5,7 +5,7 @@
 // names none, the legislature's clerk records it as communicated to the
 // chamber. Body: { outcome: assented | withheld, date?, reference?, note? }.
 import { NextRequest } from 'next/server';
-import { refusal } from '@/lib/auth/official';
+import { refusal, withOfficial } from '@/lib/auth/official';
 import { assentRefusal } from '@/lib/auth/roles';
 import { authorityFor } from '@/lib/data/store';
 import { recordAssent, legislatureId } from '@/lib/legislature/register';
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const refused = await refusal(s => assentRefusal(s, authorityFor('headOfState'), legislatureId()));
   if (refused) return refused;
   const { id } = await ctx.params;
-  const b = (await req.json().catch(() => ({}))) as Record<string, unknown> & { by?: string };
+  const b = (await withOfficial(await req.json().catch(() => ({})))) as Record<string, unknown> & { by?: string };
   const a = await legislativeActor(b.by);
   const r = recordAssent(decodeURIComponent(id), b as object, a);
   return answer('error' in r ? r : { bill: r });

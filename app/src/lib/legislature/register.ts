@@ -924,11 +924,13 @@ export const publicBills = (): PublicBill[] => listBills().map(b => publicBill(b
 
 /**
  * Who reads the full record (who recorded each step, waiting corrections):
- * officials of the legislature; the head of state's office for bills passed
- * and on (to decide on assent). Everyone else reads what the public reads.
+ * signed-in officials of the legislature; the head of state's office for
+ * bills passed and on (to decide on assent). Everyone else, and anyone not
+ * signed in, reads what the public reads.
  */
 export function readsFullRecord(s: Scope | null, b: Pick<Bill, 'state'>): boolean {
-  if (!s) return true;
+  // Nobody signed in reads what the public reads (the bills routes are public reads).
+  if (!s) return false;
   const leg = legislatureId();
   if (leg && s.institution === leg) return true;
   const head = authorityFor('headOfState');
