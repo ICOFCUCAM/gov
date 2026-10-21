@@ -61,7 +61,7 @@ export interface OrgVersion {
   case?: string;
 }
 
-export interface StandingStep { state: StandingState; at: string; by: string; reason: string; case?: string; decision?: string; validUntil?: string }
+export interface StandingStep { state: StandingState; at: string; by: string; reason: string; case?: string; decision?: string; validUntil?: string; /** Changed by a sample case in a demo or training run. */ sample?: true }
 
 export interface Standing {
   register: string;
@@ -86,6 +86,8 @@ export interface Organisation {
   previousNumber?: string;
   /** The checked load that brought it in (lib/organisations/import.ts), until it is acted on. */
   load?: string;
+  /** Registered by a sample case in a demo or training run (lib/casework/engine.ts `sampleMark`); absent on real records. */
+  sample?: true;
 }
 
 /** Register types CivicOS ships; a nation adds its own (licensed pharmacies, licensed doctors...). */
@@ -187,7 +189,7 @@ function nextNumber(now: Date): string {
   return nextRecordNumber(db() as unknown as Record<string, unknown>, 'orgSeq', 'ORG', now);
 }
 
-export interface NewOrganisation { name: unknown; kind: unknown; region?: unknown; address?: unknown; representative?: { name?: unknown; role?: unknown } }
+export interface NewOrganisation { name: unknown; kind: unknown; region?: unknown; address?: unknown; representative?: { name?: unknown; role?: unknown }; /** From a sample case: the record carries the sample marker. */ sample?: true }
 
 /** Checked before anything is written, so a refused case uses no number. */
 export function checkNewOrganisation(input: NewOrganisation): { name: string; kind: OrgKind; region?: string; address?: string; representatives: { name: string; role: string }[] } | { error: string } {
@@ -207,11 +209,11 @@ export function createOrganisation(input: NewOrganisation, caseId: string, by: s
   if (same) return { error: `${c.name} is already registered as ${same.number}` };
   const at = now.toISOString();
   const o: Organisation = {
-    id: uuid7(), number: nextNumber(now), facilities: [], standings: [], createdAt: at,
+    id: uuid7(), number: nextNumber(now), facilities: [], standings: [], createdAt: at, ...(input.sample ? { sample: true as const } : {}),
     versions: [{ n: 1, name: c.name, kind: c.kind, ...(c.region ? { region: c.region } : {}), ...(c.address ? { address: c.address } : {}), representatives: c.representatives.map(r => ({ ...r, since: at.slice(0, 10) })), at, by, reason: 'Registered', case: caseId }],
   };
   db().orgs.push(o);
-  recordAudit(by, 'organisation.create', `Organisation:${o.number}`, 'ok', `${c.kind} · case ${caseId}`);
+  recordAudit(by, 'organisation.create', `Organisation:${o.number}`, 'ok', `${c.kind} · case ${caseId}${input.sample ? ' · sample' : ''}`);
   return clone(o);
 }
 
@@ -239,7 +241,7 @@ const MOVES: Record<StandingState, StandingState[]> = {
   'struck-off': [],
 };
 
-export interface StandingChange { register: string; state: StandingState; reason: string; case?: string; decision?: string; conditions?: string[]; validUntil?: string; certificate?: string }
+export interface StandingChange { register: string; state: StandingState; reason: string; case?: string; decision?: string; conditions?: string[]; validUntil?: string; certificate?: string; /** From a sample case. */ sample?: true }
 
 /** Change an organisation's standing in one register (only through a decided case, or the expiry job). */
 export function setStanding(id: string, ch: StandingChange, by: string, now = new Date()): Standing | { error: string } {
@@ -254,7 +256,7 @@ export function setStanding(id: string, ch: StandingChange, by: string, now = ne
   if (!s && !['applied', 'granted'].includes(ch.state)) return { error: `${current(o).name} has no standing in ${t.title} to change` };
   // A grant (or renewal) runs for the register's validity from today, unless the decision says otherwise.
   const validUntil = ch.state === 'granted' ? (ch.validUntil ?? (t.validityMonths ? addMonths(at, t.validityMonths) : undefined)) : s?.validUntil;
-  const step: StandingStep = { state: ch.state, at, by, reason: ch.reason.slice(0, 500), ...(ch.case ? { case: ch.case } : {}), ...(ch.decision ? { decision: ch.decision } : {}), ...(validUntil ? { validUntil } : {}) };
+  const step: StandingStep = { state: ch.state, at, by, reason: ch.reason.slice(0, 500), ...(ch.case ? { case: ch.case } : {}), ...(ch.decision ? { decision: ch.decision } : {}), ...(validUntil ? { validUntil } : {}), ...(ch.sample ? { sample: true as const } : {}) };
   if (!s) {
     s = { register: ch.register, state: ch.state, since: at, conditions: ch.conditions ?? [], history: [step], ...(validUntil ? { validUntil } : {}) };
     o.standings.push(s);
@@ -310,6 +312,8 @@ export function expireStandings(now = new Date()): { organisation: string; regis
 
 export interface PublicOrganisation {
   number: string; name: string; kind: OrgKind; region?: string;
+  /** A sample record (made by a sample case in a demo or training run): shown with the Sample marker. */
+  sample?: true;
   standings: { register: string; title: string; state: StandingState; since: string; validUntil?: string; conditions: string[]; certificate?: string }[];
 }
 
@@ -318,7 +322,7 @@ export function publicOrganisation(o: Organisation, onlyPublicRegisters = false)
   const v = current(o);
   const types = new Map(registerTypes().map(t => [t.key, t]));
   return {
-    number: o.number, name: v.name, kind: v.kind, ...(v.region ? { region: v.region } : {}),
+    number: o.number, name: v.name, kind: v.kind, ...(v.region ? { region: v.region } : {}), ...(o.sample ? { sample: true as const } : {}),
     standings: o.standings.filter(s => !onlyPublicRegisters || types.get(s.register)?.publicCheck)
       .map(s => ({ register: s.register, title: types.get(s.register)?.title ?? s.register, state: s.state, since: s.since, ...(s.validUntil ? { validUntil: s.validUntil } : {}), conditions: s.conditions, ...(s.certificate ? { certificate: s.certificate } : {}) })),
   };

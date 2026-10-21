@@ -100,6 +100,12 @@ const ge = globalThis as unknown as { __caseEffects?: Map<string, Effect> };
 const effectsMap = () => (ge.__caseEffects ??= new Map());
 export function registerEffect(name: string, fn: Effect): void { effectsMap().set(name, fn); }
 export const registeredEffects = (): string[] => [...effectsMap().keys()];
+/**
+ * The marker an effect puts on the register entry it writes from a sample case
+ * (`{ sample: true }`, else nothing): entries made in a demo or training run
+ * stay recognisable as samples wherever they are read or restored.
+ */
+export const sampleMark = (c: Pick<Case, 'source'>): { sample?: true } => (c.source === 'sample' ? { sample: true } : {});
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const today = (now: Date) => now.toISOString().slice(0, 10);
@@ -183,6 +189,8 @@ export function openCase(input: OpenInput, actor: Actor, now = new Date()): Case
   const owner = ownerInstitution(pkg.owner, authorityFor);
   if (!owner) return { error: `No institution is named as responsible for ${pkg.title} (Configuration → Who is responsible)` };
   const source = input.source ?? 'entered';
+  // Sample cases exist only in demo and training installations (lib/ops/mode.ts; step I0.1).
+  if (source === 'sample' && !samplesAllowed()) return { error: 'A production installation opens no sample case' };
   if (actor.scope && source !== 'citizen' && !input.referral) {
     const why = caseActRefusal(actor.scope, { owner, sensitivity: pkg.sensitivity, assigned: [actor.scope.id ?? ''] }, now.getTime());
     if (why) return { error: why };
@@ -237,6 +245,8 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   if (!pkg) return { error: 'The procedure version this case runs under is missing' };
   const a = pkg.actions.find(x => x.key === input.action);
   if (!a) return { error: `This procedure has no action ${input.action}` };
+  // A sample case (kept from a demo or training run) is never acted on in production: nothing it decides reaches a register.
+  if (c.source === 'sample' && !samplesAllowed()) return { error: `${c.ref} is a sample case: a production installation takes no step or decision on it` };
   // Who may act is decided before anything about the case is returned, a repeated request included.
   if (actor.scope) {
     const why = caseActRefusal(actor.scope, facts(c, a), now.getTime());
@@ -430,7 +440,8 @@ export function refer(caseId: string, input: { procedure: string; fields?: Recor
   const c = guard(caseId, actor);
   if ('error' in c) return c;
   if (!input.reason?.trim()) return { error: 'Say what is asked of the other institution' };
-  const to = openCase({ procedure: input.procedure, fields: input.fields, subject: c.subject, referral: { from: c.id }, source: 'entered' }, actor, now);
+  // A referral from a sample case is itself a sample (and refused in production by openCase).
+  const to = openCase({ procedure: input.procedure, fields: input.fields, subject: c.subject, referral: { from: c.id }, source: c.source === 'sample' ? 'sample' : 'entered' }, actor, now);
   if ('error' in to) return to;
   c.links.push({ kind: 'referral', case: to.id });
   c.version += 1;
