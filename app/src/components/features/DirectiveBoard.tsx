@@ -20,7 +20,8 @@ import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 import { useSignIn } from '@/lib/official';
 import { canDraftDirective, canSignDirective } from '@/lib/auth/roles';
 
-const ALL_KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declaration'];
+// request, communication and referral: the only kinds an independent institution may be addressed with.
+const ALL_KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declaration', 'request', 'communication', 'referral'];
 
 /**
  * Directive Board — operator surface for the directive lifecycle.
@@ -119,8 +120,8 @@ export function DirectiveBoard() {
         <DirectiveComposer
           prefill={prefill}
           onDone={() => { setComposerOpen(false); setPrefill(null); void refresh(); }}
-          defaultIssuer={official?.institution ?? actor?.charterId ?? 'platform'}
-          issuerFixed={official?.institution ? official.institutionName ?? official.institution : null}
+          defaultIssuer={official?.institution ?? (official ? 'executive-office' : actor?.charterId ?? 'platform')}
+          issuerFixed={official?.institution ? official.institutionName ?? official.institution : official ? 'Executive office (whole government)' : null}
         />
       ) : null}
 
@@ -252,7 +253,7 @@ function DirectiveComposer({
         {issuerFixed ? (
           <div>
             <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Issued by</span>
-            <p className="mt-1 px-2 py-1 text-[11px] text-ink">{issuerFixed} <span className="text-ink-muted">(your institution)</span></p>
+            <p className="mt-1 px-2 py-1 text-[11px] text-ink">{issuerFixed} <span className="text-ink-muted">(issued for you)</span></p>
           </div>
         ) : (
         <label className="block">

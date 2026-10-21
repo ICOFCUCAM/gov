@@ -12,13 +12,17 @@ import { randomUUID } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
 import type { DirectiveRow } from '@/lib/db/types';
 import { touch } from '@/lib/data/repo/track';
+import { independentTargets } from '@/lib/data/store/institutions';
+import { COMMUNICATION_KINDS } from '@/lib/auth/roles';
 
 interface Db { rows: DirectiveRow[] }
 const g = globalThis as unknown as { __civicosDirectives?: Db };
 const db = (): Db => touch('__civicosDirectives', g.__civicosDirectives ??= { rows: [] });
 export function resetDirectives(): void { g.__civicosDirectives = undefined; }
 
-export const KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declaration'];
+// request, communication and referral only ask or inform: the only kinds an independent institution
+// (legislature, court, head of state, independent body) may be addressed with (plan phase 2, audit E).
+export const KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declaration', ...COMMUNICATION_KINDS];
 const REF = /^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$/;
 
 export function listDirectives(opts: { status?: string; issuer?: string; limit?: number; q?: string } = {}): DirectiveRow[] {
@@ -46,6 +50,13 @@ export function draftDirective(input: { ref?: string; kind?: string; issuedByCha
   const title = (input.title ?? '').trim();
   if (!title) return { error: 'Give the directive a title' };
   const kind = KINDS.includes(input.kind ?? '') ? input.kind! : 'instruction';
+  const targets = (input.targets ?? []).map(t => String(t).trim()).filter(Boolean).slice(0, 50);
+  // An independent institution receives no instruction from another institution: only a request, a
+  // communication or a referral (guidance §5.1; until relationships record a lawful instruction, phase 3).
+  const independent = independentTargets(targets);
+  if (independent.length && !COMMUNICATION_KINDS.includes(kind)) {
+    return { error: `${independent.map(t => t.name).join(', ')} ${independent.length === 1 ? 'is' : 'are'} independent and cannot be instructed: record this as a request, a communication or a referral` };
+  }
   const now = new Date().toISOString();
   // The legal basis (directions 7.1): each provision resolved to the version in force today, kept as it was.
   const legalBasis: Citation[] = [];
@@ -57,7 +68,7 @@ export function draftDirective(input: { ref?: string; kind?: string; issuedByCha
   const row: DirectiveRow = {
     id: randomUUID(), ref, kind, issued_by_charter_id: (input.issuedByCharterId ?? 'platform').trim() || 'platform',
     issued_by_name: by, title: title.slice(0, 300), citation: input.citation?.trim() || null, status: 'drafting',
-    targets: (input.targets ?? []).map(t => String(t).trim()).filter(Boolean).slice(0, 50),
+    targets,
     // The legal basis travels in the payload (the substrate mirror's columns stay as they are).
     payload: { ...(input.payload && typeof input.payload === 'object' ? input.payload : {}), ...(legalBasis.length ? { legalBasis } : {}) },
     signed_at: null, signed_by_id: null, effective_at: null, rescinded_at: null, created_at: now, updated_at: now,

@@ -12,6 +12,11 @@
 //   'decide'  { requestId, decision: link | create | refuse, accountId?, account?, reason? }
 //             → link the identity to an account, make an account with a role, or refuse;
 //   'unlink'  { accountId } → remove an account's identity link.
+// Independent institutions keep their own user administration (plan phase 2):
+// making or linking an account of one, mapping a provider group to one, or
+// unlinking one of its accounts is for its own administrators; an
+// administrator serving the whole government uses Official accounts instead,
+// where the institution confirms (lib/auth/account-changes.ts).
 
 import { NextRequest, NextResponse } from 'next/server';
 import { callbackUrl, decideRequest, listRequests, providerView, saveProvider, setProviderEnabled, type ProviderInput } from '@/lib/auth/oidc';

@@ -6,7 +6,7 @@
 // administrator (/api/platform/retention/{id}); keep applies at once.
 // Administrators only (ADMIN_ONLY in lib/auth/roles.ts: /api/platform). Audited.
 import { NextRequest, NextResponse } from 'next/server';
-import { withOfficial } from '@/lib/auth/official';
+import { withOfficial, officialId } from '@/lib/auth/official';
 import { MAX_DAYS, MIN_DAYS, RETENTION_CATEGORIES, proposeRetention, retentionChanges, retentionRules, retentionRuns } from '@/lib/data/retention';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,7 @@ export function GET() {
 /** @example request {"category":"permits","action":"anonymise","days":2555,"basis":"Records Act, schedule 4","reason":"Adopted records schedule"} */
 export async function POST(req: NextRequest) {
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { category?: unknown; action?: unknown; days?: unknown; basis?: unknown; reason?: unknown; by?: string };
-  const r = proposeRetention(b, typeof b.by === 'string' ? b.by : '');
+  const r = proposeRetention(b, typeof b.by === 'string' ? b.by : '', Date.now(), await officialId());
   if ('error' in r) return NextResponse.json(r, { status: 422 });
   return NextResponse.json({ change: r }, { status: 201 });
 }

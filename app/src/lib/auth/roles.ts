@@ -16,6 +16,25 @@ export const ROLES: { id: OfficialRole; label: string; means: string }[] = [
 export const isRole = (v: unknown): v is OfficialRole => ROLES.some(r => r.id === v);
 export const roleLabel = (r: OfficialRole) => ROLES.find(x => x.id === r)!.label;
 
+/**
+ * Where whole-government reach stops (docs/CONSTITUTIONAL_ARCHITECTURE.md
+ * §5.1, §5.3; plan phase 2). Read from the institution register at use
+ * (lib/data/store/institutions.ts institutionBounds()) and carried with the
+ * signed-in official (lib/auth/official.ts currentOfficial()), so this file
+ * keeps no imports.
+ */
+export interface Boundaries {
+  /** Independent institutions: the legislature, courts, the head of state's office, bodies the constitution sets up,
+   *  bodies set up by law whose decisions are recorded as protected, and those named for the judiciary and data protection. */
+  independent: string[];
+  /** Courts (standing judiciary, or named for the judiciary or a constitutional court): closed to every other institution. */
+  judicial: string[];
+  /** The public audit office, when the nation named one and recorded it as set up by the constitution. */
+  audit?: string;
+  /** Every registered institution: directives are issued and signed for one only by its own officials. */
+  institutions?: string[];
+}
+
 /** The part of an official's session the rules read. */
 export interface Scope {
   role?: OfficialRole; institution?: string;
@@ -23,6 +42,8 @@ export interface Scope {
   twoStepRequired?: boolean;
   /** This session passed the second sign-in step. */
   twoStep?: boolean;
+  /** Where whole-government reach stops (absent: nothing is independent, as before the register recorded it). */
+  bounds?: Boundaries;
 }
 
 /** Officials the policy requires to use the second step make no changes until this session has passed it. */
@@ -51,6 +72,19 @@ export const roleOf = (s: { role?: OfficialRole; iat?: number; createdAt?: strin
 };
 /** True when the official serves every institution, not one. */
 export const wholeGovernment = (s: Scope): boolean => !s.institution;
+
+/** Whether an institution stands outside whole-government reach. */
+export const isIndependent = (s: Scope, id: string | undefined): boolean => !!id && !!s.bounds?.independent.includes(id);
+/** Whether an institution is a court. */
+export const isJudicial = (s: Scope, id: string | undefined): boolean => !!id && !!s.bounds?.judicial.includes(id);
+/**
+ * Whether the official's scope reaches an institution: its own officials
+ * always; officials serving the whole government only when it is not
+ * independent (whole-government scope stops at the legislature, the courts,
+ * the head of state's office and independent bodies).
+ */
+export const reaches = (s: Scope, id: string): boolean => s.institution === id || (wholeGovernment(s) && !isIndependent(s, id));
+const independentRefusal = 'This institution is independent: only its own officials work here; serving the whole government does not reach it';
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -184,8 +218,10 @@ const INSTALLATION: RegExp[] = [/^\/api\/releases(\/|$)/];
  *  administrator or cast member (any role, so the cast's auditor can switch back) do it, and
  *  answers 404 outside demo and training installations (lib/auth/demo-cast.ts actAsRefusal()). */
 const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/passkeys(\/options)?\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/, /^\/api\/demo\/act-as$/];
-/** Inside one ministry's workspace: officials of that ministry, or of the whole government. */
+/** Inside one ministry's workspace: officials of that ministry, or of the whole government (not into an independent institution). */
 const MINISTRY = /^\/api\/org\/ministries\/([^/]+)\//;
+/** An institution's constitutional terms: listed in OFFICIAL_WORK, decided in the route (lib/data/store/institutions.ts). */
+const CONSTITUTIONAL = /^\/api\/org\/ministries\/[^/]+\/standing$/;
 /**
  * The day-to-day work of any official who is not an auditor. Routes here that
  * need the record to decide (directives, boundaries, facilities, the Update
@@ -219,6 +255,14 @@ const OFFICIAL_WORK: RegExp[] = [
   // The Update Center's ordinary work is UPDATE_CENTER_WORK; the rest of /api/releases is INSTALLATION.
   /^\/api\/twin\/(keys|metrics|runs|scenarios|sources|conflicts)(\/|$)/, // registering metrics and withdrawing imports are audited with the official
   /^\/api\/twin\/tasking\/tasks(\/|$)/,       // a signed-in official allowed by canTaskSensor() (checked in the route)
+  // Account changes waiting for an independent institution's confirmation: proposed by an administrator through
+  // /api/auth/officials, confirmed here by an official who can sign at that institution (canConfirmAccountChange()
+  // in the route), withdrawn by the proposer or an administrator. Not ADMIN_ONLY: the confirmer is the institution's.
+  /^\/api\/auth\/account-changes(\/|$)/,
+  // An institution's constitutional terms (standing, independence): proposed by an administrator citing the law,
+  // confirmed by a different official, by the institution itself when it is independent (checked in the route).
+  // Before MINISTRY so an independent institution's own official can confirm while whole-government scope cannot act there.
+  /^\/api\/org\/ministries\/[^/]+\/standing$/,
 ];
 
 export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official';
@@ -232,6 +276,7 @@ export function mutationRule(pathname: string): MutationRule | null {
   if (BEARER_ROUTES.some(re => re.test(pathname))) return 'bearer';
   if (UPDATE_CENTER_WORK.some(re => re.test(pathname))) return 'official';
   if (INSTALLATION.some(re => re.test(pathname))) return 'installation';
+  if (CONSTITUTIONAL.test(pathname)) return 'official';
   if (MINISTRY.test(pathname)) return 'ministry';
   if (OFFICIAL_WORK.some(re => re.test(pathname))) return 'official';
   return null;
@@ -277,8 +322,8 @@ export function installationAdmin(s: Scope): string | null {
 /** Whether the official may act inside one ministry's workspace. */
 export function ministryPermission(s: Scope, ministryId: string): string | null {
   if (roleOf(s) === 'auditor') return 'Auditors can read records but not change them';
-  if (wholeGovernment(s) || s.institution === ministryId) return null;
-  return 'You can act only for your own institution';
+  if (reaches(s, ministryId)) return null;
+  return wholeGovernment(s) ? independentRefusal : 'You can act only for your own institution';
 }
 
 /**
@@ -287,8 +332,38 @@ export function ministryPermission(s: Scope, ministryId: string): string | null 
  * officials of every role, auditors included, and the whole government.
  */
 export function canDownloadSiteArchive(s: Scope, ministryId: string): string | null {
-  if (wholeGovernment(s) || s.institution === ministryId) return null;
-  return 'Only officials of this institution (or of the whole government) may download its site archive';
+  if (reaches(s, ministryId)) return null;
+  return isIndependent(s, ministryId)
+    ? 'This institution is independent: only its own officials may download its site archive'
+    : 'Only officials of this institution (or of the whole government) may download its site archive';
+}
+
+/**
+ * Managing an official's account (creating it, changing its role or
+ * institution, a password reset code, resetting its second step, disabling
+ * or enabling it) when the account's institution, now or after the change,
+ * is independent (plan phase 2, audit D; guidance §5.1 "independent bodies
+ * retain their own user administration"): an administrator of that
+ * institution does it; an administrator serving the whole government only
+ * with the confirmation of an official who can sign there
+ * (lib/auth/account-changes.ts, a different person); an administrator of
+ * another institution not at all. Executive institutions: any administrator,
+ * as before. Returns null (go ahead), the institutions that must confirm, or
+ * the reason it is refused.
+ */
+export function accountChangeRule(s: Scope, institutions: (string | null | undefined)[]): null | { confirmBy: string[] } | string {
+  if (roleOf(s) !== 'administrator') return 'Only an administrator can change accounts';
+  const outside = [...new Set(institutions.filter((x): x is string => !!x && isIndependent(s, x) && x !== s.institution))];
+  if (!outside.length) return null;
+  if (!wholeGovernment(s)) return 'This account belongs to an independent institution: only its own administrators manage it (or an administrator serving the whole government, confirmed by an official who can sign there)';
+  return { confirmBy: outside };
+}
+
+/** Confirming an account change waiting for an independent institution: an official who can sign there, or its administrator. */
+export function canConfirmAccountChange(s: Scope, institution: string): string | null {
+  const role = roleOf(s);
+  if (s.institution !== institution || (role !== 'signatory' && role !== 'administrator')) return 'An official who can sign at the institution concerned (or its administrator) confirms this account change';
+  return null;
 }
 
 /** Connecting or disconnecting a ministry's case system issues a machine key: administrators, or those who can sign for that ministry. */
@@ -333,8 +408,10 @@ export function canSignForSite(s: Scope, ownerId: string): string | null {
  */
 export function canActForSite(s: Scope, ownerId: string | undefined): string | null {
   if (roleOf(s) === 'auditor') return 'Auditors can read records but not change them';
-  if (wholeGovernment(s) || (ownerId !== undefined && s.institution === ownerId)) return null;
-  return 'Only officials of the institution that owns this website (or of the whole government) may change it';
+  if (ownerId === undefined ? wholeGovernment(s) : reaches(s, ownerId)) return null;
+  return isIndependent(s, ownerId)
+    ? 'This institution is independent: only its own officials may change its website'
+    : 'Only officials of the institution that owns this website (or of the whole government) may change it';
 }
 
 // ── Who may read an institution's personal data (review M-3) ─────────────
@@ -353,13 +430,20 @@ export const INSTITUTION_READS: RegExp[] = [
   /^\/api\/work$/,
 ];
 
-/** Officials who see every institution's records: those serving the whole government, and auditors. */
-const fullView = (s: Scope): boolean => wholeGovernment(s) || roleOf(s) === 'auditor';
+/**
+ * Officials who see every institution's records: those serving the whole
+ * government, and auditors, but never into an independent institution
+ * (plan phase 2): there only its own officials read. The government's
+ * auditors (internal audit) stop there too; the public audit office reads
+ * an independent body's cases only with a stated purpose (caseReadRefusal()),
+ * never a court's.
+ */
+const fullView = (s: Scope, id?: string): boolean => (wholeGovernment(s) || roleOf(s) === 'auditor') && !isIndependent(s, id);
 
-/** Reading one institution's cases and the records around them: its own officials, the whole government and auditors. */
+/** Reading one institution's cases and the records around them: its own officials, the whole government and auditors (not into an independent institution). */
 export function canReadInstitution(s: Scope, ministryId: string): string | null {
-  if (fullView(s) || s.institution === ministryId) return null;
-  return 'You can read only your own institution\'s records';
+  if (s.institution === ministryId || fullView(s, ministryId)) return null;
+  return isIndependent(s, ministryId) ? 'This institution is independent: its records are read only by its own officials' : 'You can read only your own institution\'s records';
 }
 
 /**
@@ -426,26 +510,45 @@ export function canSeeParcelRights(s: Scope, authorityId: string | undefined): s
   return 'Rights and holders are shown only to the cadastre authority and officials with need';
 }
 
-/** The issuer a new directive is recorded under: an official's own institution, whatever the request names. */
+/** The issuer of a directive by an official serving the whole government: the executive office, never another institution. */
+export const EXECUTIVE_OFFICE = 'executive-office';
+/** Kinds of directive that only ask or inform: the only kinds addressed to an independent institution (never an instruction). */
+export const COMMUNICATION_KINDS = ['request', 'communication', 'referral'];
+
+/**
+ * The issuer a new directive is recorded under, whatever the request names:
+ * an official's own institution, or the executive office for an official
+ * serving the whole government (plan phase 2, audit E). Without a signed-in
+ * official (sign-in not enforced), the issuer as named.
+ */
 export function directiveIssuer(s: Scope | null, requested: string): string {
-  return s && !wholeGovernment(s) ? s.institution! : requested;
+  if (!s) return requested;
+  return wholeGovernment(s) ? EXECUTIVE_OFFICE : s.institution!;
 }
 
 export function canDraftDirective(s: Scope): string | null {
   return roleOf(s) === 'auditor' ? 'Auditors can read records but not change them' : null;
 }
 
-/** Sign or withdraw: signatories and administrators, for their own institution's directives. */
+/**
+ * Sign or withdraw: signatories and administrators, for their own
+ * institution's directives; officials serving the whole government for the
+ * executive office's (and directives recorded before issuers were checked),
+ * never in the name of a registered institution they do not belong to.
+ */
 export function canSignDirective(s: Scope, issuer: string): string | null {
   const role = roleOf(s);
   if (role !== 'signatory' && role !== 'administrator') return 'Only an official who can sign may sign or withdraw a directive';
-  if (wholeGovernment(s) || s.institution === issuer) return null;
-  return 'You can sign only your own institution\'s directives';
+  if (s.institution === issuer) return null;
+  if (wholeGovernment(s) && !s.bounds?.institutions?.includes(issuer) && !isIndependent(s, issuer)) return null;
+  return wholeGovernment(s)
+    ? 'Signing for an institution needs an account of that institution; officials serving the whole government sign the executive office\'s directives'
+    : 'You can sign only your own institution\'s directives';
 }
 
-/** Drafts are seen only by the issuing institution (and officials serving the whole government). */
+/** Drafts are seen only by the issuing institution (and officials serving the whole government, except an independent institution's). */
 export function canSeeDraft(s: Scope, issuer: string): boolean {
-  return wholeGovernment(s) || s.institution === issuer;
+  return reaches(s, issuer);
 }
 
 /** The role a substrate officer has on the platform, from the officer register's role. */
@@ -473,6 +576,9 @@ export interface CaseFacts {
   sensitivity: Sensitivity;
   /** The owner is a court: nobody outside it reads or acts. */
   judicial?: boolean;
+  /** The owner is independent (legislature, court, head of state, independent body): nobody outside it reads or
+   *  acts, except the public audit office reading with a stated purpose (never a court's). */
+  independent?: boolean;
   /** Official ids assigned to the case, and named supervisors (secret cases). */
   assigned?: string[];
   supervisors?: string[];
@@ -505,7 +611,9 @@ export function caseActRefusal(s: CaseScope, c: CaseFacts, now = Date.now()): st
   if (s.institution !== c.owner) {
     return c.judicial
       ? 'A court\'s cases are worked only by the court\'s own officials'
-      : 'Cases are worked only by officials of the institution responsible for them; serving the whole government or administering the installation does not give that authority';
+      : c.independent
+        ? 'This institution is independent: its cases are worked only by its own officials'
+        : 'Cases are worked only by officials of the institution responsible for them; serving the whole government or administering the installation does not give that authority';
   }
   if (c.decision && role !== 'signatory') return 'A decision needs an official who can sign for the institution';
   if (c.sensitivity === 'restricted' && !assignedTo(s, c) && role !== 'signatory') return 'This case is restricted to the officials assigned to it and those who can sign';
@@ -523,6 +631,13 @@ export function caseReadRefusal(s: CaseScope, c: CaseFacts, purpose?: string): s
   const role = roleOf(s);
   const own = s.institution === c.owner;
   if (c.judicial && !own) return 'A court\'s cases are read only by the court\'s own officials';
+  // An independent institution's cases: its own officials; from outside only the public audit office's
+  // auditors, with a stated purpose (the caller writes every such read and refusal to the access log).
+  if (c.independent && !own) {
+    const publicAudit = role === 'auditor' && !!s.bounds?.audit && s.institution === s.bounds.audit;
+    if (!publicAudit) return 'This institution is independent: its cases are read only by its own officials';
+    return purpose?.trim() ? null : 'Say why you need to read this independent institution\'s case (audit purpose)';
+  }
   const auditorWithPurpose = role === 'auditor' && (own || wholeGovernment(s)) && !!purpose?.trim();
   if (c.sensitivity === 'normal') return own || wholeGovernment(s) ? null : 'Cases are read by officials of the responsible institution and of the whole government';
   if (c.sensitivity === 'restricted') {
