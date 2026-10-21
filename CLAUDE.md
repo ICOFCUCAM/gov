@@ -150,7 +150,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   follow `docs/CONSTITUTIONAL_ARCHITECTURE.md` (external guidance kept verbatim;
   binding). How it applies to the code, phase by phase:
   `docs/CONSTITUTIONAL_ARCHITECTURE_PLAN.md`; the code as audited:
-  `docs/reviews/2026-10-separation-of-powers-audit.md`. CivicOS enforces the
+  `docs/reviews/2026-10-separation-of-powers-audit.md`.
+- Ministries and institutions as complete, standalone-deployable systems
+  follow `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (external specification,
+  six parts, kept verbatim; binding). Assessment, upgrades, lower-priority
+  items, mapping to the code and build order:
+  `docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md`. Its implementation starts only
+  after the constitutional phases are complete and integrated. CivicOS enforces the
   nation's configuration and never invents, transfers or assumes authority:
   no institution is a child of a universal executive administrator, a seniority
   or a role never grants a power its institution lacks, independence is
