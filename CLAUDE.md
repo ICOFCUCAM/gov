@@ -107,6 +107,15 @@ What has been built is locked. Work only upgrades it toward the vision in
   or entered with reasons; the control channel is an officer's choice with
   reasons, never a score; no seizure, penalty or detention powers. Others
   learn only whether goods were released (`customs.release`).
+- A procedure's form is its contract (`lib/forms/contract.ts`, `docs/FORMS_CONFORMANCE.md`):
+  typed fields with a personal-data class, only registered rules
+  (`lib/forms/rules.ts`, unknown names fail closed), the same checks and
+  messages in the browser and in `submitForm()`; library forms load in their
+  own JSON (`lib/forms/canonical.ts`, `envelope.ts`), never a second format.
+  Day counts are the nation's (shipped unset). Scope lists are
+  `lib/forms/scope.ts`; publication is `lib/forms/publication.ts` (automatic
+  checks apart from approvals that are acts of different signed-in officials,
+  bound to the contract's hash; no status field).
 - Every decision step is classified in `lib/permits/decisions.ts` (permit
   mapping, deployment-profile domain, or refused in production when
   unclassified); the case engine checks it when a decision is proposed and
