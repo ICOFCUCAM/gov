@@ -24,6 +24,8 @@
 
 import type { Citation } from '@/lib/law/register';
 import { translationProblem, type TranslationEntries } from '@/lib/public-sites/translation';
+import { RULE_REGISTRY, isRegisteredRule, DIFFERS_FROM } from './rules';
+import type { Envelope } from './envelope';
 
 // ── Personal-data classes ─────────────────────────────────────────────────────
 /**
@@ -121,6 +123,7 @@ export const REFERENCE_REGISTERS: { key: string; label: string; example: string;
   { key: 'site', label: 'national register of sites', example: 'the site\'s id', connected: true },
   { key: 'institution', label: 'institution register', example: 'the institution\'s id', connected: true },
   { key: 'professional', label: 'register of professionals', example: 'PR-2026-000123', connected: true },
+  { key: 'law', label: 'laws register (instrument#provision)', example: '/eli/x/act/2020/7#sec_12', connected: true },
   { key: 'appropriation', label: 'register of budget appropriations', example: 'the appropriation reference', connected: false },
   { key: 'farm', label: 'register of farms', example: 'the farm record', connected: false },
   { key: 'water-source', label: 'register of water sources', example: 'the water source reference', connected: false },
@@ -187,14 +190,21 @@ export type NamedRule =
   /** A check the country configures, by name (PROFILES, or a name a loaded form contract uses). */
   | { rule: 'profile'; profile: string }
   /** `basis` is the provision that allows the check; until the nation cites one, the check is recorded as not performed. */
-  | { rule: 'verifyWith'; service: string; input: Record<string, string>; purpose: string; basis?: { instrument: string; eId: string } };
+  | { rule: 'verifyWith'; service: string; input: Record<string, string>; purpose: string; basis?: { instrument: string; eId: string } }
+  /**
+   * A rule from the registry (lib/forms/rules.ts) by its name and parameters,
+   * as a form contract in the canonical format names it
+   * (`{"rule": "required_if", "params": {"field": "…", "in": […]}}`). An
+   * unregistered name does not fit the contract (fail closed).
+   */
+  | { rule: 'registered'; name: string; params?: Record<string, unknown> };
 export type RuleName = NamedRule['rule'] | 'required' | 'type' | 'values';
 export const RULE_LABEL: Record<RuleName, string> = {
   required: 'Required', type: 'Right kind of answer', values: 'From the approved list',
   length: 'Length', pattern: 'Pattern', range: 'Range', requiredWhen: 'Required when another answer is', notAfter: 'Not after', notBefore: 'Not before',
   mustBeTrue: 'Must be confirmed', minItems: 'At least this many', maxItems: 'At most this many', existingRecord: 'Must point to an existing record', unique: 'Unique among open applications',
   signature: 'Signed by the applicant, who is identified', verifiedChannel: 'A verified contact channel', profile: 'Checked against the country\'s configuration',
-  verifyWith: 'Checked with an exchange service, where the law allows',
+  verifyWith: 'Checked with an exchange service, where the law allows', registered: 'A registered rule',
 };
 
 // ── The field and form shapes (the case engine's FieldSpec and the package's form) ──
@@ -212,8 +222,8 @@ export interface ContractField {
   /** A secrecy the law attaches beside the class (commercial, tax, financial). */
   confidentiality?: Confidentiality;
   hint?: string;
-  /** Plain-language error text by rule name (English; translated through the review). */
-  errors?: Partial<Record<RuleName, string>>;
+  /** Plain-language error text by rule name (English; translated through the review). Registered rules use their registry name. */
+  errors?: Partial<Record<RuleName, string>> & Record<string, string | undefined>;
   valuesSource?: ValuesSource;
   /** Several answers (a list): enum, references, parties, evidence, groups. */
   multiple?: boolean;
@@ -246,15 +256,84 @@ export interface ContractField {
   raisesSensitivity?: boolean;
   /** Asked only when another answer is (conditional section). */
   showWhen?: Condition;
-  /** Who answers: the applicant (on the form) or an official (at a step). Default applicant. */
-  audience?: 'applicant' | 'officer';
+  /** Who answers: the applicant (on the form), an official (at a step) or the platform itself (a time, a calculated amount). Default applicant. */
+  audience?: 'applicant' | 'officer' | 'system';
+  /** Where the value comes from (field series Part 4): the applicant, an authorised official, a verified source, or the system. */
+  valueSource?: 'applicant' | 'authorized_officer' | 'verified_source' | 'system';
+  /** The values source as the canonical contract names it (kept verbatim). */
+  valuesSourceId?: string;
+  /** Evidence this answer may need, and when (canonical `evidence`: kind and condition). */
+  evidenceRules?: { kind: string; when: string }[];
+  /** Accessibility requirements of the field (canonical `accessibility`, kept verbatim and applied by the renderer). */
+  accessibility?: Record<string, unknown>;
+  /** A decision the country must make about this field (canonical `country_decision`). */
+  countryDecision?: string | null;
+  /** The reusable field group (immutable id and version) this field comes from. */
+  group?: { id: string; version: number };
+  /**
+   * The minimisation review (field series Part 1 §1.6): seven answers the
+   * package gives for the field. A required field without them blocks
+   * publication.
+   */
+  minimisation?: Minimisation;
   /** Fields with the same section are asked together, one section per page in self-service. */
   section?: string;
   /** The field of the specification's form contract this field carries (docs/FORMS_CONFORMANCE.md). */
   specField?: string | string[];
   /** The building block it was made from (lib/forms/blocks.ts). */
   block?: string;
+  /** Presentation hints from the envelope standard (a widget name, an order); the renderer's own components decide how. */
+  ui?: { widget?: string; order?: number };
 }
+
+/** The seven questions of the field-level minimisation review (field series Part 1 §1.6). */
+export interface Minimisation {
+  /** 1. What decision, action or statutory record requires this information? */
+  decision: string;
+  /** 2. Which legal provision or approved procedural requirement authorises its collection? */
+  authority: string;
+  /** 3. Is it already available through an authorised register or exchange? */
+  availableFrom: string;
+  /** 4. Can the purpose be achieved with less sensitive data? */
+  lessSensitive: string;
+  /** 5. Who can read it, for what purpose, and for how long? */
+  access: string;
+  /** 6. What happens if the applicant cannot supply it? */
+  ifUnavailable: string;
+  /** 7. Is it necessary in all cases, or only under a registered condition? */
+  necessity: string;
+}
+export const MINIMISATION_QUESTIONS: { key: keyof Minimisation; question: string }[] = [
+  { key: 'decision', question: 'What decision, action or statutory record requires this information?' },
+  { key: 'authority', question: 'Which legal provision or approved procedural requirement authorises its collection?' },
+  { key: 'availableFrom', question: 'Is it already available through an authorised register or exchange?' },
+  { key: 'lessSensitive', question: 'Can the purpose be achieved with less sensitive data?' },
+  { key: 'access', question: 'Who can read it, for what purpose, and for how long?' },
+  { key: 'ifUnavailable', question: 'What happens if the applicant cannot supply it?' },
+  { key: 'necessity', question: 'Is the field necessary in all cases, or only under a registered condition?' },
+];
+export const minimisationComplete = (m?: Minimisation): boolean => !!m && MINIMISATION_QUESTIONS.every(q => typeof m[q.key] === 'string' && m[q.key].trim().length > 0);
+
+/** The evidence-requirement record (civicos.evidence-requirement.v1, field series Part 1 §1.4): every activated evidence requirement resolves to it. */
+export interface EvidenceRequirement {
+  schema_version: 'civicos.evidence-requirement.v1';
+  evidence_requirement_id: string;
+  procedure_package_id: string;
+  procedure_package_version: number;
+  evidence_type: string;
+  required_when_rule_id: string;
+  legal_basis: { law_record_id: string; law_version_id: string; provision_reference: string; authority_type: string };
+  accepted_alternatives_source: string;
+  verification_method_source: string;
+  retention_rule_id: string;
+  drafted_by: string;
+  approved_by: string;
+  status: string;
+}
+export const EVIDENCE_AUTHORITY_TYPES = ['statutory_requirement', 'approved_evidentiary_procedure', 'documented_non_statutory_authority'];
+
+/** A notice type of the standard legal and privacy notices (core.legal_notices). */
+export interface NoticeType { id: string; required: boolean; content_source: string; must_state: string[]; publication_blockers: string[] }
 
 export interface ContractDocument {
   class: string; label: string; required: boolean;
@@ -268,6 +347,8 @@ export interface ContractDocument {
   alternative?: string;
   /** Several documents of this class may be given. */
   multiple?: boolean;
+  /** The evidence-requirement record that makes it activatable (resolves to an approved law record). */
+  requirement?: EvidenceRequirement;
 }
 
 export interface FormSpec {
@@ -297,6 +378,30 @@ export interface FormSpec {
   channels?: { selfService?: string; assisted?: string; paper?: string; lowConnectivity?: string };
   /** Translations by language, string by string, each with the English it was made from. */
   translations?: Record<string, TranslationEntries>;
+  /** The canonical form contract this is (civicos.form-contract.v1), with its declared status and bindings. */
+  schemaVersion?: string;
+  status?: string;
+  institutionId?: string;
+  serviceId?: string;
+  procedurePackage?: { id: string; version: number };
+  legalBasis?: unknown[];
+  countryDecisions?: string[];
+  /** Reusable field groups the form uses, by immutable id and version. */
+  groups?: { id: string; version: number }[];
+  /** The standard notice types the form carries (core.legal_notices); their text is in `notices` under the same id. */
+  noticeTypes?: NoticeType[];
+  /** How the data is used, for the data-use notice: recipients and the retention rule. */
+  dataUse?: { recipients: string[]; retentionRule: string; lawfulBasis: string };
+  /** The catalogue identifiers this form answers (field series, e.g. CIV-BTH-002). */
+  catalogueIds?: string[];
+  /**
+   * The shared envelope's form-level properties (contract_version 1.0.0:
+   * owning institution, competent-authority rule, legal basis with its
+   * verification status, applicability, workflow, decision, privacy, audit,
+   * accessibility), lib/forms/envelope.ts. Where the form does not state
+   * them, envelopeOf() derives them from the procedure package.
+   */
+  envelope?: Envelope;
 }
 
 /** The channels one definition renders in. */
@@ -310,6 +415,8 @@ export const fieldClass = (f: Pick<ContractField, 'personalDataClass' | 'persona
 /** Whether a field stays out of lists, events and exports. */
 export const isPersonalField = (f: Pick<ContractField, 'personalDataClass' | 'personal'>): boolean => PERSONAL_CLASSES.includes(fieldClass(f));
 export const forApplicant = (f: Pick<ContractField, 'audience'>): boolean => (f.audience ?? 'applicant') === 'applicant';
+/** Rules a field names from the registry. */
+export const registeredOf = (f: Pick<ContractField, 'rules'>, name: string) => (f.rules ?? []).filter((r): r is Extract<NamedRule, { rule: 'registered' }> => r.rule === 'registered' && r.name === name);
 /** Whether a conditional field is asked, given the other answers. */
 export function shown(f: Pick<ContractField, 'showWhen'>, all: Record<string, unknown>): boolean {
   return !f.showWhen || conditionHolds(f.showWhen, all);
@@ -714,6 +821,56 @@ function checkPoint(label: string, v: unknown): { point: Point } | { error: stri
   return { point: { lng, lat } };
 }
 
+/** Whether a registered rule's condition (`field` with `equals` or `in`) holds. */
+function registeredConditionHolds(p: Record<string, unknown> | undefined, all: Record<string, unknown>): boolean {
+  if (!p || typeof p.field !== 'string') return false;
+  const o = all[p.field];
+  const vals = Array.isArray(o) ? o : isEmpty(o) ? [] : [o];
+  if (Array.isArray(p.in)) return vals.some(x => (p.in as unknown[]).some(y => String(y) === String(x)));
+  if (p.equals !== undefined) return vals.some(x => String(x) === String(p.equals));
+  return vals.length > 0;
+}
+/** The message of a registered rule: the field's own text for that rule, else the rule's name in words, translated through the review. */
+function registeredMessage(f: ContractField, name: string, ctx: CheckContext, prefix = 'field.'): string {
+  const english = f.errors?.[name] ?? `${f.label}: ${RULE_REGISTRY[name]?.label.toLowerCase() ?? name}`;
+  return ctx.text ? ctx.text(`${prefix}${f.key}.error.${name}`, english) : english;
+}
+/**
+ * Whether an answer fails a registered rule the browser and server both run
+ * (scope `client`); server, system, officer, document and binding rules are
+ * applied elsewhere and pass here.
+ */
+function registeredFails(name: string, p: Record<string, unknown>, v: unknown, all: Record<string, unknown>, ctx: CheckContext): boolean {
+  if (RULE_REGISTRY[name]?.scope !== 'client') return false;
+  const num = (x: unknown) => (typeof x === 'number' ? x : undefined);
+  switch (name) {
+    case 'length': { const s = textValue(v); if (s === null) return false; const n = [...s].length; return (num(p.min) !== undefined && n < num(p.min)!) || (num(p.max) !== undefined && n > num(p.max)!); }
+    case 'date_not_in_future': { const d = typeof v === 'string' ? v.slice(0, 10) : ''; return !!ctx.today && !!d && d > ctx.today; }
+    case 'date_not_before': { const d = typeof v === 'string' ? v.slice(0, 10) : ''; const ref = p.reference === 'submission_date' || !p.reference ? ctx.today : typeof all[String(p.reference)] === 'string' ? String(all[String(p.reference)]).slice(0, 10) : undefined; return !!ref && !!d && d < ref; }
+    case 'integer_range': return typeof v !== 'number' || !Number.isInteger(v) || (num(p.min) !== undefined && v < num(p.min)!) || (num(p.max) !== undefined && v > num(p.max)!);
+    case 'must_match': { const other = all[String(p.field)]; const expected = Array.isArray(p.true_when) ? (p.true_when as unknown[]).some(x => String(x) === String(other)) : false; return isEmpty(other) ? false : v !== expected; }
+    case 'must_be_true': return v !== true;
+    case 'coordinate_range': {
+      const pt = (v ?? {}) as { lat?: unknown; lng?: unknown };
+      const [la0, la1] = Array.isArray(p.latitude) ? (p.latitude as number[]) : [-90, 90];
+      const [lo0, lo1] = Array.isArray(p.longitude) ? (p.longitude as number[]) : [-180, 180];
+      return typeof pt.lat !== 'number' || typeof pt.lng !== 'number' || pt.lat < la0! || pt.lat > la1! || pt.lng < lo0! || pt.lng > lo1!;
+    }
+    case 'email_format': { const s = textValue(v); return s !== null && !new RegExp(PATTERNS.email!.re).test(s.trim()); }
+    case 'phone_format': { const s = textValue(v); return s !== null && !/^\+?[0-9][0-9 ()-]{5,24}$/.test(s.trim()); }
+    case 'iso3166_country_code_valid': { const s = typeof v === 'string' ? v : ''; return !/^[A-Z]{2}$/.test(s); }
+    case 'at_least_one_permitted_contact_method': { const c = v as { method?: string } | null; return !c || !c.method; }
+    case 'NONNEGATIVE': { const n = typeof v === 'number' ? v : v && typeof v === 'object' && typeof (v as { amount?: unknown }).amount === 'number' ? (v as { amount: number }).amount : undefined; return n !== undefined && n < 0; }
+    case 'APPROVER-DIFFERS-FROM-MAKER': case 'SEPARATION-OF-DUTIES': case 'PERSON-DIFFERS-FROM-REVIEWER': case 'PERSON-DIFFERS-FROM-PROPOSER': {
+      // The same person named twice: compared on the answers here; the platform's own dual control (personOf()) applies to the officials who act.
+      const others = Array.isArray(p.fields) ? (p.fields as string[]) : DIFFERS_FROM[name] ?? [];
+      const id = (x: unknown) => (typeof x === 'string' ? x.trim().toLowerCase() : x && typeof x === 'object' && 'ref' in x ? String((x as { ref: unknown }).ref).trim().toLowerCase() : '');
+      return !isEmpty(v) && others.some(k => !isEmpty(all[k]) && id(all[k]) === id(v));
+    }
+    default: return false;
+  }
+}
+
 /** The text a length or pattern rule reads. */
 const textValue = (v: unknown): string | null => (typeof v === 'string' ? v : v && typeof v === 'object' && !Array.isArray(v) && Object.values(v).every(x => typeof x === 'string') && !('kind' in v) && !('line1' in v) ? textOf(v) : null);
 /** How many items a list answer has. */
@@ -750,6 +907,8 @@ export function checkAnswers(fields: ContractField[], input: Record<string, unkn
       if (f.required) { errors.push({ field: f.key, rule: 'required', message: message(f, 'required', ctx, undefined, prefix) }); continue; }
       const when = (f.rules ?? []).find((r): r is Extract<NamedRule, { rule: 'requiredWhen' }> => r.rule === 'requiredWhen' && conditionHolds(r, all));
       if (when) { errors.push({ field: f.key, rule: 'requiredWhen', message: message(f, 'requiredWhen', ctx, undefined, prefix) }); continue; }
+      const regWhen = registeredOf(f, 'required_if').find(r => registeredConditionHolds(r.params, all));
+      if (regWhen) { errors.push({ field: f.key, rule: 'required_if' as RuleName, message: registeredMessage(f, 'required_if', ctx, prefix) }); continue; }
     }
     if (empty || (!given && ctx.mode === 'partial')) continue;
     for (const r of f.rules ?? []) {
@@ -778,16 +937,22 @@ export function checkAnswers(fields: ContractField[], input: Record<string, unkn
         case 'mustBeTrue': if (v !== true) bad = { rule: 'mustBeTrue' }; break;
         case 'minItems': if (countOf(v) < r.min) bad = { rule: 'minItems', p: { min: r.min } }; break;
         case 'maxItems': if (countOf(v) > r.max) bad = { rule: 'maxItems', p: { max: r.max } }; break;
+        case 'registered': {
+          const why = registeredFails(r.name, (r.params ?? {}) as Record<string, unknown>, v, all, ctx);
+          if (why) { errors.push({ field: f.key, rule: r.name as RuleName, message: registeredMessage(f, r.name, ctx, prefix) }); bad = { rule: 'registered' }; }
+          break;
+        }
         default: break;
       }
-      if (bad) { errors.push({ field: f.key, rule: bad.rule, message: message(f, bad.rule, ctx, bad.p, prefix) }); break; }
+      if (bad) { if (bad.rule !== 'registered') errors.push({ field: f.key, rule: bad.rule, message: message(f, bad.rule, ctx, bad.p, prefix) }); break; }
     }
   }
   return { values, errors };
 }
 
 // ── Checking a definition (the designer and checkPackage()) ────────────────────
-const FIELD_KEY = /^[a-z][A-Za-z0-9]{0,40}$/;
+/** A field key: camelCase, or a canonical dotted id (person.name_full). */
+export const FIELD_KEY = /^(?:[a-z][A-Za-z0-9]{0,40}|[a-z][a-z0-9_]{0,40}(?:\.[a-z0-9_]{1,40}){1,3})$/;
 const SERVICE_ID = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/;
 const LIST_NAME = /^[a-z][a-z0-9_.-]{1,80}$/;
 const TEXTISH = ['text', 'longtext', 'localizedText', 'identifierReference', 'registryReference', 'person', 'organisation', 'place'];
@@ -795,7 +960,7 @@ const TEXTISH = ['text', 'longtext', 'localizedText', 'identifierReference', 're
 /** Why a field does not fit the contract, or null. `keys` are the procedure's field keys; `classes` its document classes; `lists` its configured lists. */
 export function fieldProblem(f: ContractField, keys: string[], classes: string[], nested = false): string | null {
   const at = `Field ${f.key}`;
-  if (nested && !FIELD_KEY.test(f.key)) return `${at}: keys are names in camelCase`;
+  if (nested && !FIELD_KEY.test(f.key)) return `${at}: keys are names in camelCase or canonical dotted ids`;
   if (!FIELD_TYPES.includes(f.type as FormFieldType)) return `${at}: unknown type ${f.type}`;
   if (typeof f.label !== 'string' || !f.label.trim() || f.label.length > 300) return `${at}: give it a plain-language label (at most 300 characters)`;
   if (f.hint !== undefined && (typeof f.hint !== 'string' || f.hint.length > 400)) return `${at}: the hint is at most 400 characters`;
@@ -803,13 +968,13 @@ export function fieldProblem(f: ContractField, keys: string[], classes: string[]
   if (f.personalDataClass !== undefined && !CLASS_KEYS.includes(f.personalDataClass)) return `${at}: the personal-data class is one of ${CLASS_KEYS.join(', ')}`;
   if (f.personalDataClass !== undefined && f.personal !== undefined && f.personal !== PERSONAL_CLASSES.includes(f.personalDataClass)) return `${at}: personal and its personal-data class disagree`;
   if (f.confidentiality !== undefined && !CONFIDENTIALITY.some(c => c.key === f.confidentiality)) return `${at}: confidentiality is commercial, tax or financial`;
-  if (f.audience !== undefined && f.audience !== 'applicant' && f.audience !== 'officer') return `${at}: answered by the applicant or an official`;
+  if (f.audience !== undefined && !['applicant', 'officer', 'system'].includes(f.audience)) return `${at}: answered by the applicant, an official or the platform`;
   if (f.multiple && !['enum', 'registryReference', 'identifierReference', 'party', 'document', 'group'].includes(f.type)) return `${at}: this kind of question takes one answer`;
   if (f.showWhen && (!keys.includes(f.showWhen.field) || f.showWhen.field === f.key)) return `${at}: it is shown depending on another field of the procedure`;
   if (f.raisesSensitivity && f.type !== 'boolean') return `${at}: only a yes-or-no question can ask for confidentiality`;
   if (f.acceptsText && !['location', 'party', 'enum', 'address', 'registryReference'].includes(f.type)) return `${at}: only locations, parties, lists, addresses and references keep an earlier text form`;
   if (f.textLines && f.type !== 'group') return `${at}: only a group can be given as lines`;
-  for (const [r, t] of Object.entries(f.errors ?? {})) if (!(r in RULE_LABEL) || typeof t !== 'string' || !t.trim() || t.length > 200) return `${at}: error text for ${r} must be plain words (at most 200 characters)`;
+  for (const [r, t] of Object.entries(f.errors ?? {})) if ((!(r in RULE_LABEL) && !isRegisteredRule(r)) || typeof t !== 'string' || !t.trim() || t.length > 200) return `${at}: error text for ${r} must be plain words (at most 200 characters)`;
   if (f.type === 'enum') {
     const s = f.valuesSource;
     if (!s) return `${at}: a choice from an approved list names where the list comes from`;
@@ -822,7 +987,7 @@ export function fieldProblem(f: ContractField, keys: string[], classes: string[]
     else if (s.kind === 'configured') { if (!LIST_NAME.test(s.list ?? '')) return `${at}: name the configured list`; }
     else if (s.kind !== 'regions') return `${at}: unknown kind of list`;
   } else if (f.valuesSource && f.type !== 'money') return `${at}: only a choice from an approved list has a list`;
-  if (f.type === 'registryReference' && !REFERENCE_REGISTERS.some(r => r.key === f.register)) return `${at}: name the register the reference points into (${REFERENCE_REGISTERS.map(r => r.key).join(', ')})`;
+  if (f.type === 'registryReference' && !REFERENCE_REGISTERS.some(r => r.key === f.register) && !/^[a-z][a-z0-9_.-]{1,80}$/.test(f.register ?? '')) return `${at}: name the register the reference points into (${REFERENCE_REGISTERS.map(r => r.key).join(', ')}, or a values source id)`;
   if (f.type === 'identifierReference' && !f.identifier?.scheme?.trim()) return `${at}: name the identifier (e.g. Birth registration number)`;
   if (f.type === 'document' && !classes.includes(f.evidence ?? '')) return `${at}: name the evidence it asks for (a document of the procedure)`;
   if (f.type === 'attestation') {
@@ -854,6 +1019,13 @@ export function fieldProblem(f: ContractField, keys: string[], classes: string[]
       case 'mustBeTrue': if (f.type !== 'boolean') return bad('applies to a yes-or-no question'); break;
       case 'minItems': if (!f.multiple || !Number.isInteger(r.min) || r.min < 1) return bad('applies to a list, from 1'); break;
       case 'maxItems': if (!f.multiple || !Number.isInteger(r.max) || r.max < 1 || r.max > 1000) return bad('applies to a list, from 1 to 1000'); break;
+      case 'registered': {
+        if (!isRegisteredRule(r.name)) return `${at}: rule ${r.name} is not registered: only registered rules run`;
+        const p = (r.params ?? {}) as Record<string, unknown>;
+        if ((r.name === 'required_if' || r.name === 'must_match') && (typeof p.field !== 'string' || !keys.includes(p.field) || p.field === f.key)) return `${at}: ${r.name} names another field of the form`;
+        if (r.name === 'length' && p.max !== undefined && (!Number.isInteger(p.max) || (p.max as number) < 1)) return `${at}: length needs a whole maximum`;
+        break;
+      }
       case 'existingRecord': if (f.type !== 'registryReference' && f.type !== 'party') return bad('applies to a register reference'); if (r.pendingProcedure !== undefined && !/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/.test(r.pendingProcedure)) return bad('names a procedure key'); break;
       case 'unique': if (!['text', 'identifierReference', 'registryReference'].includes(f.type)) return bad('applies to a reference'); break;
       case 'signature': if (f.type !== 'attestation') return bad('applies to a declaration'); break;
@@ -892,7 +1064,7 @@ export function formProblem(form: FormSpec | undefined, fields: ContractField[],
     if (!Array.isArray(l.values) || new Set(l.values.map(v => v.value)).size !== l.values.length || l.values.some(v => !/^[a-z0-9][a-z0-9_.-]{0,60}$/.test(v.value) || !v.label?.trim())) return `List ${name}: values are distinct lowercase words with a label`;
   }
   for (const [k, v] of Object.entries(form.policies ?? {})) if (!/^[a-z][a-z0-9_.]{1,60}$/.test(k) || (typeof v !== 'boolean' && (typeof v !== 'string' || v.length > 200))) return `Policy ${k}: a name and a short value`;
-  for (const n of form.notices ?? []) if (!/^[a-z][a-z0-9-]{0,40}$/.test(n.key) || !n.title?.trim() || !n.text?.trim() || n.text.length > 2000) return 'Each notice has a key, a title and its text (at most 2000 characters)';
+  for (const n of form.notices ?? []) if (!/^[a-z][a-z0-9_.-]{0,60}$/.test(n.key) || !n.title?.trim() || !n.text?.trim() || n.text.length > 2000) return 'Each notice has a key, a title and its text (at most 2000 characters)';
   for (const [k, v] of Object.entries(form.channels ?? {})) if (!['selfService', 'assisted', 'paper', 'lowConnectivity'].includes(k) || typeof v !== 'string' || v.length > 600) return `Channel note ${k}: at most 600 characters`;
   const known = new Map(formStrings(fields, documents, form).map(s => [s.path, s.text]));
   for (const [locale, entries] of Object.entries(form.translations ?? {})) {
@@ -936,6 +1108,8 @@ export interface FormView {
   currency: string;
   locale: string;
   dir: 'ltr' | 'rtl';
+  /** The nation's regions (an address's or a location's region is one of them). */
+  regions: string[];
 }
 
 /** The choices of an enum or choice field from a snapshot of the approved sources and the form's own lists. */
@@ -1028,7 +1202,7 @@ export function resolveForm(pkg: { key: string; version: number; title: string; 
       ...(rest.channels ? { channels: Object.fromEntries(Object.entries(rest.channels).map(([k, t]) => [k, tr(`form.channel.${k}`, t!)])) } : {}),
     };
   }
-  return { procedure: { key: pkg.key, version: pkg.version, title: pkg.title, state: pkg.state, ...(pkg.reference ? { reference: true } : {}), ...(pkg.library ? { library: true } : {}) }, form, fields, documents, currency: opts.currency, locale: opts.locale, dir: opts.dir ?? 'ltr' };
+  return { procedure: { key: pkg.key, version: pkg.version, title: pkg.title, state: pkg.state, ...(pkg.reference ? { reference: true } : {}), ...(pkg.library ? { library: true } : {}) }, form, fields, documents, currency: opts.currency, locale: opts.locale, dir: opts.dir ?? 'ltr', regions: [...s.regions] };
 }
 
 /** A citation in words: "Civil Registration Act, provision 12 (version …)". */

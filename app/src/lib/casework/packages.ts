@@ -15,7 +15,7 @@ import { dualControlRefusal } from '@/lib/data/dual-control';
 import { samplesAllowed } from '@/lib/ops/mode';
 import { isAuthorityKey, type AuthorityKey } from '@/lib/nation/deployment';
 import { withDefaults } from '@/lib/data/defaults';
-import { fieldClass, fieldProblem, formProblem, PERSONAL_CLASSES } from '@/lib/forms/contract';
+import { FIELD_KEY, fieldClass, fieldProblem, formProblem, PERSONAL_CLASSES } from '@/lib/forms/contract';
 import type { CasePackage, ActionSpec, FieldSpec, PackageTest } from './types';
 
 interface PackageDb { packages: CasePackage[] }
@@ -36,7 +36,6 @@ export function resetPackages(): void { g.__civicosCasePackages = undefined; }
 const KEY = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 /** Field keys are names a form and its data use: camelCase. */
-const FIELD_KEY = /^[a-z][A-Za-z0-9]{0,40}$/;
 
 /** Check a procedure's structure: every stage, action, field, document and deadline must fit together. */
 export function checkPackage(p: Partial<CasePackage>, effects: string[] = []): string | null {

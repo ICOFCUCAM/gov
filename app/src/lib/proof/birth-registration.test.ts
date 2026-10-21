@@ -52,10 +52,14 @@ describe('proof: a birth registration through every layer', () => {
   });
 
   it('1. a citizen notifies a birth', async () => {
-    const r = await citizenApply(new NextRequest('http://x/', { method: 'POST', body: JSON.stringify({ procedure: 'civil.birth', fields: { childGiven: 'Amara', childFamily: 'Okafor', sex: 'female', birthDate: '2026-09-01', region: 'North', motherGiven: 'Ngozi', motherFamily: 'Okafor' } }) }));
+    const r = await citizenApply(new NextRequest('http://x/', { method: 'POST', body: JSON.stringify({ procedure: 'civil.birth', fields: { childGiven: 'Amara', childFamily: 'Okafor', sex: 'female', birthDate: '2026-09-01', region: 'North', motherGiven: 'Ngozi', motherFamily: 'Okafor',
+      // The self-service form (crvs.birth-registration): where, who tells us, the evidence and the declaration.
+      birthPlace: { kind: 'described', text: 'District hospital' }, informantName: { kind: 'person', name: 'Ngozi Okafor' }, evidence: ['later'], declaration: { version: '1', confirmed: ['true'] } } }) }));
     expect(r.status).toBe(201);
-    caseId = (await r.json()).application.id;
-    expect(getCase(caseId)).toMatchObject({ source: 'citizen', stage: 'submitted', package: { key: 'civil.birth', version: 2 } });
+    const j = await r.json();
+    caseId = j.application.id;
+    expect(j.receipt).toMatchObject({ ref: j.application.ref, form: '1.0', channel: 'self-service', stillToProvide: ['Birth notification'] });
+    expect(getCase(caseId)).toMatchObject({ source: 'citizen', stage: 'submitted', package: { key: 'civil.birth', version: 2 }, intake: { channel: 'self-service', form: { version: '1.0', declaration: 'declaration@1' } }, fieldSources: { childGiven: { source: 'entered', channel: 'self-service' } } });
   });
 
   it('2. a traceable application, with the required evidence checked', async () => {

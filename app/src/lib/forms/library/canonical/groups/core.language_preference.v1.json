@@ -1,0 +1,70 @@
+{
+  "group_id": "core.language_preference",
+  "version": 1,
+  "scope": "universal",
+  "fields": [
+    {
+      "id": "language.interface",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.country.official_and_supported_languages",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Language for this service"},
+      "hint": {"en": "Choose a language you can understand."},
+      "error_text": {"en": {"value_in_source": "Choose an available language."}}
+    },
+    {
+      "id": "language.correspondence",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.country.official_and_supported_languages",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Language for letters and notices"},
+      "hint": {"en": "Choose this if you prefer a different language for correspondence."},
+      "error_text": {"en": {"value_in_source": "Choose an available language."}}
+    },
+    {
+      "id": "language.interpreter_needed",
+      "type": "boolean",
+      "required": false,
+      "validation": [],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Would you like an interpreter?"},
+      "hint": {"en": "This does not affect whether you can apply."},
+      "error_text": {}
+    },
+    {
+      "id": "language.interpreter_language",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "required_if", "params": {"field": "language.interpreter_needed", "equals": true}}, {"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.country.interpretation_languages",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Language for interpretation"},
+      "hint": {"en": "Choose the language you need."},
+      "error_text": {"en": {"required_if": "Choose an interpretation language."}}
+    }
+  ],
+  "accessibility": {
+    "language_must_not_be_inferred_from_nationality": true,
+    "language_switch_preserves_form_progress": true,
+    "rtl_layout_is_supported": true,
+    "untranslated_required_content_blocks_publication": true
+  },
+  "assisted_channel": {
+    "record_actual_interpretation_used_when_relevant": true,
+    "do_not_treat_machine_translation_as_certified_interpretation": true
+  },
+  "country_decisions": [
+    "Official languages, supported languages and languages available for legal notices.",
+    "Entitlement to interpretation or translated documents.",
+    "Which translations require certification for legally material proceedings."
+  ]
+}

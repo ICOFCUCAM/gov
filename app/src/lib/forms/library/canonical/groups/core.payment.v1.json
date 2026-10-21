@@ -1,0 +1,83 @@
+{
+  "group_id": "core.payment",
+  "version": 1,
+  "scope": "universal_when_the_service_has_a_lawful_charge",
+  "fields": [
+    {
+      "id": "payment.tariff_rule_ref",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "approved_rule_active_at_calculation", "params": {}}],
+      "values_source": "civicos.rules.approved_tariffs",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Applicable fee rule"},
+      "hint": {"en": "CivicOS selects the approved rule for this service."},
+      "error_text": {"en": {"approved_rule_active_at_calculation": "No approved fee rule applies. The service cannot collect a fee until the rule is configured."}}
+    },
+    {
+      "id": "payment.calculated_amount",
+      "type": "money",
+      "required": true,
+      "validation": [{"rule": "derived_from_approved_rule", "params": {}}, {"rule": "currency_matches_rule", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Calculated amount due"},
+      "hint": {"en": "This amount is calculated from the approved fee rule."},
+      "error_text": {"en": {"derived_from_approved_rule": "The amount must be calculated from the approved rule."}}
+    },
+    {
+      "id": "payment.exemption_claim",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.payment.exemption_categories",
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "exemption_evidence", "when": "when_the_applicant_claims_an_exemption_defined_by_law"}],
+      "label": {"en": "Are you claiming a fee exemption?"},
+      "hint": {"en": "Choose an exemption only if one applies to you."},
+      "error_text": {"en": {"value_in_source": "Choose an available exemption category."}}
+    },
+    {
+      "id": "payment.payment_method",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.payment.approved_methods",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Payment method"},
+      "hint": {"en": "Choose an available method."},
+      "error_text": {"en": {"value_in_source": "Choose a payment method."}}
+    },
+    {
+      "id": "payment.transaction_ref",
+      "type": "identifier_reference",
+      "required": false,
+      "validation": [{"rule": "reference_type_allowed", "params": {"types": ["payment_transaction"]}}],
+      "values_source": "civicos.payments.transactions",
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "payment_receipt", "when": "when_payment_is_required_and_the_transaction_is_completed"}],
+      "label": {"en": "Payment reference"},
+      "hint": {"en": "The payment system supplies this reference."},
+      "error_text": {"en": {"reference_type_allowed": "Select a valid payment reference."}}
+    }
+  ],
+  "accessibility": {
+    "amount_and_currency_are_announced_together": true,
+    "fee_rule_and_calculation_are_explainable": true,
+    "payment_failure_does_not_erase_application": true
+  },
+  "assisted_channel": {
+    "officer_cannot_type_or_override_fee": true,
+    "cash_handling_requires_separate_authorized_receipt_workflow": true,
+    "record_exemption_claim_and_decision_separately": true
+  },
+  "country_decisions": [
+    "Lawful tariff schedule, currency, exemptions and calculation rules.",
+    "Approved payment providers and methods.",
+    "Whether payment is required before submission, before decision or before delivery.",
+    "Refund, waiver, arrears and reconciliation rules."
+  ]
+}

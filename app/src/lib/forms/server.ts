@@ -26,10 +26,11 @@ import { getTaxpayer } from '@/lib/tax/register';
 import { getProfessional, professions } from '@/lib/professions/register';
 import { getMinistry, listMinistries, institutionBounds } from '@/lib/data/store';
 import { locales } from '@/lib/i18n/config';
+import { STANDARD_SOURCES } from './library/catalogue';
 import COUNTRIES from '@/lib/geo/countries.json';
 import {
   checkAnswers, choicesOf, defaultMessage, localiser, resolveForm, REFERENCE_REGISTERS, PROFILES,
-  type CheckContext, type ContractField, type FieldError, type FormSpec, type FormView, type NamedRule, type PartyRef, type Point, type ValueSnapshot, type Location,
+  type CheckContext, type ContractDocument, type ContractField, type FieldError, type FormSpec, type FormView, type NamedRule, type PartyRef, type Point, type ValueSnapshot, type Location,
 } from './contract';
 import type { CasePackage, Verification } from '@/lib/casework/types';
 
@@ -79,6 +80,10 @@ export function valueSnapshot(on?: string): ValueSnapshot {
       configured_profession: professions().map(p => ({ value: p.key, label: p.title })),
       // The courts: institutions the nation named for the judiciary or recorded with judicial standing.
       configured_court_reference: courts(),
+      // The field series' standard values sources (Part 1 §1.3) and the ones another system keeps.
+      ...STANDARD_SOURCES,
+      'iso.3166-1.alpha2.current': COUNTRY_LIST.map(c => ({ value: c.iso2, label: `${c.name} (${c.iso2})` })),
+      'civicos.country.official_and_supported_languages': nationLanguages().map(l => ({ value: l, label: languageName(l) })),
     },
   };
 }
@@ -95,7 +100,7 @@ export function optionsFor(fields: ContractField[], form?: FormSpec, on?: string
 }
 
 /** A procedure's form as it renders, in a language (reviewed translations only; English otherwise). */
-export function formView(pkg: Pick<CasePackage, 'key' | 'version' | 'title' | 'state' | 'reference' | 'fields' | 'documents' | 'form'> & { library?: boolean }, locale?: string, on?: string): FormView {
+export function formView(pkg: { key: string; version: number; title: string; state: string; reference?: boolean; library?: boolean; fields: ContractField[]; documents: ContractDocument[]; form?: FormSpec }, locale?: string, on?: string): FormView {
   const lang = locale && nationLanguages().includes(locale) ? locale : nationLocale();
   const dir = locales.find(l => l.code === lang)?.dir === 'rtl' ? 'rtl' : 'ltr';
   return resolveForm(pkg, valueSnapshot(on), { locale: lang, currency: nationCurrency(), dir });

@@ -1,0 +1,83 @@
+{
+  "group_id": "core.payout_account",
+  "version": 1,
+  "scope": "country-configurable",
+  "fields": [
+    {
+      "id": "payout.account_holder_name",
+      "type": "localized_text",
+      "required": true,
+      "validation": [{"rule": "required", "params": {}}, {"rule": "length", "params": {"min": 1, "max": 300}}],
+      "values_source": null,
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "account_ownership_evidence", "when": "when_required_by_the_approved_payout_procedure"}],
+      "label": {"en": "Name on the bank account"},
+      "hint": {"en": "Enter the account holder's name as recorded by the financial institution."},
+      "error_text": {"en": {"required": "Enter the account holder's name."}}
+    },
+    {
+      "id": "payout.country",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "iso.3166-1.alpha2.current",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Country of the bank account"},
+      "hint": {"en": "Select the country where the account is held."},
+      "error_text": {"en": {"value_in_source": "Select a country."}}
+    },
+    {
+      "id": "payout.account_identifier",
+      "type": "text",
+      "required": true,
+      "validation": [{"rule": "bank_identifier_format_from_country_policy", "params": {}}, {"rule": "length", "params": {"min": 1, "max": 100}}],
+      "values_source": "civicos.payments.bank_identifier_schemes",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "account_ownership_evidence", "when": "when_required_by_the_approved_payout_procedure"}],
+      "label": {"en": "Bank account details"},
+      "hint": {"en": "Enter the account identifier requested for this country and payment method."},
+      "error_text": {"en": {"bank_identifier_format_from_country_policy": "Check the account details."}}
+    },
+    {
+      "id": "payout.bank_identifier",
+      "type": "text",
+      "required": false,
+      "validation": [{"rule": "bank_identifier_format_from_country_policy", "params": {}}],
+      "values_source": "civicos.payments.bank_identifier_schemes",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Bank or branch identifier, if required"},
+      "hint": {"en": "Enter this only if the selected payment scheme requires it."},
+      "error_text": {"en": {"bank_identifier_format_from_country_policy": "Check the bank or branch identifier."}}
+    },
+    {
+      "id": "payout.verification_status",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "officer_or_service_only", "params": {}}],
+      "values_source": "civicos.payments.account_verification_status.v1",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Account verification status"},
+      "hint": {"en": "Recorded by the authorized payout or verification service."},
+      "error_text": {"en": {"officer_or_service_only": "This status is assigned by an authorized reviewer or service."}}
+    }
+  ],
+  "accessibility": {
+    "account_number_must_not_be_echoed_in_full": true,
+    "copy_and_paste_allowed": true,
+    "account_details_must_not_appear_in_general_case_exports": true
+  },
+  "assisted_channel": {
+    "mask_account_details_on_screen_and_prints": true,
+    "record_verification_method": true,
+    "do_not_require_a_bank_account_when_an_approved_alternative_exists": true
+  },
+  "country_decisions": [
+    "Supported payout schemes and account identifier formats.",
+    "Permitted payout destinations and third-party-account rules.",
+    "Evidence needed to verify account ownership.",
+    "Approved alternative payment methods for applicants without bank accounts."
+  ]
+}

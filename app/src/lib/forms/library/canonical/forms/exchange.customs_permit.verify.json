@@ -1,0 +1,101 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "exchange.customs_permit.verify",
+  "record_type": "civicos.authorized_exchange_request",
+  "form_version": 1,
+  "status": "draft",
+  "fields": [
+    {
+      "id": "exchange.requesting_institution",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "institution_active", "params": {}}, {"rule": "actor_authorized_for_exchange", "params": {}}],
+      "values_source": "civicos.registry.institutions",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Requesting institution"},
+      "hint": {"en": "Select the institution making the request."},
+      "error_text": {"en": {"institution_active": "Select an active institution.", "actor_authorized_for_exchange": "This institution or actor is not authorized for the requested exchange."}}
+    },
+    {
+      "id": "exchange.receiving_institution",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "approved_relationship_exists", "params": {}}, {"rule": "recipient_authorized_for_data", "params": {}}],
+      "values_source": "civicos.registry.institution_relationships",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Receiving institution"},
+      "hint": {"en": "Select the institution that owns the requested record."},
+      "error_text": {"en": {"approved_relationship_exists": "No approved relationship exists for this exchange.", "recipient_authorized_for_data": "The receiving institution is not authorized for this data."}}
+    },
+    {
+      "id": "exchange.purpose",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "purpose_authorized_for_relationship", "params": {}}],
+      "values_source": "civicos.exchange.approved_purposes",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Purpose of the request"},
+      "hint": {"en": "Choose the specific approved purpose for this lookup."},
+      "error_text": {"en": {"purpose_authorized_for_relationship": "The selected purpose is not authorized for this exchange."}}
+    },
+    {
+      "id": "exchange.target_record_ref",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "identifier_valid_for_target_registry", "params": {}}],
+      "values_source": "civicos.exchange.approved_target_identifiers",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Record to verify"},
+      "hint": {"en": "Provide the identifier required by the receiving institution's approved verification service."},
+      "error_text": {"en": {"identifier_valid_for_target_registry": "The identifier is invalid for the requested verification service."}}
+    },
+    {
+      "id": "exchange.legal_authority_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "lawful_basis_covers_data_and_purpose", "params": {}}],
+      "values_source": "civicos.registry.approved_legal_authorities",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Authority for the exchange"},
+      "hint": {"en": "Select the approved authority covering the requested data and purpose."},
+      "error_text": {"en": {"lawful_basis_covers_data_and_purpose": "The authority does not cover this data and purpose."}}
+    },
+    {
+      "id": "exchange.requested_attributes",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "attributes_minimized_and_allowed", "params": {}}],
+      "values_source": "civicos.exchange.approved_attribute_sets",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Information needed"},
+      "hint": {"en": "Request only the minimum attributes needed for this decision."},
+      "error_text": {"en": {"attributes_minimized_and_allowed": "One or more requested attributes are not authorized or are unnecessary for this purpose."}}
+    },
+    {
+      "id": "exchange.case_ref",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "case_open_and_purpose_matches", "params": {}}],
+      "values_source": "civicos.authorized_case_registry",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Related case"},
+      "hint": {"en": "Link the case that requires the verification."},
+      "error_text": {"en": {"case_open_and_purpose_matches": "The case is not open or does not match the stated purpose."}}
+    }
+  ],
+  "legal_basis": [],
+  "country_decisions": [
+    "Approved institutional relationships and exchange purposes.",
+    "Lawful basis for each data category and verification purpose.",
+    "Permitted attributes, response types and retention periods.",
+    "Whether the exchange requires case-by-case approval.",
+    "Dispute, correction and unauthorized-access reporting procedures."
+  ]
+}

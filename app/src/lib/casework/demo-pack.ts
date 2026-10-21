@@ -37,7 +37,7 @@ function sampleValue(f: FieldSpec, today: string): unknown {
     case 'person': return 'Sample person';
     case 'organisation': return 'Sample organisation';
     case 'place': return 'Sample place';
-    case 'text': case 'longtext': case 'localizedText': return 'Sample';
+    case 'text': case 'localizedText': return 'Sample';
     // Typed answers (lists, references, money, evidence, positions…) are left for the official: a sample never invents a register reference.
     default: return undefined;
   }

@@ -1,0 +1,78 @@
+{
+  "group_id": "core.legal_notices",
+  "version": 1,
+  "scope": "universal",
+  "notice_types": [
+    {
+      "id": "notice.service_purpose",
+      "required": true,
+      "content_source": "civicos.approved.service_purpose",
+      "must_state": ["what_service_does", "what_the_applicant_is_requesting", "what_happens_next"],
+      "publication_blockers": ["missing_approved_translation", "missing_service_owner"]
+    },
+    {
+      "id": "notice.legal_basis",
+      "required": true,
+      "content_source": "civicos.approved.legal_basis",
+      "must_state": ["law_title", "law_version_or_effective_date", "relevant_provision", "authority_granted", "scope_or_limit_of_authority"],
+      "publication_blockers": ["missing_legal_reference", "missing_effective_version", "missing_authorized_reviewer"]
+    },
+    {
+      "id": "notice.data_use",
+      "required": true,
+      "content_source": "civicos.approved.data_processing_notice",
+      "must_state": ["data_collected", "purpose", "lawful_basis", "authorized_recipients_or_recipient_categories", "retention_rule", "data_subject_rights_and_contact"],
+      "publication_blockers": ["unmapped_data_purpose", "unapproved_recipient_category", "missing_retention_rule"]
+    },
+    {
+      "id": "notice.evidence",
+      "required": true,
+      "content_source": "civicos.procedure.evidence_requirements",
+      "must_state": ["required_evidence", "why_each_item_is_required", "accepted_alternatives", "what_to_do_if_evidence_is_unavailable"],
+      "publication_blockers": ["evidence_without_legal_or_procedural_basis"]
+    },
+    {
+      "id": "notice.fees",
+      "required": false,
+      "content_source": "civicos.rules.approved_tariffs",
+      "must_state": ["calculation_basis", "currency", "exemptions_or_waivers_if_applicable", "payment_timing", "refund_or_reconciliation_route"],
+      "publication_blockers": ["fee_required_but_no_active_approved_tariff"]
+    },
+    {
+      "id": "notice.decision_and_appeal",
+      "required": true,
+      "content_source": "civicos.procedure.approved_decision_and_review_rules",
+      "must_state": ["decision_maker_or_authority", "possible_decision_types", "how_the_decision_is_communicated", "review_or_appeal_route_if_available", "applicable_deadline_from_approved_rule"],
+      "publication_blockers": ["missing_decision_authority", "missing_approved_review_route_when_legally_required"]
+    },
+    {
+      "id": "notice.save_and_return",
+      "required": true,
+      "content_source": "civicos.platform.approved_save_notice",
+      "must_state": ["whether_progress_is_saved", "how_to_return", "session_expiry_behavior", "what_must_be_submitted_before_deadline_if_any"],
+      "publication_blockers": ["save_behavior_not_defined"]
+    },
+    {
+      "id": "notice.accessibility_and_assistance",
+      "required": true,
+      "content_source": "civicos.platform.approved_assistance_notice",
+      "must_state": ["available_assisted_channels", "accessibility_support", "how_to_request_help", "alternative_submission_route_if_available"],
+      "publication_blockers": ["assistance_route_not_configured"]
+    }
+  ],
+  "universal_rules": {
+    "notices_are_versioned": true,
+    "notice_versions_are_snapshotted_at_submission": true,
+    "legal_basis_must_resolve_to_approved_law_record": true,
+    "deadlines_must_resolve_to_approved_rule": true,
+    "translation_must_be_approved_for_publication": true,
+    "notices_must_be_available_in_print_channel": true,
+    "notices_must_be_keyboard_and_screen_reader_accessible": true
+  },
+  "country_decisions": [
+    "Applicable data-protection law, notice wording and rights.",
+    "Required statutory references, decision reasons and review or appeal information.",
+    "Legally required retention periods and records-management rules.",
+    "Official languages and translations that have legal status."
+  ]
+}

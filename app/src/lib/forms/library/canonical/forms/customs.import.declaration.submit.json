@@ -1,0 +1,153 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "customs.import.declaration.submit",
+  "record_type": "customs.import_declaration",
+  "form_version": 1,
+  "status": "draft",
+  "fields": [
+    {
+      "id": "import.declarant_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [
+        {"rule": "actor_authorized_for_customs_declaration", "params": {}},
+        {"rule": "declarant_identity_resolves", "params": {}}
+      ],
+      "values_source": "customs.registry.authorized_declarants",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Declarant"},
+      "hint": {"en": "Select the person or organization legally responsible for submitting this declaration."},
+      "error_text": {"en": {"actor_authorized_for_customs_declaration": "You are not authorized to submit this declaration.", "declarant_identity_resolves": "Select a valid declarant record."}}
+    },
+    {
+      "id": "import.importer_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "party_record_valid_for_customs", "params": {}}],
+      "values_source": "civicos.registry.organisations",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Importer"},
+      "hint": {"en": "Select the importer identified by the applicable customs procedure."},
+      "error_text": {"en": {"party_record_valid_for_customs": "Select a valid importer record."}}
+    },
+    {
+      "id": "import.exporter_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "external_party_record_complete", "params": {}}],
+      "values_source": "customs.registry.trade_parties",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Exporter or consignor"},
+      "hint": {"en": "Identify the party sending the goods."},
+      "error_text": {"en": {"external_party_record_complete": "Provide the exporter or consignor details required by the customs schema."}}
+    },
+    {
+      "id": "import.transport_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "transport_document_matches_consignment", "params": {}}],
+      "values_source": "customs.transport_documents",
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "transport_document", "when": "as_required_by_the_approved_customs_procedure"}],
+      "label": {"en": "Transport document"},
+      "hint": {"en": "Select or provide the transport reference for this consignment."},
+      "error_text": {"en": {"transport_document_matches_consignment": "The transport record does not match this consignment."}}
+    },
+    {
+      "id": "import.procedure_code",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "customs_procedure_code_active", "params": {}}],
+      "values_source": "customs.country.approved.procedure_codes",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Requested customs procedure"},
+      "hint": {"en": "Choose the procedure applicable to these goods."},
+      "error_text": {"en": {"customs_procedure_code_active": "Select a procedure currently authorized for this declaration."}}
+    },
+    {
+      "id": "import.country_of_origin",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "iso3166_country_code_valid", "params": {}}, {"rule": "origin_evidence_rule_applied", "params": {}}],
+      "values_source": "iso.3166-1.alpha2.current",
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "origin_evidence", "when": "when_required_by_the_applicable_origin_rule"}],
+      "label": {"en": "Country of origin"},
+      "hint": {"en": "Use the origin definition applicable to these goods, not automatically the dispatch country."},
+      "error_text": {"en": {"iso3166_country_code_valid": "Choose a valid country code.", "origin_evidence_rule_applied": "The origin claim needs the evidence required by the applicable rule."}}
+    },
+    {
+      "id": "import.goods_items",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "customs_goods_schema_complete", "params": {}}, {"rule": "commodity_classification_active", "params": {}}],
+      "values_source": "customs.country.approved.goods_items",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Goods and commodity classifications"},
+      "hint": {"en": "Enter each goods item using the approved national customs data schema."},
+      "error_text": {"en": {"customs_goods_schema_complete": "Complete the required information for each goods item.", "commodity_classification_active": "One or more commodity codes are not valid for this declaration."}}
+    },
+    {
+      "id": "import.invoice_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "invoice_matches_declared_goods", "params": {}}],
+      "values_source": "customs.trade_documents",
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "commercial_invoice", "when": "when_required_by_the_approved_customs_procedure"}],
+      "label": {"en": "Commercial invoice"},
+      "hint": {"en": "Link the invoice or other accepted valuation evidence."},
+      "error_text": {"en": {"invoice_matches_declared_goods": "The invoice does not match the declared goods or parties."}}
+    },
+    {
+      "id": "import.declared_customs_value",
+      "type": "money",
+      "required": true,
+      "validation": [{"rule": "value_basis_allowed_for_procedure", "params": {}}, {"rule": "currency_and_conversion_rule_resolved", "params": {}}],
+      "values_source": "customs.country.approved.valuation_rules",
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "customs_valuation_evidence", "when": "as_required_by_the_applicable_valuation_rule"}],
+      "label": {"en": "Declared customs value"},
+      "hint": {"en": "Enter the value calculated under the applicable customs valuation rules."},
+      "error_text": {"en": {"value_basis_allowed_for_procedure": "The declared value does not meet the applicable valuation requirements.", "currency_and_conversion_rule_resolved": "The currency or conversion rule is invalid for this declaration."}}
+    },
+    {
+      "id": "import.supporting_documents",
+      "type": "document",
+      "required": false,
+      "validation": [{"rule": "evidence_requirements_satisfied", "params": {}}, {"rule": "malware_scan_passed", "params": {}}],
+      "values_source": "civicos.documents.secure_store",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "customs_supporting_document", "when": "as_required_by_the_approved_customs_procedure"}],
+      "label": {"en": "Supporting documents"},
+      "hint": {"en": "Attach the permits, certificates and other evidence required for this declaration."},
+      "error_text": {"en": {"evidence_requirements_satisfied": "Required evidence is missing.", "malware_scan_passed": "The file could not be accepted safely."}}
+    },
+    {
+      "id": "import.declaration_attestation",
+      "type": "boolean",
+      "required": true,
+      "validation": [{"rule": "must_be_true", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "declarant_attestation", "when": "as_required_by_the_approved_customs_law_and_procedure"}],
+      "label": {"en": "Confirm the declaration"},
+      "hint": {"en": "Read the approved declaration and legal effect before submitting."},
+      "error_text": {"en": {"must_be_true": "Confirm the declaration to submit."}}
+    }
+  ],
+  "legal_basis": [],
+  "country_decisions": [
+    "National customs law and declaration procedure types.",
+    "Required party, transport, goods, origin and valuation data elements.",
+    "Commodity classification and tariff schedule versions.",
+    "Customs valuation, exchange-rate and rounding rules.",
+    "Required certificates, permits, declarations and inspection powers.",
+    "Amendment, withdrawal, release, review and appeal rules."
+  ]
+}

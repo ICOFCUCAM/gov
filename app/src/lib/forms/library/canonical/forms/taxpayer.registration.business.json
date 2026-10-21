@@ -1,0 +1,161 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "taxpayer.registration.business",
+  "record_type": "taxpayer.registration_case",
+  "form_version": 1,
+  "status": "draft",
+  "fields": [
+    {
+      "id": "taxpayer.applicant_type",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "tax.country.approved_taxpayer_types",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Type of taxpayer"},
+      "hint": {"en": "Choose the category that matches the registration being requested."},
+      "error_text": {"en": {"value_in_source": "Choose an available taxpayer type."}}
+    },
+    {
+      "id": "taxpayer.organisation",
+      "type": "organisation",
+      "required": true,
+      "validation": [{"rule": "organisation_identity_consistent", "params": {}}],
+      "values_source": "civicos.registry.organisation",
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "legal_entity_registration", "when": "when_the_applicant_is_a_registered_legal_entity_and_the_procedure_requires_verification"}],
+      "label": {"en": "Business or organisation"},
+      "hint": {"en": "Select an existing organisation where possible, or provide the permitted registration details."},
+      "error_text": {"en": {"organisation_identity_consistent": "Check the organisation details against the applicable registration record."}}
+    },
+    {
+      "id": "taxpayer.trading_name",
+      "type": "localized_text",
+      "required": false,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 300}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Trading name"},
+      "hint": {"en": "Enter this only if it differs from the legal name."},
+      "error_text": {"en": {"length": "Check the trading name."}}
+    },
+    {
+      "id": "taxpayer.registration_ref",
+      "type": "identifier_reference",
+      "required": false,
+      "validation": [{"rule": "identifier_format_from_source", "params": {}}],
+      "values_source": "tax.country.approved.business_identifiers",
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "business_registration", "when": "when_a_business_registration_number_is_required"}],
+      "label": {"en": "Business registration number"},
+      "hint": {"en": "Enter the number issued by the responsible business registry."},
+      "error_text": {"en": {"identifier_format_from_source": "Check the business registration number."}}
+    },
+    {
+      "id": "taxpayer.business_activity",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "tax.country.approved.business_activity_codes",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Main business activity"},
+      "hint": {"en": "Choose the activity that best describes the business."},
+      "error_text": {"en": {"value_in_source": "Choose an available business activity."}}
+    },
+    {
+      "id": "taxpayer.business_start_date",
+      "type": "date",
+      "required": true,
+      "validation": [{"rule": "date_not_in_future", "params": {}}, {"rule": "date_allowed_by_registration_rule", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "business_activity_start", "when": "when_required_by_the_approved_registration_procedure"}],
+      "label": {"en": "Date business activity started or is expected to start"},
+      "hint": {"en": "Use the actual or expected date requested by the procedure."},
+      "error_text": {"en": {"date_not_in_future": "Check the date.", "date_allowed_by_registration_rule": "The date does not meet the configured registration rule."}}
+    },
+    {
+      "id": "taxpayer.registered_address",
+      "type": "address",
+      "required": true,
+      "validation": [{"rule": "address_satisfies_service_policy", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "registered_address", "when": "when_the_address_must_be_verified_under_the_approved_procedure"}],
+      "label": {"en": "Registered or principal business address"},
+      "hint": {"en": "Provide the address required for this type of taxpayer."},
+      "error_text": {"en": {"address_satisfies_service_policy": "Provide an address permitted for this registration."}}
+    },
+    {
+      "id": "taxpayer.contact",
+      "type": "contact",
+      "required": true,
+      "validation": [{"rule": "at_least_one_permitted_contact_method", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "personal",
+      "evidence": [],
+      "label": {"en": "Contact details"},
+      "hint": {"en": "Provide the contact method required by the approved procedure."},
+      "error_text": {"en": {"at_least_one_permitted_contact_method": "Provide at least one permitted contact method."}}
+    },
+    {
+      "id": "taxpayer.obligations_requested",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "obligations_available_for_taxpayer_type", "params": {}}],
+      "values_source": "tax.country.approved.tax_obligations",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Tax obligations requested"},
+      "hint": {"en": "Select the tax registrations relevant to this business."},
+      "error_text": {"en": {"obligations_available_for_taxpayer_type": "One or more selected obligations are not available for this taxpayer type."}}
+    },
+    {
+      "id": "taxpayer.representative",
+      "type": "person",
+      "required": false,
+      "validation": [{"rule": "required_if", "params": {"field": "taxpayer.acting_through_representative", "equals": true}}],
+      "values_source": "civicos.registry.person",
+      "personal_data_class": "personal",
+      "evidence": [{"kind": "authority_to_act", "when": "when_a_representative_submits_the_registration"}],
+      "label": {"en": "Authorized representative"},
+      "hint": {"en": "Provide this only when someone is acting for the business."},
+      "error_text": {"en": {"required_if": "Enter the representative's details."}}
+    },
+    {
+      "id": "taxpayer.authority_evidence",
+      "type": "document",
+      "required": false,
+      "validation": [{"rule": "required_if", "params": {"field": "taxpayer.acting_through_representative", "equals": true}}, {"rule": "evidence_requirement_in_approved_package", "params": {}}],
+      "values_source": "civicos.documents.secure_store",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "authority_to_act", "when": "when_required_by_the_approved_representation_rule"}],
+      "label": {"en": "Evidence of authority to act"},
+      "hint": {"en": "Provide the approved evidence of authority if required."},
+      "error_text": {"en": {"required_if": "Provide the required evidence of authority.", "evidence_requirement_in_approved_package": "This evidence is not included in the approved procedure."}}
+    },
+    {
+      "id": "taxpayer.declaration",
+      "type": "boolean",
+      "required": true,
+      "validation": [{"rule": "must_be_true", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [{"kind": "applicant_declaration", "when": "as_required_by_the_approved_tax_registration_procedure"}],
+      "label": {"en": "I confirm that the information provided is accurate to the best of my knowledge"},
+      "hint": {"en": "Read the declaration and applicable notice before confirming."},
+      "error_text": {"en": {"must_be_true": "Confirm the declaration to continue."}}
+    }
+  ],
+  "legal_basis": [],
+  "country_decisions": [
+    "Taxpayer categories and authoritative business registration records.",
+    "Tax obligations available to each taxpayer type.",
+    "Registration timing, filing start dates and accepted business identifiers.",
+    "Representation requirements, evidence and declaration wording.",
+    "Taxpayer confidentiality, retention and appeal rules."
+  ]
+}

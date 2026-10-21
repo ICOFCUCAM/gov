@@ -1,0 +1,125 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "tax.compliance.inspection_checklist",
+  "record_type": "tax.compliance_inspection",
+  "form_version": 1,
+  "status": "draft",
+  "fields": [
+    {
+      "id": "inspection.case_ref",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "case_exists_and_is_open", "params": {}}],
+      "values_source": "tax.compliance.authorized_cases",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Compliance case"},
+      "hint": {"en": "Select the authorized case for this inspection."},
+      "error_text": {"en": {"case_exists_and_is_open": "Select an open case authorized for this inspection."}}
+    },
+    {
+      "id": "inspection.authority_ref",
+      "type": "registry_reference",
+      "required": true,
+      "validation": [{"rule": "inspection_power_valid_for_scope", "params": {}}],
+      "values_source": "civicos.registry.approved_legal_authorities",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Legal authority for the inspection"},
+      "hint": {"en": "Select the approved legal power and scope authorizing this inspection."},
+      "error_text": {"en": {"inspection_power_valid_for_scope": "The authority does not authorize this inspection scope."}}
+    },
+    {
+      "id": "inspection.location",
+      "type": "address",
+      "required": true,
+      "validation": [{"rule": "location_within_authorized_scope", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Inspection location"},
+      "hint": {"en": "Record the location covered by the authorization."},
+      "error_text": {"en": {"location_within_authorized_scope": "The location is outside the authorized scope."}}
+    },
+    {
+      "id": "inspection.started_at",
+      "type": "date",
+      "required": true,
+      "validation": [{"rule": "server_timestamp_recorded", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Inspection start date"},
+      "hint": {"en": "The system records the inspection timestamp."},
+      "error_text": {"en": {"server_timestamp_recorded": "The start timestamp must be system-recorded."}}
+    },
+    {
+      "id": "inspection.inspector_ref",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "actor_has_active_inspection_authority", "params": {}}],
+      "values_source": "civicos.registry.authorized_officers",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Authorized inspector"},
+      "hint": {"en": "The inspector's identity and authorization are recorded by the system."},
+      "error_text": {"en": {"actor_has_active_inspection_authority": "The assigned officer is not authorized for this inspection."}}
+    },
+    {
+      "id": "inspection.checklist_version",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "approved_checklist_version", "params": {}}],
+      "values_source": "tax.compliance.approved_inspection_checklists",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Approved inspection checklist"},
+      "hint": {"en": "Use the checklist approved for this inspection type."},
+      "error_text": {"en": {"approved_checklist_version": "Select the approved checklist version."}}
+    },
+    {
+      "id": "inspection.observations",
+      "type": "long_text",
+      "required": true,
+      "validation": [{"rule": "length", "params": {"min": 1, "max": 20000}}],
+      "values_source": null,
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Observed facts"},
+      "hint": {"en": "Record what was observed. Separate observations from conclusions."},
+      "error_text": {"en": {"length": "Record the observations within the allowed length."}}
+    },
+    {
+      "id": "inspection.evidence_refs",
+      "type": "registry_reference",
+      "required": false,
+      "validation": [{"rule": "evidence_chain_complete", "params": {}}],
+      "values_source": "tax.compliance.evidence_register",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Evidence collected"},
+      "hint": {"en": "Link evidence only if it was collected under the authorized procedure."},
+      "error_text": {"en": {"evidence_chain_complete": "The evidence record is missing required chain-of-custody information."}}
+    },
+    {
+      "id": "inspection.follow_up",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "tax.compliance.inspection_follow_up.v1",
+      "personal_data_class": "restricted",
+      "evidence": [],
+      "label": {"en": "Recommended procedural next step"},
+      "hint": {"en": "Select a next step, not a finding of liability."},
+      "error_text": {"en": {"value_in_source": "Choose an available procedural next step."}}
+    }
+  ],
+  "legal_basis": [],
+  "country_decisions": [
+    "Inspection powers, authorization scope and notice requirements.",
+    "Permitted evidence collection and handling procedures.",
+    "Required records, interview safeguards and review rights.",
+    "Who may approve findings and who may make a tax assessment.",
+    "Complaint and independent review routes."
+  ]
+}

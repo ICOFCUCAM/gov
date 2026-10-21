@@ -1,0 +1,44 @@
+{
+  "schema_version": "civicos.form-contract.v1",
+  "form_id": "example.service.application",
+  "record_type": "example.service.case",
+  "form_version": 1,
+  "status": "draft",
+  "institution_id": "configured-institution-id",
+  "service_id": "configured-service-id",
+  "procedure_package_id": "configured-procedure-package-id",
+  "procedure_package_version": 1,
+  "legal_basis": [],
+  "fields": [
+    {
+      "id": "applicant.reference",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [
+        {
+          "rule": "required",
+          "params": {}
+        }
+      ],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {
+        "en": "Application reference"
+      },
+      "hint": {
+        "en": "Use the reference supplied by CivicOS."
+      },
+      "error_text": {
+        "en": {
+          "required": "Enter the application reference."
+        }
+      },
+      "accessibility": {
+        "autocomplete": "off",
+        "sensitive_to_screen_reader": false
+      },
+      "country_decision": null
+    }
+  ]
+}

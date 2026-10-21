@@ -1,0 +1,70 @@
+{
+  "group_id": "core.nationality_residence",
+  "version": 1,
+  "scope": "conditional",
+  "fields": [
+    {
+      "id": "nationality.status",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.nationality.status.v1",
+      "personal_data_class": "personal",
+      "evidence": [{"kind": "nationality_evidence", "when": "when_nationality_is_a_legal_eligibility_or_registration_requirement"}],
+      "label": {"en": "Nationality status"},
+      "hint": {"en": "Choose the description that applies to you."},
+      "error_text": {"en": {"value_in_source": "Choose a nationality status."}}
+    },
+    {
+      "id": "nationality.country_codes",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "iso.3166-1.alpha2.current",
+      "personal_data_class": "personal",
+      "evidence": [{"kind": "nationality_evidence", "when": "when_country_of_nationality_must_be_established_for_this_service"}],
+      "label": {"en": "Country or countries of nationality"},
+      "hint": {"en": "Select only the nationality information required for this service."},
+      "error_text": {"en": {"value_in_source": "Choose an available country."}}
+    },
+    {
+      "id": "residence.status",
+      "type": "choice",
+      "required": false,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.residence.status.v1",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "residence_status_evidence", "when": "when_residence_status_is_relevant_to_the_lawful_decision"}],
+      "label": {"en": "Residence status, if relevant"},
+      "hint": {"en": "Answer only if the service asks about your right or status of residence."},
+      "error_text": {"en": {"value_in_source": "Choose an available residence status."}}
+    },
+    {
+      "id": "residence.permit_reference",
+      "type": "identifier_reference",
+      "required": false,
+      "validation": [{"rule": "reference_type_allowed", "params": {"types": ["residence_permit"]}}],
+      "values_source": "civicos.registry.immigration_permits",
+      "personal_data_class": "restricted",
+      "evidence": [{"kind": "residence_status_evidence", "when": "when_a_valid_permit_reference_is_required"}],
+      "label": {"en": "Existing residence permit reference"},
+      "hint": {"en": "Use the existing reference if you have one and the service needs it."},
+      "error_text": {"en": {"reference_type_allowed": "Select a valid permit reference."}}
+    }
+  ],
+  "accessibility": {
+    "nationality_is_not_inferred_from_name_or_language": true,
+    "stateless_or_unknown_status_must_be_supported_where_lawful": true,
+    "multiple_nationalities_supported_when_relevant": true
+  },
+  "assisted_channel": {
+    "officer_may_verify_against_an_authorized_register": true,
+    "record_verification_source_and_outcome": true
+  },
+  "country_decisions": [
+    "Nationality and residence categories recognized for each service.",
+    "Which services may lawfully ask for nationality or residence status.",
+    "Accepted evidence and authoritative registers.",
+    "How unknown, disputed, stateless or multiple-nationality cases are handled."
+  ]
+}

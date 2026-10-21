@@ -1,0 +1,72 @@
+{
+  "group_id": "core.consent",
+  "version": 1,
+  "scope": "universal_when_consent_is_the_valid_basis",
+  "fields": [
+    {
+      "id": "consent.purpose_code",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.consent.approved_purposes",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Purpose of consent"},
+      "hint": {"en": "Each purpose must be explained separately."},
+      "error_text": {"en": {"value_in_source": "Choose an approved purpose."}}
+    },
+    {
+      "id": "consent.notice_version",
+      "type": "identifier_reference",
+      "required": true,
+      "validation": [{"rule": "approved_content_version", "params": {}}],
+      "values_source": "civicos.approved.consent_notices",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Consent notice"},
+      "hint": {"en": "The approved notice is displayed before the choice."},
+      "error_text": {"en": {"approved_content_version": "The consent notice is not approved."}}
+    },
+    {
+      "id": "consent.choice",
+      "type": "choice",
+      "required": true,
+      "validation": [{"rule": "value_in_source", "params": {}}],
+      "values_source": "civicos.consent.choice.v1",
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Your choice"},
+      "hint": {"en": "You can decline optional consent without losing unrelated services."},
+      "error_text": {"en": {"value_in_source": "Choose whether to consent."}}
+    },
+    {
+      "id": "consent.recorded_at",
+      "type": "date",
+      "required": true,
+      "validation": [{"rule": "server_recorded_timestamp", "params": {}}],
+      "values_source": null,
+      "personal_data_class": "administrative",
+      "evidence": [],
+      "label": {"en": "Date recorded"},
+      "hint": {"en": "The system records the time automatically."},
+      "error_text": {"en": {"server_recorded_timestamp": "The consent timestamp must be system-recorded."}}
+    }
+  ],
+  "accessibility": {
+    "consent_choices_must_be_equally_clear": true,
+    "no_preselected_optional_consent": true,
+    "each_purpose_has_separate_choice": true,
+    "withdrawal_path_must_be_explained_where_withdrawal_is_permitted": true
+  },
+  "assisted_channel": {
+    "officer_must_read_or_explain_notice_when_needed": true,
+    "record_language_and_assistance_method": true,
+    "officer_must_not_select_consent_on_behalf_of_applicant": true
+  },
+  "country_decisions": [
+    "Which processing purposes may lawfully rely on consent.",
+    "Which consent choices can be withdrawn and how withdrawal affects future processing.",
+    "Rules for minors, guardians and persons requiring supported decision-making.",
+    "Retention and audit requirements for consent evidence."
+  ]
+}
