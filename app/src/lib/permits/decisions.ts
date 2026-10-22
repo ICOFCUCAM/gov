@@ -33,6 +33,9 @@ import { PRODUCT_PERMIT_TYPES, PROCEDURE_PERMITS } from '@/lib/health/products/p
 import { PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
 import { OVERSIGHT_PERMITS } from '@/lib/oversight/procedures';
 import { TAX_PERMITS } from '@/lib/tax/procedures';
+import { LAND_PERMITS } from '@/lib/land/procedures';
+import { BUILDING_DECISION_PERMITS } from '@/lib/building/procedures';
+import { HOUSING_PERMITS } from '@/lib/housing/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -94,6 +97,17 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   // Independent oversight (plan I8, lib/oversight): admissibility, issued findings and recommendations, approved audit reports and the
   // data-protection authority's decisions, each family under its own permit type (lead: the body's slot). Proposed, unapproved.
   for (const [prefix, permitType] of Object.entries(OVERSIGHT_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  // Territory and infrastructure (plan I7): dealings in registered land and land disputes (lib/land), each under its own permit type
+  // (lead: the landRegistry slot). Proposed, unapproved.
+  for (const [prefix, permitType] of Object.entries(LAND_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  // Planning and building control (plan I7, lib/building): a planning permission, a building permit and its variations, enforcement
+  // (stop-work orders) and occupancy, each its own permit type, so a local government can lead for its area; housing programmes and allocations.
+  if (key.startsWith('building.')) {
+    const byDecision = BUILDING_DECISION_PERMITS[a.decision ?? ''];
+    if (byDecision) return mapped(byDecision);
+    for (const [prefix, permitType] of Object.entries(BUILDING_DECISION_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  }
+  for (const [prefix, permitType] of Object.entries(HOUSING_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);
 }

@@ -549,6 +549,12 @@ const OFFICIAL_WORK: RegExp[] = [
   // authority, approved only by officials who can sign there (sealKeyProposeRefusal() / sealKeyApproveRefusal(),
   // checked in the store). Not ADMIN_ONLY: the approvers are the named authority's own officials.
   /^\/api\/seal-keys$/,
+  // Territory and infrastructure (plan I7): the nation's building control rules (proposed by an official of the building
+  // control authority citing the law, confirmed by a different one who can sign there: checked in the route); a local
+  // government's council rules and its own procedures (only its own officials: checked in the route, never whole-government
+  // scope). Cases themselves move only through /api/cases.
+  /^\/api\/building$/,
+  /^\/api\/local-government$/,
 ];
 
 export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official' | 'legislature';
@@ -841,8 +847,10 @@ export function canCertifyParcel(s: Scope, authorityId: string | undefined): str
  * administrators and auditors. Nobody else; never in tiles, the OGC
  * collection, lists or exports (lib/data/parcels.ts publicParcel()).
  */
-export function canSeeParcelRights(s: Scope, authorityId: string | undefined): string | null {
-  if (authorityId && s.institution === authorityId) return null;
+export function canSeeParcelRights(s: Scope, authorityId: string | undefined | (string | undefined)[]): string | null {
+  // The cadastre authority, and since plan step I7 the land registry the nation names for registered interests (lib/data/parcels.ts rightsKeepers()).
+  const keepers = (Array.isArray(authorityId) ? authorityId : [authorityId]).filter((x): x is string => !!x);
+  if (s.institution && keepers.includes(s.institution)) return null;
   const role = roleOf(s);
   if (wholeGovernment(s) && (role === 'administrator' || role === 'auditor')) return null;
   return 'Rights and holders are shown only to the cadastre authority and officials with need';

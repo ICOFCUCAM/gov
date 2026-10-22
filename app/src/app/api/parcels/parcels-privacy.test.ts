@@ -4,8 +4,11 @@
 // vector tiles and their TileJSON, and the audit chain — for holder fields,
 // names and references. Only the cadastre authority's own officials (and
 // whole-government administrators and auditors) see them, on a parcel's own
-// record.
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+// record. Since plan step I7 a lease is registered on the parcel through the
+// land registry's procedure (two officials), and the land register's own
+// outputs (/api/land: its list, a parcel's transactions and disputes) are
+// scanned too: parties and grounds only for those with need.
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { applyNation } from '@/lib/nation/registry';
 import { listMinistries } from '@/lib/data/store';
@@ -13,6 +16,14 @@ import { listAudit } from '@/lib/data/store/audit';
 import { resetParcels, recordParcel, actOnParcel, proposeParcelPolicyChange, decideParcelPolicyChange, importParcels } from '@/lib/data/parcels';
 import { resetParcelTiles } from '@/lib/twin/parcel-tiles';
 import { listAccess, resetAccessLog } from '@/lib/records/access-log';
+import { setSovereign, institutionBounds } from '@/lib/data/store';
+import { act, attach, openCase, resetCases, registeredEffects } from '@/lib/casework/engine';
+import { draftPackage, approvePackage, resetPackages } from '@/lib/casework/packages';
+import { addDocument, resetDocuments } from '@/lib/records/documents';
+import { resetDecisions } from '@/lib/records/decisions';
+import { asNationSets } from '@/lib/casework/testkit';
+import { LAND_PROCEDURES } from '@/lib/land/procedures';
+import { resetLand } from '@/lib/land/register';
 
 let official: { name: string; institution?: string; role?: string } | null = null;
 vi.mock('@/lib/auth/official', async importOriginal => ({
@@ -33,6 +44,7 @@ const item = await import('@/app/api/twin/ogc/collections/[collectionId]/items/[
 const queryables = await import('@/app/api/twin/ogc/collections/[collectionId]/queryables/route');
 const tile = await import('@/app/api/twin/tiles/parcels/[z]/[x]/[y]/route');
 const tileJson = await import('@/app/api/twin/tiles/parcels/route');
+const land = await import('@/app/api/land/route');
 
 const HOLDER = 'Kipchoge Arap-Testholder', REF = 'NID-31415926', DOC = 'TITLE-27182818';
 // The holder's name, reference and document, and any holder or rights field (as a JSON key; the vocabulary's
@@ -50,23 +62,46 @@ const req = (path: string) => new NextRequest(`http://localhost${path}`);
 const params = <T,>(p: T) => ({ params: Promise.resolve(p) });
 let lands: string, other: string;
 
+/** The land registry registers a lease on the parcel: lodged, the parties verified, decided by two officials (lib/land/procedures.ts). */
+async function registerLease(parcel: string, holder: string) {
+  const who = (id: string, role: 'officer' | 'signatory') => ({ id, name: `Official ${id}`, scope: { id, role, institution: lands, bounds: institutionBounds() } });
+  const c = openCase({ procedure: 'land.encumbrance', fields: { parcel, encumbranceType: 'leasehold', beneficiary: holder, beneficiaryKind: 'organisation', beneficiaryRef: REF, instrumentKind: 'lease', instrumentRef: DOC } }, who('clerk', 'officer'));
+  if ('error' in c) throw new Error(c.error);
+  for (const cls of ['instrument', 'identity-evidence']) attach(c.id, (addDocument({ class: cls, title: cls, institution: lands, belongsTo: { kind: 'case', id: c.id }, bytes: new Uint8Array(Buffer.from('%PDF-1.7\nx\n%%EOF')) }, 'Clerk') as { id: string }).id, who('clerk', 'officer'));
+  for (const [action, by, reason] of [['lodge', who('clerk', 'officer'), undefined], ['verify', who('clerk', 'officer'), 'Lease and parties checked'], ['register', who('s1', 'signatory'), 'Lease registered'], ['register', who('s2', 'signatory'), undefined]] as const) {
+    const r = await act(c.id, { action, ...(reason ? { reason } : {}) }, by);
+    if ('error' in r) throw new Error(`${action}: ${r.error}`);
+  }
+}
+
 beforeEach(async () => {
   resetParcels(); resetParcelTiles();
-  applyNation({ iso3: 'KEN', regions: [] });
+  for (const r of [resetCases, resetPackages, resetDocuments, resetDecisions, resetLand]) r();
+  vi.stubEnv('CIVICOS_DATA_KEK', Buffer.alloc(32, 7).toString('base64'));
   const ms = listMinistries();
   lands = ms[0]!.id; other = ms[1]!.id;
+  setSovereign({ deployment: { authorities: { landRegistry: lands } } }, 'Administrator');
+  applyNation({ iso3: 'KEN', regions: [] });
+  for (const p of LAND_PROCEDURES) {
+    const d = draftPackage(asNationSets(p), 'Author', 'author', registeredEffects()); if ('error' in d) throw new Error(d.error);
+    const a = approvePackage(p.key, 1, 'Approver', 'approver', '2026-01-01', registeredEffects(), new Date('2026-01-01')); if ('error' in a) throw new Error(a.error);
+  }
   official = null;
   const c = ok(proposeParcelPolicyChange({ patch: { authorityId: lands }, reason: 'Lands keeps the cadastre' }, 'Admin 1'));
   ok(decideParcelPolicyChange(c.id, 'confirm', 'Admin 2'));
   const rights = [{ type: 'ownership', holderKind: 'person', holder: HOLDER, holderRef: REF, share: '1/1', source: { kind: 'title', ref: DOC } }];
   const a = ok(await recordParcel({ parcelId: 'NRB/1/100', geometry: square(LNG, LAT), landUse: 'residential', rights }, 'Clerk A'));
   ok(await actOnParcel(a.parcel.id, { action: 'publish' }, 'Registrar B'));
-  ok(await actOnParcel(a.parcel.id, { action: 'amend', reason: 'Lease registered', rights: [...rights, { type: 'leasehold', holderKind: 'organisation', holder: `${HOLDER} Ltd`, source: { kind: 'lease', ref: DOC } }] }, 'Clerk A'));
+  // The lease through the land registry's procedure (rights of a published parcel change only so), then a change of land use waiting for a second official.
+  await registerLease(a.parcel.id, `${HOLDER} Ltd`);
+  ok(await actOnParcel(a.parcel.id, { action: 'amend', reason: 'Change of user', landUse: 'commercial' }, 'Clerk A'));
   // A load with holder columns.
   const fc = { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { parcel_id: 'NRB/1/101', land_use: 'residential', holder: HOLDER, document: DOC }, geometry: square(LNG + 0.002, LAT) }] };
   ok(await importParcels({ text: JSON.stringify(fc) }, 'Clerk A'));
   ok(await actOnParcel('NRB/1/101', { action: 'publish' }, 'Registrar B'));
 });
+
+afterEach(() => { vi.unstubAllEnvs(); setSovereign({ deployment: { authorities: {} } }, 'test'); });
 
 describe('holder privacy across every output of the parcel register', () => {
   it('never carries holders in lists, records for viewers without need, loads, policy, OGC, tiles or the audit chain', async () => {
@@ -88,6 +123,8 @@ describe('holder privacy across every output of the parcel register', () => {
         ['queryables', await queryables.GET(req('/api/twin/ogc/collections/parcels/queryables'), params({ collectionId: 'parcels' }))],
         ['tile', await tile.GET(req(`/api/twin/tiles/parcels/${z}/${t.x}/${t.y}.mvt`), params({ z: String(z), x: String(t.x), y: `${t.y}.mvt` }))],
         ['tilejson', await tileJson.GET(req('/api/twin/tiles/parcels'))],
+        ['land register', await land.GET(req('/api/land'))],
+        ['land: one parcel\'s transactions and disputes', await land.GET(req('/api/land?parcel=NRB%2F1%2F100'))],
       ];
       for (const [name, r] of outputs) {
         expect(r.status, name).toBe(200);
@@ -102,7 +139,11 @@ describe('holder privacy across every output of the parcel register', () => {
     expect(ogc.numberMatched).toBe(2);
     expect(ogc.features[0]!.properties).toMatchObject({ parcelId: 'NRB/1/100', landUse: 'residential', regionCode: 'KE-30' });
     const rec = await (await one.GET(req('/api/parcels/NRB%2F1%2F100'), params({ pid: 'NRB%2F1%2F100' }))).json() as { parcel: { rightsCount: number; rightsHidden: boolean; pending?: { rightsCount: number } } };
-    expect(rec.parcel).toMatchObject({ rightsCount: 1, rightsHidden: true, pending: { rightsCount: 2 } });
+    expect(rec.parcel).toMatchObject({ rightsCount: 2, rightsHidden: true, pending: { rightsCount: 2 } });
+    // The land register has the lease's transaction: by reference, its parties hidden.
+    const lr = await (await land.GET(req('/api/land?parcel=PCL-000001'))).json() as { transactions: { kind: string; interest: string; partiesHidden: boolean }[]; interestsCount: number };
+    expect(lr.transactions).toMatchObject([{ kind: 'encumbrance', interest: 'PCL-000001/R2', partiesHidden: true }]);
+    expect(lr.interestsCount).toBe(2);
     expect(JSON.stringify(listAudit())).not.toMatch(PRIVATE);
   }, 120_000);
 
@@ -116,6 +157,12 @@ describe('holder privacy across every output of the parcel register', () => {
     expect(await seen()).toMatch(DOC);
     official = { name: 'Government auditor', role: 'auditor' };
     expect(await seen()).toMatch(HOLDER);
+    // The land registry's parties too, for the keepers only (the land registry is the cadastre authority here).
+    const parties = async () => JSON.stringify(await (await land.GET(req('/api/land?parcel=NRB%2F1%2F100'))).json());
+    official = { name: 'Clerk at Lands', institution: lands, role: 'officer' };
+    expect(await parties()).toMatch(`${HOLDER} Ltd`);
+    official = { name: 'Signatory elsewhere', institution: other, role: 'signatory' };
+    expect(await parties()).not.toMatch(PRIVATE);
     official = { name: 'Government officer', role: 'officer' };
     expect(await seen()).not.toMatch(PRIVATE);
     official = { name: 'Signatory elsewhere', institution: other, role: 'signatory' };

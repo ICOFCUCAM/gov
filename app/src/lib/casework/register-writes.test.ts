@@ -30,6 +30,8 @@ type Register = {
   changes: string[];
   /** Exports that only read it, or return a value without changing it. */
   reads: string[];
+  /** Files besides the module that name its store key: the persistence port and the backup system, which carry it whole (never a change of their own). */
+  storeAlso?: string[];
 };
 
 const REGISTERS: Register[] = [
@@ -90,6 +92,25 @@ const REGISTERS: Register[] = [
   { module: 'lib/courts/hearings.ts', store: '__civicosHearings', procedures: 'lib/courts/procedures.ts',
     changes: ['resetHearings', 'scheduleHearing', 'concludeHearing'],
     reads: ['causeList', 'hearingsOf'] },
+  // Plan step I7: the rights on a published parcel change only through the land registry's procedures (applyRightsChange,
+  // freezeInterest, releaseInterest); the parcel's own spatial record is recorded and published four-eyes through /api/parcels
+  // (the exceptions below), as before.
+  { module: 'lib/data/parcels.ts', store: '__civicosParcels', procedures: 'lib/land/procedures.ts', storeAlso: ['lib/data/repo/postgres.ts', 'lib/backup/state.ts'],
+    changes: ['resetParcels', 'proposeParcelPolicyChange', 'decideParcelPolicyChange', 'recordParcel', 'actOnParcel', 'importParcels', 'withdrawParcelImport', 'applyRightsChange', 'freezeInterest', 'releaseInterest'],
+    reads: ['LAND_USES', 'isLandUse', 'SURVEY_METHODS', 'isSurveyMethod', 'RIGHT_TYPES', 'HOLDER_KINDS', 'SOURCE_KINDS', 'DEFAULT_ID_PATTERN', 'parcelGeneration', 'publishedInBox', 'parcelPolicy',
+      'parcelPolicyChanges', 'cadastreAuthority', 'idFormat', 'readRights', 'overlapsOf', 'checkParcel', 'checkParcelId', 'rightsKeepers', 'rightRefs', 'freezeOn', 'TRANSFERABLE', 'ADDABLE',
+      'publicParcel', 'viewParcel', 'getParcel', 'PARCEL_PAGE_MAX', 'pageParcels', 'parcelCounts', 'PARCEL_COLUMNS', 'MAX_PARCEL_ROWS', 'MAX_PARCEL_FILE_BYTES', 'listParcelImports'] },
+  { module: 'lib/land/register.ts', store: '__civicosLand', procedures: 'lib/land/procedures.ts',
+    changes: ['resetLand', 'recordTransaction', 'openDispute', 'referDispute', 'decideDispute'],
+    reads: ['TRANSACTION_KINDS', 'DISPUTE_KINDS', 'DISPUTE_OUTCOMES', 'transactionsOf', 'disputesOf', 'transactionOfCase', 'disputeOfCase', 'openDisputes', 'viewTransaction', 'viewDispute', 'landCounts', 'recentLand'] },
+  { module: 'lib/building/register.ts', store: '__civicosBuilding', procedures: 'lib/building/procedures.ts',
+    changes: ['resetBuilding', 'proposeBuildingRules', 'confirmBuildingRules', 'withdrawBuildingRules', 'recordPlanningDecision', 'openPermit', 'submitDesign', 'decidePermit', 'decideVariation', 'setConstruction',
+      'recordInspection', 'issueStopWork', 'liftStopWork', 'decideOccupancy'],
+    reads: ['RESULTS', 'PERMIT_STATE_LABEL', 'CONSTRUCTION_STATE_LABEL', 'OCCUPANCY_STATE_LABEL', 'buildingRules', 'buildingRuleChanges', 'rulesRef', 'permitOfCase', 'getPermit', 'planningOfCase', 'getPlanning',
+      'inspectionsOf', 'stopOrdersOf', 'planningOnParcel', 'permitsOnParcel', 'buildingRegister', 'buildingCounts'] },
+  { module: 'lib/housing/register.ts', store: '__civicosHousing', procedures: 'lib/housing/procedures.ts',
+    changes: ['resetHousing', 'registerProgramme', 'receiveApplication', 'recordAssessment', 'allocate', 'closeApplication'],
+    reads: ['termsDigest', 'readTerms', 'readUnits', 'getProgramme', 'termsInForce', 'applicationOfCase', 'applicationsOf', 'waitingList', 'listProgrammes', 'housingCounts'] },
 ];
 
 /**
@@ -126,6 +147,18 @@ const EXCEPTIONS: { file: string; fn: string; why: string }[] = [
   { file: 'app/api/oversight/route.ts', fn: 'respondToFinding', why: 'the management response of the institution a finding concerns, appended beside the finding; the finding, its versions and stage are untouched (P4-04)' },
   { file: 'app/api/oversight/route.ts', fn: 'submitEvidence', why: 'evidence the institution asked submits to the body\'s request under an approved relationship; the request is the body\'s' },
   { file: 'app/api/oversight/route.ts', fn: 'answerControllerRequest', why: 'the controller\'s answer to the data-protection authority: what it did with a person\'s request about its records; the authority never reads them' },
+  // The land parcel register (docs/PARCEL_REGISTER.md): the spatial unit, its survey and land use, recorded by one official of the
+  // cadastre authority and published (or a change confirmed) by a different one; the policy four-eyes by administrators; loads checked
+  // row by row and withdrawable. None of them changes a right of a published parcel (actOnParcel refuses rights once published).
+  { file: 'app/api/parcels/route.ts', fn: 'recordParcel', why: 'a parcel\'s first record, published only by a different official; its rights are its first registration' },
+  { file: 'app/api/parcels/[pid]/route.ts', fn: 'actOnParcel', why: 'publication, a change of outline, land use or survey confirmed by a different official, or withdrawal with a reason; never a right of a published parcel' },
+  { file: 'app/api/parcels/import/route.ts', fn: 'importParcels', why: 'a checked load of proposed parcels (published only by a different official), audited with the file\'s SHA-256' },
+  { file: 'app/api/parcels/import/[iid]/route.ts', fn: 'withdrawParcelImport', why: 'withdraws a load as a whole, with the reason' },
+  { file: 'app/api/parcels/policy/route.ts', fn: 'proposeParcelPolicyChange', why: 'the nation\'s parcel policy (cadastre authority, id format, overlap rule): proposed by one administrator' },
+  { file: 'app/api/parcels/policy/[cid]/route.ts', fn: 'decideParcelPolicyChange', why: 'the parcel policy confirmed by a different administrator' },
+  { file: 'app/api/building/route.ts', fn: 'proposeBuildingRules', why: 'the nation\'s building control rules (categories, uses, checklists, severities), a country rule set: proposed citing the law, confirmed by a different official; records no permit or inspection' },
+  { file: 'app/api/building/route.ts', fn: 'confirmBuildingRules', why: 'the building control rules confirmed by a different official who can sign at the authority; earlier decisions keep the version they applied' },
+  { file: 'app/api/building/route.ts', fn: 'withdrawBuildingRules', why: 'withdraws a waiting rules proposal' },
   { file: 'lib/organisations/import.ts', fn: 'organisationsDb', why: 'the checked load of an existing register: proposed by one official of the keeping authority, confirmed by a different one, under the approved mapping in production' },
   { file: 'lib/organisations/import.ts', fn: 'nextOrganisationNumber', why: 'numbers the organisations a confirmed load enters' },
   // An institution's own records coming back from its portable export (Health I4 standalone-and-pilot): nothing is decided;
@@ -167,8 +200,14 @@ function importsOf(file: { path: string; text: string }): Import[] {
     const t = target(file.path, m[2]!);
     if (t) out.push({ from: t, names: m[1]!.split(',').map(s => s.trim().replace(/^type\s+/, '').split(/\s+as\s+/)[0]!.trim()).filter(Boolean), whole: false });
   }
+  // A dynamic import taken apart at once (`const { getParcel } = await import(...)`) names what it uses, like a static one.
+  const destructured = /const\s*\{([^}]*)\}\s*=\s*await\s+import\(\s*['"]([^'"]+)['"]\s*\)/g;
+  for (const m of file.text.matchAll(destructured)) {
+    const t = target(file.path, m[2]!);
+    if (t) out.push({ from: t, names: m[1]!.split(',').map(s => s.trim().split(/\s*:\s*/)[0]!.trim()).filter(Boolean), whole: false });
+  }
   const whole = /(?:import|export)\s+\*\s*(?:as\s+\w+\s*)?from\s*['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g;
-  for (const m of file.text.matchAll(whole)) {
+  for (const m of file.text.replace(destructured, '').matchAll(whole)) {
     const t = target(file.path, (m[1] ?? m[2])!);
     if (t) out.push({ from: t, names: [], whole: true });
   }
@@ -211,7 +250,7 @@ describe('case-governed registers change only through the case engine', () => {
     const bad: string[] = [];
     for (const r of REGISTERS) {
       const re = new RegExp(`\\b${r.store}\\b`);
-      for (const f of FILES) if (re.test(f.text) && f.path !== r.module && f.path !== 'lib/data/register-owners.ts') bad.push(`${f.path} uses ${r.store}`);
+      for (const f of FILES) if (re.test(f.text) && f.path !== r.module && f.path !== 'lib/data/register-owners.ts' && !(r.storeAlso ?? []).includes(f.path)) bad.push(`${f.path} uses ${r.store}`);
     }
     expect(bad).toEqual([]);
   });
@@ -241,5 +280,7 @@ describe('case-governed registers change only through the case engine', () => {
     const r = REGISTERS.find(x => x.module === 'lib/organisations/register.ts')!;
     expect(imp.names.filter(n => r.changes.includes(n))).toEqual(['setStanding']);
     expect(importsOf({ path: 'lib/x/y.ts', text: "const m = await import('../civil/register');" })[0]).toMatchObject({ from: 'lib/civil/register', whole: true });
+    // Taken apart at once, a dynamic import names what it uses (a changing function is still caught).
+    expect(importsOf({ path: 'lib/x/y.ts', text: "const { getParcel, applyRightsChange: apply } = await import('@/lib/data/parcels');" })).toEqual([{ from: 'lib/data/parcels', names: ['getParcel', 'applyRightsChange'], whole: false }]);
   });
 });

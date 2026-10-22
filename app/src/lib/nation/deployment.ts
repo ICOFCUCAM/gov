@@ -22,7 +22,10 @@ export type AuthorityKey =
   // Health bodies the nation's law may set apart from the health regulator (owner's direction 2026-10-21,
   // docs/forms-catalogue/DIRECTION-2026-10-21-HEALTH-INTEGRATION.md §3): empty until named. Until then a
   // form that names one is owned provisionally (provisionalOwner()), never as proof of legal competence.
-  | 'medicinesRegulation' | 'controlledSubstances' | 'publicHealth';
+  | 'medicinesRegulation' | 'controlledSubstances' | 'publicHealth'
+  // Territory and infrastructure (plan step I7): empty until the nation names each body. Who holds a power over a permit
+  // type still comes from the permit authority registry (lib/permits/authority.ts); these name who keeps each register.
+  | 'landRegistry' | 'buildingControl' | 'housing' | 'vehicleRegistration' | 'roadAuthority' | 'transportRegulator';
 
 export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts' | 'tax' | 'customs' | 'education' | 'health' | 'professions';
 
@@ -94,6 +97,13 @@ export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string;
   { key: 'medicinesRegulation', label: 'Medicines and medical devices regulation', registers: 'Authorised medicines and medical devices, manufacturing sites, imports, safety reports and recalls', optional: true },
   { key: 'controlledSubstances', label: 'Controlled substances authority', registers: 'Authorisations to handle controlled medicines (only where the nation\'s law names a body apart from the medicines regulator)', optional: true },
   { key: 'publicHealth', label: 'Public health authority', registers: 'Public-health programmes and the aggregate returns they receive (never an individual case)', optional: true },
+  // Plan step I7: territory and infrastructure.
+  { key: 'landRegistry', label: 'Land registry (registered interests)', registers: 'Registered interests in land: transfers, mortgages, easements, leases, caveats and restrictions, their discharge, corrections and disputes (the parcels themselves are kept by the cadastre authority the parcel policy names)', optional: true },
+  { key: 'buildingControl', label: 'Planning and building control', registers: 'Planning applications and decisions, building permits with their approved design versions, inspections, stop-work orders and occupancy certificates', optional: true },
+  { key: 'housing', label: 'Housing authority', registers: 'Housing programmes with their approved eligibility and priority rules, housing applications, assessments and allocations', optional: true },
+  { key: 'vehicleRegistration', label: 'Vehicle and driver licensing', registers: 'Registered vehicles and their keepers; driving licences, their categories, restrictions and validity', optional: true },
+  { key: 'roadAuthority', label: 'Road authority', registers: 'Permits for works in public roads, with the place, the period and the traffic arrangements they allow', optional: true },
+  { key: 'transportRegulator', label: 'Transport regulator', registers: 'Licensed transport operators (organisations of the organisations register), their fleets, routes and conditions', optional: true },
 ];
 /** Health bodies a nation may set apart from the health regulator: optional, provisionally stood in for until named (PROVISIONAL_FALLBACK). */
 export const HEALTH_SLOTS: AuthorityKey[] = ['medicinesRegulation', 'controlledSubstances', 'publicHealth'];
