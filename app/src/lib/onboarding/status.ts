@@ -104,7 +104,7 @@ const stateOf = (checks: Check[], blockedBy?: string): TrackState =>
 /** Who is accountable for a track's items when the track names no one else (plan I2). */
 const TRACK_OWNER: Record<string, string> = {
   nation: 'Administrators serving the whole government', institutions: 'Administrators serving the whole government, a different official confirming', officials: 'Administrators of each institution',
-  laws: 'The law-register authority (two officials)', mappings: 'Administrators, approved by a different one', rules: 'The authority that owns each rule (an official who can sign there)',
+  laws: 'The law-register authority (two officials)', authorities: 'Administrators, approved by a different one', rules: 'The authority that owns each rule (an official who can sign there)',
   procedures: 'Officials who can sign at each responsible institution', exchange: 'Two officials approve each integration', sites: 'Each institution\'s officials, published by a different one',
   maps: 'The mapping agency and the cadastre authority', operations: 'Whoever runs the servers', updates: 'Administrators serving the whole government', legislature: 'The legislature\'s clerk',
   administration: 'Administrators of each institution, a different official confirming',
