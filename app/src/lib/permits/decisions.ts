@@ -32,6 +32,7 @@ import { getProduct, productOfCase } from '@/lib/health/products/register';
 import { PRODUCT_PERMIT_TYPES, PROCEDURE_PERMITS } from '@/lib/health/products/procedures';
 import { PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
 import { OVERSIGHT_PERMITS } from '@/lib/oversight/procedures';
+import { TAX_PERMITS } from '@/lib/tax/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -60,6 +61,9 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   const mapped = (permitType: string | undefined): DecisionClass | null => (permitType ? { kind: 'mapping', permitType, power } : null);
   if (is(key, 'tax.registration')) return mapped('tax-registration');
   if (is(key, 'tax.return') || is(key, 'tax.objection')) return mapped('tax-assessment');
+  // Tax services (plan step I5): refunds, payment arrangements, rulings and compliance reviews under their own permit types;
+  // an amendment, a disclosure and a compliance review's assessment are tax assessments.
+  for (const [k, permitType] of Object.entries(TAX_PERMITS)) if (is(key, k)) return mapped(a.decision === 'assess' ? 'tax-assessment' : permitType);
   if (is(key, 'customs.declaration')) return mapped('customs-clearance');
   if (is(key, 'edu.qualification')) return mapped('qualification-record');
   if (key.startsWith('prof.')) {

@@ -283,8 +283,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   exists; missing contracts are written only in controlled batches the owner
   approves (batch 1, health regulation, 25 forms; batch 2, medicines and
   devices regulation, 21 forms; batch 3, taxpayer registration and account,
-  29 forms; batch 4, public-health programme forms, 2 forms; batch 7,
-  independent oversight, 7 forms: owner 2026-10-21), as library
+  29 forms; batch 4, public-health programme forms, 2 forms; batch 6, tax
+  services, 95 forms; batch 7, independent oversight, 7 forms: owner
+  2026-10-21), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.
 - Every requirement of that specification is a row of

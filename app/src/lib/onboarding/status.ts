@@ -41,6 +41,7 @@ import { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
 import { INDEPENDENT_OVERSIGHT_PROCEDURES, OVERSIGHT_PERMITS } from '@/lib/oversight/procedures';
 import { OVERSIGHT_SLOTS, oversightCounts } from '@/lib/oversight/register';
 import { relationshipGrants } from '@/lib/data/store/relationships';
+import { taxServicesView } from '@/lib/tax/services-view';
 import { smallCellRule, smallCellChanges } from '@/lib/health/small-cells';
 import { indicatorSmallCells } from '@/lib/indicators/disclosure';
 import { listDefinitions as listIndicators, approvedAt as indicatorApprovedAt } from '@/lib/indicators/register';
@@ -355,6 +356,21 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       return { checks: [
         { label: 'Indicator definitions approved by the institutions whose figures they define', done: approved.length > 0, href: '/gov/twin/indicators', detail: `${approved.length} of ${defs.length} approved somewhere; reference definitions ship as drafts` },
         { label: 'Small-cell rule for indicator values adopted by two officials citing the law', done: !!cells, href: '/gov/twin/indicators', detail: cells ? `Version ${cells.version}: threshold ${cells.threshold}` : 'Ships unset: counts about people are held back until it is adopted' },
+      ] };
+    }),
+
+    // Tax services (plan step I5, forms batch 6): the tax administration, its procedures, who decides each power, its rules, and the forms adopted.
+    track({ key: 'tax', title: 'Tax services', why: 'Registration, returns and assessments, amendments, objections, refunds, payment arrangements, voluntary disclosure, rulings and compliance reviews, each run by the tax administration under procedures its officials approve; rates, interest, penalties and periods only from the nation\'s approved rules.', href: '/gov/tax/services' }, () => {
+      const v = taxServicesView();
+      const forms = v.procedures.flatMap(p => p.forms);
+      const adopted = forms.filter(f => f.link === 'approved').length;
+      const rules = listRules().filter(r => r.key.startsWith('tax.') && r.state === 'approved').length;
+      return { checks: [
+        { label: 'Tax administration named (Who is responsible)', done: !!authorityFor('tax'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('tax') ? undefined : 'Not named: nobody keeps the tax register until it is' },
+        { label: 'Tax procedures approved (registration, returns, objections, amendments, refunds, arrangements, disclosure, rulings, compliance)', done: v.counts.approved === v.counts.procedures, href: '/gov/law/procedures', detail: `${v.counts.approved} of ${v.counts.procedures} approved` },
+        { label: 'Who decides each tax power approved (permit authorities)', done: v.counts.mappingsApproved === v.counts.permitTypes, href: '/gov/law/permit-authorities', detail: `${v.counts.mappingsApproved} of ${v.counts.permitTypes} mappings approved; the proposals ship unapproved` },
+        { label: 'Tax rates, interest and penalties approved as rules citing the law', done: rules > 0, href: '/gov/law/rules', detail: rules ? `${rules} approved tax rule version(s)` : 'None ship: assessments are entered with reasons, and a production installation refuses interest or a penalty without its rule' },
+        { label: 'Tax-service forms adopted in approved procedure versions', done: forms.length > 0 && adopted === forms.length, href: '/gov/tax/services', detail: `${adopted} of ${forms.length} forms carried by a procedure adopted; ${v.counts.waiting} wait for a procedure` },
       ] };
     }),
 

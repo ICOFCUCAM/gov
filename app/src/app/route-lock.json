@@ -123,6 +123,7 @@
   "/gov/situation-room",
   "/gov/substrate",
   "/gov/tax",
+  "/gov/tax/services",
   "/gov/telemetry",
   "/gov/telemetry/[id]",
   "/gov/treasury",

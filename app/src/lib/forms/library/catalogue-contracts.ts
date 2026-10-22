@@ -48,6 +48,17 @@
 // (lib/health/programmes/procedures.ts); every individual public-health form
 // stays excluded (docs/requirements/form-scope.json).
 //
+// Batch 6 (owner's assignment, 21 October 2026): tax services, the field
+// series Part 2 §2.6 Departments B–H: the 95 tax.* rows that had no contract
+// (returns, assessments, objections, appeals and disputes, payments, refunds
+// and credits, compliance, withholding, assistance, rulings and incentives,
+// debt, arrangements and recovery). Every field restricted under tax secrecy,
+// read only under canReadTax(). An amount a person states (a claim, a proposed
+// schedule) is money with its currency, named in the form's amounts.stated
+// policy; every charge (interest, a penalty) is the platform's, calculated by
+// an approved rule. 56 are linked by identity to the tax procedures
+// (lib/tax/procedures.ts), the rest wait with the reason no procedure fits.
+//
 // Batch 7 (owner approved; plan step I8, independent oversight): the
 // catalogue Part 12 accountability forms the oversight procedures carry
 // (lib/oversight/procedures.ts): DEM-CON-012 ombudsman complaint, DEM-CON-013
@@ -163,6 +174,101 @@ import txAssessment from './catalogue-contracts/taxpayer.registration.assessment
 import txVerificationRecord from './catalogue-contracts/taxpayer.registration.verification_record.json';
 import txAppealAssessment from './catalogue-contracts/taxpayer.registration.appeal_assessment.json';
 import txClosureRecord from './catalogue-contracts/taxpayer.registration.closure_record.json';
+import t6AppealResponse from './catalogue-contracts/tax.appeal.response.json';
+import t6AppealSubmit from './catalogue-contracts/tax.appeal.submit.json';
+import t6AppealTransmit from './catalogue-contracts/tax.appeal.transmit.json';
+import t6AssessmentAmendment from './catalogue-contracts/tax.assessment.amendment.json';
+import t6AssessmentNotice from './catalogue-contracts/tax.assessment.notice.json';
+import t6AssessmentReviewRequest from './catalogue-contracts/tax.assessment.review_request.json';
+import t6AssistanceEnquiry from './catalogue-contracts/tax.assistance.enquiry.json';
+import t6AssistanceGuidanceRequest from './catalogue-contracts/tax.assistance.guidance_request.json';
+import t6ComplianceAssessmentDecision from './catalogue-contracts/tax.compliance.assessment_decision.json';
+import t6ComplianceCaseOpen from './catalogue-contracts/tax.compliance.case.open.json';
+import t6ComplianceCaseClosure from './catalogue-contracts/tax.compliance.case_closure.json';
+import t6ComplianceComplaint from './catalogue-contracts/tax.compliance.complaint.json';
+import t6ComplianceEvidenceRegister from './catalogue-contracts/tax.compliance.evidence_register.json';
+import t6ComplianceExtensionDecision from './catalogue-contracts/tax.compliance.extension_decision.json';
+import t6ComplianceExtensionRequest from './catalogue-contracts/tax.compliance.extension_request.json';
+import t6ComplianceFindingsDraft from './catalogue-contracts/tax.compliance.findings_draft.json';
+import t6ComplianceFindingsReview from './catalogue-contracts/tax.compliance.findings_review.json';
+import t6ComplianceInformationRequest from './catalogue-contracts/tax.compliance.information_request.json';
+import t6ComplianceInformationResponse from './catalogue-contracts/tax.compliance.information_response.json';
+import t6ComplianceInspectionPlan from './catalogue-contracts/tax.compliance.inspection_plan.json';
+import t6ComplianceInterviewRecord from './catalogue-contracts/tax.compliance.interview_record.json';
+import t6ComplianceReferral from './catalogue-contracts/tax.compliance.referral.json';
+import t6ComplianceScopeApprove from './catalogue-contracts/tax.compliance.scope.approve.json';
+import t6ComplianceTaxpayerResponse from './catalogue-contracts/tax.compliance.taxpayer_response.json';
+import t6CreditAdjustment from './catalogue-contracts/tax.credit.adjustment.json';
+import t6DebtDisclosureAssessment from './catalogue-contracts/tax.debt.disclosure.assessment.json';
+import t6DebtPaymentPlanCancelRequest from './catalogue-contracts/tax.debt.payment_plan.cancel_request.json';
+import t6DebtPaymentPlanChangeRequest from './catalogue-contracts/tax.debt.payment_plan.change_request.json';
+import t6DebtPaymentPlanDecision from './catalogue-contracts/tax.debt.payment_plan.decision.json';
+import t6DebtPaymentPlanDefaultReview from './catalogue-contracts/tax.debt.payment_plan.default_review.json';
+import t6DebtPaymentPlanEvidence from './catalogue-contracts/tax.debt.payment_plan.evidence.json';
+import t6DebtPaymentPlanRequest from './catalogue-contracts/tax.debt.payment_plan.request.json';
+import t6DebtRecoveryAuthorize from './catalogue-contracts/tax.debt.recovery.authorize.json';
+import t6DebtRecoveryClose from './catalogue-contracts/tax.debt.recovery.close.json';
+import t6DebtRecoveryDispute from './catalogue-contracts/tax.debt.recovery.dispute.json';
+import t6DebtRecoveryNotice from './catalogue-contracts/tax.debt.recovery.notice.json';
+import t6DebtRecoveryResponse from './catalogue-contracts/tax.debt.recovery.response.json';
+import t6DebtRecoverySuspendRequest from './catalogue-contracts/tax.debt.recovery.suspend_request.json';
+import t6DebtStatementRequest from './catalogue-contracts/tax.debt.statement.request.json';
+import t6DebtVoluntaryDisclosure from './catalogue-contracts/tax.debt.voluntary_disclosure.json';
+import t6DisputeClosure from './catalogue-contracts/tax.dispute.closure.json';
+import t6DisputeSettlementProposal from './catalogue-contracts/tax.dispute.settlement_proposal.json';
+import t6DisputeSettlementReview from './catalogue-contracts/tax.dispute.settlement_review.json';
+import t6DisputeWithdraw from './catalogue-contracts/tax.dispute.withdraw.json';
+import t6IncentiveAmendment from './catalogue-contracts/tax.incentive.amendment.json';
+import t6IncentiveApplication from './catalogue-contracts/tax.incentive.application.json';
+import t6IncentiveComplianceReport from './catalogue-contracts/tax.incentive.compliance_report.json';
+import t6IncentiveDecision from './catalogue-contracts/tax.incentive.decision.json';
+import t6IncentiveRenewal from './catalogue-contracts/tax.incentive.renewal.json';
+import t6IncentiveReviewRequest from './catalogue-contracts/tax.incentive.review_request.json';
+import t6IncentiveSurrender from './catalogue-contracts/tax.incentive.surrender.json';
+import t6IncentiveWithdrawal from './catalogue-contracts/tax.incentive.withdrawal.json';
+import t6ObjectionAssessment from './catalogue-contracts/tax.objection.assessment.json';
+import t6ObjectionDecision from './catalogue-contracts/tax.objection.decision.json';
+import t6ObjectionExtensionRequest from './catalogue-contracts/tax.objection.extension_request.json';
+import t6ObjectionSubmit from './catalogue-contracts/tax.objection.submit.json';
+import t6ObjectionSupplement from './catalogue-contracts/tax.objection.supplement.json';
+import t6PaymentAllocationRequest from './catalogue-contracts/tax.payment.allocation_request.json';
+import t6PaymentDispute from './catalogue-contracts/tax.payment.dispute.json';
+import t6PaymentExternalReference from './catalogue-contracts/tax.payment.external_reference.json';
+import t6PaymentInitiate from './catalogue-contracts/tax.payment.initiate.json';
+import t6PaymentReversalRequest from './catalogue-contracts/tax.payment.reversal_request.json';
+import t6PaymentTransferRequest from './catalogue-contracts/tax.payment.transfer_request.json';
+import t6RefundApplication from './catalogue-contracts/tax.refund.application.json';
+import t6RefundAssessment from './catalogue-contracts/tax.refund.assessment.json';
+import t6RefundDecision from './catalogue-contracts/tax.refund.decision.json';
+import t6RefundPaymentInstruction from './catalogue-contracts/tax.refund.payment_instruction.json';
+import t6RefundReconciliation from './catalogue-contracts/tax.refund.reconciliation.json';
+import t6RefundSupportingEvidence from './catalogue-contracts/tax.refund.supporting_evidence.json';
+import t6ReturnPeriodicAmend from './catalogue-contracts/tax.return.periodic.amend.json';
+import t6ReturnPeriodicAppeal from './catalogue-contracts/tax.return.periodic.appeal.json';
+import t6ReturnPeriodicCorrection from './catalogue-contracts/tax.return.periodic.correction.json';
+import t6ReturnPeriodicDecision from './catalogue-contracts/tax.return.periodic.decision.json';
+import t6ReturnPeriodicFurtherInformation from './catalogue-contracts/tax.return.periodic.further_information.json';
+import t6ReturnPeriodicLateSubmission from './catalogue-contracts/tax.return.periodic.late_submission.json';
+import t6ReturnPeriodicNil from './catalogue-contracts/tax.return.periodic.nil.json';
+import t6ReturnPeriodicNotice from './catalogue-contracts/tax.return.periodic.notice.json';
+import t6ReturnPeriodicObjection from './catalogue-contracts/tax.return.periodic.objection.json';
+import t6ReturnPeriodicOfficerAssessment from './catalogue-contracts/tax.return.periodic.officer_assessment.json';
+import t6ReturnPeriodicWithdrawRequest from './catalogue-contracts/tax.return.periodic.withdraw_request.json';
+import t6RulingDecision from './catalogue-contracts/tax.ruling.decision.json';
+import t6RulingFurtherInformation from './catalogue-contracts/tax.ruling.further_information.json';
+import t6RulingReconsideration from './catalogue-contracts/tax.ruling.reconsideration.json';
+import t6RulingRequest from './catalogue-contracts/tax.ruling.request.json';
+import t6RulingWithdraw from './catalogue-contracts/tax.ruling.withdraw.json';
+import t6WithholdingCertificateIssue from './catalogue-contracts/tax.withholding.certificate.issue.json';
+import t6WithholdingDetailsAmend from './catalogue-contracts/tax.withholding.details.amend.json';
+import t6WithholdingDiscrepancyDecision from './catalogue-contracts/tax.withholding.discrepancy.decision.json';
+import t6WithholdingDiscrepancyResponse from './catalogue-contracts/tax.withholding.discrepancy.response.json';
+import t6WithholdingPayment from './catalogue-contracts/tax.withholding.payment.json';
+import t6WithholdingRegistration from './catalogue-contracts/tax.withholding.registration.json';
+import t6WithholdingReturnAmend from './catalogue-contracts/tax.withholding.return.amend.json';
+import t6WithholdingReturnSubmit from './catalogue-contracts/tax.withholding.return.submit.json';
+import t6WithholdingStatementCorrect from './catalogue-contracts/tax.withholding.statement.correct.json';
+import t6WithholdingStatementSubmit from './catalogue-contracts/tax.withholding.statement.submit.json';
 import con012 from './catalogue-contracts/DEM-CON-012.json';
 import con013 from './catalogue-contracts/DEM-CON-013.json';
 import con014 from './catalogue-contracts/DEM-CON-014.json';
@@ -241,6 +347,25 @@ export const BATCH_2 = [med001, med002, med003, med004, med005, med006, med007, 
 export const BATCH_3 = [txIndividual, txPublicEntity, txNonresident, txBranch, txAmend, txDetailsChange, txObligationAdd, txObligationCancel, txTransfer, txCertificateRequest, txAccountStatement, txDuplicate, txSuspendRequest, txReactivateRequest, txObjection, txAppeal, txWithdraw, txDecision, txDecisionRecord, txInspection, txInspectionChecklist, txFurtherInformation, txFurtherInformationP2, txReferral, txReferralRecord, txAssessment, txVerificationRecord, txAppealAssessment, txClosureRecord] as unknown as CatalogueContractJson[];
 /** Batch 4: public-health programme forms (owner approved, 21 October 2026). */
 export const BATCH_4 = [ph011, ph014] as unknown as CatalogueContractJson[];
+/** Batch 6: tax services, the field series Part 2 §2.6 Departments B–H (owner's assignment, 21 October 2026). */
+export const BATCH_6 = [
+  t6AppealResponse, t6AppealSubmit, t6AppealTransmit, t6AssessmentAmendment, t6AssessmentNotice, t6AssessmentReviewRequest,
+  t6AssistanceEnquiry, t6AssistanceGuidanceRequest, t6ComplianceAssessmentDecision, t6ComplianceCaseOpen, t6ComplianceCaseClosure, t6ComplianceComplaint,
+  t6ComplianceEvidenceRegister, t6ComplianceExtensionDecision, t6ComplianceExtensionRequest, t6ComplianceFindingsDraft, t6ComplianceFindingsReview, t6ComplianceInformationRequest,
+  t6ComplianceInformationResponse, t6ComplianceInspectionPlan, t6ComplianceInterviewRecord, t6ComplianceReferral, t6ComplianceScopeApprove, t6ComplianceTaxpayerResponse,
+  t6CreditAdjustment, t6DebtDisclosureAssessment, t6DebtPaymentPlanCancelRequest, t6DebtPaymentPlanChangeRequest, t6DebtPaymentPlanDecision, t6DebtPaymentPlanDefaultReview,
+  t6DebtPaymentPlanEvidence, t6DebtPaymentPlanRequest, t6DebtRecoveryAuthorize, t6DebtRecoveryClose, t6DebtRecoveryDispute, t6DebtRecoveryNotice,
+  t6DebtRecoveryResponse, t6DebtRecoverySuspendRequest, t6DebtStatementRequest, t6DebtVoluntaryDisclosure, t6DisputeClosure, t6DisputeSettlementProposal,
+  t6DisputeSettlementReview, t6DisputeWithdraw, t6IncentiveAmendment, t6IncentiveApplication, t6IncentiveComplianceReport, t6IncentiveDecision,
+  t6IncentiveRenewal, t6IncentiveReviewRequest, t6IncentiveSurrender, t6IncentiveWithdrawal, t6ObjectionAssessment, t6ObjectionDecision,
+  t6ObjectionExtensionRequest, t6ObjectionSubmit, t6ObjectionSupplement, t6PaymentAllocationRequest, t6PaymentDispute, t6PaymentExternalReference,
+  t6PaymentInitiate, t6PaymentReversalRequest, t6PaymentTransferRequest, t6RefundApplication, t6RefundAssessment, t6RefundDecision,
+  t6RefundPaymentInstruction, t6RefundReconciliation, t6RefundSupportingEvidence, t6ReturnPeriodicAmend, t6ReturnPeriodicAppeal, t6ReturnPeriodicCorrection,
+  t6ReturnPeriodicDecision, t6ReturnPeriodicFurtherInformation, t6ReturnPeriodicLateSubmission, t6ReturnPeriodicNil, t6ReturnPeriodicNotice, t6ReturnPeriodicObjection,
+  t6ReturnPeriodicOfficerAssessment, t6ReturnPeriodicWithdrawRequest, t6RulingDecision, t6RulingFurtherInformation, t6RulingReconsideration, t6RulingRequest,
+  t6RulingWithdraw, t6WithholdingCertificateIssue, t6WithholdingDetailsAmend, t6WithholdingDiscrepancyDecision, t6WithholdingDiscrepancyResponse, t6WithholdingPayment,
+  t6WithholdingRegistration, t6WithholdingReturnAmend, t6WithholdingReturnSubmit, t6WithholdingStatementCorrect, t6WithholdingStatementSubmit,
+] as unknown as CatalogueContractJson[];
 /** Batch 7: independent oversight and accountability forms, catalogue Part 12 (owner approved, 21 October 2026; plan I8). */
 export const BATCH_7 = [con012, con013, con014, con018, con019, con020, pub009] as unknown as CatalogueContractJson[];
 /** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; oversight: batch 7). */
@@ -281,7 +406,7 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 }
 
 /** Every catalogue contract CivicOS has written, as library drafts. */
-export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_7.map(c => load(c, 7))];
+export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7))];
 
 /**
  * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without
