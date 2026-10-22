@@ -875,3 +875,142 @@ is installed and is adopted only in a version a second official approves.
 | Two-official approval and the links by identity | `catalogue-contracts.test.ts` "approves a risk communication by two officials, and links each public-health form…" |
 | Procedure-link states of the linked forms | `procedure-link.test.ts` "is draft for the public-health forms and the complaint forms…" |
 | Binding scope for public health | `lib/health/programmes/scope.test.ts` |
+
+## 13. Catalogue contracts, batch 5: internal administration (21 October 2026)
+
+The owner approved batch 5 with plan step I2: the 40 forms of the
+supplement's Part 21 (shared internal administration, §21.1, lines 1088–1127
+of `docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md`). 33
+were `contract_missing` and now carry a CivicOS contract (`contract: given
+(CivicOS library)`); the seven whose own JSON contract §21.2 gives
+(ADM-HR-002, ADM-PAY-012, ADM-PRC-018, ADM-ICT-029, ADM-ICT-030, ADM-AUD-036,
+ADM-GOV-039) keep `contract: given` and name the library file that writes that
+contract in the canonical format, field by field (`contract_file` on the row;
+`app/scripts/requirements/catalogue.py`). All 40 read `contract_draft`, with
+`batch: 5` in their `catalogue` block; none is in an excluded or legal-review
+scope. The format, loader, gates and test are batch 1's (§8). The conformance
+test holds the lines each form answers: Part 1's shared rules, the
+supplement's conventions and gates, Part 21's opening line (1085) and its
+critical internal controls (1241–1245), the specification's §10 lines 966 and
+981 and its table row for the form's function (970–979), each form's row of
+§21.1 and, for the seven, every line of its §21.2 contract (form_id, title and
+each field).
+
+**The institution's own.** The owner of every contract is `institution`, not
+a slot of the deployment profile: each institution adopts the
+internal-administration procedures as its own (`adm.<template>.<institution>`,
+`installAdministrationProcedures()`, `lib/administration/procedures.ts`), drafted
+by one official and approved by another, and its own officials decide
+(`caseActRefusal()`); whole-government officials and administrators have no
+domain authority, and an independent institution keeps its own (deviation
+`institution-owned`). The library form names no institution (`ownerOf()`
+returns none; the authority gate says each institution adopts it); a
+template is in the register once any institution has adopted it
+(`procedure-link.ts`).
+
+**Linked by identity.** Nine forms belong to the internal-administration
+procedures: the minimum the plan asks (payroll input, review and correction;
+staff establishment; privileged access; internal policy; delegation) and the
+disciplinary and legal-advice procedures. Each template lists its forms
+(`ADMINISTRATION_PROCEDURES[].forms`); the other 31 name the procedure they
+wait for (deviation `procedure-not-built`).
+
+**Separation of duties.** Every approving step of a linked procedure needs a
+second official (`fourEyes`) and names the earlier steps its official may not
+have taken (`distinctFrom`), compared as persons by `dualControlRefusal()`;
+the payroll effect checks the preparer and reviewer again. In the forms, the
+payroll approver carries `SEPARATION-OF-DUTIES` against the preparer and the
+reviewer (§21.2's own rule), and every other approval (reallocation, payment
+authorisation, purchase order, disposal, records review, change, communication,
+media response, annual plan, performance countersignature) carries
+`APPROVER-DIFFERS-FROM-MAKER`; these fields are the officials', never asked.
+
+**Restricted, every read logged.** Personnel, payroll, disciplinary,
+legal-advice and legal-matter data are restricted (deviations
+`personnel-restricted`, `legal-privilege`): the procedures' cases are
+restricted to the assignee and supervisors, every read goes to the access log,
+and the forms' policy `access.read_rule` says so. Pay, bank accounts and
+payslips stay in the payroll system (`payroll-system`); the platform keeps the
+batch, its totals, the reconciliation report and each official's act.
+
+**Nothing typed.** Grades, employment types, leave types and entitlements,
+personnel actions, performance and disciplinary outcomes (CFG-ADM-001), approval
+limits (CFG-ADM-002), budget periods, rates, deductions, procurement methods,
+asset categories and disposal methods (CFG-ADM-003), records classes and
+retention schedules (CFG-ADM-004), systems, privileged roles and the longest
+privileged access (CFG-ADM-005) are the nation's or the institution's: lists
+named with "none ship", binding rules registered in `lib/forms/rules.ts`
+(`leave_entitlement_from_rule`, `approval_limit_from_policy`,
+`expense_rates_from_rule`, `retention_period_from_rule`,
+`privileged_access_period_from_policy`, `audit_severity_from_policy` and the
+rest), nation values named and unset (`adm.payroll.deductions` is a rule
+`calculate()` refuses without; a production installation approves no payroll
+without it). Amounts officials enter are whole numbers in the nation's
+currency, never the money type (`estimate-not-money`); the budget register is
+not on the platform (`finance-registers`).
+
+**Delegation between accounts.** ADM-GOV-039 records the delegator and the
+delegate as officials' accounts; the delegator's office is kept for
+information only (`accounts-not-offices`, because holding an office grants no
+permission). The procedure's effect records it (`lib/records/delegations.ts`);
+authorisation reads it (`delegationCovering()`) within its institution,
+procedures, steps and period, and a decision taken under it records both
+people on the step and the sealed decision.
+
+| Catalogue form | Title | Fields (and questions in repeatable groups) | Belongs to | Deviations (besides the five every ADM form shares) |
+|---|---|---|---|---|
+| ADM-HR-001 | Staff establishment and position request | 8 | `adm.establishment`, stage `requested`, step `submit`, document `establishment-request` | finance-registers |
+| ADM-HR-002 (§21.2 contract) | Recruitment requisition | 7 | waits: a recruitment procedure of the institution (requisition, advertisement, evaluation, offer) | finance-registers, personnel-restricted |
+| ADM-HR-003 | Recruitment evaluation | 7 (+3) | waits: the evaluation step of the institution's recruitment procedure | no-score, personnel-restricted |
+| ADM-HR-004 | Employee onboarding | 8 | waits: an onboarding step of the institution's appointment procedure | personnel-restricted, payroll-system, own-accounts |
+| ADM-HR-005 | Personnel record update | 6 | waits: a personnel-action procedure of the institution | personnel-restricted, payroll-system |
+| ADM-HR-006 | Leave request | 6 | waits: a leave procedure of the institution (request, supervisor's decision) | personnel-restricted |
+| ADM-HR-007 | Performance review | 10 | waits: a performance-review procedure of the institution | personnel-restricted, no-score |
+| ADM-HR-008 | Training and development request | 6 | waits: a training-request procedure of the institution | estimate-not-money, finance-registers |
+| ADM-HR-009 | Conflict-of-interest declaration | 5 | waits: an integrity register of the institution | personnel-restricted |
+| ADM-HR-010 | Disciplinary process record | 9 | `adm.disciplinary`, stage `opened`, step `investigate`, document `investigation-report` | personnel-restricted |
+| ADM-PAY-011 | Payroll input submission | 7 | `adm.payroll-input`, stage `prepared`, step `submit`, document `payroll-input` | payroll-system, estimate-not-money, personnel-restricted |
+| ADM-PAY-012 (§21.2 contract) | Payroll review and approval | 9 (+4) | `adm.payroll-review`, stage `received`, step `review`, document `reconciliation-report` | payroll-system, personnel-restricted |
+| ADM-PAY-013 | Payroll correction request | 6 (+2) | `adm.payroll-correction`, stage `requested`, step `correct`, document `correction-evidence` | payroll-system, estimate-not-money, personnel-restricted |
+| ADM-FIN-014 | Internal budget request | 7 (+2) | waits: an internal budget procedure of the institution | finance-registers, estimate-not-money |
+| ADM-FIN-015 | Budget reallocation request | 9 | waits: a reallocation procedure of the institution | finance-registers, estimate-not-money |
+| ADM-FIN-016 | Expense claim | 5 (+5) | waits: an expense-claim procedure of the institution | estimate-not-money, treasury-executes |
+| ADM-FIN-017 | Payment authorization | 9 | waits: a payment-authorisation procedure of the institution | finance-registers, estimate-not-money, treasury-executes |
+| ADM-PRC-018 (§21.2 contract) | Internal procurement requisition | 8 (+4) | waits: a procurement requisition procedure of the institution | finance-registers, estimate-not-money |
+| ADM-PRC-019 | Procurement evaluation | 7 (+3) | waits: a procurement evaluation procedure | no-score |
+| ADM-PRC-020 | Purchase order approval | 9 (+3) | waits: a purchase-order procedure of the institution | finance-registers, estimate-not-money |
+| ADM-PRC-021 | Supplier onboarding | 6 | waits: a supplier procedure of the institution | treasury-executes |
+| ADM-AST-022 | Asset registration | 10 | waits: an asset register procedure of the institution | estimate-not-money |
+| ADM-AST-023 | Asset transfer | 7 | waits: an asset transfer procedure of the institution | — |
+| ADM-AST-024 | Asset disposal | 9 | waits: an asset disposal procedure of the institution | estimate-not-money |
+| ADM-REC-025 | Records classification | 8 | waits: a records-management procedure of the institution | — |
+| ADM-REC-026 | Records retention or disposal review | 8 | waits: a records retention review procedure of the institution | — |
+| ADM-LEG-027 | Internal legal advice request | 7 | `adm.legal-advice`, stage `requested`, step `assign`, document `advice` | legal-privilege |
+| ADM-LEG-028 | Litigation or legal matter registration | 9 | waits: a legal-matters register of the institution | legal-privilege, not-court-record |
+| ADM-ICT-029 (§21.2 contract) | ICT access request | 9 | waits: an access-request procedure of the institution | own-accounts |
+| ADM-ICT-030 (§21.2 contract) | Privileged access approval | 10 | `adm.privileged-access`, stage `requested`, step `review`, document `security-approval` | own-accounts |
+| ADM-ICT-031 | ICT change request | 11 | waits: a change procedure of the institution | — |
+| ADM-ICT-032 | Cybersecurity incident report | 7 | waits: a security incident procedure of the institution | — |
+| ADM-COM-033 | Official communication approval | 10 | waits: a communications approval procedure of the institution | — |
+| ADM-COM-034 | Media inquiry response | 9 | waits: a media-inquiry procedure of the institution | — |
+| ADM-AUD-035 | Internal audit engagement | 8 (+2) | waits: an internal audit procedure of the institution | — |
+| ADM-AUD-036 (§21.2 contract) | Audit finding and remediation | 10 | waits: the finding step of the institution's internal audit procedure | — |
+| ADM-PLN-037 | Institutional annual plan | 8 (+3) | waits: a planning procedure of the institution | finance-registers |
+| ADM-PLN-038 | Performance indicator return | 8 | waits: an indicator return procedure | aggregate-indicators |
+| ADM-GOV-039 (§21.2 contract) | Delegation of authority record | 10 | `adm.delegation`, stage `requested`, step `approve`, document `delegation-instrument` | accounts-not-offices |
+| ADM-GOV-040 | Internal policy approval | 9 | `adm.policy`, stage `drafted`, step `review`, document `policy-text` | — |
+
+| Check | Where |
+|---|---|
+| All 40 quote and meet every piece of their lines; typed, classed, registered rules only; nothing a law decides set; three channels; contract draft | `catalogue-contracts.test.ts` (per form) |
+| Linked forms and the templates that carry them; the rest wait | `catalogue-contracts.test.ts` "links payroll input, review and correction…" |
+| Separation of duties in the forms and the procedures | `catalogue-contracts.test.ts` "keeps separation of duties…"; `lib/administration/administration.test.ts` |
+| Personnel, disciplinary and legal-advice data restricted, reads logged | `catalogue-contracts.test.ts` "restricts personnel, disciplinary and legal-advice data…" |
+| No value typed | `catalogue-contracts.test.ts` "types in no grade, entitlement, rate…" |
+| Delegation between accounts, never offices | `catalogue-contracts.test.ts` "records delegation between accounts…"; `lib/auth/task-permissions.test.ts` |
+| Procedure-link states once an institution adopts the templates | `procedure-link.test.ts` "is draft for each batch-5 form…" |
+| Register rows: 40 contracts, nine Partial, contract files named | `lib/requirements/requirements.test.ts` "rows plan steps I0.2 and I2 deliver" |
+
+Forms register: before batch 5, contract_missing 1646, contract_draft 206,
+under_review 91, excluded 128, blocked 1; after, contract_missing 1613,
+contract_draft 239, the others unchanged.

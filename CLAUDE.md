@@ -107,6 +107,24 @@ What has been built is locked. Work only upgrades it toward the vision in
   purpose approved for it and that service; an integration is approved (and
   its scopes or purposes changed) by two officials
   (`proposeIntegrationApproval()` / `confirmIntegrationApproval()`).
+- Departments and internal administration (plan I2): departments are records
+  (`lib/institution/departments.ts`: accountable office, functions, services,
+  staff, every version kept; ended with a reason, never deleted; after setup a
+  proposal a different official confirms, an independent institution's own).
+  The internal administration workspace is a tab of Ministries and reads only
+  the institution's own records (`canReadAdministration()`); its registers
+  change only in the effects of the `adm.*` procedures each institution adopts
+  (`lib/administration/procedures.ts`; separation of duties as `distinctFrom`
+  steps through `dualControlRefusal()`; personnel, payroll, disciplinary and
+  legal-advice cases restricted). Task permissions are `TASK_PERMISSIONS` in
+  `roles.ts` and package steps, never offices; attribute scope (facility,
+  jurisdiction, task) only narrows; a delegated act records delegate and
+  delegator (`delegationCovering()`). The capability manifest
+  (`lib/institution/capabilities.ts`) and completeness per item
+  (`lib/onboarding/completeness.ts`: state, evidence, owner, date, next action;
+  the critical items gate activation in production, never a percentage) are
+  computed from records; the menu is filtered by `navFor()`, the server still
+  deciding every request.
 - Education (`lib/education/`): schools are organisations (a standing in the
   `schools` register), never a second identity. Qualifications are recorded,
   corrected and revoked only through education cases; anyone else checks one
@@ -268,8 +286,8 @@ What has been built is locked. Work only upgrades it toward the vision in
   exists; missing contracts are written only in controlled batches the owner
   approves (batch 1, health regulation, 25 forms; batch 2, medicines and
   devices regulation, 21 forms; batch 3, taxpayer registration and account,
-  29 forms; batch 4, public-health programme forms, 2 forms: owner
-  2026-10-21), as library
+  29 forms; batch 4, public-health programme forms, 2 forms; batch 5,
+  internal administration, 40 forms: owner 2026-10-21), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.
 - Every requirement of that specification is a row of
