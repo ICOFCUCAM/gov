@@ -17,6 +17,7 @@ import { CATALOGUE_CONTRACTS } from './library/catalogue-contracts';
 import { procedureLink } from './procedure-link';
 import { libraryPublicationOf, findLibraryForm, libraryInfo, serviceIds } from './page-data';
 import { resetPublication } from './publication';
+import { installAdministrationProcedures } from '@/lib/administration/procedures';
 
 const FIELD_SERIES = 'docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md';
 const lib = (id: string) => CATALOGUE_CONTRACTS.find(f => f.specId === id)!;
@@ -72,10 +73,24 @@ describe('procedure-link states', () => {
     expect(procedureLink({ identity: lib('HLT-FAC-002').identity, procedure: { key: 'health.facility' } }).state).toBe('missing');
     installAll('Administrator');
     expect(listPackages({ key: 'health.facility' }).length).toBeGreaterThan(0);
-    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure)) {
+    // Internal-administration templates are adopted per institution (the next test).
+    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure && x.batch !== 5)) {
       const l = procedureLink({ identity: f.identity, procedure: f.procedure });
       expect(l.state, f.identity).toBe('draft');
       expect(l.detail).toMatch(/no version of it carries this contract yet/);
+    }
+  });
+
+  it('is draft for each batch-5 form once an institution has adopted its internal-administration template, never before', () => {
+    const adm = CATALOGUE_CONTRACTS.filter(f => f.batch === 5 && f.procedure);
+    expect(adm).toHaveLength(9);
+    for (const f of adm) expect(procedureLink({ identity: f.identity, procedure: f.procedure }).state, f.identity).toBe('missing');
+    const r = installAdministrationProcedures(CIVIL, 'Administrator', 'admin');
+    if ('error' in r) throw new Error(r.error);
+    for (const f of adm) {
+      const l = procedureLink({ identity: f.identity, procedure: f.procedure });
+      expect(l, f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
+      expect(libraryPublicationOf(findLibraryForm(f.identity)!).status, f.identity).toBe('contract_draft');
     }
   });
 

@@ -1,0 +1,464 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-HR-002",
+ "record_type": "administration.recruitment.requisition",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-HR-002",
+  "part": 21,
+  "section": "21.1",
+  "line": 1089,
+  "batch": 5
+ },
+ "library": {
+  "title": "Requisition to recruit to a position",
+  "intro": "Ask to recruit to an approved, funded position: the position, its description, the employment type, the funding and the budget approval, and why. The requester is the signed-in official.",
+  "owner": "institution",
+  "filled_by": "An official of the institution, signed in, at their desk or an office.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": null,
+  "intended": "A recruitment procedure of the institution (requisition, advertisement, evaluation, offer): not built; the form waits in the library (plan step I2, internal administration procedures)",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials (and auditors with a purpose); every read of personal data in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "procedure-not-built",
+    "what": "A recruitment procedure of the institution (requisition, advertisement, evaluation, offer): no reference procedure carries this form yet; it waits in the library for the institution's procedure, drafted by one official and approved by another",
+    "why": "Cases change only under an approved procedure package; the plan builds the internal-administration procedures in the order of plan step I2 (the payroll, establishment, privileged-access, policy, delegation, disciplinary and legal-advice procedures first).",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts under an approved procedure package"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   },
+   {
+    "id": "finance-registers",
+    "what": "Budget lines, allocations, obligations and funded positions are referred to by the reference the finance system gives; the budget register is not on the platform, so the binding checks against it are recorded as not performed and block publication in production",
+    "why": "No budget, commitment or allocation register exists on the platform yet (plan I5).",
+    "rule": "lib/forms/rules.ts binding rules; docs/INTEGRATION_REGISTER.md (finance systems)"
+   },
+   {
+    "id": "personnel-restricted",
+    "what": "Personnel data (about an official, a candidate or an employee) is restricted: the case is restricted to its assignee and supervisors, every read goes to the access log with its purpose, and nothing about a person leaves the institution",
+    "why": "Part 21: personnel files require restricted access and retention rules.",
+    "rule": "CLAUDE.md Government operating model: caseReadRefusal() restricted cases; every read of personal data in a case goes to the access log (lib/records/access-log.ts)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1089,
+    "quotes": [
+     "ADM-HR-002",
+     "Recruitment requisition"
+    ],
+    "met_by": {
+     "fields": [
+      "requisition.position",
+      "requisition.employment_type",
+      "requisition.justification"
+     ],
+     "deviation": "procedure-not-built"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 970,
+    "quotes": [
+     "Human resources",
+     "Positions, authorized establishment, assignments, training, leave, performance processes and personnel actions"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "requisition.position",
+      "requisition.employment_type"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1133,
+    "quotes": [
+     "\"form_id\": \"ADM-HR-002\""
+    ],
+    "met_by": {
+     "fields": [
+      "requisition.position"
+     ],
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "The catalogue's own contract for this form, written in the canonical format field by field (each line below)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1134,
+    "quotes": [
+     "\"title\": \"Recruitment Requisition\""
+    ],
+    "met_by": {
+     "fields": [
+      "requisition.position"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1136,
+    "quotes": [
+     "{\"key\": \"institution_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "The case belongs to the institution that opens it (its owner); the institution is never typed"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1137,
+    "quotes": [
+     "{\"key\": \"position_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "requisition.position"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1138,
+    "quotes": [
+     "{\"key\": \"position_description_reference\", \"type\": \"document_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "requisition.position_description"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1139,
+    "quotes": [
+     "{\"key\": \"employment_type\", \"type\": \"enum\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "requisition.employment_type"
+     ],
+     "country_decision": "CFG-ADM-001"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1140,
+    "quotes": [
+     "{\"key\": \"funded_position_reference\", \"type\": \"budget_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "requisition.funded_position_ref"
+     ],
+     "deviation": "finance-registers"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1141,
+    "quotes": [
+     "{\"key\": \"recruitment_justification\", \"type\": \"long_text\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "requisition.justification"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1142,
+    "quotes": [
+     "{\"key\": \"requester_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/auth/official.ts",
+      "how": "The signed-in official's verified name and account are recorded (withOfficial()); never a name from the form"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1143,
+    "quotes": [
+     "{\"key\": \"budget_approval_reference\", \"type\": \"decision_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "requisition.budget_approval_ref"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "requisition.position",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    }
+   ],
+   "values_source": "administration.registry.positions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Position on the establishment"
+   },
+   "hint": {
+    "en": "An approved position of this institution (ADM-HR-001)."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter position on the establishment.",
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The position"
+   }
+  },
+  {
+   "id": "requisition.position_description",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "position-description",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Position description"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the document."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The position"
+   }
+  },
+  {
+   "id": "requisition.employment_type",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "administration.country.employment_types",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Employment type"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "CFG-ADM-001: the public-service law's employment types; none ship.",
+   "section": {
+    "en": "The position"
+   }
+  },
+  {
+   "id": "requisition.funded_position_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Funded position reference"
+   },
+   "hint": {
+    "en": "The reference the finance system gives the funding."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter funded position reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Funding"
+   }
+  },
+  {
+   "id": "requisition.budget_approval_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Budget approval reference"
+   },
+   "hint": {
+    "en": "The decision that approved the funding."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter budget approval reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Funding"
+   }
+  },
+  {
+   "id": "requisition.justification",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Why recruit now"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter why recruit now.",
+     "length": "Why recruit now must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Funding"
+   }
+  },
+  {
+   "id": "requisition.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

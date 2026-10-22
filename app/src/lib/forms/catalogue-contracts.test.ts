@@ -3,8 +3,9 @@
 // medicines and medical devices regulation: HLT-MED-001 … 015, 017 … 020,
 // 023, 024; batch 3, taxpayer registration and account: the 29
 // taxpayer.* rows of Part 2 §2.6; batch 4, public-health programme forms:
-// HLT-PH-011, HLT-PH-014) to the documents they answer
-// (docs/FORMS_CONFORMANCE.md §8, §9, §10, §12). The test holds its
+// HLT-PH-011, HLT-PH-014; batch 5, internal administration: the 40 ADM-*
+// forms of the supplement's Part 21) to the documents they answer
+// (docs/FORMS_CONFORMANCE.md §8, §9, §10, §12, §13). The test holds its
 // own list of the catalogue lines each form must answer and reads the
 // documents themselves: every piece of every line (each table cell, list item
 // and sentence) is quoted verbatim by the contract and met by a field, a
@@ -19,7 +20,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
+import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, BATCH_5, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
 import { CANONICAL_LIBRARY } from './library/catalogue';
 import SPEC_TAXPAYER from './library/spec/taxpayer-registration-v1.json';
 import { SPEC_CLASSES } from './spec-import';
@@ -36,6 +37,8 @@ import { TAX_PROCEDURES } from '@/lib/tax/procedures';
 import { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
 import { PROGRAMME_PROCEDURES } from '@/lib/health/programmes/procedures';
 import { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
+import { ADMINISTRATION_PROCEDURES } from '@/lib/administration/procedures';
+import { dualControlRefusal } from '@/lib/data/dual-control';
 import { serviceDirectory } from '@/lib/exchange/services';
 import { AUTHORITIES } from '@/lib/nation/deployment';
 import { pagesOf } from '@/components/features/forms/answers';
@@ -70,9 +73,15 @@ const IDS_3 = [
 ];
 // Batch 4: public-health programme forms (the individual public-health forms stay excluded by the approved scope).
 const IDS_4 = ['HLT-PH-011', 'HLT-PH-014'];
-const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4];
-const batchOf = (id: string) => (id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : 1);
-const sourceOf = (id: string): Src => (batchOf(id) === 3 ? 'B' : 'A');
+// Batch 5: internal administration, the supplement's Part 21 §21.1, all 40 forms.
+const IDS_5 = [
+  ...range(1, 10).map(n => `ADM-HR-${String(n).padStart(3, '0')}`), ...range(11, 13).map(n => `ADM-PAY-0${n}`), ...range(14, 17).map(n => `ADM-FIN-0${n}`),
+  ...range(18, 21).map(n => `ADM-PRC-0${n}`), ...range(22, 24).map(n => `ADM-AST-0${n}`), 'ADM-REC-025', 'ADM-REC-026', 'ADM-LEG-027', 'ADM-LEG-028',
+  ...range(29, 32).map(n => `ADM-ICT-0${n}`), 'ADM-COM-033', 'ADM-COM-034', 'ADM-AUD-035', 'ADM-AUD-036', 'ADM-PLN-037', 'ADM-PLN-038', 'ADM-GOV-039', 'ADM-GOV-040',
+];
+const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4, ...IDS_5];
+const batchOf = (id: string) => (id.startsWith('ADM-') ? 5 : id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : 1);
+const sourceOf = (id: string): Src => (batchOf(id) === 5 ? 'C' : batchOf(id) === 3 ? 'B' : 'A');
 
 // ── The catalogue text each form answers (held here, apart from the contracts) ──
 // Every form: Part 1's universal rules, the three channels and minimisation, and the supplement's conventions and activation gates.
@@ -134,6 +143,18 @@ const TAX_FAMILY: Record<string, Partial<Record<Src, number[]>>[]> = {
   'taxpayer.registration.appeal_assessment': [{ B: [3191, 3193, 3062, 3063, 3070, 3076, 3078, 3223], D: [392, 410, 508] }],
   'taxpayer.registration.closure_record': [{ B: [3191, 3204] }],
 };
+
+// Batch 5: Part 21's opening and critical internal controls; the specification's §10 (one workspace from the departments; domains are no grant
+// of authority) and the row of its table for the form's function; for the seven forms §21.2 gives a JSON contract, its form_id, title and every
+// field line.
+const ADM: Partial<Record<Src, number[]>> = { C: [1085, ...range(1241, 1245)], D: [966, 981] };
+const ADM_FUNCTION: Record<string, number> = { HR: 970, PAY: 970, FIN: 971, PRC: 972, AST: 973, REC: 974, LEG: 975, AUD: 976, ICT: 977, PLN: 978, COM: 979, 'GOV-039': 975, 'GOV-040': 978 };
+const ADM_JSON: Record<string, number[]> = {
+  'ADM-HR-002': [1133, 1134, ...range(1136, 1143)], 'ADM-PAY-012': [1147, 1148, ...range(1150, 1158)], 'ADM-PRC-018': [1162, 1163, ...range(1165, 1173)],
+  'ADM-ICT-029': [1177, 1178, ...range(1180, 1189)], 'ADM-ICT-030': [1193, 1194, ...range(1196, 1204)], 'ADM-AUD-036': [1208, 1209, ...range(1211, 1219)],
+  'ADM-GOV-039': [1223, 1224, ...range(1226, 1233)],
+};
+const admFunction = (id: string) => ADM_FUNCTION[id.slice(4)] ?? ADM_FUNCTION[id.split('-')[1]!]!;
 
 const EXTRA: Record<string, Partial<Record<Src, number[]>>> = {
   'HLT-FAC-001': { D: [1334, 1335, ...range(1350, 1356), ...range(1359, 1362)], C: range(1559, 1564) },
@@ -201,7 +222,9 @@ function rowLine(id: string): number {
 }
 
 function linesFor(id: string): [Src, number][] {
-  const sets = batchOf(id) === 3
+  const sets = batchOf(id) === 5
+    ? [COMMON, ADM, { D: [admFunction(id)] }, { C: ADM_JSON[id] ?? [] }, { C: [rowLine(id)] }]
+    : batchOf(id) === 3
     ? [COMMON, TAX, ...(TAX_FAMILY[id] ?? []), TAX_OFFICER.includes(id) ? { B: [3205] } : {}, TAX_INTERNAL.includes(id) ? { B: [2710] } : {}, { B: [rowLine(id)] }]
     : [COMMON, COMMON_HEALTH, id.startsWith('HLT-FAC') ? FAMILY.FAC : id.startsWith('HLT-LIC') ? FAMILY.LIC : id.startsWith('HLT-MED') ? FAMILY.MED : FAMILY.PH, EXTRA[id] ?? {}, { A: [rowLine(id)] }];
   const out: [Src, number][] = [];
@@ -210,18 +233,19 @@ function linesFor(id: string): [Src, number][] {
 }
 
 const flat = (fs: ContractField[]): ContractField[] => fs.flatMap(f => [f, ...(f.items ? flat(f.items as ContractField[]) : [])]);
-const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES];
+const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES, ...ADMINISTRATION_PROCEDURES];
 const SERVICES = serviceDirectory().map(s => s.id);
 const applicantKeys = (f: CatalogueLibraryForm) => f.fields.filter(x => (x.audience ?? 'applicant') === 'applicant').map(x => x.key);
 /** No patient, clinical, treatment, diagnosis or individual health field: by key and by label. */
 const CLINICAL = /patient|clinical|clinician|diagnos|prescri|dispens|treatment|medication|symptom|medical record|health condition|care plan/i;
 
-describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account) and 4 (public-health programme forms)', () => {
-  it('holds exactly the 25 + 21 + 29 + 2 approved forms, one contract each, matched to the catalogue row it names', () => {
+describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account), 4 (public-health programme forms) and 5 (internal administration)', () => {
+  it('holds exactly the 25 + 21 + 29 + 2 + 40 approved forms, one contract each, matched to the catalogue row it names', () => {
     expect(IDS_1.length).toBe(25);
     expect(IDS_2.length).toBe(21);
     expect(IDS_3.length).toBe(29);
     expect(IDS_4.length).toBe(2);
+    expect(IDS_5.length).toBe(40);
     expect(CATALOGUE_CONTRACTS.map(f => f.specId).sort()).toEqual([...IDS].sort());
     const files = readdirSync(join(process.cwd(), 'src/lib/forms/library/catalogue-contracts')).filter(f => f.endsWith('.json'));
     expect(files.sort()).toEqual(IDS.map(i => `${i}.json`).sort());
@@ -238,7 +262,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
   });
 
   it('carries no status anywhere: the register status is derived, never written', () => {
-    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4]) {
+    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5]) {
       expect('status' in c, c.form_id).toBe(false);
       expect(JSON.stringify(c)).not.toMatch(/"(status|state|approved|approved_by|production)"\s*:/);
     }
@@ -394,7 +418,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
           if (f.exchange) expect(SERVICES).toContain(f.exchange);
         }
         // Authority from the deployment profile, never a ministry by name.
-        expect(batchOf(id) === 3 ? ['tax'] : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
+        expect(batchOf(id) === 5 ? ['institution'] : batchOf(id) === 3 ? ['tax'] : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
         expect(JSON.stringify(f.json)).not.toMatch(/Ministry of/);
       });
     });
@@ -583,6 +607,89 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     expect(ph('HLT-PH-015').procedure).toMatchObject({ key: 'public-health.programme-return', stage: 'submitted', action: 'register', document: 'return-form' });
     expect(f.procedure).toMatchObject({ key: 'public-health.risk-communication', stage: 'drafted', action: 'register', document: 'draft-message' });
     for (const id of ['HLT-PH-011', 'HLT-PH-014', 'HLT-PH-015']) expect(ph(id).owner, id).toBe('publicHealth');
+  });
+
+  // ── Batch 5: internal administration ──
+  const adm = (id: string) => CATALOGUE_CONTRACTS.find(x => x.specId === id)!;
+  /** The batch-5 contracts the internal-administration procedures carry (lib/administration/procedures.ts), by template. */
+  const LINKED_5: Record<string, string> = {
+    'ADM-HR-001': 'adm.establishment', 'ADM-PAY-011': 'adm.payroll-input', 'ADM-PAY-012': 'adm.payroll-review', 'ADM-PAY-013': 'adm.payroll-correction',
+    'ADM-ICT-030': 'adm.privileged-access', 'ADM-GOV-040': 'adm.policy', 'ADM-GOV-039': 'adm.delegation', 'ADM-HR-010': 'adm.disciplinary', 'ADM-LEG-027': 'adm.legal-advice',
+  };
+
+  it('links payroll input, review and correction, the establishment, privileged access, internal policy and delegation (and the disciplinary and legal-advice forms) to their procedures; the rest wait with the reason', () => {
+    for (const id of IDS_5) {
+      const f = adm(id);
+      expect(f.owner, id).toBe('institution');
+      expect(f.authorityNote ?? '', id).toMatch(/adopts .* as its own/);
+      expect(f.deviations.map(d => d.id), id).toContain('institution-owned');
+      if (LINKED_5[id]) {
+        expect(f.procedure, id).toMatchObject({ key: LINKED_5[id] });
+        expect(ADMINISTRATION_PROCEDURES.find(p => p.key === LINKED_5[id])!.forms, id).toContain(id);
+      } else {
+        expect(f.procedure, id).toBeNull();
+        expect(f.awaits ?? '', id).toMatch(/not built/);
+        expect(f.deviations.map(d => d.id), id).toContain('procedure-not-built');
+      }
+    }
+    expect(Object.keys(LINKED_5)).toHaveLength(9);
+    // Every template carries exactly the forms linked to it.
+    for (const p of ADMINISTRATION_PROCEDURES) expect(p.forms.every(id => LINKED_5[id] === p.key), p.key).toBe(true);
+  });
+
+  it('keeps separation of duties: the payroll approver is neither the preparer nor the reviewer, through the form rule and the procedure step', () => {
+    const f = adm('ADM-PAY-012');
+    const approver = f.fields.find(x => x.key === 'payroll.approved_by')!;
+    expect(approver.audience).toBe('officer');
+    expect(approver.rules).toEqual(expect.arrayContaining([{ rule: 'registered', name: 'SEPARATION-OF-DUTIES', params: { fields: ['payroll.prepared_by', 'payroll.reviewed_by'] } }]));
+    const review = ADMINISTRATION_PROCEDURES.find(p => p.key === 'adm.payroll-review')!;
+    expect(review.actions.find(a => a.key === 'approve')!.needs).toMatchObject({ role: 'signatory', fourEyes: true, distinctFrom: ['review'] });
+    // Every approving decision of a linked procedure needs a second official; the comparison of persons is dualControlRefusal()'s.
+    for (const key of new Set(Object.values(LINKED_5))) {
+      const p = ADMINISTRATION_PROCEDURES.find(x => x.key === key)!;
+      for (const a of p.actions.filter(x => x.decision && /^(approve|correct|disciplinary|grant|record)-/.test(x.decision))) expect(a.needs.fourEyes, `${key} ${a.key}`).toBe(true);
+    }
+    expect(dualControlRefusal({ by: 'A', byId: 'local:a' }, { by: 'A', byId: 'local:a' })).toBeTruthy();
+    // The other approvals ask for an approver other than the maker.
+    for (const id of ['ADM-FIN-015', 'ADM-FIN-017', 'ADM-PRC-020', 'ADM-AST-024', 'ADM-REC-026', 'ADM-ICT-031', 'ADM-COM-033', 'ADM-COM-034', 'ADM-PLN-037', 'ADM-HR-007']) {
+      expect(flat(adm(id).fields).some(x => x.audience === 'officer' && (x.rules ?? []).some(r => r.rule === 'registered' && r.name === 'APPROVER-DIFFERS-FROM-MAKER')), id).toBe(true);
+    }
+  });
+
+  it('restricts personnel, disciplinary and legal-advice data, every read logged', () => {
+    for (const id of ['ADM-HR-003', 'ADM-HR-004', 'ADM-HR-005', 'ADM-HR-006', 'ADM-HR-007', 'ADM-HR-009', 'ADM-HR-010', 'ADM-PAY-011', 'ADM-PAY-012', 'ADM-PAY-013', 'ADM-LEG-027', 'ADM-LEG-028']) {
+      const f = adm(id);
+      expect(f.form.policies?.['access.read_rule'], id).toMatch(/restricted to its assignee and supervisors; every read in the access log/);
+      expect(f.deviations.map(d => d.id), id).toEqual(expect.arrayContaining([id.startsWith('ADM-LEG') ? 'legal-privilege' : 'personnel-restricted']));
+      // Anything about a person, the allegation, the question and the advice: restricted (a department or a payroll batch is not personal).
+      for (const x of f.fields.filter(y => ['party', 'registryReference', 'longtext', 'document', 'group'].includes(y.type) && !/(department|requesting_unit|batch)$/.test(y.key))) expect(x.personalDataClass, `${id} ${x.key}`).toBe('restricted');
+    }
+    for (const key of ['adm.payroll-input', 'adm.payroll-review', 'adm.payroll-correction', 'adm.disciplinary', 'adm.legal-advice', 'adm.privileged-access']) expect(ADMINISTRATION_PROCEDURES.find(p => p.key === key)!.sensitivity, key).toBe('restricted');
+    // No pay, bank or payslip field: those stay in the payroll system.
+    for (const id of IDS_5) expect(flat(adm(id).fields).map(x => x.key).filter(k => /bank|account_number|payslip|salary/.test(k)), id).toEqual([]);
+  });
+
+  it('types in no grade, entitlement, rate, limit, schedule or scale: each is the nation\'s, named, and none ships', () => {
+    for (const id of IDS_5) {
+      const f = adm(id);
+      for (const name of Object.keys(f.form.lists ?? {})) expect(name, `${id} ships ${name}`).not.toMatch(/^(administration|procurement)\.(country|institution)\./);
+      for (const x of flat(f.fields)) if (/^(administration|procurement)\.(country|institution)\./.test(x.valuesSourceId ?? '')) expect(x.countryDecision ?? '', `${id} ${x.key}`).toMatch(/none ship/);
+      // Amounts the official enters are numbers in the nation's currency; no money field is typed.
+      expect(flat(f.fields).filter(x => x.type === 'money').map(x => x.key), id).toEqual([]);
+    }
+    for (const [id, key] of [['ADM-HR-006', 'administration.leave.entitlements'], ['ADM-PAY-012', 'adm.payroll.deductions'], ['ADM-FIN-016', 'administration.finance.expense-rates'], ['ADM-REC-025', 'administration.records.retention']] as const) {
+      expect(adm(id).nationValues.find(v => v.key === key), `${id} ${key}`).toMatchObject({ source: 'rule' });
+    }
+    expect(adm('ADM-ICT-030').fields.find(x => x.key === 'access.period')!.rules!.some(r => r.rule === 'registered' && r.name === 'privileged_access_period_from_policy')).toBe(true);
+  });
+
+  it('records delegation between accounts, never offices, with its legal basis and period', () => {
+    const f = adm('ADM-GOV-039');
+    expect(f.fields.find(x => x.key === 'delegation.delegator')).toMatchObject({ type: 'registryReference', register: 'civicos.registry.officials' });
+    expect(f.fields.find(x => x.key === 'delegation.delegate')).toMatchObject({ type: 'registryReference', register: 'civicos.registry.officials' });
+    expect(f.fields.find(x => x.key === 'delegation.delegator_office')!.required).toBeFalsy();
+    expect(f.fields.find(x => x.key === 'delegation.legal_basis')!.rules!.some(r => r.rule === 'registered' && r.name === 'legal_references_resolve')).toBe(true);
+    expect(f.deviations.map(d => d.id)).toContain('accounts-not-offices');
   });
 
   // ── Batch 3: taxpayer registration and account ──

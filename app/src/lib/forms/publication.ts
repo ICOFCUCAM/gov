@@ -142,6 +142,8 @@ export function packageScope(p: Pick<CasePackage, 'key' | 'fields' | 'form'>): S
 
 /** Who owns a procedure or library form: the slot's institution, else a provisional stand-in (lib/nation/deployment.ts). */
 export function ownerOf(owner: string): OwnerResolution | { institution?: string } {
+  // An internal-administration library draft (owner `institution`) names no institution: each one adopts it as its own procedure.
+  if (owner === 'institution') return {};
   return isAuthorityKey(owner) ? provisionalOwner(owner, authorityFor) : { institution: owner };
 }
 
@@ -182,7 +184,7 @@ function automaticGates(p: CasePackage, now: Date, effects?: string[], link: Pro
   const owner = resolved.institution;
   const authorityNotes: string[] = [];
   const provisional = 'provisional' in resolved ? resolved.provisional : undefined;
-  if (!owner) authority.push(provisional ? `Who is responsible does not name the institution for this procedure yet (${provisional})` : 'Who is responsible does not name the institution for this procedure yet');
+  if (!owner) authority.push(p.owner === 'institution' ? 'An internal-administration form: each institution adopts it in its own procedure (adm.<template>.<institution>), which names the institution' : provisional ? `Who is responsible does not name the institution for this procedure yet (${provisional})` : 'Who is responsible does not name the institution for this procedure yet');
   else if (provisional) {
     // A stand-in owner is recorded as provisional: never proof of legal competence; production refuses it.
     if (samplesAllowed()) authorityNotes.push(`Owner ${provisional}`);
