@@ -42,6 +42,8 @@ import {
 
 const SETUP_TOKEN = 'test-setup-token-transitions-0123456789';
 process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
+// Cheap hashes for the many accounts each test creates (the runner-only override in officials.ts).
+process.env.CIVICOS_SCRYPT_N = '1024';
 const PW = 'correct horse battery';
 const pdf = new Uint8Array(Buffer.from('%PDF-1.7\nform\n%%EOF'));
 let basis: { instrument: string; eId: string }[];
