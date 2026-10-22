@@ -13,6 +13,8 @@
 //   - a disputed (frozen) part of the constitutional profile freezes the transitions touching it;
 //   - holdings past their recorded term are no longer in force.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+// The full scrypt cost is covered by password-hash.test.ts; these tests check behaviour, not cost (and stay inside their time under a full run).
+process.env.CIVICOS_SCRYPT_N = '16384';
 import { recordVersion as recordLaw, confirmVersion as confirmLaw, resetLaw } from '@/lib/law/register';
 import { db } from '@/lib/data/store/state';
 import { createMinistry } from '@/lib/data/store/ministries';

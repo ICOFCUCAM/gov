@@ -270,6 +270,11 @@ def build(repo):
             match[0]['contract'] = LIBRARY_GIVEN
             match[0]['contract_file'] = c['path']
             match[0]['form_identity'] = c['identity']
+        elif len(match) == 1:
+            # the text gives the form's contract and CivicOS wrote it in the canonical format, line by line (batch 5: the seven
+            # ADM forms of Part 21 §21.2): the row keeps `given` and names the library file that implements it
+            match[0]['contract_file'] = c['path']
+            match[0]['form_identity'] = c['identity']
     apply_scope(rows, checks, repo)
     # a contract and its fields follow the form they define (same file): its sector, step and, where CivicOS will not hold the form or
     # holds it only after legal review, its status; otherwise a field is Partial when the form is built (the field itself is not verified)
@@ -357,7 +362,7 @@ def markdown(rows, checks):
               'carries a field outside the approved scope) > contract_draft (a JSON contract was given; none has passed validation) > contract_missing. Nothing in '
               'the catalogue is approved or in production, and no status is ever set by hand to approved: a missing contract is never an empty, approved or complete '
               'form. Every form row also carries `contract`: `given` (the text gives its contract), `given (CivicOS library)` (the text gives none; CivicOS wrote one '
-              'in a controlled batch, `contract_file` names it, held to the same scope) or `not yet given`. Verified counts, contract matching, incomplete contracts, duplicate IDs, '
+              'in a controlled batch, `contract_file` names it, held to the same scope; a form whose text gives its contract and that CivicOS wrote in the canonical format keeps `given` and names the file too) or `not yet given`. Verified counts, contract matching, incomplete contracts, duplicate IDs, '
               'scope violations and gates: `docs/forms-catalogue/GAP-REPORT.md` (generated).\n')
     md.append('*Platform rule stricter* means CivicOS will not hold the item at all (cited rule); the row says what it holds instead. Rows with basis `domain` are '
               'assessed at the level of their domain (no item-specific rule): the status is the domain\'s state and the step the domain\'s step; a contract and its '

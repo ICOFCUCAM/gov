@@ -1,0 +1,562 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-GOV-039",
+ "record_type": "administration.governance.delegation",
+ "form_version": 1,
+ "procedure_package_id": "adm.delegation",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-GOV-039",
+  "part": 21,
+  "section": "21.1",
+  "line": 1126,
+  "batch": 5
+ },
+ "library": {
+  "title": "Record a delegation of authority",
+  "intro": "Record a delegation of authority within the institution: who delegates, to whom, which procedures and steps, under which provision of law, for which period and with what restrictions. Two officials approve. A decision taken under it records both the delegate and the delegator.",
+  "owner": "institution",
+  "filled_by": "An official of the institution, signed in, at their desk or an office.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": {
+   "key": "adm.delegation",
+   "stage": "requested",
+   "action": "approve",
+   "document": "delegation-instrument"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials (and auditors with a purpose); every read of personal data in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   },
+   {
+    "id": "accounts-not-offices",
+    "what": "The delegator and the delegate are officials' accounts of this institution; the office the delegator holds is recorded for information only, because holding an office grants no permission on the platform",
+    "why": "Delegated authority is read in authorisation from the delegation record (delegate and delegator), never from an office.",
+    "rule": "CLAUDE.md Constitutional architecture: holding an office grants no permission; roles.ts never reads offices"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1126,
+    "quotes": [
+     "ADM-GOV-039",
+     "Delegation of authority record"
+    ],
+    "met_by": {
+     "fields": [
+      "delegation.delegator",
+      "delegation.delegate",
+      "delegation.procedures",
+      "delegation.actions",
+      "delegation.period"
+     ],
+     "procedure": "approve",
+     "platform": {
+      "file": "app/src/lib/records/delegations.ts",
+      "how": "The delegation is recorded by the procedure effect; authorisation reads it (delegationCovering()) only within its institution, procedures, steps and period"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 975,
+    "quotes": [
+     "Legal services",
+     "Advice requests, legal opinions, contracts, statutory obligations and litigation referrals"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "delegation.delegator",
+      "delegation.delegate"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1223,
+    "quotes": [
+     "\"form_id\": \"ADM-GOV-039\""
+    ],
+    "met_by": {
+     "fields": [
+      "delegation.delegator"
+     ],
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "The catalogue's own contract for this form, written in the canonical format field by field (each line below)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1224,
+    "quotes": [
+     "\"title\": \"Delegation of Authority Record\""
+    ],
+    "met_by": {
+     "fields": [
+      "delegation.delegator"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1226,
+    "quotes": [
+     "{\"key\": \"delegating_institution_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "The case belongs to the institution that opens it (its owner); the institution is never typed"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1227,
+    "quotes": [
+     "{\"key\": \"delegator_office_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "delegation.delegator",
+      "delegation.delegator_office"
+     ],
+     "deviation": "accounts-not-offices"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1228,
+    "quotes": [
+     "{\"key\": \"delegate_office_or_person_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "delegation.delegate"
+     ],
+     "deviation": "accounts-not-offices"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1229,
+    "quotes": [
+     "{\"key\": \"delegated_action_codes\", \"type\": \"array\", \"required\": true, \"items_type\": \"permission_code\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "delegation.procedures",
+      "delegation.actions"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1230,
+    "quotes": [
+     "{\"key\": \"legal_basis_reference\", \"type\": \"legal_basis_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "delegation.legal_basis"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1231,
+    "quotes": [
+     "{\"key\": \"effective_period\", \"type\": \"date_range\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "delegation.period"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1232,
+    "quotes": [
+     "{\"key\": \"restrictions\", \"type\": \"array\", \"required\": false, \"items_type\": \"string\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "delegation.restrictions"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1233,
+    "quotes": [
+     "{\"key\": \"approval_decision_reference\", \"type\": \"decision_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "procedure": "approve",
+     "platform": {
+      "file": "app/src/lib/records/decisions.ts",
+      "how": "The decision is sealed with the deciding official, the reasons, the law and rule versions and, under a delegation, the delegator"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "delegation.delegator",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Delegating official"
+   },
+   "hint": {
+    "en": "An official of this institution, by their account."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter delegating official.",
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Who"
+   }
+  },
+  {
+   "id": "delegation.delegator_office",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.offices",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Office the delegator holds, for information"
+   },
+   "hint": {
+    "en": "Recorded for information only: holding an office grants no permission."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Who"
+   }
+  },
+  {
+   "id": "delegation.delegate",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Official receiving the delegation"
+   },
+   "hint": {
+    "en": "An official of this institution, by their account."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter official receiving the delegation.",
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Who"
+   }
+  },
+  {
+   "id": "delegation.procedures",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.procedures",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Procedures covered"
+   },
+   "hint": {
+    "en": "The institution's own procedures, by key."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter procedures covered.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "What"
+   }
+  },
+  {
+   "id": "delegation.actions",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Steps covered (each step's key)"
+   },
+   "hint": {
+    "en": "Only steps the procedure marks as delegable can be taken under a delegation."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter steps covered (each step's key)."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "What"
+   }
+  },
+  {
+   "id": "delegation.legal_basis",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "legal_references_resolve",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Provision that allows the delegation (laws register)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter provision that allows the delegation (laws register)."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "What"
+   }
+  },
+  {
+   "id": "delegation.period",
+   "type": "date_range",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Effective period"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter effective period."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "What"
+   }
+  },
+  {
+   "id": "delegation.restrictions",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Restrictions"
+   },
+   "error_text": {
+    "en": {
+     "length": "Restrictions must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "What"
+   }
+  },
+  {
+   "id": "delegation.instrument",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "delegation-instrument",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "The delegation instrument"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the document."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "What"
+   }
+  },
+  {
+   "id": "delegation.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -287,7 +287,7 @@ def main():
         if r['category'] == 'department' and res['status'] not in ('Platform rule stricter', 'Lower priority'):
             if 'I2' not in also and res['step'] != 'I2':
                 also.append('I2')
-            if 'Department = {id, name}' not in miss:
+            if 'Departments are records' not in miss:
                 miss = (miss + '; ' if miss else '') + KB.NODEPT
         if r['category'] in ('KPI', 'twin') and res['status'] in ('Partial', 'Not yet') and r['kind'] in ('list', 'listed', 'table'):
             if 'I3' not in also and res['step'] != 'I3':

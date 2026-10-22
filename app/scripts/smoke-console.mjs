@@ -94,6 +94,14 @@ const PAGES = [
   // Plan step I3: the indicator register and one definition with its versions.
   { path: '/gov/twin/indicators', map: false, text: /indicator register/i },
   { path: '/gov/twin/indicators/civil.births_registered', map: false, text: /versions and approvals/i },
+  // Plan I2: departments as records, the internal administration workspace, the capability manifest and completeness per item.
+  { path: '/gov/institutions/departments', map: false, text: /accountable/i },
+  { path: '/gov/institutions/administration', map: false, text: /internal administration/i },
+  { path: '/gov/institutions/capabilities', map: false, text: /computed from the records/i },
+  { path: '/gov/institutions/completeness', map: false, text: /never a single percentage/i },
+  // Forms batch 5 (internal administration).
+  { path: '/gov/law/procedures/forms/ADM-PAY-012', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/ADM-GOV-039', map: false, text: /register status/i },
 ];
 const VIEWPORTS = [{ name: 'desktop', width: 1440, height: 900 }, { name: 'phone', width: 390, height: 844 }];
 

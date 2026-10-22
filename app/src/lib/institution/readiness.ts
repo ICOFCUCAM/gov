@@ -2,6 +2,12 @@
 // An institution's readiness, lifecycle and deployability are computed
 // from its actual composed structure + the capabilities its archetype
 // guarantees — not assumed. Every command surface derives from this.
+//
+// Plan I0.2: this composite score describes the structure only and no longer
+// gates activation (activateMinistry() records it for information). Spec
+// l.2029, l.3378 and l.4035 and plan §3.4 ask for completeness per item, with
+// evidence, owner, date and next action, never one percentage:
+// lib/onboarding/completeness.ts (I2). The views keep showing the score.
 
 import type { Ministry } from '@/lib/api/types';
 import { ARCHETYPE_PROFILES } from '@/lib/archetype-profiles';
@@ -24,22 +30,21 @@ export interface InstitutionReadiness {
   dimensions: ReadinessDimension[];
   total: number;            // 0-100 weighted composite
   lifecycle: Lifecycle;
-  deployable: boolean;      // passes the activation gate
+  deployable: boolean;      // the structure is complete (information only; not an activation gate since plan I0.2)
   blocking: string[];       // why not deployable (empty if deployable)
 }
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
-// Activation gate: an institution may not reach a nationally-active
-// lifecycle until composite readiness passes and no critical dimension
-// is unprovisioned.
+// Structure complete: composite readiness passes and no critical dimension
+// is unprovisioned. Shown for information; it gates nothing (plan I0.2).
 export const READINESS_THRESHOLD = 70;
 const CRITICAL = ['governance', 'operational', 'deployment'];
 
 export function scoreInstitution(m: Ministry, ctx?: { cascadeStress?: number }): InstitutionReadiness {
   const profile = ARCHETYPE_PROFILES[m.archetype];
   const spec = specFor(m.archetype);
-  const depts = m.departments?.length ?? 0;
+  const depts = m.departments?.filter(d => d.status !== 'ended').length ?? 0;
   const mods = m.modules?.filter(x => x.enabled).length ?? 0;
   const totalMods = m.modules?.length ?? 0;
   const isActive = m.status === 'active';

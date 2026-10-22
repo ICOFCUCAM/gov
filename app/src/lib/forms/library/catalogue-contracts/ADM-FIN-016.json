@@ -1,0 +1,400 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-FIN-016",
+ "record_type": "administration.finance.expense-claim",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-FIN-016",
+  "part": 21,
+  "section": "21.1",
+  "line": 1103,
+  "batch": 5
+ },
+ "library": {
+  "title": "Claim expenses",
+  "intro": "Claim back expenses you paid for official business: each expense with its date, category, amount and receipt. Rates and allowances come from the nation's approved rules; payment is made through the payroll or treasury, never to bank details on this form.",
+  "owner": "institution",
+  "filled_by": "The official claiming, signed in.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": null,
+  "intended": "An expense-claim procedure of the institution: not built; the form waits in the library (plan steps I2 and I5)",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials (and auditors with a purpose); every read of personal data in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [
+   {
+    "key": "administration.finance.expense-rates",
+    "kind": "rate",
+    "source": "rule",
+    "decision": "Allowances, per-diem and reimbursement rates, as approved rule versions."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "procedure-not-built",
+    "what": "An expense-claim procedure of the institution: no reference procedure carries this form yet; it waits in the library for the institution's procedure, drafted by one official and approved by another",
+    "why": "Cases change only under an approved procedure package; the plan builds the internal-administration procedures in the order of plan step I2 (the payroll, establishment, privileged-access, policy, delegation, disciplinary and legal-advice procedures first).",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts under an approved procedure package"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   },
+   {
+    "id": "estimate-not-money",
+    "what": "Amounts the official enters (an estimate, a total from the finance or payroll system, a claimed expense) are whole numbers in the nation's currency (formatMoney(), lib/nation/registry.ts); the money type is kept for amounts an approved rule calculates",
+    "why": "No amount is typed as if a rule had calculated it; the currency is the nation's, never asked.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; Nation conversion: formatMoney()"
+   },
+   {
+    "id": "treasury-executes",
+    "what": "This form authorises; the payment is made by the treasury through its own payment instruction (treasury.payment.instruction), never by the institution's form",
+    "why": "Authorising and paying are separate duties.",
+    "rule": "Part 21 critical controls (separation of duties for payment workflows); lib/forms/library/canonical/forms/treasury.payment.instruction.json"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1103,
+    "quotes": [
+     "ADM-FIN-016",
+     "Expense claim"
+    ],
+    "met_by": {
+     "fields": [
+      "claim.expenses",
+      "claim.receipts"
+     ],
+     "deviation": "procedure-not-built"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 971,
+    "quotes": [
+     "Finance",
+     "Budget allocations, commitments, invoices, payments, reconciliation and period close"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "claim.expenses",
+      "claim.receipts"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "claim.purpose_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Official business (travel authorisation or case reference)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter official business (travel authorisation or case reference)."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The claim"
+   }
+  },
+  {
+   "id": "claim.expenses",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "expense_rates_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Expenses"
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "date",
+     "type": "date",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "date_not_in_future",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "personal",
+     "evidence": [],
+     "label": {
+      "en": "Date"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter date."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "category",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "administration.country.expense_categories",
+     "personal_data_class": "personal",
+     "evidence": [],
+     "label": {
+      "en": "Category"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select an answer."
+      }
+     },
+     "country_decision": "CFG-ADM-003: the expense categories of the nation's rules; none ship."
+    },
+    {
+     "id": "item",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 300
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "personal",
+     "evidence": [],
+     "label": {
+      "en": "What it was"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter what it was.",
+       "length": "What it was must be 300 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "amount",
+     "type": "number",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      },
+      {
+       "rule": "NONNEGATIVE",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "personal",
+     "evidence": [],
+     "label": {
+      "en": "Amount, in the nation's currency"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter amount, in the nation's currency.",
+       "integer_range": "Amount, in the nation's currency must be a whole number, 0 or more.",
+       "NONNEGATIVE": "Amount, in the nation's currency cannot be below zero."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "receiptRef",
+     "type": "identifier_reference",
+     "required": false,
+     "validation": [],
+     "values_source": null,
+     "personal_data_class": "personal",
+     "evidence": [],
+     "label": {
+      "en": "Receipt number"
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Expenses"
+   }
+  },
+  {
+   "id": "claim.receipts",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "personal",
+   "evidence": [
+    {
+     "kind": "receipts",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Receipts"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the document."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Expenses"
+   },
+   "multiple": true
+  },
+  {
+   "id": "claim.declared",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "These expenses were incurred on official business and are not claimed elsewhere"
+   },
+   "error_text": {
+    "en": {
+     "required": "Confirm this statement to continue.",
+     "must_be_true": "Confirm this statement to continue."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Expenses"
+   }
+  },
+  {
+   "id": "claim.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

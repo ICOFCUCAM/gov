@@ -44,6 +44,6 @@ describe('POST /api/webhooks', () => {
       headers: { 'content-type': 'application/json' },
     }) as never);
     expect(res.status).toBe(201);
-    expect(subscribeMock).toHaveBeenCalledWith({ topic: 'permit.decided', url: 'https://example.com/hook' });
+    expect(subscribeMock).toHaveBeenCalledWith({ topic: 'permit.decided', url: 'https://example.com/hook', by: 'Unverified official' });
   });
 });

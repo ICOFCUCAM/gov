@@ -48,6 +48,23 @@
 // (lib/health/programmes/procedures.ts); every individual public-health form
 // stays excluded (docs/requirements/form-scope.json).
 //
+// Batch 5 (owner approved): internal administration, the supplement's Part 21
+// (docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md §21.1):
+// all 40 ADM-* forms. Owner `institution`: each institution adopts the
+// internal-administration procedures as its own (adm.<template>.<institution>,
+// lib/administration/procedures.ts) and its own officials decide; never a
+// ministry, never a central administrator. Nine are linked to those
+// procedures by identity (establishment, payroll input, review and
+// correction, privileged access, internal policy, delegation, disciplinary
+// and legal advice); the others name the procedure they wait for. The seven
+// forms whose own JSON contract the supplement gives (§21.2: ADM-HR-002,
+// ADM-PAY-012, ADM-PRC-018, ADM-ICT-029, ADM-ICT-030, ADM-AUD-036,
+// ADM-GOV-039) answer every line of it, field by field. Separation of duties
+// is the procedure's distinctFrom step through dualControlRefusal() and the
+// registered SEPARATION-OF-DUTIES and APPROVER-DIFFERS-FROM-MAKER rules;
+// personnel, disciplinary and legal-advice data are restricted and every read
+// logged; grades, entitlements, rates, limits, schedules and scales are the
+// nation's (binding rules, named nation values), none shipped.
 // Batch 6 (owner's assignment, 21 October 2026): tax services, the field
 // series Part 2 §2.6 Departments B–H: the 95 tax.* rows that had no contract
 // (returns, assessments, objections, appeals and disputes, payments, refunds
@@ -174,6 +191,46 @@ import txAssessment from './catalogue-contracts/taxpayer.registration.assessment
 import txVerificationRecord from './catalogue-contracts/taxpayer.registration.verification_record.json';
 import txAppealAssessment from './catalogue-contracts/taxpayer.registration.appeal_assessment.json';
 import txClosureRecord from './catalogue-contracts/taxpayer.registration.closure_record.json';
+import admHr001 from './catalogue-contracts/ADM-HR-001.json';
+import admHr002 from './catalogue-contracts/ADM-HR-002.json';
+import admHr003 from './catalogue-contracts/ADM-HR-003.json';
+import admHr004 from './catalogue-contracts/ADM-HR-004.json';
+import admHr005 from './catalogue-contracts/ADM-HR-005.json';
+import admHr006 from './catalogue-contracts/ADM-HR-006.json';
+import admHr007 from './catalogue-contracts/ADM-HR-007.json';
+import admHr008 from './catalogue-contracts/ADM-HR-008.json';
+import admHr009 from './catalogue-contracts/ADM-HR-009.json';
+import admHr010 from './catalogue-contracts/ADM-HR-010.json';
+import admPay011 from './catalogue-contracts/ADM-PAY-011.json';
+import admPay012 from './catalogue-contracts/ADM-PAY-012.json';
+import admPay013 from './catalogue-contracts/ADM-PAY-013.json';
+import admFin014 from './catalogue-contracts/ADM-FIN-014.json';
+import admFin015 from './catalogue-contracts/ADM-FIN-015.json';
+import admFin016 from './catalogue-contracts/ADM-FIN-016.json';
+import admFin017 from './catalogue-contracts/ADM-FIN-017.json';
+import admPrc018 from './catalogue-contracts/ADM-PRC-018.json';
+import admPrc019 from './catalogue-contracts/ADM-PRC-019.json';
+import admPrc020 from './catalogue-contracts/ADM-PRC-020.json';
+import admPrc021 from './catalogue-contracts/ADM-PRC-021.json';
+import admAst022 from './catalogue-contracts/ADM-AST-022.json';
+import admAst023 from './catalogue-contracts/ADM-AST-023.json';
+import admAst024 from './catalogue-contracts/ADM-AST-024.json';
+import admRec025 from './catalogue-contracts/ADM-REC-025.json';
+import admRec026 from './catalogue-contracts/ADM-REC-026.json';
+import admLeg027 from './catalogue-contracts/ADM-LEG-027.json';
+import admLeg028 from './catalogue-contracts/ADM-LEG-028.json';
+import admIct029 from './catalogue-contracts/ADM-ICT-029.json';
+import admIct030 from './catalogue-contracts/ADM-ICT-030.json';
+import admIct031 from './catalogue-contracts/ADM-ICT-031.json';
+import admIct032 from './catalogue-contracts/ADM-ICT-032.json';
+import admCom033 from './catalogue-contracts/ADM-COM-033.json';
+import admCom034 from './catalogue-contracts/ADM-COM-034.json';
+import admAud035 from './catalogue-contracts/ADM-AUD-035.json';
+import admAud036 from './catalogue-contracts/ADM-AUD-036.json';
+import admPln037 from './catalogue-contracts/ADM-PLN-037.json';
+import admPln038 from './catalogue-contracts/ADM-PLN-038.json';
+import admGov039 from './catalogue-contracts/ADM-GOV-039.json';
+import admGov040 from './catalogue-contracts/ADM-GOV-040.json';
 import t6AppealResponse from './catalogue-contracts/tax.appeal.response.json';
 import t6AppealSubmit from './catalogue-contracts/tax.appeal.submit.json';
 import t6AppealTransmit from './catalogue-contracts/tax.appeal.transmit.json';
@@ -292,7 +349,7 @@ export interface CatalogueItem { source: string; line: number; quotes: string[];
 /** The reference procedure (and stage, step and document) a form belongs to. */
 export interface ProcedureLink { key: string; stage: string; action?: string; document?: string; also?: string[] }
 /** A value the nation's law decides: named, never set (a fee rule, a day count, a period, a threshold, an amount of continuing education). */
-export interface NationValue { key: string; kind: 'fee' | 'days' | 'period' | 'threshold' | 'hours'; source: 'rule' | 'setting' | 'procedure'; decision: string }
+export interface NationValue { key: string; kind: 'fee' | 'days' | 'period' | 'threshold' | 'hours' | 'rate'; source: 'rule' | 'setting' | 'procedure'; decision: string }
 export interface CatalogueDeviation { id: string; field?: string; what: string; why: string; rule: string }
 
 export interface CatalogueContractJson extends CanonicalForm {
@@ -347,6 +404,8 @@ export const BATCH_2 = [med001, med002, med003, med004, med005, med006, med007, 
 export const BATCH_3 = [txIndividual, txPublicEntity, txNonresident, txBranch, txAmend, txDetailsChange, txObligationAdd, txObligationCancel, txTransfer, txCertificateRequest, txAccountStatement, txDuplicate, txSuspendRequest, txReactivateRequest, txObjection, txAppeal, txWithdraw, txDecision, txDecisionRecord, txInspection, txInspectionChecklist, txFurtherInformation, txFurtherInformationP2, txReferral, txReferralRecord, txAssessment, txVerificationRecord, txAppealAssessment, txClosureRecord] as unknown as CatalogueContractJson[];
 /** Batch 4: public-health programme forms (owner approved, 21 October 2026). */
 export const BATCH_4 = [ph011, ph014] as unknown as CatalogueContractJson[];
+/** Batch 5: internal administration, supplement Part 21 (owner approved, 21 October 2026). */
+export const BATCH_5 = [admHr001, admHr002, admHr003, admHr004, admHr005, admHr006, admHr007, admHr008, admHr009, admHr010, admPay011, admPay012, admPay013, admFin014, admFin015, admFin016, admFin017, admPrc018, admPrc019, admPrc020, admPrc021, admAst022, admAst023, admAst024, admRec025, admRec026, admLeg027, admLeg028, admIct029, admIct030, admIct031, admIct032, admCom033, admCom034, admAud035, admAud036, admPln037, admPln038, admGov039, admGov040] as unknown as CatalogueContractJson[];
 /** Batch 6: tax services, the field series Part 2 §2.6 Departments B–H (owner's assignment, 21 October 2026). */
 export const BATCH_6 = [
   t6AppealResponse, t6AppealSubmit, t6AppealTransmit, t6AssessmentAmendment, t6AssessmentNotice, t6AssessmentReviewRequest,
@@ -368,13 +427,13 @@ export const BATCH_6 = [
 ] as unknown as CatalogueContractJson[];
 /** Batch 7: independent oversight and accountability forms, catalogue Part 12 (owner approved, 21 October 2026; plan I8). */
 export const BATCH_7 = [con012, con013, con014, con018, con019, con020, pub009] as unknown as CatalogueContractJson[];
-/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; oversight: batch 7). */
+/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; adm: batch 5; oversight: batch 7). */
 export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; groups: Record<string, string[]>; items: (CatalogueItem & { for?: string })[] });
 /** The shared items that apply to one contract. */
 export const commonItemsFor = (formId: string): CatalogueItem[] => (COMMON_ITEMS.applies_to.includes(formId) ? COMMON_ITEMS.items.filter(i => !i.for || COMMON_ITEMS.groups[i.for]?.includes(formId)).map(({ for: _for, ...i }) => i) : []);
 /** Who the standard notices name, by the deployment-profile slot that owns the form. */
 const INSTITUTION: Record<string, string> = {
-  professionalRegulation: 'The professional regulator', tax: 'The tax authority', publicHealth: 'The public-health authority',
+  professionalRegulation: 'The professional regulator', tax: 'The tax authority', publicHealth: 'The public-health authority', institution: 'This institution',
   ombudsman: 'The ombudsman', humanRights: 'The human rights institution', anticorruption: 'The anti-corruption commission', supremeAudit: 'The public audit office', dataProtection: 'The data-protection authority',
 };
 
@@ -406,7 +465,7 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 }
 
 /** Every catalogue contract CivicOS has written, as library drafts. */
-export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7))];
+export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_5.map(c => load(c, 5)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7))];
 
 /**
  * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without

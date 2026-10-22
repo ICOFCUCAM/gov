@@ -90,7 +90,7 @@ export function libraryPublicationOf(found: LibraryEntry) {
   return libraryPublication({ ...found.def, identity: found.identity }, found.waitsFor, new Date(), { link: linkOf(found) });
 }
 
-const slotLabel = (k: string) => AUTHORITIES.find(a => a.key === k)?.label ?? k;
+const slotLabel = (k: string) => (k === 'institution' ? 'Each institution (its own internal administration)' : AUTHORITIES.find(a => a.key === k)?.label ?? k);
 
 /** What the designer and the form page show about a library form (components/features/forms/LibraryDetails.tsx). */
 export function libraryInfo(found: LibraryEntry) {

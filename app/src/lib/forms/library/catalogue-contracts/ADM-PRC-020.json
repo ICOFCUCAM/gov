@@ -1,0 +1,527 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-PRC-020",
+ "record_type": "administration.procurement.purchase-order",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-PRC-020",
+  "part": 21,
+  "section": "21.1",
+  "line": 1107,
+  "batch": 5
+ },
+ "library": {
+  "title": "Approve a purchase order",
+  "intro": "Approve a purchase order following an approved requisition and, where held, an evaluation: the supplier, the lines, the total and the method used. The approver is never the official who prepared it.",
+  "owner": "institution",
+  "filled_by": "The procurement officer prepares; an approving official decides.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": null,
+  "intended": "A purchase-order procedure of the institution: not built; the form waits in the library (plan steps I2 and I5)",
+  "lists": {
+   "civicos.administration.decision": {
+    "values": [
+     {
+      "value": "approve",
+      "label": "Approve"
+     },
+     {
+      "value": "return",
+      "label": "Return for correction"
+     },
+     {
+      "value": "refuse",
+      "label": "Refuse, with reasons"
+     }
+    ]
+   }
+  },
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials (and auditors with a purpose); every read of personal data in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [
+   {
+    "key": "administration.finance.approval-limits",
+    "kind": "threshold",
+    "source": "setting",
+    "decision": "The amounts each institution's officials may approve, under the nation's financial rules (CFG-ADM-002)."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "procedure-not-built",
+    "what": "A purchase-order procedure of the institution: no reference procedure carries this form yet; it waits in the library for the institution's procedure, drafted by one official and approved by another",
+    "why": "Cases change only under an approved procedure package; the plan builds the internal-administration procedures in the order of plan step I2 (the payroll, establishment, privileged-access, policy, delegation, disciplinary and legal-advice procedures first).",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts under an approved procedure package"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   },
+   {
+    "id": "finance-registers",
+    "what": "Budget lines, allocations, obligations and funded positions are referred to by the reference the finance system gives; the budget register is not on the platform, so the binding checks against it are recorded as not performed and block publication in production",
+    "why": "No budget, commitment or allocation register exists on the platform yet (plan I5).",
+    "rule": "lib/forms/rules.ts binding rules; docs/INTEGRATION_REGISTER.md (finance systems)"
+   },
+   {
+    "id": "estimate-not-money",
+    "what": "Amounts the official enters (an estimate, a total from the finance or payroll system, a claimed expense) are whole numbers in the nation's currency (formatMoney(), lib/nation/registry.ts); the money type is kept for amounts an approved rule calculates",
+    "why": "No amount is typed as if a rule had calculated it; the currency is the nation's, never asked.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; Nation conversion: formatMoney()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1107,
+    "quotes": [
+     "ADM-PRC-020",
+     "Purchase order approval"
+    ],
+    "met_by": {
+     "fields": [
+      "order.supplier",
+      "order.lines",
+      "order.total",
+      "order.approved_by"
+     ],
+     "deviation": "procedure-not-built"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 972,
+    "quotes": [
+     "Procurement",
+     "Plans, requisitions, tenders, contracts, acceptance and supplier records"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "order.supplier",
+      "order.lines"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "order.requisition",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Requisition reference (ADM-PRC-018)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter requisition reference (ADM-PRC-018)."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The order"
+   }
+  },
+  {
+   "id": "order.evaluation",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Evaluation reference (ADM-PRC-019), where held"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The order"
+   }
+  },
+  {
+   "id": "order.supplier",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.organisation",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Supplier (organisations register)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter supplier (organisations register).",
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The order"
+   }
+  },
+  {
+   "id": "order.lines",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Order lines"
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "item",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 300
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Item or service"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter item or service.",
+       "length": "Item or service must be 300 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "quantity",
+     "type": "number",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      },
+      {
+       "rule": "NONNEGATIVE",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Quantity"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter quantity.",
+       "integer_range": "Quantity must be a whole number, 0 or more.",
+       "NONNEGATIVE": "Quantity cannot be below zero."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "price",
+     "type": "number",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      },
+      {
+       "rule": "NONNEGATIVE",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Unit price, in the nation's currency"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter unit price, in the nation's currency.",
+       "integer_range": "Unit price, in the nation's currency must be a whole number, 0 or more.",
+       "NONNEGATIVE": "Unit price, in the nation's currency cannot be below zero."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "The order"
+   }
+  },
+  {
+   "id": "order.total",
+   "type": "number",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "integer_range",
+     "params": {
+      "min": 0
+     }
+    },
+    {
+     "rule": "NONNEGATIVE",
+     "params": {}
+    },
+    {
+     "rule": "approval_limit_from_policy",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Total, in the nation's currency"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter total, in the nation's currency.",
+     "integer_range": "Total, in the nation's currency must be a whole number, 0 or more.",
+     "NONNEGATIVE": "Total, in the nation's currency cannot be below zero."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The order"
+   }
+  },
+  {
+   "id": "order.prepared_by",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Prepared by"
+   },
+   "hint": {
+    "en": "An official of this institution, by their account."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "order.approved_by",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    },
+    {
+     "rule": "APPROVER-DIFFERS-FROM-MAKER",
+     "params": {
+      "fields": [
+       "order.prepared_by"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Approved by"
+   },
+   "hint": {
+    "en": "An official of this institution, by their account."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active.",
+     "APPROVER-DIFFERS-FROM-MAKER": "The approver cannot be the official who prepared it."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "order.decision",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.administration.decision",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Decision"
+   },
+   "hint": {
+    "en": "Recorded by the deciding official at the procedure step, with reasons."
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "order.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

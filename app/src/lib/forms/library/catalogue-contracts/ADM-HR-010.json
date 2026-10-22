@@ -1,0 +1,379 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-HR-010",
+ "record_type": "administration.personnel.disciplinary",
+ "form_version": 1,
+ "procedure_package_id": "adm.disciplinary",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-HR-010",
+  "part": 21,
+  "section": "21.1",
+  "line": 1097,
+  "batch": 5
+ },
+ "library": {
+  "title": "Record a disciplinary process",
+  "intro": "Open a disciplinary process: the official concerned, the allegation and the rule it concerns. An investigation follows; two officials decide with reasons, neither of them the one who opened or investigated it. Restricted to the assigned officials and their supervisors; every read is logged.",
+  "owner": "institution",
+  "filled_by": "The human-resources officer, signed in.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": {
+   "key": "adm.disciplinary",
+   "stage": "opened",
+   "action": "investigate",
+   "document": "investigation-report"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials; the case is restricted to its assignee and supervisors; every read in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   },
+   {
+    "id": "personnel-restricted",
+    "what": "Personnel data (about an official, a candidate or an employee) is restricted: the case is restricted to its assignee and supervisors, every read goes to the access log with its purpose, and nothing about a person leaves the institution",
+    "why": "Part 21: personnel files require restricted access and retention rules.",
+    "rule": "CLAUDE.md Government operating model: caseReadRefusal() restricted cases; every read of personal data in a case goes to the access log (lib/records/access-log.ts)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1097,
+    "quotes": [
+     "ADM-HR-010",
+     "Disciplinary process record"
+    ],
+    "met_by": {
+     "fields": [
+      "disciplinary.employee",
+      "disciplinary.allegation",
+      "disciplinary.outcome"
+     ],
+     "procedure": "decide"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 970,
+    "quotes": [
+     "Human resources",
+     "Positions, authorized establishment, assignments, training, leave, performance processes and personnel actions"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "disciplinary.employee",
+      "disciplinary.allegation"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "disciplinary.employee",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.person",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Official concerned (civil register reference)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter official concerned (civil register reference).",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The allegation"
+   }
+  },
+  {
+   "id": "disciplinary.allegation",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The allegation"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the allegation.",
+     "length": "The allegation must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The allegation"
+   }
+  },
+  {
+   "id": "disciplinary.provision",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "legal_references_resolve",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Rule or provision concerned (laws register)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter rule or provision concerned (laws register)."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The allegation"
+   }
+  },
+  {
+   "id": "disciplinary.informed",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The official concerned was told of the allegation and may respond"
+   },
+   "error_text": {
+    "en": {
+     "required": "Confirm this statement to continue.",
+     "must_be_true": "Confirm this statement to continue."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "disciplinary.response",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "response",
+     "when": "when_relevant"
+    }
+   ],
+   "label": {
+    "en": "The official's response"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "disciplinary.investigation_report",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "investigation-report",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Investigation report"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the document."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "disciplinary.outcome",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "administration.country.disciplinary_outcomes",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Outcome"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "CFG-ADM-001: the disciplinary outcomes of the public-service law; none ship."
+  },
+  {
+   "id": "disciplinary.reasons",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Reasons for the outcome"
+   },
+   "error_text": {
+    "en": {
+     "length": "Reasons for the outcome must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "disciplinary.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -35,7 +35,14 @@ REGOWN = "lib/data/register-owners.ts (owner, one changing API, legal authority)
 WRITES = "lib/casework/register-writes.test.ts (only the procedure module changes a case-governed register)"
 TRANS = "lib/transitions/ (acting, delegation, conflict/recusal, emergency, caretaker, court rulings); tests lib/transitions/*.test.ts"
 FOLD = "components/ui/SampleFold, Generated (production folds generated panels to Not connected); tests components/ui/Generated.test.ts, SampleFold.test.ts"
-NODEPT = "Department = {id, name} only (lib/api/types.ts:536): no accountable office, services, staff or legal basis"
+NODEPT = "Departments are records (lib/institution/departments.ts: accountable office, functions, services, staff, every version kept); this department's own procedures and records are not built"
+DEPTS = "lib/institution/departments.ts (departments as records: accountable office, functions, services, staff, every version kept; ended with a reason and kept; after setup changed only by a proposal a different official confirms, an independent institution's own); tests lib/institution/departments.test.ts, lib/data/store.test.ts"
+ADMIN = "lib/administration/ (register.ts: positions, payroll batches, privileged access grants, policies; procedures.ts: adm.* templates each institution adopts as its own — establishment, payroll input, review and correction, privileged access, internal policy, delegation, disciplinary, legal advice — with distinctFrom steps through dualControlRefusal()); test lib/administration/administration.test.ts"
+WORKSPACE = "the internal administration workspace (/gov/institutions/administration, a tab of Ministries; GET /api/org/ministries/[id]/administration under canReadAdministration(): only the institution's own records, by department function)"
+COMPLETE = "lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verified, blocked, not_applicable or not_assessed, evidence, owner, date and next action; the critical items gate activation in production; no percentage; /gov/institutions/completeness and the onboarding hub); test lib/onboarding/completeness.test.ts"
+CAPS = "lib/institution/capabilities.ts capabilityManifest() (responsibilities, registers, procedures in force and drafts, departments and administration functions, computed from records, never from the archetype; /gov/institutions/capabilities); test lib/onboarding/completeness.test.ts"
+TASKS = "lib/auth/roles.ts TASK_PERMISSIONS and taskRefusal() (the catalogue's task identifiers as package steps and rules at the responsible institution, never offices), attributeRefusal() (facility, jurisdiction and task scope, narrowing only) and delegationCovering() (a delegated act records delegate and delegator on the step and the sealed decision); test lib/auth/task-permissions.test.ts, lib/administration/administration.test.ts"
+NAVF = "lib/nav/console-nav.ts navFor() and pageRefusal() (the menu shows each official the pages roles.ts lets them use; every page stays reachable for someone allowed); test lib/nav/console-nav.test.ts"
 SCREENS = "screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3)"
 ABSENT = "absent: no module, register or procedure (audit A §3)"
 PREFILL = "reference procedures pre-fill deadline and appeal day counts (e.g. lib/civil/procedures.ts:122-124, lib/courts/procedures.ts:91-92, lib/immigration/procedures.ts:89,116, lib/organisations/procedures.ts:203-204) — drafts, but typed numbers"
@@ -85,9 +92,9 @@ R(None, None, r'risk score|risk-based selection|automated student risk score', '
 
 # framing sentences of the acceptance lists
 R(None, None, r'(tests should be mandatory|should demonstrate that|require evidence for each of the following|Use this as a working checklist|Ticking an item|I would not accept these institutions)', 'Met',
-  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (34 proven, 42 partial, 15 not yet); plan §3.5 makes it the definition of done', '', '—')
-R(3, r'^G$', r'(not ready for production simply because its interface renders|Each service needs evidence)', 'Not yet',
-  'lib/institution/readiness.ts scoreInstitution() scores structure, not evidence; onboarding tracks are per installation', 'Per-service readiness evidence (legal grounding, configuration, staffing, records, security, integration, operational testing)', 'I2')
+  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (49 proven, 31 partial, 11 not yet); plan §3.5 makes it the definition of done', '', '—')
+R(3, r'^G$', r'not ready for production simply because its interface renders', 'Met', COMPLETE, '', '—')
+R(3, r'^G$', r'Each service needs evidence', 'Partial', COMPLETE + ' (per institution)', 'Evidence per service (legal grounding, configuration, staffing, records, security, integration, operational testing)', 'I2')
 R(1, r'^2$', r'(CivicOS should use international standards|It is a disclosure standard)', 'Lower priority', 'Plan §4 "Reference lists of standards. Informative; cited where a feature uses one."', '', 'Unassigned')
 R(4, r'^A$', r'configurable archetypes for the following', 'Partial', '12 archetype constants (lib/data/store/ministries.ts:38-48, lib/institution/archetype-spec.ts); independent bodies are standings and constitutional slots, not archetypes', 'Archetypes for legislature, electoral, audit, ombudsman, data protection, human rights, anti-corruption, statistics, regulators, PSC', 'I8', 'I2')
 R(5, r'^F$', r'(versioned, documented APIs|OpenAPI is a suitable)', 'Partial', '/api/openapi generated from route files (lib/api/openapi.json; openapi.test.ts)', 'Event contracts with schemas, versioning and compatibility tests', 'I9')
@@ -106,7 +113,7 @@ R(0, None, r'^4 — A4', 'Partial', 'Legislature operational; public audit engag
 R(0, None, r'^5 — B and D', 'Partial', 'Kernel built and tested; institution export, migration manifest, event envelope missing', 'See Part 5 rows', 'I9')
 R(0, None, r'^6 — C, E and F', 'Partial', 'Console tokens and grounds exist; no workspace ground or component-state test', 'See Part 6 rows', 'I10')
 R(0, None, r'pre-approved in a universal package|legal forms, fees, deadlines', 'Country decision', 'Platform provides: laws [] and rules [] ship empty, procedures and permit mappings ship as unapproved drafts (audit A §2.6-2.8)', PREFILL + '; spec wants no pre-filled numbers', 'I1')
-R(0, None, r'product architecture for every institution', 'Partial', 'Kernel exists; per-institution architecture is archetype constants (lib/institution/archetype-spec.ts, blueprint.ts)', 'Per-institution capability manifest read from records (plan §2 row 1)', 'I2')
+R(0, None, r'product architecture for every institution', 'Partial', 'Kernel exists; ' + CAPS, 'Operating models per institution type beyond the records each institution holds (plan I5 onward)', 'I2')
 R(0, None, r'mistake to create a separate, disconnected application', 'Partial', 'Apps share kernel (apps/_shared/register-sources.ts) but 27 app dirs with engine panels', 'Shared workspace patterns (I10); record-computed indicators (I3)', 'I10', 'I3')
 
 # ====================================================================== PART 1
@@ -149,9 +156,9 @@ R(1, r'^3\.2$', r'^Appointments Secretariat', 'Partial', OFFICES, 'Nomination, e
 R(1, r'^3\.2$', r'^Public Communications', 'Partial', 'lib/data/site-editorial.ts (proposed by one, published by another); apps/communications screens', 'Announcement/speech approval records for the executive office; ' + NODEPT, 'Unassigned', 'I2')
 R(1, r'^3\.2$', r'^Delivery and Performance', 'Not yet', SCREENS, 'Milestones, verified blockers, corrective actions (approved service indicators: ' + IND + '); ' + NODEPT, 'I3', 'I2,I5')
 R(1, r'^3\.2$', r'^Cabinet Secretariat', 'Not yet', 'No Cabinet records or procedure (audit A §2.6); /gov Cabinet.tsx is a screen', 'Cabinet submission/decision/action registers and procedure; ' + NODEPT, 'I5', 'I2')
-R(1, r'^3\.2$', r'^Internal Administration', 'Not yet', 'No HR, assets, records-management or internal-audit records', 'Shared internal administration workspace (Part 1 §10); ' + NODEPT, 'Unassigned', 'I2')
+R(1, r'^3\.2$', r'^Internal Administration', 'Partial', ADMIN + '; ' + WORKSPACE, 'Asset, records-management and internal-audit procedures (their forms are library drafts, batch 5)', 'I2')
 R(1, r'^3\.2$', r'^(Policy and Strategy|Protocol and State Functions|Executive Correspondence)', 'Not yet', 'No records; presidency app reads no register (audit A §2.4)', 'Records and procedures; ' + NODEPT, 'Unassigned', 'I2')
-R(1, r'^3\.2$', r'functional departments, not mandatory', 'Country decision', 'Platform provides: departments editable per institution (/api/org/ministries/[id]/departments) — ' + NODEPT, 'Departments as records with office, services, staff', 'I2')
+R(1, r'^3\.2$', r'functional departments, not mandatory', 'Country decision', 'Platform provides: ' + DEPTS + '; none ship', '', '—')
 # §3.3 services
 R(1, r'^3\.3$', r'^Inter-ministry referral', 'Partial', REFERRAL + '; engine deadlines onLapse escalate', 'Approved coordination rules for escalation as records', 'Unassigned', 'I5')
 R(1, r'^3\.3$', r'^Formal appointment', 'Partial', OFFICES + '; ' + TRANS + ' (acting, succession)', 'Nomination, eligibility, consent and appointment instrument as documents; appointment procedure', 'Unassigned', 'I8')
@@ -273,13 +280,17 @@ R(1, r'^9$', r'separate authorities', 'Country decision', 'Platform provides: in
 R(1, r'^9\.3$', r'^Stage (1[1-5]) ', 'Not yet', ABSENT, 'Contract, deliverables, acceptance, payment and closure', 'I5')
 R(1, r'^9\.', None, 'Not yet', 'Procurement screens only (treasury/health app panels); no procedure or register (audit A §3, acceptance P1-07)', 'Procurement procedure and registers (drafts)', 'I5')
 # §10 internal administration
-R(1, r'^10$', r'^Finance:', 'Not yet', 'Bills only', 'Institution finance records', 'I5', 'Unassigned')
-R(1, r'^10$', r'^Procurement:', 'Not yet', ABSENT, 'Procurement records', 'I5')
-R(1, r'^10$', r'^Records management', 'Partial', 'Retention (lib/data/retention.ts: two administrators confirm rules), legal hold on cases (Case.legalHold)', 'Classification ownership, transfer and authorised disposal per institution', 'Unassigned')
-R(1, r'^10$', r'^ICT and operations', 'Partial', 'Platform ops: incidents (/api/ops/incidents), backups, cron runs, support tickets', 'Per-institution access requests and change records', 'Unassigned')
-R(1, r'^10$', r'^Communications', 'Partial', 'Site editorial and translations (lib/data/site-editorial.ts, lib/public-sites/translation.ts), subscriptions', 'Institution mailing lists and corrections beyond public sites', 'Unassigned')
-R(1, r'^10$', r'not automatic grants of authority', 'Met', 'Departments carry no permission; decisions need Can sign in the responsible institution (' + ROLES + ')', '', '—')
-R(1, r'^10$', r'.', 'Not yet', 'No internal administration records (HR, assets, legal services, internal audit, planning)', 'Internal administration workspace provisioned from departments — in no plan step', 'Unassigned', 'I2')
+R(1, r'^10$', r'^Finance:', 'Not yet', 'Bills only; the finance forms (ADM-FIN-014 … 017) are library drafts (forms batch 5)', 'Institution finance records', 'I5', 'I2')
+R(1, r'^10$', r'^Procurement:', 'Not yet', ABSENT + '; the procurement forms (ADM-PRC-018 … 021) are library drafts (forms batch 5)', 'Procurement records', 'I5', 'I2')
+R(1, r'^10$', r'^Records management', 'Partial', 'Retention (lib/data/retention.ts: two administrators confirm rules), legal hold on cases (Case.legalHold); records forms ADM-REC-025, 026 as library drafts', 'Classification ownership, transfer and authorised disposal per institution as procedures', 'I2')
+R(1, r'^10$', r'^ICT and operations', 'Partial', 'Platform ops: incidents (/api/ops/incidents), backups, cron runs, support tickets; privileged access per institution (' + ADMIN + ')', 'Ordinary access requests and change records as procedures (ADM-ICT-029, 031 are library drafts)', 'I2')
+R(1, r'^10$', r'^Communications', 'Partial', 'Site editorial and translations (lib/data/site-editorial.ts, lib/public-sites/translation.ts), subscriptions; ADM-COM-033, 034 as library drafts', 'Institution mailing lists and corrections beyond public sites', 'I2')
+R(1, r'^10$', r'not automatic grants of authority', 'Met', 'Departments carry no permission; decisions need Can sign in the responsible institution (' + ROLES + '); ' + TASKS, '', '—')
+R(1, r'^10$', r'(need an internal administration workspace|provisioned from the institution)', 'Met', WORKSPACE + '; ' + DEPTS, '', '—')
+R(1, r'^10$', r'^Human resources', 'Partial', ADMIN + ' (positions and the authorised establishment; payroll); the other HR forms (ADM-HR-002 … 009) are library drafts', 'Assignments, training, leave and performance procedures', 'I2')
+R(1, r'^10$', r'^Legal services', 'Partial', ADMIN + ' (legal advice requests, restricted, every read logged)', 'Legal opinions, contracts, statutory obligations and litigation referrals (ADM-LEG-028 is a library draft)', 'I2')
+R(1, r'^10$', r'^(Asset management|Internal audit|Planning and performance)', 'Not yet', 'Department functions and the workspace (' + DEPTS + '); the forms are library drafts (forms batch 5)', 'The procedures and records of the function', 'I2')
+R(1, r'^10$', r'.', 'Partial', ADMIN + '; ' + WORKSPACE, 'The remaining functions\' procedures', 'I2')
 # §11 form contract
 R(1, r'^11$', r'Distinguish a user-entered value from a verified', 'Not yet', FIELDSPEC, 'Verified-value marker from an authoritative register (identifierReference/registryReference, plan §3.1)', 'I1')
 R(1, r'^11$', r'typed fields, explicit required conditions', 'Partial', FIELDSPEC + '; engine validates required fields server-side', 'Conditional required, controlled vocabularies (valuesSource), named validation rules', 'I1')
@@ -336,7 +347,7 @@ R(2, r'^B$', r'^Approvals', 'Met', DUAL + '; ' + DECIS + ' (named authority, rea
 R(2, r'^B$', r'^Documents', 'Partial', DOCS + '; ' + CERT + '; decisions sealed', 'Templates; delivery receipts', 'I1', 'I9')
 R(2, r'^B$', r'^Exchange', 'Met', EXCH, '', '—')
 R(2, r'^B$', r'^Reporting', 'Met', IND + '; ' + INDTWIN + ' (quality_status, classification)', '', '—')
-R(2, r'^B$', r'^Administration', 'Partial', 'Officials and roles per institution (/admin/officials), locations via facilities', 'Delegated authority for officials, queues per department', 'I2')
+R(2, r'^B$', r'^Administration', 'Partial', 'Officials and roles per institution (/admin/officials), locations via facilities; ' + TASKS + '; ' + DEPTS, 'Queues per department', 'I2', 'I10')
 R(2, r'^B$', r'^Audit', 'Partial', AUDIT + '; ' + ACCESS, 'Exports written to the access log as `export` only for the substrate export (I0.1) and institution exports (' + PORTABLE + '); other bulk exports', 'I9')
 R(2, r'^B$', r'cannot itself confer legal power|may only execute an action', 'Met', MAPPING + '; engine checks decision classification at proposal and decision; law version must be in force', '', '—')
 R(2, r'^B$', r'.', 'Partial', 'Shared engine and workspace', '', 'I10')
@@ -485,10 +496,11 @@ R(2, r'^F$', r'Contract field', 'Met', IND + '; ' + INDTWIN, '', '—')
 R(2, r'^F$', r'modelled estimate|registered facilities|operational performance', 'Partial', 'Observation method distinguishes administrative-count/direct/estimate/model; indicator definitions carry intended use and qualifications that keep register counts apart from real-world claims (' + IND + ')', 'Definitions for facilities verified operational and for estimates (20.66, 20.68)', 'I3')
 R(2, r'^F$', r'.', 'Met', TWIN + '; ' + INDTWIN, '', '—')
 # G readiness
-R(2, r'^G$', r'Readiness must be derived from recorded evidence|manually set', 'Not yet', 'lib/institution/readiness.ts scoreInstitution() computes a 0-100 composite from archetype constants (audit integrity hard-coded 100) and gates activateMinistry() on it (lib/data/store/ministries.ts:118)', 'Readiness from recorded evidence; "Not assessed" until a check exists (plan §3.4)', 'I2')
-R(2, r'^G$', r'evaluate readiness at the level of each department', 'Not yet', 'Onboarding hub reads tracks per installation (lib/onboarding/status.ts), not per department/service', 'Department completeness view (I2)', 'I2')
-R(2, r'^G$', r'evidence reference, owner, verification date', 'Not yet', 'No readiness evidence records', 'Readiness dimension records', 'I2')
-R(2, r'^G$', r'^(Legal grounding|Configuration|Staffing|Operational data|Connectivity|Security and oversight|Service acceptance):', 'Partial', 'Onboarding tracks read the systems that hold the facts (laws, authorities, officials, procedures, registers, exchange, operations — lib/onboarding/status.ts)', 'Per institution and department, with evidence, owner, date', 'I2')
+R(2, r'^G$', r'Readiness must be derived from recorded evidence|manually set', 'Met', COMPLETE + '; the composite score gates nothing (I0.2)', '', '—')
+R(2, r'^G$', r'evaluate readiness at the level of each department', 'Partial', COMPLETE + ' (per institution, with its departments\' staffing and support owners as items)', 'Items per service, register and workflow', 'I2')
+R(2, r'^G$', r'evidence reference, owner, verification date', 'Met', COMPLETE, '', '—')
+R(2, r'^G$', r'not production-ready merely because its screen exists', 'Met', COMPLETE, '', '—')
+R(2, r'^G$', r'^(Legal grounding|Configuration|Staffing|Operational data|Connectivity|Security and oversight|Service acceptance):', 'Partial', COMPLETE + '; onboarding tracks with owner, date and next action (lib/onboarding/status.ts)', 'Items still not assessed until a check exists (load test, restore exercise, reconciliation)', 'I2')
 R(2, r'^G$', r'share CivicOS|They do not remove the need', 'Met', 'Shared kernel; laws and DPIA left to the nation', '', '—')
 R(2, r'^G$', r'.', 'Partial', 'Onboarding hub', '', 'I2')
 
@@ -634,7 +646,7 @@ R(4, r'^B$', r'^Protected audit', 'Partial', AUDIT + ' (acceptance P4-12)', 'Ins
 R(4, r'^B$', r'^Independent oversight', 'Met', 'Relationship-bound reads for audit/request_information, purpose, logged', '', '—')
 R(4, r'^B$', r'^Continuity', 'Partial', PORTABLE + ' (acceptance P4-13, P5-08)', 'Configuration beyond procedures and the institution\'s terms (authority mappings, rates, country rules) is not carried', 'I9')
 R(4, r'^B$', r'^Independent publication', 'Met', 'Site editorial per institution (proposed and published by its own officials); legislature publication', '', '—')
-R(4, r'^B$', r'^Transparent delegation', 'Partial', TRANS + ' (delegation and acting recorded with scope and period)', 'Delegations are recorded but not read by roles.ts for authority', 'Unassigned')
+R(4, r'^B$', r'^Transparent delegation', 'Met', TRANS + ' (acting recorded with scope and period); lib/records/delegations.ts authority delegations (adm.delegation: recorded by two officials with legal basis, procedures, steps and period); ' + TASKS, '', '—')
 R(4, r'^B$', r'represented in the platform\'s identity, authorisation, data', 'Partial', ROLES + '; ' + INST, 'Data model: one installation-wide data key (lib/keys/custody.ts), audit entries without institution field (audit C K-1, A-1)', 'I9', 'I8')
 R(4, r'^B$', r'tested technically', 'Met', 'lib/auth/negative-authorization.test.ts; portability.test.ts', '', '—')
 R(4, r'^B$', r'.', 'Met', ROLES, '', '—')
@@ -714,12 +726,13 @@ R(4, r'^D$', r'^Legal registry', 'Met', LAW + '; decisions need their own author
 R(4, r'^D$', r'^Public website publishing', 'Met', 'Site editorial per institution', '', '—')
 R(4, r'^D$', r'^Audit and security monitoring', 'Met', 'Access log content-free; audit chain read under canReadAuditChain()', '', '—')
 R(4, r'^D$', r'central payment service may execute|must not thereby gain', 'Partial', 'Acceptance P4-10 partial (payments only)', 'Payroll; outgoing payment instructions', 'I5')
-R(4, r'^D$', r'^(HR and payroll|Finance|Procurement):', 'Not yet', ABSENT, 'Shared HR/finance/procurement services — no plan step for HR/payroll', 'Unassigned', 'I5')
+R(4, r'^D$', r'^HR and payroll:', 'Partial', ADMIN + ' (each institution its own; personnel and payroll cases restricted, every read logged; no pay or bank data)', 'Personnel records beyond positions and payroll batches', 'I2')
+R(4, r'^D$', r'^(Finance|Procurement):', 'Not yet', ABSENT + '; the forms are library drafts (forms batch 5)', 'Institution-owned budgets, approvals and procurement decisions', 'I5', 'I2')
 R(4, r'^D$', r'.', 'Partial', 'Shared kernel', '', 'Unassigned')
 # E authorisation contract
 R(4, r'^E$', r'policy-enforcement layer|client-supplied field must never|defaults to denial', 'Met', 'middleware apiPermission() on every change (api-permission-coverage.test.ts), refusal()/readRefusal() server-side; withOfficial() replaces body names', '', '—')
 R(4, r'^E$', r'Contract field principal\.(user_id|institution_id|roles)', 'Met', 'currentOfficial() with institution, role, Scope.bounds', '', '—')
-R(4, r'^E$', r'Contract field principal\.delegations', 'Partial', 'Citizen delegations (lib/records/delegations.ts); official delegations as transitions', 'Delegations read in authorisation', 'Unassigned')
+R(4, r'^E$', r'Contract field principal\.delegations', 'Met', 'currentOfficial() fills Scope.delegations from authorityGrantsFor() (lib/records/delegations.ts); ' + TASKS, '', '—')
 R(4, r'^E$', r'Contract field action\.purpose', 'Partial', 'Purpose on auditor reads and exchange', 'Purpose on every protected read', 'I9')
 R(4, r'^E$', r'Contract field context\.relationship_id', 'Met', 'readRelationship() logs relationship and version', '', '—')
 R(4, r'^E$', r'Contract field context\.legal_basis', 'Partial', 'Decisions cite law; reads do not', 'Legal basis on protected reads', 'I9')
@@ -736,9 +749,9 @@ R(4, r'^F$', r'^(Exchange controls tested|Decision workflows tested)', 'Met', 'A
 R(4, r'^F$', r'^Portability tested', 'Partial', PORTABLE, 'Configuration beyond procedures (authority mappings, rates, country rules) is not exported', 'I9')
 R(4, r'^F$', r'^Continuity tested', 'Not yet', 'No institution-specific recovery', 'I9 export and restore', 'I9')
 R(4, r'^F$', r'^Publication controls tested', 'Met', 'lib/data/site-editorial.test.ts; legislature publication', '', '—')
-R(4, r'^F$', r'^(Legal mandate verified|Governance configured)', 'Partial', 'Institution terms and offices recorded; onboarding tracks', 'Per-institution readiness record', 'I2')
-R(4, r'^F$', r'not_started, in_progress|aggregate percentage must not conceal', 'Not yet', 'scoreInstitution() composite percentage gates activation (lib/institution/readiness.ts)', 'State per item with evidence, owner, date, next action', 'I2')
-R(4, r'^F$', r'.', 'Not yet', 'No independent-institution readiness checklist', 'I2 readiness', 'I2')
+R(4, r'^F$', r'^(Legal mandate verified|Governance configured)', 'Partial', 'Institution terms and offices recorded; ' + COMPLETE, 'Approval policies per institution as items', 'I2')
+R(4, r'^F$', r'not_started, in_progress|aggregate percentage must not conceal', 'Met', COMPLETE, '', '—')
+R(4, r'^F$', r'.', 'Partial', COMPLETE + ' (every institution, independent ones included, by their own records)', 'Checklist items particular to independent institutions (funding, appointment and dismissal protections as items)', 'I2')
 # H implementation order
 R(4, r'^H$', r'^First:', 'Met', 'Constitutional phases 0-7', '', '—')
 R(4, r'^H$', r'^Second:', 'Met', 'Laws register, sealed decisions, site publication approvals, exchange', '', '—')
@@ -824,9 +837,10 @@ R(5, r'^I$', r'(Availability and recovery-time|Recovery-point|Backup frequency|E
 R(5, r'^I$', r'No universal uptime', 'Met', 'No uptime or RTO typed in (estimates labelled, hosting-model)', '', '—')
 R(5, r'^I$', r'.', 'Partial', 'Hosting paths and DR docs', '', 'Unassigned')
 R(5, r'^J$', r'.', 'Partial', 'Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06)', 'Migration manifest with lifecycle, reconciliation counts, per-field provenance status', 'I9')
-R(5, r'^K$', r'(Institutional readiness|Platform completeness|must not be conflated)', 'Partial', 'Onboarding hub (installation) and Update Center readiness (software) are separate', 'Institution readiness view', 'I2')
-R(5, r'^K$', r'single overall percentage|Every verified state must have evidence', 'Not yet', 'scoreInstitution() percentage', 'Evidence-backed states', 'I2')
-R(5, r'^K$', r'.', 'Not yet', 'No per-institution readiness dimensions', 'Readiness view (plan §3.4)', 'I2')
+R(5, r'^K$', r'(Institutional readiness|Platform completeness|must not be conflated|two distinct forms of completeness)', 'Met', COMPLETE + '; ' + CAPS + '; Update Center readiness (software) apart', '', '—')
+R(5, r'^K$', r'single overall percentage|Every verified state must have evidence|explicit states|Illustrative interface|— Not assessed:|gap should lead to a specific action', 'Met', COMPLETE, '', '—')
+R(5, r'^K$', r'^(Legal|Configuration|Staffing|Data|Integrations|Security|Service|Continuity|Governance):', 'Partial', COMPLETE, 'Items still not assessed until a check exists (load test, restore exercise, reconciliation)', 'I2')
+R(5, r'^K$', r'.', 'Partial', COMPLETE, '', 'I2')
 R(5, r'^M$', r'.', 'Partial', 'Kernel, shared services exist; federation and portability layers partial', '', 'I9')
 
 # ====================================================================== PART 6
@@ -840,7 +854,7 @@ R(6, r'^A$', r'.', 'Partial', '', '', 'I10')
 R(6, r'^B$', r'not communicated by colour alone|WCAG 2\.2 AA contrast|semantically', 'Partial', 'tokens.test.ts 4.5:1; STATUS tones', 'Icons/text labels on every status', 'I10')
 R(6, r'^B$', r'^(Body|Compact table text|Page title|Section heading|Small label|Base spacing|Common control height|Standard card radius|Keyboard focus):', 'Not yet', 'No type/spacing tokens in lib/theme/tokens.ts (colours only)', 'Typography and spacing tokens', 'I10')
 R(6, r'^B$', r'.', 'Partial', 'lib/theme/tokens.ts', '', 'I10')
-R(6, r'^C$', r'reflect the user\'s assigned permissions', 'Not yet', 'lib/nav/console-nav.ts lists items for everyone; the backend enforces', 'Navigation filtered by permission', 'I10')
+R(6, r'^C$', r'reflect the user\'s assigned permissions', 'Met', NAVF + '; the backend still enforces every request', '', '—')
 R(6, r'^C$', r'.', 'Partial', 'Console shell (CommandShell, console-nav, ConsoleMark)', 'Workspace shell per spec (context panel with legal basis)', 'I10')
 R(6, r'^D\.4$', r'(Versioning and publication approval|Forms must be versioned|form version 1\.0)', 'Met', 'Packages versioned, approved by another official; cases keep version', '', '—')
 R(6, r'^D\.4$', r'^(Field types and validation|Controlled vocabularies|Document attachments)$', 'Partial', FIELDSPEC + '; DocumentSpec; choice options', 'valuesSource, named validation rules, evidence classes (I1)', 'I1')
@@ -864,15 +878,15 @@ R(6, r'^E$', r'Reduced-motion', 'Met', 'prefers-reduced-motion in globals.css; c
 R(6, r'^E$', r'.', 'Partial', 'axe wcag22aa scans (acceptance P6-17/18/19)', 'Workspace WCAG 2.2 AA assessment, RTL review', 'I10')
 R(6, r'^F$', r'(Live records|Controlled simulation|Illustrative data|never look like a real government|Do not rely on a coloured banner)', 'Met', MODE + '; training/demo banner; Simulation notice', '', '—')
 R(6, r'^F$', r'(Prevent training or demo credentials|Keep demo identities)', 'Met', 'Demo cast refused at every sign-in in production (demo-cast.test.ts)', '', '—')
-R(6, r'^F$', r'Block real payments, notifications, signatures', 'Partial', 'payBill() simulated; development keys refused only in production (developmentKeyRefusal())', 'lib/messaging and lib/events/deliver.ts do not check the installation mode: a training or demo installation with a provider or webhook connected sends real notifications', 'Unassigned')
+R(6, r'^F$', r'Block real payments, notifications, signatures', 'Met', 'I0.2: payBill() records simulated receipts and refuses in production; notifications and webhooks recorded as simulated in training and demo, no request made (lib/messaging/deliver.ts sendVia(), lib/events/deliver.ts deliverOutbox(), lib/events/substrate-webhook.ts; test lib/messaging/simulation.test.ts); sample cases and their register entries marked sample (sample-isolation.test.ts); development keys sign only outside production (developmentKeyRefusal())', '', '—')
 R(6, r'^F$', r'preserve that label through exports', 'Partial', 'Sample register entries marked sample:true (sample-isolation.test.ts)', 'The institution export carries records as kept (sample markers included) and the installation mode in its manifest; no test asserts a sample marker through it yet', 'I9')
 R(6, r'^F$', r'(Block real payments|Reject sample records|Label sample records)', 'Met', 'payBill() refuses in production; sample cases refused; register entries marked sample (sample-isolation.test.ts)', 'Sample label preserved through exports (no institution export)', '—')
 R(6, r'^F$', r'Separate production and non-production data stores and credentials', 'Partial', 'Demo backup refused in production (backups-installation.test.ts)', 'Separate credentials per mode', 'Unassigned')
-R(6, r'^F$', r'background jobs and webhooks', 'Partial', 'Cron runs check samplesAllowed where they create data', 'Webhook delivery boundary per mode', 'Unassigned')
+R(6, r'^F$', r'background jobs and webhooks', 'Met', 'I0.2: cron runs check samplesAllowed where they create data; the delivery jobs (deliver-messages, deliver-cloudevents, deliver-events) record every send as simulated in training and demo and advance their cursors so nothing replays in production (lib/messaging/deliver.ts, lib/events/deliver.ts, lib/events/substrate-webhook.ts; tests lib/messaging/simulation.test.ts, app/api/cron/deliver-events/route.test.ts)', '', '—')
 R(6, r'^F$', r'authorised deployment process to change', 'Partial', 'CIVICOS_MODE decided only in lib/ops/mode.ts from the environment', 'Recorded authorised mode change', 'Unassigned')
 R(6, r'^F$', r'silently fall back to demo data', 'Met', 'Production folds to Not connected (Generated.test.ts; lib/twin/read.test.ts)', '', '—')
 R(6, r'^F$', r'(last successful update|reason for the degraded state)', 'Partial', FOLD + ' (Not connected shown); indicator tiles show the reason and the last update (' + INDPANELS + ')', 'Last successful update and reason on degraded panels outside the indicator register', 'I3', 'I10')
-R(6, r'^F$', r'integration boundaries', 'Partial', MODE + '; exchange refuses unapproved purposes in production', 'Webhook and outbound delivery boundary per mode', 'Unassigned')
+R(6, r'^F$', r'integration boundaries', 'Partial', MODE + '; exchange refuses unapproved purposes in production; outbound notifications and webhooks simulated in training and demo (I0.2, lib/messaging/simulation.test.ts)', 'Inbound exchange calls per mode (a demo installation answering a production caller), separate credentials per mode', 'Unassigned')
 R(6, r'^F$', r'.', 'Met', MODE, '', '—')
 R(6, r'^G$', r'^(Treasury|Health|Justice|Police|Land|Electoral Commission|National Statistics Office):', 'Partial', 'Apps per institution with charters', 'Workspaces reflecting real functions from records', 'I10', 'I2')
 R(6, r'^G$', r'.', 'Partial', 'Charters (lib/institution/charters/), apps', 'Navigation from department records', 'I10', 'I2')
@@ -898,7 +912,7 @@ R(6, r'^J$', r'^Integration failure', 'Partial', 'Retries, idempotency, outbox',
 R(6, r'^J$', r'^Overly ambitious rollout', 'Met', 'Plan §5 one institution first', '', '—')
 R(6, r'^J$', r'^Vendor lock-in', 'Partial', 'Hosting paths, no lock-in guarantee', 'Export tests', 'I9')
 R(6, r'^J$', r'^Inaccessible digital services', 'Partial', 'axe scans', 'Assisted channels', 'I10', 'I1')
-R(6, r'^J$', r'^Unverified operational readiness', 'Partial', 'Acceptance register', 'Load testing, operational ownership', 'I2')
+R(6, r'^J$', r'^Unverified operational readiness', 'Partial', 'Acceptance register; ' + COMPLETE, 'Load testing', 'I2')
 R(6, r'^J$', r'(must not independently issue|broader record access|invent legal citations|distinguishable from authoritative|reviewable, attributable|opt-in|external AI service)', 'Met', 'SovereignProfile.aiAssistant opt-in; /api/ai/advisory audited, behind the sovereignty gate, reads no records; aiLabel()', 'Institution-level opt-in (nation-level only)', '—')
 R(6, r'^J$', r'.', 'Partial', '', '', 'I10')
 R(6, r'^L$', r'^01', 'Partial', 'Decisions cite law; sector actions not yet', '', 'I5')

@@ -1,0 +1,674 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-PAY-012",
+ "record_type": "administration.payroll.review",
+ "form_version": 1,
+ "procedure_package_id": "adm.payroll-review",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-PAY-012",
+  "part": 21,
+  "section": "21.1",
+  "line": 1099,
+  "batch": 5
+ },
+ "library": {
+  "title": "Review and approve payroll",
+  "intro": "Review a submitted payroll batch against its reconciliation report, record the exceptions found, and approve or return it. Separation of duties: the approver is neither the official who prepared the batch nor the one who reviewed it, and two officials approve.",
+  "owner": "institution",
+  "filled_by": "The payroll reviewer, signed in; the approvers at the next step.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": {
+   "key": "adm.payroll-review",
+   "stage": "received",
+   "action": "review",
+   "document": "reconciliation-report"
+  },
+  "lists": {
+   "civicos.administration.decision": {
+    "values": [
+     {
+      "value": "approve",
+      "label": "Approve"
+     },
+     {
+      "value": "return",
+      "label": "Return for correction"
+     },
+     {
+      "value": "refuse",
+      "label": "Refuse, with reasons"
+     }
+    ]
+   }
+  },
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials; the case is restricted to its assignee and supervisors; every read in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [
+   {
+    "key": "adm.payroll.deductions",
+    "kind": "rate",
+    "source": "rule",
+    "decision": "The statutory deductions from pay (rates and bands), as an approved rule version; the approval records the version applied or that none is in force."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   },
+   {
+    "id": "payroll-system",
+    "what": "Pay, bank accounts and each employee's payslip stay in the payroll system; the platform records the batch, its totals, the reconciliation report and each official's act (lib/administration/register.ts)",
+    "why": "A national payroll engine is not on the platform; the review and approval controls are.",
+    "rule": "docs/INTEGRATION_REGISTER.md (payroll system); CLAUDE.md: register writes only through procedure effects"
+   },
+   {
+    "id": "personnel-restricted",
+    "what": "Personnel data (about an official, a candidate or an employee) is restricted: the case is restricted to its assignee and supervisors, every read goes to the access log with its purpose, and nothing about a person leaves the institution",
+    "why": "Part 21: personnel files require restricted access and retention rules.",
+    "rule": "CLAUDE.md Government operating model: caseReadRefusal() restricted cases; every read of personal data in a case goes to the access log (lib/records/access-log.ts)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1099,
+    "quotes": [
+     "ADM-PAY-012",
+     "Payroll review and approval"
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.batch",
+      "payroll.reconciliation_report",
+      "payroll.approved_by",
+      "payroll.decision"
+     ],
+     "procedure": "approve"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 970,
+    "quotes": [
+     "Human resources",
+     "Positions, authorized establishment, assignments, training, leave, performance processes and personnel actions"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "payroll.batch",
+      "payroll.reconciliation_report"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1147,
+    "quotes": [
+     "\"form_id\": \"ADM-PAY-012\""
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.batch"
+     ],
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "The catalogue's own contract for this form, written in the canonical format field by field (each line below)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1148,
+    "quotes": [
+     "\"title\": \"Payroll Review and Approval\""
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.batch"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1150,
+    "quotes": [
+     "{\"key\": \"institution_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "The case belongs to the institution that opens it (its owner); the institution is never typed"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1151,
+    "quotes": [
+     "{\"key\": \"pay_period\", \"type\": \"date_range\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.pay_period"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1152,
+    "quotes": [
+     "{\"key\": \"payroll_batch_reference\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.batch"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1153,
+    "quotes": [
+     "{\"key\": \"reconciliation_report_reference\", \"type\": \"document_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.reconciliation_report"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1154,
+    "quotes": [
+     "{\"key\": \"exception_items\", \"type\": \"array\", \"required\": false, \"items_type\": \"payroll_exception\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.exceptions"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1155,
+    "quotes": [
+     "{\"key\": \"prepared_by_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.prepared_by"
+     ],
+     "platform": {
+      "file": "app/src/lib/auth/official.ts",
+      "how": "The signed-in official's verified name and account are recorded (withOfficial()); never a name from the form"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1156,
+    "quotes": [
+     "{\"key\": \"reviewed_by_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.reviewed_by"
+     ],
+     "procedure": "review"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1157,
+    "quotes": [
+     "{\"key\": \"approved_by_id\", \"type\": \"entity_reference\", \"required\": true, \"validation_rule_ids\": [\"SEPARATION-OF-DUTIES\"]}"
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.approved_by"
+     ],
+     "procedure": "approve",
+     "platform": {
+      "file": "app/src/lib/casework/dual-control-policy.ts",
+      "how": "Two officials at the platform minimum; a step marked distinctFrom is refused to whoever took the earlier step (dualControlRefusal(), comparing persons)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1158,
+    "quotes": [
+     "{\"key\": \"approval_decision\", \"type\": \"enum\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "payroll.decision"
+     ],
+     "procedure": "approve"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "payroll.pay_period",
+   "type": "date_range",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Pay period"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter pay period."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The batch"
+   }
+  },
+  {
+   "id": "payroll.batch",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "administration.registry.payroll_batches",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Payroll batch"
+   },
+   "hint": {
+    "en": "A batch submitted with ADM-PAY-011."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter payroll batch.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The batch"
+   }
+  },
+  {
+   "id": "payroll.reconciliation_report",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "reconciliation-report",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Reconciliation report"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the document."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The review"
+   }
+  },
+  {
+   "id": "payroll.exceptions",
+   "type": "group",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Exceptions found"
+   },
+   "hint": {
+    "en": "One entry per exception: the employee reference in the payroll system, what it is and how it was resolved."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "employeeRef",
+     "type": "identifier_reference",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Employee reference in the payroll system"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter employee reference in the payroll system."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "exceptionKind",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "administration.country.payroll_exception_kinds",
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Kind of exception"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select an answer."
+      }
+     },
+     "country_decision": "The payroll exception kinds the nation's payroll rules name; none ship."
+    },
+    {
+     "id": "explanation",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 2000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Explanation"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter explanation.",
+       "length": "Explanation must be 2000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "resolved",
+     "type": "boolean",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Resolved before approval"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select an answer."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "The review"
+   }
+  },
+  {
+   "id": "payroll.prepared_by",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Prepared by"
+   },
+   "hint": {
+    "en": "Recorded by the platform from the payroll input case."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "payroll.reviewed_by",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Reviewed by"
+   },
+   "hint": {
+    "en": "Recorded by the platform from the review step."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "payroll.approved_by",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    },
+    {
+     "rule": "SEPARATION-OF-DUTIES",
+     "params": {
+      "fields": [
+       "payroll.prepared_by",
+       "payroll.reviewed_by"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Approved by"
+   },
+   "hint": {
+    "en": "Recorded by the platform from the approval step."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active.",
+     "SEPARATION-OF-DUTIES": "The approver cannot be the official who prepared or reviewed it."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "payroll.decision",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.administration.decision",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Approval decision"
+   },
+   "hint": {
+    "en": "Recorded by the deciding official at the procedure step, with reasons."
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "payroll.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

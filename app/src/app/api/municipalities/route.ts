@@ -32,5 +32,6 @@ export async function POST(req: NextRequest) {
     modules: body.modules ?? [],
     constitutionalOfficerSignoff: body.constitutionalOfficerSignoff ?? false,
   });
-  return NextResponse.json({ result }, { status: result.status === 'provisioned' ? 201 : 200 });
+  // Nothing is created (lib/data/store/permits.ts onboardMunicipality()): always 200, never 201.
+  return NextResponse.json({ result }, { status: 200 });
 }

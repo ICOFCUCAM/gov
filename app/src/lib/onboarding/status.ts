@@ -57,9 +57,19 @@ import { HOME_NATION, nationRecord } from '@/lib/data/updates';
 import { scheduledJobsHealthy } from '@/lib/ops/cron-runs';
 import { sealKeyRules, sealKeyAuthority, presentedStanding, waitingSealKeys } from '@/lib/keys/seal-register';
 import { signer } from '@/lib/keys/custody';
+import { institutionCompleteness, type InstitutionCompleteness } from './completeness';
+import { departmentsOf, waitingDepartmentChanges } from '@/lib/institution/departments';
+import { ADMINISTRATION_PROCEDURES, administrationKey } from '@/lib/administration/procedures';
+import { ruleInForce } from '@/lib/law/rules';
 
 export type TrackState = 'done' | 'in-progress' | 'not-started' | 'blocked';
-export interface Check { label: string; done: boolean; href: string; detail?: string }
+/**
+ * One item of setting up (plan I2, completeness per item): done or not, the
+ * page that does the work, who is accountable for it (`owner`), the date of
+ * its evidence where the record carries one, and the next action while it is
+ * not done. No item is averaged into a percentage.
+ */
+export interface Check { label: string; done: boolean; href: string; detail?: string; owner?: string; date?: string; next?: string }
 export interface Track {
   key: string;
   title: string;
@@ -74,6 +84,8 @@ export interface Track {
   samplesOnly?: boolean;
   /** Its checks read records that demo and training installations seed with samples, so "done" may rest on them. */
   samplesCounted?: boolean;
+  /** Who is accountable for the track's items unless an item names another (plan I2). */
+  owner?: string;
 }
 export interface Waiting { what: string; proposedBy: string; at?: string; href: string }
 export interface OnboardingStatus {
@@ -82,17 +94,33 @@ export interface OnboardingStatus {
   done: number;
   total: number;
   waiting: Waiting[];
+  /** Completeness per institution (lib/onboarding/completeness.ts): critical items failing, and counts by state; never a percentage. */
+  institutions: { id: string; name: string; counts: InstitutionCompleteness['counts']; failing: InstitutionCompleteness['gate']['failing']; gateApplies: boolean }[];
 }
 
 const stateOf = (checks: Check[], blockedBy?: string): TrackState =>
   blockedBy ? 'blocked' : checks.every(c => c.done) ? 'done' : checks.some(c => c.done) ? 'in-progress' : 'not-started';
+
+/** Who is accountable for a track's items when the track names no one else (plan I2). */
+const TRACK_OWNER: Record<string, string> = {
+  nation: 'Administrators serving the whole government', institutions: 'Administrators serving the whole government, a different official confirming', officials: 'Administrators of each institution',
+  laws: 'The law-register authority (two officials)', mappings: 'Administrators, approved by a different one', rules: 'The authority that owns each rule (an official who can sign there)',
+  procedures: 'Officials who can sign at each responsible institution', exchange: 'Two officials approve each integration', sites: 'Each institution\'s officials, published by a different one',
+  maps: 'The mapping agency and the cadastre authority', operations: 'Whoever runs the servers', updates: 'Administrators serving the whole government', legislature: 'The legislature\'s clerk',
+  administration: 'Administrators of each institution, a different official confirming',
+  indicators: 'Officials who can sign at each institution whose figures an indicator defines', tax: 'The tax administration the nation names (officials who can sign there)',
+  oversight: 'Each independent oversight body the nation names (its own officials)',
+};
 
 /** One track, read defensively: a store that cannot be read shows as a check not done, never breaks the page. */
 function track(t: Omit<Track, 'state' | 'checks' | 'blockedBy' | 'samplesCounted'> & { seeded?: boolean }, read: () => { checks: Check[]; blockedBy?: string }): Track {
   let r: { checks: Check[]; blockedBy?: string };
   try { r = read(); } catch (e) { r = { checks: [{ label: 'Could not be read', done: false, href: t.href, detail: (e as Error).message.slice(0, 200) }] }; }
   const { seeded, ...rest } = t;
-  return { ...rest, ...r, state: stateOf(r.checks, r.blockedBy), ...(seeded && samplesAllowed() ? { samplesCounted: true } : {}) };
+  // Completeness per item (plan I2): every item names who is accountable and, while not done, what to do next.
+  const owner = rest.owner ?? TRACK_OWNER[rest.key] ?? 'Administrators serving the whole government';
+  const checks = r.checks.map(c => ({ ...c, owner: c.owner ?? owner, ...(!c.done && !c.next ? { next: `${c.label}: open ${c.href}` } : {}) }));
+  return { ...rest, owner, ...r, checks, state: stateOf(checks, r.blockedBy), ...(seeded && samplesAllowed() ? { samplesCounted: true } : {}) };
 }
 
 const n = (k: number, one: string, many = `${one}s`) => `${k} ${k === 1 ? one : many}`;
@@ -106,7 +134,7 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
     track({ key: 'nation', title: 'Nation and installation', why: 'The country this installation serves, its name, insignia and languages, and whether it is a real government or a demonstration.', href: '/setup' }, () => {
       const p = getSovereign();
       return { checks: [
-        { label: 'First-run setup launched', done: getSetup() !== null, href: '/setup' },
+        { label: 'First-run setup launched', done: getSetup() !== null, href: '/setup', ...(getSetup() ? { date: getSetup()!.completedAt.slice(0, 10), owner: getSetup()!.by } : {}) },
         { label: 'Installation mode set (CIVICOS_MODE)', done: !modeUnset(env), href: '/platform', detail: `Running as ${installationMode(env)}` },
         { label: 'Assistant choice made (on or off)', done: p.aiAssistant !== undefined, href: '/setup' },
       ] };
@@ -374,6 +402,22 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       ] };
     }),
 
+    // Departments as records and each institution's internal administration (plan I2).
+    track({ key: 'administration', title: 'Departments and internal administration', why: 'Each institution\'s departments as records (an accountable office, services and staff) and its own internal administration procedures: payroll reviewed and approved by different persons, establishment, privileged access, policies, delegations.', href: '/gov/institutions/administration' }, () => {
+      const list = active();
+      const depts = list.map(m => ({ m, d: departmentsOf(m.id) }));
+      const accountable = depts.filter(x => x.d.length && x.d.every(d => d.office && !d.officeProblem));
+      const adopted = list.filter(m => ADMINISTRATION_PROCEDURES.every(t => listPackages({ key: administrationKey(t.key, m.id), state: 'approved' }).length));
+      const drafted = list.filter(m => ADMINISTRATION_PROCEDURES.some(t => listPackages({ key: administrationKey(t.key, m.id) }).length));
+      const rule = ruleInForce('adm.payroll.deductions');
+      return { checks: [
+        { label: 'Every department has an accountable office', done: list.length > 0 && accountable.length === list.length, href: '/gov/institutions/departments', detail: `${accountable.length} of ${list.length} institution(s)` },
+        { label: 'Internal administration procedures drafted from the templates', done: list.length > 0 && drafted.length === list.length, href: '/gov/institutions/administration', detail: `${drafted.length} of ${list.length} institution(s)` },
+        { label: 'Internal administration procedures approved by a second official', done: list.length > 0 && adopted.length === list.length, href: '/gov/institutions/administration', detail: `${adopted.length} of ${list.length} institution(s)`, owner: 'Officials who can sign at each institution' },
+        { label: 'Payroll deductions rule approved (adm.payroll.deductions; no rate ships)', done: !!rule, href: '/gov/law/rules', owner: 'The authority the nation names for payroll deductions (an official who can sign there)', ...(rule ? { date: rule.approvedAt?.slice(0, 10), detail: `Version ${rule.version}` } : { detail: 'Ships unset: a production installation approves no payroll without it' }) },
+      ] };
+    }),
+
     track({ key: 'exchange', title: 'Data sharing', why: 'Other systems and institutions reach records only through approved services, for an approved purpose, agreed by the data\'s owners.', href: '/integrations', seeded: true }, () => {
       const ints = listIntegrations();
       for (const i of ints) if (i.pendingApproval) wait({ what: `Data sharing: ${i.name}`, proposedBy: i.pendingApproval.by, at: i.pendingApproval.at, href: '/integrations' });
@@ -506,7 +550,11 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const t of waitingTransitions()) wait({ what: `${t.what} — waiting for a second official`, proposedBy: t.by, at: t.at, href: '/gov/configuration/transitions' }); });
   safe(() => { for (const w of waitingSealKeys()) if (!/review/.test(w.what) || w.overdue) wait({ what: w.what, proposedBy: w.by, at: w.at, href: '/gov/configuration/seal-keys' }); });
   safe(() => { for (const h of waitingHoldings()) wait({ what: `${h.holderName} to hold an office — waiting for a second official`, proposedBy: h.proposedBy, at: h.proposedAt, href: '/gov/configuration/offices' }); });
+  safe(() => { for (const d of waitingDepartmentChanges()) wait({ what: `Departments: ${d.what} — waiting for a second official`, proposedBy: d.pending.by, at: d.pending.at, href: `/gov/institutions/departments?institution=${d.id}` }); });
 
   waiting.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''));
-  return { mode: installationMode(env), tracks, done: tracks.filter(t => t.state === 'done').length, total: tracks.length, waiting };
+  // Completeness per institution (plan I2): read from the records, never a score.
+  const institutions: OnboardingStatus['institutions'] = [];
+  safe(() => { for (const m of active()) { const c = institutionCompleteness(m.id); if (c) institutions.push({ id: m.id, name: m.name, counts: c.counts, failing: c.gate.failing, gateApplies: c.gate.applies }); } });
+  return { mode: installationMode(env), tracks, done: tracks.filter(t => t.state === 'done').length, total: tracks.length, waiting, institutions };
 }

@@ -17,6 +17,8 @@ import '@/lib/health/products/procedures';
 import '@/lib/health/programmes/procedures';
 import '@/lib/health/complaints/procedures';
 import '@/lib/oversight/procedures';
+// Internal administration (plan I2): each institution's own procedures, drafted from templates on request.
+import '@/lib/administration/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
 import '@/lib/permits/decisions';
 // Publication gates: a form takes submissions in production only once its release is approved (lib/forms/publication.ts).

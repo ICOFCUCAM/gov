@@ -34,6 +34,6 @@ describe('POST /api/ops/incidents/[id]/escalate', () => {
     const res = await POST(new Request('http://x', { method: 'POST', body: 'no' }) as never,
       { params: Promise.resolve({ id: 'i-1' }) });
     expect(res.status).toBe(200);
-    expect(escalateMock).toHaveBeenCalledWith('i-1', 'operator', undefined);
+    expect(escalateMock).toHaveBeenCalledWith('i-1', 'Unverified official', undefined);
   });
 });

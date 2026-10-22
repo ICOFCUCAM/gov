@@ -1,0 +1,388 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-REC-026",
+ "record_type": "administration.records.retention-review",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-REC-026",
+  "part": 21,
+  "section": "21.1",
+  "line": 1113,
+  "batch": 5
+ },
+ "library": {
+  "title": "Review records for retention or disposal",
+  "intro": "Review a records series at the end of its retention period: confirm no legal hold applies, and record whether it is retained, transferred to the archives or disposed of as the schedule authorises. The approver is never the reviewer.",
+  "owner": "institution",
+  "filled_by": "The records officer reviews; an approving official decides.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": null,
+  "intended": "A records retention review procedure of the institution: not built; the form waits in the library (plan step I2)",
+  "lists": {
+   "civicos.records.review_outcomes": {
+    "values": [
+     {
+      "value": "retain",
+      "label": "Retain for a further period"
+     },
+     {
+      "value": "transfer",
+      "label": "Transfer to the archives"
+     },
+     {
+      "value": "dispose",
+      "label": "Dispose of, as the schedule authorises"
+     }
+    ]
+   }
+  },
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials (and auditors with a purpose); every read of personal data in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [
+   {
+    "key": "administration.records.retention",
+    "kind": "period",
+    "source": "rule",
+    "decision": "How long each records series is kept, under the approved retention schedules (CFG-ADM-004)."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "procedure-not-built",
+    "what": "A records retention review procedure of the institution: no reference procedure carries this form yet; it waits in the library for the institution's procedure, drafted by one official and approved by another",
+    "why": "Cases change only under an approved procedure package; the plan builds the internal-administration procedures in the order of plan step I2 (the payroll, establishment, privileged-access, policy, delegation, disciplinary and legal-advice procedures first).",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts under an approved procedure package"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1113,
+    "quotes": [
+     "ADM-REC-026",
+     "Records retention or disposal review"
+    ],
+    "met_by": {
+     "fields": [
+      "records.series",
+      "records.no_legal_hold",
+      "records.outcome"
+     ],
+     "platform": {
+      "file": "app/src/lib/data/retention.ts",
+      "how": "Retention rules are confirmed by two administrators; disposal only as an approved schedule authorises"
+     },
+     "deviation": "procedure-not-built"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 974,
+    "quotes": [
+     "Records management",
+     "Classification, ownership, retention schedules, legal holds, transfer and authorized disposal"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "records.series",
+      "records.no_legal_hold"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "records.series",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Records series reference"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter records series reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The review"
+   }
+  },
+  {
+   "id": "records.retention_schedule",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "retention_period_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": "administration.country.retention_schedules",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Retention schedule"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "CFG-ADM-004: the approved retention schedules; none ship.",
+   "section": {
+    "en": "The review"
+   }
+  },
+  {
+   "id": "records.no_legal_hold",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "No legal hold applies to the series"
+   },
+   "error_text": {
+    "en": {
+     "required": "Confirm this statement to continue.",
+     "must_be_true": "Confirm this statement to continue."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "records.outcome",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.records.review_outcomes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Outcome"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "records.reasons",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reasons"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reasons.",
+     "length": "Reasons must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The review"
+   }
+  },
+  {
+   "id": "records.reviewed_by",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reviewed by"
+   },
+   "hint": {
+    "en": "An official of this institution, by their account."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "records.approved_by",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    },
+    {
+     "rule": "APPROVER-DIFFERS-FROM-MAKER",
+     "params": {
+      "fields": [
+       "records.reviewed_by"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Approved by"
+   },
+   "hint": {
+    "en": "An official of this institution, by their account."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active.",
+     "APPROVER-DIFFERS-FROM-MAKER": "The approver cannot be the official who prepared it."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "records.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

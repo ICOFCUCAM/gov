@@ -52,6 +52,8 @@ const is = (key: string, prefix: string) => key === prefix || key.startsWith(`${
 /** The procedures whose decisions belong to an authority the deployment profile designates for the whole domain. */
 const DEPLOYMENT_DOMAINS: [prefix: string, authority: string][] = [
   ['civil', 'civilRegistration'], ['immigration', 'immigration'], ['court', 'judiciary'], ['police', 'police'], ['referral', 'the institution whose referral procedure it is'],
+  // Internal administration (plan I2): each institution's own procedure (adm.<function>.<institution>), decided by its own officials.
+  ['adm', 'the institution whose internal administration procedure it is'],
 ];
 
 /** Classify a decision step; null when the platform cannot say which authority it rests on. */

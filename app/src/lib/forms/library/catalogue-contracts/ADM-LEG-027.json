@@ -1,0 +1,304 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-LEG-027",
+ "record_type": "administration.legal.advice-request",
+ "form_version": 1,
+ "procedure_package_id": "adm.legal-advice",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-LEG-027",
+  "part": 21,
+  "section": "21.1",
+  "line": 1114,
+  "batch": 5
+ },
+ "library": {
+  "title": "Ask for internal legal advice",
+  "intro": "Ask the institution's legal service for advice: the requesting unit, the question, the background and the documents. Restricted to the assigned lawyer and supervisors; every read is logged.",
+  "owner": "institution",
+  "filled_by": "An official of the institution, signed in, at their desk or an office.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": {
+   "key": "adm.legal-advice",
+   "stage": "requested",
+   "action": "assign",
+   "document": "advice"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials; the case is restricted to its assignee and supervisors; every read in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   },
+   {
+    "id": "legal-privilege",
+    "what": "Legal advice and legal-matter files are restricted to the assigned lawyer and supervisors; every read goes to the access log; retention follows the legal-file schedule",
+    "why": "Part 21: legal advice requires restricted access and retention rules.",
+    "rule": "CLAUDE.md Government operating model: restricted cases go to their assignee and supervisors; lib/records/access-log.ts"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1114,
+    "quotes": [
+     "ADM-LEG-027",
+     "Internal legal advice request"
+    ],
+    "met_by": {
+     "fields": [
+      "advice.requesting_unit",
+      "advice.question",
+      "advice.advice"
+     ],
+     "procedure": "advise"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 975,
+    "quotes": [
+     "Legal services",
+     "Advice requests, legal opinions, contracts, statutory obligations and litigation referrals"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "advice.requesting_unit",
+      "advice.question"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "advice.requesting_unit",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.departments",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Requesting unit"
+   },
+   "hint": {
+    "en": "One of this institution's departments in force."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter requesting unit.",
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The question"
+   }
+  },
+  {
+   "id": "advice.question",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The question"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the question.",
+     "length": "The question must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The question"
+   }
+  },
+  {
+   "id": "advice.background",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Background"
+   },
+   "error_text": {
+    "en": {
+     "length": "Background must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The question"
+   }
+  },
+  {
+   "id": "advice.documents",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "background-documents",
+     "when": "when_relevant"
+    }
+   ],
+   "label": {
+    "en": "Background documents"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The question"
+   },
+   "multiple": true
+  },
+  {
+   "id": "advice.needed_by",
+   "type": "date",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Advice needed by"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The question"
+   }
+  },
+  {
+   "id": "advice.advice",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "advice",
+     "when": "when_relevant"
+    }
+   ],
+   "label": {
+    "en": "The legal advice"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "advice.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

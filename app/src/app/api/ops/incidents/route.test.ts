@@ -46,7 +46,7 @@ describe('POST /api/ops/incidents', () => {
     }) as never);
     expect(res.status).toBe(201);
     expect(createMock).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'Outage', scope: 'energy', severity: 'sev3', by: 'operator',
+      title: 'Outage', scope: 'energy', severity: 'sev3', by: 'Unverified official', // plan I0.2: no 'operator' placeholder
     }));
   });
 

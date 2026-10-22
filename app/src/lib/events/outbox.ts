@@ -55,7 +55,8 @@ export interface CloudEvent {
 }
 
 interface Db { events: CloudEvent[]; cursors: Record<string, number>; deliveries: Delivery[]; epoch?: number }
-export interface Delivery { webhookId: string; eventId: string; type: string; at: string; ok: boolean; detail: string }
+/** `simulated`: a training or demo installation recorded the delivery without sending it (plan I0.2). */
+export interface Delivery { webhookId: string; eventId: string; type: string; at: string; ok: boolean; detail: string; simulated?: boolean }
 
 const g = globalThis as unknown as { __civicosEventOutbox?: Db };
 export const outboxDb = (): Db => {

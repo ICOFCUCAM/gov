@@ -29,12 +29,12 @@ describe('POST /api/ops/incidents/[id]/resolve', () => {
     expect(resolveMock).toHaveBeenCalledWith('i-1', 'NOC', 'restored');
   });
 
-  it('defaults operator to "operator"', async () => {
+  it('records "Unverified official" when no one is signed in and no name is given (plan I0.2)', async () => {
     resolveMock.mockReturnValue({ id: 'i-1' });
     await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({}),
       headers: { 'content-type': 'application/json' },
     }) as never, { params: Promise.resolve({ id: 'i-1' }) });
-    expect(resolveMock).toHaveBeenCalledWith('i-1', 'operator', undefined);
+    expect(resolveMock).toHaveBeenCalledWith('i-1', 'Unverified official', undefined);
   });
 });

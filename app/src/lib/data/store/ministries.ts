@@ -8,6 +8,7 @@ import type {
   Archetype,
   ArchetypeKey,
   Ministry,
+  Department,
   MinistryOperations,
   ModuleOps,
   KpiValue,
@@ -30,7 +31,7 @@ import type {
 } from '@/lib/api/types';
 import { db } from './state';
 import { uid, seededInt, REGIONS } from './shared';
-import { recordAudit } from './audit';
+import { recordAudit, UNVERIFIED_ACTOR } from './audit';
 import { seedQueue, seedIncidents } from './seeds';
 
 // ── Institutional framework (mirrors backend archetypes) ──────────────
@@ -73,6 +74,8 @@ export function createMinistry(input: {
   archetype: ArchetypeKey;
   name: string;
   slug: string;
+  /** Who acted: the verified official (routes pass it from the session). */
+  by?: string;
 }): Ministry | { error: string } {
   const bp = ARCHETYPES[input.archetype];
   if (!bp) return { error: 'Unknown archetype' };
@@ -101,7 +104,7 @@ export function createMinistry(input: {
   };
   m.activatedAt = m.createdAt;
   db.ministries.unshift(m);
-  recordAudit('operator', 'ministry.create', `Ministry:${m.id}`, 'ok', `${input.archetype}/${input.slug}`);
+  recordAudit(input.by || UNVERIFIED_ACTOR, 'ministry.create', `Ministry:${m.id}`, 'ok', `${input.archetype}/${input.slug}`);
   return m;
 }
 /**
@@ -111,47 +114,64 @@ export function createMinistry(input: {
  * taken from the export: this installation records them through its own
  * change process. An institution already here with that id is kept as it is.
  */
-export function adoptInstitution(r: { id: string; slug: string; name: string; archetype: ArchetypeKey; departments?: { id: string; name: string }[]; createdAt?: string }, by: string): Ministry | { error: string } {
+export function adoptInstitution(r: { id: string; slug: string; name: string; archetype: ArchetypeKey; departments?: Department[]; createdAt?: string }, by: string): Ministry | { error: string } {
   const here = db.ministries.find(m => m.id === r.id);
   if (here) return here;
   if (!ARCHETYPES[r.archetype]) return { error: `Unknown archetype ${r.archetype}` };
   if (!/^[a-z0-9-]+$/.test(r.slug) || db.ministries.some(m => m.slug === r.slug)) return { error: `The institution's short name ${r.slug} is already used here by another institution` };
   const at = new Date().toISOString();
   const m: Ministry = { id: r.id, slug: r.slug, name: r.name.slice(0, 200), archetype: r.archetype, status: 'active', standing: 'executive-ministry', createdAt: r.createdAt ?? at, activatedAt: at,
-    departments: (r.departments ?? []).map(d => ({ id: d.id, name: d.name })), modules: [] };
+    departments: (r.departments ?? []).map(d => ({ ...structuredClone(d), id: d.id, name: d.name })), modules: [] };
   db.ministries.unshift(m);
   recordAudit(by, 'ministry.adopt', `Ministry:${m.id}`, 'ok', `${m.name} taken in from its own export with its id; its standing is recorded here through the change process`);
   return m;
 }
-export function renameMinistry(id: string, name: string): Ministry | { error: string } {
+export function renameMinistry(id: string, name: string, by = UNVERIFIED_ACTOR): Ministry | { error: string } {
   const m = getMinistry(id);
   if (!m) return { error: 'Ministry not found' };
   m.name = name;
-  recordAudit('operator', 'ministry.rename', `Ministry:${id}`, 'ok', name);
+  recordAudit(by, 'ministry.rename', `Ministry:${id}`, 'ok', name);
   return m;
 }
-export function activateMinistry(id: string): Ministry | { error: string } {
+/**
+ * The activation gate (plan I2): completeness per item
+ * (lib/onboarding/completeness.ts registers it), which refuses activation in
+ * a production installation while a critical item is not verified. Kept on
+ * globalThis so this store needs no import of the modules completeness reads.
+ */
+const gate = globalThis as unknown as { __institutionActivationGate?: (id: string) => string | null };
+export function registerActivationGate(fn: (id: string) => string | null): void { gate.__institutionActivationGate = fn; }
+
+/**
+ * Activate an institution. The composite readiness score
+ * (lib/institution/readiness.ts) no longer gates activation (plan I0.2): it
+ * is recorded with the entry for information only. The gate is completeness
+ * per item, with owner, date and next action (lib/onboarding/completeness.ts,
+ * plan I2): in production every critical item verified.
+ */
+export function activateMinistry(id: string, by = UNVERIFIED_ACTOR): Ministry | { error: string } {
   const m = getMinistry(id);
   if (!m) return { error: 'Ministry not found' };
   if (m.status === 'merged') return { error: 'Merged institutions cannot be activated' };
-  const r = scoreInstitution({ ...m, status: 'active' });
-  if (!r.deployable) {
-    recordAudit('operator', 'ministry.activate', `Ministry:${id}`, 'denied', r.blocking.join('; '));
-    return { error: `Activation gate failed (${r.total}% ready): ${r.blocking.join('; ')}` };
+  const held = gate.__institutionActivationGate?.(id) ?? null;
+  if (held) {
+    recordAudit(by, 'ministry.activate', `Ministry:${id}`, 'denied', held.slice(0, 400));
+    return { error: held };
   }
+  const r = scoreInstitution({ ...m, status: 'active' });
   m.status = 'active';
   m.activatedAt ??= new Date().toISOString();
-  recordAudit('operator', 'ministry.activate', `Ministry:${id}`, 'ok', `readiness ${r.total}% · ${r.lifecycle}`);
+  recordAudit(by, 'ministry.activate', `Ministry:${id}`, 'ok', `structure score ${r.total}% (information only, not a gate)${r.blocking.length ? ` · open items: ${r.blocking.join('; ')}` : ''}`.slice(0, 400));
   return m;
 }
-export function deactivateMinistry(id: string): Ministry | { error: string } {
+export function deactivateMinistry(id: string, by = UNVERIFIED_ACTOR): Ministry | { error: string } {
   const m = getMinistry(id);
   if (!m) return { error: 'Ministry not found' };
   m.status = 'deactivated';
-  recordAudit('operator', 'ministry.deactivate', `Ministry:${id}`, 'ok');
+  recordAudit(by, 'ministry.deactivate', `Ministry:${id}`, 'ok');
   return m;
 }
-export function mergeMinistry(sourceId: string, targetId: string): Ministry | { error: string } {
+export function mergeMinistry(sourceId: string, targetId: string, by = UNVERIFIED_ACTOR): Ministry | { error: string } {
   if (sourceId === targetId) return { error: 'Cannot merge into itself' };
   const src = getMinistry(sourceId);
   const tgt = getMinistry(targetId);
@@ -159,41 +179,60 @@ export function mergeMinistry(sourceId: string, targetId: string): Ministry | { 
   if (src.status !== 'active' || tgt.status !== 'active') {
     return { error: 'Both ministries must be active' };
   }
+  const at = new Date().toISOString();
+  // The target takes over the source's departments in operation (a copy with the same id); the
+  // source keeps its own, ended with the merge as the reason: a department is never deleted (plan I0.2).
   for (const d of src.departments) {
-    if (!tgt.departments.some(x => x.name === d.name)) tgt.departments.push(d);
+    if (!isActiveDepartment(d)) continue;
+    if (!activeDepartments(tgt).some(x => x.name === d.name)) tgt.departments.push({ ...structuredClone(d), status: 'active' });
+    Object.assign(d, { status: 'ended', endedAt: at, endedBy: by, endReason: `Merged into ${tgt.name}` });
   }
   for (const mod of src.modules) {
     if (!tgt.modules.some(x => x.moduleKey === mod.moduleKey)) tgt.modules.push(mod);
   }
   src.status = 'merged';
   src.mergedIntoId = targetId;
-  src.departments = [];
   src.modules = [];
-  recordAudit('operator', 'ministry.merge', `Ministry:${sourceId}`, 'ok', `-> ${targetId}`);
+  recordAudit(by, 'ministry.merge', `Ministry:${sourceId}`, 'ok', `-> ${targetId}`);
   return tgt;
 }
-export function addDepartment(ministryId: string, name: string): Ministry | { error: string } {
+/** Whether a department is in operation (records from before carry no status: active). */
+export const isActiveDepartment = (d: { status?: string }): boolean => d.status !== 'ended';
+/** An institution's departments in operation (ended ones stay on the record, never deleted). */
+export const activeDepartments = <D extends { status?: string }>(m: { departments?: D[] }): D[] => (m.departments ?? []).filter(isActiveDepartment);
+
+export function addDepartment(ministryId: string, name: string, by = UNVERIFIED_ACTOR): Ministry | { error: string } {
   const m = getMinistry(ministryId);
   if (!m) return { error: 'Ministry not found' };
-  if (m.departments.some(d => d.name === name)) return { error: 'Department exists' };
-  m.departments.push({ id: uid('DEP'), name });
-  recordAudit('operator', 'department.add', `Ministry:${ministryId}`, 'ok', name);
+  if (activeDepartments(m).some(d => d.name === name)) return { error: 'Department exists' };
+  m.departments.push({ id: uid('DEP'), name, status: 'active' });
+  recordAudit(by, 'department.add', `Ministry:${ministryId}`, 'ok', name);
   return m;
 }
-export function removeDepartment(ministryId: string, deptId: string): Ministry | { error: string } {
+/**
+ * End a department with a reason: it stays on the record (status ended, who,
+ * when and why), never deleted (plan I0.2). The earlier DELETE route asks for
+ * the reason and ends it.
+ */
+export function endDepartment(ministryId: string, deptId: string, reason: string, by = UNVERIFIED_ACTOR): Ministry | { error: string; status: number } {
   const m = getMinistry(ministryId);
-  if (!m) return { error: 'Ministry not found' };
-  m.departments = m.departments.filter(d => d.id !== deptId);
-  recordAudit('operator', 'department.remove', `Ministry:${ministryId}`, 'ok', deptId);
+  if (!m) return { error: 'Ministry not found', status: 404 };
+  const d = m.departments.find(x => x.id === deptId);
+  if (!d) return { error: 'Department not found', status: 404 };
+  if (!isActiveDepartment(d)) return { error: `${d.name} was already ended on ${d.endedAt?.slice(0, 10) ?? 'an earlier date'}`, status: 409 };
+  const why = String(reason ?? '').trim().slice(0, 500);
+  if (!why) return { error: 'Give the reason the department is ended: a department is ended with a reason and kept, never deleted', status: 422 };
+  Object.assign(d, { status: 'ended', endedAt: new Date().toISOString(), endedBy: by, endReason: why });
+  recordAudit(by, 'department.end', `Ministry:${ministryId}`, 'ok', `${d.name} (${d.id}) · ${why}`.slice(0, 400));
   return m;
 }
-export function setModule(ministryId: string, moduleKey: string, enabled: boolean): Ministry | { error: string } {
+export function setModule(ministryId: string, moduleKey: string, enabled: boolean, by = UNVERIFIED_ACTOR): Ministry | { error: string } {
   const m = getMinistry(ministryId);
   if (!m) return { error: 'Ministry not found' };
   const existing = m.modules.find(x => x.moduleKey === moduleKey);
   if (existing) existing.enabled = enabled;
   else m.modules.push({ moduleKey, enabled });
-  recordAudit('operator', 'module.set', `Ministry:${ministryId}`, 'ok', `${moduleKey}=${enabled}`);
+  recordAudit(by, 'module.set', `Ministry:${ministryId}`, 'ok', `${moduleKey}=${enabled}`);
   return m;
 }
 

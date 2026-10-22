@@ -125,6 +125,31 @@ describe('institutional requirements register', () => {
   });
 });
 
+// Plan I0.2 (fixes to what is built) and I2 (departments, internal administration, task permissions, delegation, completeness,
+// the capability manifest, navigation by permission): the rows each step delivers, with the status the rules give them, and every
+// file and test their evidence names exists.
+const DELIVERED: Record<string, string> = {
+  'S6-F-10': 'Met', 'S6-F-13': 'Met',
+  'S1-10-01': 'Met', 'S1-10-02': 'Met', 'S2-G-10': 'Met', 'S2-G-11': 'Met', 'S3-G-01': 'Met', 'S4-B-12': 'Met', 'S4-E-05': 'Met', 'S4-F-12': 'Met', 'S4-F-13': 'Met',
+  'S5-K-14': 'Met', 'S5-K-15': 'Met', 'S5-K-23': 'Met', 'S5-K-24': 'Met', 'S6-C-11': 'Met', 'S4-D-06': 'Partial', 'S0-intro-01': 'Partial',
+};
+describe('rows plan steps I0.2 and I2 deliver', () => {
+  it('carry the status their rules give, with evidence that exists', () => {
+    const all = ALL as (Row & { evidence?: string; text?: string })[];
+    for (const [id, status] of Object.entries(DELIVERED)) {
+      const r = all.find(x => x.id === id);
+      expect(r, id).toBeDefined();
+      expect(r!.status, id).toBe(status);
+      for (const [, f] of (r!.evidence ?? '').matchAll(/\b((?:lib|components)\/[\w./-]+\.tsx?)\b/g)) expect(fs.existsSync(path.join(ROOT, 'app/src', f!)), `${id}: ${f}`).toBe(true);
+    }
+    // Every ADM form of Part 21 has a library contract; the nine its procedures carry are Partial, the rest wait (Not yet).
+    const adm = all.filter(r => r.category === 'form' && (r.catalogue_id ?? '').startsWith('ADM-'));
+    expect(adm).toHaveLength(40);
+    expect(adm.filter(r => r.status === 'Partial').map(r => r.catalogue_id).sort()).toEqual(['ADM-GOV-039', 'ADM-GOV-040', 'ADM-HR-001', 'ADM-HR-010', 'ADM-ICT-030', 'ADM-LEG-027', 'ADM-PAY-011', 'ADM-PAY-012', 'ADM-PAY-013']);
+    for (const r of adm) expect((r as { contract_file?: string }).contract_file, r.id).toBe(`app/src/lib/forms/library/catalogue-contracts/${r.catalogue_id}.json`);
+  });
+});
+
 describe('forms catalogue in the register', () => {
   it('reads every catalogue file and keeps every row in a file it names', () => {
     expect(CAT_FILES.length).toBeGreaterThanOrEqual(6);
@@ -269,7 +294,8 @@ describe('forms register (owner\'s direction 2026-10-21)', () => {
       // The form ID is the catalogue ID, or, where the catalogue repeats it, the register row's own ID (a form ID is never reused).
       if (c.form_id !== c.catalogue.id && c.form_id !== r.id) bad.push(`${f}: form_id ${c.form_id} is neither its catalogue ID nor its register row`);
       if (c.form_id !== c.catalogue.id && FORMS.filter(x => x.source === c.catalogue!.source && x.catalogue_id === c.catalogue!.id).length < 2) bad.push(`${f}: a register row ID as form_id only for a repeated catalogue ID`);
-      if (r.contract !== 'given (CivicOS library)') bad.push(`${r.id}: contract ${r.contract}`);
+      // A library contract answers a form whose text gives none, or implements, line by line, the contract the text gives (batch 5, Part 21 §21.2).
+      if (r.contract !== 'given (CivicOS library)' && !(r.contract === 'given' && (r as { contract_file?: string }).contract_file === `${LIB_DIR}/${f}`)) bad.push(`${r.id}: contract ${r.contract}`);
       if (r.form_status !== 'contract_draft' && r.form_status !== 'blocked') bad.push(`${r.id}: form status ${r.form_status}`);
       const scope = SCOPE.forms.find(e => e.source === r.source && e.id === r.catalogue_id);
       if (scope && scope.scope !== 'allowed') bad.push(`${r.id}: in scope ${scope.scope}`);
@@ -277,7 +303,7 @@ describe('forms register (owner\'s direction 2026-10-21)', () => {
     }
     expect(bad).toEqual([]);
     // No other row claims a library contract.
-    expect(FORMS.filter(r => r.contract === 'given (CivicOS library)').length).toBe(LIB_FILES.length);
+    expect(FORMS.filter(r => (r as { contract_file?: string }).contract_file).length).toBe(LIB_FILES.length);
   });
 
   it('has a current gap report: generated from these sources and agreeing with the register', () => {

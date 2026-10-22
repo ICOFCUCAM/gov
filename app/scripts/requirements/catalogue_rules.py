@@ -148,7 +148,7 @@ D = {
     'professions-other': ('Professional licensing outside health', 'I6', True, PROFEV + ' (a profession is configured by its regulator; the reference procedures are written for health professions)', 'Not yet'),
     'local-gov': ('Local and regional government', 'I7', False, "Subnational institutions (standing 'subnational', Boundaries.subnational; " + KB.INST + "); municipal onboarding (lib/data/store/permits.ts onboardMunicipality())", 'Not yet'),
     'housing': ('Housing, planning and building control', 'I7', False, KB.SCREENS + '; ' + PERMITMAP + ' (building-permit)', 'Not yet'),
-    'internal-admin': ('Shared internal administration', 'I2', False, KB.NODEPT, 'Not yet'),
+    'internal-admin': ('Shared internal administration', 'I2', True, KB.ADMIN + '; ' + KB.DEPTS + '; ' + KB.WORKSPACE, 'Not yet'),
     'form-gov': ('Form design and governance', 'I1', True, "Procedure packages drafted by one official, tested, approved by another (lib/casework/packages.ts; test lib/casework/packages.test.ts); change control and releases (" + UPD + ")", 'Not yet'),
 }
 
@@ -448,6 +448,9 @@ I(r'^EDU-VOC-010$', 'Partial', EDUEV + ' (edu.qualification)', 'Skills certifica
 
 # ---------------------------------------------------------------- supplement (parts 14-22, Stage B contracts for parts 5-13)
 RESTR = "Restricted personal data (supplement header): built only as restricted fields under the owning institution's read rule, every read in the access log (" + KB.ACCESS + "); medical content only as a sealed document reference, never a clinical field"
+# Internal administration (supplement Part 21, plan I2): the forms the adm.* procedures carry, and the rest as library drafts (forms batch 5)
+I(r'^ADM-(HR-001|PAY-01[123]|ICT-030|GOV-039|GOV-040|HR-010|LEG-027)$', 'Partial', KB.ADMIN + '; the library contract (forms batch 5) linked to the procedure by identity', "The institution's adopted procedure version carrying the contract, approved by a second official; the nation's grades, rates, limits and schedules", 'I2', tag='SUP')
+I(r'^ADM-', 'Not yet', 'Library contract (forms batch 5); ' + KB.DEPTS + '; ' + KB.WORKSPACE, "The institution's procedure for this form (none is built yet)", 'I2', tag='SUP')
 I(r'^(HLT-PAT-001|HLT-ENC-002|HLT-REF-003|HLT-MED-004|HLT-CARE-008)$', 'Platform rule stricter', CLINRULE, 'CivicOS holds no patient, encounter, referral, dispensing or care-plan record on a named person', '—', tag='SUP')
 I(r'^HLT-PUB-005$', 'Partial', 'Aggregate returns only (lib/health/register.ts); ' + CLINRULE, 'A public-health incident as an aggregate count, never a case on a person', 'I4', tag='SUP')
 I(r'^HLT-FAC-006$', 'Met', HEALTHEV, '', '—', tag='SUP')

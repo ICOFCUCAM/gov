@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"tax6\" (batch 6, tax services: the same parts beside registration) and \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration) and \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -78,6 +78,46 @@
   "taxpayer.registration.verification_record",
   "taxpayer.registration.appeal_assessment",
   "taxpayer.registration.closure_record",
+  "ADM-HR-001",
+  "ADM-HR-002",
+  "ADM-HR-003",
+  "ADM-HR-004",
+  "ADM-HR-005",
+  "ADM-HR-006",
+  "ADM-HR-007",
+  "ADM-HR-008",
+  "ADM-HR-009",
+  "ADM-HR-010",
+  "ADM-PAY-011",
+  "ADM-PAY-012",
+  "ADM-PAY-013",
+  "ADM-FIN-014",
+  "ADM-FIN-015",
+  "ADM-FIN-016",
+  "ADM-FIN-017",
+  "ADM-PRC-018",
+  "ADM-PRC-019",
+  "ADM-PRC-020",
+  "ADM-PRC-021",
+  "ADM-AST-022",
+  "ADM-AST-023",
+  "ADM-AST-024",
+  "ADM-REC-025",
+  "ADM-REC-026",
+  "ADM-LEG-027",
+  "ADM-LEG-028",
+  "ADM-ICT-029",
+  "ADM-ICT-030",
+  "ADM-ICT-031",
+  "ADM-ICT-032",
+  "ADM-COM-033",
+  "ADM-COM-034",
+  "ADM-AUD-035",
+  "ADM-AUD-036",
+  "ADM-PLN-037",
+  "ADM-PLN-038",
+  "ADM-GOV-039",
+  "ADM-GOV-040",
   "tax.appeal.response",
   "tax.appeal.submit",
   "tax.appeal.transmit",
@@ -262,6 +302,48 @@
    "taxpayer.registration.verification_record",
    "taxpayer.registration.appeal_assessment",
    "taxpayer.registration.closure_record"
+  ],
+  "adm": [
+   "ADM-HR-001",
+   "ADM-HR-002",
+   "ADM-HR-003",
+   "ADM-HR-004",
+   "ADM-HR-005",
+   "ADM-HR-006",
+   "ADM-HR-007",
+   "ADM-HR-008",
+   "ADM-HR-009",
+   "ADM-HR-010",
+   "ADM-PAY-011",
+   "ADM-PAY-012",
+   "ADM-PAY-013",
+   "ADM-FIN-014",
+   "ADM-FIN-015",
+   "ADM-FIN-016",
+   "ADM-FIN-017",
+   "ADM-PRC-018",
+   "ADM-PRC-019",
+   "ADM-PRC-020",
+   "ADM-PRC-021",
+   "ADM-AST-022",
+   "ADM-AST-023",
+   "ADM-AST-024",
+   "ADM-REC-025",
+   "ADM-REC-026",
+   "ADM-LEG-027",
+   "ADM-LEG-028",
+   "ADM-ICT-029",
+   "ADM-ICT-030",
+   "ADM-ICT-031",
+   "ADM-ICT-032",
+   "ADM-COM-033",
+   "ADM-COM-034",
+   "ADM-AUD-035",
+   "ADM-AUD-036",
+   "ADM-PLN-037",
+   "ADM-PLN-038",
+   "ADM-GOV-039",
+   "ADM-GOV-040"
   ],
   "tax6": [
    "tax.appeal.response",
@@ -2629,6 +2711,124 @@
      "how": "A whistleblower's or complainant's identity is never in a list, a search or an export, and no other institution reads it"
     }
    }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1085,
+   "quotes": [
+    "This part provides common internal administration services for institutions.",
+    "It does not make all internal records visible across government: each institution retains ownership and applies its own authorization rules."
+   ],
+   "met_by": {
+    "deviation": "institution-owned",
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "canReadAdministration() and caseReadRefusal(): only the institution's own officials read its internal records; whole-government scope stops at independent institutions (reaches())"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1241,
+   "quotes": [
+    "HR, payroll, procurement, payment and asset disposal workflows must have configurable separation-of-duties controls."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/dual-control-policy.ts",
+     "how": "Two officials at the platform minimum; a step marked distinctFrom is refused to whoever took the earlier step (dualControlRefusal(), comparing persons)"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1242,
+   "quotes": [
+    "ICT privileged access must be time-limited, approved, logged and revocable."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/administration/register.ts",
+     "how": "Privileged access is granted only by the adm.privileged-access procedure: for a period, approved by two officials, logged, ended at expiry and revocable (grantAccess(), revokeAccess())"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1243,
+   "quotes": [
+    "Internal audit must be able to inspect evidence without having unrestricted power to change the records being audited."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Auditors read with a purpose, every read logged; caseActRefusal() refuses them any change or decision"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1244,
+   "quotes": [
+    "Legal advice and personnel files require restricted access and retention rules."
+   ],
+   "met_by": {
+    "policy": "access.read_rule",
+    "platform": {
+     "file": "app/src/lib/records/access-log.ts",
+     "how": "Personnel, disciplinary and legal-advice cases are restricted to the assignee and supervisors; every read is logged; retention follows the procedure's rule (lib/data/retention.ts)"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1245,
+   "quotes": [
+    "The legislature, judiciary and independent institutions must retain independent ownership and control of their internal administration."
+   ],
+   "met_by": {
+    "deviation": "institution-owned",
+    "platform": {
+     "file": "app/src/lib/institution/departments.ts",
+     "how": "An independent institution's departments and internal procedures are changed and confirmed only by its own officials"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 966,
+   "quotes": [
+    "All six institution types above need an internal administration workspace.",
+    "It should be provisioned from the institution's enabled departments, not implemented as six separate HR and finance applications."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/institutions/AdministrationWorkspace.tsx",
+     "how": "One internal administration workspace, provisioned from the institution's departments and their functions, reading only its own records"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 981,
+   "quotes": [
+    "These are operational domains, not automatic grants of authority.",
+    "For example, the finance department may prepare a payment, but the relevant payment authorization and separation-of-duties controls still apply."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "A department grants no authority: tasks are roles.ts rules (TASK_PERMISSIONS) at the institution, and decisions keep their separation-of-duties steps"
+    }
+   },
+   "for": "adm"
   }
  ]
 }
