@@ -1,0 +1,472 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-ICT-031",
+ "record_type": "administration.ict.change",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-ICT-031",
+  "part": 21,
+  "section": "21.1",
+  "line": 1118,
+  "batch": 5
+ },
+ "library": {
+  "title": "Request an ICT change",
+  "intro": "Ask for a change to one of the institution's systems: what changes, the kind of change, its risks, how it is undone, when, and whether it was tested. The approver is never the official who asked.",
+  "owner": "institution",
+  "filled_by": "The ICT officer, signed in.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": null,
+  "intended": "A change procedure of the institution: not built; the form waits in the library (plan step I2). The platform's own updates follow change control (lib/data/change-control.ts)",
+  "lists": {
+   "civicos.administration.decision": {
+    "values": [
+     {
+      "value": "approve",
+      "label": "Approve"
+     },
+     {
+      "value": "return",
+      "label": "Return for correction"
+     },
+     {
+      "value": "refuse",
+      "label": "Refuse, with reasons"
+     }
+    ]
+   }
+  },
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials (and auditors with a purpose); every read of personal data in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "procedure-not-built",
+    "what": "A change procedure of the institution: no reference procedure carries this form yet; it waits in the library for the institution's procedure, drafted by one official and approved by another",
+    "why": "Cases change only under an approved procedure package; the plan builds the internal-administration procedures in the order of plan step I2 (the payroll, establishment, privileged-access, policy, delegation, disciplinary and legal-advice procedures first).",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts under an approved procedure package"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1118,
+    "quotes": [
+     "ADM-ICT-031",
+     "ICT change request"
+    ],
+    "met_by": {
+     "fields": [
+      "change.summary",
+      "change.risks",
+      "change.rollback",
+      "change.approved_by"
+     ],
+     "platform": {
+      "file": "app/src/lib/data/change-control.ts",
+      "how": "The platform's own production changes are four-eyes: one official proposes, a different one approves"
+     },
+     "deviation": "procedure-not-built"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 977,
+    "quotes": [
+     "ICT and operations",
+     "Services, incidents, access requests, changes, service availability, backup and recovery evidence"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "change.summary",
+      "change.risks"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "change.summary",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The change"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the change.",
+     "length": "The change must be 300 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "change.system",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "administration.institution.systems",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "System"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "CFG-ADM-005: the institution's own list of systems; none ship.",
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "change.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "administration.institution.change_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Kind of change"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "CFG-ADM-005: the kinds of change the institution's change policy names; none ship.",
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "change.risks",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Risks and their handling"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter risks and their handling.",
+     "length": "Risks and their handling must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "change.rollback",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "How the change is undone"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter how the change is undone.",
+     "length": "How the change is undone must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "change.window",
+   "type": "date_range",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Change window"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter change window."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "change.tested",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Tested before the change"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The change"
+   }
+  },
+  {
+   "id": "change.requested_by",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Requested by"
+   },
+   "hint": {
+    "en": "An official of this institution, by their account."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "change.approved_by",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "REF-ACTIVE",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    },
+    {
+     "rule": "APPROVER-DIFFERS-FROM-MAKER",
+     "params": {
+      "fields": [
+       "change.requested_by"
+      ]
+     }
+    }
+   ],
+   "values_source": "civicos.registry.officials",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Approved by"
+   },
+   "hint": {
+    "en": "An official of this institution, by their account."
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference.",
+     "REF-ACTIVE": "That record is not active.",
+     "APPROVER-DIFFERS-FROM-MAKER": "The approver cannot be the official who prepared it."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "change.decision",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.administration.decision",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Decision"
+   },
+   "hint": {
+    "en": "Recorded by the deciding official at the procedure step, with reasons."
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "change.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

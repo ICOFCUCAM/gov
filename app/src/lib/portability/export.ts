@@ -85,6 +85,7 @@ export const NOT_INCLUDED: ExportManifest['notIncluded'] = [
   { what: 'Keys (the data key, the seal key)', why: 'Held in key custody; the trust list carries the public seal keys a verifier needs' },
   { what: 'Authority mappings, rates and the country\'s rules', why: 'The nation\'s configuration, adopted in each installation through its own change process; each decision records the versions it used' },
   { what: 'Certificates, recall notice deliveries and capacity returns of organisations outside its registers', why: 'Not yet carried (integration register 20.43)' },
+  { what: 'Protected identities (complainants, people making a protected disclosure, protected witnesses, data subjects)', why: 'Kept apart from the cases they belong to (lib/oversight/protected-identity.ts); an ordinary export never carries them (acceptance P4-07). Moving them to another installation would be its own act of the body\'s officials (integration register 20.86)' },
 ];
 
 export interface ExportRecord {

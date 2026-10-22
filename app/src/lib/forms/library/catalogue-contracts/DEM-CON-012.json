@@ -1,0 +1,971 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "DEM-CON-012",
+ "record_type": "oversight.ombudsman.complaint",
+ "form_version": 1,
+ "procedure_package_id": "ombudsman.complaint",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-DEM-012: the ombudsman's mandate, its kinds of issue and whether anonymous complaints are accepted (none ship).",
+  "CFG-DEM-012: independent institution mandates and protected access boundaries (who is named for the oversight slot, its standing and independence, recorded through the institution register; none ship).",
+  "CFG-DEM-017: judicial review and independent dispute-resolution pathways (the review route a closure names).",
+  "CFG-DAT-001: retention and disclosure of the case and of the protected identity."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "DEM-CON-012",
+  "part": 12,
+  "section": "2.4",
+  "line": 152,
+  "batch": 7
+ },
+ "library": {
+  "title": "Complain to the ombudsman about a public body",
+  "intro": "Tell the ombudsman about something a public body did, or failed to do, that affected you. The ombudsman is independent of the body you complain about. Who you are is kept apart from your complaint and read only by the official handling it; the body concerned learns only what it needs to answer.",
+  "owner": "ombudsman",
+  "filled_by": "Anyone affected: online, at an office or on paper. The ombudsman registers it and decides whether it is within its mandate.",
+  "authority": "The ombudsman the nation names for the ombudsman slot of the deployment profile (authorityFor('ombudsman'), shipped empty); independent once named (INDEPENDENT_SLOTS). Never a ministry by name.",
+  "procedure": {
+   "key": "ombudsman.complaint",
+   "stage": "received",
+   "action": "register",
+   "document": "complaint"
+  },
+  "lists": {
+   "civicos.oversight.admissibility": {
+    "values": [
+     {
+      "value": "admitted",
+      "label": "Admitted for investigation"
+     },
+     {
+      "value": "not-admitted",
+      "label": "Not admitted, with reasons"
+     },
+     {
+      "value": "resolved-early",
+      "label": "Resolved early"
+     },
+     {
+      "value": "referred",
+      "label": "Referred elsewhere (reference only)"
+     }
+    ],
+    "proposed": true
+   },
+   "civicos.oversight.closure_reasons": {
+    "values": [
+     {
+      "value": "resolved",
+      "label": "Resolved"
+     },
+     {
+      "value": "recommendations-followed",
+      "label": "Recommendations followed"
+     },
+     {
+      "value": "not-upheld",
+      "label": "Not upheld"
+     },
+     {
+      "value": "outside-mandate",
+      "label": "Outside the mandate"
+     },
+     {
+      "value": "withdrawn",
+      "label": "Withdrawn"
+     },
+     {
+      "value": "referred-elsewhere",
+      "label": "Referred elsewhere"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "oversight.complaint-acknowledgement",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The days within which the body acknowledges what it received."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "oversight-slot",
+    "what": "The body is the institution the nation names for its slot of the deployment profile (ombudsman, humanRights, anticorruption, supremeAudit, dataProtection), shipped empty; it is independent once named",
+    "why": "Authority comes from the deployment profile, never a ministry by name; no oversight body ships for a nation.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/nation/deployment.ts INDEPENDENT_SLOTS (plan I8)"
+   },
+   {
+    "id": "recommendation-not-order",
+    "what": "A finding is a recommendation with reasons, never an order or an automatic decision; whatever it asks is done, or not, by the institution concerned under its own procedures",
+    "why": "Part 12 §7.3: a recommendation is not automatically a binding order; AI never makes a legally material decision.",
+    "rule": "lib/oversight/register.ts; CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "identity-kept-apart",
+    "what": "The answers about the person who raised the matter (whether anonymous, name, contact, consent to share, protection needs) go to the protected-identity record, never into the case: no list, search, case read or export carries them",
+    "why": "Part 4 §C.7: separate source identity from the general case record; Part 12 §10.2: protect whistleblower and complainant identities.",
+    "rule": "lib/oversight/protected-identity.ts and lib/oversight/intake.ts receiveProtected() (acceptance P4-06, P4-07)"
+   },
+   {
+    "id": "reference-only-referral",
+    "what": "A referral to a prosecution, a court or another body carries the case reference and the reason only; nothing of the file passes and no case is opened there",
+    "why": "Prosecution referrals that identify a person need a country's legal review (owner's direction 2026-10-21 §1; plan I11).",
+    "rule": "lib/oversight/procedures.ts oversight.refer; docs/forms-catalogue/DIRECTION-2026-10-21-REGISTER-FIRST.md §1"
+   },
+   {
+    "id": "no-ai-finding",
+    "what": "No score, rating or automated assessment: admissibility, findings and referrals are decided by the body's officials with reasons",
+    "why": "AI may help a human review but never labels a person or issues a finding.",
+    "rule": "CLAUDE.md Government operating model: AI never makes a legally material decision"
+   },
+   {
+    "id": "anonymity-country",
+    "what": "Whether anonymous submissions are accepted is the nation's decision (configured_profile, binding until set)",
+    "why": "Part 12 §2.5: anonymous or pseudonymous submissions where appropriate and lawful.",
+    "rule": "lib/forms/rules.ts configured_profile (binding)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 152,
+    "quotes": [
+     "DEM-CON-012",
+     "Ombudsman complaint",
+     "Complaint, jurisdiction and remedy workflow"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.respondent",
+      "complaint.description",
+      "complaint.admissibility"
+     ],
+     "procedure": "admit",
+     "deviation": "recommendation-not-order"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 57,
+    "quotes": [
+     "Ombudsman",
+     "Complaints and investigations within its jurisdiction"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.respondent",
+      "complaint.alleged_action"
+     ],
+     "deviation": "oversight-slot"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2798,
+    "quotes": [
+     "Complaints about public administration, maladministration and rights-related concerns within mandate."
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.alleged_action",
+      "complaint.issue_category"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2800,
+    "quotes": [
+     "Keeps complaint handling, evidence, findings and recommendations distinct from the institution being investigated."
+    ],
+    "met_by": {
+     "deviation": "identity-kept-apart",
+     "platform": {
+      "file": "app/src/lib/auth/roles.ts",
+      "how": "The institution complained about never reads or acts on the ombudsman's case"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3025,
+    "quotes": [
+     "Complaint ID and preferred contact method"
+    ],
+    "met_by": {
+     "fields": [
+      "complainant.contact"
+     ],
+     "platform": {
+      "file": "app/src/lib/oversight/protected-identity.ts",
+      "how": "The reference is the case's; the contact method is kept with the protected identity"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3026,
+    "quotes": [
+     "Respondent institution and jurisdiction"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.respondent"
+     ],
+     "procedure": "admit"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3027,
+    "quotes": [
+     "Issue category and alleged administrative action"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.issue_category",
+      "complaint.alleged_action"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3028,
+    "quotes": [
+     "Dates, evidence and affected decision"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.when",
+      "complaint.evidence",
+      "complaint.affected_decision"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3029,
+    "quotes": [
+     "Confidentiality or safety concerns"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.confidentiality_concerns"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3030,
+    "quotes": [
+     "Admissibility decision and reasons"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.admissibility",
+      "complaint.admissibility_reasons"
+     ],
+     "procedure": "admit"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3031,
+    "quotes": [
+     "Investigator and assigned authority"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.investigator"
+     ],
+     "deviation": "oversight-slot"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3032,
+    "quotes": [
+     "Findings, recommendation and response"
+    ],
+    "met_by": {
+     "procedure": "record-finding",
+     "platform": {
+      "file": "app/src/lib/oversight/register.ts",
+      "how": "Findings with recommendations, and the response of the institution concerned beside them"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3033,
+    "quotes": [
+     "Closure reason and review route"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.closure_reason",
+      "complaint.review_route"
+     ],
+     "procedure": "close"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3037,
+    "quotes": [
+     "Intake → jurisdiction review → admissibility decision → evidence collection → investigation → findings → authorised recommendation or other outcome → response monitoring → closure."
+    ],
+    "met_by": {
+     "procedure": "issue",
+     "platform": {
+      "file": "app/src/lib/oversight/procedures.ts",
+      "how": "register → admit → request-evidence → record-finding → communicate → issue → follow-up → close"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3039,
+    "quotes": [
+     "A complaint is not a finding of misconduct.",
+     "The institution being complained about should receive only the information needed for a lawful response, with protections for confidential sources and sensitive complainant details."
+    ],
+    "met_by": {
+     "deviation": "recommendation-not-order",
+     "platform": {
+      "file": "app/src/lib/oversight/register.ts",
+      "how": "The institution concerned sees only a finding sent to it, never the complaint or the complainant"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "complaint.respondent",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The public body you are complaining about"
+   },
+   "hint": {
+    "en": "Choose it from the list of public bodies."
+   },
+   "error_text": {
+    "en": {
+     "required": "Name the public body.",
+     "reference_exists": "There is no institution with that reference in the institution register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.issue_category",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "oversight.country.ombudsman_issue_kinds",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What kind of problem is it?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "The nation's kinds of issue within the ombudsman's mandate (CFG-DEM-012); none ship.",
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.alleged_action",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What did the body do, or fail to do?"
+   },
+   "hint": {
+    "en": "For example: a decision you think was wrong, a long delay, or how you were treated."
+   },
+   "error_text": {
+    "en": {
+     "required": "What did the body do, or fail to do?: this is needed.",
+     "length": "What did the body do, or fail to do? must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.affected_decision",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The decision or reference concerned, if any"
+   },
+   "error_text": {
+    "en": {
+     "length": "The decision or reference concerned, if any must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.when",
+   "type": "date_range",
+   "required": false,
+   "validation": [
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "When it happened"
+   },
+   "error_text": {
+    "en": {
+     "date_not_in_future": "When it happened must be today or in the past."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.description",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Describe what happened and how it affected you"
+   },
+   "hint": {
+    "en": "Do not name anyone who is not needed. Say what you would like to happen."
+   },
+   "error_text": {
+    "en": {
+     "required": "Describe what happened and how it affected you: this is needed.",
+     "length": "Describe what happened and how it affected you must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.raised_with_body",
+   "type": "boolean",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Have you complained to the body itself first?"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "complaint_evidence",
+     "when": "when_the_person_has_evidence"
+    }
+   ],
+   "label": {
+    "en": "Anything that supports your complaint"
+   },
+   "hint": {
+    "en": "Letters, decisions, messages."
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.confidentiality_concerns",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Is there anything about your safety or confidentiality we should know?"
+   },
+   "error_text": {
+    "en": {
+     "length": "Is there anything about your safety or confidentiality we should know? must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complaint.accessibility_support",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 500
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Do you need any support to take part (for example a language, a format or someone to help)?"
+   },
+   "error_text": {
+    "en": {
+     "length": "Do you need any support to take part (for example a language, a format or someone to help)? must be 500 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your complaint"
+   }
+  },
+  {
+   "id": "complainant.anonymous",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "configured_profile",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Do you want to stay anonymous?"
+   },
+   "hint": {
+    "en": "If you stay anonymous we keep no name or contact, and cannot tell you what happens."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": "Whether the nation accepts anonymous submissions to this body, and how an anonymous person is answered.",
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "complainant.name",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "complainant.anonymous",
+      "equals": false
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Your name"
+   },
+   "hint": {
+    "en": "Kept apart from the case: only the official handling it, or one specifically authorised, reads it."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter your name.",
+     "length": "Your name must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "complainant.contact",
+   "type": "contact",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "complainant.anonymous",
+      "equals": false
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "How we can reach you"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter how we can reach you."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "complainant.consent_to_share",
+   "type": "boolean",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "complainant.anonymous",
+      "equals": false
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "May we tell the public body concerned who you are?"
+   },
+   "hint": {
+    "en": "We never tell them just because they ask. If fairness requires it, we tell you first."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "complaint.admissibility",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.oversight.admissibility",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Admissibility decision"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "complaint.admissibility_reasons",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Reasons for the admissibility decision"
+   },
+   "error_text": {
+    "en": {
+     "length": "Reasons for the admissibility decision must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "complaint.investigator",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Investigator assigned"
+   },
+   "error_text": {
+    "en": {
+     "length": "Investigator assigned must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "complaint.closure_reason",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.oversight.closure_reasons",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Closure reason"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "complaint.review_route",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 500
+     }
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Review route open to the person"
+   },
+   "error_text": {
+    "en": {
+     "length": "Review route open to the person must be 500 characters or fewer."
+    }
+   },
+   "country_decision": "The review or appeal route the nation's law gives (CFG-DEM-017)."
+  },
+  {
+   "id": "complaint.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

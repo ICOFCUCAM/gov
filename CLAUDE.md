@@ -107,6 +107,24 @@ What has been built is locked. Work only upgrades it toward the vision in
   purpose approved for it and that service; an integration is approved (and
   its scopes or purposes changed) by two officials
   (`proposeIntegrationApproval()` / `confirmIntegrationApproval()`).
+- Departments and internal administration (plan I2): departments are records
+  (`lib/institution/departments.ts`: accountable office, functions, services,
+  staff, every version kept; ended with a reason, never deleted; after setup a
+  proposal a different official confirms, an independent institution's own).
+  The internal administration workspace is a tab of Ministries and reads only
+  the institution's own records (`canReadAdministration()`); its registers
+  change only in the effects of the `adm.*` procedures each institution adopts
+  (`lib/administration/procedures.ts`; separation of duties as `distinctFrom`
+  steps through `dualControlRefusal()`; personnel, payroll, disciplinary and
+  legal-advice cases restricted). Task permissions are `TASK_PERMISSIONS` in
+  `roles.ts` and package steps, never offices; attribute scope (facility,
+  jurisdiction, task) only narrows; a delegated act records delegate and
+  delegator (`delegationCovering()`). The capability manifest
+  (`lib/institution/capabilities.ts`) and completeness per item
+  (`lib/onboarding/completeness.ts`: state, evidence, owner, date, next action;
+  the critical items gate activation in production, never a percentage) are
+  computed from records; the menu is filtered by `navFor()`, the server still
+  deciding every request.
 - Education (`lib/education/`): schools are organisations (a standing in the
   `schools` register), never a second identity. Qualifications are recorded,
   corrected and revoked only through education cases; anyone else checks one
@@ -146,6 +164,21 @@ What has been built is locked. Work only upgrades it toward the vision in
   or entered with reasons; the control channel is an officer's choice with
   reasons, never a score; no seizure, penalty or detention powers. Others
   learn only whether goods were released (`customs.release`).
+- Independent oversight (`lib/oversight/`, plan I8): the ombudsman, human
+  rights, anti-corruption, public audit and data-protection bodies are the
+  institutions named for their slots (none ships) and are independent
+  (`INDEPENDENT_SLOTS`); only their own officials work their cases. The person
+  who raised a matter is kept apart from the case (`protected-identity.ts`,
+  taken in by `receiveProtected()`): never in a list, search, case read or
+  export; read only by the assigned or specifically authorised official with a
+  purpose, every read logged; no other institution reads it. A finding is a
+  recommendation with reasons, by version; the institution concerned answers
+  beside it (`respondToFinding()`) and never changes it. Evidence and a
+  controller's records are asked for only under an approved audit or
+  request-information relationship; the data-protection authority never reads
+  the records and reads the access log only for its case's records
+  (`investigationAccess()`). Referrals carry the case reference only; no field
+  records a suspect.
 - A procedure's form is its contract (`lib/forms/contract.ts`, `docs/FORMS_CONFORMANCE.md`):
   typed fields with a personal-data class, only registered rules
   (`lib/forms/rules.ts`, unknown names fail closed), the same checks and
@@ -268,8 +301,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   exists; missing contracts are written only in controlled batches the owner
   approves (batch 1, health regulation, 25 forms; batch 2, medicines and
   devices regulation, 21 forms; batch 3, taxpayer registration and account,
-  29 forms; batch 4, public-health programme forms, 2 forms: owner
-  2026-10-21), as library
+  29 forms; batch 4, public-health programme forms, 2 forms; batch 5,
+  internal administration, 40 forms; batch 6, tax services, 95 forms;
+  batch 7, independent oversight, 7 forms: owner 2026-10-21), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.
 - Every requirement of that specification is a row of
@@ -288,7 +322,8 @@ What has been built is locked. Work only upgrades it toward the vision in
   an executive ministry.
 - Who is independent is `institutionBounds()` (standing, and the bodies named
   for judiciary, data protection, legislature, head of state, constitutional
-  court). `roles.ts` reads it from `Scope.bounds`, filled by
+  court, and since I8 public audit, ombudsman, human rights and
+  anti-corruption). `roles.ts` reads it from `Scope.bounds`, filled by
   `currentOfficial()` at each request (never signed into the session):
   whole-government scope and auditors stop at independent institutions
   (`reaches()`); only the public audit office reads an independent body's
@@ -598,6 +633,16 @@ What has been built is locked. Work only upgrades it toward the vision in
   observed values and are modelled, never observations; every version is kept
   with its inputs and a SHA-256 evidence hash, and a directive drafted from
   one cites scenario, version and hash.
+- Indicators (`lib/indicators/`, National data › Indicators; `docs/INTEGRATION_REGISTER.md`
+  20.60–20.69): a figure about an institution's work is a value computed from the records under a
+  definition (numerator, denominator, period, coverage, method and version, disclosure rule,
+  qualifications; never a target), drafted by an official of the owning institution and approved
+  per institution by a different one who can sign there, every version kept; reference definitions
+  ship as drafts. No source is "Not connected", never zero; sample records never count in
+  production; counts about people pass the indicator small-cell rule (`policy-change.ts`, shipped
+  unset). Approved values reach the twin only through `lib/indicators/twin.ts`: the internal source
+  and `indicator.` metrics take computed runs only (`lib/twin/computed.ts`). A changed computation is
+  a new method version in `methods.ts`; a generated panel moves to computed or stays folded.
 - The console menu is `lib/nav/console-nav.ts` (plain language, about 30
   entries; related pages are tabs of one item). A new console page joins an
   item as a tab (with `was` if it replaces an earlier name) instead of

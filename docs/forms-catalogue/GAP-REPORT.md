@@ -52,8 +52,8 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | Status | Forms |
 |---|---|
 | catalogued | 0 |
-| contract_missing | 1646 |
-| contract_draft | 206 |
+| contract_missing | 1511 |
+| contract_draft | 341 |
 | under_review | 91 |
 | blocked | 1 |
 | excluded | 128 |
@@ -69,7 +69,7 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 
 ## Contracts CivicOS wrote (form library, controlled batches)
 
-77 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 77 matched to exactly one registered form (by source file and catalogue ID, and by line where the catalogue repeats an ID in one file), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
+219 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 219 matched to exactly one registered form (by source file and catalogue ID, and by line where the catalogue repeats an ID in one file), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
 
 
 **Batch 1** (health regulation, owner approved 21 October 2026): 25 contracts added; form status contract_draft 25.
@@ -171,27 +171,184 @@ HLT-MED-024: its public answer is bound to a rule. Built only through publicProd
 | HLT-PH-011 | `FIELD-SERIES-PARTS-05-07:HLT-PH-011@1` | HLT-PH-011 | 30 | contract_draft | allowed |
 | HLT-PH-014 | `FIELD-SERIES-PARTS-05-07:HLT-PH-014@1` | HLT-PH-014 | 16 | contract_draft | allowed |
 
+**Batch 5** (internal administration, owner approved 21 October 2026): 40 contracts added; form status contract_draft 40.
+
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| ADM-AST-022 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-AST-022@1` | ADM-AST-022 | 10 | contract_draft | allowed |
+| ADM-AST-023 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-AST-023@1` | ADM-AST-023 | 7 | contract_draft | allowed |
+| ADM-AST-024 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-AST-024@1` | ADM-AST-024 | 9 | contract_draft | allowed |
+| ADM-AUD-035 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-AUD-035@1` | ADM-AUD-035 | 10 | contract_draft | allowed |
+| ADM-AUD-036 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-AUD-036@1` | ADM-AUD-036 | 10 | contract_draft | allowed |
+| ADM-COM-033 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-COM-033@1` | ADM-COM-033 | 10 | contract_draft | allowed |
+| ADM-COM-034 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-COM-034@1` | ADM-COM-034 | 9 | contract_draft | allowed |
+| ADM-FIN-014 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-FIN-014@1` | ADM-FIN-014 | 9 | contract_draft | allowed |
+| ADM-FIN-015 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-FIN-015@1` | ADM-FIN-015 | 9 | contract_draft | allowed |
+| ADM-FIN-016 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-FIN-016@1` | ADM-FIN-016 | 10 | contract_draft | allowed |
+| ADM-FIN-017 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-FIN-017@1` | ADM-FIN-017 | 9 | contract_draft | allowed |
+| ADM-GOV-039 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-GOV-039@1` | ADM-GOV-039 | 10 | contract_draft | allowed |
+| ADM-GOV-040 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-GOV-040@1` | ADM-GOV-040 | 9 | contract_draft | allowed |
+| ADM-HR-001 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-HR-001@1` | ADM-HR-001 | 8 | contract_draft | allowed |
+| ADM-HR-002 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-HR-002@1` | ADM-HR-002 | 7 | contract_draft | allowed |
+| ADM-HR-003 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-HR-003@1` | ADM-HR-003 | 10 | contract_draft | allowed |
+| ADM-HR-004 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-HR-004@1` | ADM-HR-004 | 8 | contract_draft | allowed |
+| ADM-HR-005 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-HR-005@1` | ADM-HR-005 | 6 | contract_draft | allowed |
+| ADM-HR-006 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-HR-006@1` | ADM-HR-006 | 6 | contract_draft | allowed |
+| ADM-HR-007 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-HR-007@1` | ADM-HR-007 | 10 | contract_draft | allowed |
+| ADM-HR-008 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-HR-008@1` | ADM-HR-008 | 6 | contract_draft | allowed |
+| ADM-HR-009 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-HR-009@1` | ADM-HR-009 | 5 | contract_draft | allowed |
+| ADM-HR-010 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-HR-010@1` | ADM-HR-010 | 9 | contract_draft | allowed |
+| ADM-ICT-029 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-ICT-029@1` | ADM-ICT-029 | 9 | contract_draft | allowed |
+| ADM-ICT-030 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-ICT-030@1` | ADM-ICT-030 | 10 | contract_draft | allowed |
+| ADM-ICT-031 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-ICT-031@1` | ADM-ICT-031 | 11 | contract_draft | allowed |
+| ADM-ICT-032 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-ICT-032@1` | ADM-ICT-032 | 7 | contract_draft | allowed |
+| ADM-LEG-027 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-LEG-027@1` | ADM-LEG-027 | 7 | contract_draft | allowed |
+| ADM-LEG-028 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-LEG-028@1` | ADM-LEG-028 | 9 | contract_draft | allowed |
+| ADM-PAY-011 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-PAY-011@1` | ADM-PAY-011 | 7 | contract_draft | allowed |
+| ADM-PAY-012 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-PAY-012@1` | ADM-PAY-012 | 13 | contract_draft | allowed |
+| ADM-PAY-013 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-PAY-013@1` | ADM-PAY-013 | 8 | contract_draft | allowed |
+| ADM-PLN-037 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-PLN-037@1` | ADM-PLN-037 | 11 | contract_draft | allowed |
+| ADM-PLN-038 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-PLN-038@1` | ADM-PLN-038 | 8 | contract_draft | allowed |
+| ADM-PRC-018 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-PRC-018@1` | ADM-PRC-018 | 12 | contract_draft | allowed |
+| ADM-PRC-019 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-PRC-019@1` | ADM-PRC-019 | 10 | contract_draft | allowed |
+| ADM-PRC-020 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-PRC-020@1` | ADM-PRC-020 | 12 | contract_draft | allowed |
+| ADM-PRC-021 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-PRC-021@1` | ADM-PRC-021 | 6 | contract_draft | allowed |
+| ADM-REC-025 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-REC-025@1` | ADM-REC-025 | 8 | contract_draft | allowed |
+| ADM-REC-026 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:ADM-REC-026@1` | ADM-REC-026 | 8 | contract_draft | allowed |
+
+**Batch 6** (tax services, owner approved 21 October 2026): 95 contracts added; form status contract_draft 95.
+
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| tax.appeal.response | `FIELD-SERIES-PARTS-01-02:tax.appeal.response@1` | tax.appeal.response | 8 | contract_draft | allowed |
+| tax.appeal.submit | `FIELD-SERIES-PARTS-01-02:tax.appeal.submit@1` | tax.appeal.submit | 20 | contract_draft | allowed |
+| tax.appeal.transmit | `FIELD-SERIES-PARTS-01-02:tax.appeal.transmit@1` | tax.appeal.transmit | 8 | contract_draft | allowed |
+| tax.assessment.amendment | `FIELD-SERIES-PARTS-01-02:tax.assessment.amendment@1` | tax.assessment.amendment | 16 | contract_draft | allowed |
+| tax.assessment.notice | `FIELD-SERIES-PARTS-01-02:tax.assessment.notice@1` | tax.assessment.notice | 9 | contract_draft | allowed |
+| tax.assessment.review_request | `FIELD-SERIES-PARTS-01-02:tax.assessment.review_request@1` | tax.assessment.review_request | 19 | contract_draft | allowed |
+| tax.assistance.enquiry | `FIELD-SERIES-PARTS-01-02:tax.assistance.enquiry@1` | tax.assistance.enquiry | 10 | contract_draft | allowed |
+| tax.assistance.guidance_request | `FIELD-SERIES-PARTS-01-02:tax.assistance.guidance_request@1` | tax.assistance.guidance_request | 10 | contract_draft | allowed |
+| tax.compliance.assessment_decision | `FIELD-SERIES-PARTS-01-02:tax.compliance.assessment_decision@1` | tax.compliance.assessment_decision | 10 | contract_draft | allowed |
+| tax.compliance.case.open | `FIELD-SERIES-PARTS-01-02:tax.compliance.case.open@1` | tax.compliance.case.open | 9 | contract_draft | allowed |
+| tax.compliance.case_closure | `FIELD-SERIES-PARTS-01-02:tax.compliance.case_closure@1` | tax.compliance.case_closure | 6 | contract_draft | allowed |
+| tax.compliance.complaint | `FIELD-SERIES-PARTS-01-02:tax.compliance.complaint@1` | tax.compliance.complaint | 16 | contract_draft | allowed |
+| tax.compliance.evidence_register | `FIELD-SERIES-PARTS-01-02:tax.compliance.evidence_register@1` | tax.compliance.evidence_register | 10 | contract_draft | allowed |
+| tax.compliance.extension_decision | `FIELD-SERIES-PARTS-01-02:tax.compliance.extension_decision@1` | tax.compliance.extension_decision | 7 | contract_draft | allowed |
+| tax.compliance.extension_request | `FIELD-SERIES-PARTS-01-02:tax.compliance.extension_request@1` | tax.compliance.extension_request | 15 | contract_draft | allowed |
+| tax.compliance.findings_draft | `FIELD-SERIES-PARTS-01-02:tax.compliance.findings_draft@1` | tax.compliance.findings_draft | 11 | contract_draft | allowed |
+| tax.compliance.findings_review | `FIELD-SERIES-PARTS-01-02:tax.compliance.findings_review@1` | tax.compliance.findings_review | 11 | contract_draft | allowed |
+| tax.compliance.information_request | `FIELD-SERIES-PARTS-01-02:tax.compliance.information_request@1` | tax.compliance.information_request | 10 | contract_draft | allowed |
+| tax.compliance.information_response | `FIELD-SERIES-PARTS-01-02:tax.compliance.information_response@1` | tax.compliance.information_response | 17 | contract_draft | allowed |
+| tax.compliance.inspection_plan | `FIELD-SERIES-PARTS-01-02:tax.compliance.inspection_plan@1` | tax.compliance.inspection_plan | 10 | contract_draft | allowed |
+| tax.compliance.interview_record | `FIELD-SERIES-PARTS-01-02:tax.compliance.interview_record@1` | tax.compliance.interview_record | 10 | contract_draft | allowed |
+| tax.compliance.referral | `FIELD-SERIES-PARTS-01-02:tax.compliance.referral@1` | tax.compliance.referral | 7 | contract_draft | allowed |
+| tax.compliance.scope.approve | `FIELD-SERIES-PARTS-01-02:tax.compliance.scope.approve@1` | tax.compliance.scope.approve | 11 | contract_draft | allowed |
+| tax.compliance.taxpayer_response | `FIELD-SERIES-PARTS-01-02:tax.compliance.taxpayer_response@1` | tax.compliance.taxpayer_response | 17 | contract_draft | allowed |
+| tax.credit.adjustment | `FIELD-SERIES-PARTS-01-02:tax.credit.adjustment@1` | tax.credit.adjustment | 18 | contract_draft | allowed |
+| tax.debt.disclosure.assessment | `FIELD-SERIES-PARTS-01-02:tax.debt.disclosure.assessment@1` | tax.debt.disclosure.assessment | 12 | contract_draft | allowed |
+| tax.debt.payment_plan.cancel_request | `FIELD-SERIES-PARTS-01-02:tax.debt.payment_plan.cancel_request@1` | tax.debt.payment_plan.cancel_request | 15 | contract_draft | allowed |
+| tax.debt.payment_plan.change_request | `FIELD-SERIES-PARTS-01-02:tax.debt.payment_plan.change_request@1` | tax.debt.payment_plan.change_request | 19 | contract_draft | allowed |
+| tax.debt.payment_plan.decision | `FIELD-SERIES-PARTS-01-02:tax.debt.payment_plan.decision@1` | tax.debt.payment_plan.decision | 16 | contract_draft | allowed |
+| tax.debt.payment_plan.default_review | `FIELD-SERIES-PARTS-01-02:tax.debt.payment_plan.default_review@1` | tax.debt.payment_plan.default_review | 14 | contract_draft | allowed |
+| tax.debt.payment_plan.evidence | `FIELD-SERIES-PARTS-01-02:tax.debt.payment_plan.evidence@1` | tax.debt.payment_plan.evidence | 16 | contract_draft | allowed |
+| tax.debt.payment_plan.request | `FIELD-SERIES-PARTS-01-02:tax.debt.payment_plan.request@1` | tax.debt.payment_plan.request | 21 | contract_draft | allowed |
+| tax.debt.recovery.authorize | `FIELD-SERIES-PARTS-01-02:tax.debt.recovery.authorize@1` | tax.debt.recovery.authorize | 15 | contract_draft | allowed |
+| tax.debt.recovery.close | `FIELD-SERIES-PARTS-01-02:tax.debt.recovery.close@1` | tax.debt.recovery.close | 5 | contract_draft | allowed |
+| tax.debt.recovery.dispute | `FIELD-SERIES-PARTS-01-02:tax.debt.recovery.dispute@1` | tax.debt.recovery.dispute | 19 | contract_draft | allowed |
+| tax.debt.recovery.notice | `FIELD-SERIES-PARTS-01-02:tax.debt.recovery.notice@1` | tax.debt.recovery.notice | 10 | contract_draft | allowed |
+| tax.debt.recovery.response | `FIELD-SERIES-PARTS-01-02:tax.debt.recovery.response@1` | tax.debt.recovery.response | 15 | contract_draft | allowed |
+| tax.debt.recovery.suspend_request | `FIELD-SERIES-PARTS-01-02:tax.debt.recovery.suspend_request@1` | tax.debt.recovery.suspend_request | 15 | contract_draft | allowed |
+| tax.debt.statement.request | `FIELD-SERIES-PARTS-01-02:tax.debt.statement.request@1` | tax.debt.statement.request | 10 | contract_draft | allowed |
+| tax.debt.voluntary_disclosure | `FIELD-SERIES-PARTS-01-02:tax.debt.voluntary_disclosure@1` | tax.debt.voluntary_disclosure | 19 | contract_draft | allowed |
+| tax.dispute.closure | `FIELD-SERIES-PARTS-01-02:tax.dispute.closure@1` | tax.dispute.closure | 6 | contract_draft | allowed |
+| tax.dispute.settlement_proposal | `FIELD-SERIES-PARTS-01-02:tax.dispute.settlement_proposal@1` | tax.dispute.settlement_proposal | 16 | contract_draft | allowed |
+| tax.dispute.settlement_review | `FIELD-SERIES-PARTS-01-02:tax.dispute.settlement_review@1` | tax.dispute.settlement_review | 11 | contract_draft | allowed |
+| tax.dispute.withdraw | `FIELD-SERIES-PARTS-01-02:tax.dispute.withdraw@1` | tax.dispute.withdraw | 16 | contract_draft | allowed |
+| tax.incentive.amendment | `FIELD-SERIES-PARTS-01-02:tax.incentive.amendment@1` | tax.incentive.amendment | 16 | contract_draft | allowed |
+| tax.incentive.application | `FIELD-SERIES-PARTS-01-02:tax.incentive.application@1` | tax.incentive.application | 18 | contract_draft | allowed |
+| tax.incentive.compliance_report | `FIELD-SERIES-PARTS-01-02:tax.incentive.compliance_report@1` | tax.incentive.compliance_report | 19 | contract_draft | allowed |
+| tax.incentive.decision | `FIELD-SERIES-PARTS-01-02:tax.incentive.decision@1` | tax.incentive.decision | 11 | contract_draft | allowed |
+| tax.incentive.renewal | `FIELD-SERIES-PARTS-01-02:tax.incentive.renewal@1` | tax.incentive.renewal | 16 | contract_draft | allowed |
+| tax.incentive.review_request | `FIELD-SERIES-PARTS-01-02:tax.incentive.review_request@1` | tax.incentive.review_request | 16 | contract_draft | allowed |
+| tax.incentive.surrender | `FIELD-SERIES-PARTS-01-02:tax.incentive.surrender@1` | tax.incentive.surrender | 16 | contract_draft | allowed |
+| tax.incentive.withdrawal | `FIELD-SERIES-PARTS-01-02:tax.incentive.withdrawal@1` | tax.incentive.withdrawal | 16 | contract_draft | allowed |
+| tax.objection.assessment | `FIELD-SERIES-PARTS-01-02:tax.objection.assessment@1` | tax.objection.assessment | 13 | contract_draft | allowed |
+| tax.objection.decision | `FIELD-SERIES-PARTS-01-02:tax.objection.decision@1` | tax.objection.decision | 13 | contract_draft | allowed |
+| tax.objection.extension_request | `FIELD-SERIES-PARTS-01-02:tax.objection.extension_request@1` | tax.objection.extension_request | 15 | contract_draft | allowed |
+| tax.objection.submit | `FIELD-SERIES-PARTS-01-02:tax.objection.submit@1` | tax.objection.submit | 19 | contract_draft | allowed |
+| tax.objection.supplement | `FIELD-SERIES-PARTS-01-02:tax.objection.supplement@1` | tax.objection.supplement | 15 | contract_draft | allowed |
+| tax.payment.allocation_request | `FIELD-SERIES-PARTS-01-02:tax.payment.allocation_request@1` | tax.payment.allocation_request | 16 | contract_draft | allowed |
+| tax.payment.dispute | `FIELD-SERIES-PARTS-01-02:tax.payment.dispute@1` | tax.payment.dispute | 19 | contract_draft | allowed |
+| tax.payment.external_reference | `FIELD-SERIES-PARTS-01-02:tax.payment.external_reference@1` | tax.payment.external_reference | 12 | contract_draft | allowed |
+| tax.payment.initiate | `FIELD-SERIES-PARTS-01-02:tax.payment.initiate@1` | tax.payment.initiate | 11 | contract_draft | allowed |
+| tax.payment.reversal_request | `FIELD-SERIES-PARTS-01-02:tax.payment.reversal_request@1` | tax.payment.reversal_request | 16 | contract_draft | allowed |
+| tax.payment.transfer_request | `FIELD-SERIES-PARTS-01-02:tax.payment.transfer_request@1` | tax.payment.transfer_request | 17 | contract_draft | allowed |
+| tax.refund.application | `FIELD-SERIES-PARTS-01-02:tax.refund.application@1` | tax.refund.application | 26 | contract_draft | allowed |
+| tax.refund.assessment | `FIELD-SERIES-PARTS-01-02:tax.refund.assessment@1` | tax.refund.assessment | 14 | contract_draft | allowed |
+| tax.refund.decision | `FIELD-SERIES-PARTS-01-02:tax.refund.decision@1` | tax.refund.decision | 13 | contract_draft | allowed |
+| tax.refund.payment_instruction | `FIELD-SERIES-PARTS-01-02:tax.refund.payment_instruction@1` | tax.refund.payment_instruction | 7 | contract_draft | allowed |
+| tax.refund.reconciliation | `FIELD-SERIES-PARTS-01-02:tax.refund.reconciliation@1` | tax.refund.reconciliation | 8 | contract_draft | allowed |
+| tax.refund.supporting_evidence | `FIELD-SERIES-PARTS-01-02:tax.refund.supporting_evidence@1` | tax.refund.supporting_evidence | 16 | contract_draft | allowed |
+| tax.return.periodic.amend | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.amend@1` | tax.return.periodic.amend | 18 | contract_draft | allowed |
+| tax.return.periodic.appeal | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.appeal@1` | tax.return.periodic.appeal | 20 | contract_draft | allowed |
+| tax.return.periodic.correction | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.correction@1` | tax.return.periodic.correction | 8 | contract_draft | allowed |
+| tax.return.periodic.decision | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.decision@1` | tax.return.periodic.decision | 10 | contract_draft | allowed |
+| tax.return.periodic.further_information | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.further_information@1` | tax.return.periodic.further_information | 16 | contract_draft | allowed |
+| tax.return.periodic.late_submission | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.late_submission@1` | tax.return.periodic.late_submission | 19 | contract_draft | allowed |
+| tax.return.periodic.nil | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.nil@1` | tax.return.periodic.nil | 16 | contract_draft | allowed |
+| tax.return.periodic.notice | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.notice@1` | tax.return.periodic.notice | 9 | contract_draft | allowed |
+| tax.return.periodic.objection | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.objection@1` | tax.return.periodic.objection | 19 | contract_draft | allowed |
+| tax.return.periodic.officer_assessment | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.officer_assessment@1` | tax.return.periodic.officer_assessment | 11 | contract_draft | allowed |
+| tax.return.periodic.withdraw_request | `FIELD-SERIES-PARTS-01-02:tax.return.periodic.withdraw_request@1` | tax.return.periodic.withdraw_request | 16 | contract_draft | allowed |
+| tax.ruling.decision | `FIELD-SERIES-PARTS-01-02:tax.ruling.decision@1` | tax.ruling.decision | 12 | contract_draft | allowed |
+| tax.ruling.further_information | `FIELD-SERIES-PARTS-01-02:tax.ruling.further_information@1` | tax.ruling.further_information | 15 | contract_draft | allowed |
+| tax.ruling.reconsideration | `FIELD-SERIES-PARTS-01-02:tax.ruling.reconsideration@1` | tax.ruling.reconsideration | 20 | contract_draft | allowed |
+| tax.ruling.request | `FIELD-SERIES-PARTS-01-02:tax.ruling.request@1` | tax.ruling.request | 17 | contract_draft | allowed |
+| tax.ruling.withdraw | `FIELD-SERIES-PARTS-01-02:tax.ruling.withdraw@1` | tax.ruling.withdraw | 15 | contract_draft | allowed |
+| tax.withholding.certificate.issue | `FIELD-SERIES-PARTS-01-02:tax.withholding.certificate.issue@1` | tax.withholding.certificate.issue | 6 | contract_draft | allowed |
+| tax.withholding.details.amend | `FIELD-SERIES-PARTS-01-02:tax.withholding.details.amend@1` | tax.withholding.details.amend | 17 | contract_draft | allowed |
+| tax.withholding.discrepancy.decision | `FIELD-SERIES-PARTS-01-02:tax.withholding.discrepancy.decision@1` | tax.withholding.discrepancy.decision | 10 | contract_draft | allowed |
+| tax.withholding.discrepancy.response | `FIELD-SERIES-PARTS-01-02:tax.withholding.discrepancy.response@1` | tax.withholding.discrepancy.response | 15 | contract_draft | allowed |
+| tax.withholding.payment | `FIELD-SERIES-PARTS-01-02:tax.withholding.payment@1` | tax.withholding.payment | 10 | contract_draft | allowed |
+| tax.withholding.registration | `FIELD-SERIES-PARTS-01-02:tax.withholding.registration@1` | tax.withholding.registration | 16 | contract_draft | allowed |
+| tax.withholding.return.amend | `FIELD-SERIES-PARTS-01-02:tax.withholding.return.amend@1` | tax.withholding.return.amend | 23 | contract_draft | allowed |
+| tax.withholding.return.submit | `FIELD-SERIES-PARTS-01-02:tax.withholding.return.submit@1` | tax.withholding.return.submit | 22 | contract_draft | allowed |
+| tax.withholding.statement.correct | `FIELD-SERIES-PARTS-01-02:tax.withholding.statement.correct@1` | tax.withholding.statement.correct | 21 | contract_draft | allowed |
+| tax.withholding.statement.submit | `FIELD-SERIES-PARTS-01-02:tax.withholding.statement.submit@1` | tax.withholding.statement.submit | 19 | contract_draft | allowed |
+
+**Batch 7** (independent oversight and accountability forms, owner approved 21 October 2026): 7 contracts added; form status contract_draft 7.
+
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| DEM-CON-012 | `PARTS-12-13:DEM-CON-012@1` | DEM-CON-012 | 23 | contract_draft | allowed |
+| DEM-CON-013 | `PARTS-12-13:DEM-CON-013@1` | DEM-CON-013 | 24 | contract_draft | allowed |
+| DEM-CON-014 | `PARTS-12-13:DEM-CON-014@1` | DEM-CON-014 | 13 | contract_draft | allowed |
+| DEM-CON-018 | `PARTS-12-13:DEM-CON-018@1` | DEM-CON-018 | 18 | contract_draft | allowed |
+| DEM-CON-019 | `PARTS-12-13:DEM-CON-019@1` | DEM-CON-019 | 22 | contract_draft | allowed |
+| DEM-CON-020 | `PARTS-12-13:DEM-CON-020@1` | DEM-CON-020 | 12 | contract_draft | allowed |
+| DEM-PUB-009 | `PARTS-12-13:DEM-PUB-009@1` | DEM-PUB-009 | 17 | contract_draft | allowed |
+
 **Totals beside the earlier ones** (the register without the library's contracts, after each batch, and now):
 
-| Status | Before (without the library) | After batch 1 | After batch 2 | After batch 3 | After batch 4 | Now |
-|---|---|---|---|---|---|---|
-| catalogued | 0 | 0 | 0 | 0 | 0 | 0 |
-| contract_missing | 1723 | 1698 | 1677 | 1648 | 1646 | 1646 |
-| contract_draft | 129 | 154 | 175 | 204 | 206 | 206 |
-| under_review | 91 | 91 | 91 | 91 | 91 | 91 |
-| blocked | 1 | 1 | 1 | 1 | 1 | 1 |
-| excluded | 128 | 128 | 128 | 128 | 128 | 128 |
-| approved | 0 | 0 | 0 | 0 | 0 | 0 |
-| production | 0 | 0 | 0 | 0 | 0 | 0 |
-| forms without a contract | 1927 | 1902 | 1881 | 1852 | 1850 | 1850 |
+| Status | Before (without the library) | After batch 1 | After batch 2 | After batch 3 | After batch 4 | After batch 5 | After batch 6 | After batch 7 | Now |
+|---|---|---|---|---|---|---|---|---|---|
+| catalogued | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| contract_missing | 1723 | 1698 | 1677 | 1648 | 1646 | 1613 | 1518 | 1511 | 1511 |
+| contract_draft | 129 | 154 | 175 | 204 | 206 | 239 | 334 | 341 | 341 |
+| under_review | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 |
+| blocked | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+| excluded | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 |
+| approved | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| production | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| forms without a contract | 1927 | 1902 | 1881 | 1852 | 1850 | 1817 | 1722 | 1715 | 1715 |
 
 ## Forms with no contract
 
-1850 forms have no field contract (`contract: not yet given` in the register). By part:
+1715 forms have no field contract (`contract: not yet given` in the register). By part:
 
 | Part | Forms without a contract |
 |---|---|
-| Part 2 | 234 |
+| Part 2 | 139 |
 | Part 3 | 361 |
 | Part 4 | 116 |
 | Part 5 | 136 |
@@ -201,7 +358,7 @@ HLT-MED-024: its public answer is bound to a rule. Built only through publicProd
 | Part 9 | 76 |
 | Part 10 | 76 |
 | Part 11 | 66 |
-| Part 12 | 94 |
+| Part 12 | 87 |
 | Part 13 | 83 |
 | Part 14 | 10 |
 | Part 15 | 15 |
@@ -210,7 +367,6 @@ HLT-MED-024: its public answer is bound to a rule. Built only through publicProd
 | Part 18 | 15 |
 | Part 19 | 14 |
 | Part 20 | 19 |
-| Part 21 | 33 |
 | Part 22 | 14 |
 | Part 7 (supplement, Stage B contracts) | 1 |
 | Part 10 (supplement, Stage B contracts) | 1 |

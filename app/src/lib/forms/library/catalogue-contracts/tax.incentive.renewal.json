@@ -1,0 +1,545 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "tax.incentive.renewal",
+ "record_type": "tax.incentive_renewal",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "Department G country decisions (the nation's tax law; no §2.8 record names them): whether formal rulings exist and who is bound by them, their publication and confidentiality rules, statutory incentive schemes, eligibility, duration, renewal, monitoring and revocation powers, review and appeal routes.",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for these records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "tax.incentive.renewal",
+  "part": 2,
+  "section": "2.6",
+  "line": 3115,
+  "batch": 6
+ },
+ "library": {
+  "title": "Renew an incentive, where the law allows renewal",
+  "intro": "Ask for an incentive to be renewed for a further period, where the scheme allows renewal.",
+  "owner": "tax",
+  "filled_by": "The taxpayer, or someone authorised to act for them.",
+  "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
+  "procedure": null,
+  "intended": "A statutory incentive procedure of the tax authority (application, eligibility under the approved scheme, decision by two officials, monitoring, renewal, surrender and revocation): not built; the form waits in the library (plan step I5, priority four of forms batch 6).",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadTax() in lib/auth/roles.ts: the tax authority's officials and auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only registration status, through the taxpayer.status exchange service, for an approved purpose"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "incentive-not-built",
+    "what": "No incentive procedure or register exists yet: schemes, eligibility, benefits and periods are the nation's law and none ships, so incentive forms wait in the library",
+    "why": "A tax incentive changes liabilities; it needs an approved scheme rule, a procedure and decisions by two officials.",
+    "rule": "CLAUDE.md Government operating model: cases change only under an approved procedure package; plan step I5"
+   },
+   {
+    "id": "representation-own-fields",
+    "field": "taxpayer.representative",
+    "what": "Representation is asked as the form's own fields (taxpayer.acting_through_representative, taxpayer.representative_capacity, taxpayer.representative, taxpayer.authority_evidence; the ids of the catalogue's business registration contract, with the capacities of civicos.representation.capacity.v1), not through the field group core.representation, whose fields carry personal and administrative classes",
+    "why": "A form uses a field group by id and version and never changes its fields (Part 1 §1.1); who represents a taxpayer is under tax secrecy, so the same questions are asked as the form's own, restricted fields.",
+    "rule": "CLAUDE.md Tax (tax data read by the tax authority only); field series Part 1 §1.1 (groups are immutable)"
+   },
+   {
+    "id": "declaration-group",
+    "field": "declaration.confirmed",
+    "what": "The catalogue's declaration (must_be_true) and the specification's signed attestation are carried by the field group core.declaration_signature: the approved text version, the confirmation, the signing method, the signature (restricted) and the time; its fields record the act of declaring and hold no taxpayer data",
+    "why": "The specification asks for a valid signature on a versioned text; the group gives both without a second declaration format.",
+    "rule": "CLAUDE.md forms: library forms load in their own JSON, never a second format; field series Part 1 §1.1"
+   },
+   {
+    "id": "tax-secrecy-class",
+    "what": "Every field of the form is restricted and marked tax secrecy (confidentiality tax), stricter than the catalogue's administrative and personal classes where it gives them; the case is restricted and read only under canReadTax() (the tax authority's officials, auditors with a purpose), every read in the access log; other institutions learn status only through the taxpayer.status exchange service",
+    "why": "Tax records are confidential: a class label alone grants no access, and nothing about a taxpayer leaves the tax authority except through an approved exchange for an approved purpose.",
+    "rule": "CLAUDE.md Tax: lib/tax/ is read by the tax authority only (canReadTax(), every read in the access log); others use the taxpayer.status exchange service"
+   },
+   {
+    "id": "no-tax-values",
+    "what": "No rate, threshold, penalty, interest, deadline, filing period, refund period, instalment term or fee is typed: each is a named nation value checked by a binding rule (recorded as not performed and a publication blocker until the nation approves it); tax types, periods, schemas, methods, bases, remedies, outcomes and actions are nation lists that ship empty",
+    "why": "The field series Part 2 §2.6: tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, retention and appeal rights come from approved national rules, never universal constants.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3115,
+    "quotes": [
+     "tax.incentive.renewal",
+     "Renew an incentive where the law allows renewal",
+     "Eligible taxpayer or representative",
+     "Renewal",
+     "Renewal decision"
+    ],
+    "met_by": {
+     "fields": [
+      "incentive.decision_ref",
+      "incentive.requested_period"
+     ],
+     "deviation": "incentive-not-built"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3139,
+    "quotes": [
+     "Country decisions: whether formal rulings exist and who is bound by them; their publication and confidentiality rules; statutory incentive schemes; eligibility, duration, renewal, monitoring and revocation powers; review and appeal routes."
+    ],
+    "met_by": {
+     "country_decision": "Department G country decisions"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3132,
+    "quotes": [
+     "incentive.scheme_ref: registry_reference, required; approved incentive scheme."
+    ],
+    "met_by": {
+     "fields": [
+      "incentive.scheme_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3136,
+    "quotes": [
+     "incentive.decision_ref: identifier_reference, system-created at decision."
+    ],
+    "met_by": {
+     "fields": [
+      "incentive.decision_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3134,
+    "quotes": [
+     "incentive.requested_period: registry_reference, required; approved scheme period."
+    ],
+    "met_by": {
+     "fields": [
+      "incentive.requested_period"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3133,
+    "quotes": [
+     "incentive.eligibility_evidence: registry_reference, conditional on the approved scheme."
+    ],
+    "met_by": {
+     "fields": [
+      "incentive.eligibility_evidence"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "incentive.taxpayer_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "taxpayer_active_for_period",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registry.taxpayer_accounts",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Taxpayer account"
+   },
+   "hint": {
+    "en": "The taxpayer account in the tax register."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter taxpayer account.",
+     "reference_exists": "There is no record with that reference.",
+     "taxpayer_active_for_period": "The taxpayer account is not eligible for this period."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The incentive"
+   }
+  },
+  {
+   "id": "incentive.scheme_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "incentive_terms_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.country.approved.incentive_schemes",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The incentive scheme"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the incentive scheme.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": "Department G country decisions: the statutory incentive schemes, their eligibility, duration, renewal, monitoring and revocation (none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The incentive"
+   }
+  },
+  {
+   "id": "incentive.decision_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The incentive decision it concerns"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the incentive decision it concerns.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The incentive"
+   }
+  },
+  {
+   "id": "incentive.requested_period",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "incentive_terms_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.country.approved.incentive_periods",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Period requested"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter period requested.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": "Department G country decisions: the scheme periods (none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The incentive"
+   }
+  },
+  {
+   "id": "incentive.eligibility_evidence",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirements_satisfied",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Eligibility evidence"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "The incentive"
+   }
+  },
+  {
+   "id": "taxpayer.acting_through_representative",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Are you acting for the taxpayer as their representative?"
+   },
+   "hint": {
+    "en": "Answer yes if you are completing this for someone else (a person, a business or an institution)."
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Someone acting for the taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.representative_capacity",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "taxpayer.acting_through_representative",
+      "equals": true
+     }
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.representation.capacity.v1",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "In what capacity are you acting?"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Select in what capacity are you acting.",
+     "value_in_source": "Choose one of the listed values for in what capacity are you acting."
+    }
+   },
+   "country_decision": "country.tax.registration: the representation law (who may act for a taxpayer and with what evidence).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "Someone acting for the taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.representative",
+   "type": "person",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "taxpayer.acting_through_representative",
+      "equals": true
+     }
+    }
+   ],
+   "values_source": "civicos.registry.person",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "authority_to_act",
+     "when": "when_a_representative_submits_the_request"
+    }
+   ],
+   "label": {
+    "en": "Authorized representative"
+   },
+   "hint": {
+    "en": "Provide this only when someone is acting for the taxpayer."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter authorized representative."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Someone acting for the taxpayer"
+   }
+  },
+  {
+   "id": "taxpayer.authority_evidence",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "taxpayer.acting_through_representative",
+      "equals": true
+     }
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "authority_to_act",
+     "when": "when_required_by_the_approved_representation_rule"
+    }
+   ],
+   "label": {
+    "en": "Evidence of authority to act"
+   },
+   "hint": {
+    "en": "Provide the approved evidence of authority if required."
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Provide evidence of authority to act.",
+     "evidence_requirement_in_approved_package": "This evidence is not included in the approved procedure."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "Someone acting for the taxpayer"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "renewal.reference",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Case reference given"
+   },
+   "hint": {
+    "en": "Given by the platform when the case is opened."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "renewal.submitted_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Submitted at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  }
+ ]
+}

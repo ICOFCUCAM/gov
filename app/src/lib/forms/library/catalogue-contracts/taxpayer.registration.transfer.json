@@ -3,6 +3,7 @@
  "form_id": "taxpayer.registration.transfer",
  "record_type": "taxpayer.office_transfer",
  "form_version": 1,
+ "procedure_package_id": "tax.registration-amendment",
  "legal_basis": [],
  "country_decisions": [
   "country.tax.registration: taxpayer categories, registration identifiers, tax obligations and registration procedures (approved by the authorized tax and legal authority).",
@@ -22,8 +23,11 @@
   "owner": "tax",
   "filled_by": "The taxpayer or someone authorised to act for them.",
   "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
-  "procedure": null,
-  "intended": "A transfer step of the registration amendment procedure (the responsible office changes on the taxpayer's record): not built; the form waits in the library (plan step I5).",
+  "procedure": {
+   "key": "tax.registration-amendment",
+   "stage": "submitted",
+   "document": "change-request"
+  },
   "lists": {
    "tax.registration.transfer_reasons": {
     "values": [
@@ -61,9 +65,9 @@
   ],
   "deviations": [
    {
-    "id": "amendment-not-built",
-    "what": "The tax register keeps the history of what decided cases did, but no procedure yet changes a registration's details, obligations, responsible office or state, so this form waits in the library; the register will keep every version when it is built",
-    "why": "The specification's registration amendment (change request, evidence, validation, approval; an updated account version) is a procedure of its own; none was invented here.",
+    "id": "amendment-procedure",
+    "what": "Linked to tax.registration-amendment (since forms batch 6): the change is verified, proposed and decided by two officials (amend, suspend or reinstate, each its own step and power); the register keeps every version and the state before each change (amendRegistration())",
+    "why": "The specification's registration amendment (change request, evidence, validation, approval; an updated account version) is a procedure of its own; the form is adopted in a version a second official approves.",
     "rule": "CLAUDE.md Government operating model: registers change only through procedure effects; plan step I5"
    },
    {
@@ -133,7 +137,8 @@
       "transfer.requested_office",
       "transfer.decision_ref"
      ],
-     "deviation": "amendment-not-built"
+     "deviation": "amendment-procedure",
+     "procedure": "amend"
     }
    },
    {
@@ -149,7 +154,8 @@
       "transfer.requested_office",
       "transfer.evidence"
      ],
-     "deviation": "amendment-not-built"
+     "deviation": "amendment-procedure",
+     "procedure": "amend"
     }
    }
   ]

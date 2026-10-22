@@ -51,8 +51,8 @@ export function OnboardingWizard() {
       <Card>
         <div className="flex items-center gap-2 mb-2">
           <h2 className="text-xl font-semibold">{result.name}</h2>
-          {result.status === 'provisioned' ? (
-            <Pill tone="ok">Provisioned</Pill>
+          {result.status === 'checked' ? (
+            <Pill tone="ok">Checks passed · nothing stored</Pill>
           ) : (
             <Pill tone="alert">Blocked</Pill>
           )}
@@ -77,11 +77,9 @@ export function OnboardingWizard() {
           ))}
         </ul>
 
-        {result.status === 'provisioned' ? (
+        {result.status === 'checked' ? (
           <Plain>
-            Provisioned. Estimated go-live: {result.goLiveEstimateDays} days.
-            Next: load local services, train officers, run the inclusion-floor
-            check in the field.
+            The checks passed. Nothing has been stored or provisioned yet.
           </Plain>
         ) : (
           <Plain>
@@ -89,6 +87,17 @@ export function OnboardingWizard() {
             inclusion floor and constitutional officer signoff are not optional.
           </Plain>
         )}
+
+        {/* Said plainly (plan I0.2): what this step did not do, and where each is done. */}
+        <div className="mt-3 text-sm">
+          <p className="font-semibold">Not done by this step</p>
+          <ul className="mt-1 list-disc ps-5 text-ink-muted">
+            {(result.notDone ?? []).map(n => <li key={n}>{n}</li>)}
+          </ul>
+          <ul className="mt-2 space-y-1">
+            {(result.next ?? []).map(n => <li key={n.href}><a className="text-link underline underline-offset-2" href={n.href}>{n.label}</a></li>)}
+          </ul>
+        </div>
 
         <Button className="mt-4" variant="secondary" onClick={() => setResult(null)}>
           Start over
@@ -106,7 +115,7 @@ export function OnboardingWizard() {
           { l: 'Inclusion floor', v: 'ENFORCED', c: 'rgb(var(--c-ok))' },
           { l: 'Sovereign core', v: 'INHERITED', c: 'rgb(var(--c-ok))' },
           { l: 'Governance', v: 'NAMED', c: 'rgb(var(--c-ok))' },
-          { l: 'Status', v: 'READY', c: 'rgb(var(--c-ok))' },
+          { l: 'Stores', v: 'CHECKS ONLY', c: 'rgb(var(--c-warn))' },
         ].map(m => (
           <div key={m.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
             <span className="uppercase tracking-[0.14em] text-ink-muted">{m.l}</span>

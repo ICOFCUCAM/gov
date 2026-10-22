@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createIncident, listIncidents } from '@/lib/data/store';
 import type { IncidentSeverity } from '@/lib/api/types';
 import { withOfficial } from '@/lib/auth/official';
+import { actingName } from '@/lib/casework/actor';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     severity,
     title: body.title,
     scope: body.scope,
-    by: body.by ?? 'operator',
+    by: await actingName(body.by),
   });
   return NextResponse.json({ incident: inc }, { status: 201 });
 }

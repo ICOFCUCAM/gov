@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { BranchTile, useBranchRecords, billCounts, recordFigure, BILLS_SOURCE, HEARINGS_SOURCE, type BranchFigure } from '@/components/features/BranchRecords';
+import { BranchTile, useBranchRecords, billCounts, recordFigure, indicatorFigure, BILLS_SOURCE, HEARINGS_SOURCE, type BranchFigure } from '@/components/features/BranchRecords';
 import { GeneratedText } from '@/components/ui/Generated';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { judicialDocket, branchReadiness } from '@/lib/gov/branches';
@@ -37,7 +37,9 @@ export function BranchesView() {
     { l: 'Branches', v: String(m.branches.length), t: 'ok', k: 'br', kind: 'reported', src: 'National settings' },
     { l: 'Legislature', v: m.legislature.structure.toUpperCase(), t: 'ok', k: 'lg', kind: 'reported', src: 'National settings' },
     recordFigure('Bills in progress', 'bp', rec.bills ? billCounts(rec.bills).inProgress : null, BILLS_SOURCE),
-    { l: 'Open cases', v: String(docket.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'oc', kind: 'sample' },
+    // The courts' own indicator of pending cases (plan step I3), computed from their records; the earlier docket model stays beside it, generated.
+    indicatorFigure('Open cases', 'oc', rec.courtsBacklog),
+    { l: 'Docket model', v: String(docket.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'dm', kind: 'sample' },
     recordFigure('Hearings listed · 7 days', 'hl', rec.hearings, HEARINGS_SOURCE),
     { l: 'Separation', v: separationWord(separation.data).toUpperCase(), t: !separation.data ? 'neutral' : sepOk ? 'ok' : 'warn', k: 'si', kind: 'reported', src: 'Checks on the separation of powers, read from the configuration' },
   ];

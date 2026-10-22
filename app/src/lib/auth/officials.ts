@@ -21,6 +21,9 @@ import { checkSetupCode, consumeSetupCode, localAccountsAllowed, LOCAL_ACCOUNTS_
 import { verifyAssertion, verifyRegistration, WebAuthnError, type AssertionJSON, type RegistrationJSON } from './webauthn';
 import { creationOptions, newChallenge, requestOptions, takeChallenge, type RelyingParty } from './passkeys';
 
+/** The attributes an account is scoped by (lib/auth/roles.ts attributeRefusal()). */
+export interface AccountAttributes { facilities?: string[]; jurisdictions?: string[]; tasks?: string[]; setBy?: string; setAt?: string }
+
 export interface OfficialAccount {
   id: string;
   email: string;
@@ -35,6 +38,14 @@ export interface OfficialAccount {
   role?: OfficialRole;
   /** Ministry id; absent for officials serving the whole government. */
   institution?: string;
+  /**
+   * Attribute scope (plan I2): narrows what the account may act on within its
+   * institution, never widens it. Facilities (ids in the facility register),
+   * jurisdictions (the nation's regions) and tasks (TASK_PERMISSIONS ids in
+   * lib/auth/roles.ts). An empty or absent list leaves that attribute
+   * unrestricted. Set by an administrator of the institution, audited.
+   */
+  attributes?: AccountAttributes;
   /** Second sign-in step (authenticator app), once confirmed. Never leaves the server. The secret is
    *  sealed with AES-256-GCM under CIVICOS_DATA_KEK (lib/crypto/envelope.ts); plaintext from before that is
    *  still read and sealed on its next use. */
@@ -303,6 +314,31 @@ const otherActiveAdmin = (id: string) => db().accounts.some(x => x.id !== id && 
 export function accountById(id: string): PublicAccount | undefined {
   const a = db().accounts.find(x => x.id === id);
   return a ? pub(a) : undefined;
+}
+
+/**
+ * Set the attributes an account is scoped by (plan I2): facilities,
+ * jurisdictions and tasks, each list narrowing what it may act on within its
+ * institution (lib/auth/roles.ts attributeRefusal()); an empty list lifts that
+ * restriction. The caller checks the values against the records they name
+ * (the facility register, the nation's regions, TASK_PERMISSIONS). Audited
+ * with the lists' sizes and the account, never anyone else's data.
+ */
+export function setAttributes(id: string, input: { facilities?: string[]; jurisdictions?: string[]; tasks?: string[] }, by: string, now = new Date()): PublicAccount | { error: string } {
+  const a = db().accounts.find(x => x.id === id);
+  if (!a) return { error: 'No such account' };
+  if (!a.institution) return { error: 'An official serving the whole government has no institution to scope within: give the account an institution first' };
+  const clean = (v: unknown) => (Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string').map(x => x.trim().slice(0, 120)).filter(Boolean))].slice(0, 200) : undefined);
+  const next: AccountAttributes = { ...(a.attributes ?? {}) };
+  for (const k of ['facilities', 'jurisdictions', 'tasks'] as const) {
+    if (!(k in input)) continue;
+    const v = clean(input[k]);
+    if (v?.length) next[k] = v; else delete next[k];
+  }
+  next.setBy = by; next.setAt = now.toISOString();
+  a.attributes = next;
+  recordAudit(by, 'auth.account.attributes', `Official:${a.id}`, 'ok', `${a.name} · facilities ${next.facilities?.length ?? 'any'} · jurisdictions ${next.jurisdictions?.join(', ') || 'any'} · tasks ${next.tasks?.length ?? 'any'}`.slice(0, 400));
+  return pub(a);
 }
 
 /** Change what an official may do and for which institution (administrators only; audited). */

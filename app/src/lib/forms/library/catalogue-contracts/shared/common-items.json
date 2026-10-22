@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common) and \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration) and \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -77,7 +77,149 @@
   "taxpayer.registration.assessment",
   "taxpayer.registration.verification_record",
   "taxpayer.registration.appeal_assessment",
-  "taxpayer.registration.closure_record"
+  "taxpayer.registration.closure_record",
+  "ADM-HR-001",
+  "ADM-HR-002",
+  "ADM-HR-003",
+  "ADM-HR-004",
+  "ADM-HR-005",
+  "ADM-HR-006",
+  "ADM-HR-007",
+  "ADM-HR-008",
+  "ADM-HR-009",
+  "ADM-HR-010",
+  "ADM-PAY-011",
+  "ADM-PAY-012",
+  "ADM-PAY-013",
+  "ADM-FIN-014",
+  "ADM-FIN-015",
+  "ADM-FIN-016",
+  "ADM-FIN-017",
+  "ADM-PRC-018",
+  "ADM-PRC-019",
+  "ADM-PRC-020",
+  "ADM-PRC-021",
+  "ADM-AST-022",
+  "ADM-AST-023",
+  "ADM-AST-024",
+  "ADM-REC-025",
+  "ADM-REC-026",
+  "ADM-LEG-027",
+  "ADM-LEG-028",
+  "ADM-ICT-029",
+  "ADM-ICT-030",
+  "ADM-ICT-031",
+  "ADM-ICT-032",
+  "ADM-COM-033",
+  "ADM-COM-034",
+  "ADM-AUD-035",
+  "ADM-AUD-036",
+  "ADM-PLN-037",
+  "ADM-PLN-038",
+  "ADM-GOV-039",
+  "ADM-GOV-040",
+  "tax.appeal.response",
+  "tax.appeal.submit",
+  "tax.appeal.transmit",
+  "tax.assessment.amendment",
+  "tax.assessment.notice",
+  "tax.assessment.review_request",
+  "tax.assistance.enquiry",
+  "tax.assistance.guidance_request",
+  "tax.compliance.assessment_decision",
+  "tax.compliance.case.open",
+  "tax.compliance.case_closure",
+  "tax.compliance.complaint",
+  "tax.compliance.evidence_register",
+  "tax.compliance.extension_decision",
+  "tax.compliance.extension_request",
+  "tax.compliance.findings_draft",
+  "tax.compliance.findings_review",
+  "tax.compliance.information_request",
+  "tax.compliance.information_response",
+  "tax.compliance.inspection_plan",
+  "tax.compliance.interview_record",
+  "tax.compliance.referral",
+  "tax.compliance.scope.approve",
+  "tax.compliance.taxpayer_response",
+  "tax.credit.adjustment",
+  "tax.debt.disclosure.assessment",
+  "tax.debt.payment_plan.cancel_request",
+  "tax.debt.payment_plan.change_request",
+  "tax.debt.payment_plan.decision",
+  "tax.debt.payment_plan.default_review",
+  "tax.debt.payment_plan.evidence",
+  "tax.debt.payment_plan.request",
+  "tax.debt.recovery.authorize",
+  "tax.debt.recovery.close",
+  "tax.debt.recovery.dispute",
+  "tax.debt.recovery.notice",
+  "tax.debt.recovery.response",
+  "tax.debt.recovery.suspend_request",
+  "tax.debt.statement.request",
+  "tax.debt.voluntary_disclosure",
+  "tax.dispute.closure",
+  "tax.dispute.settlement_proposal",
+  "tax.dispute.settlement_review",
+  "tax.dispute.withdraw",
+  "tax.incentive.amendment",
+  "tax.incentive.application",
+  "tax.incentive.compliance_report",
+  "tax.incentive.decision",
+  "tax.incentive.renewal",
+  "tax.incentive.review_request",
+  "tax.incentive.surrender",
+  "tax.incentive.withdrawal",
+  "tax.objection.assessment",
+  "tax.objection.decision",
+  "tax.objection.extension_request",
+  "tax.objection.submit",
+  "tax.objection.supplement",
+  "tax.payment.allocation_request",
+  "tax.payment.dispute",
+  "tax.payment.external_reference",
+  "tax.payment.initiate",
+  "tax.payment.reversal_request",
+  "tax.payment.transfer_request",
+  "tax.refund.application",
+  "tax.refund.assessment",
+  "tax.refund.decision",
+  "tax.refund.payment_instruction",
+  "tax.refund.reconciliation",
+  "tax.refund.supporting_evidence",
+  "tax.return.periodic.amend",
+  "tax.return.periodic.appeal",
+  "tax.return.periodic.correction",
+  "tax.return.periodic.decision",
+  "tax.return.periodic.further_information",
+  "tax.return.periodic.late_submission",
+  "tax.return.periodic.nil",
+  "tax.return.periodic.notice",
+  "tax.return.periodic.objection",
+  "tax.return.periodic.officer_assessment",
+  "tax.return.periodic.withdraw_request",
+  "tax.ruling.decision",
+  "tax.ruling.further_information",
+  "tax.ruling.reconsideration",
+  "tax.ruling.request",
+  "tax.ruling.withdraw",
+  "tax.withholding.certificate.issue",
+  "tax.withholding.details.amend",
+  "tax.withholding.discrepancy.decision",
+  "tax.withholding.discrepancy.response",
+  "tax.withholding.payment",
+  "tax.withholding.registration",
+  "tax.withholding.return.amend",
+  "tax.withholding.return.submit",
+  "tax.withholding.statement.correct",
+  "tax.withholding.statement.submit",
+  "DEM-CON-012",
+  "DEM-CON-013",
+  "DEM-CON-014",
+  "DEM-CON-018",
+  "DEM-CON-019",
+  "DEM-CON-020",
+  "DEM-PUB-009"
  ],
  "groups": {
   "health": [
@@ -160,6 +302,154 @@
    "taxpayer.registration.verification_record",
    "taxpayer.registration.appeal_assessment",
    "taxpayer.registration.closure_record"
+  ],
+  "adm": [
+   "ADM-HR-001",
+   "ADM-HR-002",
+   "ADM-HR-003",
+   "ADM-HR-004",
+   "ADM-HR-005",
+   "ADM-HR-006",
+   "ADM-HR-007",
+   "ADM-HR-008",
+   "ADM-HR-009",
+   "ADM-HR-010",
+   "ADM-PAY-011",
+   "ADM-PAY-012",
+   "ADM-PAY-013",
+   "ADM-FIN-014",
+   "ADM-FIN-015",
+   "ADM-FIN-016",
+   "ADM-FIN-017",
+   "ADM-PRC-018",
+   "ADM-PRC-019",
+   "ADM-PRC-020",
+   "ADM-PRC-021",
+   "ADM-AST-022",
+   "ADM-AST-023",
+   "ADM-AST-024",
+   "ADM-REC-025",
+   "ADM-REC-026",
+   "ADM-LEG-027",
+   "ADM-LEG-028",
+   "ADM-ICT-029",
+   "ADM-ICT-030",
+   "ADM-ICT-031",
+   "ADM-ICT-032",
+   "ADM-COM-033",
+   "ADM-COM-034",
+   "ADM-AUD-035",
+   "ADM-AUD-036",
+   "ADM-PLN-037",
+   "ADM-PLN-038",
+   "ADM-GOV-039",
+   "ADM-GOV-040"
+  ],
+  "tax6": [
+   "tax.appeal.response",
+   "tax.appeal.submit",
+   "tax.appeal.transmit",
+   "tax.assessment.amendment",
+   "tax.assessment.notice",
+   "tax.assessment.review_request",
+   "tax.assistance.enquiry",
+   "tax.assistance.guidance_request",
+   "tax.compliance.assessment_decision",
+   "tax.compliance.case.open",
+   "tax.compliance.case_closure",
+   "tax.compliance.complaint",
+   "tax.compliance.evidence_register",
+   "tax.compliance.extension_decision",
+   "tax.compliance.extension_request",
+   "tax.compliance.findings_draft",
+   "tax.compliance.findings_review",
+   "tax.compliance.information_request",
+   "tax.compliance.information_response",
+   "tax.compliance.inspection_plan",
+   "tax.compliance.interview_record",
+   "tax.compliance.referral",
+   "tax.compliance.scope.approve",
+   "tax.compliance.taxpayer_response",
+   "tax.credit.adjustment",
+   "tax.debt.disclosure.assessment",
+   "tax.debt.payment_plan.cancel_request",
+   "tax.debt.payment_plan.change_request",
+   "tax.debt.payment_plan.decision",
+   "tax.debt.payment_plan.default_review",
+   "tax.debt.payment_plan.evidence",
+   "tax.debt.payment_plan.request",
+   "tax.debt.recovery.authorize",
+   "tax.debt.recovery.close",
+   "tax.debt.recovery.dispute",
+   "tax.debt.recovery.notice",
+   "tax.debt.recovery.response",
+   "tax.debt.recovery.suspend_request",
+   "tax.debt.statement.request",
+   "tax.debt.voluntary_disclosure",
+   "tax.dispute.closure",
+   "tax.dispute.settlement_proposal",
+   "tax.dispute.settlement_review",
+   "tax.dispute.withdraw",
+   "tax.incentive.amendment",
+   "tax.incentive.application",
+   "tax.incentive.compliance_report",
+   "tax.incentive.decision",
+   "tax.incentive.renewal",
+   "tax.incentive.review_request",
+   "tax.incentive.surrender",
+   "tax.incentive.withdrawal",
+   "tax.objection.assessment",
+   "tax.objection.decision",
+   "tax.objection.extension_request",
+   "tax.objection.submit",
+   "tax.objection.supplement",
+   "tax.payment.allocation_request",
+   "tax.payment.dispute",
+   "tax.payment.external_reference",
+   "tax.payment.initiate",
+   "tax.payment.reversal_request",
+   "tax.payment.transfer_request",
+   "tax.refund.application",
+   "tax.refund.assessment",
+   "tax.refund.decision",
+   "tax.refund.payment_instruction",
+   "tax.refund.reconciliation",
+   "tax.refund.supporting_evidence",
+   "tax.return.periodic.amend",
+   "tax.return.periodic.appeal",
+   "tax.return.periodic.correction",
+   "tax.return.periodic.decision",
+   "tax.return.periodic.further_information",
+   "tax.return.periodic.late_submission",
+   "tax.return.periodic.nil",
+   "tax.return.periodic.notice",
+   "tax.return.periodic.objection",
+   "tax.return.periodic.officer_assessment",
+   "tax.return.periodic.withdraw_request",
+   "tax.ruling.decision",
+   "tax.ruling.further_information",
+   "tax.ruling.reconsideration",
+   "tax.ruling.request",
+   "tax.ruling.withdraw",
+   "tax.withholding.certificate.issue",
+   "tax.withholding.details.amend",
+   "tax.withholding.discrepancy.decision",
+   "tax.withholding.discrepancy.response",
+   "tax.withholding.payment",
+   "tax.withholding.registration",
+   "tax.withholding.return.amend",
+   "tax.withholding.return.submit",
+   "tax.withholding.statement.correct",
+   "tax.withholding.statement.submit"
+  ],
+  "oversight": [
+   "DEM-CON-012",
+   "DEM-CON-013",
+   "DEM-CON-014",
+   "DEM-CON-018",
+   "DEM-CON-019",
+   "DEM-CON-020",
+   "DEM-PUB-009"
   ]
  },
  "items": [
@@ -1885,6 +2175,660 @@
      "how": "taxCounts(): counts only, never a taxpayer's record"
     }
    }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2517,
+   "quotes": [
+    "The Revenue/Tax Authority must have a separate configured service catalogue for each tax type that the country actually administers.",
+    "CivicOS must not assume that every nation has VAT, corporate income tax, personal income tax, property tax, excise, withholding tax or a particular taxpayer identifier."
+   ],
+   "met_by": {
+    "deviation": "no-tax-values",
+    "platform": {
+     "file": "app/src/lib/law/rules.ts",
+     "how": "Each tax type is calculated only by its own approved rule version; a service is activated only by a procedure version the nation approves for a tax it has"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 2519,
+   "quotes": [
+    "Tax is a legally consequential domain.",
+    "Tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, records-retention periods and appeal rights must come from approved national rules.",
+    "They must never be hard-coded as universal CivicOS constants."
+   ],
+   "met_by": {
+    "deviation": "no-tax-values",
+    "platform": {
+     "file": "app/src/lib/law/rules.ts",
+     "how": "Rates, thresholds, deadlines and fees only from approved, cited, tested rule versions; calculate() refuses without one"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3225,
+   "quotes": [
+    "country.exec.finance.retention",
+    "Retention schedules, confidentiality, publication, disclosure and access restrictions for all records in this part",
+    "Records owner and authorized legal/privacy reviewers"
+   ],
+   "met_by": {
+    "country_decision": "country.exec.finance.retention",
+    "platform": {
+     "file": "app/src/lib/data/retention.ts",
+     "how": "Retention rules confirmed by two officials; disclosure only through the exchange layer"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3226,
+   "quotes": [
+    "Each configuration record must itself be versioned, reviewed by a different authorized official from its proposer where required, and linked to the applicable law version.",
+    "Changing a configuration must trigger an impact assessment for the affected forms and open procedure packages."
+   ],
+   "met_by": {
+    "deviation": "config-impact",
+    "platform": {
+     "file": "app/src/lib/law/policy-change.ts",
+     "how": "Country rule sets are versions citing the laws register, proposed by one official and confirmed by a different one; every version kept"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3231,
+   "quotes": [
+    "Every form is owned by a configured institution and bound to a verified authority record."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Owned by the tax slot of the deployment profile (authorityFor('tax')); the authority gate resolves it before publication"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3236,
+   "quotes": [
+    "Every activated service has its applicable intake, assessment, evidence, decision, notification, correction, review and closure stages."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/procedures.ts",
+     "how": "Batch 6 holds intake, assessment, evidence, decision, notice, correction, review and closure forms; the tax procedures carry them through those stages, approved by two officials before a service is activated"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3251,
+   "quotes": [
+    "Every legally material decision records the authority, rule version, decision-maker, reasons where required, evidence and timestamp."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "The sealed decision records the authority, the law and rule versions, the decision-maker, the reasons, the evidence and the time"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3256,
+   "quotes": [
+    "The system enforces the configured separation between proposing, reviewing, approving, executing and reconciling."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/dual-control-policy.ts",
+     "how": "Two officials at the platform minimum whatever a procedure says; the proposer never approves"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3261,
+   "quotes": [
+    "Taxpayer information, confidential Cabinet papers, debt records and payment details are accessible only for authorized purposes."
+   ],
+   "met_by": {
+    "deviation": "tax-secrecy-class",
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "canReadTax(): the tax authority's officials, auditors with a purpose; every read in the access log"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3266,
+   "quotes": [
+    "All published forms pass the required language, right-to-left, keyboard, screen-reader, mobile and assisted-channel tests."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/forms/FormRenderer.tsx",
+     "how": "One definition renders self-service, assisted and print; accessibility and localisation are a publication gate"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 3271,
+   "quotes": [
+    "Production reports use sourced records; estimates and modelled figures are explicitly identified; missing integrations are not represented as live data."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+     "how": "A library draft: no return, assessment, balance, refund or arrangement is shown as real; statements come from recorded entries; sample records carry the Sample marker"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 376,
+   "quotes": [
+    "The tax authority administers taxes established by law.",
+    "It may be a department within a ministry, a semi-autonomous revenue authority or a statutory agency.",
+    "Its legal powers may include registration, assessment, collection, audit, refund processing, objections and referrals to courts or other enforcement bodies."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Whatever form the tax administration takes, the nation names it once under Who is responsible (slot tax); its powers come from its law"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 378,
+   "quotes": [
+    "CivicOS must separate the tax-policy authority from the tax-administration authority when they are different institutions."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Only the tax administration slot (tax) owns these forms; a tax-policy institution named apart has no power over a taxpayer's record"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 380,
+   "quotes": [
+    "A minister or treasury officer must not change an individual's liability by editing a tax record outside the legally authorized tax procedure."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/register.ts",
+     "how": "Tax records change only through the effects of decided cases; no route writes them directly and no other file imports a changing function (register-writes.test.ts)"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 509,
+   "quotes": [
+    "Amendments never overwrite the original return or assessment."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/register.ts",
+     "how": "Returns keep every version; an assessment is varied by a posted adjustment, never overwritten; a taxpayer's history is kept"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 510,
+   "quotes": [
+    "Read access to tax records is restricted to authorized tax personnel and legally authorized disclosures."
+   ],
+   "met_by": {
+    "deviation": "tax-secrecy-class",
+    "exchange": "taxpayer.status",
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "canReadTax(): authorised tax personnel and auditors with a purpose; others through the taxpayer.status exchange for an approved purpose"
+    }
+   }
+  },
+  {
+   "for": "tax6",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 511,
+   "quotes": [
+    "The national twin receives approved aggregate figures, not individual returns."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/tax/register.ts",
+     "how": "taxCounts(): counts only, never a taxpayer's record"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 64,
+   "quotes": [
+    "These are archetypes, not mandatory institutional arrangements.",
+    "The system must represent each institution's establishing law, constitutional standing, independence, powers, record ownership and authorized relationships explicitly."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/data/store/institutions.ts",
+     "how": "Each institution's establishing law, standing, independence per dimension and records owned are recorded on its register entry; relationships in the relationship register; nothing ships for a nation"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 66,
+   "quotes": [
+    "Non-negotiable principle: Executive administrators must not be able to modify legislative votes, change certified election results, suppress independent findings or access confidential constitutional-office records merely because they hold a national government administrator account."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Whole-government administrators reach no independent institution (reaches(), caseActRefusal(), caseReadRefusal()); the oversight bodies are independent slots (INDEPENDENT_SLOTS)"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 161,
+   "quotes": [
+    "CivicOS must not assume that a constitutional appointment is made by the executive, that a commission reports to a ministry, or that a public audit body can be instructed to change its findings.",
+    "Those powers must follow the nation's constitutional and statutory framework."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Each oversight body is the institution the nation names for its slot; no body reports to a ministry by default, and an audit finding changes only by the audit office's own new version"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 193,
+   "quotes": [
+    "Never overwrite a legislative text, electoral result, appointment decision or independent finding without preserving the earlier version and its status."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/register.ts",
+     "how": "A finding is corrected only by a new version, the earlier kept; an issued finding is never changed"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 196,
+   "quotes": [
+    "Record the authority responsible for certifying each result or decision."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/records/decisions.ts",
+     "how": "Every decision is sealed with its institution, officials, reasons, the authority mapping it rested on and the law cited"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 197,
+   "quotes": [
+    "Support corrections through linked, attributable events."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/register.ts",
+     "how": "Corrections, responses and follow-up are appended as numbered, attributed versions and events"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 199,
+   "quotes": [
+    "Prevent training and demonstration data from appearing in production elections or official government records."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/ops/mode.ts",
+     "how": "A production installation opens and moves no sample case, and sample records stay marked (samplesAllowed(), sampleMark())"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 401,
+   "quotes": [
+    "An independent institution's record owner must not be reassigned by a general government administrator without a lawful, explicitly authorized process."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/data/store/institutions.ts",
+     "how": "Who is responsible and an institution's terms change after setup only through policy-change.ts (cited, confirmed by a different official; an independent institution confirms its own)"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 403,
+   "quotes": [
+    "The investigation workflow should record the mandate, investigator, conflicts of interest, evidence, procedural steps, findings, recommendations, response from the institution concerned and closure status."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/procedures.ts",
+     "how": "The procedure records the mandate (admission), the investigator (assignee), evidence requests, steps, findings, recommendations, the institution's response and closure; a declared conflict of interest recuses at once (lib/transitions)"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 405,
+   "quotes": [
+    "A recommendation is not automatically a binding order.",
+    "A finding should not be silently rewritten by the institution under investigation.",
+    "If an independent body's decision is appealed or judicially reviewed, the new proceeding must link to the original record and preserve the original outcome."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/register.ts",
+     "how": "A recommendation is never an order; the institution concerned answers beside a finding and never changes it; a review is a new linked case, the original kept"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 451,
+   "quotes": [
+    "Keep independent institutions' records under their own configured authority."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "An independent body's cases are worked and read only by its own officials (caseActRefusal(), caseReadRefusal())"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 478,
+   "quotes": [
+    "independent_body.case.manage"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "independent_body.case.manage maps to caseActRefusal(): an official of the body itself; no whole-government role"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 486,
+   "quotes": [
+    "Protect whistleblower and complainant identities."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/protected-identity.ts",
+     "how": "The person who raised a matter is kept apart from the case, read only by the assigned or authorised official with a purpose"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 488,
+   "quotes": [
+    "Log access to restricted records and audit bulk exports."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/records/access-log.ts",
+     "how": "Every read of a case, of a protected identity, every refusal and every export is in the access log"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 489,
+   "quotes": [
+    "Keep independent review cases inaccessible to unauthorized staff of the institution under review."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "The institution under review is refused the body's cases and the protected identity; it sees only a finding sent to it"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 500,
+   "quotes": [
+    "Suppress, rewrite or reclassify an independent finding."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/register.ts",
+     "how": "No function lets AI or the institution concerned change a finding; corrections are the body's own versions"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 518,
+   "quotes": [
+    "CFG-DEM-012",
+    "Independent institution mandates and protected access boundaries"
+   ],
+   "met_by": {
+    "country_decision": "CFG-DEM-012"
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 529,
+   "quotes": [
+    "Where the governing law is uncertain, the relevant binding workflow must remain inactive until the competent institution confirms the legal position.",
+    "CivicOS must not infer constitutional powers from an institution's name or administrative location."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/permits/decisions.ts",
+     "how": "Every decision is classified under a proposed, unapproved authority mapping and refused in production until the nation approves it; no power is inferred from a name"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 590,
+   "quotes": [
+    "Independent oversight: Findings cannot be silently changed or suppressed by the institution under review."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/register.ts",
+     "how": "respondToFinding() appends beside the finding; its versions and stage are untouched (acceptance P4-04)"
+    }
+   }
+  },
+  {
+   "for": "oversight",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 591,
+   "quotes": [
+    "Privacy: Voter, donor, whistleblower and complainant information is disclosed only when authorized."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/oversight/protected-identity.ts",
+     "how": "A whistleblower's or complainant's identity is never in a list, a search or an export, and no other institution reads it"
+    }
+   }
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1085,
+   "quotes": [
+    "This part provides common internal administration services for institutions.",
+    "It does not make all internal records visible across government: each institution retains ownership and applies its own authorization rules."
+   ],
+   "met_by": {
+    "deviation": "institution-owned",
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "canReadAdministration() and caseReadRefusal(): only the institution's own officials read its internal records; whole-government scope stops at independent institutions (reaches())"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1241,
+   "quotes": [
+    "HR, payroll, procurement, payment and asset disposal workflows must have configurable separation-of-duties controls."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/dual-control-policy.ts",
+     "how": "Two officials at the platform minimum; a step marked distinctFrom is refused to whoever took the earlier step (dualControlRefusal(), comparing persons)"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1242,
+   "quotes": [
+    "ICT privileged access must be time-limited, approved, logged and revocable."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/administration/register.ts",
+     "how": "Privileged access is granted only by the adm.privileged-access procedure: for a period, approved by two officials, logged, ended at expiry and revocable (grantAccess(), revokeAccess())"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1243,
+   "quotes": [
+    "Internal audit must be able to inspect evidence without having unrestricted power to change the records being audited."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Auditors read with a purpose, every read logged; caseActRefusal() refuses them any change or decision"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1244,
+   "quotes": [
+    "Legal advice and personnel files require restricted access and retention rules."
+   ],
+   "met_by": {
+    "policy": "access.read_rule",
+    "platform": {
+     "file": "app/src/lib/records/access-log.ts",
+     "how": "Personnel, disciplinary and legal-advice cases are restricted to the assignee and supervisors; every read is logged; retention follows the procedure's rule (lib/data/retention.ts)"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1245,
+   "quotes": [
+    "The legislature, judiciary and independent institutions must retain independent ownership and control of their internal administration."
+   ],
+   "met_by": {
+    "deviation": "institution-owned",
+    "platform": {
+     "file": "app/src/lib/institution/departments.ts",
+     "how": "An independent institution's departments and internal procedures are changed and confirmed only by its own officials"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 966,
+   "quotes": [
+    "All six institution types above need an internal administration workspace.",
+    "It should be provisioned from the institution's enabled departments, not implemented as six separate HR and finance applications."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/components/features/institutions/AdministrationWorkspace.tsx",
+     "how": "One internal administration workspace, provisioned from the institution's departments and their functions, reading only its own records"
+    }
+   },
+   "for": "adm"
+  },
+  {
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 981,
+   "quotes": [
+    "These are operational domains, not automatic grants of authority.",
+    "For example, the finance department may prepare a payment, but the relevant payment authorization and separation-of-duties controls still apply."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "A department grants no authority: tasks are roles.ts rules (TASK_PERMISSIONS) at the institution, and decisions keep their separation-of-duties steps"
+    }
+   },
+   "for": "adm"
   }
  ]
 }

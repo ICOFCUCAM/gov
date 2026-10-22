@@ -1,0 +1,449 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "DEM-CON-020",
+ "record_type": "oversight.response",
+ "form_version": 1,
+ "procedure_package_id": "audit.engagement",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-DEM-012: whether the nation's law obliges an institution to answer a finding, and how its response is published (none ship).",
+  "CFG-DEM-012: independent institution mandates and protected access boundaries (who is named for the oversight slot, its standing and independence, recorded through the institution register; none ship).",
+  "CFG-DEM-017: judicial review and independent dispute-resolution pathways (the review route a closure names).",
+  "CFG-DAT-001: retention and disclosure of the case and of the protected identity."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "DEM-CON-020",
+  "part": 12,
+  "section": "2.4",
+  "line": 160,
+  "batch": 7
+ },
+ "library": {
+  "title": "Answer an oversight finding",
+  "intro": "The institution a finding concerns gives its official response: whether it accepts the finding, its reasons and evidence, and what it will do. The response is recorded beside the finding; it never changes the finding.",
+  "owner": "supremeAudit",
+  "filled_by": "Officials of the institution the finding concerns, once the body has sent the finding for its response.",
+  "authority": "Filled by the institution the finding concerns (actor_authorized_for_institution); addressed to the body that made the finding, the institution the nation names for its oversight slot (shipped empty). Never a ministry by name.",
+  "procedure": {
+   "key": "audit.engagement",
+   "stage": "response",
+   "also": [
+    "ombudsman.complaint",
+    "human-rights.complaint",
+    "integrity.disclosure",
+    "data-protection.rights-request"
+   ]
+  },
+  "lists": {
+   "civicos.oversight.response_positions": {
+    "values": [
+     {
+      "value": "accepted",
+      "label": "Accepted"
+     },
+     {
+      "value": "partly-accepted",
+      "label": "Partly accepted"
+     },
+     {
+      "value": "disputed",
+      "label": "Disputed"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "oversight-slot",
+    "what": "The body is the institution the nation names for its slot of the deployment profile (ombudsman, humanRights, anticorruption, supremeAudit, dataProtection), shipped empty; it is independent once named",
+    "why": "Authority comes from the deployment profile, never a ministry by name; no oversight body ships for a nation.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/nation/deployment.ts INDEPENDENT_SLOTS (plan I8)"
+   },
+   {
+    "id": "recommendation-not-order",
+    "what": "A finding is a recommendation with reasons, never an order or an automatic decision; whatever it asks is done, or not, by the institution concerned under its own procedures",
+    "why": "Part 12 §7.3: a recommendation is not automatically a binding order; AI never makes a legally material decision.",
+    "rule": "lib/oversight/register.ts; CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "response-beside",
+    "what": "The response is recorded beside the finding: the finding, its versions and its stage are untouched; only the body corrects its own finding, as a new version",
+    "why": "Part 4 §C.3 separation rule and acceptance P4-04.",
+    "rule": "lib/oversight/register.ts respondToFinding()"
+   },
+   {
+    "id": "not-a-step",
+    "what": "The response is not a step of the body's case: the institution concerned never acts on an independent body's case; it answers through /api/oversight, checked against the finding",
+    "why": "An independent institution's cases are worked only by its own officials.",
+    "rule": "lib/auth/roles.ts caseActRefusal(); app/api/oversight/route.ts"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 160,
+    "quotes": [
+     "DEM-CON-020",
+     "Independent institution oversight response",
+     "Official response and corrective-action record"
+    ],
+    "met_by": {
+     "fields": [
+      "response.text",
+      "response.corrective_action"
+     ],
+     "platform": {
+      "file": "app/src/lib/oversight/register.ts",
+      "how": "respondToFinding(): the official response of the institution concerned, recorded beside the finding"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 441,
+    "quotes": [
+     "REG-DEM-015",
+     "Public accountability findings register",
+     "Finding, responsible institution, response and follow-up"
+    ],
+    "met_by": {
+     "fields": [
+      "response.finding",
+      "response.text"
+     ],
+     "deviation": "response-beside"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2989,
+    "quotes": [
+     "Management response",
+     "Respondent, response, supporting evidence and date"
+    ],
+    "met_by": {
+     "fields": [
+      "response.institution",
+      "response.text",
+      "response.evidence",
+      "response.action_date"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2990,
+    "quotes": [
+     "Recommendation",
+     "Owner, agreed or disputed action, due date if established and follow-up status"
+    ],
+    "met_by": {
+     "fields": [
+      "response.action_owner",
+      "response.position",
+      "response.action_date"
+     ],
+     "deviation": "response-beside"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3005,
+    "quotes": [
+     "Separation rule: the audited ministry may respond to a finding and submit evidence, but it must not edit the audit institution's finding or delete its working papers.",
+     "A disagreement should be recorded as a response or review, not resolved by overwriting the auditor's record."
+    ],
+    "met_by": {
+     "deviation": "response-beside",
+     "platform": {
+      "file": "app/src/lib/oversight/register.ts",
+      "how": "respondToFinding() never changes the finding; submitEvidence() for evidence the institution submits"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "response.finding",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 40
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The finding you are answering (its number)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the finding you are answering (its number).",
+     "length": "The finding you are answering (its number) must be 40 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your response"
+   }
+  },
+  {
+   "id": "response.institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_institution",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Your institution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Name your institution.",
+     "reference_exists": "There is no institution with that reference in the institution register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your response"
+   }
+  },
+  {
+   "id": "response.position",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.oversight.response_positions",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Do you accept the finding?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your response"
+   }
+  },
+  {
+   "id": "response.text",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Your response and its reasons"
+   },
+   "error_text": {
+    "en": {
+     "required": "Your response and its reasons: this is needed.",
+     "length": "Your response and its reasons must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your response"
+   }
+  },
+  {
+   "id": "response.corrective_action",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What you will do"
+   },
+   "error_text": {
+    "en": {
+     "length": "What you will do must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Corrective action"
+   }
+  },
+  {
+   "id": "response.action_owner",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Who is responsible for the action"
+   },
+   "error_text": {
+    "en": {
+     "length": "Who is responsible for the action must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Corrective action"
+   }
+  },
+  {
+   "id": "response.action_date",
+   "type": "date",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "By when you say it will be done"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Corrective action"
+   }
+  },
+  {
+   "id": "response.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "response_evidence",
+     "when": "when_the_person_has_evidence"
+    }
+   ],
+   "label": {
+    "en": "Supporting evidence"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Your response"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "response.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

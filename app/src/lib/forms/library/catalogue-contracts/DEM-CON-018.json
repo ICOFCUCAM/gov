@@ -1,0 +1,792 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "DEM-CON-018",
+ "record_type": "oversight.data-protection.rights-request",
+ "form_version": 1,
+ "procedure_package_id": "data-protection.rights-request",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-DEM-015: personal data protection: the rights a person has, the controller's duties and the authority's powers of order and sanction (none ship).",
+  "CFG-DEM-012: independent institution mandates and protected access boundaries (who is named for the oversight slot, its standing and independence, recorded through the institution register; none ship).",
+  "CFG-DEM-017: judicial review and independent dispute-resolution pathways (the review route a closure names).",
+  "CFG-DAT-001: retention and disclosure of the case and of the protected identity."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "DEM-CON-018",
+  "part": 12,
+  "section": "2.4",
+  "line": 158,
+  "batch": 7
+ },
+ "library": {
+  "title": "Ask the data-protection authority about your personal data",
+  "intro": "Ask the data-protection authority to help when a public body has not let you see your data, has not corrected or erased it, or used it in a way you object to. The authority asks the public body; it does not read your records itself. Who you are is kept apart from the request.",
+  "owner": "dataProtection",
+  "filled_by": "The person the data is about, or someone acting for them: online, at an office or on paper.",
+  "authority": "The data-protection authority the nation names for the dataProtection slot of the deployment profile (authorityFor('dataProtection'), shipped empty); independent once named (INDEPENDENT_SLOTS). Never a ministry by name.",
+  "procedure": {
+   "key": "data-protection.rights-request",
+   "stage": "received",
+   "action": "register",
+   "document": "request"
+  },
+  "lists": {
+   "civicos.data_rights.request_kinds": {
+    "values": [
+     {
+      "value": "access",
+      "label": "See the data a body holds about me"
+     },
+     {
+      "value": "correction",
+      "label": "Correct my data"
+     },
+     {
+      "value": "erasure",
+      "label": "Erase my data"
+     },
+     {
+      "value": "restriction",
+      "label": "Restrict how my data is used"
+     },
+     {
+      "value": "objection",
+      "label": "Object to how my data is used"
+     }
+    ],
+    "proposed": true
+   },
+   "civicos.data_rights.outcomes": {
+    "values": [
+     {
+      "value": "provided",
+      "label": "Provided"
+     },
+     {
+      "value": "corrected",
+      "label": "Corrected"
+     },
+     {
+      "value": "erased",
+      "label": "Erased"
+     },
+     {
+      "value": "restricted",
+      "label": "Restricted"
+     },
+     {
+      "value": "refused",
+      "label": "Refused, with reasons"
+     },
+     {
+      "value": "partly",
+      "label": "Partly"
+     },
+     {
+      "value": "no-record",
+      "label": "No record held"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [
+   {
+    "key": "oversight.complaint-acknowledgement",
+    "kind": "days",
+    "source": "setting",
+    "decision": "The days within which the body acknowledges what it received."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "oversight-slot",
+    "what": "The body is the institution the nation names for its slot of the deployment profile (ombudsman, humanRights, anticorruption, supremeAudit, dataProtection), shipped empty; it is independent once named",
+    "why": "Authority comes from the deployment profile, never a ministry by name; no oversight body ships for a nation.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/nation/deployment.ts INDEPENDENT_SLOTS (plan I8)"
+   },
+   {
+    "id": "recommendation-not-order",
+    "what": "A finding is a recommendation with reasons, never an order or an automatic decision; whatever it asks is done, or not, by the institution concerned under its own procedures",
+    "why": "Part 12 §7.3: a recommendation is not automatically a binding order; AI never makes a legally material decision.",
+    "rule": "lib/oversight/register.ts; CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "identity-kept-apart",
+    "what": "The answers about the person who raised the matter (whether anonymous, name, contact, consent to share, protection needs) go to the protected-identity record, never into the case: no list, search, case read or export carries them",
+    "why": "Part 4 §C.7: separate source identity from the general case record; Part 12 §10.2: protect whistleblower and complainant identities.",
+    "rule": "lib/oversight/protected-identity.ts and lib/oversight/intake.ts receiveProtected() (acceptance P4-06, P4-07)"
+   },
+   {
+    "id": "no-direct-read",
+    "what": "The authority never reads the records: it asks the controller under an approved request-information relationship, and reads the access log only for the records its case names, logged",
+    "why": "Part 4 §C.5 critical boundary: no blanket access to raw personal data.",
+    "rule": "lib/oversight/procedures.ts oversight.ask-controller; lib/oversight/intake.ts investigationAccess() (acceptance P4-05)"
+   },
+   {
+    "id": "processor-register",
+    "what": "Processor references, data categories and purposes, breach notifications and DPIA records are not built: the request names the controller and the records; processing is described in the investigation procedure",
+    "why": "Controller and processor registers, breach notification and DPIA records are later rows of plan I8.",
+    "rule": "docs/INTEGRATION_REGISTER.md 20.88"
+   },
+   {
+    "id": "no-ai-finding",
+    "what": "No score, rating or automated assessment: admissibility, findings and referrals are decided by the body's officials with reasons",
+    "why": "AI may help a human review but never labels a person or issues a finding.",
+    "rule": "CLAUDE.md Government operating model: AI never makes a legally material decision"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 158,
+    "quotes": [
+     "DEM-CON-018",
+     "Personal data rights request",
+     "Authorized access, correction or other rights workflow"
+    ],
+    "met_by": {
+     "fields": [
+      "request.kind",
+      "request.controller",
+      "request.correction"
+     ],
+     "procedure": "ask-controller"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 62,
+    "quotes": [
+     "Information or data protection commissioner",
+     "Independent oversight of information access or personal-data protection"
+    ],
+    "met_by": {
+     "fields": [
+      "request.kind",
+      "request.controller"
+     ],
+     "deviation": "oversight-slot"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 521,
+    "quotes": [
+     "CFG-DEM-015",
+     "Personal data protection and electoral data retention"
+    ],
+    "met_by": {
+     "country_decision": "CFG-DEM-015"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2806,
+    "quotes": [
+     "Investigates complaints, audits data practices and manages authorised enforcement actions without inheriting the operational control of every register."
+    ],
+    "met_by": {
+     "deviation": "no-direct-read",
+     "procedure": "ask-controller"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3064,
+    "quotes": [
+     "Complaint and affected processing activity"
+    ],
+    "met_by": {
+     "fields": [
+      "request.description",
+      "request.records"
+     ],
+     "deviation": "processor-register"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3065,
+    "quotes": [
+     "Responsible controller and processor references"
+    ],
+    "met_by": {
+     "fields": [
+      "request.controller"
+     ],
+     "deviation": "processor-register"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3066,
+    "quotes": [
+     "Data categories and purposes"
+    ],
+    "met_by": {
+     "deviation": "processor-register"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3067,
+    "quotes": [
+     "Alleged or observed breach"
+    ],
+    "met_by": {
+     "fields": [
+      "request.description"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3068,
+    "quotes": [
+     "Evidence request and response"
+    ],
+    "met_by": {
+     "procedure": "ask-controller",
+     "platform": {
+      "file": "app/src/lib/oversight/register.ts",
+      "how": "The request to the controller and its answer (answerControllerRequest())"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3069,
+    "quotes": [
+     "Investigation findings"
+    ],
+    "met_by": {
+     "procedure": "record-finding"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3070,
+    "quotes": [
+     "Legal provisions and version"
+    ],
+    "met_by": {
+     "fields": [
+      "request.legal_provisions"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3071,
+    "quotes": [
+     "Corrective action or enforcement decision"
+    ],
+    "met_by": {
+     "fields": [
+      "request.outcome"
+     ],
+     "procedure": "decide"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3072,
+    "quotes": [
+     "Review or appeal status"
+    ],
+    "met_by": {
+     "fields": [
+      "request.review_route"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3073,
+    "quotes": [
+     "Publication and redaction record"
+    ],
+    "met_by": {
+     "fields": [
+      "request.publication_record"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3086,
+    "quotes": [
+     "Critical boundary: privacy oversight staff must not receive blanket access to all raw personal data merely because they regulate data protection.",
+     "Their access should be based on specific investigatory authority and limited to the evidence required.",
+     "Where direct access to a record is necessary, the purpose, scope and access event must be recorded."
+    ],
+    "met_by": {
+     "deviation": "no-direct-read",
+     "platform": {
+      "file": "app/src/lib/oversight/intake.ts",
+      "how": "investigationAccess(): the access log only for the records the case names, every read logged with the case"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "request.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.data_rights.request_kinds",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What do you want?"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your request"
+   }
+  },
+  {
+   "id": "request.controller",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The public body that holds the data"
+   },
+   "error_text": {
+    "en": {
+     "required": "Name the public body.",
+     "reference_exists": "There is no institution with that reference in the institution register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your request"
+   }
+  },
+  {
+   "id": "request.records",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 500
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Which records, if you know (a reference you were given)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Which records, if you know (a reference you were given) must be 500 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your request"
+   }
+  },
+  {
+   "id": "request.description",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Describe your request and what happened when you asked the body"
+   },
+   "error_text": {
+    "en": {
+     "required": "Describe your request and what happened when you asked the body: this is needed.",
+     "length": "Describe your request and what happened when you asked the body must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your request"
+   }
+  },
+  {
+   "id": "request.correction",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "request.kind",
+      "equals": "correction"
+     }
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What should the record say instead?"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Say what the record should say.",
+     "length": "What should the record say instead? must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your request"
+   }
+  },
+  {
+   "id": "request.raised_with_controller",
+   "type": "boolean",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Did you ask the body itself first?"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your request"
+   }
+  },
+  {
+   "id": "request.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "request_evidence",
+     "when": "when_the_person_has_evidence"
+    }
+   ],
+   "label": {
+    "en": "Anything that supports your request"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Your request"
+   }
+  },
+  {
+   "id": "request.accessibility_support",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 500
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Do you need any support to take part?"
+   },
+   "error_text": {
+    "en": {
+     "length": "Do you need any support to take part? must be 500 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your request"
+   }
+  },
+  {
+   "id": "requester.name",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Your name"
+   },
+   "hint": {
+    "en": "Kept apart from the case: only the official handling it, or one specifically authorised, reads it."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter your name.",
+     "length": "Your name must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "id": "requester.contact",
+   "type": "contact",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "How we can reach you"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter how we can reach you."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "About you"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "request.legal_provisions",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.law_provisions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Provisions of law applied (and their version)"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no such provision in the laws register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "request.outcome",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.data_rights.outcomes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Outcome"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "request.publication_record",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Publication and redaction record"
+   },
+   "error_text": {
+    "en": {
+     "length": "Publication and redaction record must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "request.review_route",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 500
+     }
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Review or appeal route open to the person"
+   },
+   "error_text": {
+    "en": {
+     "length": "Review or appeal route open to the person must be 500 characters or fewer."
+    }
+   },
+   "country_decision": "The review or appeal route the nation's data-protection law gives (CFG-DEM-017)."
+  },
+  {
+   "id": "request.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

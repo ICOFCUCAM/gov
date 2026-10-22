@@ -31,6 +31,8 @@ import { getProfessional, profession } from '@/lib/professions/register';
 import { getProduct, productOfCase } from '@/lib/health/products/register';
 import { PRODUCT_PERMIT_TYPES, PROCEDURE_PERMITS } from '@/lib/health/products/procedures';
 import { PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
+import { OVERSIGHT_PERMITS } from '@/lib/oversight/procedures';
+import { TAX_PERMITS } from '@/lib/tax/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -50,6 +52,8 @@ const is = (key: string, prefix: string) => key === prefix || key.startsWith(`${
 /** The procedures whose decisions belong to an authority the deployment profile designates for the whole domain. */
 const DEPLOYMENT_DOMAINS: [prefix: string, authority: string][] = [
   ['civil', 'civilRegistration'], ['immigration', 'immigration'], ['court', 'judiciary'], ['police', 'police'], ['referral', 'the institution whose referral procedure it is'],
+  // Internal administration (plan I2): each institution's own procedure (adm.<function>.<institution>), decided by its own officials.
+  ['adm', 'the institution whose internal administration procedure it is'],
 ];
 
 /** Classify a decision step; null when the platform cannot say which authority it rests on. */
@@ -59,6 +63,9 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   const mapped = (permitType: string | undefined): DecisionClass | null => (permitType ? { kind: 'mapping', permitType, power } : null);
   if (is(key, 'tax.registration')) return mapped('tax-registration');
   if (is(key, 'tax.return') || is(key, 'tax.objection')) return mapped('tax-assessment');
+  // Tax services (plan step I5): refunds, payment arrangements, rulings and compliance reviews under their own permit types;
+  // an amendment, a disclosure and a compliance review's assessment are tax assessments.
+  for (const [k, permitType] of Object.entries(TAX_PERMITS)) if (is(key, k)) return mapped(a.decision === 'assess' ? 'tax-assessment' : permitType);
   if (is(key, 'customs.declaration')) return mapped('customs-clearance');
   if (is(key, 'edu.qualification')) return mapped('qualification-record');
   if (key.startsWith('prof.')) {
@@ -84,6 +91,9 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   // Public-health programmes (lib/health/programmes): establishment and change, interventions and risk communications, each
   // under its own permit type (lead: the publicHealth slot).
   if (key.startsWith('public-health.')) for (const [k, permitType] of Object.entries(PROGRAMME_PERMITS)) if (is(key, k)) return mapped(permitType);
+  // Independent oversight (plan I8, lib/oversight): admissibility, issued findings and recommendations, approved audit reports and the
+  // data-protection authority's decisions, each family under its own permit type (lead: the body's slot). Proposed, unapproved.
+  for (const [prefix, permitType] of Object.entries(OVERSIGHT_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);
 }

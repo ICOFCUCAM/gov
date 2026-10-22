@@ -24,6 +24,9 @@ LEGEV = "lib/legislature/register.ts (introduceBill, addText versions, referToCo
 CIVEV = "lib/civil/procedures.ts (civil.birth, civil.death, civil.marriage, civil.correction reference procedures), lib/civil/register.ts (changes only through procedure effects), certificates checked at /verify; tests lib/civil/procedures.test.ts, register.test.ts"
 IMMEV = "lib/immigration/procedures.ts (immigration.visa, immigration.extension, immigration.revocation), lib/immigration/register.ts (visas and residence permits; canReadImmigration(); others learn status only through immigration.status); tests lib/immigration/procedures.test.ts, register.test.ts"
 TAXEV = "lib/tax/procedures.ts (tax.registration, tax.return with amendments, assessment with the approved rule or entered with reasons, objection; four-eyes decisions), lib/tax/register.ts (taxpayers, returns, assessments, account ledger, reconcileTaxPayments); canReadTax(); tests lib/tax/procedures.test.ts, register.test.ts"
+# Tax services (plan step I5, forms batch 6): reference procedures as drafts, every decision by two officials and classified under proposed, unapproved mappings; no rate, interest, penalty or period shipped.
+TAX6EV = "lib/tax/procedures.ts (tax.registration-amendment, tax.amendment, tax.refund, tax.payment-plan, tax.payment-plan-review, tax.disclosure, tax.ruling, tax.compliance; nil and late returns in tax.return; objection admissibility and withdrawal), lib/tax/register.ts (amendRegistration versioned, decideRefund/instructRefund/reconcileRefundPayout once, recordPaymentPlan with instalment bills reconciled once, recordDisclosure, recordRuling), lib/permits/decisions.ts TAX_PERMITS; forms batch 6 (lib/forms/library/catalogue-contracts/tax.*.json, docs/FORMS_CONFORMANCE.md §14); tests lib/tax/services.test.ts, lib/forms/catalogue-contracts.test.ts"
+TAX6WAIT = "Field contract in the form library (forms batch 6, lib/forms/library/catalogue-contracts/; docs/FORMS_CONFORMANCE.md §14), waiting for its procedure; test lib/forms/catalogue-contracts.test.ts"
 CUSEV = "lib/customs/procedures.ts (customs.declaration: declaration, officer's channel with reasons, duty from the approved customs.tariff rule or entered with reasons, release decision), lib/customs/register.ts; customs.release exchange; tests lib/customs/procedures.test.ts, register.test.ts"
 PHEV = "lib/health/programmes/register.ts and procedures.ts (programme register: eligibility cited, coverage with documented denominator, budget reference, reporting period, supply items; interventions under the nation's rules CFG-PH-003; aggregate returns with reported, suspected, confirmed and modelled kept apart; risk communications approved by two officials), lib/health/small-cells.ts; tests lib/health/programmes/programmes.test.ts, scope.test.ts"
 COMPLAINTEV = "lib/health/complaints/procedures.ts (health.complaint, prof.complaint: intake, assessment by the assigned officer with reasons, referral into the licence's or registration's own case through refer(); complainant restricted, every read logged; no clinical field); test lib/health/complaints/complaints.test.ts"
@@ -31,6 +34,7 @@ HEALTHEV = "lib/health/procedures.ts (facility and pharmacy licence, renewal, su
 PROFEV = "lib/professions/procedures.ts (prof.registration, prof.renewal, prof.fitness), lib/professions/register.ts (each profession kept by its regulator; public check by full name, rate-limited, harvest watch; professional.standing exchange); tests lib/professions/*.test.ts"
 EDUEV = "lib/education/procedures.ts (edu.inspection, edu.qualification, edu.qualification-correction, edu.qualification-revocation), schools as organisations with a standing in the schools register, aggregate returns, qualification.verify; tests lib/education/procedures.test.ts"
 ACCEV = "lib/organisations/procedures.ts org.accreditation (higher-education accreditation as a standing kept by the accrediting body)"
+OVSEV = KB.OVS + '; ' + KB.PIDEV
 TRANSEV = KB.TRANS + "; emergencies recorded as legal events cited from the laws register, confirmed by a different person, lapsing at expiry (lib/transitions/events.ts, state.ts)"
 INCID = "ministry incidents with recorded places (lib/data/incident-places.ts; test lib/data/incident-places.test.ts)"
 DELEG = "lib/records/delegations.ts (who may act for whom, for which procedures, until when; granted by the verifying official, revocable, expiring, audited without names); test lib/records/delegations.test.ts"
@@ -43,7 +47,7 @@ AIMISS = "No test proves that no AI output can reach act(), a register change or
 A11Y = "Public sites: npm run audit:sites (axe WCAG A/AA on every site, design and viewport), logical CSS and right-to-left, self-hosted fonts; console tokens at 4.5:1 (lib/theme/tokens.test.ts)"
 A11YMISS = "No form renderer for self-service, assisted and print channels with WCAG 2.2 AA tests, save-and-resume and check-your-answers (plan I1, I10)"
 PROV = KB.TWIN + "; SignalKind record/observed/reported/modelled/sample/simulated/unavailable (lib/twin/signal.ts); production folds generated panels to Not connected (" + KB.FOLD + ")"
-PROVMISS = "No 'verified', 'estimated', 'provisional' or 'revised' kind; no indicator definitions (numerator, denominator, method version) — plan I3"
+PROVMISS = "No 'verified', 'estimated', 'provisional' or 'revised' kind (docs/INTEGRATION_REGISTER.md 20.68); indicator definitions exist (lib/indicators/: numerator, denominator, period, coverage, method version; values Record, Sample or Not connected) — plan I3"
 CFGEV = "Configuration through the platform's approved records: laws register (" + KB.LAW + "), rules (" + KB.RULESX + "), procedure packages drafted, tested and approved by two officials (lib/casework/packages.ts), permit authority mappings (lib/permits/authority.ts), who is responsible (lib/nation/deployment.ts authorityFor()), country rule sets through lib/law/policy-change.ts"
 LEGALREV = "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)"
 POLRULE = "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (" + POLICE + ")"
@@ -144,7 +148,7 @@ D = {
     'professions-other': ('Professional licensing outside health', 'I6', True, PROFEV + ' (a profession is configured by its regulator; the reference procedures are written for health professions)', 'Not yet'),
     'local-gov': ('Local and regional government', 'I7', False, "Subnational institutions (standing 'subnational', Boundaries.subnational; " + KB.INST + "); municipal onboarding (lib/data/store/permits.ts onboardMunicipality())", 'Not yet'),
     'housing': ('Housing, planning and building control', 'I7', False, KB.SCREENS + '; ' + PERMITMAP + ' (building-permit)', 'Not yet'),
-    'internal-admin': ('Shared internal administration', 'I2', False, KB.NODEPT, 'Not yet'),
+    'internal-admin': ('Shared internal administration', 'I2', True, KB.ADMIN + '; ' + KB.DEPTS + '; ' + KB.WORKSPACE, 'Not yet'),
     'form-gov': ('Form design and governance', 'I1', True, "Procedure packages drafted by one official, tested, approved by another (lib/casework/packages.ts; test lib/casework/packages.test.ts); change control and releases (" + UPD + ")", 'Not yet'),
 }
 
@@ -344,6 +348,10 @@ I(r'^CFG-DEM-00[123]$', 'Country decision', LEGEV + ' (stages, vote rules, assen
 I(r'^DEM-CON-00[67]$|^DEM-CON-009$', 'Partial', KB.OFFICES, 'Nomination, eligibility, hearing and recommendation kept apart from the decision; appointment instrument', 'I8')
 I(r'^DEM-CON-003$', 'Partial', TRANSEV + ' (a declared interest recuses at once, CaseFacts.recused)', 'Declaration as a record with review', 'I8')
 I(r'^DEM-CON-010$', 'Partial', TRANSEV + ' (impeachment stages run in order by the institution named for each)', 'Removal and suspension proceedings per office', 'I8')
+# Independent oversight (plan I8): the accountability forms of batch 7, linked to their procedures, and the findings register.
+I(r'^DEM-CON-01[2348]$|^DEM-CON-019$|^DEM-PUB-009$', 'Partial', OVSEV + '; library contract of batch 7 (app/src/lib/forms/library/catalogue-contracts/)', 'Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved', 'I8')
+I(r'^DEM-CON-020$', 'Partial', KB.OVS + ' (respondToFinding(): beside the finding, never changing it); library contract of batch 7', 'Adoption by the nation: whether its law obliges a response, and how it is published', 'I8')
+I(r'^REG-DEM-015$', 'Met', KB.OVS + ' (findings, the institution concerned, responses and follow-up; lib/oversight/register.ts)', '', '—')
 I(r'^REG-DEM-012$', 'Met', KB.INST + '; relationships ' + KB.RELS, '', '—')
 I(r'^REG-DEM-011$', 'Partial', KB.OFFICES, 'Nominations and recommendations', 'I8')
 I(r'^CFG-DEM-012$', 'Country decision', KB.INST + ' (terms through lib/law/policy-change.ts)', '', '—')
@@ -365,7 +373,8 @@ I(r'^GOV-REC-012$', 'Partial', RET + ' (legal holds on documents and cases are r
 I(r'^GOV-REC-01[67]$', 'Partial', KB.TWIN + '; case-import and parcel loads audited with the file\'s SHA-256 (lib/data/case-import.ts)', 'Custody history per record; migration approval by two officials')
 I(r'^GOV-STA-00[12]$', 'Partial', KB.TWIN + ' (sources registered, runs observed by a named official, rows refused with reasons)', 'A statistical programme with scope and owner; quality findings', 'I8', 'I3')
 I(r'^GOV-STA-013$', 'Partial', 'Aggregate returns: health capacity (lib/health/register.ts), education (lib/education/register.ts)', 'A consolidated national reporting return', 'I3')
-I(r'^GOV-STA-006$|^DEM-PUB-010$', 'Not yet', PROV, 'Indicator definitions (plan I3)', 'I3')
+I(r'^GOV-STA-006$', 'Partial', PROV + '; lib/indicators/register.ts (official indicator definitions by version, drafted by one official and approved per institution by another; tests lib/indicators/register.test.ts)', 'The statistics authority\'s methodology approval as a form and procedure of the statistics slot (docs/INTEGRATION_REGISTER.md 20.69)', 'I3')
+I(r'^DEM-PUB-010$', 'Not yet', PROV + '; approved indicator definitions (lib/indicators/)', 'A public institution performance report from approved indicators with explanatory notes (no public indicator release yet, 20.69)', 'I3')
 I(r'^GOV-GOV-002$', 'Partial', KB.REGOWN, 'Service owners for services (the service catalogue, I13)')
 I(r'^GOV-GOV-005$', 'Partial', 'lib/data/status.ts (status page, incidents) and lib/data/support.ts (P1–P4 tickets)', 'Disruption reports per government service')
 I(r'^GOV-GOV-006$', 'Partial', UPD, 'Change requests for a government service (not only the platform)')
@@ -380,8 +389,25 @@ I(r'^INT-GOV-0(09|1[01234])$', 'Partial', RET + '; ' + KB.EXCH + '; lib/events (
 # Field series Part 2 (tax)
 I(r'^taxpayer\.registration\.(submit|application|decision_record|verification_record|assessment|further_information|closure_record)$', 'Partial', TAXEV,
   'The catalogue field contract (classes, conditional fields, evidence policy) and stages beyond the reference procedure')
-I(r'^tax\.return\.periodic\.(submit|amend|officer_assessment|decision|notice|objection)$', 'Partial', TAXEV, 'Typed per-tax schemas (tax.return_schema.*), nil and late returns, notices with delivery records')
-I(r'^tax\.payment\.(initiate|external_reference)$', 'Partial', TAXEV + '; ' + KB.PAY, 'Payment initiation by the taxpayer through a connected provider')
+I(r'^taxpayer\.(registration\.(amend|transfer|suspend_request|reactivate_request)|details\.change|obligation\.(add|cancel))$', 'Partial', TAX6EV + ' (batch 3\'s change forms linked to tax.registration-amendment)', 'The nation\'s obligation, suspension and office-assignment rules (country.tax.registration, binding, shipped unset)')
+I(r'^tax\.return\.periodic\.(submit|officer_assessment|decision)$', 'Partial', TAXEV + '; ' + TAX6EV, 'Typed per-tax schemas (tax.return_schema.*, the nation\'s); its approved filing and calculation rules')
+I(r'^tax\.return\.periodic\.(nil|late_submission|further_information)$', 'Partial', TAXEV + '; ' + TAX6EV, 'Typed per-tax schemas; the nation\'s nil-return and late-filing rules (binding, shipped unset)')
+I(r'^tax\.return\.periodic\.(amend|correction)$|^tax\.assessment\.(amendment|review_request)$', 'Partial', TAX6EV, 'Typed per-tax schemas; the nation\'s amendment rights and periods (binding, shipped unset)')
+I(r'^tax\.return\.periodic\.notice$|^tax\.assessment\.notice$', 'Partial', TAXEV + '; ' + TAX6EV, 'Delivery records from a connected messaging or postal provider (integration register); due dates as approved rules')
+I(r'^tax\.return\.periodic\.objection$|^tax\.objection\.(submit|supplement|extension_request|assessment|decision)$|^tax\.dispute\.(withdraw|closure)$', 'Partial', TAXEV + '; ' + TAX6EV, 'The nation\'s dispute periods, remedies and outcomes (country.tax.disputes, shipped unset); a separate extension decision step')
+I(r'^tax\.return\.periodic\.(withdraw_request|appeal)$|^tax\.appeal\.(submit|transmit|response)$|^tax\.dispute\.settlement_(proposal|review)$', 'Not yet', TAX6WAIT, 'A procedure for this service (return withdrawal; appeal transmission to the body the law names by a referral case; settlement where the law permits)')
+I(r'^tax\.payment\.(initiate|external_reference)$', 'Partial', TAXEV + '; ' + KB.PAY + '; ' + TAX6WAIT, 'Payment initiation by the taxpayer through a connected provider')
+I(r'^tax\.payment\.(allocation_request|transfer_request|reversal_request|dispute)$|^tax\.credit\.adjustment$', 'Not yet', TAX6WAIT, 'An allocation, credit transfer, reversal and payment-dispute procedure decided by two officials under the nation\'s allocation rules')
+I(r'^tax\.refund\.(application|supporting_evidence|assessment|decision|payment_instruction|reconciliation)$', 'Partial', TAX6EV, 'A treasury payout rail (the payout confirmation is recorded by an official; integration register); the nation\'s refund rules and interest (shipped unset)')
+I(r'^tax\.compliance\.(case\.open|scope\.approve|information_request|information_response|inspection_plan|evidence_register|interview_record|findings_draft|taxpayer_response|findings_review|assessment_decision|case_closure)$', 'Partial', TAX6EV, 'The nation\'s compliance powers and checklists (country.tax.compliance_powers, shipped unset); an evidence-custody register')
+I(r'^tax\.compliance\.inspection_checklist$', 'Partial', TAX6EV + ' (tax.compliance authorised stage; the catalogue\'s own contract in the library)', 'The catalogue contract attached to a tax.compliance version the nation approves')
+I(r'^tax\.compliance\.(extension_request|extension_decision|complaint|referral)$', 'Not yet', TAX6WAIT, 'An extension decision step; a conduct-complaint route to the body the nation names; a referral case for tax compliance')
+I(r'^tax\.withholding\.(registration|details\.amend|return\.submit|return\.amend|discrepancy\.(response|decision))$', 'Partial', TAX6EV, 'Typed withholding schemas and rules (Department F country decisions, shipped unset)')
+I(r'^tax\.withholding\.(payment|certificate\.issue|statement\.(submit|correct))$', 'Not yet', TAX6WAIT + '; payments as bills reconciled once (' + KB.PAY + ')', 'Third-party reporting and certificates (matching statements against returns)')
+I(r'^tax\.ruling\.(request|further_information|withdraw|decision|reconsideration)$', 'Partial', TAX6EV, 'Whether rulings exist, who they bind and their publication (Department G country decisions, shipped unset)')
+I(r'^tax\.(assistance\.(enquiry|guidance_request)|incentive\.[a-z_]+)$', 'Not yet', TAX6WAIT, 'An enquiry service; a statutory incentive procedure and register (schemes are the nation\'s)')
+I(r'^tax\.debt\.(payment_plan\.(request|evidence|decision|change_request|default_review|cancel_request)|voluntary_disclosure|disclosure\.assessment)$', 'Partial', TAX6EV, 'The nation\'s arrangement terms, disclosure treatment and interest (approved rules, shipped unset)')
+I(r'^tax\.debt\.(statement\.request|recovery\.[a-z_]+)$', 'Not yet', TAX6WAIT, 'A debt statement drawn from account(); a recovery procedure only for the powers the nation\'s law gives (none inferred from a balance)')
 # Field series Part 3 (customs)
 I(r'^customs\.(import\.declaration\.submit|declaration\.(completeness|inspection|release_decision|release_notice|receipt))$', 'Partial', CUSEV, 'The catalogue\'s declaration contract (WCO data model mapping) and stages')
 I(r'^exchange\.', 'Partial', KB.EXCH, 'This exchange service is not defined', None, 'I9')
@@ -422,6 +448,9 @@ I(r'^EDU-VOC-010$', 'Partial', EDUEV + ' (edu.qualification)', 'Skills certifica
 
 # ---------------------------------------------------------------- supplement (parts 14-22, Stage B contracts for parts 5-13)
 RESTR = "Restricted personal data (supplement header): built only as restricted fields under the owning institution's read rule, every read in the access log (" + KB.ACCESS + "); medical content only as a sealed document reference, never a clinical field"
+# Internal administration (supplement Part 21, plan I2): the forms the adm.* procedures carry, and the rest as library drafts (forms batch 5)
+I(r'^ADM-(HR-001|PAY-01[123]|ICT-030|GOV-039|GOV-040|HR-010|LEG-027)$', 'Partial', KB.ADMIN + '; the library contract (forms batch 5) linked to the procedure by identity', "The institution's adopted procedure version carrying the contract, approved by a second official; the nation's grades, rates, limits and schedules", 'I2', tag='SUP')
+I(r'^ADM-', 'Not yet', 'Library contract (forms batch 5); ' + KB.DEPTS + '; ' + KB.WORKSPACE, "The institution's procedure for this form (none is built yet)", 'I2', tag='SUP')
 I(r'^(HLT-PAT-001|HLT-ENC-002|HLT-REF-003|HLT-MED-004|HLT-CARE-008)$', 'Platform rule stricter', CLINRULE, 'CivicOS holds no patient, encounter, referral, dispensing or care-plan record on a named person', '—', tag='SUP')
 I(r'^HLT-PUB-005$', 'Partial', 'Aggregate returns only (lib/health/register.ts); ' + CLINRULE, 'A public-health incident as an aggregate count, never a case on a person', 'I4', tag='SUP')
 I(r'^HLT-FAC-006$', 'Met', HEALTHEV, '', '—', tag='SUP')
@@ -494,6 +523,8 @@ T(r'CAT-08-11:11', r'intelligence (content|source|collection)|raw intelligence|s
   CLASSRULE + '; ' + NOTHOLD, 'The installation\'s accreditation level and permitted data classes are not declared; until they are, CivicOS holds no classified content (plan I12)', 'I12', lr=True, forms=True)
 T(r'CAT-08-11:11', r'military (action|operations|targeting)|weapons|covert|operational command', 'Platform rule stricter', "Plan §4: anything operational is out of scope; CivicOS has no operational defence function", '', '—', forms=True)
 T(r'CAT-08-11:10', r'surveillance|interception|location tracking|facial recognition|biometric', 'Platform rule stricter', 'No surveillance, interception, location tracking or biometric function exists in lib/ (police is intake and referral only, CLAUDE.md); directions §15', '', '—', forms=True)
+T(r'CAT-12-13:12', r'^(Protect whistleblower and complainant identities|Keep independent review cases inaccessible|independent_body\.case\.manage|Privacy: Voter, donor, whistleblower|Independent oversight: Findings cannot)', 'Met', OVSEV, '', '—')
+T(r'CAT-12-13:12', r'^(The investigation workflow should record|A recommendation is not automatically|A finding should not be silently rewritten|Keep independent institutions\' records under)', 'Met', OVSEV, '', '—')
 T(r'CAT-12-13:12', r'online voting|electronic (voting|ballot)|ballot secrecy|marked ballot', 'Platform rule stricter', 'CivicOS records no vote of any voter and is no electronic voting system (plan §4: electoral results after legal review)', '', '—', forms=True)
 T(r'', r'risk score|credibility score|risk scoring', 'Platform rule stricter', 'CLAUDE.md: no risk score (immigration, customs: "never a score"); AI never makes a legally material decision; no risk score exists in lib/', '', '—', forms=True)
 # permissions

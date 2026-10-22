@@ -16,11 +16,17 @@
 // run) and counts on the subscription. Addresses are fetched through
 // safeFetchText (public addresses only, unless CIVICOS_WEBHOOKS_PRIVATE=1
 // allows the nation's own network); redirects are not followed.
+//
+// A training or demo installation never sends a webhook (spec Part 6 F,
+// l.4498 and l.4501; plan I0.2): each event is recorded as a simulated
+// delivery (no request made) and the cursor advances, so switching the
+// installation to production does not replay a demonstration's events.
 
 import { createHmac } from 'node:crypto';
 import { listWebhooks, webhookSigningSecret, noteWebhookDelivery } from '@/lib/data/store';
 import { safeFetchText, type SafeFetchOptions } from '@/lib/net/safe-fetch';
 import { pendingFor, advanceCursor, recordDelivery, type CloudEvent } from './outbox';
+import { installationMode, samplesAllowed } from '@/lib/ops/mode';
 
 export const PER_RUN_LIMIT = 50;
 
@@ -28,7 +34,7 @@ export function signDelivery(secret: string, timestamp: number, body: string): s
   return `sha256=${createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex')}`;
 }
 
-export interface DeliveryRun { webhookId: string; topic: string; delivered: number; failed: boolean; detail: string | null }
+export interface DeliveryRun { webhookId: string; topic: string; delivered: number; failed: boolean; detail: string | null; simulated?: boolean }
 
 /** Deliver pending events to every active webhook. `net` overrides fetching (tests). */
 export async function deliverOutbox(now = Date.now(), net: Pick<SafeFetchOptions, 'fetch' | 'resolve'> = {}): Promise<DeliveryRun[]> {
@@ -36,6 +42,17 @@ export async function deliverOutbox(now = Date.now(), net: Pick<SafeFetchOptions
   for (const w of listWebhooks().filter(x => x.status === 'active')) {
     const events = pendingFor(w.id, w.topic, PER_RUN_LIMIT);
     if (!events.length) continue;
+    if (samplesAllowed()) {
+      // Training and demo: recorded, never sent.
+      const detail = `simulated: ${installationMode()} installation, nothing sent`;
+      for (const ev of events) {
+        recordDelivery({ webhookId: w.id, eventId: ev.id, type: ev.type, at: new Date(now).toISOString(), ok: true, detail, simulated: true });
+        advanceCursor(w.id, ev.auditseq);
+      }
+      noteWebhookDelivery(w.id, true, `${events.length} ${detail}`, now);
+      runs.push({ webhookId: w.id, topic: w.topic, delivered: events.length, failed: false, detail, simulated: true });
+      continue;
+    }
     const secret = webhookSigningSecret(w.id);
     if (!secret) {
       const detail = 'No signing secret the platform can read: issue a new secret for this subscription';

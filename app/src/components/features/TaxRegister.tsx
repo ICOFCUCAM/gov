@@ -16,12 +16,14 @@ interface Account { entries: { at: string; kind: string; amountMinor: number; cu
 interface Taxpayer { tin: string; party: { kind: string; id: string; name: string }; taxTypes: string[]; state: string; registeredAt: string; case: string;
   returns: { id: string; taxType: string; period: string; state: string; versions: { n: number; baseMinor: number; currency: string; filedAt: string }[] }[];
   assessments: { reference: string; taxType: string; period: string; amountMinor: number; currency: string; state: string; case: string; method: { kind: string; rule?: string; version?: number; reasons?: string } }[];
-  accounts: Record<string, Account> }
+  accounts: Record<string, Account>;
+  refunds?: { id: string; taxType: string; claimedMinor: number; approvedMinor: number; currency: string; state: string; case: string }[];
+  plans?: { id: string; taxType: string; currency: string; state: string; case: string; instalments: { n: number; due: string; amountMinor: number; bill?: string }[] }[] }
 const field = 'mt-1 w-full rounded border border-line bg-surface px-2 py-1 text-sm';
 const money = (minor: number, currency: string) => formatMoney(minor / 100, { currency });
 
 export function TaxRegister() {
-  const [counts, setCounts] = React.useState<{ taxpayers: Record<string, number>; returns: Record<string, number>; assessments: Record<string, number> } | null>(null);
+  const [counts, setCounts] = React.useState<{ taxpayers: Record<string, number>; returns: Record<string, number>; assessments: Record<string, number>; refunds?: Record<string, number>; plans?: Record<string, number> } | null>(null);
   const [q, setQ] = React.useState({ tin: '', party: '', purpose: '' });
   const [found, setFound] = React.useState<Taxpayer[] | null>(null);
   const [msg, setMsg] = React.useState<string | null>(null);
@@ -39,7 +41,7 @@ export function TaxRegister() {
       <h1 className="text-xl font-semibold">Tax</h1>
       <p className="max-w-3xl text-sm text-ink-muted">Taxpayers, returns, assessments and tax accounts. Registration, returns, assessments and objections are <Link className="underline" href="/gov/work/cases/open">cases</Link> under approved procedures; assessments use the approved rate table (<Link className="underline" href="/gov/law/rules">Rates and tariffs</Link>) or an amount the assessor enters with reasons. Tax records are confidential: only the tax authority reads them and every search is recorded in the access log.</p>
       {msg ? <p role="alert" className="text-sm text-alert">{msg}</p> : null}
-      {counts ? <p className="text-sm">Taxpayers: {line(counts.taxpayers)}. Returns: {line(counts.returns)}. Assessments: {line(counts.assessments)}.</p> : null}
+      {counts ? <p className="text-sm">Taxpayers: {line(counts.taxpayers)}. Returns: {line(counts.returns)}. Assessments: {line(counts.assessments)}. Refunds: {line(counts.refunds ?? {})}. Payment arrangements: {line(counts.plans ?? {})}. <Link className="underline" href="/gov/tax/services">Tax services</Link></p> : null}
       <Section title="Find a taxpayer" meta="by TIN or register reference">
         <div className="grid gap-2 md:grid-cols-3">
           <label className="text-sm">TIN<input className={field} value={q.tin} onChange={e => setQ(x => ({ ...x, tin: e.target.value }))} /></label>
@@ -60,6 +62,10 @@ export function TaxRegister() {
           <ul className="text-xs">{t.returns.map(r => <li key={r.id}>{r.taxType} {r.period} · {r.state} · {r.versions.length} version(s), latest base {money(r.versions.at(-1)!.baseMinor, r.versions.at(-1)!.currency)}</li>)}</ul>
           <p className="mt-2 text-sm font-medium">Assessments</p>
           <ul className="text-xs">{t.assessments.map(a => <li key={a.reference}>{a.reference} · {a.taxType} {a.period} · {money(a.amountMinor, a.currency)} · {a.state} · {a.method.kind === 'rule' ? `rule ${a.method.rule} v${a.method.version}` : `entered: ${a.method.reasons}`} · <Link className="underline" href={`/gov/cases/${a.case}`}>case</Link></li>)}</ul>
+          {t.refunds?.length ? <><p className="mt-2 text-sm font-medium">Refunds</p>
+            <ul className="text-xs">{t.refunds.map(r => <li key={r.id}>{r.id} · {r.taxType} · claimed {money(r.claimedMinor, r.currency)} · approved {money(r.approvedMinor, r.currency)} · {r.state} · <Link className="underline" href={`/gov/cases/${r.case}`}>case</Link></li>)}</ul></> : null}
+          {t.plans?.length ? <><p className="mt-2 text-sm font-medium">Payment arrangements</p>
+            <ul className="text-xs">{t.plans.map(p => <li key={p.id}>{p.id} · {p.taxType} · {p.state} · {p.instalments.length} instalment(s), {p.instalments.filter(i => i.bill).length} billed · <Link className="underline" href={`/gov/cases/${p.case}`}>case</Link></li>)}</ul></> : null}
         </Section>
       )) : <p className="text-sm text-ink-muted">Nobody matches.</p> : null}
     </div>

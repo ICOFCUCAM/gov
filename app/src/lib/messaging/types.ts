@@ -45,6 +45,8 @@ export interface OutboundMessage {
   lastError?: string;
   providerId?: string;
   providerMessageId?: string;
+  /** Recorded as sent in a training or demo installation, which never sends a real message (plan I0.2). */
+  simulated?: boolean;
   createdAt: string;
   sentAt?: string;
   finishedAt?: string;
@@ -114,4 +116,5 @@ export interface RenderedMessage {
 }
 
 /** What a provider answered. `permanent` failures are not retried (a refused recipient). */
-export type SendResult = { ok: true; id?: string } | { ok: false; permanent: boolean; error: string };
+/** `simulated`: a training or demo installation recorded the send without sending anything (plan I0.2). */
+export type SendResult = { ok: true; id?: string; simulated?: true } | { ok: false; permanent: boolean; error: string };

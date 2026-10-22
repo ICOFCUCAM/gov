@@ -1,0 +1,532 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "tax.debt.recovery.notice",
+ "record_type": "tax.recovery_notice",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "country.tax.debt_recovery: lawful debt recovery actions, notices, payment arrangements, suspension and review safeguards (approved by the authorized tax and legal authority).",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for these records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "tax.debt.recovery.notice",
+  "part": 2,
+  "section": "2.6",
+  "line": 3153,
+  "batch": 6
+ },
+ "library": {
+  "title": "Issue a recovery notice",
+  "intro": "Give the taxpayer notice of an authorised recovery action, as the law requires: the liabilities, the action, the power, the rights to respond, dispute and ask for suspension.",
+  "owner": "tax",
+  "filled_by": "The tax authority's service, through an authorised official.",
+  "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
+  "procedure": null,
+  "intended": "A recovery procedure, only for the recovery actions the nation's law gives (authorisation by two officials citing the power, notice, the taxpayer's response, dispute and suspension, closure): not built; the form waits in the library (plan step I5, priority four of forms batch 6). No recovery power is inferred from a balance.",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadTax() in lib/auth/roles.ts: the tax authority's officials and auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only registration status, through the taxpayer.status exchange service, for an approved purpose"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "recovery-not-built",
+    "what": "No recovery procedure exists: recovery powers and their safeguards are the nation's law, none is assumed, and the platform takes no recovery action",
+    "why": "Recovery is a legally material act; it needs the power cited, an approved procedure and a decision by two officials.",
+    "rule": "CLAUDE.md Government operating model: cases change only under an approved procedure package; plan step I5"
+   },
+   {
+    "id": "no-recovery-inferred",
+    "what": "No recovery power is inferred from an unpaid balance: every amount traces to an assessment (tax:ASM-…) in a valid state, and recovery actions wait for the powers the nation's law gives",
+    "why": "The field series Part 2 §2.6 Department H: a balance must be traceable to an approved liability and a valid procedural state.",
+    "rule": "Field series Part 2 §2.6 Department H; CLAUDE.md Tax: liabilities are bills with a domain reference"
+   },
+   {
+    "id": "delivery-not-recorded",
+    "what": "The notice is issued from the decided case (its sealed decision and the bill carrying the assessment's reference); a delivery record from a postal or messaging provider is not on the platform: alert() queues deliveries with no provider (integration register)",
+    "why": "No messaging or postal provider is connected; the platform never shows a delivery it did not observe.",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "tax-secrecy-class",
+    "what": "Every field of the form is restricted and marked tax secrecy (confidentiality tax), stricter than the catalogue's administrative and personal classes where it gives them; the case is restricted and read only under canReadTax() (the tax authority's officials, auditors with a purpose), every read in the access log; other institutions learn status only through the taxpayer.status exchange service",
+    "why": "Tax records are confidential: a class label alone grants no access, and nothing about a taxpayer leaves the tax authority except through an approved exchange for an approved purpose.",
+    "rule": "CLAUDE.md Tax: lib/tax/ is read by the tax authority only (canReadTax(), every read in the access log); others use the taxpayer.status exchange service"
+   },
+   {
+    "id": "no-tax-values",
+    "what": "No rate, threshold, penalty, interest, deadline, filing period, refund period, instalment term or fee is typed: each is a named nation value checked by a binding rule (recorded as not performed and a publication blocker until the nation approves it); tax types, periods, schemas, methods, bases, remedies, outcomes and actions are nation lists that ship empty",
+    "why": "The field series Part 2 §2.6: tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, retention and appeal rights come from approved national rules, never universal constants.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3153,
+    "quotes": [
+     "tax.debt.recovery.notice",
+     "Issue a recovery notice",
+     "Authorized tax service",
+     "Notification",
+     "Notice and delivery record"
+    ],
+    "met_by": {
+     "fields": [
+      "debt.recovery.decision_ref",
+      "notice.delivery_ref"
+     ],
+     "deviation": "recovery-not-built"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3141,
+    "quotes": [
+     "These forms are available only to the extent permitted by national law.",
+     "CivicOS must not infer a recovery power from an unpaid balance.",
+     "A balance must be traceable to an approved liability and a valid procedural state."
+    ],
+    "met_by": {
+     "deviation": "no-recovery-inferred",
+     "country_decision": "country.tax.debt_recovery"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3173,
+    "quotes": [
+     "Country decisions: tax debt calculation; statutory notices; payment arrangements; voluntary disclosure treatment; recovery powers and safeguards; suspension rules; interest and penalties; review rights; authorized recovery decision-makers."
+    ],
+    "met_by": {
+     "country_decision": "country.tax.debt_recovery",
+     "deviation": "no-tax-values"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3224,
+    "quotes": [
+     "country.tax.debt_recovery",
+     "Lawful debt recovery actions, notices, payment arrangements, suspension and review safeguards",
+     "Authorized tax/legal authority"
+    ],
+    "met_by": {
+     "country_decision": "country.tax.debt_recovery"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3159,
+    "quotes": [
+     "debt.taxpayer_ref: registry_reference, required."
+    ],
+    "met_by": {
+     "fields": [
+      "debt.taxpayer_ref"
+     ],
+     "deviation": "tax-secrecy-class"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3160,
+    "quotes": [
+     "debt.liability_refs: registry_reference, required; all liabilities must resolve to approved assessment or return records."
+    ],
+    "met_by": {
+     "fields": [
+      "debt.liability_refs"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3161,
+    "quotes": [
+     "debt.balance_ref: identifier_reference, required; approved balance calculation."
+    ],
+    "met_by": {
+     "fields": [
+      "debt.balance_ref"
+     ],
+     "deviation": "no-recovery-inferred"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3168,
+    "quotes": [
+     "debt.recovery.authority_ref: registry_reference, required; approved legal power."
+    ],
+    "met_by": {
+     "fields": [
+      "debt.recovery.authority_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3169,
+    "quotes": [
+     "debt.recovery.action_type: choice, required; source tax.country.approved.recovery_actions."
+    ],
+    "met_by": {
+     "fields": [
+      "debt.recovery.action_type"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3170,
+    "quotes": [
+     "debt.recovery.decision_ref: identifier_reference, required before execution of the authorized action."
+    ],
+    "met_by": {
+     "fields": [
+      "debt.recovery.decision_ref"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "debt.taxpayer_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "taxpayer_active_for_period",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registry.taxpayer_accounts",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Taxpayer account"
+   },
+   "hint": {
+    "en": "The taxpayer account in the tax register."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter taxpayer account.",
+     "reference_exists": "There is no record with that reference.",
+     "taxpayer_active_for_period": "The taxpayer account is not eligible for this period."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The notice"
+   }
+  },
+  {
+   "id": "debt.liability_refs",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.registry.assessments",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The liabilities (assessments, tax:ASM-…)"
+   },
+   "hint": {
+    "en": "Every amount must be an approved assessment or return; a balance never stands alone."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the liabilities (assessments, tax:ASM-…).",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "The notice"
+   }
+  },
+  {
+   "id": "debt.balance_ref",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Balance as the account shows it"
+   },
+   "hint": {
+    "en": "Drawn from the account's recorded entries; never typed."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "debt.recovery.authority_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "legal_references_resolve",
+     "params": {}
+    },
+    {
+     "rule": "recovery_power_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.approved_legal_authorities",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Legal power relied on"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter legal power relied on.",
+     "legal_references_resolve": "Every provision must be a confirmed version in the laws register."
+    }
+   },
+   "country_decision": "country.tax.debt_recovery: the recovery powers and their safeguards (none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The notice"
+   }
+  },
+  {
+   "id": "debt.recovery.action_type",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "recovery_power_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": "tax.country.approved.recovery_actions",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recovery action"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select recovery action.",
+     "value_in_source": "Choose one of the listed values for recovery action."
+    }
+   },
+   "country_decision": "country.tax.debt_recovery: the lawful recovery actions (none ship).",
+   "confidentiality": "tax",
+   "section": {
+    "en": "The notice"
+   }
+  },
+  {
+   "id": "debt.recovery.decision_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The authorisation it gives notice of"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the authorisation it gives notice of.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The notice"
+   }
+  },
+  {
+   "id": "notice.channel",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.notification.channel.v1",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "How the notice is given"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select how the notice is given.",
+     "value_in_source": "Choose one of the listed values for how the notice is given."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The notice"
+   }
+  },
+  {
+   "id": "notice.rights",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Rights stated (respond, dispute, ask for suspension)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter rights stated (respond, dispute, ask for suspension).",
+     "length": "Rights stated (respond, dispute, ask for suspension) must be between 1 and 4000 characters."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "section": {
+    "en": "The notice"
+   }
+  },
+  {
+   "id": "notice.delivery_ref",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Delivery record"
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "notice.issued_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Issued at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  }
+ ]
+}

@@ -1,0 +1,643 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "DEM-CON-014",
+ "record_type": "oversight.audit.finding",
+ "form_version": 1,
+ "procedure_package_id": "audit.engagement",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-DEM-012: the public audit office's mandate, its audit plan and report approval and how reports are published or laid before the legislature (none ship).",
+  "CFG-DEM-012: independent institution mandates and protected access boundaries (who is named for the oversight slot, its standing and independence, recorded through the institution register; none ship).",
+  "CFG-DEM-017: judicial review and independent dispute-resolution pathways (the review route a closure names).",
+  "CFG-DAT-001: retention and disclosure of the case and of the protected identity."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "DEM-CON-014",
+  "part": 12,
+  "section": "2.4",
+  "line": 154,
+  "batch": 7
+ },
+ "library": {
+  "title": "Record a public audit finding",
+  "intro": "The audit team records a finding of an audit engagement: what was measured, what was found, why and with what effect, the evidence relied on and the recommendation. The audited institution answers beside it and never changes it.",
+  "owner": "supremeAudit",
+  "filled_by": "The auditors of the public audit office working the engagement.",
+  "authority": "The public audit office the nation names for the supremeAudit slot of the deployment profile (authorityFor('supremeAudit'), shipped empty); independent once named (INDEPENDENT_SLOTS). Never a ministry by name.",
+  "procedure": {
+   "key": "audit.engagement",
+   "stage": "fieldwork",
+   "action": "record-finding",
+   "document": "working-paper"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "oversight-slot",
+    "what": "The body is the institution the nation names for its slot of the deployment profile (ombudsman, humanRights, anticorruption, supremeAudit, dataProtection), shipped empty; it is independent once named",
+    "why": "Authority comes from the deployment profile, never a ministry by name; no oversight body ships for a nation.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/nation/deployment.ts INDEPENDENT_SLOTS (plan I8)"
+   },
+   {
+    "id": "recommendation-not-order",
+    "what": "A finding is a recommendation with reasons, never an order or an automatic decision; whatever it asks is done, or not, by the institution concerned under its own procedures",
+    "why": "Part 12 §7.3: a recommendation is not automatically a binding order; AI never makes a legally material decision.",
+    "rule": "lib/oversight/register.ts; CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "response-beside",
+    "what": "The management response (respondent, response, supporting evidence and date) is the audited institution's own form, DEM-CON-020, recorded beside the finding; follow-up status is the audit office's follow-up step",
+    "why": "Part 4 §C.3 separation rule: the audited ministry responds; it never edits the finding.",
+    "rule": "lib/oversight/register.ts respondToFinding(), recordFollowUp()"
+   },
+   {
+    "id": "report-approval",
+    "what": "The audit report (approved version, sign-off, publication and distribution) is the engagement's approve-report and publish steps, two officials of the audit office, not a field of the finding",
+    "why": "Approval is an act of the audit office's own governance, never a status field.",
+    "rule": "lib/oversight/procedures.ts audit.engagement (approve-report, four-eyes; publish)"
+   },
+   {
+    "id": "no-ai-finding",
+    "what": "No score, rating or automated assessment: admissibility, findings and referrals are decided by the body's officials with reasons",
+    "why": "AI may help a human review but never labels a person or issues a finding.",
+    "rule": "CLAUDE.md Government operating model: AI never makes a legally material decision"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 154,
+    "quotes": [
+     "DEM-CON-014",
+     "Public audit finding",
+     "Finding, recommendation and response"
+    ],
+    "met_by": {
+     "fields": [
+      "finding.condition",
+      "finding.recommendation"
+     ],
+     "procedure": "record-finding",
+     "platform": {
+      "file": "app/src/lib/oversight/register.ts",
+      "how": "Management responses sit beside the finding (respondToFinding())"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 56,
+    "quotes": [
+     "Public audit institution",
+     "Independent audit and public financial accountability"
+    ],
+    "met_by": {
+     "deviation": "oversight-slot",
+     "procedure": "approve-plan"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 441,
+    "quotes": [
+     "REG-DEM-015",
+     "Public accountability findings register",
+     "Finding, responsible institution, response and follow-up"
+    ],
+    "met_by": {
+     "fields": [
+      "finding.condition",
+      "finding.audited_entity"
+     ],
+     "deviation": "response-beside",
+     "platform": {
+      "file": "app/src/lib/oversight/register.ts",
+      "how": "The findings register: finding, institution concerned, responses and follow-up"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2794,
+    "quotes": [
+     "Maintains independent audit plans, working papers, findings, management responses and published reports."
+    ],
+    "met_by": {
+     "fields": [
+      "finding.working_papers",
+      "finding.condition"
+     ],
+     "procedure": "approve-plan",
+     "deviation": "report-approval"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2985,
+    "quotes": [
+     "Evidence request",
+     "Audited entity, requested evidence, purpose, due date and status"
+    ],
+    "met_by": {
+     "procedure": "request-evidence",
+     "platform": {
+      "file": "app/src/lib/oversight/register.ts",
+      "how": "Evidence requests: audited entity, requested evidence, purpose, due date, submissions and whether closed"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2986,
+    "quotes": [
+     "Evidence item",
+     "Source, received time, integrity information, custodian and audit use"
+    ],
+    "met_by": {
+     "fields": [
+      "finding.evidence_items"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2987,
+    "quotes": [
+     "Audit test",
+     "Procedure, sample or population definition, result and reviewer"
+    ],
+    "met_by": {
+     "fields": [
+      "finding.audit_test"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2988,
+    "quotes": [
+     "Finding",
+     "Criteria, condition, evidence, cause, effect and proposed recommendation"
+    ],
+    "met_by": {
+     "fields": [
+      "finding.criteria",
+      "finding.condition",
+      "finding.evidence_items",
+      "finding.cause",
+      "finding.effect",
+      "finding.recommendation"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2989,
+    "quotes": [
+     "Management response",
+     "Respondent, response, supporting evidence and date"
+    ],
+    "met_by": {
+     "deviation": "response-beside"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2990,
+    "quotes": [
+     "Recommendation",
+     "Owner, agreed or disputed action, due date if established and follow-up status"
+    ],
+    "met_by": {
+     "fields": [
+      "finding.recommendation_owner",
+      "finding.due_date"
+     ],
+     "deviation": "response-beside",
+     "procedure": "follow-up"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2991,
+    "quotes": [
+     "Audit report",
+     "Approved version, sign-off, publication status and distribution"
+    ],
+    "met_by": {
+     "deviation": "report-approval",
+     "procedure": "approve-report"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 3005,
+    "quotes": [
+     "Separation rule: the audited ministry may respond to a finding and submit evidence, but it must not edit the audit institution's finding or delete its working papers.",
+     "A disagreement should be recorded as a response or review, not resolved by overwriting the auditor's record."
+    ],
+    "met_by": {
+     "deviation": "response-beside",
+     "platform": {
+      "file": "app/src/lib/oversight/register.ts",
+      "how": "A disagreement is a response beside the finding; only the audit office corrects its finding, as a new version"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "finding.engagement",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 40
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The audit engagement (its case reference)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the audit engagement (its case reference).",
+     "length": "The audit engagement (its case reference) must be 40 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The finding"
+   }
+  },
+  {
+   "id": "finding.audited_entity",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The audited institution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Name the public body.",
+     "reference_exists": "There is no institution with that reference in the institution register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The finding"
+   }
+  },
+  {
+   "id": "finding.criteria",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Criteria: the rule or standard the matter is measured against"
+   },
+   "error_text": {
+    "en": {
+     "required": "Criteria: the rule or standard the matter is measured against: this is needed.",
+     "length": "Criteria: the rule or standard the matter is measured against must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The finding"
+   }
+  },
+  {
+   "id": "finding.condition",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Condition: what was found"
+   },
+   "error_text": {
+    "en": {
+     "required": "Condition: what was found: this is needed.",
+     "length": "Condition: what was found must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The finding"
+   }
+  },
+  {
+   "id": "finding.cause",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Cause"
+   },
+   "error_text": {
+    "en": {
+     "length": "Cause must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The finding"
+   }
+  },
+  {
+   "id": "finding.effect",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Effect"
+   },
+   "error_text": {
+    "en": {
+     "length": "Effect must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The finding"
+   }
+  },
+  {
+   "id": "finding.evidence_items",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Evidence relied on: source, when received, integrity (hash), custodian and how it was used"
+   },
+   "error_text": {
+    "en": {
+     "required": "Evidence relied on: source, when received, integrity (hash), custodian and how it was used: this is needed.",
+     "length": "Evidence relied on: source, when received, integrity (hash), custodian and how it was used must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "finding.audit_test",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Audit test: procedure, sample or population definition, result and reviewer"
+   },
+   "error_text": {
+    "en": {
+     "length": "Audit test: procedure, sample or population definition, result and reviewer must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "finding.working_papers",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "working-paper",
+     "when": "when_the_person_has_evidence"
+    }
+   ],
+   "label": {
+    "en": "Working papers"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "finding.recommendation",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recommendation (never an order)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Recommendation (never an order): this is needed.",
+     "length": "Recommendation (never an order) must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Recommendation"
+   }
+  },
+  {
+   "id": "finding.recommendation_owner",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Who in the audited institution owns the recommendation"
+   },
+   "error_text": {
+    "en": {
+     "length": "Who in the audited institution owns the recommendation must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Recommendation"
+   }
+  },
+  {
+   "id": "finding.due_date",
+   "type": "date",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Due date, if one is established"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Recommendation"
+   }
+  },
+  {
+   "id": "finding.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

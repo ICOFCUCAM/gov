@@ -25,6 +25,14 @@ export function auditHashV2(e: Pick<AuditEntry, 'seq' | 'at' | 'actor' | 'action
   return createHash('sha256').update(canonical, 'utf8').digest('hex');
 }
 
+/**
+ * The name recorded when no verified official acted and none was declared
+ * (sign-in not enforced: demonstrations and tests). Routes record the signed-in
+ * official (lib/casework/actor.ts routeActor(), lib/auth/official.ts
+ * withOfficial()); a store never writes a placeholder such as 'operator'.
+ */
+export const UNVERIFIED_ACTOR = 'Unverified official';
+
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
 function appendAudit(
   actor: string,

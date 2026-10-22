@@ -683,7 +683,7 @@ export function SetupWizard() {
                           <span className="w-5 shrink-0 font-mono text-[10px] tabular-nums" style={{ color: on ? CHAMPAGNE : NIGHT.faint }}>{String(idx + 1).padStart(2, '0')}</span>
                           <span className="min-w-0 flex-1">
                             <span className={`block truncate text-[14px] font-light ${on ? 'text-[#f3efe6]' : 'text-night-muted'}`}>{m.name}</span>
-                            <span className="mt-0.5 block truncate font-mono text-[9.5px] tracking-[0.08em] text-night-faint">{m.archetype} · {m.departments.length} departments</span>
+                            <span className="mt-0.5 block truncate font-mono text-[9.5px] tracking-[0.08em] text-night-faint">{m.archetype} · {m.departments.filter(d => d.status !== 'ended').length} departments</span>
                           </span>
                           <input type="checkbox" className="peer sr-only" checked={on} onChange={() => setActive(a => ({ ...a, [m.id]: !on }))} />
                           <span aria-hidden className="relative h-[18px] w-[34px] shrink-0 rounded-full border transition-colors duration-300"

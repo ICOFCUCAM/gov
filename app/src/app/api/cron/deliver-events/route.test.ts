@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createHmac } from 'node:crypto';
 
 const serverClientMock = vi.fn();
@@ -20,7 +20,10 @@ import { GET } from './route';
 
 const answer = (status: number) => () => Promise.resolve(new Response(status === 200 ? 'ok' : 'no', { status }));
 
+// Webhooks are sent only by a production installation (plan I0.2).
+afterEach(() => vi.unstubAllEnvs());
 beforeEach(() => {
+  vi.stubEnv('CIVICOS_MODE', 'production');
   serverClientMock.mockReset();
   fetchMock.mockReset();
   resolveMock.mockReset();

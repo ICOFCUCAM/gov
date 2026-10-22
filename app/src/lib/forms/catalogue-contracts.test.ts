@@ -3,8 +3,11 @@
 // medicines and medical devices regulation: HLT-MED-001 … 015, 017 … 020,
 // 023, 024; batch 3, taxpayer registration and account: the 29
 // taxpayer.* rows of Part 2 §2.6; batch 4, public-health programme forms:
-// HLT-PH-011, HLT-PH-014) to the documents they answer
-// (docs/FORMS_CONFORMANCE.md §8, §9, §10, §12). The test holds its
+// HLT-PH-011, HLT-PH-014; batch 5, internal administration: the 40 ADM-*
+// forms of the supplement's Part 21; batch 6, tax services: the 95 tax.* rows
+// of Part 2 §2.6 Departments B–H; batch 7, independent oversight: DEM-CON-012,
+// 013, 014, 018, 019, 020 and DEM-PUB-009) to the documents they answer
+// (docs/FORMS_CONFORMANCE.md §8, §9, §10, §12, §13, §14, §15). The test holds its
 // own list of the catalogue lines each form must answer and reads the
 // documents themselves: every piece of every line (each table cell, list item
 // and sentence) is quoted verbatim by the contract and met by a field, a
@@ -19,7 +22,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
+import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, BATCH_5, BATCH_6, BATCH_7, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
 import { CANONICAL_LIBRARY } from './library/catalogue';
 import SPEC_TAXPAYER from './library/spec/taxpayer-registration-v1.json';
 import { SPEC_CLASSES } from './spec-import';
@@ -36,6 +39,9 @@ import { TAX_PROCEDURES } from '@/lib/tax/procedures';
 import { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
 import { PROGRAMME_PROCEDURES } from '@/lib/health/programmes/procedures';
 import { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
+import { INDEPENDENT_OVERSIGHT_PROCEDURES } from '@/lib/oversight/procedures';
+import { ADMINISTRATION_PROCEDURES } from '@/lib/administration/procedures';
+import { dualControlRefusal } from '@/lib/data/dual-control';
 import { serviceDirectory } from '@/lib/exchange/services';
 import { AUTHORITIES } from '@/lib/nation/deployment';
 import { pagesOf } from '@/components/features/forms/answers';
@@ -48,6 +54,7 @@ const SRC = {
   B: 'docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md',
   C: 'docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md',
   D: 'docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md',
+  E: 'docs/forms-catalogue/PARTS-12-13.md',
 } as const;
 type Src = keyof typeof SRC;
 const DOC = Object.fromEntries(Object.entries(SRC).map(([k, p]) => [k, readFileSync(join(ROOT, p), 'utf8').split('\n')])) as Record<Src, string[]>;
@@ -70,9 +77,46 @@ const IDS_3 = [
 ];
 // Batch 4: public-health programme forms (the individual public-health forms stay excluded by the approved scope).
 const IDS_4 = ['HLT-PH-011', 'HLT-PH-014'];
-const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4];
-const batchOf = (id: string) => (id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : 1);
-const sourceOf = (id: string): Src => (batchOf(id) === 3 ? 'B' : 'A');
+// Batch 5: internal administration, the supplement's Part 21 §21.1, all 40 forms.
+const IDS_5 = [
+  ...range(1, 10).map(n => `ADM-HR-${String(n).padStart(3, '0')}`), ...range(11, 13).map(n => `ADM-PAY-0${n}`), ...range(14, 17).map(n => `ADM-FIN-0${n}`),
+  ...range(18, 21).map(n => `ADM-PRC-0${n}`), ...range(22, 24).map(n => `ADM-AST-0${n}`), 'ADM-REC-025', 'ADM-REC-026', 'ADM-LEG-027', 'ADM-LEG-028',
+  ...range(29, 32).map(n => `ADM-ICT-0${n}`), 'ADM-COM-033', 'ADM-COM-034', 'ADM-AUD-035', 'ADM-AUD-036', 'ADM-PLN-037', 'ADM-PLN-038', 'ADM-GOV-039', 'ADM-GOV-040',
+];
+// Batch 6: tax services, every tax.* row of the register that had no contract (Part 2 §2.6 Departments B–H; the periodic return and the
+// inspection checklist have the catalogue's own contracts).
+const IDS_6 = [
+  'tax.appeal.response', 'tax.appeal.submit', 'tax.appeal.transmit', 'tax.assessment.amendment',
+  'tax.assessment.notice', 'tax.assessment.review_request', 'tax.assistance.enquiry', 'tax.assistance.guidance_request',
+  'tax.compliance.assessment_decision', 'tax.compliance.case.open', 'tax.compliance.case_closure', 'tax.compliance.complaint',
+  'tax.compliance.evidence_register', 'tax.compliance.extension_decision', 'tax.compliance.extension_request', 'tax.compliance.findings_draft',
+  'tax.compliance.findings_review', 'tax.compliance.information_request', 'tax.compliance.information_response', 'tax.compliance.inspection_plan',
+  'tax.compliance.interview_record', 'tax.compliance.referral', 'tax.compliance.scope.approve', 'tax.compliance.taxpayer_response',
+  'tax.credit.adjustment', 'tax.debt.disclosure.assessment', 'tax.debt.payment_plan.cancel_request', 'tax.debt.payment_plan.change_request',
+  'tax.debt.payment_plan.decision', 'tax.debt.payment_plan.default_review', 'tax.debt.payment_plan.evidence', 'tax.debt.payment_plan.request',
+  'tax.debt.recovery.authorize', 'tax.debt.recovery.close', 'tax.debt.recovery.dispute', 'tax.debt.recovery.notice',
+  'tax.debt.recovery.response', 'tax.debt.recovery.suspend_request', 'tax.debt.statement.request', 'tax.debt.voluntary_disclosure',
+  'tax.dispute.closure', 'tax.dispute.settlement_proposal', 'tax.dispute.settlement_review', 'tax.dispute.withdraw',
+  'tax.incentive.amendment', 'tax.incentive.application', 'tax.incentive.compliance_report', 'tax.incentive.decision',
+  'tax.incentive.renewal', 'tax.incentive.review_request', 'tax.incentive.surrender', 'tax.incentive.withdrawal',
+  'tax.objection.assessment', 'tax.objection.decision', 'tax.objection.extension_request', 'tax.objection.submit',
+  'tax.objection.supplement', 'tax.payment.allocation_request', 'tax.payment.dispute', 'tax.payment.external_reference',
+  'tax.payment.initiate', 'tax.payment.reversal_request', 'tax.payment.transfer_request', 'tax.refund.application',
+  'tax.refund.assessment', 'tax.refund.decision', 'tax.refund.payment_instruction', 'tax.refund.reconciliation',
+  'tax.refund.supporting_evidence', 'tax.return.periodic.amend', 'tax.return.periodic.appeal', 'tax.return.periodic.correction',
+  'tax.return.periodic.decision', 'tax.return.periodic.further_information', 'tax.return.periodic.late_submission', 'tax.return.periodic.nil',
+  'tax.return.periodic.notice', 'tax.return.periodic.objection', 'tax.return.periodic.officer_assessment', 'tax.return.periodic.withdraw_request',
+  'tax.ruling.decision', 'tax.ruling.further_information', 'tax.ruling.reconsideration', 'tax.ruling.request',
+  'tax.ruling.withdraw', 'tax.withholding.certificate.issue', 'tax.withholding.details.amend', 'tax.withholding.discrepancy.decision',
+  'tax.withholding.discrepancy.response', 'tax.withholding.payment', 'tax.withholding.registration', 'tax.withholding.return.amend',
+  'tax.withholding.return.submit', 'tax.withholding.statement.correct', 'tax.withholding.statement.submit',
+];
+// Batch 7: the Part 12 accountability forms the independent oversight procedures carry (plan I8).
+const IDS_7 = ['DEM-CON-012', 'DEM-CON-013', 'DEM-CON-014', 'DEM-CON-018', 'DEM-CON-019', 'DEM-CON-020', 'DEM-PUB-009'];
+const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4, ...IDS_5, ...IDS_6, ...IDS_7];
+const batchOf = (id: string) => (id.startsWith('ADM-') ? 5 : id.startsWith('tax.') ? 6 : id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : IDS_7.includes(id) ? 7 : 1);
+const sourceOf = (id: string): Src => (batchOf(id) === 5 ? 'C' : [3, 6].includes(batchOf(id)) ? 'B' : batchOf(id) === 7 ? 'E' : 'A');
+const OVERSIGHT_SLOTS = ['ombudsman', 'humanRights', 'anticorruption', 'supremeAudit', 'dataProtection'];
 
 // ── The catalogue text each form answers (held here, apart from the contracts) ──
 // Every form: Part 1's universal rules, the three channels and minimisation, and the supplement's conventions and activation gates.
@@ -133,6 +177,139 @@ const TAX_FAMILY: Record<string, Partial<Record<Src, number[]>>[]> = {
   'taxpayer.registration.verification_record': [{ B: [3191, 3194] }],
   'taxpayer.registration.appeal_assessment': [{ B: [3191, 3193, 3062, 3063, 3070, 3076, 3078, 3223], D: [392, 410, 508] }],
   'taxpayer.registration.closure_record': [{ B: [3191, 3204] }],
+};
+
+// Batch 5: Part 21's opening and critical internal controls; the specification's §10 (one workspace from the departments; domains are no grant
+// of authority) and the row of its table for the form's function; for the seven forms §21.2 gives a JSON contract, its form_id, title and every
+// field line.
+const ADM: Partial<Record<Src, number[]>> = { C: [1085, ...range(1241, 1245)], D: [966, 981] };
+const ADM_FUNCTION: Record<string, number> = { HR: 970, PAY: 970, FIN: 971, PRC: 972, AST: 973, REC: 974, LEG: 975, AUD: 976, ICT: 977, PLN: 978, COM: 979, 'GOV-039': 975, 'GOV-040': 978 };
+const ADM_JSON: Record<string, number[]> = {
+  'ADM-HR-002': [1133, 1134, ...range(1136, 1143)], 'ADM-PAY-012': [1147, 1148, ...range(1150, 1158)], 'ADM-PRC-018': [1162, 1163, ...range(1165, 1173)],
+  'ADM-ICT-029': [1177, 1178, ...range(1180, 1189)], 'ADM-ICT-030': [1193, 1194, ...range(1196, 1204)], 'ADM-AUD-036': [1208, 1209, ...range(1211, 1219)],
+  'ADM-GOV-039': [1223, 1224, ...range(1226, 1233)],
+};
+const admFunction = (id: string) => ADM_FUNCTION[id.slice(4)] ?? ADM_FUNCTION[id.split('-')[1]!]!;
+
+// Every batch-7 form: Part 12's rules for independent institutions, their findings and protected identities (the archetypes'
+// standing, the non-negotiable principle, findings never overwritten, record ownership, investigations and findings, the
+// privacy safeguards, AI governance, CFG-DEM-012 and legal activation, the oversight and privacy gates).
+const OVERSIGHT: Partial<Record<Src, number[]>> = { E: [64, 66, 161, 193, 196, 197, 199, 401, 403, 405, 451, 478, 486, 488, 489, 500, 518, 529, 590, 591] };
+// Batch 7: each form's archetype line, register and the specification's operating specification for its body (Part 4 §A, §C).
+const EXTRA_7: Record<string, Partial<Record<Src, number[]>>> = {
+  'DEM-CON-012': { E: [57], D: [2798, 2800, ...range(3025, 3033), 3037, 3039] },
+  'DEM-CON-013': { E: [58], D: [2810, 2812, 3105, ...range(3109, 3112)] },
+  'DEM-CON-014': { E: [56, 441], D: [2794, ...range(2985, 2991), 3005] },
+  'DEM-CON-018': { E: [62, 521], D: [2806, ...range(3064, 3073), 3086] },
+  'DEM-CON-019': { E: [59], D: [2816, 2818, 3134, ...range(3138, 3145), 3147] },
+  'DEM-CON-020': { E: [441], D: [2989, 2990, 3005] },
+  'DEM-PUB-009': { E: [59, 176], D: [3134, 3147] },
+};
+
+// Batch 6: every tax-services form answers Part 2 §2.6's opening rules, the retention and configuration records of §2.8, the §2.9 gates and
+// the specification's tax authority and decision controls (the shared items of group tax6); and the lines of its own department below:
+// the department's fields, country decisions and safeguards, the §2.7 internal fields and universal control for officers' records, the
+// configuration record of §2.8 and the specification's services (§5.2, §5.3, §5.5).
+const TAX6: Partial<Record<Src, number[]>> = {
+  B: [2517, 2519, 3225, 3226, 3231, 3236, 3251, 3256, 3261, 3266, 3271],
+  D: [376, 378, 380, 509, 510, 511],
+};
+const TAX6_FORM: Record<string, Partial<Record<Src, number[]>>> = {
+  'tax.appeal.response': { B: [3063, 3074, 3076, 3191, 3205, 3223] },
+  'tax.appeal.submit': { B: [3062, 3063, 3064, 3065, 3066, 3067, 3068, 3069, 3070, 3074, 3076, 3078, 3223], D: [392, 410, 508] },
+  'tax.appeal.transmit': { B: [3074, 3076, 3191, 3202, 3203, 3205, 3223] },
+  'tax.assessment.amendment': { B: [3063, 3066, 3076, 3223], D: [406, 509] },
+  'tax.assessment.notice': { B: [3191, 3205], D: [407, 414, 505] },
+  'tax.assessment.review_request': { B: [3062, 3063, 3064, 3065, 3066, 3067, 3068, 3069, 3070, 3076, 3078, 3223], D: [392, 410, 508, 509] },
+  'tax.assistance.enquiry': { B: [3123, 3124, 3125, 3139], D: [386] },
+  'tax.assistance.guidance_request': { B: [3123, 3124, 3125, 3139], D: [386] },
+  'tax.compliance.assessment_decision': { B: [2896, 3191, 3193, 3198, 3199, 3200, 3201, 3205, 3222, 3251], D: [397, 411, 506, 507] },
+  'tax.compliance.case.open': { B: [2896, 3191, 3205, 3222, 3236], D: [397, 411] },
+  'tax.compliance.case_closure': { B: [2896, 3191, 3204, 3205, 3222], D: [397, 411] },
+  'tax.compliance.complaint': { B: [2896, 3222], D: [397] },
+  'tax.compliance.evidence_register': { B: [2896, 3043, 3191, 3194, 3205, 3222], D: [397, 411] },
+  'tax.compliance.extension_decision': { B: [2896, 3191, 3193, 3198, 3199, 3200, 3205, 3222], D: [397] },
+  'tax.compliance.extension_request': { B: [2896, 3222], D: [397] },
+  'tax.compliance.findings_draft': { B: [2896, 3043, 3191, 3193, 3195, 3205, 3222], D: [397, 411] },
+  'tax.compliance.findings_review': { B: [2896, 3191, 3193, 3194, 3205, 3222], D: [397, 411] },
+  'tax.compliance.information_request': { B: [2896, 3191, 3196, 3197, 3205, 3222], D: [397, 411] },
+  'tax.compliance.information_response': { B: [2896, 3222], D: [397, 411] },
+  'tax.compliance.inspection_plan': { B: [2896, 3191, 3205, 3222], D: [397, 411] },
+  'tax.compliance.interview_record': { B: [2896, 3043, 3191, 3195, 3205, 3222], D: [397, 411] },
+  'tax.compliance.referral': { B: [2896, 3191, 3202, 3203, 3205, 3222], D: [397] },
+  'tax.compliance.scope.approve': { B: [2896, 3191, 3193, 3198, 3199, 3200, 3201, 3205, 3222, 3251], D: [397, 411, 507] },
+  'tax.compliance.taxpayer_response': { B: [2896, 3222], D: [397, 411] },
+  'tax.credit.adjustment': { B: [2880, 2883, 2894, 3221, 3241] },
+  'tax.debt.disclosure.assessment': { B: [3141, 3165, 3173, 3191, 3193, 3194, 3205, 3224], D: [397] },
+  'tax.debt.payment_plan.cancel_request': { B: [3141, 3159, 3163, 3164, 3173, 3224], D: [412] },
+  'tax.debt.payment_plan.change_request': { B: [3141, 3159, 3162, 3163, 3164, 3173, 3224], D: [412] },
+  'tax.debt.payment_plan.decision': { B: [3141, 3160, 3162, 3173, 3191, 3193, 3198, 3199, 3200, 3201, 3205, 3224, 3251], D: [412, 507] },
+  'tax.debt.payment_plan.default_review': { B: [3141, 3161, 3173, 3191, 3193, 3194, 3205, 3224], D: [397, 412] },
+  'tax.debt.payment_plan.evidence': { B: [3141, 3164, 3173, 3224] },
+  'tax.debt.payment_plan.request': { B: [3141, 3159, 3160, 3161, 3162, 3163, 3164, 3173, 3224], D: [393, 412] },
+  'tax.debt.recovery.authorize': { B: [3141, 3159, 3160, 3161, 3168, 3169, 3170, 3173, 3191, 3193, 3198, 3199, 3200, 3201, 3205, 3224, 3251], D: [507] },
+  'tax.debt.recovery.close': { B: [3141, 3172, 3173, 3191, 3204, 3205, 3224] },
+  'tax.debt.recovery.dispute': { B: [3062, 3063, 3064, 3065, 3066, 3067, 3068, 3069, 3070, 3076, 3078, 3141, 3159, 3173, 3223, 3224], D: [392, 410, 508] },
+  'tax.debt.recovery.notice': { B: [3141, 3159, 3160, 3161, 3168, 3169, 3170, 3173, 3224] },
+  'tax.debt.recovery.response': { B: [3141, 3159, 3170, 3173, 3224] },
+  'tax.debt.recovery.suspend_request': { B: [3141, 3159, 3170, 3171, 3173, 3224] },
+  'tax.debt.statement.request': { B: [3141, 3159, 3161, 3173, 3224, 3241] },
+  'tax.debt.voluntary_disclosure': { B: [3141, 3159, 3165, 3166, 3167, 3173, 3224] },
+  'tax.dispute.closure': { B: [3075, 3076, 3191, 3204, 3205, 3223] },
+  'tax.dispute.settlement_proposal': { B: [3062, 3063, 3066, 3068, 3076, 3223] },
+  'tax.dispute.settlement_review': { B: [3076, 3191, 3193, 3194, 3205, 3223], D: [397] },
+  'tax.dispute.withdraw': { B: [3062, 3063, 3068, 3076, 3223] },
+  'tax.incentive.amendment': { B: [3132, 3133, 3136, 3139] },
+  'tax.incentive.application': { B: [3132, 3133, 3134, 3135, 3136, 3139] },
+  'tax.incentive.compliance_report': { B: [3132, 3136, 3137, 3139] },
+  'tax.incentive.decision': { B: [3132, 3136, 3139, 3191, 3193, 3198, 3199, 3200, 3201, 3205, 3251], D: [507] },
+  'tax.incentive.renewal': { B: [3132, 3133, 3134, 3136, 3139] },
+  'tax.incentive.review_request': { B: [3132, 3136, 3139] },
+  'tax.incentive.surrender': { B: [3132, 3136, 3138, 3139] },
+  'tax.incentive.withdrawal': { B: [3132, 3139] },
+  'tax.objection.assessment': { B: [3063, 3070, 3078, 3191, 3193, 3194, 3205, 3223], D: [397, 410, 508] },
+  'tax.objection.decision': { B: [3072, 3073, 3074, 3076, 3191, 3193, 3198, 3199, 3200, 3201, 3205, 3223, 3251], D: [410, 507, 508] },
+  'tax.objection.extension_request': { B: [3063, 3070, 3071, 3076, 3078, 3223] },
+  'tax.objection.submit': { B: [3062, 3063, 3064, 3065, 3066, 3067, 3068, 3069, 3070, 3076, 3078, 3223], D: [392, 410, 508] },
+  'tax.objection.supplement': { B: [3067, 3068, 3076] },
+  'tax.payment.allocation_request': { B: [2880, 2881, 2885, 2886, 2894, 3221, 3241], D: [408, 414] },
+  'tax.payment.dispute': { B: [2880, 2894, 3062, 3063, 3064, 3065, 3066, 3067, 3068, 3069, 3070, 3076, 3078, 3221, 3223, 3241], D: [392, 410, 508] },
+  'tax.payment.external_reference': { B: [2880, 2881, 2882, 2883, 2885, 2894, 3221, 3241], D: [408, 414] },
+  'tax.payment.initiate': { B: [2880, 2881, 2882, 2883, 2884, 2885, 2894, 3221, 3241], D: [408, 414] },
+  'tax.payment.reversal_request': { B: [2880, 2885, 2894, 3221, 3241], D: [408, 414] },
+  'tax.payment.transfer_request': { B: [2880, 2882, 2883, 2894, 3221, 3241], D: [408, 414] },
+  'tax.refund.application': { B: [2880, 2887, 2888, 2889, 2890, 2891, 2894, 3221, 3241], D: [409] },
+  'tax.refund.assessment': { B: [2888, 2891, 2894, 3191, 3193, 3194, 3205, 3221, 3241], D: [397, 409] },
+  'tax.refund.decision': { B: [2892, 2894, 3191, 3193, 3198, 3199, 3200, 3201, 3205, 3221, 3241, 3251], D: [409, 507] },
+  'tax.refund.payment_instruction': { B: [2890, 2893, 2894, 3191, 3205, 3221, 3241, 3256] },
+  'tax.refund.reconciliation': { B: [2893, 2894, 3191, 3205, 3221, 3241], D: [408] },
+  'tax.refund.supporting_evidence': { B: [2891, 2894, 3221, 3241] },
+  'tax.return.periodic.amend': { B: [2732, 2747, 2842, 2843, 2844, 2845, 2846, 2851, 3220, 3246], D: [406, 509] },
+  'tax.return.periodic.appeal': { B: [2732, 3062, 3063, 3064, 3065, 3066, 3067, 3068, 3069, 3070, 3074, 3076, 3078, 3220, 3223, 3246], D: [392, 410, 508] },
+  'tax.return.periodic.correction': { B: [2732, 3191, 3205, 3220, 3246], D: [406, 509] },
+  'tax.return.periodic.decision': { B: [2732, 3191, 3193, 3198, 3199, 3200, 3201, 3205, 3220, 3246, 3251], D: [407, 505, 506, 507] },
+  'tax.return.periodic.further_information': { B: [2732, 3220, 3246] },
+  'tax.return.periodic.late_submission': { B: [2732, 2747, 2842, 2843, 2844, 2845, 2846, 2851, 3220, 3246], D: [405] },
+  'tax.return.periodic.nil': { B: [2732, 2747, 2842, 2843, 2844, 2845, 2846, 2851, 3220, 3246], D: [405] },
+  'tax.return.periodic.notice': { B: [2732, 3191, 3205, 3220, 3246], D: [407, 414] },
+  'tax.return.periodic.objection': { B: [2732, 3062, 3063, 3064, 3065, 3066, 3067, 3068, 3069, 3070, 3076, 3078, 3220, 3223, 3246], D: [392, 410, 508] },
+  'tax.return.periodic.officer_assessment': { B: [2732, 3191, 3193, 3194, 3205, 3220, 3246], D: [397, 407, 506] },
+  'tax.return.periodic.withdraw_request': { B: [2732, 3220, 3246], D: [509] },
+  'tax.ruling.decision': { B: [3139, 3191, 3193, 3198, 3199, 3200, 3201, 3205, 3251], D: [394, 507] },
+  'tax.ruling.further_information': { B: [3129, 3131, 3139] },
+  'tax.ruling.reconsideration': { B: [3126, 3127, 3128, 3129, 3130, 3131, 3139], D: [508] },
+  'tax.ruling.request': { B: [3126, 3127, 3128, 3129, 3130, 3131, 3139], D: [394] },
+  'tax.ruling.withdraw': { B: [3126, 3139] },
+  'tax.withholding.certificate.issue': { B: [3080, 3093, 3095, 3104] },
+  'tax.withholding.details.amend': { B: [3080, 3093, 3103, 3104], D: [404] },
+  'tax.withholding.discrepancy.decision': { B: [3080, 3104, 3191, 3193, 3198, 3199, 3200, 3201, 3205, 3251], D: [507] },
+  'tax.withholding.discrepancy.response': { B: [3080, 3093, 3103, 3104] },
+  'tax.withholding.payment': { B: [3080, 3093, 3095, 3101, 3104] },
+  'tax.withholding.registration': { B: [3080, 3093, 3094, 3103, 3104], D: [404] },
+  'tax.withholding.return.amend': { B: [3080, 3093, 3095, 3096, 3097, 3098, 3099, 3100, 3102, 3103, 3104], D: [406, 509] },
+  'tax.withholding.return.submit': { B: [3080, 3093, 3094, 3095, 3096, 3097, 3098, 3099, 3100, 3103, 3104], D: [405] },
+  'tax.withholding.statement.correct': { B: [3080, 3093, 3095, 3096, 3097, 3098, 3102, 3103, 3104] },
+  'tax.withholding.statement.submit': { B: [3080, 3093, 3095, 3096, 3097, 3098, 3103, 3104] },
 };
 
 const EXTRA: Record<string, Partial<Record<Src, number[]>>> = {
@@ -201,7 +378,12 @@ function rowLine(id: string): number {
 }
 
 function linesFor(id: string): [Src, number][] {
-  const sets = batchOf(id) === 3
+  const sets = batchOf(id) === 5
+    ? [COMMON, ADM, { D: [admFunction(id)] }, { C: ADM_JSON[id] ?? [] }, { C: [rowLine(id)] }]
+    : batchOf(id) === 7
+    ? [COMMON, OVERSIGHT, EXTRA_7[id] ?? {}, { E: [rowLine(id)] }]
+    : batchOf(id) === 6 ? [COMMON, TAX6, TAX6_FORM[id] ?? {}, { B: [rowLine(id)] }]
+    : batchOf(id) === 3
     ? [COMMON, TAX, ...(TAX_FAMILY[id] ?? []), TAX_OFFICER.includes(id) ? { B: [3205] } : {}, TAX_INTERNAL.includes(id) ? { B: [2710] } : {}, { B: [rowLine(id)] }]
     : [COMMON, COMMON_HEALTH, id.startsWith('HLT-FAC') ? FAMILY.FAC : id.startsWith('HLT-LIC') ? FAMILY.LIC : id.startsWith('HLT-MED') ? FAMILY.MED : FAMILY.PH, EXTRA[id] ?? {}, { A: [rowLine(id)] }];
   const out: [Src, number][] = [];
@@ -210,18 +392,21 @@ function linesFor(id: string): [Src, number][] {
 }
 
 const flat = (fs: ContractField[]): ContractField[] => fs.flatMap(f => [f, ...(f.items ? flat(f.items as ContractField[]) : [])]);
-const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES];
+const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES, ...ADMINISTRATION_PROCEDURES, ...INDEPENDENT_OVERSIGHT_PROCEDURES];
 const SERVICES = serviceDirectory().map(s => s.id);
 const applicantKeys = (f: CatalogueLibraryForm) => f.fields.filter(x => (x.audience ?? 'applicant') === 'applicant').map(x => x.key);
 /** No patient, clinical, treatment, diagnosis or individual health field: by key and by label. */
 const CLINICAL = /patient|clinical|clinician|diagnos|prescri|dispens|treatment|medication|symptom|medical record|health condition|care plan/i;
 
-describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account) and 4 (public-health programme forms)', () => {
-  it('holds exactly the 25 + 21 + 29 + 2 approved forms, one contract each, matched to the catalogue row it names', () => {
+describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account), 4 (public-health programme forms), 5 (internal administration), 6 (tax services) and 7 (independent oversight)', () => {
+  it('holds exactly the 25 + 21 + 29 + 2 + 40 + 95 + 7 approved forms, one contract each, matched to the catalogue row it names', () => {
     expect(IDS_1.length).toBe(25);
     expect(IDS_2.length).toBe(21);
     expect(IDS_3.length).toBe(29);
     expect(IDS_4.length).toBe(2);
+    expect(IDS_5.length).toBe(40);
+    expect(IDS_6.length).toBe(95);
+    expect(IDS_7.length).toBe(7);
     expect(CATALOGUE_CONTRACTS.map(f => f.specId).sort()).toEqual([...IDS].sort());
     const files = readdirSync(join(process.cwd(), 'src/lib/forms/library/catalogue-contracts')).filter(f => f.endsWith('.json'));
     expect(files.sort()).toEqual(IDS.map(i => `${i}.json`).sort());
@@ -238,7 +423,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
   });
 
   it('carries no status anywhere: the register status is derived, never written', () => {
-    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4]) {
+    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5, ...BATCH_6, ...BATCH_7]) {
       expect('status' in c, c.form_id).toBe(false);
       expect(JSON.stringify(c)).not.toMatch(/"(status|state|approved|approved_by|production)"\s*:/);
     }
@@ -306,12 +491,14 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
           expect(Object.keys(v).sort(), v.key).toEqual(['decision', 'key', 'kind', 'source']);
           if (v.source === 'rule') expect(ruleInForce(v.key), v.key).toBeUndefined();
         }
-        // Money is only ever calculated by an approved rule; nobody types a fee.
-        for (const x of flat(f.fields).filter(y => y.type === 'money')) {
+        // Money is only ever calculated by an approved rule; nobody types a fee. Batch 6: an amount a person states (a claim, a proposed
+        // schedule, the deciding officials' adjusted figure) is named in the form's amounts.stated policy and checked below; never a charge.
+        const stated = batchOf(id) === 6 ? String(f.form.policies?.['amounts.stated'] ?? '').split(':')[0]! : '';
+        for (const x of flat(f.fields).filter(y => y.type === 'money' && !(stated && stated.includes(y.key)))) {
           expect(x.audience, x.key).toBe('system');
           expect((x.rules ?? []).some(r => r.rule === 'registered' && r.name === 'derived_from_approved_rule'), x.key).toBe(true);
         }
-        if (flat(f.fields).some(y => y.type === 'money')) expect(f.nationValues.some(v => v.kind === 'fee'), 'a fee is named as the nation\'s').toBe(true);
+        if (batchOf(id) !== 6 && flat(f.fields).some(y => y.type === 'money')) expect(f.nationValues.some(v => v.kind === 'fee'), 'a fee is named as the nation\'s').toBe(true);
         // No number in the contract outside a validation rule's own bounds and the contract's bookkeeping.
         const c = f.json as unknown as Record<string, unknown>;
         const numbers: string[] = [];
@@ -394,7 +581,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
           if (f.exchange) expect(SERVICES).toContain(f.exchange);
         }
         // Authority from the deployment profile, never a ministry by name.
-        expect(batchOf(id) === 3 ? ['tax'] : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
+        expect(batchOf(id) === 5 ? ['institution'] : [3, 6].includes(batchOf(id)) ? ['tax'] : batchOf(id) === 7 ? OVERSIGHT_SLOTS : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
         expect(JSON.stringify(f.json)).not.toMatch(/Ministry of/);
       });
     });
@@ -585,6 +772,89 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     for (const id of ['HLT-PH-011', 'HLT-PH-014', 'HLT-PH-015']) expect(ph(id).owner, id).toBe('publicHealth');
   });
 
+  // ── Batch 5: internal administration ──
+  const adm = (id: string) => CATALOGUE_CONTRACTS.find(x => x.specId === id)!;
+  /** The batch-5 contracts the internal-administration procedures carry (lib/administration/procedures.ts), by template. */
+  const LINKED_5: Record<string, string> = {
+    'ADM-HR-001': 'adm.establishment', 'ADM-PAY-011': 'adm.payroll-input', 'ADM-PAY-012': 'adm.payroll-review', 'ADM-PAY-013': 'adm.payroll-correction',
+    'ADM-ICT-030': 'adm.privileged-access', 'ADM-GOV-040': 'adm.policy', 'ADM-GOV-039': 'adm.delegation', 'ADM-HR-010': 'adm.disciplinary', 'ADM-LEG-027': 'adm.legal-advice',
+  };
+
+  it('links payroll input, review and correction, the establishment, privileged access, internal policy and delegation (and the disciplinary and legal-advice forms) to their procedures; the rest wait with the reason', () => {
+    for (const id of IDS_5) {
+      const f = adm(id);
+      expect(f.owner, id).toBe('institution');
+      expect(f.authorityNote ?? '', id).toMatch(/adopts .* as its own/);
+      expect(f.deviations.map(d => d.id), id).toContain('institution-owned');
+      if (LINKED_5[id]) {
+        expect(f.procedure, id).toMatchObject({ key: LINKED_5[id] });
+        expect(ADMINISTRATION_PROCEDURES.find(p => p.key === LINKED_5[id])!.forms, id).toContain(id);
+      } else {
+        expect(f.procedure, id).toBeNull();
+        expect(f.awaits ?? '', id).toMatch(/not built/);
+        expect(f.deviations.map(d => d.id), id).toContain('procedure-not-built');
+      }
+    }
+    expect(Object.keys(LINKED_5)).toHaveLength(9);
+    // Every template carries exactly the forms linked to it.
+    for (const p of ADMINISTRATION_PROCEDURES) expect(p.forms.every(id => LINKED_5[id] === p.key), p.key).toBe(true);
+  });
+
+  it('keeps separation of duties: the payroll approver is neither the preparer nor the reviewer, through the form rule and the procedure step', () => {
+    const f = adm('ADM-PAY-012');
+    const approver = f.fields.find(x => x.key === 'payroll.approved_by')!;
+    expect(approver.audience).toBe('officer');
+    expect(approver.rules).toEqual(expect.arrayContaining([{ rule: 'registered', name: 'SEPARATION-OF-DUTIES', params: { fields: ['payroll.prepared_by', 'payroll.reviewed_by'] } }]));
+    const review = ADMINISTRATION_PROCEDURES.find(p => p.key === 'adm.payroll-review')!;
+    expect(review.actions.find(a => a.key === 'approve')!.needs).toMatchObject({ role: 'signatory', fourEyes: true, distinctFrom: ['review'] });
+    // Every approving decision of a linked procedure needs a second official; the comparison of persons is dualControlRefusal()'s.
+    for (const key of new Set(Object.values(LINKED_5))) {
+      const p = ADMINISTRATION_PROCEDURES.find(x => x.key === key)!;
+      for (const a of p.actions.filter(x => x.decision && /^(approve|correct|disciplinary|grant|record)-/.test(x.decision))) expect(a.needs.fourEyes, `${key} ${a.key}`).toBe(true);
+    }
+    expect(dualControlRefusal({ by: 'A', byId: 'local:a' }, { by: 'A', byId: 'local:a' })).toBeTruthy();
+    // The other approvals ask for an approver other than the maker.
+    for (const id of ['ADM-FIN-015', 'ADM-FIN-017', 'ADM-PRC-020', 'ADM-AST-024', 'ADM-REC-026', 'ADM-ICT-031', 'ADM-COM-033', 'ADM-COM-034', 'ADM-PLN-037', 'ADM-HR-007']) {
+      expect(flat(adm(id).fields).some(x => x.audience === 'officer' && (x.rules ?? []).some(r => r.rule === 'registered' && r.name === 'APPROVER-DIFFERS-FROM-MAKER')), id).toBe(true);
+    }
+  });
+
+  it('restricts personnel, disciplinary and legal-advice data, every read logged', () => {
+    for (const id of ['ADM-HR-003', 'ADM-HR-004', 'ADM-HR-005', 'ADM-HR-006', 'ADM-HR-007', 'ADM-HR-009', 'ADM-HR-010', 'ADM-PAY-011', 'ADM-PAY-012', 'ADM-PAY-013', 'ADM-LEG-027', 'ADM-LEG-028']) {
+      const f = adm(id);
+      expect(f.form.policies?.['access.read_rule'], id).toMatch(/restricted to its assignee and supervisors; every read in the access log/);
+      expect(f.deviations.map(d => d.id), id).toEqual(expect.arrayContaining([id.startsWith('ADM-LEG') ? 'legal-privilege' : 'personnel-restricted']));
+      // Anything about a person, the allegation, the question and the advice: restricted (a department or a payroll batch is not personal).
+      for (const x of f.fields.filter(y => ['party', 'registryReference', 'longtext', 'document', 'group'].includes(y.type) && !/(department|requesting_unit|batch)$/.test(y.key))) expect(x.personalDataClass, `${id} ${x.key}`).toBe('restricted');
+    }
+    for (const key of ['adm.payroll-input', 'adm.payroll-review', 'adm.payroll-correction', 'adm.disciplinary', 'adm.legal-advice', 'adm.privileged-access']) expect(ADMINISTRATION_PROCEDURES.find(p => p.key === key)!.sensitivity, key).toBe('restricted');
+    // No pay, bank or payslip field: those stay in the payroll system.
+    for (const id of IDS_5) expect(flat(adm(id).fields).map(x => x.key).filter(k => /bank|account_number|payslip|salary/.test(k)), id).toEqual([]);
+  });
+
+  it('types in no grade, entitlement, rate, limit, schedule or scale: each is the nation\'s, named, and none ships', () => {
+    for (const id of IDS_5) {
+      const f = adm(id);
+      for (const name of Object.keys(f.form.lists ?? {})) expect(name, `${id} ships ${name}`).not.toMatch(/^(administration|procurement)\.(country|institution)\./);
+      for (const x of flat(f.fields)) if (/^(administration|procurement)\.(country|institution)\./.test(x.valuesSourceId ?? '')) expect(x.countryDecision ?? '', `${id} ${x.key}`).toMatch(/none ship/);
+      // Amounts the official enters are numbers in the nation's currency; no money field is typed.
+      expect(flat(f.fields).filter(x => x.type === 'money').map(x => x.key), id).toEqual([]);
+    }
+    for (const [id, key] of [['ADM-HR-006', 'administration.leave.entitlements'], ['ADM-PAY-012', 'adm.payroll.deductions'], ['ADM-FIN-016', 'administration.finance.expense-rates'], ['ADM-REC-025', 'administration.records.retention']] as const) {
+      expect(adm(id).nationValues.find(v => v.key === key), `${id} ${key}`).toMatchObject({ source: 'rule' });
+    }
+    expect(adm('ADM-ICT-030').fields.find(x => x.key === 'access.period')!.rules!.some(r => r.rule === 'registered' && r.name === 'privileged_access_period_from_policy')).toBe(true);
+  });
+
+  it('records delegation between accounts, never offices, with its legal basis and period', () => {
+    const f = adm('ADM-GOV-039');
+    expect(f.fields.find(x => x.key === 'delegation.delegator')).toMatchObject({ type: 'registryReference', register: 'civicos.registry.officials' });
+    expect(f.fields.find(x => x.key === 'delegation.delegate')).toMatchObject({ type: 'registryReference', register: 'civicos.registry.officials' });
+    expect(f.fields.find(x => x.key === 'delegation.delegator_office')!.required).toBeFalsy();
+    expect(f.fields.find(x => x.key === 'delegation.legal_basis')!.rules!.some(r => r.rule === 'registered' && r.name === 'legal_references_resolve')).toBe(true);
+    expect(f.deviations.map(d => d.id)).toContain('accounts-not-offices');
+  });
+
   // ── Batch 3: taxpayer registration and account ──
   const tax = (id: string) => CATALOGUE_CONTRACTS.find(x => x.specId === id)!;
   const REG3 = ['individual', 'public_entity', 'nonresident', 'branch'].map(x => `taxpayer.registration.${x}`);
@@ -707,6 +977,9 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
       'taxpayer.registration.inspection': ['tax.registration', 'verification', 'verify'], 'taxpayer.registration.inspection_checklist': ['tax.registration', 'verification', 'verify'],
       'taxpayer.registration.verification_record': ['tax.registration', 'verification', 'verify'], 'taxpayer.registration.assessment': ['tax.registration', 'verification', 'propose'],
       'taxpayer.registration.decision': ['tax.registration', 'pending-approval', 'register'], 'taxpayer.registration.decision_record': ['tax.registration', 'pending-approval', 'register'],
+      // Since forms batch 6 (plan step I5): the registration change forms belong to the registration amendment procedure.
+      ...Object.fromEntries(['taxpayer.registration.amend', 'taxpayer.details.change', 'taxpayer.obligation.add', 'taxpayer.obligation.cancel', 'taxpayer.registration.transfer',
+        'taxpayer.registration.suspend_request', 'taxpayer.registration.reactivate_request'].map(x => [x, ['tax.registration-amendment', 'submitted'] as [string, string]])),
     };
     for (const id of IDS_3) {
       const f = tax(id);
@@ -719,8 +992,8 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
       }
       expect(f.authorityNote ?? '', id).toMatch(/authorityFor\('tax'\)/);
     }
-    // No procedure was invented: the tax procedures are the three references.
-    expect(TAX_PROCEDURES.map(p => p.key)).toEqual(['tax.registration', 'tax.return', 'tax.objection']);
+    // The tax procedures: the three references, then the tax services of plan step I5 (forms batch 6), none approved.
+    expect(TAX_PROCEDURES.map(p => p.key)).toEqual(['tax.registration', 'tax.return', 'tax.objection', 'tax.registration-amendment', 'tax.amendment', 'tax.refund', 'tax.payment-plan', 'tax.payment-plan-review', 'tax.disclosure', 'tax.ruling', 'tax.compliance']);
     expect(AUTHORITIES.some(a => a.key === 'tax')).toBe(true);
   });
 
@@ -754,5 +1027,239 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
       expect(len && 'params' in len ? len.params : undefined, id).toEqual({ min: 20, max: 10000 });
     }
     expect(tax('taxpayer.registration.appeal_assessment').fields.find(x => x.key === 'appeal_assessment.not_disqualified')!.rules!.some(r => r.rule === 'registered' && r.name === 'must_be_true')).toBe(true);
+  });
+
+  // ── Batch 6: tax services ──
+  const tax6 = (id: string) => CATALOGUE_CONTRACTS.find(x => x.specId === id)!;
+  const own6 = (f: CatalogueLibraryForm) => flat(f.fields).filter(x => !x.group);
+
+  it('holds every tax-services field under tax secrecy: restricted, confidentiality tax, read only under canReadTax()', () => {
+    for (const id of IDS_6) {
+      const f = tax6(id);
+      for (const x of own6(f)) {
+        expect(x.personalDataClass, `${id} ${x.key}`).toBe('restricted');
+        expect(x.confidentiality, `${id} ${x.key}`).toBe('tax');
+      }
+      // Field groups only record the act of declaring, or (a refund) the payout account the catalogue names; never other taxpayer data.
+      expect([...new Set(flat(f.fields).filter(x => x.group).map(x => x.group!.id))].every(g => ['core.declaration_signature', 'core.payout_account'].includes(g)), id).toBe(true);
+      if (flat(f.fields).some(x => x.group?.id === 'core.payout_account')) expect(id).toBe('tax.refund.application');
+      expect(f.form.policies?.['access.read_rule'], id).toMatch(/canReadTax\(\)/);
+      expect(f.form.policies?.['access.others'], id).toMatch(/taxpayer\.status/);
+      expect(f.deviations.map(d => d.id), id).toEqual(expect.arrayContaining(['tax-secrecy-class', 'no-tax-values']));
+      expect(f.batch, id).toBe(6);
+      expect(f.identity, id).toBe(`FIELD-SERIES-PARTS-01-02:${id}@1`);
+    }
+  });
+
+  it('types in no rate, period, penalty, interest or fee: lists the law decides ship empty, charges come only from an approved rule, stated amounts are named', () => {
+    const NATION = (src: string) => /^tax\.country\./.test(src) || ['tax.payment.approved_allocation_bases', 'tax.refund.approved_claim_bases', 'tax.compliance.approved_inspection_checklists'].includes(src);
+    for (const id of IDS_6) {
+      const f = tax6(id);
+      for (const name of Object.keys(f.form.lists ?? {})) expect(NATION(name), `${id} ships ${name}`).toBe(false);
+      // Lists a form ships are the procedure's own steps, proposed for the nation to review.
+      for (const [name, l] of Object.entries(f.form.lists ?? {})) expect(l.proposed, `${id} ${name}`).toBe(true);
+      for (const x of flat(f.fields)) if (x.valuesSourceId && NATION(x.valuesSourceId)) expect(x.countryDecision ?? '', `${id} ${x.key}`).toMatch(/country\.tax\.|Department [FG] country decisions/);
+      for (const v of f.nationValues) {
+        expect(['fee', 'days', 'period', 'threshold'], `${id} ${v.key}`).toContain(v.kind);
+        expect(v.key, id).toMatch(/^tax\./);
+      }
+      const stated = String(f.form.policies?.['amounts.stated'] ?? '');
+      for (const x of flat(f.fields).filter(y => y.type === 'money')) {
+        const derived = (x.rules ?? []).some(r => r.rule === 'registered' && r.name === 'derived_from_approved_rule');
+        if (derived) {
+          // A charge: the platform's, calculated by the approved rule; the nation's rule for it is named, unset; a production installation refuses without it.
+          expect(x.audience, `${id} ${x.key}`).toBe('system');
+          expect(f.nationValues.some(v => v.source === 'rule'), `${id} names the rule for ${x.key}`).toBe(true);
+          expect(f.deviations.map(d => d.id), id).toContain('charge-by-rule');
+        } else {
+          // A stated amount: named in the policy, never interest or a penalty.
+          expect(stated.split(':')[0], `${id} ${x.key}`).toContain(x.key);
+          expect(x.key, id).not.toMatch(/interest|penalt|fee/i);
+          expect(f.deviations.map(d => d.id), id).toContain('stated-amount');
+        }
+      }
+    }
+    // The rules the nation must configure are binding (recorded as not performed until then, and a publication blocker).
+    for (const name of ['nil_return_required_by_rule', 'late_filing_treatment_from_rule', 'payment_due_date_from_rule', 'refund_interest_from_rule', 'payment_arrangement_terms_from_rule', 'recovery_power_from_rule', 'voluntary_disclosure_treatment_from_rule', 'withholding_rule_active_for_period'])
+      expect(RULE_REGISTRY[name]?.scope, name).toBe('binding');
+  });
+
+  it('counts every dispute period by the approved rule from the event date, never a number of days; grounds of 20–10,000 characters', () => {
+    const DISPUTES = ['tax.return.periodic.objection', 'tax.return.periodic.appeal', 'tax.objection.submit', 'tax.assessment.review_request', 'tax.appeal.submit', 'tax.payment.dispute', 'tax.debt.recovery.dispute'];
+    for (const id of DISPUTES) {
+      const f = tax6(id);
+      const g = f.fields.find(x => x.key === 'dispute.grounds')!;
+      const len = (g.rules ?? []).find(r => r.rule === 'registered' && r.name === 'length');
+      expect(len && 'params' in len ? len.params : undefined, id).toEqual({ min: 20, max: 10000 });
+      expect(f.fields.find(x => x.key === 'dispute.timeliness_rule_ref')!.rules!.some(r => r.rule === 'registered' && r.name === 'dispute_period_from_rule'), id).toBe(true);
+      expect(f.fields.find(x => x.key === 'dispute.timeliness_rule_ref')!.audience, id).toBe('officer');
+      expect(f.nationValues.some(v => /^tax\.disputes\./.test(v.key) && v.source === 'rule'), id).toBe(true);
+    }
+    // An appeal goes to the body the law names: the tax authority never decides it, and a court's case is the judiciary's.
+    for (const id of ['tax.return.periodic.appeal', 'tax.appeal.submit', 'tax.appeal.transmit', 'tax.appeal.response']) {
+      expect(tax6(id).procedure, id).toBeNull();
+      expect(tax6(id).deviations.map(d => d.id), id).toEqual(expect.arrayContaining(['court-appeal', 'appeal-not-built']));
+    }
+  });
+
+  it('records an officer\'s findings with reasons, never a score; inspection records hold observations only; a referral names no suspect', () => {
+    for (const id of IDS_6) expect(flat(tax6(id).fields).map(x => x.key).filter(k => /score|rating|probab|risk/i.test(k)), id).toEqual([]);
+    const ASSESS = ['tax.return.periodic.officer_assessment', 'tax.refund.assessment', 'tax.objection.assessment', 'tax.compliance.findings_review', 'tax.debt.payment_plan.default_review', 'tax.debt.disclosure.assessment', 'tax.dispute.settlement_review'];
+    for (const id of ASSESS) {
+      const f = tax6(id);
+      expect(f.deviations.map(d => d.id), id).toContain('no-score');
+      expect(f.fields.find(x => x.key === 'assessment.findings')!.items!.map(i => i.key), id).toEqual(['matter', 'found', 'reasons']);
+      expect(f.fields.find(x => x.key === 'assessment.recommendation')!.hint, id).toMatch(/not a finding of liability/);
+      expect(f.fields.find(x => x.key === 'assessment.recorded_by')!.audience, id).toBe('officer');
+    }
+    for (const id of ['tax.compliance.evidence_register', 'tax.compliance.interview_record', 'tax.compliance.findings_draft']) expect(tax6(id).deviations.map(d => d.id), id).toContain('observations-only');
+    expect(tax6('tax.compliance.case.open').fields.find(x => x.key === 'compliance.grounds')!.hint).toMatch(/never as the reason/);
+    const referral = tax6('tax.compliance.referral');
+    expect(referral.deviations.map(d => d.id)).toEqual(expect.arrayContaining(['no-suspect', 'referral-case']));
+    expect(formScope(referral.key, referral.form, referral.fields).status).toBe('allowed');
+    // The objection's completeness check is by an official who did not take the decision objected to.
+    expect(tax6('tax.objection.assessment').fields.find(x => x.key === 'assessment.not_disqualified')!.rules!.some(r => r.rule === 'registered' && r.name === 'must_be_true')).toBe(true);
+  });
+
+  it('links each form to the tax procedure that carries it by identity, else names why it waits; payments open no case', () => {
+    const linked: Record<string, [string, string, string?]> = {
+      'tax.assessment.amendment': ['tax.amendment', 'lodged'],
+      'tax.assessment.notice': ['tax.return', 'assessed', 'issue'],
+      'tax.assessment.review_request': ['tax.amendment', 'lodged'],
+      'tax.compliance.assessment_decision': ['tax.compliance', 'pending-approval', 'assess'],
+      'tax.compliance.case.open': ['tax.compliance', 'opened', 'propose-scope'],
+      'tax.compliance.case_closure': ['tax.compliance', 'findings-review', 'close'],
+      'tax.compliance.evidence_register': ['tax.compliance', 'authorised'],
+      'tax.compliance.findings_draft': ['tax.compliance', 'authorised', 'draft-findings'],
+      'tax.compliance.findings_review': ['tax.compliance', 'findings-review', 'propose-assessment'],
+      'tax.compliance.information_request': ['tax.compliance', 'authorised', 'request-information'],
+      'tax.compliance.information_response': ['tax.compliance', 'awaiting-information', 'information-received'],
+      'tax.compliance.inspection_plan': ['tax.compliance', 'authorised'],
+      'tax.compliance.interview_record': ['tax.compliance', 'authorised'],
+      'tax.compliance.scope.approve': ['tax.compliance', 'scope-review', 'authorise'],
+      'tax.compliance.taxpayer_response': ['tax.compliance', 'awaiting-response', 'response-received'],
+      'tax.debt.disclosure.assessment': ['tax.disclosure', 'assessment', 'propose'],
+      'tax.debt.payment_plan.cancel_request': ['tax.payment-plan-review', 'received'],
+      'tax.debt.payment_plan.change_request': ['tax.payment-plan-review', 'received'],
+      'tax.debt.payment_plan.decision': ['tax.payment-plan', 'pending-approval', 'approve'],
+      'tax.debt.payment_plan.default_review': ['tax.payment-plan-review', 'review', 'propose'],
+      'tax.debt.payment_plan.evidence': ['tax.payment-plan', 'awaiting-evidence', 'evidence-received'],
+      'tax.debt.payment_plan.request': ['tax.payment-plan', 'requested'],
+      'tax.debt.voluntary_disclosure': ['tax.disclosure', 'received'],
+      'tax.dispute.closure': ['tax.objection', 'pending-approval'],
+      'tax.dispute.withdraw': ['tax.objection', 'review', 'withdraw'],
+      'tax.objection.assessment': ['tax.objection', 'review', 'propose'],
+      'tax.objection.decision': ['tax.objection', 'pending-approval', 'vary'],
+      'tax.objection.extension_request': ['tax.objection', 'lodged'],
+      'tax.objection.submit': ['tax.objection', 'lodged'],
+      'tax.objection.supplement': ['tax.objection', 'awaiting-information', 'information-received'],
+      'tax.refund.application': ['tax.refund', 'claimed'],
+      'tax.refund.assessment': ['tax.refund', 'assessment', 'propose'],
+      'tax.refund.decision': ['tax.refund', 'pending-approval', 'approve'],
+      'tax.refund.payment_instruction': ['tax.refund', 'approved', 'instruct'],
+      'tax.refund.reconciliation': ['tax.refund', 'instructed', 'reconcile'],
+      'tax.refund.supporting_evidence': ['tax.refund', 'awaiting-evidence', 'evidence-received'],
+      'tax.return.periodic.amend': ['tax.amendment', 'lodged'],
+      'tax.return.periodic.correction': ['tax.amendment', 'lodged'],
+      'tax.return.periodic.decision': ['tax.return', 'pending-approval', 'assess'],
+      'tax.return.periodic.further_information': ['tax.return', 'returned', 'resubmit'],
+      'tax.return.periodic.late_submission': ['tax.return', 'filed'],
+      'tax.return.periodic.nil': ['tax.return', 'filed'],
+      'tax.return.periodic.notice': ['tax.return', 'assessed', 'issue'],
+      'tax.return.periodic.objection': ['tax.objection', 'lodged'],
+      'tax.return.periodic.officer_assessment': ['tax.return', 'checking', 'propose'],
+      'tax.ruling.decision': ['tax.ruling', 'pending-approval', 'issue'],
+      'tax.ruling.further_information': ['tax.ruling', 'awaiting-information', 'information-received'],
+      'tax.ruling.reconsideration': ['tax.ruling', 'requested'],
+      'tax.ruling.request': ['tax.ruling', 'requested'],
+      'tax.ruling.withdraw': ['tax.ruling', 'review', 'withdraw'],
+      'tax.withholding.details.amend': ['tax.registration-amendment', 'submitted'],
+      'tax.withholding.discrepancy.decision': ['tax.compliance', 'findings-review', 'close'],
+      'tax.withholding.discrepancy.response': ['tax.compliance', 'awaiting-information', 'information-received'],
+      'tax.withholding.registration': ['tax.registration-amendment', 'submitted'],
+      'tax.withholding.return.amend': ['tax.amendment', 'lodged'],
+      'tax.withholding.return.submit': ['tax.return', 'filed'],
+    };
+    for (const id of IDS_6) {
+      const f = tax6(id);
+      if (linked[id]) {
+        const [key, stage, action] = linked[id]!;
+        expect(f.procedure, id).toMatchObject({ key, stage, ...(action ? { action } : {}) });
+        expect(f.json.procedure_package_id, id).toBe(key);
+        expect(TAX_PROCEDURES.some(p => p.key === key), id).toBe(true);
+      } else {
+        expect(f.procedure, id).toBeNull();
+        expect(f.awaits ?? '', id).toMatch(/not built|no case is opened/);
+      }
+      expect(f.authorityNote ?? '', id).toMatch(/authorityFor\('tax'\)/);
+    }
+    expect(Object.keys(linked)).toHaveLength(56);
+    // Payments are bills and receipts, reconciled once each: no case is opened, and nothing is marked paid by a click.
+    for (const id of ['tax.payment.initiate', 'tax.payment.external_reference', 'tax.withholding.payment']) {
+      expect(tax6(id).awaits, id).toMatch(/no case is opened/);
+      expect(tax6(id).deviations.map(d => d.id), id).toContain('bill-payment');
+    }
+    // Every procedure a batch-6 form names ships as a draft reference with no day count set.
+    for (const key of new Set(Object.values(linked).map(([k]) => k))) {
+      const p = TAX_PROCEDURES.find(x => x.key === key)!;
+      expect(p.reference, key).toBe(true);
+      for (const d of p.deadlines) expect(d.days, `${key} ${d.key}`).toBeUndefined();
+    }
+  });
+
+  // ── Batch 7: independent oversight (plan I8) ──
+  const ov = (id: string) => CATALOGUE_CONTRACTS.find(x => x.specId === id)!;
+  it('links each oversight form to its body\'s procedure by identity; each body a slot that ships empty', () => {
+    const linked: Record<string, [string, string, string?]> = {
+      'DEM-CON-012': ['ombudsman.complaint', 'received', 'register'], 'DEM-CON-013': ['human-rights.complaint', 'received', 'register'],
+      'DEM-CON-014': ['audit.engagement', 'fieldwork', 'record-finding'], 'DEM-CON-018': ['data-protection.rights-request', 'received', 'register'],
+      'DEM-CON-019': ['integrity.disclosure', 'received', 'register'], 'DEM-CON-020': ['audit.engagement', 'response'], 'DEM-PUB-009': ['integrity.disclosure', 'received', 'register'],
+    };
+    for (const id of IDS_7) {
+      const [key, stage, action] = linked[id]!;
+      expect(ov(id).procedure, id).toMatchObject({ key, stage, ...(action ? { action } : {}) });
+      expect(ov(id).batch).toBe(7);
+      // A slot of the deployment profile (optional for every body but data protection, which every installation names); none ships set.
+      expect(AUTHORITIES.find(a => a.key === ov(id).owner), id).toBeDefined();
+      if (ov(id).owner !== 'dataProtection') expect(AUTHORITIES.find(a => a.key === ov(id).owner), id).toMatchObject({ optional: true });
+      expect(ov(id).deviations.map(d => d.id), id).toEqual(expect.arrayContaining(['oversight-slot', 'recommendation-not-order']));
+    }
+    // The response answers every body's finding, never as a step of the body's case.
+    expect(ov('DEM-CON-020').procedure!.also).toEqual(['ombudsman.complaint', 'human-rights.complaint', 'integrity.disclosure', 'data-protection.rights-request']);
+    expect(ov('DEM-CON-020').procedure!.action).toBeUndefined();
+  });
+
+  it('keeps the person who raised a matter restricted and apart from the case, names no suspect, and writes no voter registration form', () => {
+    for (const id of ['DEM-CON-012', 'DEM-CON-013', 'DEM-CON-018', 'DEM-CON-019', 'DEM-PUB-009']) {
+      const f = ov(id);
+      const person = f.fields.filter(x => /^(complainant|discloser|requester)\./.test(x.key));
+      expect(person.length, id).toBeGreaterThanOrEqual(2);
+      for (const x of person) expect(x.personalDataClass, `${id} ${x.key}`).toBe('restricted');
+      expect(f.deviations.map(d => d.id), id).toContain('identity-kept-apart');
+      // The procedure the form feeds keeps no field about that person: it goes to the protected-identity record.
+      const p = INDEPENDENT_OVERSIGHT_PROCEDURES.find(x => x.key === f.procedure!.key)!;
+      expect(p.fields.map(x => x.key).filter(k => /name|contact|complainant|discloser|requester|raisedBy/i.test(k)), id).toEqual([]);
+    }
+    for (const id of IDS_7) for (const x of flat(ov(id).fields)) expect(x.key, `${id} ${x.key}`).not.toMatch(/suspect|accused|offender|voter|score|risk_rating/);
+    // Anonymity is the nation's decision; referrals carry the case reference only.
+    for (const id of ['DEM-CON-012', 'DEM-CON-019', 'DEM-PUB-009']) expect((ov(id).fields.find(x => /\.anonymous$/.test(x.key))!.rules ?? []).some(r => r.rule === 'registered' && r.name === 'configured_profile'), id).toBe(true);
+    for (const id of ['DEM-CON-019', 'DEM-PUB-009']) expect(ov(id).deviations.map(d => d.id), id).toEqual(expect.arrayContaining(['reference-only-referral', 'no-suspect']));
+    // Voter registration and the forms the scope holds for legal review stay unwritten.
+    for (const id of ['DEM-ELC-003', 'DEM-ELC-004', 'DEM-ELC-005', 'DEM-ELC-006']) {
+      expect(CATALOGUE_CONTRACTS.find(x => x.specId === id), id).toBeUndefined();
+      expect(scopeOf([id], []).status, id).toBe('legal_review');
+    }
+  });
+
+  it('records an audit finding by criteria, condition, cause, effect, evidence and recommendation; the response sits beside it', () => {
+    const f = ov('DEM-CON-014');
+    expect(f.fields.map(x => x.key)).toEqual(expect.arrayContaining(['finding.criteria', 'finding.condition', 'finding.cause', 'finding.effect', 'finding.evidence_items', 'finding.recommendation']));
+    for (const k of ['finding.criteria', 'finding.condition', 'finding.recommendation']) expect(f.fields.find(x => x.key === k)!.required, k).toBe(true);
+    expect(f.deviations.map(d => d.id)).toEqual(expect.arrayContaining(['response-beside', 'report-approval']));
+    const r = ov('DEM-CON-020');
+    expect(r.fields.find(x => x.key === 'response.institution')!.rules!.some(x => x.rule === 'registered' && x.name === 'actor_authorized_for_institution')).toBe(true);
+    expect(r.form.lists?.['civicos.oversight.response_positions']?.values.map(v => v.value)).toEqual(['accepted', 'partly-accepted', 'disputed']);
+    // The data-protection request: the authority never reads the records itself.
+    expect(ov('DEM-CON-018').deviations.map(d => d.id)).toContain('no-direct-read');
   });
 });

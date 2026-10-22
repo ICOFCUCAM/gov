@@ -4,6 +4,15 @@
 // its address; `was` keeps the earlier menu name so people (and the command
 // palette) still find it. Labels are the words a ministry uses; technical
 // names live in the glossary (lib/nav/glossary.ts).
+//
+// The menu shows only what the signed-in official can use (plan I2,
+// navigation filtered by permission): navFor() keeps the tabs whose rule in
+// lib/auth/roles.ts lets this official in (the rules the routes apply; the
+// backend still decides every request). Every page stays reachable for
+// someone allowed (console-nav.test.ts); without a signed-in official (sign-in
+// not enforced) the whole menu shows.
+
+import { adminOnly, installationAdmin, canSeeOnboarding, roleOf, type Scope } from '@/lib/auth/roles';
 
 export interface NavTab { label: string; href: string; was?: string }
 export interface NavItem {
@@ -55,7 +64,7 @@ export const CONSOLE_NAV: NavSection[] = [
         tab('Knock-on effects', '/gov/coordination', 'National Coordination'), tab('Live events', '/gov/live', 'Live Wall'),
         tab('Emergency screen', '/wall', 'NCCC Wall'), tab('Status history', '/gov/posture', 'Posture Board')] },
     { key: 'reg', icon: '◉', label: 'Regions', href: '/gov/regional', purpose: 'How each region is doing, side by side.', tabs: [tab('Regions', '/gov/regional', 'Regional Command')] },
-    { key: 'fin', icon: '§', label: 'Public finances', href: '/gov/treasury', purpose: 'Revenue, spending, reserves and fiscal pressure.', tabs: [tab('Public finances', '/gov/treasury', 'Treasury Command'), tab('Tax', '/gov/tax'), tab('Customs', '/gov/customs')] },
+    { key: 'fin', icon: '§', label: 'Public finances', href: '/gov/treasury', purpose: 'Revenue, spending, reserves and fiscal pressure.', tabs: [tab('Public finances', '/gov/treasury', 'Treasury Command'), tab('Tax', '/gov/tax'), tab('Tax services', '/gov/tax/services'), tab('Customs', '/gov/customs')] },
     { key: 'sec', icon: '◈', label: 'Security & public order', href: '/gov/security', purpose: 'Threats, incidents and the readiness of security services.', tabs: [tab('Security & public order', '/gov/security', 'Security & Interior')] },
     { key: 'geo', icon: '◷', label: 'Foreign relations', href: '/gov/geopolitical', purpose: 'Pressure from outside the borders: partners, markets and frontiers.', tabs: [tab('Foreign relations', '/gov/geopolitical', 'Geopolitical Monitor')] },
     { key: 'sim', icon: '⟁', label: 'What-if scenarios', href: '/gov/simulation', purpose: 'Try a scenario and see its likely effect before deciding. Results are modelled, never facts.', tabs: [tab('What-if scenarios', '/gov/simulation', 'National Simulation')] },
@@ -64,7 +73,10 @@ export const CONSOLE_NAV: NavSection[] = [
     { key: 'min', icon: '▦', label: 'All ministries & agencies', href: '/ministries',
       purpose: 'Every institution: set them up, see their mandates, performance and services.',
       tabs: [tab('Ministries & agencies', '/ministries', 'Institutions Admin'), tab('Directory', '/gov/registry', 'Institutions Catalogue'),
-        tab('Mandates', '/gov/charter', 'Charters'), tab('Performance', '/gov/accountability', 'Accountability'), tab('Service health', '/control', 'Ministry Control')] },
+        tab('Mandates', '/gov/charter', 'Charters'), tab('Performance', '/gov/accountability', 'Accountability'), tab('Service health', '/control', 'Ministry Control'),
+        // Plan I2: departments as records, the internal administration workspace, what each institution has, and completeness per item.
+        tab('Departments', '/gov/institutions/departments'), tab('Internal administration', '/gov/institutions/administration'),
+        tab('What it has', '/gov/institutions/capabilities'), tab('Readiness by item', '/gov/institutions/completeness')] },
   ]},
   { label: 'Services', items: [
     { key: 'ops', icon: '⊞', label: 'Operations', href: '/ops', purpose: 'Day-to-day running of public services across institutions.',
@@ -75,7 +87,7 @@ export const CONSOLE_NAV: NavSection[] = [
   { label: 'National data', items: [
     { key: 'twin', icon: '◬', label: 'National data', href: '/gov/twin',
       purpose: 'The facts the government relies on, where each comes from and what was known when.',
-      tabs: [tab('National data', '/gov/twin', 'National Twin'), tab('Sensor and system feeds', '/gov/telemetry', 'Telemetry Wall'),
+      tabs: [tab('National data', '/gov/twin', 'National Twin'), tab('Indicators', '/gov/twin/indicators'), tab('Sensor and system feeds', '/gov/telemetry', 'Telemetry Wall'),
         tab('Messages between institutions', '/gov/federation', 'Federation Stream'), tab('Activity across government', '/gov/global', 'Global feed'),
         tab('Sites', '/gov/sites'), tab('Capture a site', '/gov/sites/capture'), tab('Boundaries', '/gov/sites/boundaries'),
         tab('Land parcels', '/gov/sites/parcels'), tab('Sources that disagree', '/gov/twin/conflicts')] },
@@ -90,7 +102,7 @@ export const CONSOLE_NAV: NavSection[] = [
       purpose: 'The tamper-evident record of every action, and the means to check it.',
       tabs: [tab('Audit record', '/audit', 'Oversight'), tab('Search the record', '/gov/audit', 'Audit Explorer'), tab('Activity', '/gov/activity', 'Activity Log'),
         tab('Signatures', '/gov/signatures', 'Signature Audit'), tab('Independent confirmations', '/gov/witnesses', 'Audit Witnesses'),
-        tab('Check an exported record', '/gov/audit-replay', 'Audit Replay'), tab('Who read what', '/gov/access-log')] },
+        tab('Check an exported record', '/gov/audit-replay', 'Audit Replay'), tab('Who read what', '/gov/access-log'), tab('Independent oversight', '/gov/oversight')] },
   ]},
   { label: 'People', items: [
     { key: 'staff', icon: '⚿', label: 'Staff', href: '/gov/officers', purpose: 'Officials, their roles and their accounts.',
@@ -135,3 +147,45 @@ export function locate(pathname: string): { section: string; item: NavItem; tab?
 /** Links in the console header rather than the side menu. */
 export const HEADER_LINKS: NavTab[] = [tab('Search', '/gov/search', 'Search')];
 const SEARCH_ITEM: NavItem = { key: 'search', icon: '⌕', label: 'Search', href: '/gov/search', purpose: 'Find any record by its name, reference or the person involved.', tabs: [tab('Search', '/gov/search')] };
+
+// ── Navigation filtered by permission (plan I2) ─────────────────────────────
+
+/**
+ * Who may use a page, by its address: the same rule lib/auth/roles.ts applies
+ * to what the page reads or changes. Pages not listed are open to every
+ * signed-in official (the page and its API still check each record).
+ */
+const PAGE_RULES: Record<string, (s: Scope) => string | null> = {
+  '/admin/officials': adminOnly,
+  '/gov/officers/bulk': adminOnly,
+  '/setup': adminOnly,
+  '/admin/messaging': adminOnly,
+  '/admin/onboarding': canSeeOnboarding,
+  '/platform': installationAdmin,
+  '/gov/crons': installationAdmin,
+  '/admin/releases': installationAdmin,
+  // The access log and the audit chain: auditors and the data-protection authority's officials (never administrators by their role).
+  '/gov/access-log': s => (roleOf(s) === 'auditor' || (!!s.institution && roleOf(s) !== 'administrator') ? null : 'The access log is read by auditors and by the data-protection authority'),
+  '/gov/audit': s => (roleOf(s) === 'auditor' || (!!s.institution && roleOf(s) !== 'administrator') ? null : 'The audit chain is read by auditors and by the data-protection authority'),
+  // Loading cases changes records: not auditors.
+  '/gov/work/cases': s => (roleOf(s) === 'auditor' ? 'Auditors can read records but not change them' : null),
+};
+/** Whether the official may use the page at `href` (null: yes). */
+export const pageRefusal = (s: Scope, href: string): string | null => PAGE_RULES[href]?.(s) ?? null;
+
+/**
+ * The menu as this official sees it: tabs whose rule refuses them are left
+ * out, and an item with no tab left disappears (its first remaining tab
+ * becomes its address). Null scope: no one is signed in, the whole menu.
+ */
+export function navFor(s: Scope | null): NavSection[] {
+  if (!s) return CONSOLE_NAV;
+  return CONSOLE_NAV.map(sec => ({
+    ...sec,
+    items: sec.items.flatMap(item => {
+      const tabs = item.tabs.filter(t => !pageRefusal(s, t.href));
+      if (!tabs.length) return [];
+      return [{ ...item, tabs, href: tabs.some(t => t.href === item.href) ? item.href : tabs[0]!.href }];
+    }),
+  })).filter(sec => sec.items.length);
+}

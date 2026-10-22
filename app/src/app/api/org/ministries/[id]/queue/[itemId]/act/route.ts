@@ -3,6 +3,7 @@ import { actOnQueueItem } from '@/lib/data/store';
 import type { QueueAction } from '@/lib/api/types';
 import { withOfficial, refusal } from '@/lib/auth/official';
 import { ministryPermission } from '@/lib/auth/roles';
+import { actingName } from '@/lib/casework/actor';
 export const dynamic = 'force-dynamic';
 const ACTIONS = ['assign', 'escalate', 'clear'];
 export async function POST(
@@ -16,7 +17,7 @@ export async function POST(
   if (!b.action || !ACTIONS.includes(b.action)) {
     return NextResponse.json({ error: 'action must be assign|escalate|clear' }, { status: 422 });
   }
-  const r = actOnQueueItem(params.id, params.itemId, b.action as QueueAction, b.by ?? 'operator', b.note);
+  const r = actOnQueueItem(params.id, params.itemId, b.action as QueueAction, await actingName(b.by), b.note);
   if ('error' in r) return NextResponse.json(r, { status: 409 });
   return NextResponse.json({ item: r });
 }

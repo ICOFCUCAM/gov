@@ -1,0 +1,401 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-PRC-019",
+ "record_type": "administration.procurement.evaluation",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-PRC-019",
+  "part": 21,
+  "section": "21.1",
+  "line": 1106,
+  "batch": 5
+ },
+ "library": {
+  "title": "Record a procurement evaluation",
+  "intro": "Record the evaluation committee's findings on each bid against the published criteria, with reasons, and its recommendation. Every member declares any conflict of interest first.",
+  "owner": "institution",
+  "filled_by": "The evaluation committee's secretary, signed in.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": null,
+  "intended": "A procurement evaluation procedure: not built; the form waits in the library (plan steps I2 and I5)",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials (and auditors with a purpose); every read of personal data in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "procedure-not-built",
+    "what": "A procurement evaluation procedure: no reference procedure carries this form yet; it waits in the library for the institution's procedure, drafted by one official and approved by another",
+    "why": "Cases change only under an approved procedure package; the plan builds the internal-administration procedures in the order of plan step I2 (the payroll, establishment, privileged-access, policy, delegation, disciplinary and legal-advice procedures first).",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts under an approved procedure package"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   },
+   {
+    "id": "no-score",
+    "what": "Evaluations record findings against the approved criteria with reasons, by named officials; the platform computes no score, ranking or recommendation",
+    "why": "An evaluation is a decision of officials, never a generated number.",
+    "rule": "CLAUDE.md Government operating model: AI never makes a legally material decision; customs and medicines: an officer's choice with reasons, never a score"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1106,
+    "quotes": [
+     "ADM-PRC-019",
+     "Procurement evaluation"
+    ],
+    "met_by": {
+     "fields": [
+      "evaluation.bids",
+      "evaluation.recommendation"
+     ],
+     "deviation": "no-score"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 972,
+    "quotes": [
+     "Procurement",
+     "Plans, requisitions, tenders, contracts, acceptance and supplier records"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "evaluation.bids",
+      "evaluation.recommendation"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "evaluation.tender",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Tender reference"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter tender reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The tender"
+   }
+  },
+  {
+   "id": "evaluation.criteria_version",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evaluation_criteria_from_policy",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Published evaluation criteria (version)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter published evaluation criteria (version)."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The tender"
+   }
+  },
+  {
+   "id": "evaluation.bids",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_procurement",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Bids evaluated"
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "bidder",
+     "type": "registry_reference",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": "civicos.registry.organisation",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Bidder (organisations register)"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter bidder (organisations register)."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "findings",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 4000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Findings against the criteria, with reasons"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter findings against the criteria, with reasons.",
+       "length": "Findings against the criteria, with reasons must be 4000 characters or fewer."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "responsive",
+     "type": "boolean",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Responsive to every mandatory requirement"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select an answer."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "Bids"
+   }
+  },
+  {
+   "id": "evaluation.declared",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Every committee member declared any conflict of interest before the evaluation"
+   },
+   "error_text": {
+    "en": {
+     "required": "Confirm this statement to continue.",
+     "must_be_true": "Confirm this statement to continue."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The committee"
+   }
+  },
+  {
+   "id": "evaluation.recommendation",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recommendation, with reasons"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter recommendation, with reasons.",
+     "length": "Recommendation, with reasons must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The committee"
+   }
+  },
+  {
+   "id": "evaluation.report",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "evaluation-report",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Evaluation report"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the document."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The committee"
+   }
+  },
+  {
+   "id": "evaluation.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -462,8 +462,12 @@ export const api = {
       req<{ ministry: Ministry }>(`/api/org/ministries/${id}/merge`, { method: 'POST', body: JSON.stringify({ targetId }) }),
     addDepartment: (id: string, name: string) =>
       req<{ ministry: Ministry }>(`/api/org/ministries/${id}/departments`, { method: 'POST', body: JSON.stringify({ name }) }),
-    removeDepartment: (id: string, deptId: string) =>
-      req<{ ministry: Ministry }>(`/api/org/ministries/${id}/departments/${deptId}`, { method: 'DELETE' }),
+    /** Ends a department with a reason; it is kept, never deleted (plan I0.2). */
+    endDepartment: (id: string, deptId: string, reason: string) =>
+      req<{ ministry: Ministry }>(`/api/org/ministries/${id}/departments/${deptId}`, { method: 'POST', body: JSON.stringify({ op: 'end', reason }) }),
+    /** Kept from before: the DELETE route now ends the department with the reason given. */
+    removeDepartment: (id: string, deptId: string, reason: string) =>
+      req<{ ministry: Ministry }>(`/api/org/ministries/${id}/departments/${deptId}`, { method: 'DELETE', body: JSON.stringify({ reason }) }),
     setModule: (id: string, moduleKey: string, enabled: boolean) =>
       req<{ ministry: Ministry }>(`/api/org/ministries/${id}/modules`, { method: 'POST', body: JSON.stringify({ moduleKey, enabled }) }),
   },

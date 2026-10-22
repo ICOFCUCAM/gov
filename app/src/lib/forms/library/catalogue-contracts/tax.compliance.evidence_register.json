@@ -1,0 +1,524 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "tax.compliance.evidence_register",
+ "record_type": "tax.evidence_register",
+ "form_version": 1,
+ "procedure_package_id": "tax.compliance",
+ "legal_basis": [],
+ "country_decisions": [
+  "country.tax.compliance_powers: inspection powers, information requests, evidence rules, taxpayer safeguards and authorized officers (approved by the authorized tax and legal authority).",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for these records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "tax.compliance.evidence_register",
+  "part": 2,
+  "section": "2.6",
+  "line": 2906,
+  "batch": 6
+ },
+ "library": {
+  "title": "Register evidence collected lawfully",
+  "intro": "Register each piece of evidence collected within the authorised scope: what it is, where and how it was obtained, under which power, and who has held it since. Evidence only; it establishes nothing by itself.",
+  "owner": "tax",
+  "filled_by": "An authorised tax officer.",
+  "authority": "The tax administration the nation names under Who is responsible (deployment profile slot tax, authorityFor('tax')); where tax policy and tax administration are different institutions, only the administration acts on these forms; never a ministry by name.",
+  "procedure": {
+   "key": "tax.compliance",
+   "stage": "authorised",
+   "document": "evidence"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadTax() in lib/auth/roles.ts: the tax authority's officials and auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only registration status, through the taxpayer.status exchange service, for an approved purpose"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "observations-only",
+    "what": "The record holds observations and evidence only: it establishes no fraud, criminal conduct or tax liability, which need the separate authorised process, its decision rule, a responsible decision-maker and the chance to respond",
+    "why": "The field series' mandatory safeguard for inspection records.",
+    "rule": "Field series Part 2 §2.6 Department D (mandatory safeguard)"
+   },
+   {
+    "id": "officer-from-sign-in",
+    "what": "The official who records it comes from the signed-in session, never typed; their authority is the power cited and the role roles.ts gives them",
+    "why": "Who acted is the verified signed-in official.",
+    "rule": "CLAUDE.md Who acted: withOfficial() replaces any name in the request"
+   },
+   {
+    "id": "custody-binding",
+    "what": "The chain of custody is recorded per item and checked by the binding rule evidence_chain_complete, which needs an evidence-custody register not on the platform yet",
+    "why": "Evidence handling is the nation's procedure; an unverifiable chain blocks publication.",
+    "rule": "Integration register (evidence custody, plan I11); lib/forms/rules.ts"
+   },
+   {
+    "id": "no-score",
+    "what": "No risk score, rating or automatic finding: the officer records what was checked and found, with reasons; a risk indicator, where the law allows one, only helps an officer choose work and is recorded with its policy version and human review",
+    "why": "A score must not determine liability, deny a refund or impose a penalty; findings are an officer's, with reasons.",
+    "rule": "Field series Part 2 §2.6 Department D; specification §5.2; CLAUDE.md: AI never makes a legally material decision"
+   },
+   {
+    "id": "tax-secrecy-class",
+    "what": "Every field of the form is restricted and marked tax secrecy (confidentiality tax), stricter than the catalogue's administrative and personal classes where it gives them; the case is restricted and read only under canReadTax() (the tax authority's officials, auditors with a purpose), every read in the access log; other institutions learn status only through the taxpayer.status exchange service",
+    "why": "Tax records are confidential: a class label alone grants no access, and nothing about a taxpayer leaves the tax authority except through an approved exchange for an approved purpose.",
+    "rule": "CLAUDE.md Tax: lib/tax/ is read by the tax authority only (canReadTax(), every read in the access log); others use the taxpayer.status exchange service"
+   },
+   {
+    "id": "no-tax-values",
+    "what": "No rate, threshold, penalty, interest, deadline, filing period, refund period, instalment term or fee is typed: each is a named nation value checked by a binding rule (recorded as not performed and a publication blocker until the nation approves it); tax types, periods, schemas, methods, bases, remedies, outcomes and actions are nation lists that ship empty",
+    "why": "The field series Part 2 §2.6: tax liabilities, rates, filing periods, exemptions, penalties, interest, thresholds, deadlines, retention and appeal rights come from approved national rules, never universal constants.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2906,
+    "quotes": [
+     "tax.compliance.evidence_register",
+     "Register evidence collected lawfully",
+     "Authorized officer",
+     "Evidence handling",
+     "Evidence register"
+    ],
+    "met_by": {
+     "fields": [
+      "evidence.items",
+      "evidence.authority_ref"
+     ],
+     "procedure": "draft-findings"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2896,
+    "quotes": [
+     "Tax compliance workflows must be grounded in the powers and safeguards of the national tax law.",
+     "A risk indicator may help an authorized officer prioritize work where lawful, but CivicOS must not invent a risk score, infer wrongdoing from protected characteristics, or automatically make a legally material finding."
+    ],
+    "met_by": {
+     "deviation": "no-score",
+     "country_decision": "country.tax.compliance_powers"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3222,
+    "quotes": [
+     "country.tax.compliance_powers",
+     "Inspection powers, information requests, evidence rules, taxpayer safeguards and authorized officers",
+     "Authorized tax/legal authority"
+    ],
+    "met_by": {
+     "country_decision": "country.tax.compliance_powers"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 397,
+    "quotes": [
+     "Risk scores must not independently determine liability, deny a refund or impose a penalty.",
+     "If a country authorizes risk-based selection, record the policy version, inputs, purpose and human review.",
+     "Provide a lawful challenge mechanism where applicable."
+    ],
+    "met_by": {
+     "deviation": "no-score"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3043,
+    "quotes": [
+     "Mandatory safeguard: an inspection record contains observations and evidence.",
+     "It does not itself establish fraud, criminal conduct or tax liability.",
+     "Those outcomes require the separate legally authorized process, the applicable decision rule, a responsible decision-maker and any required opportunity to respond."
+    ],
+    "met_by": {
+     "deviation": "observations-only"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3205,
+    "quotes": [
+     "Universal control: these records must be bound to the actual service-specific procedure package.",
+     "A generic internal form cannot be used to bypass the case's approved stages, skip mandatory legal review or issue a decision that the officer is not authorized to make."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "Each record is made at a step of tax.compliance, the procedure its case runs under; it cannot move the case past an approved stage, skip the taxpayer's response or decide what the official may not decide (caseActRefusal())"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3191,
+    "quotes": [
+     "case_ref: identifier_reference, required; source is the owning institution's authorized case registry."
+    ],
+    "met_by": {
+     "fields": [
+      "evidence.case_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 3194,
+    "quotes": [
+     "evidence_refs: registry_reference, conditional according to the procedure."
+    ],
+    "met_by": {
+     "fields": [
+      "evidence.items",
+      "evidence.files"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 411,
+    "quotes": [
+     "Audit",
+     "Legal basis → authorized scope → notification or lawful exception → evidence → findings → response → decision",
+     "Audit report and resulting decision"
+    ],
+    "met_by": {
+     "fields": [
+      "evidence.items"
+     ],
+     "procedure": "draft-findings"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "evidence.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The case"
+   },
+   "hint": {
+    "en": "The open case of the procedure this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the case.",
+     "case_exists_and_is_open": "Select an open case of this procedure."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "evidence.authority_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "legal_references_resolve",
+     "params": {}
+    },
+    {
+     "rule": "inspection_power_valid_for_scope",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.approved_legal_authorities",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The power it was collected under"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the power it was collected under.",
+     "legal_references_resolve": "Every provision must be a confirmed version in the laws register."
+    }
+   },
+   "country_decision": "country.tax.compliance_powers: the legal powers of review, inspection and information requests, and the officers authorised (none ship).",
+   "confidentiality": "tax"
+  },
+  {
+   "id": "evidence.items",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_chain_complete",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Evidence"
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to evidence."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "multiple": true,
+   "items": [
+    {
+     "id": "description",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "min": 1,
+        "max": 300
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "What it is"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter what it is.",
+       "length": "What it is must be between 1 and 300 characters."
+      }
+     },
+     "country_decision": null,
+     "confidentiality": "tax"
+    },
+    {
+     "id": "obtainedFrom",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "min": 1,
+        "max": 300
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Where and from whom it was obtained"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter where and from whom it was obtained.",
+       "length": "Where and from whom it was obtained must be between 1 and 300 characters."
+      }
+     },
+     "country_decision": null,
+     "confidentiality": "tax"
+    },
+    {
+     "id": "obtainedOn",
+     "type": "date",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "When"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter when."
+      }
+     },
+     "country_decision": null,
+     "confidentiality": "tax"
+    },
+    {
+     "id": "custody",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "min": 1,
+        "max": 2000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "Who has held it since, and where it is kept"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter who has held it since, and where it is kept.",
+       "length": "Who has held it since, and where it is kept must be between 1 and 2000 characters."
+      }
+     },
+     "country_decision": null,
+     "confidentiality": "tax"
+    }
+   ],
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "evidence.files",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "compliance_evidence",
+     "when": "when_the_evidence_is_a_document"
+    }
+   ],
+   "label": {
+    "en": "Evidence files"
+   },
+   "error_text": {
+    "en": {
+     "evidence_requirement_in_approved_package": "This evidence is not included in the approved procedure."
+    }
+   },
+   "country_decision": null,
+   "confidentiality": "tax",
+   "multiple": true,
+   "section": {
+    "en": "Evidence"
+   }
+  },
+  {
+   "id": "evidence.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded by"
+   },
+   "hint": {
+    "en": "The signed-in official; never typed."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  },
+  {
+   "id": "evidence.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null,
+   "confidentiality": "tax"
+  }
+ ]
+}

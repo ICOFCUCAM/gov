@@ -23,6 +23,8 @@ import { useRenderNow } from '@/lib/clock/render-now';
 import { executivePosture } from '@/lib/gov/executive-posture';
 import { useSignIn } from '@/lib/official';
 import { greetingName } from '@/lib/workspace/home';
+import type { IndicatorValue } from '@/lib/indicators/types';
+import { valueText, sourceText } from '@/components/features/indicators/IndicatorTile';
 
 // A function so the executive office's name follows the installed nation at render.
 const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] => [
@@ -98,6 +100,8 @@ export default function SovereignCommandCenter() {
   // Receipts the signed-in official may see (/api/payments): the one real money
   // figure on this screen, counted from the payments register.
   const [receipts, setReceipts] = React.useState<PaymentReceipt[] | null>(null);
+  // Government-wide indicators computed from the institutions' cases (plan step I3, /api/indicators).
+  const [indicators, setIndicators] = React.useState<IndicatorValue[] | null>(null);
   const [now, setNow] = React.useState(useRenderNow());
 
   React.useEffect(() => {
@@ -110,6 +114,7 @@ export default function SovereignCommandCenter() {
       ]);
       setSov(s); setNat(n); setCoord(c); setMins(m);
       api.payments.list().then(r => setReceipts(r.receipts)).catch(() => setReceipts(null));
+      fetch('/api/indicators', { cache: 'no-store' }).then(r => r.json()).then(j => setIndicators(Array.isArray(j?.values) ? j.values : null)).catch(() => setIndicators(null));
     };
     void load();
     const poll = setInterval(() => void load(), 12_000);
@@ -173,13 +178,25 @@ export default function SovereignCommandCenter() {
     { i: '✦', l: 'Verify Document', s: 'Tamper-evident verification', href: '/wallet/documents' },
     { i: '⊞', l: 'Municipal Onboarding', s: 'Set up a municipality', href: '/admin/onboarding' },
   ];
-  // The first two lines read the coordination posture and the incident list;
-  // the rest come from the reference model and carry the Sample marker.
+  // The first two lines read the coordination posture and the incident list; the next come from the
+  // indicator register, computed from the institutions' cases (plan step I3): each with its marker, or
+  // "not connected" while no institution runs an approved procedure. The reference model's lines
+  // (energy, health capacity, treasury liquidity) carry the Sample marker in demo and training only.
+  const ind = (id: string) => indicators?.find(v => v.indicatorId === id);
+  const indLine = (id: string, words: string): { text: string; kind?: SignalKind; src?: string } => {
+    const v = ind(id);
+    if (!v) return { text: `${words}: computing from the records`, kind: 'unavailable', src: 'The indicator register has not answered yet' };
+    return { text: `${words}: ${v.value === null ? (v.kind === 'unavailable' ? 'not connected' : valueText(v).toLowerCase()) : valueText(v)}${v.status === 'draft' ? ' (draft definition)' : ''}`, kind: v.kind, src: sourceText(v) };
+  };
   const brief: { text: string; kind?: SignalKind; src?: string }[] = [
     view.risk.kind === 'unavailable'
       ? { text: 'National stability: not connected', kind: 'unavailable', src: view.risk.src }
       : { text: `National stability: ${posture && posture.level !== 'ok' ? 'Elevated' : posture?.label === 'NONE RECORDED' ? 'no incidents recorded' : 'Stable'}`, kind: view.risk.kind, src: view.risk.src },
     { text: `${sev('sev1')} critical escalations require attention`, kind: view.incidents.kind, src: view.incidents.src },
+    indLine('casework.cases_decided', 'Cases decided this month across government'),
+    indLine('casework.past_deadline', 'Open cases past a deadline'),
+    indLine('casework.referrals_unresolved', 'Referrals between institutions still open'),
+    indLine('casework.decisions_citing_law', 'Decisions citing a law version'),
     ...(gen.show
       ? [
         { text: 'Energy sector pressure in one region', kind: 'sample' as SignalKind },
@@ -538,7 +555,8 @@ export default function SovereignCommandCenter() {
             <ul className="space-y-1.5 text-[11px] leading-snug">
               {brief.map((b, i) => <li key={i} className="flex gap-1.5"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: ACCENT }} /><span className="text-ink-soft">{b.text}</span>{b.kind ? <SignalTag kind={b.kind} source={b.src ?? REFERENCE_MODEL} className="ml-auto self-start" /> : null}</li>)}
             </ul>
-            <Link href="/gov" className="focus-ring mt-2 inline-block text-[11px] text-link underline underline-offset-2">Read full briefing →</Link>
+            <Link href="/gov" className="focus-ring mt-2 inline-block text-[11px] text-link underline underline-offset-2">Read full briefing →</Link>{' '}
+            <Link href="/gov/twin/indicators" className="focus-ring mt-2 inline-block text-[11px] text-link underline underline-offset-2">Indicators →</Link>
           </Panel>
 
           <Panel label={`Active Incidents (${incidents.length})`} meta={<Link href="/gov/coordination" className="text-link underline">View all</Link>}>

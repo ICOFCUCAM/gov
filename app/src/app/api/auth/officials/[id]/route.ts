@@ -4,14 +4,22 @@
 // or reset its second sign-in step when the official's phone is lost
 // ({ resetTwoStep: true }; they set it up again at their next sign-in), or
 // issue a one-time password reset code to hand over in person
-// ({ issueReset: true }; shown once, expires in 24 hours).
+// ({ issueReset: true }; shown once, expires in 24 hours), or set the
+// attributes the account is scoped by within its institution (plan I2:
+// { attributes: { facilities?, jurisdictions?, tasks? } }; each list narrows
+// what the role allows, never widens it; checked against the facility
+// register, the nation's regions and the task permissions; an independent
+// institution's accounts only by its own administrators).
 // An account of an independent institution (now, or after the change) is
 // changed by that institution's own administrator; an administrator serving
 // the whole government proposes the change and it waits (202) for an
 // official who can sign there (lib/auth/account-changes.ts,
 // accountChangeRule()); administrators of another institution may not.
 import { NextRequest, NextResponse } from 'next/server';
-import { setDisabled, setRole, removeTwoStep, issueReset, accountById } from '@/lib/auth/officials';
+import { setDisabled, setRole, removeTwoStep, issueReset, accountById, setAttributes } from '@/lib/auth/officials';
+import { TASK_PERMISSIONS } from '@/lib/auth/roles';
+import { regionList } from '@/lib/nation/registry';
+import { getFacility } from '@/lib/data/facilities';
 import { accountChangeRule } from '@/lib/auth/roles';
 import { proposeAccountChange, type AccountChangeKind } from '@/lib/auth/account-changes';
 import { currentOfficial, actorLabel } from '@/lib/auth/official';
@@ -24,7 +32,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   const o = await currentOfficial();
   if (!o) return NextResponse.json({ error: 'Sign in as an official' }, { status: 401 });
   if (roleOf(o) !== 'administrator') return NextResponse.json({ error: 'Only an administrator can change accounts' }, { status: 403 });
-  const b = (await req.json().catch(() => ({}))) as { disabled?: boolean; role?: string; institution?: string | null; resetTwoStep?: boolean; issueReset?: boolean };
+  const b = (await req.json().catch(() => ({}))) as { disabled?: boolean; role?: string; institution?: string | null; resetTwoStep?: boolean; issueReset?: boolean; attributes?: { facilities?: unknown; jurisdictions?: unknown; tasks?: unknown } };
   const self = `local:${params.id}` === o.sub;
   const target = accountById(params.id);
   if (!target) return NextResponse.json({ error: 'No such account' }, { status: 422 });
@@ -32,6 +40,18 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   const moving = 'institution' in b ? (b.institution || undefined) : undefined;
   const rule = accountChangeRule(o, [target.institution, moving]);
   if (typeof rule === 'string') return NextResponse.json({ error: rule }, { status: 403 });
+  // Attribute scope (plan I2): narrows an account within its institution; checked against the records it names.
+  if (b.attributes && typeof b.attributes === 'object') {
+    if (rule) return NextResponse.json({ error: 'This account belongs to an independent institution: only its own administrators set its attribute scope' }, { status: 403 });
+    const list = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').map(x => x.trim()).filter(Boolean) : v === undefined ? undefined : []);
+    const facilities = list(b.attributes.facilities), jurisdictions = list(b.attributes.jurisdictions), tasks = list(b.attributes.tasks);
+    const regions = [...regionList([])];
+    for (const f of facilities ?? []) { const site = getFacility(f); if (!site || site.ownerId !== target.institution) return NextResponse.json({ error: `Facility ${f} is not a site of this account's institution in the facility register` }, { status: 422 }); }
+    for (const j of jurisdictions ?? []) if (regions.length && !regions.includes(j)) return NextResponse.json({ error: `${j} is not one of the nation's regions` }, { status: 422 });
+    for (const t of tasks ?? []) if (!TASK_PERMISSIONS.some(x => x.id === t)) return NextResponse.json({ error: `${t} is not a task permission (lib/auth/roles.ts)` }, { status: 422 });
+    const r = setAttributes(params.id, { ...(facilities ? { facilities } : {}), ...(jurisdictions ? { jurisdictions } : {}), ...(tasks ? { tasks } : {}) }, actorLabel(o));
+    return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json({ account: r });
+  }
   if (rule && !self) {
     const kind: AccountChangeKind = b.issueReset ? 'issue-reset' : b.resetTwoStep ? 'reset-two-step' : ('role' in b || 'institution' in b) ? 'role' : b.disabled ? 'disable' : 'enable';
     const p = proposeAccountChange({ kind, accountId: params.id, details: { ...('role' in b ? { role: b.role } : {}), ...('institution' in b ? { institution: b.institution ?? null } : {}) } }, rule.confirmBy, { by: actorLabel(o), byId: o.sub });

@@ -124,15 +124,17 @@ describe('the institution register\'s constitutional terms', () => {
     expect(getMinistry(assembly)!.name).toBe('House of Assembly');
   });
 
-  it('makes the bodies named for the judiciary, data protection, legislature, head of state and a constitutional court independent; others only by standing', () => {
+  it('makes the bodies named for the judiciary, data protection, legislature, head of state, a constitutional court and the oversight bodies independent; others only by standing', () => {
     const [j, dp, leg, hos, cc, audit, central] = ['Courts', 'Data Commissioner', 'Parliament', 'Royal Household', 'Constitutional Council', 'Audit Office', 'Central Bank'].map((n, i) => mk(n, `slot${i}`));
     setSovereign({ deployment: { authorities: { judiciary: j!, dataProtection: dp!, legislature: leg!, headOfState: hos!, constitutionalCourt: cc!, supremeAudit: audit!, centralBank: central! } } }, 'test');
     const b = institutionBounds();
     for (const id of [j, dp, leg, hos, cc]) expect(b.independent).toContain(id);
     expect(b.judicial).toEqual(expect.arrayContaining([j, cc]));
     expect(b.judicial).not.toContain(leg);
-    expect(b.independent).not.toContain(audit);
+    // Plan step I8: the oversight bodies (public audit office, ombudsman, human rights, anti-corruption) keep their own records.
+    expect(b.independent).toContain(audit);
     expect(b.independent).not.toContain(central);
+    // Its power to read another independent body's case still needs its recorded standing.
     expect(b.audit).toBeUndefined(); // named, but not recorded as set up by the constitution
     recordTermsDuringSetup(audit!, { standing: 'independent-constitutional' }, 'Admin A');
     expect(institutionBounds().audit).toBe(audit);

@@ -1,0 +1,478 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "ADM-ICT-029",
+ "record_type": "administration.ict.access-request",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
+  "CFG-ADM-002: the approval limits of each institution and the separation-of-duties steps beyond the platform minimum of two officials (lib/casework/dual-control-policy.ts; the country adds steps, never removes them).",
+  "CFG-ADM-003: financial rules: budget periods, allowances and reimbursement rates, payroll deductions, procurement methods and thresholds, asset categories and disposal methods (approved, cited rule versions; none ship).",
+  "CFG-ADM-004: the records classification scheme and retention schedules (lib/data/retention.ts), approved by the records authority the nation names.",
+  "CFG-ADM-005: the institution's ICT systems and privileged roles, and the longest privileged access its security policy allows."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "ADM-ICT-029",
+  "part": 21,
+  "section": "21.1",
+  "line": 1116,
+  "batch": 5
+ },
+ "library": {
+  "title": "Request access to a system",
+  "intro": "Ask for access to one of the institution's systems: the system, the role, why and for how long. Your manager and the system's owner approve; the access is provisioned in that system and referred to here.",
+  "owner": "institution",
+  "filled_by": "The official needing access, signed in.",
+  "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
+  "procedure": null,
+  "intended": "An access-request procedure of the institution: not built; the form waits in the library (plan step I2). Privileged access has its procedure (adm.privileged-access, ADM-ICT-030)",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: this institution's own officials (and auditors with a purpose); every read of personal data in the access log",
+   "access.others": "No other institution reads these records; whole-government officials and administrators get no domain authority"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "procedure-not-built",
+    "what": "An access-request procedure of the institution: no reference procedure carries this form yet; it waits in the library for the institution's procedure, drafted by one official and approved by another",
+    "why": "Cases change only under an approved procedure package; the plan builds the internal-administration procedures in the order of plan step I2 (the payroll, establishment, privileged-access, policy, delegation, disciplinary and legal-advice procedures first).",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts under an approved procedure package"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "Each institution keeps its own internal administration: the form is used in the institution's own procedure (adm.<template>.<institution>), read and decided only by its own officials; whole-government officials and administrators get no domain authority, and an independent institution's records stay with it",
+    "why": "Part 21 provides common services without making internal records visible across government.",
+    "rule": "CLAUDE.md Who acted: caseActRefusal() / caseReadRefusal() in lib/auth/roles.ts; Constitutional architecture: reaches() and isIndependent()"
+   },
+   {
+    "id": "own-accounts",
+    "what": "Access to the platform itself is an account with a role at the institution, changed by the institution's own administrators (/admin/officials); access to another system is provisioned there and only referred to here",
+    "why": "One rule set decides what an official may do (lib/auth/roles.ts).",
+    "rule": "CLAUDE.md Who acted: never add a second place that decides permissions"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1116,
+    "quotes": [
+     "ADM-ICT-029",
+     "ICT access request"
+    ],
+    "met_by": {
+     "fields": [
+      "access.system",
+      "access.role",
+      "access.purpose"
+     ],
+     "deviation": "procedure-not-built"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 977,
+    "quotes": [
+     "ICT and operations",
+     "Services, incidents, access requests, changes, service availability, backup and recovery evidence"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/institution/departments.ts",
+      "how": "Departments are records with the functions they serve (ADMIN_FUNCTIONS), an accountable office, services, staff and history"
+     },
+     "fields": [
+      "access.system",
+      "access.role"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1177,
+    "quotes": [
+     "\"form_id\": \"ADM-ICT-029\""
+    ],
+    "met_by": {
+     "fields": [
+      "access.system"
+     ],
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "The catalogue's own contract for this form, written in the canonical format field by field (each line below)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1178,
+    "quotes": [
+     "\"title\": \"ICT Access Request\""
+    ],
+    "met_by": {
+     "fields": [
+      "access.system"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1180,
+    "quotes": [
+     "{\"key\": \"requester_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/auth/official.ts",
+      "how": "The signed-in official's verified name and account are recorded (withOfficial()); never a name from the form"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1181,
+    "quotes": [
+     "{\"key\": \"institution_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/casework/engine.ts",
+      "how": "The case belongs to the institution that opens it (its owner); the institution is never typed"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1182,
+    "quotes": [
+     "{\"key\": \"target_system_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "access.system"
+     ],
+     "country_decision": "CFG-ADM-005"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1183,
+    "quotes": [
+     "{\"key\": \"requested_role_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "access.role"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1184,
+    "quotes": [
+     "{\"key\": \"business_purpose\", \"type\": \"string\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "access.purpose"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1185,
+    "quotes": [
+     "{\"key\": \"access_start_date\", \"type\": \"date\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "access.start"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1186,
+    "quotes": [
+     "{\"key\": \"access_end_date\", \"type\": \"date\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "access.end"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1187,
+    "quotes": [
+     "{\"key\": \"manager_approval_reference\", \"type\": \"decision_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "access.manager_approval"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1188,
+    "quotes": [
+     "{\"key\": \"system_owner_approval_reference\", \"type\": \"decision_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "access.owner_approval"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1189,
+    "quotes": [
+     "{\"key\": \"provisioning_record_reference\", \"type\": \"entity_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "access.provisioning_ref"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "access.system",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "administration.institution.systems",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "System"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "CFG-ADM-005: the institution's own list of systems; none ship.",
+   "section": {
+    "en": "The access"
+   }
+  },
+  {
+   "id": "access.role",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Role requested"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter role requested.",
+     "length": "Role requested must be 300 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The access"
+   }
+  },
+  {
+   "id": "access.purpose",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 600
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Business purpose"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter business purpose.",
+     "length": "Business purpose must be 600 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The access"
+   }
+  },
+  {
+   "id": "access.start",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Access from"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter access from."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The access"
+   }
+  },
+  {
+   "id": "access.end",
+   "type": "date",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Access until"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The access"
+   }
+  },
+  {
+   "id": "access.manager_approval",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Manager's approval reference"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "access.owner_approval",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "System owner's approval reference"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "access.provisioning_ref",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Provisioning record reference"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "access.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

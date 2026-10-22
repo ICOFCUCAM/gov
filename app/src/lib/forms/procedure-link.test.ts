@@ -17,6 +17,7 @@ import { CATALOGUE_CONTRACTS } from './library/catalogue-contracts';
 import { procedureLink } from './procedure-link';
 import { libraryPublicationOf, findLibraryForm, libraryInfo, serviceIds } from './page-data';
 import { resetPublication } from './publication';
+import { installAdministrationProcedures } from '@/lib/administration/procedures';
 
 const FIELD_SERIES = 'docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md';
 const lib = (id: string) => CATALOGUE_CONTRACTS.find(f => f.specId === id)!;
@@ -72,10 +73,24 @@ describe('procedure-link states', () => {
     expect(procedureLink({ identity: lib('HLT-FAC-002').identity, procedure: { key: 'health.facility' } }).state).toBe('missing');
     installAll('Administrator');
     expect(listPackages({ key: 'health.facility' }).length).toBeGreaterThan(0);
-    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure)) {
+    // Internal-administration templates are adopted per institution (the next test).
+    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure && x.batch !== 5)) {
       const l = procedureLink({ identity: f.identity, procedure: f.procedure });
       expect(l.state, f.identity).toBe('draft');
       expect(l.detail).toMatch(/no version of it carries this contract yet/);
+    }
+  });
+
+  it('is draft for each batch-5 form once an institution has adopted its internal-administration template, never before', () => {
+    const adm = CATALOGUE_CONTRACTS.filter(f => f.batch === 5 && f.procedure);
+    expect(adm).toHaveLength(9);
+    for (const f of adm) expect(procedureLink({ identity: f.identity, procedure: f.procedure }).state, f.identity).toBe('missing');
+    const r = installAdministrationProcedures(CIVIL, 'Administrator', 'admin');
+    if ('error' in r) throw new Error(r.error);
+    for (const f of adm) {
+      const l = procedureLink({ identity: f.identity, procedure: f.procedure });
+      expect(l, f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
+      expect(libraryPublicationOf(findLibraryForm(f.identity)!).status, f.identity).toBe('contract_draft');
     }
   });
 
@@ -113,6 +128,25 @@ describe('procedure-link states', () => {
       expect(pub.status, id).not.toBe('approved');
       expect(pub.human.filter(g => g.applies && g.passed), id).toEqual([]);
     }
+  });
+
+  it('is draft for the tax-services forms (batch 6) and batch 3\'s change forms once the tax procedures are in the register, linked by identity, never approved by it', () => {
+    const tax = CATALOGUE_CONTRACTS.filter(f => (f.batch === 6 || f.batch === 3) && f.procedure && f.procedure.key !== 'tax.registration');
+    // 56 of batch 6 and the 7 registration change forms of batch 3 (tax.registration-amendment).
+    expect(tax.filter(f => f.batch === 6)).toHaveLength(56);
+    expect(tax.filter(f => f.batch === 3).map(f => f.procedure!.key)).toEqual(Array(7).fill('tax.registration-amendment'));
+    for (const f of tax) expect(libraryPublicationOf(findLibraryForm(f.identity)!).procedure.state, f.identity).toBe('missing');
+    installAll('Administrator');
+    for (const f of tax) {
+      expect(f.identity, f.specId).toBe(`FIELD-SERIES-PARTS-01-02:${f.specId}@1`);
+      const pub = libraryPublicationOf(findLibraryForm(f.identity)!);
+      expect(pub.procedure, f.identity).toMatchObject({ state: 'draft' });
+      expect(procedureLink({ identity: f.identity, procedure: f.procedure }), f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
+      expect(pub.status, f.identity).toBe('contract_draft');
+      expect(pub.human.filter(g => g.applies && g.passed), f.identity).toEqual([]);
+    }
+    // The tax procedures arrive as drafts: nothing is approved by installing them.
+    for (const key of new Set(tax.map(f => f.procedure!.key))) expect(listPackages({ key }).map(p => p.state), key).toEqual(['draft']);
   });
 
   it('moves draft → under review → approved only as the register changes', () => {

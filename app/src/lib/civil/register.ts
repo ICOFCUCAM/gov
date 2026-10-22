@@ -217,4 +217,13 @@ export function eventCounts(kind: VitalKind): { month: string; region: string; c
   return [...by.values()].sort((a, b) => a.month.localeCompare(b.month) || a.region.localeCompare(b.region));
 }
 
+/**
+ * What an aggregate counts of each registered event (the indicator register,
+ * lib/indicators/methods.ts): its id, when it was registered, its region and
+ * whether a sample case made it. No name, date of the event or person.
+ */
+export function eventFacts(kind: VitalKind): { id: string; registeredAt: string; region?: string; sample: boolean }[] {
+  return db().events.filter(e => e.kind === kind).map(e => ({ id: e.id, registeredAt: e.registeredAt, ...(e.place.region ? { region: e.place.region } : {}), sample: !!e.sample }));
+}
+
 export const registerSize = () => ({ persons: db().persons.length, births: db().events.filter(e => e.kind === 'birth').length, deaths: db().events.filter(e => e.kind === 'death').length, marriages: db().events.filter(e => e.kind === 'marriage').length });

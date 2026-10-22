@@ -22,6 +22,7 @@ import { recordAudit } from '@/lib/data/store';
 import { twinDb } from './db';
 import { archivedMetrics } from './archive';
 import { derivedMetric, formulaOf } from './derived';
+import { COMPUTED_FROM_RECORDS, isIndicatorMetric, TYPED_REFUSAL, type ComputedCapability } from './computed';
 
 export type Aggregation = 'sum' | 'mean' | 'weighted-mean' | 'none';
 export type MetricPeriod = 'instant' | 'year' | 'quarter' | 'month' | 'day';
@@ -214,11 +215,13 @@ export interface MetricInput {
  * what changed). Units must be UCUM; a weighted mean names the metric that
  * weights it.
  */
-export function registerMetric(input: MetricInput): MetricDef | { error: string } {
+export function registerMetric(input: MetricInput, computed?: ComputedCapability): MetricDef | { error: string } {
   const by = (input.by ?? '').trim();
   if (!by) return { error: 'Name the official registering the metric' };
   const id = (input.id ?? '').trim().toLowerCase();
   if (!METRIC_ID.test(id)) return { error: 'A metric is lower case letters, digits, dots and underscores, e.g. population or cpi.all_items' };
+  // An indicator's metric is defined by the indicator register from an approved definition, never by hand (lib/twin/computed.ts).
+  if (isIndicatorMetric(id) && computed !== COMPUTED_FROM_RECORDS) return { error: TYPED_REFUSAL };
   const derived = derivedMetric(id);
   if (derived) return { error: `${id} is derived (${formulaOf(derived)}) and computed from its inputs: register ${derived.numerator.id} and ${derived.denominator.id} instead` };
   const label = (input.label ?? '').trim().slice(0, 120);

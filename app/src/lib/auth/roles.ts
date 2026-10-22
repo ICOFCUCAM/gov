@@ -94,6 +94,200 @@ export interface Scope {
   twoStep?: boolean;
   /** Where whole-government reach stops (absent: nothing is independent, as before the register recorded it). */
   bounds?: Boundaries;
+  /** The account's attribute scope (facilities, jurisdictions, tasks), read from its record at each request (plan I2). Narrows, never widens. */
+  attributes?: AttributeScope;
+  /** Delegations of authority to this official in force today, read from the delegations register at each request (plan I2). */
+  delegations?: DelegationGrant[];
+}
+
+// ── Attribute scope, transparent delegation and task permissions (plan I2) ──
+// Read from records at each request (lib/auth/official.ts currentOfficial()):
+// the account's attributes and the delegations register. Neither an office
+// nor a department grants anything here: attributes only narrow what the
+// role and institution allow, and a delegation lets an official of the same
+// institution take a decision step another official who can sign there
+// delegated to them, under a cited law, for a period, where the procedure
+// marks the step delegable (the law allows it).
+
+/** What an account is scoped to within its institution: an absent or empty list leaves that attribute open. */
+export interface AttributeScope { facilities?: string[]; jurisdictions?: string[]; tasks?: string[] }
+/**
+ * A delegation of authority in force (lib/records/delegations.ts, kind
+ * `authority`; form ADM-GOV-039): `delegator` (an official who can sign at
+ * `institution`) lets the holder take the listed decision steps (`actions`,
+ * case package action keys or task ids; `procedures`, package keys or '*')
+ * from `from` until `until`, resting on the cited law (`basis`).
+ */
+export interface DelegationGrant { id: string; delegator: { id: string; name: string }; institution: string; procedures: string[]; actions: string[]; from: string; until?: string; basis: string }
+
+/** The facts about a record an attribute check reads: its facility, its jurisdiction (region) and the task the step is. */
+export interface AttributeFacts { facility?: string; jurisdiction?: string; task?: string }
+/**
+ * Whether the account's attribute scope reaches this record and task: null
+ * when it does (or the account is not scoped by that attribute). A record
+ * without the attribute (no facility named) is outside a facility-scoped
+ * account's reach: scoping narrows, so the unknown is refused.
+ */
+export function attributeRefusal(s: Scope, on: AttributeFacts): string | null {
+  const a = s.attributes;
+  if (!a) return null;
+  if (a.facilities?.length && !(on.facility && a.facilities.includes(on.facility))) return on.facility ? 'Your account is scoped to other facilities: this record belongs to a facility outside your scope' : 'Your account is scoped to named facilities: this record names none of them';
+  if (a.jurisdictions?.length && !(on.jurisdiction && a.jurisdictions.includes(on.jurisdiction))) return on.jurisdiction ? `Your account is scoped to ${a.jurisdictions.join(', ')}: this record is in ${on.jurisdiction}` : 'Your account is scoped to named jurisdictions: this record names no region';
+  if (a.tasks?.length && on.task && !a.tasks.includes(on.task)) return `Your account is scoped to named tasks: ${on.task} is not one of them`;
+  return null;
+}
+
+/**
+ * The delegation that lets this official take `action` of procedure
+ * `procedure` at `institution` on `on` (YYYY-MM-DD), or null. Only an official
+ * of that institution, never across institutions; only in its period; never
+ * by the delegator to themselves.
+ */
+export function delegationCovering(s: Scope & { id?: string }, institution: string, procedure: string | undefined, action: string | undefined, task: string | undefined, on: string): DelegationGrant | null {
+  if (s.institution !== institution) return null;
+  const familyOf = (k?: string) => (k && /^adm\.[a-z-]+\./.test(k) ? k.split('.').slice(0, 2).join('.') : k);
+  return s.delegations?.find(g => g.institution === institution && g.from <= on && (!g.until || on < g.until) && g.delegator.id !== s.id
+    && (g.procedures.includes('*') || (!!procedure && (g.procedures.includes(procedure) || g.procedures.includes(familyOf(procedure)!))))
+    && ((!!action && g.actions.includes(action)) || (!!task && g.actions.includes(task)))) ?? null;
+}
+
+/**
+ * The catalogue's task-level permission identifiers (forms catalogue parts 9
+ * §11, 10 §12.1, 12 §10.2, 13 §11.1; supplement part 21), expressed as
+ * roles.ts rules: each needs a role at the institution that `keeper` names
+ * (a deployment-profile slot, the permit authority mapping for the permit
+ * type, or the institution's own records), and, where it is a decision, a
+ * package step marked as one (`needs.task` on the step, lib/casework/types.ts).
+ * Mapped to institutions and roles, never to offices: holding an office
+ * grants none of them (catalogue: "technical permissions, not statutory
+ * powers"; each country maps them to its authorised offices through who is
+ * responsible, the permit authority registry and its procedures).
+ * `built` says whether a procedure or register carries the task yet.
+ */
+export interface TaskPermission {
+  id: string;
+  /** The least role: 'any' for a public or citizen act, 'auditor' for a read-only audit task. */
+  role: OfficialRole | 'any';
+  /** A legal decision: a step of an approved procedure, sealed, citing the law (two officials where the platform minimum applies). */
+  decision?: boolean;
+  /** Whose officials act: a deployment-profile slot, the approved permit authority mapping, or the institution's own records. */
+  keeper: { slot: string } | 'mapping' | 'own';
+  /** What carries it on the platform. */
+  step: string;
+  built: 'built' | 'not built' | 'legal review';
+}
+const T = (id: string, role: TaskPermission['role'], keeper: TaskPermission['keeper'], step: string, built: TaskPermission['built'], decision?: true): TaskPermission => ({ id, role, keeper, step, built, ...(decision ? { decision } : {}) });
+export const TASK_PERMISSIONS: TaskPermission[] = [
+  // Part 9 §11: transport and infrastructure (plan I7): licences and permits under the permit authority mapping.
+  T('transport.application.read', 'officer', 'mapping', 'canReadInstitution() for the institution the mapping names', 'not built'),
+  T('transport.application.submit', 'any', 'mapping', 'openCase() on the transport procedure (self-service, assisted or paper)', 'not built'),
+  T('transport.application.assess', 'officer', 'mapping', 'an assessment step (needs.role officer, task transport.application.assess)', 'not built'),
+  T('transport.licence.issue', 'signatory', 'mapping', 'a decision step under the approved permit mapping (powerRefusal())', 'not built', true),
+  T('transport.register.correct', 'signatory', 'mapping', 'a correction case decided by two officials', 'not built', true),
+  T('transport.inspection.record', 'officer', 'mapping', 'an inspection step recorded under the assigned inspector\'s account (needs.assigned)', 'not built'),
+  T('transport.enforcement.recommend', 'officer', 'mapping', 'a recommendation step with reasons (no decision)', 'not built'),
+  T('transport.enforcement.approve', 'signatory', 'mapping', 'a decision step under the approved mapping, four-eyes', 'not built', true),
+  T('infrastructure.permit.assess', 'officer', 'mapping', 'an assessment step of the building-control procedure', 'not built'),
+  T('infrastructure.permit.approve', 'signatory', 'mapping', 'a decision step under the approved permit mapping', 'not built', true),
+  T('infrastructure.asset.manage', 'officer', 'own', 'the institution\'s own asset records (ADM-AST-022 … 024)', 'not built'),
+  T('transport.audit.read', 'auditor', 'own', 'canReadInstitution() with a purpose; every read in the access log', 'built'),
+  // Part 10 §12.1: public safety (plan I7); police evidence, custody and force records need legal review (I11).
+  T('safety.incident.create', 'officer', 'own', 'an incident record of the institution (incidents API)', 'built'),
+  T('safety.incident.triage', 'officer', 'own', 'acknowledging and escalating an incident (named official)', 'built'),
+  T('safety.dispatch.assign', 'officer', 'own', 'dispatch records (substrate dispatches)', 'built'),
+  T('safety.command.manage', 'signatory', 'own', 'incident command decisions by an official who can sign', 'not built'),
+  T('police.case.read', 'officer', { slot: 'police' }, 'caseReadRefusal() on police.incident cases (intake and referral only)', 'built'),
+  T('police.case.update', 'officer', { slot: 'police' }, 'police.incident steps (classification citing the law, referral)', 'built'),
+  T('police.evidence.register', 'officer', { slot: 'police' }, 'none: needs the judiciary\'s and the country\'s legal review (plan I11)', 'legal review'),
+  T('police.evidence.transfer', 'officer', { slot: 'police' }, 'none: needs legal review (plan I11)', 'legal review'),
+  T('police.custody.record', 'officer', { slot: 'police' }, 'none: needs legal review (plan I11)', 'legal review'),
+  T('police.force.report', 'officer', { slot: 'police' }, 'none: needs legal review (plan I11)', 'legal review'),
+  T('safety.alert.prepare', 'officer', 'own', 'drafting an alert (approval by two officials before release)', 'not built'),
+  T('safety.alert.approve', 'signatory', 'own', 'a four-eyes approval step before an alert is released', 'not built', true),
+  T('safety.declaration.propose', 'administrator', 'own', 'proposing an emergency as a transition (lib/transitions), citing the law', 'built'),
+  T('safety.declaration.approve', 'signatory', 'own', 'confirming the transition by a different person (lib/transitions)', 'built', true),
+  T('safety.emergency_power.review', 'signatory', 'own', 'reviewing an emergency in force (lib/transitions/restrictions.ts)', 'built'),
+  T('safety.relief.assess', 'officer', 'own', 'a relief assessment step', 'not built'),
+  T('safety.recovery.audit', 'auditor', 'own', 'read with a purpose; access log', 'built'),
+  // Part 12 §10.2: the legislature (its own record) and elections (plan I11; legal review for voter registration).
+  T('legislature.bill.submit', 'officer', { slot: 'legislature' }, 'legislativeRecordRefusal(record): introducing a bill', 'built'),
+  T('legislature.bill.amend', 'officer', { slot: 'legislature' }, 'legislativeRecordRefusal(record): an amendment', 'built'),
+  T('legislature.vote.record', 'signatory', { slot: 'legislature' }, 'legislativeRecordRefusal(sign): a recorded vote', 'built', true),
+  T('legislature.proceedings.publish', 'signatory', { slot: 'legislature' }, 'legislativeRecordRefusal(sign): publication', 'built', true),
+  T('election.voter.register', 'officer', { slot: 'electoral' }, 'none: voter registration needs legal review and stays with the electoral body', 'legal review'),
+  T('election.voter.correct', 'signatory', { slot: 'electoral' }, 'none: needs legal review', 'legal review', true),
+  T('election.candidate.assess', 'officer', { slot: 'electoral' }, 'an electoral-body procedure (plan I11)', 'not built'),
+  T('election.result.submit', 'officer', { slot: 'electoral' }, 'an electoral-body procedure (plan I11)', 'not built'),
+  T('election.result.certify', 'signatory', { slot: 'electoral' }, 'a four-eyes certification step of the electoral body (plan I11)', 'not built', true),
+  T('election.complaint.review', 'signatory', { slot: 'electoral' }, 'an electoral complaint procedure (plan I11)', 'not built', true),
+  T('political_party.registration.assess', 'officer', { slot: 'electoral' }, 'a political parties register type (plan I11)', 'not built'),
+  T('political_finance.return.review', 'officer', { slot: 'electoral' }, 'campaign finance returns (plan I11)', 'not built'),
+  T('independent_body.case.manage', 'officer', 'own', 'caseActRefusal(): an independent institution\'s cases are worked only by its own officials', 'built'),
+  // Part 13 §11.1: the digital front door and records (plan I13).
+  T('government.service.publish', 'signatory', 'own', 'site editor: proposed by one official, published by another (lib/data/site-editorial.ts)', 'built', true),
+  T('government.application.route', 'officer', 'own', 'openCase(): the procedure\'s owner from who is responsible', 'built'),
+  T('government.workflow.manage', 'signatory', 'own', 'approving a procedure version (lib/casework/packages.ts, a different official)', 'built', true),
+  T('government.document.issue', 'signatory', 'own', 'a decision step sealing a decision (lib/records/decisions.ts)', 'built', true),
+  T('government.document.verify', 'any', 'own', '/verify and qualification.verify: public checks', 'built'),
+  T('government.record.access', 'officer', 'own', 'caseReadRefusal() and register read rules; every read in the access log', 'built'),
+  T('government.record.correct', 'signatory', 'own', 'a correction case under the register\'s procedure', 'built', true),
+  T('government.record.dispose', 'signatory', 'own', 'retention: disposal confirmed by two officials (lib/data/retention.ts)', 'built', true),
+  T('government.data_exchange.approve', 'administrator', 'own', 'proposeIntegrationApproval() / confirmIntegrationApproval(): two officials', 'built', true),
+  T('government.statistics.publish', 'signatory', { slot: 'statistics' }, 'a statistical release procedure (plan I8)', 'not built', true),
+  T('government.open_data.approve', 'signatory', 'own', 'an open data release (plan I8)', 'not built', true),
+  T('government.dashboard.manage', 'administrator', 'own', 'the twin\'s registered sources and metrics (lib/twin)', 'built'),
+  T('government.integration.manage', 'administrator', 'own', 'connected systems (/api/integrations), approved by two officials', 'built'),
+  T('government.audit.read', 'auditor', 'own', 'canReadAuditChain(): auditors and the data-protection authority; every read logged', 'built'),
+  T('government.production.activate', 'administrator', 'own', 'Update Center change control: proposed by one official, approved by another (lib/data/change-control.ts)', 'built', true),
+  // Supplement part 21: shared internal administration (each institution's own; lib/administration/procedures.ts).
+  T('administration.establishment.request', 'officer', 'own', 'adm.establishment: request (ADM-HR-001)', 'built'),
+  T('administration.establishment.approve', 'signatory', 'own', 'adm.establishment: approve, four-eyes', 'built', true),
+  T('administration.payroll.prepare', 'officer', 'own', 'adm.payroll-input: submit (ADM-PAY-011)', 'built'),
+  T('administration.payroll.review', 'officer', 'own', 'adm.payroll-review: review, by a person other than the preparer (ADM-PAY-012)', 'built'),
+  T('administration.payroll.approve', 'signatory', 'own', 'adm.payroll-review: approve, by a person other than the preparer and the reviewer', 'built', true),
+  T('administration.payroll.correct', 'signatory', 'own', 'adm.payroll-correction: approve, four-eyes (ADM-PAY-013)', 'built', true),
+  T('administration.access.privileged.approve', 'signatory', 'own', 'adm.privileged-access: approve, time-limited, four-eyes (ADM-ICT-030)', 'built', true),
+  T('administration.policy.approve', 'signatory', 'own', 'adm.policy: approve, four-eyes (ADM-GOV-040)', 'built', true),
+  T('administration.delegation.approve', 'signatory', 'own', 'adm.delegation: approve, four-eyes; recorded in the delegations register (ADM-GOV-039)', 'built', true),
+  T('administration.personnel.read', 'officer', 'own', 'restricted cases: the assigned officials and those who can sign; every read in the access log', 'built'),
+  T('administration.legal.advise', 'officer', 'own', 'adm.legal-advice: restricted (ADM-LEG-027)', 'built'),
+  T('administration.discipline.decide', 'signatory', 'own', 'adm.disciplinary: decide, four-eyes, restricted (ADM-HR-010)', 'built', true),
+];
+export const taskPermission = (id: string): TaskPermission | undefined => TASK_PERMISSIONS.find(t => t.id === id);
+
+/**
+ * May this official perform the catalogue task `id` at the institution
+ * `keeper` resolves to (the caller resolves a slot or a mapping; for 'own',
+ * the record's institution)? Null when yes. Roles, institutions and
+ * attributes only: never an office.
+ */
+export function taskRefusal(s: Scope, id: string, institution: string | undefined): string | null {
+  const t = taskPermission(id);
+  if (!t) return `No task ${id} is defined (lib/auth/roles.ts TASK_PERMISSIONS)`;
+  if (t.built === 'legal review') return `${id} needs the country's legal review before anything carries it`;
+  const role = roleOf(s);
+  if (t.role === 'any') return null;
+  if (t.role === 'auditor') return role === 'auditor' ? null : `${id} is an auditor's read`;
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (!institution) return `Name the institution responsible for ${id} first (Who is responsible, or the permit authority registry)`;
+  if (s.institution !== institution) return `${id} is done by officials of the institution responsible for it; serving the whole government or holding an office does not give that authority`;
+  if (t.role === 'signatory' && role !== 'signatory') return `${id} needs an official who can sign there`;
+  if (t.role === 'administrator' && role !== 'administrator') return `${id} needs an administrator there`;
+  return attributeRefusal(s, { task: id });
+}
+
+/**
+ * Reading an institution's internal administration workspace (plan I2):
+ * its own officials, and officials serving the whole government and
+ * auditors where whole-government reach goes (never into an independent or
+ * regional institution: the legislature, the judiciary and independent
+ * institutions keep their own internal administration).
+ */
+export function canReadAdministration(s: Scope, institution: string): string | null {
+  if (s.institution === institution || fullView(s, institution)) return null;
+  return isIndependent(s, institution) ? 'This institution is independent: its internal administration is read only by its own officials'
+    : isSubnational(s, institution) ? 'This is a regional or local government with its own powers: its internal administration is read by its own officials'
+    : 'You can read only your own institution\'s internal administration';
 }
 
 /** Officials the policy requires to use the second step make no changes until this session has passed it. */
@@ -303,6 +497,11 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/education$/,                      // institutional returns: canRecordEducationReturn() in the route
   /^\/api\/health-regulation$/,              // capacity returns: canRecordHealthReturn() in the route
   /^\/api\/rules$/,                          // operational rules: canManageRule() in the route
+  // Independent oversight (plan I8, lib/oversight): intake with the protected identity kept apart, reading it (the assigned or authorised
+  // official, logged), and what the institution concerned adds beside the body's record (a response, evidence, a controller's answer);
+  // each checked against the record in lib/oversight. Cases themselves move only through /api/cases.
+  /^\/api\/oversight$/,
+  /^\/api\/indicators$/,                     // indicator definitions: indicatorDraftRefusal() / indicatorApproveRefusal() in the store; the small-cell rule adminOnly() in the route
   /^\/api\/access-log\/retention$/,          // oversight confirmation of shortening the access log: canConfirmAccessLogRetention() in the route
   /^\/api\/case-packages(\/|$)/,              // procedures: drafted by the responsible institution, approved by one who can sign there (route)
   /^\/api\/documents\/verify$/,               // checks a document code (no change)
@@ -762,6 +961,13 @@ export interface CaseFacts {
   recordType?: string;
   /** Official ids recused from this case by a declared conflict of interest (lib/transitions; plan phase 6). */
   recused?: string[];
+  /** The record's facility, jurisdiction (region) and the step's task, for an account scoped by attributes (plan I2). */
+  facility?: string;
+  jurisdiction?: string;
+  task?: string;
+  /** The step's action key, and whether the procedure marks it delegable (the law allows a delegation for it; plan I2). */
+  action?: string;
+  delegable?: boolean;
 }
 /** The record types a case read covers: every case of the institution, or this procedure's. */
 export const caseRecordTypes = (c: Pick<CaseFacts, 'recordType'>) => ['cases', ...(c.recordType ? [c.recordType] : [])];
@@ -795,7 +1001,12 @@ export function caseActRefusal(s: CaseScope, c: CaseFacts, now = Date.now()): st
   }
   // A declared conflict of interest: the official steps aside from every action on the case (guidance §4.13).
   if (s.id && (c.recused ?? []).includes(s.id)) return 'You declared a conflict of interest on this case and stepped aside: another official acts on it (the recusal is lifted only by two officials)';
-  if (c.decision && role !== 'signatory') return 'A decision needs an official who can sign for the institution';
+  // Attribute scope (plan I2): an account scoped to facilities, jurisdictions or tasks acts only within them.
+  const scoped = attributeRefusal(s, c);
+  if (scoped) return scoped;
+  // Transparent delegation (plan I2): a decision step the procedure marks delegable may be taken under a
+  // delegation in force from an official who can sign there; the engine records both (Step.delegation).
+  if (c.decision && role !== 'signatory' && !(c.delegable && delegationCovering(s, c.owner, c.recordType, c.action, c.task, new Date(now).toISOString().slice(0, 10)))) return 'A decision needs an official who can sign for the institution';
   if (c.sensitivity === 'restricted' && !assignedTo(s, c) && role !== 'signatory') return 'This case is restricted to the officials assigned to it and those who can sign';
   if (c.sensitivity === 'secret' && !assignedTo(s, c) && !supervises(s, c)) return 'This case is open only to the officials assigned to it and its named supervisors';
   if (c.stepUp && !(s.twoStepAt && now - s.twoStepAt <= STEP_UP_MINUTES * 60_000)) return `This step needs the second sign-in step within the last ${STEP_UP_MINUTES} minutes: sign in again`;
@@ -826,6 +1037,8 @@ export function caseReadRefusal(s: CaseScope, c: CaseFacts, purpose?: string): s
   }
   // A regional or local government's cases (plan phase 7, audit K): its own officials, or under an approved relationship.
   if (!own && isSubnational(s, c.owner)) return hint ?? 'This is a regional or local government with its own powers: its cases are read by its own officials, or under an approved relationship for a purpose it lists';
+  // Attribute scope (plan I2): an own official scoped to facilities or jurisdictions reads only within them.
+  if (own && role !== 'auditor') { const scoped = attributeRefusal(s, { facility: c.facility, jurisdiction: c.jurisdiction }); if (scoped) return scoped; }
   const auditorWithPurpose = role === 'auditor' && (own || wholeGovernment(s)) && !!purpose?.trim();
   if (c.sensitivity === 'normal') return own || wholeGovernment(s) ? null : hint ?? 'Cases are read by officials of the responsible institution and of the whole government';
   if (c.sensitivity === 'restricted') {
@@ -867,6 +1080,29 @@ export function canManageRule(s: Scope, owner: string | undefined, approve: bool
   if (roleOf(s) === 'auditor') return 'Auditors can read rules but not change them';
   if (!owner || s.institution !== owner) return 'Rules are drafted and approved by the authority that owns them (named under Who is responsible)';
   if (approve && roleOf(s) !== 'signatory') return 'Approving a rule needs an official who can sign for the authority';
+  return null;
+}
+
+/**
+ * Indicator definitions (lib/indicators/register.ts, plan step I3): drafted by
+ * an official of the institution that owns the definition, or by a
+ * whole-government official where that institution is within reach (never
+ * into an independent or subnational one); a definition each institution keeps
+ * for its own records may be drafted by any official who is not an auditor.
+ * Approved only by an official who can sign at the institution the approval is
+ * for (administrators and whole-government officials have no say in what an
+ * institution's figures mean).
+ */
+export function indicatorDraftRefusal(s: Scope, owner: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors can read indicator definitions but not change them';
+  if (owner === undefined) return null;
+  if (!owner) return 'No institution is named as responsible for this indicator (Configuration → Who is responsible)';
+  return reaches(s, owner) ? null : 'An indicator is drafted by officials of the institution that owns it';
+}
+export function indicatorApproveRefusal(s: Scope, institution: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors can read indicator definitions but not approve them';
+  if (!institution || s.institution !== institution) return 'An indicator is approved by an official of the institution whose figures it defines';
+  if (roleOf(s) !== 'signatory') return 'Approving an indicator needs an official who can sign for the institution';
   return null;
 }
 

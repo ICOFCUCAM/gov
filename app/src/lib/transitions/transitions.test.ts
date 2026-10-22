@@ -13,6 +13,8 @@
 //   - a disputed (frozen) part of the constitutional profile freezes the transitions touching it;
 //   - holdings past their recorded term are no longer in force.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+// The full scrypt cost is covered by password-hash.test.ts; these tests check behaviour, not cost (and stay inside their time under a full run).
+process.env.CIVICOS_SCRYPT_N = '16384';
 import { recordVersion as recordLaw, confirmVersion as confirmLaw, resetLaw } from '@/lib/law/register';
 import { db } from '@/lib/data/store/state';
 import { createMinistry } from '@/lib/data/store/ministries';
@@ -42,6 +44,8 @@ import {
 
 const SETUP_TOKEN = 'test-setup-token-transitions-0123456789';
 process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
+// Cheap hashes for the many accounts each test creates (the runner-only override in officials.ts).
+process.env.CIVICOS_SCRYPT_N = '1024';
 const PW = 'correct horse battery';
 const pdf = new Uint8Array(Buffer.from('%PDF-1.7\nform\n%%EOF'));
 let basis: { instrument: string; eId: string }[];
