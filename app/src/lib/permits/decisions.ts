@@ -57,6 +57,9 @@ const DEPLOYMENT_DOMAINS: [prefix: string, authority: string][] = [
   ['civil', 'civilRegistration'], ['immigration', 'immigration'], ['court', 'judiciary'], ['police', 'police'], ['referral', 'the institution whose referral procedure it is'],
   // Internal administration (plan I2): each institution's own procedure (adm.<function>.<institution>), decided by its own officials.
   ['adm', 'the institution whose internal administration procedure it is'],
+  // Local and regional government (plan I7): each local government's own procedure (lg.<template>.<institution>): its council's
+  // resolutions, its budget, its service requests and complaints, decided by its own officials under its own powers.
+  ['lg', 'the local government whose own procedure it is'],
 ];
 
 /** Classify a decision step; null when the platform cannot say which authority it rests on. */

@@ -21,6 +21,8 @@ import '@/lib/oversight/procedures';
 import '@/lib/land/procedures';
 import '@/lib/building/procedures';
 import '@/lib/housing/procedures';
+// Local and regional government (plan I7): each local government's own procedures, adopted from templates on request.
+import '@/lib/localgov/procedures';
 // Internal administration (plan I2): each institution's own procedures, drafted from templates on request.
 import '@/lib/administration/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).

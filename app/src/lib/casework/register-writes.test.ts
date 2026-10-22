@@ -111,6 +111,9 @@ const REGISTERS: Register[] = [
   { module: 'lib/housing/register.ts', store: '__civicosHousing', procedures: 'lib/housing/procedures.ts',
     changes: ['resetHousing', 'registerProgramme', 'receiveApplication', 'recordAssessment', 'allocate', 'closeApplication'],
     reads: ['termsDigest', 'readTerms', 'readUnits', 'getProgramme', 'termsInForce', 'applicationOfCase', 'applicationsOf', 'waitingList', 'listProgrammes', 'housingCounts'] },
+  { module: 'lib/localgov/register.ts', store: '__civicosLocalGov', procedures: 'lib/localgov/procedures.ts',
+    changes: ['resetLocalGov', 'proposeCouncilRules', 'confirmCouncilRules', 'withdrawCouncilRules', 'recordResolution', 'adoptBudget', 'openRequest', 'closeRequest'],
+    reads: ['MAJORITIES', 'councilRules', 'councilRuleChanges', 'checkVote', 'getResolution', 'resolutionOfCase', 'budgetOfCase', 'requestOfCase', 'localRecords', 'requestPlaces', 'localCounts'] },
 ];
 
 /**
@@ -159,6 +162,9 @@ const EXCEPTIONS: { file: string; fn: string; why: string }[] = [
   { file: 'app/api/building/route.ts', fn: 'proposeBuildingRules', why: 'the nation\'s building control rules (categories, uses, checklists, severities), a country rule set: proposed citing the law, confirmed by a different official; records no permit or inspection' },
   { file: 'app/api/building/route.ts', fn: 'confirmBuildingRules', why: 'the building control rules confirmed by a different official who can sign at the authority; earlier decisions keep the version they applied' },
   { file: 'app/api/building/route.ts', fn: 'withdrawBuildingRules', why: 'withdraws a waiting rules proposal' },
+  { file: 'app/api/local-government/route.ts', fn: 'proposeCouncilRules', why: 'a council\'s standing rules (seats, quorum, majority), the local government\'s own rule set: proposed by its own official citing the law; records no resolution' },
+  { file: 'app/api/local-government/route.ts', fn: 'confirmCouncilRules', why: 'the council\'s rules confirmed by a different official who can sign at that local government; earlier resolutions keep the version they were checked against' },
+  { file: 'app/api/local-government/route.ts', fn: 'withdrawCouncilRules', why: 'withdraws a waiting rules proposal' },
   { file: 'lib/organisations/import.ts', fn: 'organisationsDb', why: 'the checked load of an existing register: proposed by one official of the keeping authority, confirmed by a different one, under the approved mapping in production' },
   { file: 'lib/organisations/import.ts', fn: 'nextOrganisationNumber', why: 'numbers the organisations a confirmed load enters' },
   // An institution's own records coming back from its portable export (Health I4 standalone-and-pilot): nothing is decided;
