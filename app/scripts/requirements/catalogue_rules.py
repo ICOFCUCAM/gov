@@ -44,7 +44,7 @@ AIMISS = "No test proves that no AI output can reach act(), a register change or
 A11Y = "Public sites: npm run audit:sites (axe WCAG A/AA on every site, design and viewport), logical CSS and right-to-left, self-hosted fonts; console tokens at 4.5:1 (lib/theme/tokens.test.ts)"
 A11YMISS = "No form renderer for self-service, assisted and print channels with WCAG 2.2 AA tests, save-and-resume and check-your-answers (plan I1, I10)"
 PROV = KB.TWIN + "; SignalKind record/observed/reported/modelled/sample/simulated/unavailable (lib/twin/signal.ts); production folds generated panels to Not connected (" + KB.FOLD + ")"
-PROVMISS = "No 'verified', 'estimated', 'provisional' or 'revised' kind; no indicator definitions (numerator, denominator, method version) — plan I3"
+PROVMISS = "No 'verified', 'estimated', 'provisional' or 'revised' kind (docs/INTEGRATION_REGISTER.md 20.68); indicator definitions exist (lib/indicators/: numerator, denominator, period, coverage, method version; values Record, Sample or Not connected) — plan I3"
 CFGEV = "Configuration through the platform's approved records: laws register (" + KB.LAW + "), rules (" + KB.RULESX + "), procedure packages drafted, tested and approved by two officials (lib/casework/packages.ts), permit authority mappings (lib/permits/authority.ts), who is responsible (lib/nation/deployment.ts authorityFor()), country rule sets through lib/law/policy-change.ts"
 LEGALREV = "Directions §15 and plan §4: built only after the judiciary's and the country's legal review, as unapproved drafts (step I11)"
 POLRULE = "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (" + POLICE + ")"
@@ -370,7 +370,8 @@ I(r'^GOV-REC-012$', 'Partial', RET + ' (legal holds on documents and cases are r
 I(r'^GOV-REC-01[67]$', 'Partial', KB.TWIN + '; case-import and parcel loads audited with the file\'s SHA-256 (lib/data/case-import.ts)', 'Custody history per record; migration approval by two officials')
 I(r'^GOV-STA-00[12]$', 'Partial', KB.TWIN + ' (sources registered, runs observed by a named official, rows refused with reasons)', 'A statistical programme with scope and owner; quality findings', 'I8', 'I3')
 I(r'^GOV-STA-013$', 'Partial', 'Aggregate returns: health capacity (lib/health/register.ts), education (lib/education/register.ts)', 'A consolidated national reporting return', 'I3')
-I(r'^GOV-STA-006$|^DEM-PUB-010$', 'Not yet', PROV, 'Indicator definitions (plan I3)', 'I3')
+I(r'^GOV-STA-006$', 'Partial', PROV + '; lib/indicators/register.ts (official indicator definitions by version, drafted by one official and approved per institution by another; tests lib/indicators/register.test.ts)', 'The statistics authority\'s methodology approval as a form and procedure of the statistics slot (docs/INTEGRATION_REGISTER.md 20.69)', 'I3')
+I(r'^DEM-PUB-010$', 'Not yet', PROV + '; approved indicator definitions (lib/indicators/)', 'A public institution performance report from approved indicators with explanatory notes (no public indicator release yet, 20.69)', 'I3')
 I(r'^GOV-GOV-002$', 'Partial', KB.REGOWN, 'Service owners for services (the service catalogue, I13)')
 I(r'^GOV-GOV-005$', 'Partial', 'lib/data/status.ts (status page, incidents) and lib/data/support.ts (P1–P4 tickets)', 'Disruption reports per government service')
 I(r'^GOV-GOV-006$', 'Partial', UPD, 'Change requests for a government service (not only the platform)')

@@ -42,6 +42,8 @@ import { INDEPENDENT_OVERSIGHT_PROCEDURES, OVERSIGHT_PERMITS } from '@/lib/overs
 import { OVERSIGHT_SLOTS, oversightCounts } from '@/lib/oversight/register';
 import { relationshipGrants } from '@/lib/data/store/relationships';
 import { smallCellRule, smallCellChanges } from '@/lib/health/small-cells';
+import { indicatorSmallCells } from '@/lib/indicators/disclosure';
+import { listDefinitions as listIndicators, approvedAt as indicatorApprovedAt } from '@/lib/indicators/register';
 import { SITE_IDS } from '@/lib/public-sites';
 import { siteEditorial } from '@/lib/data/site-editorial';
 import { listBoundaryVersions } from '@/lib/data/boundaries';
@@ -336,6 +338,23 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Small-cell rule for health aggregates adopted by two officials citing the law', done: !!cells, href: '/gov/health-regulation/programmes', detail: cells ? `Version ${cells.version}: threshold ${cells.threshold}` : 'Ships unset: no programme figure or workforce count is published until it is adopted' },
         { label: 'Programmes established through decided cases', done: c.programmes.established > 0, href: '/gov/health-regulation/programmes', detail: `${c.programmes.established} established · ${c.returns} return(s)${c.samples ? ` (${c.samples} samples)` : ''}` },
         { label: 'Complaint procedures approved (facility and pharmacy complaints, professional conduct complaints)', done: complaintsApproved.length === complaints.length, href: '/gov/law/procedures', detail: `${complaintsApproved.length} of ${complaints.length} approved` },
+      ] };
+    }),
+
+    // The indicator register (plan step I3): definitions approved by each institution, the small-cell rule for indicator values.
+    track({ key: 'indicators', title: 'Indicators', why: 'What each figure on the console means (numerator, denominator, period, coverage, computation and disclosure rule), approved by the institution whose figures it defines; only approved definitions reach the national data.', href: '/gov/twin/indicators' }, () => {
+      const cellsPending = indicatorSmallCells.changes().pending;
+      if (cellsPending) wait({ what: 'Small-cell rule for indicator values: a change waiting for a second official', proposedBy: cellsPending.by, at: cellsPending.at, href: '/gov/twin/indicators' });
+      const defs = listIndicators();
+      for (const d of defs) {
+        const v = d.versions.at(-1)!;
+        if (!v.reference && !d.approvals.some(a => a.version === v.n && !a.withdrawn)) wait({ what: `Indicator ${d.id}: version ${v.n} waiting for approval by an official who can sign`, proposedBy: v.by, at: v.at, href: `/gov/twin/indicators/${d.id}` });
+      }
+      const approved = defs.filter(d => indicatorApprovedAt(d).length);
+      const cells = indicatorSmallCells.rule();
+      return { checks: [
+        { label: 'Indicator definitions approved by the institutions whose figures they define', done: approved.length > 0, href: '/gov/twin/indicators', detail: `${approved.length} of ${defs.length} approved somewhere; reference definitions ship as drafts` },
+        { label: 'Small-cell rule for indicator values adopted by two officials citing the law', done: !!cells, href: '/gov/twin/indicators', detail: cells ? `Version ${cells.version}: threshold ${cells.threshold}` : 'Ships unset: counts about people are held back until it is adopted' },
       ] };
     }),
 

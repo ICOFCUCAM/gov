@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/SituationRoom';
-import { BranchTile, useBranchRecords, billCounts, recordFigure, BILLS_SOURCE, HEARINGS_SOURCE, type BranchFigure } from '@/components/features/BranchRecords';
+import { BranchTile, useBranchRecords, billCounts, recordFigure, indicatorFigure, BILLS_SOURCE, HEARINGS_SOURCE, type BranchFigure } from '@/components/features/BranchRecords';
 import { GeneratedStrip, GeneratedText } from '@/components/ui/Generated';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { instantiateInstitution, systemKindLabel, type InstitutionKind } from '@/lib/institution/blueprint';
@@ -82,7 +82,9 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
       const co = courtHierarchyFor(form, ts); const dk = judicialDocket(ts); const cr = constitutionalReview(ts);
       return [
         gen({ l: 'Courts', v: String(co.length), t: 'ok', k: 'ct' }),
-        gen({ l: 'Open cases', v: String(dk.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'oc' }),
+        // The courts' own indicator of pending cases (plan step I3), computed from their records, not the docket model.
+        indicatorFigure('Open cases', 'oc', rec.courtsBacklog),
+        gen({ l: 'Docket model', v: String(dk.reduce((a, s) => a + s.count, 0)), t: 'ok', k: 'dm' }),
         recordFigure('Hearings listed · 7 days', 'hl', rec.hearings, HEARINGS_SOURCE),
         gen({ l: 'Mean clearance', v: `${Math.round(co.reduce((a, c) => a + c.clearance, 0) / co.length)}%`, t: 'ok', k: 'cl' }),
         gen({ l: 'Constitutional review', v: String(cr.length), t: 'warn', k: 'cr' }),

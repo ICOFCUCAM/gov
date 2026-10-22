@@ -36,6 +36,7 @@ import { twinPolicy } from './policy';
 import { derivedMetric, formulaOf } from './derived';
 import { checkStreamSpec, checkIngestSpec, streamRows, STREAM_ROW, STA_WRITE_SCOPE, type StreamSpec, type StreamLineage, type TelemetryReader, type StreamIngest } from './stream';
 import { declarePushedStream, undeclarePushedStream, holdBrokerPassword, hasBrokerPassword } from './readings';
+import { COMPUTED_FROM_RECORDS, INDICATOR_SYSTEM, isIndicatorMetric, TYPED_REFUSAL, type ComputedCapability } from './computed';
 
 export type EntityKind = 'nation' | 'place' | 'institution' | 'facility' | 'organisation';
 
@@ -369,9 +370,11 @@ export function getRun(id: string): TwinRun | undefined {
   return r ? { ...r } : undefined;
 }
 
-export function registerSource(input: Partial<TwinSource> & { by?: string }): TwinSource | { error: string } {
+export function registerSource(input: Partial<TwinSource> & { by?: string }, computed?: ComputedCapability): TwinSource | { error: string } {
   const by = (input.by ?? '').trim();
   if (!by) return { error: 'Name the official registering the source' };
+  // The indicator register's internal source is registered only by the register itself (lib/twin/computed.ts).
+  if ((input.system ?? '').trim() === INDICATOR_SYSTEM && computed !== COMPUTED_FROM_RECORDS) return { error: TYPED_REFUSAL };
   const name = (input.name ?? '').trim(), publisher = (input.publisher ?? '').trim();
   if (!name || !publisher) return { error: 'Give the source a name and its publisher' };
   if (input.kind === 'stream') return registerStreamSource(input, by, name, publisher);
@@ -628,10 +631,15 @@ export interface RunLineage {
   query?: string;
 }
 
-export async function runSource(sourceId: string, { by, csv, deps = {}, lineage }: { by: string; csv?: string; deps?: RunDeps; lineage?: RunLineage }): Promise<TwinRun | { error: string }> {
+export async function runSource(sourceId: string, { by, csv, deps = {}, lineage, computed }: { by: string; csv?: string; deps?: RunDeps; lineage?: RunLineage;
+  /** Only the indicator register passes it, with rows it computed from records (lib/twin/computed.ts). */
+  computed?: ComputedCapability }): Promise<TwinRun | { error: string }> {
   const d = db();
   const s = d.sources.find(x => x.id === sourceId);
   if (!s) return { error: 'No such source' };
+  const fromRecords = computed === COMPUTED_FROM_RECORDS;
+  // The indicator register's source takes no upload, no fetched file and no scheduled run: only its own computed rows.
+  if (s.system === INDICATOR_SYSTEM && !fromRecords) return { error: TYPED_REFUSAL };
   if (!by.trim()) return { error: 'Name the official running the import' };
   await syncRegister();
   const now = deps.now ?? new Date();
@@ -673,6 +681,8 @@ export async function runSource(sourceId: string, { by, csv, deps = {}, lineage 
       if (!entity) return reject(ref ? `"${ref}" is not an entity of the register (link it to one with its id)` : 'No entity');
       const metric = (col(row, mapping.metric) ?? '').trim().toLowerCase();
       if (!METRIC.test(metric)) return reject(`"${metric}" is not a metric name`);
+      // An indicator's metric is never imported from another source (an uploaded or fetched number is not computed from records).
+      if (isIndicatorMetric(metric) && !(fromRecords && s.system === INDICATOR_SYSTEM)) return reject(TYPED_REFUSAL);
       const derivedFrom = derivedMetric(metric);
       if (derivedFrom) return reject(`${metric} is derived (${formulaOf(derivedFrom)}), never imported: import its inputs`);
       const def = getMetric(metric);

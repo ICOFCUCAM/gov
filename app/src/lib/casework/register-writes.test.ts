@@ -35,7 +35,7 @@ type Register = {
 const REGISTERS: Register[] = [
   { module: 'lib/civil/register.ts', store: '__civicosCivil', procedures: 'lib/civil/procedures.ts',
     changes: ['resetCivil', 'registerEvent', 'attachDecision', 'amendPerson', 'adjudicate'],
-    reads: ['findMatches', 'searchPersons', 'eventCounts', 'current', 'fold', 'getPerson', 'getEvent', 'eventOfCase', 'registerSize'] },
+    reads: ['findMatches', 'searchPersons', 'eventCounts', 'eventFacts', 'current', 'fold', 'getPerson', 'getEvent', 'eventOfCase', 'registerSize'] },
   { module: 'lib/organisations/register.ts', store: '__civicosOrganisations', procedures: 'lib/organisations/procedures.ts',
     changes: ['resetOrganisations', 'defineRegisterType', 'createOrganisation', 'amendOrganisation', 'setStanding', 'attachStandingDecision', 'attachCertificate', 'linkFacilities', 'expireStandings', 'organisationsDb', 'nextOrganisationNumber'],
     reads: ['organisationRecords', 'registerTypes', 'getOrganisation', 'listOrganisations', 'checkNewOrganisation', 'publicOrganisation', 'checkStanding', 'ORG_KINDS', 'REFERENCE_TYPES', 'registerType', 'current'] },
