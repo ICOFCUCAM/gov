@@ -49,6 +49,8 @@ describe('front door routes', () => {
     expect(r.status).toBe(200);
     const id = (await r.json()).id as string;
     expect((await (await publicRoute.GET(get('/api/public/services'))).json()).services).toEqual([]);
+    const { searchSites } = await import('@/lib/public-sites/search');
+    expect(searchSites('stall permit').filter(h => h.siteId === 'services')).toEqual([]);
     expect((await servicesRoute.POST(post('/api/services', { op: 'publish', id }))).status).toBe(403);
     as('s1', 'signatory');
     expect((await servicesRoute.POST(post('/api/services', { op: 'publish', id }))).status).toBe(200);
@@ -56,6 +58,8 @@ describe('front door routes', () => {
     const list = (await (await publicRoute.GET(get('/api/public/services'))).json()).services;
     expect(list).toEqual([expect.objectContaining({ id, status: 'unavailable', reasons: ['The procedure mk.none has no approved version in force'] })]);
     expect(JSON.stringify(list)).not.toMatch(/Official o1|Official s1|proposedBy|publishedBy/);
+    // Discoverable through the public search, leading to its own page.
+    expect(searchSites('stall permit').filter(h => h.siteId === 'services')).toEqual([expect.objectContaining({ kind: 'service', title: 'Market stall permit', href: `/services/${id}` })]);
     const one = await (await publicRoute.GET(get(`/api/public/services?id=${id}`))).json();
     expect(one.journey.map((s: { key: string; state: string }) => [s.key, s.state])).toContainEqual(['apply', 'not-connected']);
     // A citizen grants a representation for it and revokes it; another person cannot revoke it.

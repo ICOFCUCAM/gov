@@ -254,6 +254,15 @@ describe('digital front door', () => {
     expect(activePackage(frontdoorKey('svc.refund', X))).toBeDefined();
   });
 
+  it('holds sample services only in demonstrations, marked, and never shows them in production', () => {
+    const e = proposeService({ terms: terms(), reason: 'Sample', sample: true }, cat('o1')) as { id: string };
+    publishService(e.id, cat('s1', 'signatory'));
+    expect(publicCatalogue()).toEqual([expect.objectContaining({ id: e.id, sample: true })]);
+    vi.stubEnv('CIVICOS_MODE', 'production');
+    expect(publicCatalogue()).toEqual([]);
+    expect(proposeService({ terms: terms({ name: 'Another' }), reason: 'Sample', sample: true }, cat('o1'))).toMatchObject({ error: expect.stringMatching(/no sample service/) });
+  });
+
   it('ships drafts only: no day count, no amount, no outcome list the law decides; decisions classified as the institution\'s own', async () => {
     const { classifyDecision } = await import('@/lib/permits/decisions');
     for (const p of FRONTDOOR_PROCEDURES) {

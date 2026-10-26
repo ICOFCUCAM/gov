@@ -20,6 +20,7 @@ import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, 
 import type { AuthorityKey } from '@/lib/nation/deployment';
 import { activePackage, approvePackage, draftPackage, listPackages, withSampleDeadlines } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
+import { listServices, proposeService, publishService } from '@/lib/frontdoor/catalogue';
 
 export const DEMO_ACT_TITLE = 'Civil Registration Act (sample for demonstration)';
 export const DEMO_ORG_ACT_TITLE = 'Business Registration, Licensing and Accreditation Act (sample for demonstration)';
@@ -270,8 +271,35 @@ export function loadDemonstration(by: string, now = new Date()): DemoResult {
       approved.push(p.key);
     }
   }
+  // I13 (plan step I13): a sample act for the front door and records (cited by sample services and, in demonstrations,
+  // by officials approving retention schedules), and sample catalogue entries for the services the demonstration runs,
+  // each marked Sample, proposed and published by two different demonstration officials. Never in production.
+  const recordsAct = sampleAct('Public Services and Records Act (sample for demonstration)', 'sample-i13-1', [
+    { eId: 'sec_5', num: '5', text: 'Every public service is described in the public service catalogue by the institution that provides it.' },
+    { eId: 'sec_9', num: '9', text: 'Public records are kept, transferred to the archives or destroyed only under a retention schedule approved for their class.' },
+    { eId: 'sec_12', num: '12', text: 'No record that may be needed in a legal proceeding, audit or investigation shall be destroyed while it is held.' },
+    { eId: 'sec_20', num: '20', text: 'A person affected by an administrative decision may ask the institution that made it to reconsider it.' },
+  ], now);
+  if (!('error' in recordsAct)) sampleServices(first, recordsAct.instrument, now);
   recordAudit(by, 'demo.load', 'Demonstration:procedures', 'ok', `Sample acts; approved ${approved.join(', ') || 'none'}`);
   return { act: first, approved, present };
+}
+
+/** I13: sample catalogue entries (demo and training only, marked Sample) for the reference services the demonstration approved. */
+function sampleServices(civilAct: string, recordsAct: string, now: Date): void {
+  if (!samplesAllowed() || listServices().some(e => e.sample)) return;
+  const entries: { name: string; slot: AuthorityKey; procedure: string; law: { instrument: string; eId: string }; description: string; category: string; lifeEvents: string[] }[] = [
+    { name: 'Register a birth', slot: 'civilRegistration', procedure: 'civil.birth', law: { instrument: civilAct, eId: 'sec_12' }, description: 'Notify the birth of a child so the civil registry records it and issues a birth certificate.', category: 'Family', lifeEvents: ['Having a child'] },
+    ...(authorityFor('police') ? [{ name: 'Report an incident to the police', slot: 'police' as AuthorityKey, procedure: 'police.incident', law: { instrument: recordsAct, eId: 'sec_5' }, description: 'Report something that has already happened so the police record it and decide what to do.', category: 'Safety', lifeEvents: ['Something happened to me'] }] : []),
+  ];
+  for (const x of entries) {
+    const e = proposeService({ sample: true, reason: 'Sample entry of a demonstration', terms: {
+      name: x.name, description: x.description, owner: { slot: x.slot }, legalBasis: [x.law], procedure: x.procedure, forms: [], eligibility: 'Anyone the law allows (sample wording)', representatives: true,
+      evidence: ['As the procedure asks'], fee: null, channels: ['online', 'assisted', 'paper'], outcome: 'A decision with reasons', review: 'Reconsideration by the institution that decided', languages: [], accessibility: 'Assisted at any office',
+      privacy: 'restricted', contact: 'The responsible institution\'s office', lifeEvents: x.lifeEvents, category: x.category, declared: 'active',
+    } }, { name: DRAFTER.name, id: DRAFTER.id, scope: null }, now);
+    if (!('error' in e)) publishService(e.id, { name: APPROVER.name, id: APPROVER.id, scope: null }, now);
+  }
 }
 
 /** A sample act, recorded and confirmed once (marked as a sample). */

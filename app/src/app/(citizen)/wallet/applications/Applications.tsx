@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FormRenderer, type Submission, type SubmitResult } from '@/components/features/forms/FormRenderer';
 import type { FormView } from '@/lib/forms/contract';
+import { FrontDoor } from './FrontDoor';
 
 interface App { id: string; ref: string; procedure: string; stage: string; openedAt: string; closedAt: string | null; certificates: { code: string; title: string; status: string }[] }
 const field = 'mt-1 block w-full rounded border border-line bg-surface px-2 py-1.5 text-sm';
@@ -54,6 +55,8 @@ export function Applications() {
           </ul>
         ) : <p className="mt-1 text-sm text-ink-muted">{apps ? 'You have no applications yet.' : 'Loading…'}</p>}
       </Card>
+      {/* I13: the catalogue's services, tracking and reconsideration (lib/frontdoor/journey.ts). */}
+      <FrontDoor />
       {birthForm ? (
         <Card tight>
           <h2 className="font-semibold">Notify a birth</h2>
