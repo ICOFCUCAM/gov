@@ -19040,6 +19040,305 @@
         "x-source": "src/app/api/exchange/states/route.ts"
       }
     },
+    "/api/exchange/workflows": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_workflows",
+        "summary": "GET /api/exchange/workflows",
+        "description": "/api/exchange/workflows — cross-institution workflow (plan I9, lib/federation/procedures.ts): requests, consultations, handovers, tasks, decision requests, dependencies, disputes, agreements, onboarding, access and exceptions as cases of the receiving institution's own procedures, never binding orders. GET: the templates, the forms each carries, and how far each institution has adopted them (drafted, approved). POST { op: 'adopt', institution }: an official who can sign at that institution drafts its own procedures from the templates (a different official approves each under Laws › Procedures); never whole-government scope for another institution. Cases themselves move only through /api/cases.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "forms": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "stages": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "decisions": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "title",
+                          "forms",
+                          "stages",
+                          "decisions"
+                        ]
+                      }
+                    },
+                    "adoption": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "institution": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "procedures": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "template": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string"
+                                },
+                                "state": {
+                                  "type": "string",
+                                  "enum": [
+                                    "approved",
+                                    "draft",
+                                    "none"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "template",
+                                "key",
+                                "state"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "institution",
+                          "name",
+                          "procedures"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "templates",
+                    "adoption"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "templates": [
+                        {
+                          "key": "string",
+                          "title": "Example",
+                          "forms": [
+                            "string"
+                          ],
+                          "stages": [
+                            "string"
+                          ],
+                          "decisions": [
+                            "string"
+                          ]
+                        }
+                      ],
+                      "adoption": [
+                        {
+                          "institution": "string",
+                          "name": "Example",
+                          "procedures": [
+                            {}
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/exchange/workflows/route.ts"
+      },
+      "post": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "post_exchange_workflows",
+        "summary": "POST /api/exchange/workflows",
+        "description": "/api/exchange/workflows — cross-institution workflow (plan I9, lib/federation/procedures.ts): requests, consultations, handovers, tasks, decision requests, dependencies, disputes, agreements, onboarding, access and exceptions as cases of the receiving institution's own procedures, never binding orders. GET: the templates, the forms each carries, and how far each institution has adopted them (drafted, approved). POST { op: 'adopt', institution }: an official who can sign at that institution drafts its own procedures from the templates (a different official approves each under Laws › Procedures); never whole-government scope for another institution. Cases themselves move only through /api/cases.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "drafted": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "present": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "drafted",
+                        "present"
+                      ]
+                    },
+                    "procedures": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "template": {
+                            "type": "string"
+                          },
+                          "key": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "approved",
+                              "draft",
+                              "none"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "template",
+                          "key",
+                          "state"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "procedures"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {
+                        "drafted": [
+                          "string"
+                        ],
+                        "present": [
+                          "string"
+                        ]
+                      },
+                      "procedures": [
+                        {
+                          "template": "string",
+                          "key": "string",
+                          "state": "approved"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/exchange/workflows/route.ts"
+      }
+    },
     "/api/facilities/{fid}": {
       "get": {
         "tags": [

@@ -69,6 +69,9 @@ const DEPLOYMENT_DOMAINS: [prefix: string, authority: string][] = [
   // Local and regional government (plan I7): each local government's own procedure (lg.<template>.<institution>): its council's
   // resolutions, its budget, its service requests and complaints, decided by its own officials under its own powers.
   ['lg', 'the local government whose own procedure it is'],
+  // I9: cross-institution workflow (xi.<template>.<institution>): the receiving institution's own procedure, decided by its own officials;
+  // a request never becomes an order (lib/federation/procedures.ts natureOf()).
+  ['xi', 'the institution whose own cross-institution procedure it is'],
 ];
 
 /** Classify a decision step; null when the platform cannot say which authority it rests on. */

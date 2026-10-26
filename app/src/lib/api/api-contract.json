@@ -24,8 +24,8 @@
   {
    "family": "exchanges",
    "means": "Exchange services, federation, integrations and events",
-   "endpoints": 40,
-   "paths": 33
+   "endpoints": 42,
+   "paths": 34
   },
   {
    "family": "identity-and-access",
@@ -2961,6 +2961,52 @@
    "version": "1",
    "deprecated": false,
    "source": "src/app/api/exchange/states/route.ts"
+  },
+  {
+   "path": "/api/exchange/workflows",
+   "method": "GET",
+   "family": "exchanges",
+   "resource": "exchange",
+   "operation": "read",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "read: signed-in official or the credential named",
+   "purpose": "none read by the route",
+   "refusals": [
+    400,
+    422
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/exchange/workflows/route.ts"
+  },
+  {
+   "path": "/api/exchange/workflows",
+   "method": "POST",
+   "family": "exchanges",
+   "resource": "exchange",
+   "operation": "change",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "official",
+   "purpose": "none read by the route",
+   "refusals": [
+    400,
+    422
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/exchange/workflows/route.ts"
   },
   {
    "path": "/api/facilities/{fid}",

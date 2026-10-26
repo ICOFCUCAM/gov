@@ -493,6 +493,8 @@ const CONSTITUTIONAL = /^\/api\/org\/ministries\/[^/]+\/standing$/;
 const OFFICIAL_WORK: RegExp[] = [
   // I9: an institution's own officials publish federation envelopes about its records and decide pending ones (checked in lib/federation/events.ts).
   /^\/api\/exchange\/events$/,
+  // I9: an institution adopts the cross-institution workflow templates as its own (its own officials who can sign; checked in the route).
+  /^\/api\/exchange\/workflows$/,
   /^\/api\/ai\/advisory$/,                    // advisory text (refuses when the nation has the assistant off)
   /^\/api\/audit\/proof$/,                    // builds a proof of the audit chain (no change)
   /^\/api\/boundaries(\/|$)/,                 // canManageBoundaries() in the route

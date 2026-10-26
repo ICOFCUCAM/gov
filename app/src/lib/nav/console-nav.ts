@@ -99,7 +99,10 @@ export const CONSOLE_NAV: NavSection[] = [
       purpose: 'Which outside systems may exchange data with the platform, and on what terms.',
       tabs: [tab('Connected systems', '/integrations', 'Interoperability'), tab('Links between institutions', '/gov/fabric', 'Interoperability Fabric'),
         tab('Data-sharing services', '/gov/exchange'), tab('Events sent out', '/gov/exchange/events'),
-        tab('Automatic notifications', '/gov/webhooks', 'Federation Webhooks'), tab('Email and text messages', '/admin/messaging')] },
+        tab('Automatic notifications', '/gov/webhooks', 'Federation Webhooks'), tab('Email and text messages', '/admin/messaging'),
+        // I9 (federation and portability): envelopes between institutions, requests between institutions, declared degraded states, the endpoint contract.
+        tab('Events between institutions', '/gov/exchange/federation'), tab('Requests between institutions', '/gov/exchange/workflows'),
+        tab('When a service is unavailable', '/gov/exchange/states'), tab('Endpoints and their rules', '/gov/exchange/contract')] },
   ]},
   { label: 'Records & audit', items: [
     { key: 'aud', icon: '⛓', label: 'Audit record', href: '/audit',
