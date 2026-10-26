@@ -87,6 +87,19 @@ What has been built is locked. Work only upgrades it toward the vision in
   `immigration.status` exchange service, never the file. Do not add asylum,
   border enforcement or any risk score without the safeguards of directions
   §15 and an independent legal review.
+- Human services (plan I6): identity (`lib/identity/`), travel documents
+  (`lib/passports/`), citizenship (`lib/citizenship/`), labour (`lib/labour/`)
+  and social protection (`lib/social/`) change only in their procedures'
+  effects, each kept by the body named for its slot (`travelDocuments`,
+  `citizenship`, `labour`, `socialProtection` ship empty) and read only by it
+  (`canReadIdentity()` …, every read logged); others learn a result through
+  `identity.verify`, `travel-document.status` or `employer.standing`. A
+  possible duplicate identity is a flag an official determines with reasons;
+  no biometric field or template; a passport fee only from the approved
+  `passports.fees` schedule and a benefit only from its programme's approved
+  rule (version sealed, calculation reproducible); a check that cannot be made
+  holds the case, never refuses it; no score ever cuts support; an injury's
+  medical evidence is a sealed document only.
 - Police (`lib/police/`) is intake and referral only: classification cites
   the law, no field records a suspect or a finding. Courts (`lib/courts/`)
   are worked only by the judiciary; the public cause list
@@ -303,7 +316,8 @@ What has been built is locked. Work only upgrades it toward the vision in
   devices regulation, 21 forms; batch 3, taxpayer registration and account,
   29 forms; batch 4, public-health programme forms, 2 forms; batch 5,
   internal administration, 40 forms; batch 6, tax services, 95 forms;
-  batch 7, independent oversight, 7 forms: owner 2026-10-21), as library
+  batch 7, independent oversight, 7 forms: owner 2026-10-21; batch 9, human
+  services, 96 forms: plan I6), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.
 - Every requirement of that specification is a row of

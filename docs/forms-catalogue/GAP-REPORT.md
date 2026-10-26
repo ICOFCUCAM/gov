@@ -52,8 +52,8 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | Status | Forms |
 |---|---|
 | catalogued | 0 |
-| contract_missing | 1511 |
-| contract_draft | 341 |
+| contract_missing | 1434 |
+| contract_draft | 418 |
 | under_review | 91 |
 | blocked | 1 |
 | excluded | 128 |
@@ -69,7 +69,7 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 
 ## Contracts CivicOS wrote (form library, controlled batches)
 
-219 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 219 matched to exactly one registered form (by source file and catalogue ID, and by line where the catalogue repeats an ID in one file), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
+315 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 315 matched to exactly one registered form (by source file and catalogue ID, and by line where the catalogue repeats an ID in one file), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
 
 
 **Batch 1** (health regulation, owner approved 21 October 2026): 25 contracts added; form status contract_draft 25.
@@ -328,29 +328,130 @@ HLT-MED-024: its public answer is bound to a rule. Built only through publicProd
 | DEM-CON-020 | `PARTS-12-13:DEM-CON-020@1` | DEM-CON-020 | 12 | contract_draft | allowed |
 | DEM-PUB-009 | `PARTS-12-13:DEM-PUB-009@1` | DEM-PUB-009 | 17 | contract_draft | allowed |
 
+**Batch 9** (human services forms, owner approved 21 October 2026): 96 contracts added; form status contract_draft 96.
+
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| IDN-ACC-001 | `FIELD-SERIES-PARTS-03-04:IDN-ACC-001@1` | IDN-ACC-001 | 3 | contract_draft | allowed |
+| IDN-ACC-002 | `FIELD-SERIES-PARTS-03-04:IDN-ACC-002@1` | IDN-ACC-002 | 3 | contract_draft | allowed |
+| IDN-ACC-003 | `FIELD-SERIES-PARTS-03-04:IDN-ACC-003@1` | IDN-ACC-003 | 3 | contract_draft | allowed |
+| IDN-ACC-004 | `FIELD-SERIES-PARTS-03-04:IDN-ACC-004@1` | IDN-ACC-004 | 3 | contract_draft | allowed |
+| IDN-CARD-001 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-001@1` | IDN-CARD-001 | 5 | contract_draft | allowed |
+| IDN-CARD-002 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-002@1` | IDN-CARD-002 | 5 | contract_draft | allowed |
+| IDN-CARD-003 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-003@1` | IDN-CARD-003 | 6 | contract_draft | allowed |
+| IDN-CARD-004 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-004@1` | IDN-CARD-004 | 5 | contract_draft | allowed |
+| IDN-CARD-005 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-005@1` | IDN-CARD-005 | 4 | contract_draft | allowed |
+| IDN-CARD-006 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-006@1` | IDN-CARD-006 | 6 | contract_draft | allowed |
+| IDN-CARD-007 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-007@1` | IDN-CARD-007 | 4 | contract_draft | allowed |
+| IDN-REG-001 | `FIELD-SERIES-PARTS-03-04:IDN-REG-001@1` | IDN-REG-001 | 8 | contract_draft | allowed |
+| IDN-REG-002 | `FIELD-SERIES-PARTS-03-04:IDN-REG-002@1` | IDN-REG-002 | 4 | contract_draft | allowed |
+| IDN-REG-003 | `FIELD-SERIES-PARTS-03-04:IDN-REG-003@1` | IDN-REG-003 | 5 | contract_draft | allowed |
+| IDN-REG-004 | `FIELD-SERIES-PARTS-03-04:IDN-REG-004@1` | IDN-REG-004 | 5 | contract_draft | allowed |
+| IDN-REG-005 | `FIELD-SERIES-PARTS-03-04:IDN-REG-005@1` | IDN-REG-005 | 4 | contract_draft | allowed |
+| IDN-SEC-001 | `FIELD-SERIES-PARTS-03-04:IDN-SEC-001@1` | IDN-SEC-001 | 3 | contract_draft | allowed |
+| IDN-SEC-002 | `FIELD-SERIES-PARTS-03-04:IDN-SEC-002@1` | IDN-SEC-002 | 4 | contract_draft | allowed |
+| IDN-SEC-003 | `FIELD-SERIES-PARTS-03-04:IDN-SEC-003@1` | IDN-SEC-003 | 3 | contract_draft | allowed |
+| IDN-VER-001 | `FIELD-SERIES-PARTS-03-04:IDN-VER-001@1` | IDN-VER-001 | 4 | contract_draft | allowed |
+| IDN-VER-002 | `FIELD-SERIES-PARTS-03-04:IDN-VER-002@1` | IDN-VER-002 | 4 | contract_draft | allowed |
+| IDN-VER-003 | `FIELD-SERIES-PARTS-03-04:IDN-VER-003@1` | IDN-VER-003 | 3 | contract_draft | allowed |
+| LAB-EMP-001 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-001@1` | LAB-EMP-001 | 10 | contract_draft | allowed |
+| LAB-EMP-002 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-002@1` | LAB-EMP-002 | 3 | contract_draft | allowed |
+| LAB-EMP-003 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-003@1` | LAB-EMP-003 | 9 | contract_draft | allowed |
+| LAB-EMP-004 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-004@1` | LAB-EMP-004 | 10 | contract_draft | allowed |
+| LAB-EMP-005 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-005@1` | LAB-EMP-005 | 9 | contract_draft | allowed |
+| LAB-EMP-006 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-006@1` | LAB-EMP-006 | 3 | contract_draft | allowed |
+| LAB-EMP-007 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-007@1` | LAB-EMP-007 | 3 | contract_draft | allowed |
+| LAB-EMP-008 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-008@1` | LAB-EMP-008 | 15 | contract_draft | allowed |
+| LAB-EMP-009 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-009@1` | LAB-EMP-009 | 8 | contract_draft | allowed |
+| LAB-EMP-010 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-010@1` | LAB-EMP-010 | 9 | contract_draft | allowed |
+| LAB-EMP-011 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-011@1` | LAB-EMP-011 | 11 | contract_draft | allowed |
+| LAB-EMP-012 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-012@1` | LAB-EMP-012 | 3 | contract_draft | allowed |
+| LAB-EMP-013 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-013@1` | LAB-EMP-013 | 3 | contract_draft | allowed |
+| LAB-EMP-014 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-014@1` | LAB-EMP-014 | 5 | contract_draft | allowed |
+| LAB-EMP-015 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-015@1` | LAB-EMP-015 | 5 | contract_draft | allowed |
+| LAB-EMP-016 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-016@1` | LAB-EMP-016 | 9 | contract_draft | allowed |
+| LAB-EMP-017 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-017@1` | LAB-EMP-017 | 2 | contract_draft | allowed |
+| LAB-EMP-018 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-018@1` | LAB-EMP-018 | 2 | contract_draft | allowed |
+| LAB-EMP-019 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-019@1` | LAB-EMP-019 | 2 | contract_draft | allowed |
+| LAB-EMP-020 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-020@1` | LAB-EMP-020 | 10 | contract_draft | allowed |
+| NAT-APP-001 | `FIELD-SERIES-PARTS-03-04:NAT-APP-001@1` | NAT-APP-001 | 6 | contract_draft | allowed |
+| NAT-APP-002 | `FIELD-SERIES-PARTS-03-04:NAT-APP-002@1` | NAT-APP-002 | 6 | contract_draft | allowed |
+| NAT-APP-003 | `FIELD-SERIES-PARTS-03-04:NAT-APP-003@1` | NAT-APP-003 | 6 | contract_draft | allowed |
+| NAT-APP-004 | `FIELD-SERIES-PARTS-03-04:NAT-APP-004@1` | NAT-APP-004 | 6 | contract_draft | allowed |
+| NAT-APP-005 | `FIELD-SERIES-PARTS-03-04:NAT-APP-005@1` | NAT-APP-005 | 6 | contract_draft | allowed |
+| NAT-APP-006 | `FIELD-SERIES-PARTS-03-04:NAT-APP-006@1` | NAT-APP-006 | 6 | contract_draft | allowed |
+| NAT-APP-007 | `FIELD-SERIES-PARTS-03-04:NAT-APP-007@1` | NAT-APP-007 | 6 | contract_draft | allowed |
+| NAT-APP-008 | `FIELD-SERIES-PARTS-03-04:NAT-APP-008@1` | NAT-APP-008 | 2 | contract_draft | allowed |
+| NAT-APP-009 | `FIELD-SERIES-PARTS-03-04:NAT-APP-009@1` | NAT-APP-009 | 2 | contract_draft | allowed |
+| NAT-APP-010 | `FIELD-SERIES-PARTS-03-04:NAT-APP-010@1` | NAT-APP-010 | 6 | contract_draft | allowed |
+| NAT-APP-011 | `FIELD-SERIES-PARTS-03-04:NAT-APP-011@1` | NAT-APP-011 | 2 | contract_draft | allowed |
+| NAT-APP-012 | `FIELD-SERIES-PARTS-03-04:NAT-APP-012@1` | NAT-APP-012 | 6 | contract_draft | allowed |
+| PAS-APP-001 | `FIELD-SERIES-PARTS-03-04:PAS-APP-001@1` | PAS-APP-001 | 9 | contract_draft | allowed |
+| PAS-APP-002 | `FIELD-SERIES-PARTS-03-04:PAS-APP-002@1` | PAS-APP-002 | 9 | contract_draft | allowed |
+| PAS-APP-003 | `FIELD-SERIES-PARTS-03-04:PAS-APP-003@1` | PAS-APP-003 | 10 | contract_draft | allowed |
+| PAS-APP-004 | `FIELD-SERIES-PARTS-03-04:PAS-APP-004@1` | PAS-APP-004 | 11 | contract_draft | allowed |
+| PAS-APP-005 | `FIELD-SERIES-PARTS-03-04:PAS-APP-005@1` | PAS-APP-005 | 11 | contract_draft | allowed |
+| PAS-APP-006 | `FIELD-SERIES-PARTS-03-04:PAS-APP-006@1` | PAS-APP-006 | 4 | contract_draft | allowed |
+| PAS-APP-007 | `FIELD-SERIES-PARTS-03-04:PAS-APP-007@1` | PAS-APP-007 | 3 | contract_draft | allowed |
+| PAS-APP-008 | `FIELD-SERIES-PARTS-03-04:PAS-APP-008@1` | PAS-APP-008 | 11 | contract_draft | allowed |
+| PAS-APP-009 | `FIELD-SERIES-PARTS-03-04:PAS-APP-009@1` | PAS-APP-009 | 10 | contract_draft | allowed |
+| PAS-APP-010 | `FIELD-SERIES-PARTS-03-04:PAS-APP-010@1` | PAS-APP-010 | 11 | contract_draft | allowed |
+| PAS-APP-011 | `FIELD-SERIES-PARTS-03-04:PAS-APP-011@1` | PAS-APP-011 | 3 | contract_draft | allowed |
+| PAS-APP-012 | `FIELD-SERIES-PARTS-03-04:PAS-APP-012@1` | PAS-APP-012 | 2 | contract_draft | allowed |
+| PAS-APP-013 | `FIELD-SERIES-PARTS-03-04:PAS-APP-013@1` | PAS-APP-013 | 5 | contract_draft | allowed |
+| PAS-APP-014 | `FIELD-SERIES-PARTS-03-04:PAS-APP-014@1` | PAS-APP-014 | 5 | contract_draft | allowed |
+| PAS-APP-015 | `FIELD-SERIES-PARTS-03-04:PAS-APP-015@1` | PAS-APP-015 | 3 | contract_draft | allowed |
+| PAS-APP-016 | `FIELD-SERIES-PARTS-03-04:PAS-APP-016@1` | PAS-APP-016 | 4 | contract_draft | allowed |
+| PAS-APP-017 | `FIELD-SERIES-PARTS-03-04:PAS-APP-017@1` | PAS-APP-017 | 4 | contract_draft | allowed |
+| PAS-APP-018 | `FIELD-SERIES-PARTS-03-04:PAS-APP-018@1` | PAS-APP-018 | 5 | contract_draft | allowed |
+| SOC-BEN-001 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-001@1` | SOC-BEN-001 | 7 | contract_draft | allowed |
+| SOC-BEN-002 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-002@1` | SOC-BEN-002 | 9 | contract_draft | allowed |
+| SOC-BEN-003 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-003@1` | SOC-BEN-003 | 8 | contract_draft | allowed |
+| SOC-BEN-004 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-004@1` | SOC-BEN-004 | 20 | contract_draft | allowed |
+| SOC-BEN-005 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-005@1` | SOC-BEN-005 | 5 | contract_draft | allowed |
+| SOC-BEN-006 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-006@1` | SOC-BEN-006 | 5 | contract_draft | allowed |
+| SOC-BEN-007 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-007@1` | SOC-BEN-007 | 5 | contract_draft | allowed |
+| SOC-BEN-008 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-008@1` | SOC-BEN-008 | 2 | contract_draft | allowed |
+| SOC-BEN-009 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-009@1` | SOC-BEN-009 | 5 | contract_draft | allowed |
+| SOC-BEN-010 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-010@1` | SOC-BEN-010 | 7 | contract_draft | allowed |
+| SOC-BEN-011 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-011@1` | SOC-BEN-011 | 5 | contract_draft | allowed |
+| SOC-BEN-012 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-012@1` | SOC-BEN-012 | 5 | contract_draft | allowed |
+| SOC-BEN-013 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-013@1` | SOC-BEN-013 | 2 | contract_draft | allowed |
+| SOC-BEN-014 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-014@1` | SOC-BEN-014 | 5 | contract_draft | allowed |
+| SOC-BEN-015 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-015@1` | SOC-BEN-015 | 8 | contract_draft | allowed |
+| SOC-BEN-016 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-016@1` | SOC-BEN-016 | 2 | contract_draft | allowed |
+| SOC-BEN-017 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-017@1` | SOC-BEN-017 | 5 | contract_draft | allowed |
+| SOC-BEN-018 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-018@1` | SOC-BEN-018 | 7 | contract_draft | allowed |
+| SOC-BEN-019 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-019@1` | SOC-BEN-019 | 8 | contract_draft | allowed |
+| SOC-BEN-020 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-020@1` | SOC-BEN-020 | 7 | contract_draft | allowed |
+| SOC-BEN-021 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-021@1` | SOC-BEN-021 | 2 | contract_draft | allowed |
+| SOC-BEN-022 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-022@1` | SOC-BEN-022 | 2 | contract_draft | allowed |
+| SOC-BEN-023 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-023@1` | SOC-BEN-023 | 2 | contract_draft | allowed |
+| SOC-BEN-024 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-024@1` | SOC-BEN-024 | 2 | contract_draft | allowed |
+
 **Totals beside the earlier ones** (the register without the library's contracts, after each batch, and now):
 
-| Status | Before (without the library) | After batch 1 | After batch 2 | After batch 3 | After batch 4 | After batch 5 | After batch 6 | After batch 7 | Now |
-|---|---|---|---|---|---|---|---|---|---|
-| catalogued | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| contract_missing | 1723 | 1698 | 1677 | 1648 | 1646 | 1613 | 1518 | 1511 | 1511 |
-| contract_draft | 129 | 154 | 175 | 204 | 206 | 239 | 334 | 341 | 341 |
-| under_review | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 |
-| blocked | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
-| excluded | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 |
-| approved | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| production | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| forms without a contract | 1927 | 1902 | 1881 | 1852 | 1850 | 1817 | 1722 | 1715 | 1715 |
+| Status | Before (without the library) | After batch 1 | After batch 2 | After batch 3 | After batch 4 | After batch 5 | After batch 6 | After batch 7 | After batch 9 | Now |
+|---|---|---|---|---|---|---|---|---|---|---|
+| catalogued | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| contract_missing | 1723 | 1698 | 1677 | 1648 | 1646 | 1613 | 1518 | 1511 | 1434 | 1434 |
+| contract_draft | 129 | 154 | 175 | 204 | 206 | 239 | 334 | 341 | 418 | 418 |
+| under_review | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 |
+| blocked | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+| excluded | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 |
+| approved | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| production | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| forms without a contract | 1927 | 1902 | 1881 | 1852 | 1850 | 1817 | 1722 | 1715 | 1638 | 1638 |
 
 ## Forms with no contract
 
-1715 forms have no field contract (`contract: not yet given` in the register). By part:
+1638 forms have no field contract (`contract: not yet given` in the register). By part:
 
 | Part | Forms without a contract |
 |---|---|
 | Part 2 | 139 |
 | Part 3 | 361 |
-| Part 4 | 116 |
+| Part 4 | 64 |
 | Part 5 | 136 |
 | Part 6 | 93 |
 | Part 7 | 152 |
@@ -360,8 +461,6 @@ HLT-MED-024: its public answer is bound to a rule. Built only through publicProd
 | Part 11 | 66 |
 | Part 12 | 87 |
 | Part 13 | 83 |
-| Part 14 | 10 |
-| Part 15 | 15 |
 | Part 16 | 17 |
 | Part 17 | 18 |
 | Part 18 | 15 |
