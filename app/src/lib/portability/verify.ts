@@ -206,6 +206,15 @@ export function verifyExportParts(manifest: ExportManifest, parts: Parts): Expor
       }
       if (problems.length === before) checks.push(`Records management: ${rm.classes.length} class(es), ${rm.holds.length} hold(s), ${rm.migrations.length} migration(s) of its own; ${migrated} migrated record(s), each manifest giving back its recorded digests and every reconciliation's counts its records' statuses`);
     }
+    // Plan I9 (register 25.16): security registers, unmarked records only in full; a marked one only as a reference.
+    if (parts.has('registers/security.json')) {
+      const sec = read<{ records: { number: string; owner: string; marking: string }[]; references: { number: string; owner: string; summary?: string; terms?: unknown }[] }>(parts, 'registers/security.json');
+      const before = problems.length;
+      if (sec.records.some(r => r.marking)) problems.push('A marked security record is carried in full: an export carries a marked record as a reference only');
+      if (sec.references.some(r => 'summary' in r || 'terms' in r)) problems.push('A marked security record\'s reference carries its summary or terms');
+      if ([...sec.records, ...sec.references].some(r => r.owner !== inst)) problems.push('Security records of another institution');
+      if (problems.length === before) checks.push(`Security registers: ${sec.records.length} unmarked record(s) of its own; ${sec.references.length} marked record(s) as references only`);
+    }
   } catch (e) {
     problems.push((e as Error).message);
   }

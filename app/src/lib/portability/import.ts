@@ -42,6 +42,7 @@ import { getImportAuthorisation, restoreImports, type ImportAuthorisation } from
 import { getControlledAuthorisation, restoreControlled, type ControlledAuthorisation } from '@/lib/health/products/controlled';
 import { restoreCapacity, type CapacityReturn } from '@/lib/health/register';
 import { restoreRecordkeeping, recordkeepingConflicts, type recordkeepingOf } from '@/lib/recordkeeping/register';
+import { restoreSecurityRecords, securityRecordRaw, type SecurityRecord } from '@/lib/security/register';
 import { raiseCounter } from '@/lib/data/numbering';
 import { verifyExportParts, type ExportReport } from './verify';
 import { keepEvidence, type EvidenceSegment, type TrustListCopy } from './evidence';
@@ -67,6 +68,7 @@ function clashes(parts: Parts): string[] {
   if (parts.has('verification.json')) for (const c of read<{ certificates: Certificate[] }>(parts, 'verification.json').certificates) if (getCertificate(c.id)) out.push(`certificate ${c.id}`);
   // Plan I9: records management (exports taken before I9 carry none).
   if (parts.has('registers/records-management.json')) out.push(...recordkeepingConflicts(read<ReturnType<typeof recordkeepingOf>>(parts, 'registers/records-management.json')));
+  if (parts.has('registers/security.json')) for (const r of read<{ records: SecurityRecord[] }>(parts, 'registers/security.json').records) if (securityRecordRaw(r.number)) out.push(`security record ${r.number}`);
   return out;
 }
 
@@ -180,6 +182,7 @@ function apply(manifest: ExportManifest, parts: Parts, by: string): { counts: Re
   if (errs.length) return fail(errs.join('; '));
   // Plan I9: records management, each migration with its per-record manifest and verification history.
   if (parts.has('registers/records-management.json')) out.recordsManagement = restoreRecordkeeping(read<ReturnType<typeof recordkeepingOf>>(parts, 'registers/records-management.json'));
+  if (parts.has('registers/security.json')) { const e = step('securityRecords', restoreSecurityRecords(read<{ records: SecurityRecord[] }>(parts, 'registers/security.json').records)); if (e) return fail(e); }
 
   // The evidence the records verify against, as exported, and what it carried from before.
   const audit = read<EvidenceSegment['audit']>(parts, 'audit.json');

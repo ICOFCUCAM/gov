@@ -193,6 +193,41 @@ export const securityRecordOfCase = (caseId: string): SecurityRecord | undefined
 export const securityRecordsRaw = (filter: { kind?: SecurityKind; owner?: string } = {}): SecurityRecord[] =>
   db().records.filter(r => (!filter.kind || r.kind === filter.kind) && (!filter.owner || r.owner === filter.owner)).map(clone);
 
+/**
+ * One keeping institution's security registers as its portable export
+ * carries them (plan I9, integration register 25.16): an unmarked record in
+ * full (metadata only by construction), a marked record as a reference only
+ * (number, kind, register, case, status, dates): never its summary, terms,
+ * recipients or who needs to know it.
+ */
+export function portableSecurity(owner: string, now = new Date()): { records: SecurityRecord[]; references: (SecurityListing & { marking: 'marked' })[] } {
+  const mine = db().records.filter(r => r.owner === owner);
+  return {
+    records: mine.filter(r => !r.marking).map(clone),
+    references: mine.filter(r => !!r.marking).map(r => ({ ...listingOf(r, false, now), marking: 'marked' as const })),
+  };
+}
+
+/**
+ * The confirmed import of an institution's own export (lib/portability/import.ts:
+ * two officials, the export verified, none of its records already here): its
+ * unmarked records with their numbers and versions unchanged. A marked record
+ * travels as a reference only and is never restored here.
+ */
+export function restoreSecurityRecords(records: SecurityRecord[]): { restored: number } | { error: string } {
+  const d = db();
+  if (records.some(r => r.marking)) return { error: 'A marked security record is never carried by an export, so it is never imported' };
+  let n = 0;
+  for (const r of records) {
+    if (d.records.some(x => x.number === r.number)) continue;
+    d.records.push(clone(r));
+    const m = /^([A-Z]+)-\d{4}-(\d+)$/.exec(r.number);
+    if (m) d.seq[m[1]!] = Math.max(d.seq[m[1]!] ?? 0, Number(m[2]));
+    n++;
+  }
+  return { restored: n };
+}
+
 /** The clearance in force for an official account (granted, renewed or varied, not past its date), as the access rule needs it. */
 export function clearanceOf(officialId: string | undefined, now = new Date()): { number: string; level: string; validUntil: string } | null {
   if (!officialId) return null;

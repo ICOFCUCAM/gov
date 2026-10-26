@@ -110,8 +110,12 @@ const REGISTERS: Register[] = [
     reads: ['samePerson', 'CLASSIFICATIONS', 'cabinetRules', 'cabinetRuleChanges', 'checkVote', 'getSubmission', 'getCabinetDecision', 'getAction', 'actionsOf', 'cabinetRecords', 'cabinetIndicators', 'cabinetCounts'] },
   // I12: security governance and resilience (lib/security): written only by the security procedures' effects.
   { module: 'lib/security/register.ts', store: '__civicosSecurityRecords', procedures: 'lib/security/procedures.ts',
-    changes: ['resetSecurityRecords', 'openSecurityRecord', 'updateSecurityRecord', 'shareSecurityRecord', 'needToKnowGrant'],
-    reads: ['KIND_LABEL', 'KIND_REGISTER', 'SECURITY_REGISTER', 'effectiveStatus', 'listingOf', 'securityRecordRaw', 'securityRecordOfCase', 'securityRecordsRaw', 'clearanceOf', 'securityCounts'] },
+    changes: ['resetSecurityRecords', 'openSecurityRecord', 'updateSecurityRecord', 'shareSecurityRecord', 'needToKnowGrant',
+      // leftovers (plan I9, register 25.16): the confirmed import of an institution's own export.
+      'restoreSecurityRecords'],
+    reads: ['KIND_LABEL', 'KIND_REGISTER', 'SECURITY_REGISTER', 'effectiveStatus', 'listingOf', 'securityRecordRaw', 'securityRecordOfCase', 'securityRecordsRaw', 'clearanceOf', 'securityCounts',
+      // leftovers (plan I9): the security registers in an institution's export (unmarked records, marked ones as references).
+      'portableSecurity'] },
   { module: 'lib/courts/hearings.ts', store: '__civicosHearings', procedures: 'lib/courts/procedures.ts',
     changes: ['resetHearings', 'scheduleHearing', 'concludeHearing'],
     reads: ['causeList', 'hearingsOf'] },
@@ -254,6 +258,7 @@ const EXCEPTIONS: { file: string; fn: string; why: string }[] = [
   { file: 'lib/portability/import.ts', fn: 'restoreControlled', why: "the confirmed import of an institution's own export (two officials, the export verified, none of its records already here), keeping record identity" },
   { file: 'lib/portability/import.ts', fn: 'restoreCapacity', why: "the confirmed import of an institution's own export (two officials, the export verified, none of its records already here), keeping record identity" },
   // leftovers (plan I9): records management travels with an institution's export.
+  { file: 'lib/portability/import.ts', fn: 'restoreSecurityRecords', why: "the confirmed import of an institution's own export (two officials, the export verified, none of its records already here): its unmarked security records, numbers and versions unchanged; a marked record travels as a reference only and is never restored" },
   { file: 'lib/portability/import.ts', fn: 'restoreRecordkeeping', why: "the confirmed import of an institution's own export (two officials, the export verified, none of its records already here), keeping record identity and each migrated record's verification history" },
   // I13 (plan step I13): what the represented person does themselves, and what the front door and the archive record as their own.
   { file: 'lib/frontdoor/representation.ts', fn: 'grantDelegation', why: 'a representation granted by the represented person themselves (signed in), for named services and acts, until a date or revoked; decides no one\'s standing' },

@@ -32,6 +32,8 @@
 //                           legal holds, registered correspondence, disposals, transfers and migrations, each
 //                           migration with its per-record manifest (source, transformations, target) and the
 //                           verification status of every reconciliation (acceptance P5-06)
+//   registers/security.json (plan I9, register 25.16) the security registers it keeps: unmarked records in full
+//                           (metadata only), marked ones as references only (never their summary or terms)
 //
 // Sealed through key custody exactly as backups are (lib/backup/archive.ts,
 // format civicos-institution-export/1; never plaintext), written to the backup
@@ -81,6 +83,7 @@ import { listRelationships } from '@/lib/data/store/relationships';
 import { certificatesFor } from '@/lib/records/certificates';
 import { institutionPublicKey, seenInstitutionKeys } from '@/lib/federation/keys';
 import { recordkeepingOf } from '@/lib/recordkeeping/register';
+import { portableSecurity } from '@/lib/security/register';
 
 export const EXPORT_KIND = 'civicos.institution-export';
 
@@ -302,6 +305,8 @@ export function collectInstitution(institution: string, now = new Date()): { nam
   const rm = recordkeepingOf(institution);
   const rmCount = rm.classes.length + rm.holds.length + rm.incoming.length + rm.disposals.length + rm.transfers.length + rm.migrations.length;
   add('registers/records-management.json', rm, rmCount);
+  const sec = portableSecurity(institution, now);
+  add('registers/security.json', sec, sec.records.length + sec.references.length);
 
   // The records it carries, as the audit chain and the access log name them.
   const exports = portabilityDb().proposals.filter(p => p.institution === institution).map(p => p.id);
@@ -314,6 +319,7 @@ export function collectInstitution(institution: string, now = new Date()): { nam
     // Plan I9: its records management entries.
     ...rm.classes.map(x => `RecordClass:${institution}/${x.key}`), ...rm.holds.map(x => `Hold:${x.id}`), ...rm.incoming.map(x => `Incoming:${x.number}`),
     ...rm.disposals.map(x => `Disposal:${x.id}`), ...rm.transfers.map(x => `Transfer:${x.id}`), ...rm.migrations.map(x => `Migration:${x.id}`),
+    ...sec.records.map(x => `SecurityRecord:${x.number}`),
   ]);
   // Organisation entries only for what this institution recorded (capacity returns); the rest is the business register's.
   const ours = (e: { action: string; resource: string }) => resources.has(e.resource) || (e.action === 'health.capacity.record' && orgNumbers.has(e.resource.replace(/^Organisation:/, '')));
@@ -348,7 +354,7 @@ export function collectInstitution(institution: string, now = new Date()): { nam
   const counts = { organisations: orgs.length, professionals: people.length, products: products.length, imports: imports.length, controlled: controlled.length, capacityReturns: capacity.length,
     procedures: packages.length, cases: cases.length, decisions: decisions.length, documents: docs.length, auditEntries: fullAudit, accessEntries: fullAccess, importedSegments: evidence.length,
     mappings: configuration.mappings.length, rules: configuration.rules.length, relationships: configuration.relationships.length, laws: configuration.laws.length, certificates: certificates.length,
-    recordsManagement: rmCount, migratedRecords: rm.migrations.reduce((n, m) => n + (m.records?.length ?? 0), 0) };
+    recordsManagement: rmCount, migratedRecords: rm.migrations.reduce((n, m) => n + (m.records?.length ?? 0), 0), securityRecords: sec.records.length, securityReferences: sec.references.length };
   return { name: m.name, parts, counts, audit: { head, entries: items.length, full: fullAudit }, accessLog: { head: accessHead, entries: access.length, full: fullAccess } };
 }
 

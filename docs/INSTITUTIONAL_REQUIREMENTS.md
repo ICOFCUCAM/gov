@@ -23,16 +23,16 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | 2 | 141 | 300 | 118 | 16 | 0 | 0 | 575 |
 | 3 | 84 | 173 | 221 | 23 | 2 | 79 | 582 |
 | 4 | 178 | 146 | 105 | 0 | 1 | 50 | 480 |
-| 5 | 130 | 164 | 4 | 0 | 18 | 0 | 316 |
+| 5 | 133 | 161 | 4 | 0 | 18 | 0 | 316 |
 | 6 | 92 | 167 | 34 | 8 | 8 | 2 | 311 |
-| **All** | **736** | **1167** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **739** | **1164** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 736 | 0 | 0 | 39 | 12 | 0 | 787 |
+| — | 739 | 0 | 0 | 39 | 12 | 0 | 790 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 109 | 3 | 0 | 0 | 0 | 112 |
 | I3 | 0 | 123 | 30 | 0 | 0 | 0 | 153 |
@@ -41,12 +41,12 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | I6 | 0 | 123 | 111 | 4 | 0 | 0 | 238 |
 | I7 | 0 | 65 | 208 | 0 | 0 | 0 | 273 |
 | I8 | 0 | 63 | 105 | 0 | 0 | 0 | 168 |
-| I9 | 0 | 217 | 11 | 0 | 10 | 0 | 238 |
+| I9 | 0 | 214 | 11 | 0 | 10 | 0 | 235 |
 | I10 | 0 | 147 | 22 | 6 | 0 | 2 | 177 |
 | I11 | 0 | 44 | 5 | 3 | 0 | 166 | 218 |
 | I12 | 0 | 5 | 0 | 0 | 0 | 0 | 5 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
-| **All** | **736** | **1167** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **739** | **1164** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By sector
@@ -115,7 +115,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Control plane | 2 | 19 | 0 | 0 | 0 | 0 | 21 |
 | Standalone deployment | 11 | 13 | 1 | 0 | 0 | 0 | 25 |
 | Federation | 5 | 14 | 0 | 0 | 0 | 0 | 19 |
-| APIs and events | 23 | 33 | 0 | 0 | 0 | 0 | 56 |
+| APIs and events | 26 | 30 | 0 | 0 | 0 | 0 | 56 |
 | Ownership and portability | 21 | 17 | 1 | 0 | 0 | 0 | 39 |
 | Security and keys | 5 | 25 | 2 | 0 | 1 | 0 | 33 |
 | Hosting | 1 | 5 | 0 | 0 | 17 | 0 | 23 |
@@ -128,7 +128,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Roadmap | 23 | 9 | 4 | 0 | 8 | 0 | 44 |
 | Risks | 14 | 8 | 0 | 0 | 0 | 0 | 22 |
 | Launch checklist | 18 | 5 | 0 | 0 | 0 | 0 | 23 |
-| **All** | **736** | **1167** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **739** | **1164** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By category
@@ -140,7 +140,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | architecture | 123 | 136 | 7 | 0 | 25 | 0 | 291 |
 | department | 0 | 179 | 152 | 13 | 0 | 47 | 391 |
 | design | 26 | 122 | 30 | 8 | 0 | 2 | 188 |
-| exchange | 29 | 68 | 7 | 0 | 0 | 2 | 106 |
+| exchange | 32 | 65 | 7 | 0 | 0 | 2 | 106 |
 | fieldwork | 1 | 15 | 8 | 0 | 0 | 0 | 24 |
 | form | 1 | 58 | 13 | 1 | 0 | 0 | 73 |
 | procedure | 135 | 97 | 167 | 4 | 0 | 39 | 442 |
@@ -151,7 +151,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | security | 45 | 36 | 2 | 0 | 1 | 0 | 84 |
 | service | 3 | 12 | 13 | 0 | 0 | 0 | 28 |
 | twin | 52 | 29 | 16 | 0 | 0 | 2 | 99 |
-| **All** | **736** | **1167** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **739** | **1164** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ## Plan gaps closed by the revised plan
@@ -2900,15 +2900,15 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-E.3-01 | 3641 | architecture | CivicOS should support all three without changing the legal meaning of a record when its physical hosting location changes. | Partial | Federation partly built |  | I9 |
 | S5-E.3-02 | 3645 | prose-rule | An institution is identified by a stable, unique institutional ID—not by a mutable display name. | Met | Stable institution ids (lib/institution/federation.ts) |  | — |
 | S5-E.3-03 | 3646 | prose-rule | Every exchange has a requesting identity, recipient, purpose and authorisation decision. | Partial | Federation partly built |  | I9 |
-| S5-E.3-04 | 3647 | prose-rule | Every data contract has a version and defined compatibility rules. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections and revocations propagated automatically as events from decisions (types declared, published by officials); compatibility rules between sc | I9 |
-| S5-E.3-05 | 3648 | prose-rule | A receiver validates the sender and message integrity before processing. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections and revocations propagated automatically as events from decisions (types declared, published by officials); compatibility rules between sc | I9 |
+| S5-E.3-04 | 3647 | prose-rule | Every data contract has a version and defined compatibility rules. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections of register records propagated as events; compatibility rules between schema versions | I9 |
+| S5-E.3-05 | 3648 | prose-rule | A receiver validates the sender and message integrity before processing. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections of register records propagated as events; compatibility rules between schema versions | I9 |
 | S5-E.3-06 | 3649 | prose-rule | Duplicate or retried messages must not create duplicate legal decisions. | Met | Acceptance P5-04 | Inbound receiver dedupe | — |
-| S5-E.3-07 | 3650 | prose-rule | Unavailable services must produce explicit pending, failed or unavailable states. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections and revocations propagated automatically as events from decisions (types declared, published by officials); compatibility rules between sc | I9 |
-| S5-E.3-08 | 3651 | prose-rule | Corrections and revocations propagate through authorised events while preserving the original history. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections and revocations propagated automatically as events from decisions (types declared, published by officials); compatibility rules between sc | I9 |
+| S5-E.3-07 | 3650 | prose-rule | Unavailable services must produce explicit pending, failed or unavailable states. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections of register records propagated as events; compatibility rules between schema versions | I9 |
+| S5-E.3-08 | 3651 | prose-rule | Corrections and revocations propagate through authorised events while preserving the original history. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections of register records propagated as events; compatibility rules between schema versions | I9 |
 | S5-E.3-09 | 3652 | prose-rule | Federation must not silently grant a remote administrator access to local records. | Met | Federation reads by grant only (lib/exchange/log.test.ts) |  | — |
 | S5-E.3-10 | 3653 | prose-rule | Disconnection or termination of a relationship must revoke its credentials and stop future exchanges without erasing the prior audit history. | Met | lib/federation/binding.ts exchangeBinding() in callService() (between two registered institutions only under an approved exchange relationship in forc |  | — |
 
-### APIs and events — Met 23, Partial 33
+### APIs and events — Met 26, Partial 30
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2937,14 +2937,14 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-F.1-21 | 3697 | exchange | Actual endpoint naming and access rules should be standardised in the API specification. | Partial | /api/openapi generated (openapi.test.ts); mutationRule() per route | Owning institution, refusal codes, idempotency, rate limits, audit, classification, deprecation per endpoint | I9 |
 | S5-F.1-22 | 3697 | exchange | The existence of an endpoint must never imply public access. | Partial | /api/openapi generated (openapi.test.ts); mutationRule() per route | Owning institution, refusal codes, idempotency, rate limits, audit, classification, deprecation per endpoint | I9 |
 | S5-F.2-01 | 3701 | exchange | Events are useful when one institution needs to notify another that something happened without granting direct database access. | Partial | lib/events/outbox.ts; lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws register, aggregate and pa | Compatibility rules between event schema versions | I9 |
-| S5-F.2-02 | 3705 | exchange | credential.status.changed | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
-| S5-F.2-03 | 3706 | exchange | permit.issued | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
-| S5-F.2-04 | 3707 | exchange | permit.revoked | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
-| S5-F.2-05 | 3708 | exchange | case.status.changed | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
-| S5-F.2-06 | 3709 | exchange | court.order.issued | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
-| S5-F.2-07 | 3710 | exchange | payment.reconciled | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
-| S5-F.2-08 | 3711 | exchange | facility.status.changed | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
-| S5-F.2-09 | 3712 | exchange | legal.instrument.effective | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
+| S5-F.2-02 | 3705 | exchange | credential.status.changed | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the register changes that cause them (credentials, court orders, reconciled payments, sites, laws in force) | I9 |
+| S5-F.2-03 | 3706 | exchange | permit.issued | Met | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions; lib/federation/emit.ts (a sealed case decision p |  | — |
+| S5-F.2-04 | 3707 | exchange | permit.revoked | Met | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions; lib/federation/emit.ts (a sealed case decision p |  | — |
+| S5-F.2-05 | 3708 | exchange | case.status.changed | Met | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions; lib/federation/emit.ts (a sealed case decision p |  | — |
+| S5-F.2-06 | 3709 | exchange | court.order.issued | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the register changes that cause them (credentials, court orders, reconciled payments, sites, laws in force) | I9 |
+| S5-F.2-07 | 3710 | exchange | payment.reconciled | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the register changes that cause them (credentials, court orders, reconciled payments, sites, laws in force) | I9 |
+| S5-F.2-08 | 3711 | exchange | facility.status.changed | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the register changes that cause them (credentials, court orders, reconciled payments, sites, laws in force) | I9 |
+| S5-F.2-09 | 3712 | exchange | legal.instrument.effective | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the register changes that cause them (credentials, court orders, reconciled payments, sites, laws in force) | I9 |
 | S5-F.2-10 | 3716-3734 | exchange | Contract field event_id (example: "unique-event-id") | Met | CloudEvents id/type/time (lib/events/outbox.ts) |  | — |
 | S5-F.2-11 | 3716-3734 | exchange | Contract field event_type (example: "permit.issued") | Met | CloudEvents id/type/time (lib/events/outbox.ts) |  | — |
 | S5-F.2-12 | 3716-3734 | exchange | Contract field schema_version (example: "1.0") | Met | lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws register, aggregate and payload references only, |  | — |
