@@ -108,6 +108,7 @@ describe('navigation by permission (plan I10)', () => {
   it('accounts for every read the routes refuse as a whole: a menu page\'s rule, or a reason it is not one', () => {
     // Routes whose GET refuses before reading anything (scanned), and why no menu page hides on them.
     const NOT_A_PAGE: Record<string, string> = {
+      '/api/audit/key-reviews': 'Reviews of key operations by an auditor or the data-protection authority (lib/keys/key-review.ts); no screen yet (integration register 24.15), the route decides who may review.',
       '/api/org/ministries/[id]/administration': 'The page asks for one institution at a time and offers only those the official reaches (canReadAdministration per institution).',
       '/api/org/ministries/[id]/capabilities': 'Per institution, chosen on the page (canReadAdministration).',
       '/api/org/ministries/[id]/completeness': 'Per institution, chosen on the page (canReadAdministration).',

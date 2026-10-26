@@ -32,7 +32,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 759 | 2 | 0 | 45 | 12 | 0 | 818 |
+| — | 759 | 0 | 0 | 45 | 12 | 0 | 816 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 109 | 3 | 0 | 0 | 0 | 112 |
 | I3 | 0 | 123 | 30 | 0 | 0 | 0 | 153 |
@@ -42,7 +42,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | I7 | 0 | 65 | 208 | 0 | 0 | 0 | 273 |
 | I8 | 0 | 63 | 105 | 0 | 0 | 0 | 168 |
 | I9 | 0 | 214 | 11 | 0 | 10 | 0 | 235 |
-| I10 | 0 | 146 | 1 | 0 | 0 | 2 | 149 |
+| I10 | 0 | 148 | 1 | 0 | 0 | 2 | 151 |
 | I11 | 0 | 44 | 5 | 3 | 0 | 166 | 218 |
 | I12 | 0 | 5 | 0 | 0 | 0 | 0 | 5 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
@@ -3506,8 +3506,8 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-K-17 | 4717 | acceptance | Incident response and support owners assigned | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-14: `app/src/app/api/ops/incidents/*/route.test.ts` (ack, escalate, resolve); `app/src/lib/data/support.test.ts`;  |  | — |
 | S6-K-18 | 4719 | acceptance | Monitoring and integration failures tested | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-15: `app/src/lib/ops/cron-runs.test.ts` "retries a failed job … and alerts once after the last attempt"; `app/src/ |  | — |
 | S6-K-19 | 4721 | acceptance | Export and exit process verified | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-16: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
-| S6-K-20 | 4725 | acceptance | Keyboard and screen-reader testing completed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-17: `app/scripts/audit-console.mjs` (first Tab stop is the skip link; CI "console audit"); `app/scripts/audit-publ | Automated checks only. No session with a screen reader or with keyboard-only users has been held: the protocol and the session template are in `docs/U | — |
-| S6-K-21 | 4727 | acceptance | WCAG 2.2 AA assessment performed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-18: axe-core with `wcag22aa` tags in `app/scripts/audit-public-sites.mjs` and `app/scripts/audit-console.mjs` (CI) | Still an automated rule scan of the listed pages plus tests of the shared components, not an assessment of every screen by a qualified assessor (integ | — |
+| S6-K-20 | 4725 | acceptance | Keyboard and screen-reader testing completed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-17: `app/scripts/audit-console.mjs` (first Tab stop is the skip link; CI "console audit"); `app/scripts/audit-publ | Automated checks only. No session with a screen reader or with keyboard-only users has been held: the protocol and the session template are in `docs/U | I10 |
+| S6-K-21 | 4727 | acceptance | WCAG 2.2 AA assessment performed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-18: axe-core with `wcag22aa` tags in `app/scripts/audit-public-sites.mjs` and `app/scripts/audit-console.mjs` (CI) | Still an automated rule scan of the listed pages plus tests of the shared components, not an assessment of every screen by a qualified assessor (integ | I10 |
 | S6-K-22 | 4729 | acceptance | RTL and required languages reviewed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-19: `app/src/lib/public-sites/translation.test.ts` "is complete when every string is translated from its current t | Proven for public sites and for forms' translations as a publication gate. Console and workspace RTL are not tested. | I10 |
 | S6-K-23 | 4731 | acceptance | Assisted and offline procedures tested where applicable | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-20: Step I1: `app/src/lib/forms/contract.test.ts` "records an assisted application: who assisted, the identity evi | The assisted channel is proven (and refused where `deployment.identity.assisted` is off). Offline: a self-service draft is kept in the browser and res | I6 |
 
