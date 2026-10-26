@@ -48,7 +48,7 @@ export function RulesBoard() {
         ) : <p className="text-sm text-ink-muted">No rule has been recorded. Assessments and duties are entered by officials with their reasons until one is approved.</p>}
       </Section>
       <Section title="Draft a version" meta="the owning authority's officials">
-        <label className="block text-sm">Rule (JSON: key, title, kind flat-rate | rate-bands | tariff, owner, effectiveFrom, rate | bands | lines, citations, tests)
+        <label className="block text-sm">Rule (JSON: key, title, kind flat-rate | rate-bands | tariff | tiers, owner, effectiveFrom, rate | bands | lines | tiers, citations, tests; a tiers test gives expectTier)
           <textarea className={field} rows={12} value={draft} placeholder={EXAMPLE} onChange={e => setDraft(e.target.value)} />
         </label>
         <Button className="mt-2" onClick={() => { try { void send({ op: 'draft', rule: JSON.parse(draft) }, 'Drafted: its tests passed. A different official approves it.'); } catch { setMsg('The rule is not valid JSON'); } }}>Record the draft</Button>
