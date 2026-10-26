@@ -1590,11 +1590,20 @@
       "app/src/lib/law/register.ts",
       "app/src/lib/health/programmes/register.ts"
      ]
+    },
+    {
+     "what": "Budget and procurement (plan step I5): a programme's budget reference resolves to an appropriation in the finance register (fin:APP-…; budgetLink(): an unknown reference refused, free text refused in production once the finance slot is named); the health institution commits against its appropriation (finance.commitment, two officials) and buys through its own procurement procedures (proc.plan and proc.tender adopted as its own: sealed bids, evaluation with reasons, award, standstill, complaints to the review body)",
+     "files": [
+      "app/src/lib/health/programmes/procedures.ts",
+      "app/src/lib/finance/register.ts",
+      "app/src/lib/finance/procedures.ts",
+      "app/src/lib/procurement/procedures.ts"
+     ]
     }
    ],
    "missing": [
     "Logistics and inventory (lots, stock, locations, expiry, transactions) and essential-supply availability from reliable inventory feeds: not built (integration register 20.36)",
-    "Budget, procurement and grants: plan step I5 (finance), recorded as a dependency (integration register 20.37); a programme carries a budget reference only",
+    "Grants and transfers to health institutions or programmes: not built (plan step I5 left grants and transfers; integration register 20.37); budget and procurement are built (I5)",
     "Service-quality investigations beyond the complaint's referral; planning and performance frameworks with indicator definitions (I3)",
     "Adoption by the nation of the complaint procedures (a version approved by a second official; its complaint kinds and relationships configured)"
    ],
@@ -1631,6 +1640,10 @@
      {
       "file": "app/src/lib/professions/workforce.test.ts",
       "name": "counts by profession, standing and region, suppresses small cells by the nation's threshold, and names nobody"
+     },
+     {
+      "file": "app/src/lib/finance/finance.test.ts",
+      "name": "links a public-health programme's budget reference to the appropriation it names"
      }
     ],
     "planned": [
