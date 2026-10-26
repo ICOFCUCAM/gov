@@ -87,6 +87,10 @@ const PAGES = [
   { path: '/gov/transport', map: false, text: /transport registers/i },
   // Tax services (plan step I5) and forms batch 6: the procedures and a form of each kind, in three channels.
   { path: '/gov/tax/services', map: false, text: /tax services/i },
+  // Plan step I5: budget and treasury, procurement, the Cabinet office (records as the official may read them, and the procedures).
+  { path: '/gov/treasury/budget', map: false, text: /budget and treasury/i },
+  { path: '/gov/treasury/procurement', map: false, text: /procurement/i },
+  { path: '/gov/cabinet-office', map: false, text: /cabinet office/i },
   { path: '/gov/law/procedures/forms/tax.return.periodic.nil', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/tax.return.periodic.late_submission/print', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/tax.objection.submit', map: false, text: /register status/i },

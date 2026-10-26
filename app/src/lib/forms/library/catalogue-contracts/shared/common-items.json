@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration) and \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration), \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities), \"econ8\" (batch 8: Part 2's implementation rules for the executive centre, finance, treasury and budget forms) and \"land\", \"hpc\", \"lrg\" and \"trn\" (batch 10: the territory and infrastructure families of Parts 8 and 9 and the supplement's Parts 19 and 20). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -255,7 +255,64 @@
   "TRN-VEH-001",
   "TRN-VEH-002",
   "TRN-ROAD-002",
-  "TRN-OPS-001"
+  "TRN-OPS-001",
+  "budget.allocation.approve",
+  "budget.allocation.notify",
+  "budget.allocation.propose",
+  "budget.bid.justification",
+  "budget.bid.revise",
+  "budget.bid.withdraw",
+  "budget.ceiling.approve",
+  "budget.ceiling.propose",
+  "budget.circular.issue",
+  "budget.execution.commitment",
+  "budget.execution.commitment.approve",
+  "budget.execution.correction",
+  "budget.execution.overrun.report",
+  "budget.execution.reallocation.approve",
+  "budget.execution.reallocation.request",
+  "budget.execution.supplementary.request",
+  "budget.execution.underspend.report",
+  "budget.execution.variance.report",
+  "budget.execution.virement",
+  "budget.execution.year_end",
+  "budget.negotiation.record",
+  "budget.programme.costing",
+  "exec.cabinet.action.close",
+  "exec.cabinet.action.update",
+  "exec.cabinet.agenda.approve",
+  "exec.cabinet.agenda.propose",
+  "exec.cabinet.decision.action_assign",
+  "exec.cabinet.decision.correct",
+  "exec.cabinet.decision.distribution",
+  "exec.cabinet.decision.record",
+  "exec.cabinet.paper.fiscal_review",
+  "exec.cabinet.paper.legal_review",
+  "exec.cabinet.paper.revise",
+  "exec.presidency.correspondence.complaint",
+  "exec.presidency.correspondence.decision",
+  "exec.presidency.correspondence.notice",
+  "exec.presidency.correspondence.referral",
+  "exec.presidency.correspondence.submit",
+  "exec.presidency.correspondence.supplement",
+  "exec.presidency.correspondence.withdraw",
+  "treasury.cash_forecast.close",
+  "treasury.cash_forecast.review",
+  "treasury.cash_forecast.revise",
+  "treasury.cash_forecast.submit",
+  "treasury.cash_position.report",
+  "treasury.liquidity.response",
+  "treasury.liquidity.shortfall",
+  "treasury.payment.approve",
+  "treasury.payment.cancel_request",
+  "treasury.payment.correction",
+  "treasury.payment.dispute",
+  "treasury.payment.execute",
+  "treasury.payment.reconcile",
+  "treasury.payment.refund",
+  "treasury.payment.reject",
+  "treasury.payment.supporting_evidence",
+  "treasury.payment.verify"
  ],
  "groups": {
   "health": [
@@ -530,6 +587,65 @@
    "TRN-VEH-002",
    "TRN-ROAD-002",
    "TRN-OPS-001"
+  ],
+  "econ8": [
+   "budget.allocation.approve",
+   "budget.allocation.notify",
+   "budget.allocation.propose",
+   "budget.bid.justification",
+   "budget.bid.revise",
+   "budget.bid.withdraw",
+   "budget.ceiling.approve",
+   "budget.ceiling.propose",
+   "budget.circular.issue",
+   "budget.execution.commitment",
+   "budget.execution.commitment.approve",
+   "budget.execution.correction",
+   "budget.execution.overrun.report",
+   "budget.execution.reallocation.approve",
+   "budget.execution.reallocation.request",
+   "budget.execution.supplementary.request",
+   "budget.execution.underspend.report",
+   "budget.execution.variance.report",
+   "budget.execution.virement",
+   "budget.execution.year_end",
+   "budget.negotiation.record",
+   "budget.programme.costing",
+   "exec.cabinet.action.close",
+   "exec.cabinet.action.update",
+   "exec.cabinet.agenda.approve",
+   "exec.cabinet.agenda.propose",
+   "exec.cabinet.decision.action_assign",
+   "exec.cabinet.decision.correct",
+   "exec.cabinet.decision.distribution",
+   "exec.cabinet.decision.record",
+   "exec.cabinet.paper.fiscal_review",
+   "exec.cabinet.paper.legal_review",
+   "exec.cabinet.paper.revise",
+   "exec.presidency.correspondence.complaint",
+   "exec.presidency.correspondence.decision",
+   "exec.presidency.correspondence.notice",
+   "exec.presidency.correspondence.referral",
+   "exec.presidency.correspondence.submit",
+   "exec.presidency.correspondence.supplement",
+   "exec.presidency.correspondence.withdraw",
+   "treasury.cash_forecast.close",
+   "treasury.cash_forecast.review",
+   "treasury.cash_forecast.revise",
+   "treasury.cash_forecast.submit",
+   "treasury.cash_position.report",
+   "treasury.liquidity.response",
+   "treasury.liquidity.shortfall",
+   "treasury.payment.approve",
+   "treasury.payment.cancel_request",
+   "treasury.payment.correction",
+   "treasury.payment.dispute",
+   "treasury.payment.execute",
+   "treasury.payment.reconcile",
+   "treasury.payment.refund",
+   "treasury.payment.reject",
+   "treasury.payment.supporting_evidence",
+   "treasury.payment.verify"
   ]
  },
  "items": [
@@ -3368,6 +3484,93 @@
     "platform": {
      "file": "app/src/lib/transport/register.ts",
      "how": "Transfers keep their history; nothing is overwritten"
+    }
+   }
+  },
+  {
+   "for": "econ8",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1838,
+   "quotes": [
+    "Universal: CivicOS's legal authority, workflow, audit, versioning, accessibility and data-minimisation controls apply to every form."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "Every form is carried by a procedure package the nation approves: the law cited, every step audited, every version kept; accessibility and minimisation are publication gates"
+    }
+   }
+  },
+  {
+   "for": "econ8",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1839,
+   "quotes": [
+    "Country-configurable: institutional boundaries, tax types, fiscal calendars, public offices, fee rules, forms of representation and official values are configured by each nation."
+   ],
+   "met_by": {
+    "deviation": "no-amounts-typed",
+    "platform": {
+     "file": "app/src/lib/nation/deployment.ts",
+     "how": "Who is responsible, fiscal values and the country rule sets come from the deployment profile and the nation's approved rules; none ship"
+    }
+   }
+  },
+  {
+   "for": "econ8",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1840,
+   "quotes": [
+    "Legal review required: legal powers, tax liabilities, statutory deadlines, budget authority, confidentiality rules, exemptions, appeal rights and the legal effect of declarations must be approved by the country's authorized officials."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "Legal review, authority and release are recorded acts of different signed-in officials; a form with a binding rule the nation has not approved does not go live"
+    }
+   }
+  },
+  {
+   "for": "econ8",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1841,
+   "quotes": [
+    "A catalogue entry is a baseline specification, not permission to activate a power that the institution does not legally possess."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/permits/decisions.ts",
+     "how": "Every decision step is classified; a production installation refuses a power no approved mapping covers (proposed mappings ship unapproved)"
+    }
+   }
+  },
+  {
+   "for": "econ8",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1842,
+   "quotes": [
+    "Forms for constitutional offices and executive offices must not grant the executive access to judicial, legislative or independent-institution records."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "The executive office and the finance authority reach no judicial, legislative or independent institution's records (reaches(), caseReadRefusal()); a Cabinet action to an independent institution is a request (directiveTargetRefusal())"
+    }
+   }
+  },
+  {
+   "for": "econ8",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+   "line": 1843,
+   "quotes": [
+    "For readability, the detailed JSON contracts below use the canonical field shape from Part 1.",
+    "A field's validation entries refer to named rules in CivicOS's validation registry.",
+    "All referenced value sources, legal records and procedure packages must resolve to actual approved records before production activation."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/rules.ts",
+     "how": "Only registered rules run (unknown names fail closed); a binding rule is recorded as not performed and blocks publication until its register or decision exists"
     }
    }
   }

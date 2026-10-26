@@ -6,9 +6,11 @@
 // HLT-PH-011, HLT-PH-014; batch 5, internal administration: the 40 ADM-*
 // forms of the supplement's Part 21; batch 6, tax services: the 95 tax.* rows
 // of Part 2 §2.6 Departments B–H; batch 7, independent oversight: DEM-CON-012,
-// 013, 014, 018, 019, 020 and DEM-PUB-009; batch 10, territory and
-// infrastructure: 12 LND-REG, 14 HPC, 5 LRG and 5 TRN forms) to the documents they answer
-// (docs/FORMS_CONFORMANCE.md §8, §9, §10, §12, §13, §14, §15, §18). The test holds its
+// 013, 014, 018, 019, 020 and DEM-PUB-009; batch 8, executive office, Cabinet,
+// treasury and budget: 57 rows of Part 2 §2.1, §2.2, §2.4 and §2.5; batch 10,
+// territory and infrastructure: 12 LND-REG, 14 HPC, 5 LRG and 5 TRN forms) to the
+// documents they answer (docs/FORMS_CONFORMANCE.md §8, §9, §10, §12, §13, §14,
+// §15, §16, §18). The test holds its
 // own list of the catalogue lines each form must answer and reads the
 // documents themselves: every piece of every line (each table cell, list item
 // and sentence) is quoted verbatim by the contract and met by a field, a
@@ -23,7 +25,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, BATCH_5, BATCH_6, BATCH_7, BATCH_10, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
+import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, BATCH_5, BATCH_6, BATCH_7, BATCH_8, BATCH_10, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
 import { CANONICAL_LIBRARY } from './library/catalogue';
 import SPEC_TAXPAYER from './library/spec/taxpayer-registration-v1.json';
 import { SPEC_CLASSES } from './spec-import';
@@ -47,6 +49,9 @@ import { BUILDING_PROCEDURES } from '@/lib/building/procedures';
 import { HOUSING_PROCEDURES } from '@/lib/housing/procedures';
 import { LOCAL_GOVERNMENT_TEMPLATES } from '@/lib/localgov/procedures';
 import { TRANSPORT_PROCEDURES } from '@/lib/transport/procedures';
+import { FINANCE_PROCEDURES } from '@/lib/finance/procedures';
+import { CABINET_PROCEDURES } from '@/lib/cabinet/procedures';
+import { PROCUREMENT_PROCEDURES } from '@/lib/procurement/procedures';
 import { dualControlRefusal } from '@/lib/data/dual-control';
 import { serviceDirectory } from '@/lib/exchange/services';
 import { AUTHORITIES } from '@/lib/nation/deployment';
@@ -124,9 +129,31 @@ const IDS_7 = ['DEM-CON-012', 'DEM-CON-013', 'DEM-CON-014', 'DEM-CON-018', 'DEM-
 const IDS_10 = [
   'LND-REG-007', 'LND-REG-012', 'LND-REG-008', 'LND-REG-009', 'LND-REG-011', 'LND-REG-020', 'LND-REG-010', 'LND-REG-021', 'LND-REG-016', 'LND-REG-005', 'LND-REG-017', 'LND-REG-022', 'HPC-HOU-001', 'HPC-HOU-002', 'HPC-HOU-003', 'HPC-HOU-004', 'HPC-PLN-009', 'HPC-PLN-012', 'HPC-PLN-013', 'HPC-BLD-014', 'HPC-BLD-015', 'HPC-BLD-016', 'HPC-BLD-017', 'HPC-BLD-018', 'HPC-BLD-019', 'HPC-BLD-020', 'LRG-ORG-005', 'LRG-ORG-004', 'LRG-FIN-008', 'LRG-SVC-013', 'LRG-SVC-014', 'TRN-DRV-001', 'TRN-VEH-001', 'TRN-VEH-002', 'TRN-ROAD-002', 'TRN-OPS-001',
 ];
-const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4, ...IDS_5, ...IDS_6, ...IDS_7, ...IDS_10];
-const batchOf = (id: string) => (IDS_10.includes(id) ? 10 : id.startsWith('ADM-') ? 5 : id.startsWith('tax.') ? 6 : id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : IDS_7.includes(id) ? 7 : 1);
-const sourceOf = (id: string): Src => (batchOf(id) === 10 ? (/^(LND|TRN)-/.test(id) ? 'F' : 'C') : batchOf(id) === 5 ? 'C' : [3, 6].includes(batchOf(id)) ? 'B' : batchOf(id) === 7 ? 'E' : 'A');
+// Batch 8: the Part 2 forms of the executive office, Cabinet, treasury and budget the I5 procedures carry or wait for (plan I5).
+const IDS_8 = [
+  'budget.allocation.approve', 'budget.allocation.notify', 'budget.allocation.propose',
+  'budget.bid.justification', 'budget.bid.revise', 'budget.bid.withdraw',
+  'budget.ceiling.approve', 'budget.ceiling.propose', 'budget.circular.issue',
+  'budget.execution.commitment', 'budget.execution.commitment.approve', 'budget.execution.correction',
+  'budget.execution.overrun.report', 'budget.execution.reallocation.approve', 'budget.execution.reallocation.request',
+  'budget.execution.supplementary.request', 'budget.execution.underspend.report', 'budget.execution.variance.report',
+  'budget.execution.virement', 'budget.execution.year_end', 'budget.negotiation.record',
+  'budget.programme.costing', 'exec.cabinet.action.close', 'exec.cabinet.action.update',
+  'exec.cabinet.agenda.approve', 'exec.cabinet.agenda.propose', 'exec.cabinet.decision.action_assign',
+  'exec.cabinet.decision.correct', 'exec.cabinet.decision.distribution', 'exec.cabinet.decision.record',
+  'exec.cabinet.paper.fiscal_review', 'exec.cabinet.paper.legal_review', 'exec.cabinet.paper.revise',
+  'exec.presidency.correspondence.complaint', 'exec.presidency.correspondence.decision', 'exec.presidency.correspondence.notice',
+  'exec.presidency.correspondence.referral', 'exec.presidency.correspondence.submit', 'exec.presidency.correspondence.supplement',
+  'exec.presidency.correspondence.withdraw', 'treasury.cash_forecast.close', 'treasury.cash_forecast.review',
+  'treasury.cash_forecast.revise', 'treasury.cash_forecast.submit', 'treasury.cash_position.report',
+  'treasury.liquidity.response', 'treasury.liquidity.shortfall', 'treasury.payment.approve',
+  'treasury.payment.cancel_request', 'treasury.payment.correction', 'treasury.payment.dispute',
+  'treasury.payment.execute', 'treasury.payment.reconcile', 'treasury.payment.refund',
+  'treasury.payment.reject', 'treasury.payment.supporting_evidence', 'treasury.payment.verify',
+];
+const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4, ...IDS_5, ...IDS_6, ...IDS_7, ...IDS_8, ...IDS_10];
+const batchOf = (id: string) => (IDS_10.includes(id) ? 10 : IDS_8.includes(id) ? 8 : id.startsWith('ADM-') ? 5 : id.startsWith('tax.') ? 6 : id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : IDS_7.includes(id) ? 7 : 1);
+const sourceOf = (id: string): Src => (batchOf(id) === 10 ? (/^(LND|TRN)-/.test(id) ? 'F' : 'C') : batchOf(id) === 5 ? 'C' : [3, 6, 8].includes(batchOf(id)) ? 'B' : batchOf(id) === 7 ? 'E' : 'A');
 const OVERSIGHT_SLOTS = ['ombudsman', 'humanRights', 'anticorruption', 'supremeAudit', 'dataProtection'];
 const TERRITORY_OWNERS = ['landRegistry', 'buildingControl', 'housing', 'vehicleRegistration', 'roadAuthority', 'transportRegulator', 'institution'];
 
@@ -324,6 +351,69 @@ const TAX6_FORM: Record<string, Partial<Record<Src, number[]>>> = {
   'tax.withholding.statement.submit': { B: [3080, 3093, 3095, 3096, 3097, 3098, 3103, 3104] },
 };
 
+// Batch 8: every form answers Part 2's implementation rules (the shared items of group econ8); and the lines of its own department
+// below: the submission or specific fields, the evidence, channel and control lines and the country decisions.
+const ECON8: Partial<Record<Src, number[]>> = { B: range(1838, 1843) };
+const ECON8_FORM: Record<string, Partial<Record<Src, number[]>>> = {
+  'budget.allocation.approve': { B: [2452, 2453, 2454, 2455, 2460] },
+  'budget.allocation.notify': { B: [2452, 2453, 2454, 2455, 2460] },
+  'budget.allocation.propose': { B: [2452, 2453, 2454, 2455, 2460] },
+  'budget.bid.justification': { B: [2452, 2453, 2454, 2455, 2460] },
+  'budget.bid.revise': { B: [2452, 2453, 2454, 2455, 2460] },
+  'budget.bid.withdraw': { B: [2452, 2453, 2454, 2455, 2460] },
+  'budget.ceiling.approve': { B: [2452, 2453, 2454, 2455, 2460] },
+  'budget.ceiling.propose': { B: [2452, 2453, 2454, 2455, 2460] },
+  'budget.circular.issue': { B: [2452, 2453, 2454, 2455, 2460] },
+  'budget.execution.commitment': { B: [2475, 2476, 2477, 2478, 2480, 2481, 2482, 2483, 2484, 2485, 2486, 2487] },
+  'budget.execution.commitment.approve': { B: [2486, 2487] },
+  'budget.execution.correction': { B: [2475, 2476, 2477, 2478, 2480, 2481, 2482, 2483, 2484, 2485, 2486, 2487] },
+  'budget.execution.overrun.report': { B: [2475, 2476, 2477, 2478, 2480, 2481, 2482, 2483, 2484, 2485, 2486, 2487] },
+  'budget.execution.reallocation.approve': { B: [2486, 2487] },
+  'budget.execution.reallocation.request': { B: [2475, 2476, 2477, 2478, 2479, 2480, 2481, 2482, 2483, 2484, 2485, 2486, 2487] },
+  'budget.execution.supplementary.request': { B: [2475, 2476, 2477, 2478, 2479, 2480, 2481, 2482, 2483, 2484, 2485, 2486, 2487] },
+  'budget.execution.underspend.report': { B: [2475, 2476, 2477, 2478, 2480, 2481, 2482, 2483, 2484, 2485, 2486, 2487] },
+  'budget.execution.variance.report': { B: [2475, 2476, 2477, 2478, 2480, 2481, 2482, 2483, 2484, 2485, 2486, 2487] },
+  'budget.execution.virement': { B: [2475, 2476, 2477, 2478, 2479, 2480, 2481, 2482, 2483, 2484, 2485, 2486, 2487] },
+  'budget.execution.year_end': { B: [2475, 2476, 2477, 2478, 2480, 2481, 2482, 2483, 2484, 2485, 2486, 2487] },
+  'budget.negotiation.record': { B: [2452, 2453, 2454, 2455, 2460] },
+  'budget.programme.costing': { B: [2452, 2453, 2454, 2455, 2460] },
+  'exec.cabinet.action.close': { B: [1897, 2027] },
+  'exec.cabinet.action.update': { B: [1897, 2027] },
+  'exec.cabinet.agenda.approve': { B: [1897, 2027] },
+  'exec.cabinet.agenda.propose': { B: [1897, 2027] },
+  'exec.cabinet.decision.action_assign': { B: [1897, 2027] },
+  'exec.cabinet.decision.correct': { B: [1897, 2027] },
+  'exec.cabinet.decision.distribution': { B: [1897, 2027] },
+  'exec.cabinet.decision.record': { B: [1897, 2027] },
+  'exec.cabinet.paper.fiscal_review': { B: [1897, 2027] },
+  'exec.cabinet.paper.legal_review': { B: [1897, 2027] },
+  'exec.cabinet.paper.revise': { B: [1897, 2027] },
+  'exec.presidency.correspondence.complaint': { B: [1863, 1865, 1867, 1869] },
+  'exec.presidency.correspondence.decision': { B: [1865, 1867, 1869] },
+  'exec.presidency.correspondence.notice': { B: [1865, 1867, 1869] },
+  'exec.presidency.correspondence.referral': { B: [1865, 1867, 1869] },
+  'exec.presidency.correspondence.submit': { B: [1857, 1858, 1859, 1860, 1861, 1862, 1863, 1864, 1865, 1867, 1869] },
+  'exec.presidency.correspondence.supplement': { B: [1862, 1864, 1865, 1867, 1869] },
+  'exec.presidency.correspondence.withdraw': { B: [1864, 1865, 1867, 1869] },
+  'treasury.cash_forecast.close': { B: [2283] },
+  'treasury.cash_forecast.review': { B: [2281, 2283] },
+  'treasury.cash_forecast.revise': { B: [2273, 2274, 2275, 2276, 2277, 2278, 2279, 2280, 2281, 2282, 2283] },
+  'treasury.cash_forecast.submit': { B: [2273, 2274, 2275, 2276, 2277, 2278, 2279, 2280, 2281, 2282, 2283] },
+  'treasury.cash_position.report': { B: [2283] },
+  'treasury.liquidity.response': { B: [2283] },
+  'treasury.liquidity.shortfall': { B: [2283] },
+  'treasury.payment.approve': { B: [2254, 2255, 2256, 2257, 2262] },
+  'treasury.payment.cancel_request': { B: [2254, 2255, 2256, 2257, 2262] },
+  'treasury.payment.correction': { B: [2254, 2255, 2256, 2257, 2262] },
+  'treasury.payment.dispute': { B: [2254, 2255, 2256, 2257, 2262] },
+  'treasury.payment.execute': { B: [2254, 2255, 2256, 2257, 2262] },
+  'treasury.payment.reconcile': { B: [2254, 2255, 2256, 2257, 2262] },
+  'treasury.payment.refund': { B: [2254, 2255, 2256, 2257, 2262] },
+  'treasury.payment.reject': { B: [2254, 2255, 2256, 2257, 2262] },
+  'treasury.payment.supporting_evidence': { B: [2254, 2255, 2256, 2257, 2262] },
+  'treasury.payment.verify': { B: [2254, 2255, 2256, 2257, 2262] },
+};
+
 const EXTRA: Record<string, Partial<Record<Src, number[]>>> = {
   'HLT-FAC-001': { D: [1334, 1335, ...range(1350, 1356), ...range(1359, 1362)], C: range(1559, 1564) },
   'HLT-FAC-002': { D: [...range(1334, 1341), ...range(1350, 1356), ...range(1359, 1362)], C: range(1559, 1564) },
@@ -445,6 +535,7 @@ function linesFor(id: string): [Src, number][] {
     : batchOf(id) === 7
     ? [COMMON, OVERSIGHT, EXTRA_7[id] ?? {}, { E: [rowLine(id)] }]
     : batchOf(id) === 6 ? [COMMON, TAX6, TAX6_FORM[id] ?? {}, { B: [rowLine(id)] }]
+    : batchOf(id) === 8 ? [COMMON, ECON8, ECON8_FORM[id] ?? {}, { B: [rowLine(id)] }]
     : batchOf(id) === 3
     ? [COMMON, TAX, ...(TAX_FAMILY[id] ?? []), TAX_OFFICER.includes(id) ? { B: [3205] } : {}, TAX_INTERNAL.includes(id) ? { B: [2710] } : {}, { B: [rowLine(id)] }]
     : [COMMON, COMMON_HEALTH, id.startsWith('HLT-FAC') ? FAMILY.FAC : id.startsWith('HLT-LIC') ? FAMILY.LIC : id.startsWith('HLT-MED') ? FAMILY.MED : FAMILY.PH, EXTRA[id] ?? {}, { A: [rowLine(id)] }];
@@ -454,14 +545,14 @@ function linesFor(id: string): [Src, number][] {
 }
 
 const flat = (fs: ContractField[]): ContractField[] => fs.flatMap(f => [f, ...(f.items ? flat(f.items as ContractField[]) : [])]);
-const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES, ...ADMINISTRATION_PROCEDURES, ...INDEPENDENT_OVERSIGHT_PROCEDURES, ...LAND_PROCEDURES, ...BUILDING_PROCEDURES, ...HOUSING_PROCEDURES, ...LOCAL_GOVERNMENT_TEMPLATES, ...TRANSPORT_PROCEDURES];
+const PROCEDURES = [...FINANCE_PROCEDURES, ...CABINET_PROCEDURES, ...PROCUREMENT_PROCEDURES, ...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES, ...ADMINISTRATION_PROCEDURES, ...INDEPENDENT_OVERSIGHT_PROCEDURES, ...LAND_PROCEDURES, ...BUILDING_PROCEDURES, ...HOUSING_PROCEDURES, ...LOCAL_GOVERNMENT_TEMPLATES, ...TRANSPORT_PROCEDURES];
 const SERVICES = serviceDirectory().map(s => s.id);
 const applicantKeys = (f: CatalogueLibraryForm) => f.fields.filter(x => (x.audience ?? 'applicant') === 'applicant').map(x => x.key);
 /** No patient, clinical, treatment, diagnosis or individual health field: by key and by label. */
 const CLINICAL = /patient|clinical|clinician|diagnos|prescri|dispens|treatment|medication|symptom|medical record|health condition|care plan/i;
 
-describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account), 4 (public-health programme forms), 5 (internal administration), 6 (tax services), 7 (independent oversight) and 10 (territory and infrastructure)', () => {
-  it('holds exactly the 25 + 21 + 29 + 2 + 40 + 95 + 7 + 36 approved forms, one contract each, matched to the catalogue row it names', () => {
+describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account), 4 (public-health programme forms), 5 (internal administration), 6 (tax services), 7 (independent oversight), 8 (executive office, Cabinet, treasury and budget) and 10 (territory and infrastructure)', () => {
+  it('holds exactly the 25 + 21 + 29 + 2 + 40 + 95 + 7 + 57 + 36 approved forms, one contract each, matched to the catalogue row it names', () => {
     expect(IDS_1.length).toBe(25);
     expect(IDS_2.length).toBe(21);
     expect(IDS_3.length).toBe(29);
@@ -470,6 +561,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     expect(IDS_6.length).toBe(95);
     expect(IDS_7.length).toBe(7);
     expect(IDS_10.length).toBe(36);
+    expect(IDS_8.length).toBe(57);
     expect(CATALOGUE_CONTRACTS.map(f => f.specId).sort()).toEqual([...IDS].sort());
     const files = readdirSync(join(process.cwd(), 'src/lib/forms/library/catalogue-contracts')).filter(f => f.endsWith('.json'));
     expect(files.sort()).toEqual(IDS.map(i => `${i}.json`).sort());
@@ -486,7 +578,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
   });
 
   it('carries no status anywhere: the register status is derived, never written', () => {
-    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5, ...BATCH_6, ...BATCH_7, ...BATCH_10]) {
+    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5, ...BATCH_6, ...BATCH_7, ...BATCH_8, ...BATCH_10]) {
       expect('status' in c, c.form_id).toBe(false);
       expect(JSON.stringify(c)).not.toMatch(/"(status|state|approved|approved_by|production)"\s*:/);
     }
@@ -556,12 +648,12 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
         }
         // Money is only ever calculated by an approved rule; nobody types a fee. Batch 6: an amount a person states (a claim, a proposed
         // schedule, the deciding officials' adjusted figure) is named in the form's amounts.stated policy and checked below; never a charge.
-        const stated = batchOf(id) === 6 ? String(f.form.policies?.['amounts.stated'] ?? '').split(':')[0]! : '';
+        const stated = [6, 8].includes(batchOf(id)) ? String(f.form.policies?.['amounts.stated'] ?? '').split(':')[0]! : '';
         for (const x of flat(f.fields).filter(y => y.type === 'money' && !(stated && stated.includes(y.key)))) {
           expect(x.audience, x.key).toBe('system');
           expect((x.rules ?? []).some(r => r.rule === 'registered' && r.name === 'derived_from_approved_rule'), x.key).toBe(true);
         }
-        if (batchOf(id) !== 6 && flat(f.fields).some(y => y.type === 'money')) expect(f.nationValues.some(v => v.kind === 'fee'), 'a fee is named as the nation\'s').toBe(true);
+        if (![6, 8].includes(batchOf(id)) && flat(f.fields).some(y => y.type === 'money')) expect(f.nationValues.some(v => v.kind === 'fee'), 'a fee is named as the nation\'s').toBe(true);
         // No number in the contract outside a validation rule's own bounds and the contract's bookkeeping.
         const c = f.json as unknown as Record<string, unknown>;
         const numbers: string[] = [];
@@ -644,7 +736,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
           if (f.exchange) expect(SERVICES).toContain(f.exchange);
         }
         // Authority from the deployment profile, never a ministry by name.
-        expect(batchOf(id) === 10 ? TERRITORY_OWNERS : batchOf(id) === 5 ? ['institution'] : [3, 6].includes(batchOf(id)) ? ['tax'] : batchOf(id) === 7 ? OVERSIGHT_SLOTS : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
+        expect(batchOf(id) === 10 ? TERRITORY_OWNERS : batchOf(id) === 8 ? ['finance', 'cabinetOffice'] : batchOf(id) === 5 ? ['institution'] : [3, 6].includes(batchOf(id)) ? ['tax'] : batchOf(id) === 7 ? OVERSIGHT_SLOTS : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
         expect(JSON.stringify(f.json)).not.toMatch(/Ministry of/);
       });
     });
@@ -841,9 +933,12 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
   const LINKED_5: Record<string, string> = {
     'ADM-HR-001': 'adm.establishment', 'ADM-PAY-011': 'adm.payroll-input', 'ADM-PAY-012': 'adm.payroll-review', 'ADM-PAY-013': 'adm.payroll-correction',
     'ADM-ICT-030': 'adm.privileged-access', 'ADM-GOV-040': 'adm.policy', 'ADM-GOV-039': 'adm.delegation', 'ADM-HR-010': 'adm.disciplinary', 'ADM-LEG-027': 'adm.legal-advice',
+    // Plan step I5: the institution's own procurement procedures (proc.<template>.<institution>).
+    'ADM-PRC-018': 'proc.plan', 'ADM-PRC-019': 'proc.tender', 'ADM-PRC-020': 'proc.tender',
   };
+  const TEMPLATES_5 = [...ADMINISTRATION_PROCEDURES, ...PROCUREMENT_PROCEDURES];
 
-  it('links payroll input, review and correction, the establishment, privileged access, internal policy and delegation (and the disciplinary and legal-advice forms) to their procedures; the rest wait with the reason', () => {
+  it('links payroll input, review and correction, the establishment, privileged access, internal policy and delegation (and the disciplinary and legal-advice forms, and since I5 the procurement requisition, evaluation and order) to their procedures; the rest wait with the reason', () => {
     for (const id of IDS_5) {
       const f = adm(id);
       expect(f.owner, id).toBe('institution');
@@ -851,16 +946,16 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
       expect(f.deviations.map(d => d.id), id).toContain('institution-owned');
       if (LINKED_5[id]) {
         expect(f.procedure, id).toMatchObject({ key: LINKED_5[id] });
-        expect(ADMINISTRATION_PROCEDURES.find(p => p.key === LINKED_5[id])!.forms, id).toContain(id);
+        expect(TEMPLATES_5.find(p => p.key === LINKED_5[id])!.forms, id).toContain(id);
       } else {
         expect(f.procedure, id).toBeNull();
         expect(f.awaits ?? '', id).toMatch(/not built/);
         expect(f.deviations.map(d => d.id), id).toContain('procedure-not-built');
       }
     }
-    expect(Object.keys(LINKED_5)).toHaveLength(9);
+    expect(Object.keys(LINKED_5)).toHaveLength(12);
     // Every template carries exactly the forms linked to it.
-    for (const p of ADMINISTRATION_PROCEDURES) expect(p.forms.every(id => LINKED_5[id] === p.key), p.key).toBe(true);
+    for (const p of TEMPLATES_5) expect(p.forms.every(id => LINKED_5[id] === p.key), p.key).toBe(true);
   });
 
   it('keeps separation of duties: the payroll approver is neither the preparer nor the reviewer, through the form rule and the procedure step', () => {
@@ -872,8 +967,8 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     expect(review.actions.find(a => a.key === 'approve')!.needs).toMatchObject({ role: 'signatory', fourEyes: true, distinctFrom: ['review'] });
     // Every approving decision of a linked procedure needs a second official; the comparison of persons is dualControlRefusal()'s.
     for (const key of new Set(Object.values(LINKED_5))) {
-      const p = ADMINISTRATION_PROCEDURES.find(x => x.key === key)!;
-      for (const a of p.actions.filter(x => x.decision && /^(approve|correct|disciplinary|grant|record)-/.test(x.decision))) expect(a.needs.fourEyes, `${key} ${a.key}`).toBe(true);
+      const p = TEMPLATES_5.find(x => x.key === key)!;
+      for (const a of p.actions.filter(x => x.decision && /^(approve|correct|disciplinary|grant|record|award)-?/.test(x.decision))) expect(a.needs.fourEyes, `${key} ${a.key}`).toBe(true);
     }
     expect(dualControlRefusal({ by: 'A', byId: 'local:a' }, { by: 'A', byId: 'local:a' })).toBeTruthy();
     // The other approvals ask for an approver other than the maker.
@@ -1324,5 +1419,59 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     expect(r.form.lists?.['civicos.oversight.response_positions']?.values.map(v => v.value)).toEqual(['accepted', 'partly-accepted', 'disputed']);
     // The data-protection request: the authority never reads the records itself.
     expect(ov('DEM-CON-018').deviations.map(d => d.id)).toContain('no-direct-read');
+  });
+
+  // ── Batch 8: executive office, Cabinet, treasury and budget (plan I5) ──
+  const e8 = (id: string) => CATALOGUE_CONTRACTS.find(x => x.specId === id)!;
+  it('links batch 8 to the I5 procedures by identity, else names why it waits; owners are slots, never a ministry', () => {
+    const linked = IDS_8.filter(id => e8(id).procedure);
+    expect(linked.length).toBe(43);
+    for (const id of IDS_8) {
+      const f = e8(id);
+      expect(['finance', 'cabinetOffice'], id).toContain(f.owner);
+      expect(f.authorityNote ?? '', id).toMatch(/authorityFor\('(finance|cabinetOffice)'\)/);
+      if (f.procedure) expect([...FINANCE_PROCEDURES, ...CABINET_PROCEDURES].some(p => p.key === f.procedure!.key), id).toBe(true);
+      else expect(f.deviations.some(d => /-not-built$/.test(d.id)), id).toBe(true);
+    }
+  });
+
+  it('separates every payment stage by person and approves every payment by two officials', () => {
+    const pay = FINANCE_PROCEDURES.find(p => p.key === 'treasury.payment')!;
+    const step = (k: string) => pay.actions.find(a => a.key === k)!;
+    expect(step('verify').needs.distinctFrom).toEqual(['instruct']);
+    expect(step('approve').needs.fourEyes).toBe(true);
+    expect(step('approve').needs.distinctFrom).toEqual(expect.arrayContaining(['instruct', 'verify']));
+    expect(step('execute').needs.distinctFrom).toEqual(expect.arrayContaining(['instruct', 'approve']));
+    expect(step('reconcile').needs.distinctFrom).toEqual(expect.arrayContaining(['instruct', 'approve', 'execute']));
+    for (const id of ['treasury.payment.verify', 'treasury.payment.approve', 'treasury.payment.execute', 'treasury.payment.reconcile']) {
+      expect(e8(id).procedure?.key, id).toBe('treasury.payment');
+      expect(e8(id).items.some(i => i.met_by.deviation === 'separation-by-person'), id).toBe(true);
+    }
+    expect(e8('treasury.payment.approve').nationValues.map(v => v.key)).toContain('treasury.payment.approval-tiers');
+    expect(dualControlRefusal).toBeTypeOf('function');
+  });
+
+  it('types in no threshold, tier, limit or calendar: stated amounts named, balances computed, the lists the law decides empty', () => {
+    for (const id of IDS_8) {
+      const f = e8(id);
+      const stated = String(f.form.policies?.['amounts.stated'] ?? '').split(':')[0]!;
+      for (const x of flat(f.fields).filter(y => y.type === 'money')) expect(stated, `${id} ${x.key}`).toContain(x.key);
+      expect(f.deviations.map(d => d.id), id).toContain('no-amounts-typed');
+      for (const v of f.nationValues) expect(ruleInForce(v.key), v.key).toBeUndefined();
+    }
+    for (const id of IDS_8.filter(i => i.startsWith('budget.execution.') && !i.endsWith('.approve'))) {
+      expect(flat(e8(id).fields).map(x => x.key), id).not.toContain('execution.current_amount');
+      expect(e8(id).items.some(i => i.met_by.deviation === 'balance-computed'), id).toBe(true);
+    }
+    expect(e8('exec.cabinet.decision.record').form.lists?.['exec.cabinet.legal_categories']?.values ?? []).toEqual([]);
+  });
+
+  it('keeps Cabinet actions within each institution\'s powers and petitions restricted, asking no identity proof', () => {
+    expect(e8('exec.cabinet.decision.action_assign').deviations.map(d => d.id)).toContain('request-not-instruction');
+    expect(e8('exec.cabinet.decision.record').deviations.map(d => d.id)).toContain('cabinet-rules');
+    const sub = e8('exec.presidency.correspondence.submit');
+    expect(sub.fields.find(x => x.key === 'correspondence.message')!.personalDataClass).toBe('restricted');
+    expect(sub.deviations.map(d => d.id)).toContain('no-identity-demand');
+    expect(flat(sub.fields).map(x => x.key).some(k => /identity|national_id|passport/.test(k))).toBe(false);
   });
 });

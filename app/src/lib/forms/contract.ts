@@ -128,7 +128,8 @@ export const REFERENCE_REGISTERS: { key: string; label: string; example: string;
   { key: 'product', label: 'register of medicines and medical devices', example: 'MA-2026-000123', connected: true },
   // The register of public-health programmes (lib/health/programmes/register.ts): an established programme by its number.
   { key: 'programme', label: 'register of public-health programmes', example: 'PHP-2026-000123', connected: true },
-  { key: 'appropriation', label: 'register of budget appropriations', example: 'the appropriation reference', connected: false },
+  // The finance register's appropriations (lib/finance/register.ts, plan step I5): by number.
+  { key: 'appropriation', label: 'register of budget appropriations', example: 'APP-2027-000001', connected: true },
   { key: 'farm', label: 'register of farms', example: 'the farm record', connected: false },
   { key: 'water-source', label: 'register of water sources', example: 'the water source reference', connected: false },
   { key: 'land-interest', label: 'register of interests in land', example: 'the registered interest', connected: false },

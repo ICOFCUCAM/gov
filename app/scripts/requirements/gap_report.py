@@ -21,6 +21,8 @@ BATCH_LABEL = {1: 'health regulation', 2: 'medicines and medical devices regulat
 BATCH_LABEL[6] = 'tax services'
 # Batch 10 (plan I7): territory and infrastructure, the forms the land, building, housing, local-government and transport procedures carry.
 BATCH_LABEL[10] = 'territory and infrastructure'
+# Batch 8 (owner's assignment, plan step I5): the executive office, Cabinet, treasury and budget forms of the field series Part 2.
+BATCH_LABEL[8] = 'executive office, Cabinet, treasury and budget'
 GATES = [
     'The form owner and competent authority are verified.',
     'Legal references and their versions have been approved.',

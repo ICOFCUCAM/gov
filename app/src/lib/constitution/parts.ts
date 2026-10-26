@@ -19,6 +19,8 @@
 //   sealKeys        who approves the state's seal keys, how many, whether the legislature must too
 //                   (lib/keys/seal-register.ts); counted only once the nation adopts its rules, so the
 //                   digest of every profile drafted before stays as it was
+//   cabinetRules    the Cabinet's members counted, quorum and decision rule (lib/cabinet/register.ts, plan
+//                   step I5); counted only once the nation adopts them
 
 import { sha256Hex } from '@/lib/audit/sha256';
 import { canonicalJson } from '@/lib/data/store/shared';
@@ -33,6 +35,7 @@ import { classificationOf } from '@/lib/nation/classification';
 import { PART_KEYS, PART_LABELS, type PartKey, type PartRef } from './profile-state';
 import { sealKeyRules } from '@/lib/keys/seal-register';
 import { competencesInForce, competenceVersions, competencesWaiting, transitionRules } from '@/lib/transitions/state';
+import { cabinetRules, cabinetRuleChanges } from '@/lib/cabinet/register';
 
 const digestOf = (v: unknown) => sha256Hex(canonicalJson(v));
 const adoptedCount = (h?: { history?: { outcome: string }[] }) => (h?.history ?? []).filter(x => x.outcome === 'adopted').length;
@@ -100,11 +103,17 @@ function read(key: PartKey, now: Date): LivePart {
       return { key, label, version: adoptedCount(r.changes), digest: digestOf({ authority: r.authority, approvers: r.approvers, legislatureResolution: r.legislatureResolution, reviewWithinDays: r.reviewWithinDays, adopted: r.adopted }), waiting: waitingOf(r.changes),
         summary: r.adopted ? `${r.approvers} approvals${r.legislatureResolution ? ' and the legislature\'s enacted instrument' : ''} for each key; compromise reviewed within ${r.reviewWithinDays} d` : 'Platform defaults (not adopted by the nation)' };
     }
+    case 'cabinetRules': {
+      const { version, ...values } = cabinetRules();
+      const ch = cabinetRuleChanges();
+      return { key, label, version: adoptedCount(ch), digest: digestOf(values), waiting: waitingOf(ch),
+        summary: version ? `${values.members} members; quorum ${values.quorum?.numerator}/${values.quorum?.denominator}; ${values.rule}` : 'None adopted by the nation' };
+    }
   }
 }
 
 /** Parts that count only once the nation adopts them (added after profiles existed; their absence leaves earlier digests as they were). */
-const ONCE_ADOPTED: PartKey[] = ['sealKeys'];
+const ONCE_ADOPTED: PartKey[] = ['sealKeys', 'cabinetRules'];
 
 /** Every part as it stands today, in a fixed order. */
 export function currentParts(now = new Date()): LivePart[] {

@@ -1298,6 +1298,144 @@ DPIA records are not built (`processor-register`, integration register 20.88).
 | Audit finding and the response beside it | `catalogue-contracts.test.ts` "records an audit finding by criteria, condition, cause, effect, evidence and recommendation…" |
 | The procedures behind them | `lib/oversight/oversight.test.ts`, `app/api/oversight/route.test.ts` |
 
+## 16. Catalogue contracts, batch 8: executive office, Cabinet, treasury and budget (26 October 2026)
+
+The owner's assignment for plan step I5 (the economic group) asked for the
+catalogue forms the new procedures carry. Fifty-seven forms of the field
+series Part 2 (`docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md`), which were
+`contract_missing`, now have a CivicOS contract (`contract: given (CivicOS
+library)`, `form_status: contract_draft`), with `batch: 8` in their
+`catalogue` block: §2.1 Department A (official correspondence and petitions,
+7), §2.2 Department A (Cabinet agenda and decisions, 11; the paper itself is
+the catalogue's own contract), §2.4 Department A (payments, 10; the
+instruction is the catalogue's own) and Department B (cash forecasting, 7),
+§2.5 Department A (budget preparation, 11; the bid is the catalogue's own and
+the two capital-project forms wait with public investment) and Department B
+(budget execution, 11). The format, loader, gates and test are batch 1's
+(§8). The conformance test holds the lines each form answers: Part 1's shared
+rules and the supplement's conventions and gates, as for every batch; Part 2's
+implementation rules (lines 1838–1843, the shared group `econ8`); and its own
+row and department lines: the submission or specific fields (§2.1 lines
+1857–1864, §2.4 B lines 2273–2282, §2.5 B lines 2475–2486), the evidence and
+channel lines (1865, 1869), the controls (the Cabinet's 2027 and 1897, the
+payment's universal control 2262, the budget's 2460) and the country
+decisions (1867, the payment contract's 2254–2257, 2283, the bid contract's
+2452–2455, 2487).
+
+Forty-three are linked by identity to the I5 reference procedures
+(`lib/finance/procedures.ts`, `lib/cabinet/procedures.ts`); fourteen name the
+procedure they wait for (an agenda register, a payment refund, dispute or
+correction, a cash position or liquidity case, a correspondence complaint,
+variance, underspend, overrun, year-end and correction reports). Owners are
+the slots `finance` and `cabinetOffice`, shipped empty; the spending
+institution is named on each record, never a ministry by name.
+
+| Catalogue form | Title | Owner | Fields | Belongs to | Deviations (besides the five every batch-8 form shares) |
+|---|---|---|---|---|---|
+| budget.allocation.approve | Approve a budget allocation | finance | 7 | `budget.bid`, stage `pending-approval`, step `allocate` | decision-in-engine, officer-from-sign-in |
+| budget.allocation.notify | Notify an institution of its approved allocation | finance | 4 | `budget.bid`, stage `allocated` | delivery-not-recorded, officer-from-sign-in |
+| budget.allocation.propose | Propose a budget allocation | finance | 5 | `budget.bid`, stage `negotiation`, step `propose` | officer-from-sign-in, stated-amount |
+| budget.bid.justification | Supply missing budget justification | finance | 5 | `budget.bid`, stage `awaiting-justification`, step `justification-received`, document `justification` | officer-from-sign-in |
+| budget.bid.revise | Revise a budget request | finance | 6 | `budget.bid`, stage `review`, step `revise` | officer-from-sign-in, stated-amount |
+| budget.bid.withdraw | Withdraw a budget request | finance | 4 | `budget.bid`, stage `review`, step `withdraw` | officer-from-sign-in |
+| budget.ceiling.approve | Approve an institutional budget ceiling | finance | 7 | `budget.ceiling`, stage `pending-approval`, step `approve` | decision-in-engine, officer-from-sign-in |
+| budget.ceiling.propose | Propose an institutional budget ceiling | finance | 7 | `budget.ceiling`, stage `proposed`, step `propose` | officer-from-sign-in, stated-amount |
+| budget.circular.issue | Prepare and issue a budget call circular | finance | 6 | `budget.circular`, stage `drafted`, step `propose`, document `circular` | officer-from-sign-in |
+| budget.execution.commitment | Register a proposed financial commitment | finance | 13 | `finance.commitment`, stage `proposed`, step `check`, document `commitment-request` | officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.commitment.approve | Approve or refuse a commitment | finance | 7 | `finance.commitment`, stage `pending-approval`, step `approve` | decision-in-engine, officer-from-sign-in |
+| budget.execution.correction | Correct a submitted execution report | finance | 12 | waits: Execution report correction | correction-not-built, officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.overrun.report | Report a forecast or actual overrun | finance | 12 | waits: Overrun case | report-not-built, officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.reallocation.approve | Approve or refuse a reallocation | finance | 8 | `budget.revision`, stage `pending-approval`, step `approve` | decision-in-engine, officer-from-sign-in |
+| budget.execution.reallocation.request | Request a budget reallocation | finance | 14 | `budget.revision`, stage `requested`, step `check`, document `revision-request` | officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.supplementary.request | Request supplementary funding | finance | 13 | `budget.revision`, stage `requested`, step `check`, document `revision-request` | officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.underspend.report | Report expected underspending | finance | 12 | waits: Underspend report | report-not-built, officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.variance.report | Report a material budget variance | finance | 12 | waits: Variance report | report-not-built, officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.virement | Request an authorized transfer between budget lines | finance | 14 | `budget.revision`, stage `requested`, step `check`, document `revision-request` | officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.year_end | Submit year-end budget closure information | finance | 12 | waits: Year-end closure | year_end-not-built, officer-from-sign-in, stated-amount, balance-computed |
+| budget.negotiation.record | Record a budget negotiation outcome | finance | 5 | `budget.bid`, stage `review`, step `record-negotiation` | officer-from-sign-in, stated-amount |
+| budget.programme.costing | Submit programme costing | finance | 7 | `budget.bid`, stage `submitted`, document `costing` | officer-from-sign-in, stated-amount |
+| exec.cabinet.action.close | Confirm completion of a Cabinet action | cabinetOffice | 7 | `cabinet.decision`, stage `implementation` | cabinet-rules, officer-from-sign-in |
+| exec.cabinet.action.update | Report progress on a Cabinet action | cabinetOffice | 5 | `cabinet.decision`, stage `implementation` | cabinet-rules, officer-from-sign-in |
+| exec.cabinet.agenda.approve | Approve the Cabinet agenda | cabinetOffice | 5 | waits: Agenda approval | cabinet-rules, agenda-not-built, officer-from-sign-in |
+| exec.cabinet.agenda.propose | Propose an item for a Cabinet meeting | cabinetOffice | 5 | waits: Agenda item | cabinet-rules, agenda-not-built, officer-from-sign-in |
+| exec.cabinet.decision.action_assign | Assign an approved decision action | cabinetOffice | 4 | `cabinet.decision`, stage `notified`, step `assign-actions` | cabinet-rules, officer-from-sign-in, request-not-instruction |
+| exec.cabinet.decision.correct | Correct a Cabinet decision record | cabinetOffice | 7 | `cabinet.decision`, stage `decided`, step `correct` | cabinet-rules, decision-in-engine, officer-from-sign-in |
+| exec.cabinet.decision.distribution | Record controlled distribution of a decision | cabinetOffice | 6 | `cabinet.decision`, stage `decided`, step `publish` | cabinet-rules, officer-from-sign-in |
+| exec.cabinet.decision.record | Record a Cabinet decision | cabinetOffice | 15 | `cabinet.decision`, stage `circulated`, step `record-decision`, document `minutes` | cabinet-rules, decision-in-engine, officer-from-sign-in |
+| exec.cabinet.paper.fiscal_review | Record fiscal implications review | cabinetOffice | 8 | `cabinet.decision`, stage `legal-reviewed`, step `fiscal-review` | cabinet-rules, officer-from-sign-in, distinct-reviewers |
+| exec.cabinet.paper.legal_review | Record legal and authority review | cabinetOffice | 7 | `cabinet.decision`, stage `validation`, step `legal-review` | cabinet-rules, officer-from-sign-in |
+| exec.cabinet.paper.revise | Revise a Cabinet paper | cabinetOffice | 13 | `cabinet.decision`, stage `returned`, step `resubmit`, document `paper` | cabinet-rules |
+| exec.presidency.correspondence.complaint | Complain about the handling of a petition | cabinetOffice | 4 and contact | waits: Service complaint review of the executive office | no-identity-demand, restricted-case, complaint-not-built |
+| exec.presidency.correspondence.decision | Record the official response or routing decision | cabinetOffice | 8 | `exec.correspondence`, stage `pending-approval`, step `respond`, document `response-letter` | no-identity-demand, restricted-case, decision-in-engine, officer-from-sign-in |
+| exec.presidency.correspondence.notice | Notify the submitter of the outcome | cabinetOffice | 5 | `exec.correspondence`, stage `responded`, document `response-letter` | no-identity-demand, restricted-case, delivery-not-recorded, officer-from-sign-in |
+| exec.presidency.correspondence.referral | Refer correspondence to the responsible authority | cabinetOffice | 6 | `exec.correspondence`, stage `routed`, step `refer`, document `referral` | no-identity-demand, restricted-case, officer-from-sign-in, referral-case |
+| exec.presidency.correspondence.submit | Send an official petition or correspondence | cabinetOffice | 9 and contact, representation | `exec.correspondence`, stage `received`, step `acknowledge`, document `correspondence` | no-identity-demand, restricted-case |
+| exec.presidency.correspondence.supplement | Add information to an existing petition | cabinetOffice | 4 and representation | `exec.correspondence`, stage `acknowledged`, document `correspondence` | no-identity-demand, restricted-case |
+| exec.presidency.correspondence.withdraw | Withdraw a petition | cabinetOffice | 3 and representation | `exec.correspondence`, stage `received`, step `withdraw` | no-identity-demand, restricted-case |
+| treasury.cash_forecast.close | Close a forecasting period | finance | 4 | `treasury.cash-forecast`, stage `reviewed`, step `close` | officer-from-sign-in |
+| treasury.cash_forecast.review | Review forecast assumptions and variance | finance | 5 | `treasury.cash-forecast`, stage `recorded`, step `review` | officer-from-sign-in |
+| treasury.cash_forecast.revise | Revise a cash forecast | finance | 12 | `treasury.cash-forecast`, stage `submitted`, step `record`, document `forecast` | officer-from-sign-in, stated-amount |
+| treasury.cash_forecast.submit | Submit an institutional cash forecast | finance | 12 | `treasury.cash-forecast`, stage `submitted`, step `record`, document `forecast` | officer-from-sign-in, stated-amount |
+| treasury.cash_position.report | Report an authorized cash position | finance | 6 | waits: Cash position report | report-not-built, officer-from-sign-in, stated-amount |
+| treasury.liquidity.response | Propose a liquidity response | finance | 6 | waits: Liquidity response | response-not-built, officer-from-sign-in, stated-amount |
+| treasury.liquidity.shortfall | Report an expected liquidity shortfall | finance | 6 | waits: Liquidity shortfall case | shortfall-not-built, officer-from-sign-in, stated-amount |
+| treasury.payment.approve | Approve or refuse a payment | finance | 8 | `treasury.payment`, stage `pending-approval`, step `approve` | decision-in-engine, officer-from-sign-in, separation-by-person |
+| treasury.payment.cancel_request | Request cancellation of a payment | finance | 4 | `treasury.payment`, stage `instructed`, step `cancel` | officer-from-sign-in, separation-by-person |
+| treasury.payment.correction | Correct payment metadata | finance | 5 | waits: Correction of payment metadata | correction-not-built, officer-from-sign-in, separation-by-person |
+| treasury.payment.dispute | Dispute a payment or reconciliation result | finance | 5 | waits: Payment dispute | dispute-not-built, officer-from-sign-in, separation-by-person |
+| treasury.payment.execute | Record execution by the payment system | finance | 7 | `treasury.payment`, stage `approved`, step `execute`, document `bank-confirmation` | officer-from-sign-in, stated-amount, separation-by-person |
+| treasury.payment.reconcile | Reconcile payment against the treasury ledger | finance | 6 | `treasury.payment`, stage `executed`, step `reconcile`, document `statement` | officer-from-sign-in, stated-amount, separation-by-person |
+| treasury.payment.refund | Request or record a refund | finance | 6 | waits: Refund of a government payment | refund-not-built, officer-from-sign-in, stated-amount, separation-by-person |
+| treasury.payment.reject | Record a rejected or failed payment | finance | 5 | `treasury.payment`, stage `approved`, step `fail` | officer-from-sign-in, separation-by-person |
+| treasury.payment.supporting_evidence | Supply missing payment evidence | finance | 5 | `treasury.payment`, stage `returned`, step `resubmit`, document `payment-evidence` | officer-from-sign-in, separation-by-person |
+| treasury.payment.verify | Record payment verification | finance | 5 | `treasury.payment`, stage `instructed`, step `verify` | officer-from-sign-in, separation-by-person |
+
+The five deviations every batch-8 form shares are `no-amounts-typed` (no
+threshold, approval tier or limit, calendar, period, quorum or deadline typed:
+each is the nation's approved rule or country rule set, a binding rule until
+then), `config-impact`, `minimisation`, `evidence-requirement` and `scanning`.
+
+**Separation of duties by person.** The payment forms follow the procedure's
+steps: the verifier is not the official who instructed, the two approvers are
+neither, execution is recorded by none of them and reconciliation by none of
+the three (`distinctFrom` through `dualControlRefusal()`, comparing persons);
+the platform minimum of two officials applies to every payment approval and
+every payee account change (`lib/casework/dual-control-policy.ts`). The
+approval tier is read from the approved `treasury.payment.approval-tiers`
+rule (a `tiers` rule kind) and never typed; production refuses an approval
+without it.
+
+**Amounts.** An amount a person states (a request, a forecast, a proposed
+ceiling or allocation, a bank's confirmation) is money with its currency,
+named in the form's `amounts.stated` policy; the amount that binds is the one
+the sealed decision and the register record. The current amount and available
+balance of an appropriation are never asked: they are computed from the
+register on every read (`balance-computed`).
+
+**Cabinet.** A decision records its legal category, the law cited and the
+actions it authorises; quorum and the vote are checked against the Cabinet
+rules the nation adopts (`cabinet-rules`); an action for an institution the
+whole government may not instruct is a request (`request-not-instruction`).
+Petitions are restricted (stricter than the catalogue's "personal where
+applicable") and ask no identity proof merely because they are addressed to
+the executive (`no-identity-demand`).
+
+**Batch 5's procurement forms.** ADM-PRC-018 (requisition), ADM-PRC-019
+(evaluation) and ADM-PRC-020 (order) are linked to the institution's own
+procurement templates (`proc.plan`, step `record`; `proc.tender`, steps
+`evaluate` and `sign-contract`), deviation `procurement-procedure` in place of
+`procedure-not-built`. The Part 3 procurement forms (125 rows) are not written
+in this batch.
+
+| Check | Where |
+|---|---|
+| Each contract quotes and meets every piece of its lines; typed, classed, registered rules only; nothing a law decides set; three channels; contract draft | `catalogue-contracts.test.ts` (per form) |
+| Links by identity; owners are slots | `catalogue-contracts.test.ts` "links batch 8 to the I5 procedures by identity…" |
+| Payments separated by person, approved by two | `catalogue-contracts.test.ts` "separates every payment stage by person…"; `lib/finance/finance.test.ts` |
+| No threshold, tier or calendar typed; balances computed | `catalogue-contracts.test.ts` "types in no threshold, tier, limit or calendar…" |
+| Cabinet actions within powers; petitions restricted | `catalogue-contracts.test.ts` "keeps Cabinet actions within each institution's powers…"; `lib/cabinet/cabinet.test.ts` |
+| Procurement links of batch 5 | `catalogue-contracts.test.ts` "links payroll input, review and correction…"; `lib/procurement/procurement.test.ts` |
+
 ## 18. Catalogue contracts, batch 10: territory and infrastructure (26 October 2026)
 
 Plan step I7 wrote the contracts of the forms its procedures carry: land

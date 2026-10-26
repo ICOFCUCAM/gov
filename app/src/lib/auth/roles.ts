@@ -145,7 +145,7 @@ export function attributeRefusal(s: Scope, on: AttributeFacts): string | null {
  */
 export function delegationCovering(s: Scope & { id?: string }, institution: string, procedure: string | undefined, action: string | undefined, task: string | undefined, on: string): DelegationGrant | null {
   if (s.institution !== institution) return null;
-  const familyOf = (k?: string) => (k && /^adm\.[a-z-]+\./.test(k) ? k.split('.').slice(0, 2).join('.') : k);
+  const familyOf = (k?: string) => (k && /^(adm|proc)\.[a-z-]+\./.test(k) ? k.split('.').slice(0, 2).join('.') : k);
   return s.delegations?.find(g => g.institution === institution && g.from <= on && (!g.until || on < g.until) && g.delegator.id !== s.id
     && (g.procedures.includes('*') || (!!procedure && (g.procedures.includes(procedure) || g.procedures.includes(familyOf(procedure)!))))
     && ((!!action && g.actions.includes(action)) || (!!task && g.actions.includes(task)))) ?? null;
@@ -501,6 +501,11 @@ const OFFICIAL_WORK: RegExp[] = [
   // official, logged), and what the institution concerned adds beside the body's record (a response, evidence, a controller's answer);
   // each checked against the record in lib/oversight. Cases themselves move only through /api/cases.
   /^\/api\/oversight$/,
+  // The economic group (plan I5): a sealed bid received and withdrawn, a committee member's own declaration of interests and its
+  // management, an institution adopting the procurement templates (lib/procurement); progress on a Cabinet action and its closure,
+  // the Cabinet rules proposed and confirmed (lib/cabinet). Each checked in the route against the record and the rules below.
+  /^\/api\/procurement$/,
+  /^\/api\/cabinet-office$/,
   /^\/api\/indicators$/,                     // indicator definitions: indicatorDraftRefusal() / indicatorApproveRefusal() in the store; the small-cell rule adminOnly() in the route
   /^\/api\/access-log\/retention$/,          // oversight confirmation of shortening the access log: canConfirmAccessLogRetention() in the route
   /^\/api\/case-packages(\/|$)/,              // procedures: drafted by the responsible institution, approved by one who can sign there (route)
@@ -1223,6 +1228,47 @@ export function canReadTax(s: Scope, authority: string | undefined, purpose?: st
   if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read tax records';
   if (authority && s.institution === authority) return null;
   return 'Tax records are read by the tax authority; other institutions check registration through the exchange (taxpayer.status)';
+}
+
+/**
+ * Public finance records (lib/finance, plan I5): the finance authority's
+ * officials read every institution's; another institution's officials read
+ * their own institution's appropriations, commitments, payments and
+ * forecasts; whole-government officials where whole-government reach goes;
+ * auditors with a purpose (the public audit office reads under its mandate,
+ * never changing them). Payment records and payee accounts are restricted:
+ * every read in the access log (the route).
+ */
+export function canReadFinance(s: Scope, institution: string | undefined, financeAuthority: string | undefined, purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read public finance records';
+  if (financeAuthority && s.institution === financeAuthority) return null;
+  if (institution && (s.institution === institution || fullView(s, institution))) return null;
+  return 'Public finance records are read by the finance authority and by each institution for its own';
+}
+/**
+ * Procurement records (lib/procurement, plan I5): each procuring institution
+ * its own; the review body the tenders a complaint before it concerns;
+ * whole-government reach as usual; auditors with a purpose. A declaration's
+ * details only within the procuring institution. Bid contents are sealed
+ * until the opening whoever reads.
+ */
+export function canReadProcurement(s: Scope, institution: string, reviewBody: string | undefined, purpose?: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read procurement records';
+  if (s.institution === institution || fullView(s, institution)) return null;
+  if (reviewBody && s.institution === reviewBody) return null;
+  return 'Procurement records are read by the procuring institution (and the review body for a complaint before it)';
+}
+/**
+ * Cabinet records (lib/cabinet, plan I5): the cabinet office's officials read
+ * them all; another institution its own submissions, the actions assigned to
+ * it and the decisions distributed or published to it. Auditors with a
+ * purpose. Never whole-government reach into an independent institution's
+ * submissions: those are only its own.
+ */
+export function cabinetReadScope(s: Scope, cabinetOffice: string | undefined, purpose?: string): { view: 'all' | 'own' } | { refused: string } {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? { view: 'all' } : { refused: 'Say why you need to read Cabinet records' };
+  if (cabinetOffice && s.institution === cabinetOffice) return { view: 'all' };
+  return s.institution ? { view: 'own' } : { refused: 'Cabinet records are read by the cabinet office; other institutions see their own submissions and the actions assigned to them' };
 }
 
 /** Education records (lib/education/register.ts): the education authority's officials; auditors with a purpose. Holders' names are personal data. */

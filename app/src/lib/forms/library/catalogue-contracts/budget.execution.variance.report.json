@@ -1,0 +1,624 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "budget.execution.variance.report",
+ "record_type": "budget.execution",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "country.budget.execution: permitted reallocation types, who can approve each type, whether a supplementary appropriation requires legislative action, fiscal thresholds, year-end closure and carry-forward rules (none ship).",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for public finance records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "budget.execution.variance.report",
+  "part": 2,
+  "section": "2.5",
+  "line": 2469,
+  "batch": 8
+ },
+ "library": {
+  "title": "Report a material budget variance",
+  "intro": "Report a material difference between the budget and what is being spent, with the reasons.",
+  "owner": "finance",
+  "filled_by": "An official of the institution that holds the appropriation.",
+  "authority": "The finance authority the nation names for the finance slot under Who is responsible (authorityFor('finance')); the spending institution is named on each record and acts only for itself; never a ministry by name.",
+  "procedure": null,
+  "intended": "Variance report: not built (the computed balance shows spending against each appropriation; no procedure carries a variance report yet).",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadFinance() in lib/auth/roles.ts: officials of the finance authority, and of a spending institution for its own records; auditors with a purpose; every read of a payment in the access log",
+   "access.others": "Payee bank details are sealed and shown masked; no other institution reads them",
+   "amounts.stated": "execution.proposed_amount: the amount the institution requests or reports"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "report-not-built",
+    "what": "Variance report: not built (the computed balance shows spending against each appropriation; no procedure carries a variance report yet).",
+    "why": "The report type and its procedure are the nation's budget configuration.",
+    "rule": "CLAUDE.md Government operating model: cases change only under an approved procedure package; plan step I5"
+   },
+   {
+    "id": "officer-from-sign-in",
+    "what": "The official who records it comes from the signed-in session, never typed; their authority is the power the procedure step needs and the role roles.ts gives them",
+    "why": "Who acted is the verified signed-in official.",
+    "rule": "CLAUDE.md Who acted: withOfficial() replaces any name in the request"
+   },
+   {
+    "id": "stated-amount",
+    "what": "The amount is what a person states (an institution's request or forecast, an invoice, the officials' proposed figure), typed as money with its currency and named in the form's amounts.stated policy; it is never a charge, and the amount that binds is the one the sealed decision and the register record",
+    "why": "A request or forecast is a statement; only a decision of the officials the procedure names fixes an allocation, a commitment or a payment.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; plan step I5 (no amount typed into code)"
+   },
+   {
+    "id": "balance-computed",
+    "what": "The current amount and the available balance are the platform's, computed from the appropriation register each time (balanceOf(): enacted, revised, released, committed, paid), never typed or stored",
+    "why": "The field series: system-derived from the approved ledger where available.",
+    "rule": "Plan step I5: an appropriation's balance is computed, never stored (lib/finance/register.ts)"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2469,
+    "quotes": [
+     "budget.execution.variance.report",
+     "Report a material budget variance",
+     "Public institution",
+     "Reporting",
+     "Variance record"
+    ],
+    "met_by": {
+     "fields": [
+      "execution.reason"
+     ],
+     "deviation": "report-not-built"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2487,
+    "quotes": [
+     "Country decisions: permitted reallocation types; who can approve each type; whether supplementary appropriation requires legislative action; fiscal thresholds; year-end closure and carry-forward rules."
+    ],
+    "met_by": {
+     "country_decision": "country.budget.execution"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2475,
+    "quotes": [
+     "execution.institution: registry_reference, required."
+    ],
+    "met_by": {
+     "fields": [
+      "execution.institution"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2476,
+    "quotes": [
+     "execution.budget_allocation_ref: registry_reference, required; approved allocation."
+    ],
+    "met_by": {
+     "fields": [
+      "execution.budget_allocation_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2477,
+    "quotes": [
+     "execution.budget_line_ref: registry_reference, required; approved budget line."
+    ],
+    "met_by": {
+     "fields": [
+      "execution.budget_line_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2478,
+    "quotes": [
+     "execution.transaction_period: registry_reference, required; configured fiscal period."
+    ],
+    "met_by": {
+     "fields": [
+      "execution.transaction_period"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2480,
+    "quotes": [
+     "execution.current_amount: money, required and system-derived from the approved ledger where available."
+    ],
+    "met_by": {
+     "deviation": "balance-computed"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2481,
+    "quotes": [
+     "execution.proposed_amount: money, required for a change request; must be within the legal and policy bounds."
+    ],
+    "met_by": {
+     "fields": [
+      "execution.proposed_amount"
+     ],
+     "deviation": "no-amounts-typed"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2482,
+    "quotes": [
+     "execution.reason: long_text, required for all changes and exceptions."
+    ],
+    "met_by": {
+     "fields": [
+      "execution.reason"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2483,
+    "quotes": [
+     "execution.legal_authority_ref: registry_reference, required where the change requires a specific legal power or appropriation authority."
+    ],
+    "met_by": {
+     "fields": [
+      "execution.legal_authority_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2484,
+    "quotes": [
+     "execution.impact_refs: registry_reference, required for a material change; approved forecasts, programme records or commitments."
+    ],
+    "met_by": {
+     "fields": [
+      "execution.impact_refs"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2485,
+    "quotes": [
+     "execution.supporting_evidence: document, conditional on the approved procedure."
+    ],
+    "met_by": {
+     "fields": [
+      "execution.supporting_evidence"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2486,
+    "quotes": [
+     "execution.approval_record: identifier_reference, system-created after the decision stage."
+    ],
+    "met_by": {
+     "fields": [
+      "execution.approval_record"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "execution.institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_institution",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Institution"
+   },
+   "hint": {
+    "en": "The institution in the institution register."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter institution.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "execution.budget_allocation_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "available_budget_covers_payment",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.finance.approved_budget_allocations",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Appropriation"
+   },
+   "hint": {
+    "en": "The appropriation in the register (APP-…)."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter appropriation.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "execution.budget_line_ref",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.finance.budget_lines",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Budget line"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter budget line.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "execution.transaction_period",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.finance.budget_periods",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Fiscal period"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter fiscal period.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "execution.proposed_amount",
+   "type": "money",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "NONNEGATIVE",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Amount"
+   },
+   "hint": {
+    "en": "Within the legal and policy bounds; checked against the computed balance."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter amount.",
+     "NONNEGATIVE": "The amount cannot be below zero."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "execution.reason",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reasons"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reasons.",
+     "length": "Reasons must be between 1 and 10000 characters."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "execution.legal_authority_ref",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "legal_references_resolve",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.law_provisions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Legal authority (where the change needs a specific power or appropriation authority)"
+   },
+   "hint": {
+    "en": "Confirmed provisions from the laws register."
+   },
+   "error_text": {
+    "en": {
+     "legal_references_resolve": "Every provision must be a confirmed version in the laws register."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "execution.impact_refs",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.finance.records",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Forecasts, programmes or commitments affected (for a material change)"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "execution.supporting_evidence",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    },
+    {
+     "rule": "malware_scan_passed",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "commitment-request",
+     "when": "under_the_approved_procedure"
+    }
+   ],
+   "label": {
+    "en": "Supporting evidence"
+   },
+   "error_text": {
+    "en": {
+     "evidence_requirement_in_approved_package": "This evidence is not included in the approved procedure.",
+     "malware_scan_passed": "The file could not be accepted safely."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "execution.approval_record",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Approval record"
+   },
+   "hint": {
+    "en": "Created by the platform after the decision stage."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "execution.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Submitted by"
+   },
+   "hint": {
+    "en": "The signed-in official; never typed."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "execution.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}

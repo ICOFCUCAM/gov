@@ -66,24 +66,30 @@ STUDRULE = "CLAUDE.md Education: 'Returns carry aggregate counts only; there is 
 CLASSRULE = "Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class; CivicOS holds no classification scheme, no accreditation level and no intelligence content"
 NOTHOLD = "CivicOS will hold only approved metadata or a reference to the record in an accredited external system"
 
+FINEV = "lib/finance/register.ts and procedures.ts (budget.circular, budget.ceiling, budget.bid, budget.appropriation, budget.revision, finance.commitment, treasury.payee-account, treasury.payment separated by person at every stage and approved by two officials with the tier from the approved rule, treasury.cash-forecast; appropriation balances computed, never stored); tests lib/finance/finance.test.ts"
+CABEV = "lib/cabinet/register.ts and procedures.ts (cabinet.decision: legal and fiscal reviews by different officials, quorum and vote under the Cabinet rules the nation adopts, a decision authenticated by a second official, corrections as versions, distribution and disclosure, the action register with requests to independent institutions; exec.correspondence restricted); directives with required responses (lib/data/directives.ts); tests lib/cabinet/cabinet.test.ts"
+PROCEV = "lib/procurement/register.ts and procedures.ts (each institution's plans, tenders, bids sealed until two committee members open them, declarations of interest, evaluation with reasons and no deciding score, award by officials who did not evaluate, standstill, complaints to the independent review body, contracts, variations and payment certifications; OCDS release); tests lib/procurement/procurement.test.ts"
+E8LINK = '; the library contract of forms batch 8 linked to the procedure by identity (docs/FORMS_CONFORMANCE.md §16)'
+E8WAIT = "Field contract in the form library (forms batch 8; docs/FORMS_CONFORMANCE.md §16), waiting for its procedure; test lib/forms/catalogue-contracts.test.ts"
+
 # ---------------------------------------------------------------- domains
 # key: (sector, step, built, evidence, default form status)
 D = {
     'form-lib': ('Form library (building blocks)', 'I1', True, KB.FIELDSPEC + "; documents lib/records/documents.ts; declarations and evidence as procedure package requirements", 'Partial'),
     'platform': ('Platform architecture', 'Throughout', True, KB.ENGINE + '; ' + KB.ROLES + '; ' + KB.INST + '; ' + KB.LAW + '; ' + KB.EXCH + '; ' + KB.AUDIT + '; ' + KB.BACKUP, 'Partial'),
     'democracy': ('Democratic institutions (general)', 'I8', True, LEGEV + '; ' + KB.INST + '; ' + KB.RELS, 'Not yet'),
-    'presidency': ('Presidency and head of state', 'I5', False, KB.ABSENT + "; directives lib/data/directives.ts; laws register; office register", 'Not yet'),
-    'cabinet': ('Prime Minister\'s Office and Cabinet', 'I5', False, KB.ABSENT + "; directives lib/data/directives.ts", 'Not yet'),
+    'presidency': ('Presidency and head of state', 'I5', True, CABEV + "; laws register; office register", 'Not yet'),
+    'cabinet': ('Prime Minister\'s Office and Cabinet', 'I5', True, CABEV, 'Not yet'),
     'finance': ('Ministry of Finance', 'I5', False, KB.SCREENS, 'Not yet'),
-    'treasury': ('Treasury and public debt', 'I5', False, KB.SCREENS + "; bills and receipts " + KB.PAY, 'Not yet'),
-    'budget': ('Budget office', 'I5', False, KB.SCREENS, 'Not yet'),
+    'treasury': ('Treasury and public debt', 'I5', True, FINEV + "; bills and receipts " + KB.PAY, 'Not yet'),
+    'budget': ('Budget office', 'I5', True, FINEV, 'Not yet'),
     'tax': ('Revenue and tax', 'I5', True, TAXEV, 'Not yet'),
     'exec-internal': ('Executive and finance internal forms', 'I5', True, KB.ENGINE + "; " + KB.DECIS + "; " + KB.REFERRAL, 'Partial'),
     'customs': ('Customs', 'I5', True, CUSEV, 'Not yet'),
     'centralbank': ('Central bank', 'I5', False, "Plan §4: central bank operations lower priority; its public registers and independence in I5 (" + KB.INST + ")", 'Lower priority'),
     'trade': ('Trade and industry', 'I5', False, KB.SCREENS, 'Not yet'),
     'investment': ('Investment facilitation', 'I5', False, KB.SCREENS, 'Not yet'),
-    'procurement': ('Public procurement', 'I5', False, KB.SCREENS, 'Not yet'),
+    'procurement': ('Public procurement', 'I5', True, PROCEV, 'Not yet'),
     'exchange': ('Cross-institution exchange', 'I9', True, KB.EXCH, 'Not yet'),
     'civil': ('Civil registration', 'I6', True, CIVEV, 'Not yet'),
     'identity': ('National identity', 'I6', False, "person.verify exchange (lib/exchange/services.ts) answers a match against the civil register; no identity credential register", 'Not yet'),
@@ -470,7 +476,12 @@ I(r'^EDU-VOC-010$', 'Partial', EDUEV + ' (edu.qualification)', 'Skills certifica
 
 # ---------------------------------------------------------------- supplement (parts 14-22, Stage B contracts for parts 5-13)
 RESTR = "Restricted personal data (supplement header): built only as restricted fields under the owning institution's read rule, every read in the access log (" + KB.ACCESS + "); medical content only as a sealed document reference, never a clinical field"
+# Executive office, Cabinet, treasury and budget (plan step I5, forms batch 8): the forms the I5 procedures carry, and the rest as library drafts.
+I(r'^(exec\.cabinet\.action\.close|exec\.cabinet\.action\.update|exec\.cabinet\.decision\.action_assign|exec\.cabinet\.decision\.correct|exec\.cabinet\.decision\.distribution|exec\.cabinet\.decision\.record|exec\.cabinet\.paper\.fiscal_review|exec\.cabinet\.paper\.legal_review|exec\.cabinet\.paper\.revise|exec\.presidency\.correspondence\.decision|exec\.presidency\.correspondence\.notice|exec\.presidency\.correspondence\.referral|exec\.presidency\.correspondence\.submit|exec\.presidency\.correspondence\.supplement|exec\.presidency\.correspondence\.withdraw)$', 'Partial', CABEV + E8LINK, "Adoption by the nation: the office named for the cabinetOffice slot, its Cabinet rules (policy-change.ts), the procedure approved by a second official and its decision mapping approved", 'I5')
+I(r'^(budget\.allocation\.approve|budget\.allocation\.notify|budget\.allocation\.propose|budget\.bid\.justification|budget\.bid\.revise|budget\.bid\.withdraw|budget\.ceiling\.approve|budget\.ceiling\.propose|budget\.circular\.issue|budget\.execution\.commitment|budget\.execution\.commitment\.approve|budget\.execution\.reallocation\.approve|budget\.execution\.reallocation\.request|budget\.execution\.supplementary\.request|budget\.execution\.virement|budget\.negotiation\.record|budget\.programme\.costing|treasury\.cash_forecast\.close|treasury\.cash_forecast\.review|treasury\.cash_forecast\.revise|treasury\.cash_forecast\.submit|treasury\.payment\.approve|treasury\.payment\.cancel_request|treasury\.payment\.execute|treasury\.payment\.reconcile|treasury\.payment\.reject|treasury\.payment\.supporting_evidence|treasury\.payment\.verify)$', 'Partial', FINEV + E8LINK, "Adoption by the nation: the finance authority named, its approved rules (payment approval tiers, calendars, thresholds), the procedure approved by a second official and its decision mapping approved", 'I5')
+I(r'^(budget\.execution\.correction|budget\.execution\.overrun\.report|budget\.execution\.underspend\.report|budget\.execution\.variance\.report|budget\.execution\.year_end|exec\.cabinet\.agenda\.approve|exec\.cabinet\.agenda\.propose|exec\.presidency\.correspondence\.complaint|treasury\.cash_position\.report|treasury\.liquidity\.response|treasury\.liquidity\.shortfall|treasury\.payment\.correction|treasury\.payment\.dispute|treasury\.payment\.refund)$', 'Not yet', E8WAIT, "A procedure for this service (none is built yet)", 'I5')
 # Internal administration (supplement Part 21, plan I2): the forms the adm.* procedures carry, and the rest as library drafts (forms batch 5)
+I(r'^ADM-PRC-01[89]$|^ADM-PRC-020$', 'Partial', PROCEV + '; the library contract (forms batch 5) linked to the institution\'s procurement procedure by identity (plan step I5)', "The institution's adopted procedure version (proc.<template>.<institution>) approved by a second official; the nation's method thresholds (procurement.method-thresholds, binding, shipped unset)", 'I5', tag='SUP')
 I(r'^ADM-(HR-001|PAY-01[123]|ICT-030|GOV-039|GOV-040|HR-010|LEG-027)$', 'Partial', KB.ADMIN + '; the library contract (forms batch 5) linked to the procedure by identity', "The institution's adopted procedure version carrying the contract, approved by a second official; the nation's grades, rates, limits and schedules", 'I2', tag='SUP')
 I(r'^ADM-', 'Not yet', 'Library contract (forms batch 5); ' + KB.DEPTS + '; ' + KB.WORKSPACE, "The institution's procedure for this form (none is built yet)", 'I2', tag='SUP')
 I(r'^(HLT-PAT-001|HLT-ENC-002|HLT-REF-003|HLT-MED-004|HLT-CARE-008)$', 'Platform rule stricter', CLINRULE, 'CivicOS holds no patient, encounter, referral, dispensing or care-plan record on a named person', '—', tag='SUP')

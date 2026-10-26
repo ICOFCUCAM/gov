@@ -1,0 +1,277 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "exec.presidency.correspondence.complaint",
+ "record_type": "exec.correspondence",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "country.exec.correspondence: the constitutional role and petition powers of the office, the subjects it may handle, routing rules, whether anonymous petitions are accepted, records retention and any special procedure for constitutional complaints (none ship).",
+  "country.exec.records: retention, confidentiality, disclosure and access restrictions for executive-office and Cabinet records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "exec.presidency.correspondence.complaint",
+  "part": 2,
+  "section": "2.1",
+  "line": 1852,
+  "batch": 8
+ },
+ "library": {
+  "title": "Complain about the handling of a petition",
+  "intro": "Complain about how a petition was handled: a delay, a reply that did not answer it, or how you were treated. The complaint names the petition; it is reviewed apart from the officials who handled it.",
+  "owner": "cabinetOffice",
+  "filled_by": "The person who sent the petition.",
+  "authority": "The office the nation names for the cabinetOffice slot under Who is responsible (authorityFor('cabinetOffice')); where the head of state's office keeps its own correspondence, the nation names that office; never a ministry by name, and holding an office grants no power.",
+  "procedure": null,
+  "intended": "Service complaint review of the executive office: not built (no procedure carries a complaint about the handling of correspondence yet; a complaint about maladministration can go to the ombudsman, DEM-CON-012, where the nation names one).",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "cabinetReadScope() in lib/auth/roles.ts: officials of the office that keeps the record; a restricted case only to its assignee and signatories; every read of personal data in the access log",
+   "access.others": "No other institution reads these records; a referral or an assigned action carries only what its own record names"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "no-identity-demand",
+    "what": "No identity proof is asked merely because the petition is addressed to the executive office: the submitter gives only the contact channel needed for a reply; evidence is optional unless the approved procedure requires it; a restriction on submission, referral, disclosure or retention needs a cited legal basis",
+    "why": "The field series Part 2 §2.1: the office must not require proof of identity merely because a petition is addressed to the head of state.",
+    "rule": "Field series Part 2 §2.1 Department A; CLAUDE.md forms: forms are built to a higher standard than the catalogue where we can"
+   },
+   {
+    "id": "restricted-case",
+    "what": "The petition and the requested outcome are restricted, stricter than the catalogue's \"personal where applicable\": the case runs under the restricted exec.correspondence procedure (assignee and signatories only), every read in the access log",
+    "why": "A petition can carry anything about a person; the class is set by the strictest content it may hold.",
+    "rule": "CLAUDE.md Government operating model: restricted cases go to their assignee and supervisors; every read of personal data goes to the access log"
+   },
+   {
+    "id": "complaint-not-built",
+    "what": "No procedure reviews a complaint about the handling of correspondence yet: the form waits for one the nation adopts, reviewed by officials other than those who handled the petition",
+    "why": "The service complaint review is a procedure of its own (who reviews it is the nation's decision).",
+    "rule": "CLAUDE.md Government operating model: cases change only under an approved procedure package; plan step I5"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1852,
+    "quotes": [
+     "exec.presidency.correspondence.complaint",
+     "Complain about the handling of a petition",
+     "Submitter",
+     "Complaint",
+     "Service complaint review"
+    ],
+    "met_by": {
+     "fields": [
+      "complaint.matters"
+     ],
+     "deviation": "complaint-not-built"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1865,
+    "quotes": [
+     "Evidence and legal basis: evidence is optional unless a specific, approved procedure requires it.",
+     "The Presidency must not require proof of identity merely because a petition is addressed to the Head of State.",
+     "Any restriction on submission, referral, public disclosure or retention requires an approved legal basis."
+    ],
+    "met_by": {
+     "deviation": "no-identity-demand",
+     "country_decision": "country.exec.correspondence"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1867,
+    "quotes": [
+     "Country decisions: constitutional role and petition powers; subjects the Presidency may handle; routing rules; whether anonymous petitions are accepted; records retention; any special procedure for constitutional complaints."
+    ],
+    "met_by": {
+     "country_decision": "country.exec.correspondence"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1869,
+    "quotes": [
+     "Channels: self-service, assisted, print, postal intake; offline capture for authorized offices."
+    ],
+    "met_by": {
+     "deviation": "scanning",
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "The same questions in self-service, assisted and print; a postal or paper submission is transcribed by an official and the case records it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1863,
+    "quotes": [
+     "correspondence.contact: group core.contact, minimized to the channel needed for a response."
+    ],
+    "met_by": {
+     "fields": [
+      "contact.email",
+      "contact.phone",
+      "contact.preferred_channel"
+     ],
+     "deviation": "minimisation"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "correspondence.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The petition reference"
+   },
+   "hint": {
+    "en": "The reference you were given when you wrote."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the petition reference.",
+     "case_exists_and_is_open": "Select an open case of this procedure."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "complaint.matters",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 20,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What went wrong"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter what went wrong.",
+     "length": "What went wrong must be between 20 and 10000 characters."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "complaint.requested_outcome",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What you want to happen"
+   },
+   "error_text": {
+    "en": {
+     "length": "What you want to happen must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we reply"
+   }
+  },
+  {
+   "id": "complaint.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}
