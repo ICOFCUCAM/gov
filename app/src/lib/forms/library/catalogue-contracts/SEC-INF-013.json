@@ -3,6 +3,8 @@
  "form_id": "SEC-INF-013",
  "record_type": "security.critical_infrastructure",
  "form_version": 1,
+ "procedure_package_id": "ci.exception",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "CFG-SEC-003: classification levels and handling restrictions (the nation's scheme, adopted by two officials; ships empty).",
@@ -25,8 +27,12 @@
   "owner": "criticalInfrastructure",
   "filled_by": "The operator's authorised representative.",
   "authority": "The critical infrastructure authority the nation names (criticalInfrastructure slot, shipped empty).",
-  "procedure": null,
-  "intended": "A resilience exception procedure of the criticalInfrastructure slot (like cyber.exception: two officials, until a date): not built; the form waits in the library (plan step I12)",
+  "procedure": {
+   "key": "ci.exception",
+   "stage": "received",
+   "action": "register",
+   "document": "exception-request"
+  },
   "lists": {},
   "nation_values": [
    {
@@ -114,10 +120,7 @@
      "Approved exception and compensating measures"
     ],
     "met_by": {
-     "platform": {
-      "file": "app/src/lib/security/procedures.ts",
-      "how": "A resilience exception procedure of the criticalInfrastructure slot (like cyber.exception: two officials, until a date): not built; the form waits in the library (plan step I12)"
-     }
+     "procedure": "register"
     }
    }
   ]

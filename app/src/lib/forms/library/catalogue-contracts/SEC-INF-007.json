@@ -3,6 +3,8 @@
  "form_id": "SEC-INF-007",
  "record_type": "security.critical_infrastructure",
  "form_version": 1,
+ "procedure_package_id": "ci.incident",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "CFG-SEC-003: classification levels and handling restrictions (the nation's scheme, adopted by two officials; ships empty).",
@@ -25,8 +27,12 @@
   "owner": "criticalInfrastructure",
   "filled_by": "The operator's authorised representative.",
   "authority": "The critical infrastructure authority the nation names (criticalInfrastructure slot, shipped empty).",
-  "procedure": null,
-  "intended": "A critical infrastructure incident procedure of the criticalInfrastructure slot: not built; the form waits in the library (plan step I12). A cyber incident on designated infrastructure is reported through cyber.incident.",
+  "procedure": {
+   "key": "ci.incident",
+   "stage": "received",
+   "action": "register",
+   "document": "incident-notification"
+  },
   "lists": {},
   "nation_values": [
    {
@@ -114,10 +120,7 @@
      "Restricted incident record"
     ],
     "met_by": {
-     "platform": {
-      "file": "app/src/lib/security/procedures.ts",
-      "how": "A critical infrastructure incident procedure of the criticalInfrastructure slot: not built; the form waits in the library (plan step I12). A cyber incident on designated infrastructure is reported through cyber.incident."
-     }
+     "procedure": "register"
     }
    }
   ]

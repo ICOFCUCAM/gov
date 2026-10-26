@@ -1,6 +1,6 @@
 # Institutional requirements traceability register
 
-**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): 2827 rows, ids `S<part>-…`, below. (2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): 7548 rows (Met 229, Partial 3931, Not yet 2230, Legal review 250, Platform rule stricter 334, Country decision 268, Lower priority 306), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.
+**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): 2827 rows, ids `S<part>-…`, below. (2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): 7548 rows (Met 229, Partial 3944, Not yet 2217, Legal review 250, Platform rule stricter 334, Country decision 268, Lower priority 306), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.
 
 Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts) against the code in `app/src` on 21 October 2026 (main checkout, after step I0.1), with the plan step that delivers each one (`docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md` §5). Machine-readable rows: `docs/requirements/requirements.json`. Re-run from the repository root: `python3 -I app/scripts/requirements/extract.py .` (scripts in `app/scripts/requirements/`; status knowledge base `rules.py`, step reassignment under the revised plan `reassign.py`). Checked by `app/src/lib/requirements/requirements.test.ts`.
 
@@ -3576,7 +3576,7 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 8 | 2 | 119 | 288 | 0 | 0 | 23 | 0 | 432 |
 | Part 9 | 4 | 276 | 70 | 0 | 3 | 18 | 0 | 371 |
 | Part 10 | 5 | 75 | 262 | 62 | 6 | 13 | 0 | 423 |
-| Part 11 | 117 | 166 | 12 | 4 | 24 | 21 | 46 | 390 |
+| Part 11 | 117 | 170 | 8 | 4 | 24 | 21 | 46 | 390 |
 | Part 12 | 26 | 207 | 45 | 4 | 8 | 24 | 97 | 411 |
 | Part 13 | 15 | 463 | 59 | 0 | 1 | 21 | 0 | 559 |
 | Supplement: shared contract standard | 0 | 50 | 0 | 0 | 0 | 0 | 0 | 50 |
@@ -3586,7 +3586,7 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 8 (supplement, Stage B contracts) | 0 | 31 | 35 | 0 | 0 | 0 | 0 | 66 |
 | Part 9 (supplement, Stage B contracts) | 0 | 24 | 41 | 0 | 0 | 0 | 0 | 65 |
 | Part 10 (supplement, Stage B contracts) | 0 | 10 | 52 | 0 | 0 | 0 | 0 | 62 |
-| Part 11 (supplement, Stage B contracts) | 0 | 21 | 19 | 17 | 1 | 0 | 17 | 75 |
+| Part 11 (supplement, Stage B contracts) | 0 | 30 | 10 | 17 | 1 | 0 | 17 | 75 |
 | Part 12 (supplement, Stage B contracts) | 2 | 26 | 10 | 7 | 0 | 0 | 25 | 70 |
 | Part 13 (supplement, Stage B contracts) | 3 | 102 | 24 | 0 | 0 | 0 | 0 | 129 |
 | Part 14 | 0 | 109 | 14 | 0 | 0 | 0 | 0 | 123 |
@@ -3598,7 +3598,7 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 20 | 0 | 64 | 10 | 0 | 0 | 0 | 0 | 74 |
 | Part 21 | 1 | 58 | 58 | 0 | 0 | 0 | 0 | 117 |
 | Part 22 | 0 | 77 | 21 | 0 | 0 | 0 | 0 | 98 |
-| **All** | **229** | **3931** | **2230** | **250** | **334** | **268** | **306** | **7548** |
+| **All** | **229** | **3944** | **2217** | **250** | **334** | **268** | **306** | **7548** |
 
 
 ### By plan step
@@ -3616,10 +3616,10 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | I8 | 0 | 198 | 128 | 0 | 0 | 3 | 0 | 329 |
 | I9 | 0 | 165 | 43 | 0 | 0 | 0 | 0 | 208 |
 | I11 | 0 | 115 | 42 | 229 | 0 | 13 | 173 | 572 |
-| I12 | 0 | 158 | 30 | 21 | 12 | 3 | 12 | 236 |
+| I12 | 0 | 171 | 17 | 21 | 12 | 3 | 12 | 236 |
 | I13 | 0 | 210 | 21 | 0 | 0 | 0 | 0 | 231 |
 | Throughout | 0 | 297 | 1 | 0 | 0 | 0 | 0 | 298 |
-| **All** | **229** | **3931** | **2230** | **250** | **334** | **268** | **306** | **7548** |
+| **All** | **229** | **3944** | **2217** | **250** | **334** | **268** | **306** | **7548** |
 
 
 Also-steps (a row's further steps): I1-catalogue 3264, I10 56, I11 2, I12 1, I3 3, I7 25, I8 13, I9 63, Throughout 13.
@@ -3696,7 +3696,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 56, I11 2, I12 1, I3 
 | Classified information | 39 | 101 | 10 | 0 | 17 | 6 | 0 | 173 |
 | Intelligence governance | 0 | 3 | 0 | 21 | 1 | 4 | 12 | 41 |
 | Cybersecurity incident management | 19 | 25 | 4 | 0 | 2 | 3 | 0 | 53 |
-| Critical infrastructure resilience | 30 | 32 | 17 | 0 | 1 | 2 | 0 | 82 |
+| Critical infrastructure resilience | 30 | 45 | 4 | 0 | 1 | 2 | 0 | 82 |
 | National security directives | 16 | 5 | 0 | 0 | 0 | 0 | 0 | 21 |
 | Constitutional offices and independent institutions | 5 | 41 | 9 | 0 | 0 | 2 | 0 | 57 |
 | Democratic institutions (general) | 12 | 136 | 0 | 0 | 4 | 3 | 0 | 155 |
@@ -3719,7 +3719,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 56, I11 2, I12 1, I3 
 | Local and regional government | 0 | 45 | 29 | 0 | 0 | 0 | 0 | 74 |
 | Housing, planning and building control | 0 | 64 | 10 | 0 | 0 | 0 | 0 | 74 |
 | Shared internal administration | 1 | 58 | 58 | 0 | 0 | 0 | 0 | 117 |
-| **All** | **229** | **3931** | **2230** | **250** | **334** | **268** | **306** | **7548** |
+| **All** | **229** | **3944** | **2217** | **250** | **334** | **268** | **306** | **7548** |
 
 
 ### By category
@@ -3728,12 +3728,12 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 56, I11 2, I12 1, I3 
 |---|---|---|---|---|---|---|---|---|
 | acceptance gate | 17 | 122 | 15 | 3 | 9 | 0 | 0 | 166 |
 | configuration | 0 | 0 | 0 | 10 | 5 | 201 | 0 | 216 |
-| data contract | 18 | 1601 | 603 | 34 | 81 | 1 | 86 | 2424 |
+| data contract | 18 | 1609 | 595 | 34 | 81 | 1 | 86 | 2424 |
 | definition of done | 7 | 29 | 2 | 0 | 2 | 1 | 0 | 41 |
 | engineering deliverable | 0 | 100 | 19 | 4 | 9 | 2 | 0 | 134 |
 | exchange | 1 | 13 | 34 | 5 | 2 | 0 | 0 | 55 |
 | field group | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
-| form | 64 | 528 | 1134 | 91 | 128 | 0 | 127 | 2072 |
+| form | 64 | 533 | 1129 | 91 | 128 | 0 | 127 | 2072 |
 | permission | 1 | 52 | 0 | 4 | 0 | 0 | 0 | 57 |
 | register | 2 | 26 | 18 | 1 | 0 | 0 | 11 | 58 |
 | safeguard | 40 | 452 | 124 | 28 | 40 | 24 | 21 | 729 |
@@ -3742,7 +3742,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 56, I11 2, I12 1, I3 
 | table row | 0 | 87 | 9 | 14 | 9 | 1 | 1 | 121 |
 | values source | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 11 |
 | workflow stage | 5 | 52 | 21 | 0 | 0 | 0 | 12 | 90 |
-| **All** | **229** | **3931** | **2230** | **250** | **334** | **268** | **306** | **7548** |
+| **All** | **229** | **3944** | **2217** | **250** | **334** | **268** | **306** | **7548** |
 
 
 ### Deviations: platform rule stricter and legal review (584 rows)
@@ -9735,7 +9735,7 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | CFG-SEC-010 | 2034 | 12 | configuration | CFG-SEC-010 — Vulnerability disclosure and coordination procedures | Country decision | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende |  | — |
 | CFG-SEC-018 | 2042 | 12 | configuration | CFG-SEC-018 — National security incident response and recovery responsibilities | Country decision | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende |  | — |
 
-##### Critical infrastructure resilience — Met 30, Partial 15, Not yet 8, Platform rule stricter 1, Country decision 2
+##### Critical infrastructure resilience — Met 30, Partial 19, Not yet 4, Platform rule stricter 1, Country decision 2
 
 | ID | Lines | Section | Cat. | Item | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|---|
@@ -9745,16 +9745,16 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | SEC-INF-004 | 1724 | 2.4 | form | SEC-INF-004 — Infrastructure resilience plan — Approved continuity and recovery plan | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
 | SEC-INF-005 | 1725 | 2.4 | form | SEC-INF-005 — Continuity exercise authorization — Exercise scope and approval | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
 | SEC-INF-006 | 1726 | 2.4 | form | SEC-INF-006 — Continuity exercise evaluation — Findings and corrective actions | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
-| SEC-INF-007 | 1727 | 2.4 | form | SEC-INF-007 — Critical infrastructure incident notification — Restricted incident record | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | A critical infrastructure incident, disruption, resilience exception and information release procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
+| SEC-INF-007 | 1727 | 2.4 | form | SEC-INF-007 — Critical infrastructure incident notification — Restricted incident record | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
 | SEC-INF-008 | 1728 | 2.4 | form | SEC-INF-008 — Cross-sector infrastructure incident coordination — Authorized coordination record | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Procedure package, field contract and record for this form | I12 (+I1-catalogue) |
-| SEC-INF-009 | 1729 | 2.4 | form | SEC-INF-009 — Essential service disruption report — Service impact, duration and restoration status | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | A critical infrastructure incident, disruption, resilience exception and information release procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
+| SEC-INF-009 | 1729 | 2.4 | form | SEC-INF-009 — Essential service disruption report — Service impact, duration and restoration status | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
 | SEC-INF-010 | 1730 | 2.4 | form | SEC-INF-010 — Infrastructure recovery assurance — Verified recovery and residual risk | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Procedure package, field contract and record for this form | I12 (+I1-catalogue) |
 | SEC-INF-011 | 1731 | 2.4 | form | SEC-INF-011 — Critical supplier dependency assessment — Supplier and concentration risk record | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Procedure package, field contract and record for this form | I12 (+I1-catalogue) |
 | SEC-INF-012 | 1732 | 2.4 | form | SEC-INF-012 — Infrastructure security inspection — Findings, remediation and follow-up | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Procedure package, field contract and record for this form | I12 (+I1-catalogue) |
-| SEC-INF-013 | 1733 | 2.4 | form | SEC-INF-013 — Resilience exception request — Approved exception and compensating measures | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | A critical infrastructure incident, disruption, resilience exception and information release procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
+| SEC-INF-013 | 1733 | 2.4 | form | SEC-INF-013 — Resilience exception request — Approved exception and compensating measures | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
 | SEC-INF-014 | 1734 | 2.4 | form | SEC-INF-014 — Infrastructure risk acceptance — Authorized, scoped risk acceptance | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
 | SEC-INF-015 | 1735 | 2.4 | form | SEC-INF-015 — Infrastructure risk acceptance review — Reassessment and closure or renewal | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
-| SEC-INF-016 | 1736 | 2.4 | form | SEC-INF-016 — Critical infrastructure information release review — Controlled disclosure decision | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | A critical infrastructure incident, disruption, resilience exception and information release procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
+| SEC-INF-016 | 1736 | 2.4 | form | SEC-INF-016 — Critical infrastructure information release review — Controlled disclosure decision | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
 | FC11-2.4-01 | 1737 | 2.4 | safeguard | The designation of an asset as critical infrastructure must be based on applicable law and approved criteria. | Met | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende |  | — |
 | FC11-2.4-02 | 1737 | 2.4 | scope | A label in a national digital twin does not by itself create a legal designation. | Met | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende |  | — |
 | FC11-6-01 | 1851 | 6 | scope | CivicOS's national digital twin can help institutions understand dependencies among electricity, water, telecommunications, transport, health, finance and government services. | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | The requirement as stated is not built for this domain beyond the cited records | I12 |
@@ -11574,13 +11574,13 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | FCS11-intro-38 | 2060 | intro | data contract | SEC-OVS-007 field findings: {"type": "array", "required": true, "items_type": "oversight_finding"} | Legal review | Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class; the nation's scheme a | Part of SEC-OVS-007: The platform is not an intelligence repository: product and oversight metadata only after legal review | I12 (+I1-catalogue) |
 | FCS11-intro-39 | 2061 | intro | data contract | SEC-OVS-007 field recommendations: {"type": "array", "required": false, "items_type": "string"} | Legal review | Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class; the nation's scheme a | Part of SEC-OVS-007: The platform is not an intelligence repository: product and oversight metadata only after legal review | I12 (+I1-catalogue) |
 
-##### Critical infrastructure resilience — Partial 17, Not yet 9
+##### Critical infrastructure resilience — Partial 26
 
 | ID | Lines | Section | Cat. | Item | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|---|
 | CIP-REG-008 | 2000 | intro | form | CIP-REG-008 — Critical infrastructure registration | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
 | CIP-RSK-009 | 2001 | intro | form | CIP-RSK-009 — Critical infrastructure risk assessment | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
-| CIP-INC-010 | 2002 | intro | form | CIP-INC-010 — Critical infrastructure incident report | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | A critical infrastructure incident procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
+| CIP-INC-010 | 2002 | intro | form | CIP-INC-010 — Critical infrastructure incident report | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classif | I12 (+I1-catalogue) |
 | FCS11-intro-40 | 2065 | intro | data contract | Contract CIP-REG-008: {"form_id": "CIP-REG-008"} (6 fields) | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-REG-008 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
 | FCS11-intro-41 | 2067 | intro | data contract | CIP-REG-008 field asset_operator_id: {"type": "entity_reference", "required": true} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-REG-008 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
 | FCS11-intro-42 | 2068 | intro | data contract | CIP-REG-008 field infrastructure_sector: {"type": "code_reference", "required": true} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-REG-008 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
@@ -11596,14 +11596,14 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | FCS11-intro-52 | 2082 | intro | data contract | CIP-RSK-009 field mitigation_actions: {"type": "array", "required": true, "items_type": "mitigation_action"} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-RSK-009 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
 | FCS11-intro-53 | 2083 | intro | data contract | CIP-RSK-009 field assessor_id: {"type": "entity_reference", "required": true} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-RSK-009 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
 | FCS11-intro-54 | 2084 | intro | data contract | CIP-RSK-009 field reviewer_id: {"type": "entity_reference", "required": true} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-RSK-009 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
-| FCS11-intro-55 | 2088 | intro | data contract | Contract CIP-INC-010: {"form_id": "CIP-INC-010"} (7 fields) | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | CIP-INC-010 is not built: A critical infrastructure incident procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
-| FCS11-intro-56 | 2090 | intro | data contract | CIP-INC-010 field asset_id: {"type": "entity_reference", "required": true} | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | CIP-INC-010 is not built: A critical infrastructure incident procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
-| FCS11-intro-57 | 2091 | intro | data contract | CIP-INC-010 field incident_datetime: {"type": "datetime", "required": true} | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | CIP-INC-010 is not built: A critical infrastructure incident procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
-| FCS11-intro-58 | 2092 | intro | data contract | CIP-INC-010 field incident_type: {"type": "enum", "required": true} | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | CIP-INC-010 is not built: A critical infrastructure incident procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
-| FCS11-intro-59 | 2093 | intro | data contract | CIP-INC-010 field service_impact: {"type": "structured_object", "required": true} | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | CIP-INC-010 is not built: A critical infrastructure incident procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
-| FCS11-intro-60 | 2094 | intro | data contract | CIP-INC-010 field reporting_operator_id: {"type": "entity_reference", "required": true} | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | CIP-INC-010 is not built: A critical infrastructure incident procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
-| FCS11-intro-61 | 2095 | intro | data contract | CIP-INC-010 field containment_actions: {"type": "array", "required": false, "items_type": "string"} | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | CIP-INC-010 is not built: A critical infrastructure incident procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
-| FCS11-intro-62 | 2096 | intro | data contract | CIP-INC-010 field regulatory_notification_reference: {"type": "document_reference", "required": false} | Not yet | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | CIP-INC-010 is not built: A critical infrastructure incident procedure of the criticalInfrastructure slot | I12 (+I1-catalogue) |
+| FCS11-intro-55 | 2088 | intro | data contract | Contract CIP-INC-010: {"form_id": "CIP-INC-010"} (7 fields) | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-INC-010 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
+| FCS11-intro-56 | 2090 | intro | data contract | CIP-INC-010 field asset_id: {"type": "entity_reference", "required": true} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-INC-010 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
+| FCS11-intro-57 | 2091 | intro | data contract | CIP-INC-010 field incident_datetime: {"type": "datetime", "required": true} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-INC-010 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
+| FCS11-intro-58 | 2092 | intro | data contract | CIP-INC-010 field incident_type: {"type": "enum", "required": true} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-INC-010 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
+| FCS11-intro-59 | 2093 | intro | data contract | CIP-INC-010 field service_impact: {"type": "structured_object", "required": true} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-INC-010 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
+| FCS11-intro-60 | 2094 | intro | data contract | CIP-INC-010 field reporting_operator_id: {"type": "entity_reference", "required": true} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-INC-010 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
+| FCS11-intro-61 | 2095 | intro | data contract | CIP-INC-010 field containment_actions: {"type": "array", "required": false, "items_type": "string"} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-INC-010 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
+| FCS11-intro-62 | 2096 | intro | data contract | CIP-INC-010 field regulatory_notification_reference: {"type": "document_reference", "required": false} | Partial | lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.depende | Field of CIP-INC-010 as the contract defines it (type, validation, classification, source) in the form library and the procedure | I12 (+I1-catalogue) |
 
 #### Part 12 (supplement, Stage B contracts) — Part 12 (SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md)
 
