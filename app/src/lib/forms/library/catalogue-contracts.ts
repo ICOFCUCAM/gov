@@ -123,6 +123,22 @@
 // lib/citizenship, lib/labour and lib/social; the others name what they wait
 // for.
 //
+// Batch 11 (owner's assignment; plan step I9, federation and portability): the
+// catalogue Part 13 §2.2 whole-of-government workflow forms GOV-WF-001 … 006 and
+// 009 … 015 (docs/forms-catalogue/PARTS-12-13.md; GOV-WF-007 and 008, directives,
+// belong to the executive office's step) and the field series Part 3 §3.6
+// cross-institution exchange forms for referrals and the tax and business
+// status checks (docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md), 21 in all.
+// Each GOV-WF form is carried by the receiving institution's own
+// cross-institution procedure (xi.<template>.<institution>,
+// lib/federation/procedures.ts) and never becomes a binding order: its nature
+// (a request, or an instruction under an approved instruct relationship) is
+// recorded when it is taken in. The status checks are answered by the
+// taxpayer.status and organisation.standing exchange services (no case),
+// between institutions only under an approved exchange relationship
+// (lib/federation/binding.ts); the referral forms wait for the referral
+// procedure (lib/casework/referral.ts) to carry a contract.
+//
 // Each contract is a JSON file in the canonical format
 // (civicos.form-contract.v1, lib/forms/canonical.ts; never a second format),
 // with two blocks of its own beside the fields: `catalogue` names the one
@@ -366,6 +382,28 @@ import con018 from './catalogue-contracts/DEM-CON-018.json';
 import con019 from './catalogue-contracts/DEM-CON-019.json';
 import con020 from './catalogue-contracts/DEM-CON-020.json';
 import pub009 from './catalogue-contracts/DEM-PUB-009.json';
+// Batch 11: federation and portability (plan I9): cross-institution workflow and controlled exchanges.
+import b11GovWf001 from './catalogue-contracts/GOV-WF-001.json';
+import b11GovWf002 from './catalogue-contracts/GOV-WF-002.json';
+import b11GovWf003 from './catalogue-contracts/GOV-WF-003.json';
+import b11GovWf004 from './catalogue-contracts/GOV-WF-004.json';
+import b11GovWf005 from './catalogue-contracts/GOV-WF-005.json';
+import b11GovWf006 from './catalogue-contracts/GOV-WF-006.json';
+import b11GovWf009 from './catalogue-contracts/GOV-WF-009.json';
+import b11GovWf010 from './catalogue-contracts/GOV-WF-010.json';
+import b11GovWf011 from './catalogue-contracts/GOV-WF-011.json';
+import b11GovWf012 from './catalogue-contracts/GOV-WF-012.json';
+import b11GovWf013 from './catalogue-contracts/GOV-WF-013.json';
+import b11GovWf014 from './catalogue-contracts/GOV-WF-014.json';
+import b11GovWf015 from './catalogue-contracts/GOV-WF-015.json';
+import b11ExchangeReferralCreate from './catalogue-contracts/exchange.referral.create.json';
+import b11ExchangeReferralAccept from './catalogue-contracts/exchange.referral.accept.json';
+import b11ExchangeReferralUpdate from './catalogue-contracts/exchange.referral.update.json';
+import b11ExchangeReferralClose from './catalogue-contracts/exchange.referral.close.json';
+import b11ExchangeTaxStatusVerify from './catalogue-contracts/exchange.tax_status.verify.json';
+import b11ExchangeTaxStatusResponse from './catalogue-contracts/exchange.tax_status.response.json';
+import b11ExchangeBusinessStatusVerify from './catalogue-contracts/exchange.business_status.verify.json';
+import b11ExchangeBusinessStatusResponse from './catalogue-contracts/exchange.business_status.response.json';
 // Batch 10: territory and infrastructure (plan I7).
 import b10LndReg005 from './catalogue-contracts/LND-REG-005.json';
 import b10LndReg007 from './catalogue-contracts/LND-REG-007.json';
@@ -682,7 +720,11 @@ export const BATCH_9 = [
   b9SOCBEN009, b9SOCBEN011, b9SOCBEN012, b9SOCBEN014, b9SOCBEN010, b9SOCBEN008, b9SOCBEN013, b9SOCBEN016,
   b9SOCBEN021, b9SOCBEN022, b9SOCBEN023, b9SOCBEN024, b9SOCBEN015, b9SOCBEN018, b9SOCBEN019, b9SOCBEN020,
 ] as unknown as CatalogueContractJson[];
-/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; adm: batch 5; oversight: batch 7; land, hpc, lrg, trn: batch 10). */
+/** Batch 11: federation and portability, catalogue Part 13 §2.2 and field series Part 3 §3.6 (owner's assignment; plan I9). */
+export const BATCH_11 = [
+  b11GovWf001, b11GovWf002, b11GovWf003, b11GovWf004, b11GovWf005, b11GovWf006, b11GovWf009, b11GovWf010, b11GovWf011, b11GovWf012, b11GovWf013, b11GovWf014, b11GovWf015, b11ExchangeReferralCreate, b11ExchangeReferralAccept, b11ExchangeReferralUpdate, b11ExchangeReferralClose, b11ExchangeTaxStatusVerify, b11ExchangeTaxStatusResponse, b11ExchangeBusinessStatusVerify, b11ExchangeBusinessStatusResponse,
+] as unknown as CatalogueContractJson[];
+/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; adm: batch 5; oversight: batch 7; land, hpc, lrg, trn: batch 10; xi, xex: batch 11). */
 export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; groups: Record<string, string[]>; items: (CatalogueItem & { for?: string })[] });
 /** The shared items that apply to one contract. */
 export const commonItemsFor = (formId: string): CatalogueItem[] => (COMMON_ITEMS.applies_to.includes(formId) ? COMMON_ITEMS.items.filter(i => !i.for || COMMON_ITEMS.groups[i.for]?.includes(formId)).map(({ for: _for, ...i }) => i) : []);
@@ -694,6 +736,8 @@ const INSTITUTION: Record<string, string> = {
   landRegistry: 'The land registry', buildingControl: 'The planning and building control authority', housing: 'The housing authority',
   vehicleRegistration: 'The vehicle and driver licensing authority', roadAuthority: 'The road authority', transportRegulator: 'The transport regulator',
   finance: 'The finance authority', cabinetOffice: 'The executive office',
+  // I9: the business register answers the business status check.
+  businessRegister: 'The business register',
 };
 
 function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
@@ -724,7 +768,7 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 }
 
 /** Every catalogue contract CivicOS has written, as library drafts. */
-export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_5.map(c => load(c, 5)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7)), ...BATCH_8.map(c => load(c, 8)), ...BATCH_9.map(c => load(c, 9)), ...BATCH_10.map(c => load(c, 10))];
+export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_5.map(c => load(c, 5)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7)), ...BATCH_8.map(c => load(c, 8)), ...BATCH_9.map(c => load(c, 9)), ...BATCH_10.map(c => load(c, 10)), ...BATCH_11.map(c => load(c, 11))];
 
 /**
  * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without

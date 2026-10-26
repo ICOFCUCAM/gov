@@ -1,0 +1,312 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-WF-010",
+ "record_type": "xi.dispute",
+ "form_version": 1,
+ "procedure_package_id": "xi.dispute",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-002: constitutional structure and institution registry (each institution and its relationships, recorded through the institution register; none ship).",
+  "CFG-GOV-011: approved data exchange and interoperability standards (exchange relationships, purposes and contracts; none ship).",
+  "CFG-DAT-001: retention and disclosure of the case and its records."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-WF-010",
+  "part": 13,
+  "section": "2.2",
+  "line": 678,
+  "batch": 11
+ },
+ "library": {
+  "title": "Refer a dispute between institutions to the body that resolves it",
+  "intro": "Refer a dispute between two institutions to the body authorised to resolve it. The referral is not a ruling: only the resolving body decides, in its own procedure.",
+  "owner": "institution",
+  "filled_by": "An official of an institution party to the dispute.",
+  "authority": "Each institution's own: worked by the institution that receives the request, under its own adopted procedure (xi.<template>.<institution>); never a central administrator's.",
+  "procedure": {
+   "key": "xi.dispute",
+   "stage": "received",
+   "action": "refer",
+   "document": "dispute-file"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself: it adopts the cross-institution templates as its own procedures (xi.<template>.<institution>), drafted by one of its officials and approved by another; the case belongs to the institution that receives the request",
+    "why": "Every institution decides what is asked of it under its own powers; no central administrator works another institution's cases.",
+    "rule": "lib/federation/procedures.ts installCrossInstitutionProcedures(); lib/auth/roles.ts caseActRefusal()"
+   },
+   {
+    "id": "not-an-order",
+    "what": "What one institution asks of another is a case of the receiving institution's own procedure; its nature is recorded when it is taken in: an instruction only where an approved instruct relationship from the requester covers it, otherwise a request it may decline with reasons",
+    "why": "Catalogue Part 13 §2.2: cross-institution tasks must not silently become binding orders; specification Part 5 E: federation must not transfer authority by accident.",
+    "rule": "lib/federation/procedures.ts natureOf(); lib/auth/roles.ts directiveTargetRefusal() (plan I9)"
+   },
+   {
+    "id": "no-power-granted",
+    "what": "Recording an agreement, accepting a handover or approving access grants no power: an exchange needs an approved exchange relationship, a read an audit or request-information relationship, a change of who is responsible its own change process",
+    "why": "Specification Part 5 E: federation must not silently grant access or transfer authority; relationships are the nation's law, recorded through policy-change.ts.",
+    "rule": "lib/data/store/relationships.ts; lib/federation/binding.ts (plan I9)"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 678,
+    "quotes": [
+     "GOV-WF-010",
+     "Cross-institution dispute referral",
+     "Referral to an authorized resolving body"
+    ],
+    "met_by": {
+     "fields": [
+      "dispute.from_institution",
+      "dispute.requesting_case",
+      "dispute.issue"
+     ],
+     "procedure": "refer"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "dispute.from_institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Institution raising the dispute"
+   },
+   "error_text": {
+    "en": {
+     "required": "Choose institution raising the dispute.",
+     "reference_exists": "There is no institution with that reference in the institution register.",
+     "institution_active": "Choose an active institution."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The dispute"
+   }
+  },
+  {
+   "id": "dispute.requesting_case",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Its own case (its reference)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Its own case (its reference) is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The dispute"
+   }
+  },
+  {
+   "id": "dispute.issue",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The issue in dispute"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the issue in dispute.",
+     "length": "The issue in dispute is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The dispute"
+   }
+  },
+  {
+   "id": "dispute.resolving_body",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The body authorised to resolve it"
+   },
+   "hint": {
+    "en": "Neither party: the body the law names."
+   },
+   "error_text": {
+    "en": {
+     "required": "Choose the body authorised to resolve it.",
+     "reference_exists": "There is no institution with that reference in the institution register.",
+     "institution_active": "Choose an active institution."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The dispute"
+   }
+  },
+  {
+   "id": "dispute.legal_basis",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The provision that names the resolving body"
+   },
+   "error_text": {
+    "en": {
+     "length": "The provision that names the resolving body is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The dispute"
+   }
+  },
+  {
+   "id": "dispute.file",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "dispute-file",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "The positions of both institutions"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the positions of both institutions."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The dispute"
+   }
+  },
+  {
+   "id": "dispute.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

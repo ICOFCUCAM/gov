@@ -75,7 +75,7 @@ describe('procedure-link states', () => {
     installAll('Administrator');
     expect(listPackages({ key: 'health.facility' }).length).toBeGreaterThan(0);
     // Internal-administration templates are adopted per institution (the next test); local-government templates by each local government (below).
-    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure && x.batch !== 5 && !x.procedure.key.startsWith('lg.'))) {
+    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure && x.batch !== 5 && !x.procedure.key.startsWith('lg.') && !x.procedure.key.startsWith('xi.'))) {
       const l = procedureLink({ identity: f.identity, procedure: f.procedure });
       expect(l.state, f.identity).toBe('draft');
       expect(l.detail).toMatch(/no version of it carries this contract yet/);
@@ -112,6 +112,16 @@ describe('procedure-link states', () => {
     const r = installLocalGovernmentProcedures(m.id, 'District clerk', 'local:clerk');
     if ('error' in r) throw new Error(r.error);
     for (const f of lg) expect(procedureLink({ identity: f.identity, procedure: f.procedure }), f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
+  });
+
+  it('is draft for each batch-11 form once an institution has adopted the cross-institution templates, never before (plan I9)', async () => {
+    const xi = CATALOGUE_CONTRACTS.filter(f => f.batch === 11 && f.procedure);
+    expect(xi).toHaveLength(12);
+    for (const f of xi) expect(procedureLink({ identity: f.identity, procedure: f.procedure }).state, f.identity).toBe('missing');
+    const { installCrossInstitutionProcedures } = await import('@/lib/federation/procedures');
+    const r = installCrossInstitutionProcedures(CIVIL, 'Administrator', 'admin');
+    if ('error' in r) throw new Error(r.error);
+    for (const f of xi) expect(procedureLink({ identity: f.identity, procedure: f.procedure }), f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
   });
 
   it('is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it', () => {

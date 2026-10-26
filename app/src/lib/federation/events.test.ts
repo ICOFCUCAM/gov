@@ -26,7 +26,7 @@ const mk = (name: string) => {
   if ('error' in m) throw new Error(m.error);
   return m.id;
 };
-const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
+const ok = <T,>(r: T): Exclude<T, { error: string }> => { if (r && typeof r === "object" && "error" in r) throw new Error((r as { error: string }).error); return r as Exclude<T, { error: string }>; };
 const A = { by: 'Admin A', byId: 'local:a' };
 const B = { by: 'Admin B', byId: 'local:b', role: 'administrator' };
 let licensing: string, customs: string, legal: { instrument_reference: string; version_reference: string }, basis: { instrument: string; eId: string }[];

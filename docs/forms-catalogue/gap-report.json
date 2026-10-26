@@ -55,6 +55,19 @@
   "app/src/lib/forms/library/catalogue-contracts/DEM-CON-019.json": "99348afb496cf813b0c86008c4e05ba3b459e996a3a9327616dcd53eb38a3348",
   "app/src/lib/forms/library/catalogue-contracts/DEM-CON-020.json": "041daa30bb084cc6dff2bde2174ac85eb53f8dd3272a267295e4c9a39ca71d6b",
   "app/src/lib/forms/library/catalogue-contracts/DEM-PUB-009.json": "0b239913fbea157b5a0816c156db830e99993769e42b57760a69933d11eed91b",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-001.json": "d10a3b22a2d9a0882f0704302ce0a324b5f2d202aad46f01f95a866f1bfb72ed",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-002.json": "1f4ecfeb40c4f5f8b2bbc9adc89d543fd6116f9d1a73dfa13268ee96bf92f94f",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-003.json": "1bbb00e9e957e6783b7e653e097e09d02e460743d6ba79a68a41480603a76da6",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-004.json": "64c90113289fc412f1cf7c195f148b3009010c4b5a3beddff1711cb3c48f312a",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-005.json": "6621060c2aaa461c82062469e125d6e102767780814b6023637da110959af64b",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-006.json": "b8a2e8adc8d57ba573b792eeac99449972354759d4cbc7555daf72b99f134e49",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-009.json": "f3c9d389bc73ef6d5fe7256338761ba7f971612c4b84249c0d90bb69e56dea77",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-010.json": "c5795d2190bcf6e3042a473291f8e4b5e79a25826c470a5bed6e07b602438001",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-011.json": "d6226c7c8031b1a411370603f9aa4573feccd134c3f4d243d17fb2096a53e2d4",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-012.json": "c98a4887a6b72b585229254d70066c22e4868a0a5ce99e6afba6e375922f61f3",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-013.json": "5873b91fca5ef4974276ad7eab75c56e74bead2d91b2060a950ff0cfbf8a556e",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-014.json": "c5ead14df7e43e066fb0f7c46516f94ea04367027b36a65151a0737bfb984471",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-WF-015.json": "9e0f8f407a580b83f123117ad0c516bc4d60c876bc45ff9a433e35b586084e2a",
   "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-001.json": "d95b517d3cd56d6c90044128beb122ecd971ff9cfd797f051d055d782c3edaf9",
   "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-002.json": "9c24ce4dd7c24abc7f447a3978f8c176cf032b62b2d6e2f9717d628f9087934d",
   "app/src/lib/forms/library/catalogue-contracts/HLT-FAC-003.json": "f7fb7f822e294bb5c2bcd0b2d91e9170d70e8c227b9584f1dd8d5dde407ad47c",
@@ -257,6 +270,14 @@
   "app/src/lib/forms/library/catalogue-contracts/budget.execution.year_end.json": "578357dd8060c3146c7e2e7c2744f8d171656a0ddfa4245a03e10fd0385e3b47",
   "app/src/lib/forms/library/catalogue-contracts/budget.negotiation.record.json": "e6ee282acca2607f2bad42d7b98ece13a9245857a7430d01de7cefe9f92102a0",
   "app/src/lib/forms/library/catalogue-contracts/budget.programme.costing.json": "87d034de68372968ae47df3668e1751e6bc11d114a0d00d73208218840c36122",
+  "app/src/lib/forms/library/catalogue-contracts/exchange.business_status.response.json": "83aa83ae604fa1f46c8b270735ac050272c27044a805185aa1aa203d2d22d554",
+  "app/src/lib/forms/library/catalogue-contracts/exchange.business_status.verify.json": "cc7c054764aafcaabdd196a9d80bb5c49150f06242ef50eeb1544209711514a4",
+  "app/src/lib/forms/library/catalogue-contracts/exchange.referral.accept.json": "e42031e61b18b64e7c9695f6db3a5e468a781703a79de5f0243f90d111b15df3",
+  "app/src/lib/forms/library/catalogue-contracts/exchange.referral.close.json": "5ecc9ccd06a9514bc12ff85809c9043cc4b1a386176ff34b7c46f474392feee5",
+  "app/src/lib/forms/library/catalogue-contracts/exchange.referral.create.json": "c519f7154b17470d284c08ae15efad39ec23d41c07f7ec7f7526e53fb6a0de55",
+  "app/src/lib/forms/library/catalogue-contracts/exchange.referral.update.json": "680163f23bb72fe4efd6c6b2a9f6e19fbdab73d038db9b17079cd6c52b06e45d",
+  "app/src/lib/forms/library/catalogue-contracts/exchange.tax_status.response.json": "5ab80297f967ec354235c6190129d58e9a96872509f4cfca12833b2b4705fef5",
+  "app/src/lib/forms/library/catalogue-contracts/exchange.tax_status.verify.json": "cc3e88bbe8ca59afee952e4fd373c9b0b62eed4d9defe4dfcca100145ebc152b",
   "app/src/lib/forms/library/catalogue-contracts/exec.cabinet.action.close.json": "9798a05cc313b90d905e42089219ededa5aa9e80bdb35ad304b967ce837b4433",
   "app/src/lib/forms/library/catalogue-contracts/exec.cabinet.action.update.json": "222a71a041be93320e571a5a9bbdb7ee91f6c76233b271e9ba723b9d6e2447e1",
   "app/src/lib/forms/library/catalogue-contracts/exec.cabinet.agenda.approve.json": "6db370eaa6c5140c917da10856875a2c4631e9f956945db0783688d7ec095aad",
@@ -462,8 +483,8 @@
   "Part 13 (supplement, Stage B contracts)": 10
  },
  "form_status": {
-  "contract_draft": 502,
-  "contract_missing": 1350,
+  "contract_draft": 523,
+  "contract_missing": 1329,
   "under_review": 91,
   "excluded": 128,
   "blocked": 1
@@ -485,10 +506,10 @@
    "LAB-EMP-001"
   ]
  },
- "forms_without_contract": 1554,
+ "forms_without_contract": 1533,
  "library_contracts": {
-  "total": 408,
-  "matched_to_one_form": 408,
+  "total": 429,
+  "matched_to_one_form": 429,
   "unmatched_or_ambiguous": [],
   "batches": [
    {
@@ -4243,6 +4264,203 @@
     "form_status": {
      "contract_draft": 36
     }
+   },
+   {
+    "batch": 11,
+    "contracts": [
+     {
+      "id": "GOV-WF-001",
+      "identity": "PARTS-12-13:GOV-WF-001@1",
+      "row": "GOV-WF-001",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-001.json",
+      "fields": 7,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-002",
+      "identity": "PARTS-12-13:GOV-WF-002@1",
+      "row": "GOV-WF-002",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-002.json",
+      "fields": 8,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-003",
+      "identity": "PARTS-12-13:GOV-WF-003@1",
+      "row": "GOV-WF-003",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-003.json",
+      "fields": 6,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-004",
+      "identity": "PARTS-12-13:GOV-WF-004@1",
+      "row": "GOV-WF-004",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-004.json",
+      "fields": 8,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-005",
+      "identity": "PARTS-12-13:GOV-WF-005@1",
+      "row": "GOV-WF-005",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-005.json",
+      "fields": 7,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-006",
+      "identity": "PARTS-12-13:GOV-WF-006@1",
+      "row": "GOV-WF-006",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-006.json",
+      "fields": 8,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-009",
+      "identity": "PARTS-12-13:GOV-WF-009@1",
+      "row": "GOV-WF-009",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-009.json",
+      "fields": 6,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-010",
+      "identity": "PARTS-12-13:GOV-WF-010@1",
+      "row": "GOV-WF-010",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-010.json",
+      "fields": 7,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-011",
+      "identity": "PARTS-12-13:GOV-WF-011@1",
+      "row": "GOV-WF-011",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-011.json",
+      "fields": 8,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-012",
+      "identity": "PARTS-12-13:GOV-WF-012@1",
+      "row": "GOV-WF-012",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-012.json",
+      "fields": 4,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-013",
+      "identity": "PARTS-12-13:GOV-WF-013@1",
+      "row": "GOV-WF-013",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-013.json",
+      "fields": 6,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-014",
+      "identity": "PARTS-12-13:GOV-WF-014@1",
+      "row": "GOV-WF-014",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-014.json",
+      "fields": 6,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-WF-015",
+      "identity": "PARTS-12-13:GOV-WF-015@1",
+      "row": "GOV-WF-015",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-WF-015.json",
+      "fields": 7,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "exchange.business_status.response",
+      "identity": "FIELD-SERIES-PARTS-03-04:exchange.business_status.response@1",
+      "row": "exchange.business_status.response",
+      "file": "app/src/lib/forms/library/catalogue-contracts/exchange.business_status.response.json",
+      "fields": 4,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "exchange.business_status.verify",
+      "identity": "FIELD-SERIES-PARTS-03-04:exchange.business_status.verify@1",
+      "row": "exchange.business_status.verify",
+      "file": "app/src/lib/forms/library/catalogue-contracts/exchange.business_status.verify.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "exchange.referral.accept",
+      "identity": "FIELD-SERIES-PARTS-03-04:exchange.referral.accept@1",
+      "row": "exchange.referral.accept",
+      "file": "app/src/lib/forms/library/catalogue-contracts/exchange.referral.accept.json",
+      "fields": 4,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "exchange.referral.close",
+      "identity": "FIELD-SERIES-PARTS-03-04:exchange.referral.close@1",
+      "row": "exchange.referral.close",
+      "file": "app/src/lib/forms/library/catalogue-contracts/exchange.referral.close.json",
+      "fields": 3,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "exchange.referral.create",
+      "identity": "FIELD-SERIES-PARTS-03-04:exchange.referral.create@1",
+      "row": "exchange.referral.create",
+      "file": "app/src/lib/forms/library/catalogue-contracts/exchange.referral.create.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "exchange.referral.update",
+      "identity": "FIELD-SERIES-PARTS-03-04:exchange.referral.update@1",
+      "row": "exchange.referral.update",
+      "file": "app/src/lib/forms/library/catalogue-contracts/exchange.referral.update.json",
+      "fields": 3,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "exchange.tax_status.response",
+      "identity": "FIELD-SERIES-PARTS-03-04:exchange.tax_status.response@1",
+      "row": "exchange.tax_status.response",
+      "file": "app/src/lib/forms/library/catalogue-contracts/exchange.tax_status.response.json",
+      "fields": 4,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "exchange.tax_status.verify",
+      "identity": "FIELD-SERIES-PARTS-03-04:exchange.tax_status.verify@1",
+      "row": "exchange.tax_status.verify",
+      "file": "app/src/lib/forms/library/catalogue-contracts/exchange.tax_status.verify.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     }
+    ],
+    "form_status": {
+     "contract_draft": 21
+    }
    }
   ],
   "form_status_without_library": {
@@ -4323,6 +4541,13 @@
     "under_review": 91,
     "excluded": 128,
     "blocked": 1
+   },
+   "11": {
+    "contract_draft": 523,
+    "contract_missing": 1329,
+    "under_review": 91,
+    "excluded": 128,
+    "blocked": 1
    }
   },
   "forms_without_contract_after_batch": {
@@ -4335,7 +4560,8 @@
    "7": 1715,
    "8": 1658,
    "9": 1581,
-   "10": 1554
+   "10": 1554,
+   "11": 1533
   }
  },
  "incomplete_contracts": [

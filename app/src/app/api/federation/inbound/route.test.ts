@@ -14,7 +14,7 @@ import { proposePeerKey, confirmPeerKey, resetFederationEvents } from '@/lib/fed
 import { RECEIPT_HEADER, verifyReceipt } from '@/lib/exchange/log';
 import { POST } from './route';
 
-const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
+const ok = <T,>(r: T): Exclude<T, { error: string }> => { if (r && typeof r === "object" && "error" in r) throw new Error((r as { error: string }).error); return r as Exclude<T, { error: string }>; };
 const mk = (name: string) => { const m = createMinistry({ archetype: 'GENERIC', name, slug: `${name.toLowerCase().replace(/\W+/g, '-')}-${Math.random().toString(36).slice(2, 7)}` }); if ('error' in m) throw new Error(m.error); return m.id; };
 const post = (body: unknown, key?: string) => new NextRequest('http://x/api/federation/inbound', { method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json', ...(key ? { authorization: `Bearer ${key}` } : {}) } });
 

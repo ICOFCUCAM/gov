@@ -18,7 +18,7 @@ import { createMinistry, setSovereign, authorityFor } from '@/lib/data/store';
 import { proposeRelationship, confirmRelationship, resetRelationships } from '@/lib/data/store/relationships';
 import { CROSS_INSTITUTION_PROCEDURES, installCrossInstitutionProcedures, crossKey, natureOfCase, adoptionOf, resetCrossInstitution } from './procedures';
 
-const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
+const ok = <T,>(r: T): Exclude<T, { error: string }> => { if (r && typeof r === "object" && "error" in r) throw new Error((r as { error: string }).error); return r as Exclude<T, { error: string }>; };
 const mk = (name: string) => ok(createMinistry({ archetype: 'GENERIC', name, slug: `${name.toLowerCase().replace(/\W+/g, '-')}-${Math.random().toString(36).slice(2, 7)}` })).id;
 const at = (inst: string) => (id: string, role: 'officer' | 'signatory' = 'officer'): Actor => ({ id, name: `Official ${id}`, scope: { id, role, institution: inst } });
 async function step(id: string, action: string, who: Actor, extra: Record<string, unknown> = {}) { const r = await act(id, { action, ...extra }, who); if ('error' in r) throw new Error(`${action}: ${r.error}`); return r; }

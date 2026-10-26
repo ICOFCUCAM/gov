@@ -13,7 +13,7 @@ import { callService } from '@/lib/exchange/services';
 import { resetSigningKeys } from '@/lib/crypto/signing-key';
 import { declaredStates } from './degraded';
 
-const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
+const ok = <T,>(r: T): Exclude<T, { error: string }> => { if (r && typeof r === "object" && "error" in r) throw new Error((r as { error: string }).error); return r as Exclude<T, { error: string }>; };
 const state = (key: string) => declaredStates().find(c => c.key === key)!;
 afterEach(() => { vi.unstubAllEnvs(); resetSigningKeys(); setSovereign({ deployment: { authorities: {}, edition: null } as never }, 'test'); });
 

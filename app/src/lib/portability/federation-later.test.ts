@@ -45,7 +45,7 @@ const dir = join(tmpdir(), `civicos-federate-later-${process.pid}`);
 const hr = (id: string, role: 'officer' | 'signatory' = 'officer'): Actor => ({ id, name: `Official ${id}`, scope: { id, role, institution: HEALTH } });
 const official = (id: string, role: 'administrator' | 'signatory', institution?: string) => ({ by: `Official ${id}`, byId: id, scope: { role, ...(institution ? { institution } : {}) }, ...(institution ? { institution } : {}) });
 const pdf = new Uint8Array(Buffer.from('%PDF-1.7\nevidence\n%%EOF'));
-const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
+const ok = <T,>(r: T): Exclude<T, { error: string }> => { if (r && typeof r === "object" && "error" in r) throw new Error((r as { error: string }).error); return r as Exclude<T, { error: string }>; };
 async function step(id: string, action: string, who: Actor, extra: Record<string, unknown> = {}) { const r = await act(id, { action, ...extra }, who); if ('error' in r) throw new Error(`${action}: ${r.error}`); return r; }
 /** Everything an installation holds about cases, records, relationships and federation (the laws register is the nation's reference data, held in both). */
 const resetInstallation = () => { for (const r of [resetCases, resetPackages, resetDocuments, resetDecisions, resetCertificates, resetOrganisations, resetProfessions, resetHealth, resetAccessLog, resetPortability, resetImportedEvidence, resetRelationships, resetFederationEvents]) r(); resetSealKeys(); };
