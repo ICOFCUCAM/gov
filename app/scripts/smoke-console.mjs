@@ -84,6 +84,14 @@ const PAGES = [
   { path: '/gov/security/resilience', map: false, text: /cyber and resilience/i },
   // Forms batch 13 (I12): a security library form with its catalogue row and publication gates.
   { path: '/gov/law/procedures/forms/SEC-CYB-001', map: false, text: /register status/i },
+  // Federation and portability (plan I9): envelopes and requests between institutions, declared degraded states, the endpoint contract.
+  { path: '/gov/exchange/federation', map: false, text: /events one institution tells another/i },
+  { path: '/gov/exchange/workflows', map: false, text: /nothing here is an order/i },
+  { path: '/gov/exchange/states', map: false, text: /said in advance/i },
+  { path: '/gov/exchange/contract', map: false, text: /every endpoint of this installation/i },
+  { path: '/gov/exchange/contract?family=exchanges', map: false, text: /federation\/inbound/i },
+  { path: '/gov/law/procedures/forms/GOV-WF-002', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/exchange.tax_status.verify', map: false, text: /register status/i },
   // Territory and infrastructure (plan I7): land dealings and disputes, building control and housing, local governments, transport.
   { path: '/gov/land', map: false, text: /land dealings and disputes/i },
   { path: '/gov/building', map: false, text: /planning, building control and housing/i },

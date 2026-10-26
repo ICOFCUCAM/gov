@@ -356,7 +356,9 @@ export const SELF_AUTHENTICATED: RegExp[] = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/ap
   /^\/api\/oauth\/token$/,          // OAuth2 client credentials: the integration's id and key (lib/auth/client-credentials.ts)
   /^\/api\/exchange\/services\/[a-z0-9.-]+$/, // another system's call to a service: its integration key of scope service:<id> (verifyIntegrationKey in the route)
   /^\/api\/citizen\/applications$/, // a citizen's own applications: the route checks the citizen's session (lib/auth/citizen.ts)
-  /^\/api\/audit\/witnesses$/];     // a witness attestation: signed by a key an administrator registered (verifyWitnessStatement in the route)
+  /^\/api\/audit\/witnesses$/,      // a witness attestation: signed by a key an administrator registered (verifyWitnessStatement in the route)
+  // I9: another installation's federation envelope: its integration key of scope events:inbound, the envelope's signature by a key two officials trust (receiveEnvelope())
+  /^\/api\/federation\/inbound$/];
 /**
  * Routes that verify an `Authorization` bearer themselves (the automation
  * secret of the route's purpose or a platform-tier substrate session: lib/platform-auth.ts,
@@ -395,6 +397,8 @@ export const BEARER_READS: RegExp[] = [
   /^\/api\/twin\/tasking\/executor$/,
   // The mirror feed for services/civic-api's follower: an integration key of scope mirror:read (review D8).
   /^\/api\/platform\/mirror$/,
+  // I9: another institution's installation collects the federation envelopes its relationships cover: an integration key of scope events:read.
+  /^\/api\/exchange\/events\/feed$/,
 ];
 /** True when the route checks the caller's own credential (bearer, agent or feed key). */
 export const verifiesOwnCredential = (pathname: string): boolean =>
@@ -487,6 +491,10 @@ const CONSTITUTIONAL = /^\/api\/org\/ministries\/[^/]+\/standing$/;
  * Center's four-eyes steps) check again with refusal() or their own rules.
  */
 const OFFICIAL_WORK: RegExp[] = [
+  // I9: an institution's own officials publish federation envelopes about its records and decide pending ones (checked in lib/federation/events.ts).
+  /^\/api\/exchange\/events$/,
+  // I9: an institution adopts the cross-institution workflow templates as its own (its own officials who can sign; checked in the route).
+  /^\/api\/exchange\/workflows$/,
   /^\/api\/ai\/advisory$/,                    // advisory text (refuses when the nation has the assistant off)
   /^\/api\/audit\/proof$/,                    // builds a proof of the audit chain (no change)
   /^\/api\/boundaries(\/|$)/,                 // canManageBoundaries() in the route

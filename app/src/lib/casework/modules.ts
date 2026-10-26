@@ -40,6 +40,8 @@ import '@/lib/procurement/procedures';
 // I12: security governance and resilience (cyber incidents, vulnerabilities, suppliers, exceptions, exercises, critical
 // infrastructure, clearances as metadata).
 import '@/lib/security/procedures';
+// I9: cross-institution workflow procedures (xi.<template>.<institution>).
+import '@/lib/federation/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
 import '@/lib/permits/decisions';
 // Publication gates: a form takes submissions in production only once its release is approved (lib/forms/publication.ts).

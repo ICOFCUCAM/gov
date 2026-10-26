@@ -179,7 +179,7 @@ describe('public site email updates', () => {
     expect(confirmMail.text).toMatch(/https:\/\/www\.gov\.example\/subscriptions\?token=[\w-]+&action=confirm/);
     expect(confirmMail.unsubscribe).toBe('');
     const token = /token=([\w-]+)&action=confirm/.exec(confirmMail.text)![1]!;
-    expect(confirmSubscription(token)).toEqual({ siteId: 'health' });
+    expect(confirmSubscription(token, T0 + 1500)).toEqual({ siteId: 'health' });
 
     queueUpdate('health', 'Ministry of Health: Clinics open on Saturdays', 'From November.', T0 + 2000);
     await deliverMessages(T0 + 3000, api.net);
@@ -203,7 +203,7 @@ describe('public site email updates', () => {
 
   it('withdraw unsent messages when the person unsubscribes, and expire an unused confirmation', async () => {
     subscribe('trade', 'b@example.org', { sender: '1', now: T0 });
-    confirmSubscription(tokenOf(siteOutbox('trade')[0]!.link));
+    confirmSubscription(tokenOf(siteOutbox('trade')[0]!.link), T0 + 1500);
     queueUpdate('trade', 'First', 'x', T0);
     const [update] = siteOutbox('trade');
     expect(update!.status).toBe('queued');

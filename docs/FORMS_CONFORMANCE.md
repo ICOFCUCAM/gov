@@ -1593,6 +1593,77 @@ listed above, the other transport forms (licence renewals, vehicle
 inspection, road reports, maritime and aviation) and every environment form
 (integration register 21.79).
 
+## 19. Catalogue contracts, batch 11: federation and portability (26 October 2026)
+
+Plan step I9 wrote the contracts of the cross-institution workflow and exchange
+forms: the catalogue Part 13 §2.2 whole-of-government workflow forms (GOV-WF-001
+… 006 and 009 … 015 of `docs/forms-catalogue/PARTS-12-13.md`; GOV-WF-007 and 008
+are directives, the executive office's) and the field series Part 3 §3.6
+cross-institution exchange forms for referrals and the tax and business status
+checks (`docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md`). Twenty-one forms
+that were `contract_missing` have a CivicOS contract with `batch: 11` in their
+`catalogue` block. The format, loader, gates and test are batch 1's (§8). The
+conformance test (`lib/forms/catalogue-contracts.test.ts`, sources `E` and `G`,
+no new source document) holds the lines each form answers: Part 1's shared
+rules and the supplement's conventions and gates, as for every batch; the
+shared group of its family (`xi`: Part 13 line 684, "Cross-institution tasks
+must not silently become binding orders …", and line 1270, CFG-GOV-011; `xex`:
+the field series Part 3 line 1220, "They do not transfer ownership of the
+underlying record", and line 1814, CFG-INT-001); and its own row.
+
+| Catalogue form | Title | Fields | Belongs to | Owner | Deviations (besides minimisation, evidence-requirement and scanning) |
+|---|---|---|---|---|---|
+| GOV-WF-001 | Refer a matter to another institution | 6 | waits for the referral procedure (`referral.<institution>`) to carry it | institution | institution-owned, not-an-order, referral-procedure |
+| GOV-WF-002 | Request information from another institution | 7 | `xi.information-request`, stage `received`, step `assess` | institution | institution-owned, not-an-order |
+| GOV-WF-003 | Propose handing over a service to another institution | 5 | `xi.handover`, stage `proposed`, step `assess`, document `handover-plan` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-004 | Ask another institution to carry out a task | 7 | `xi.task`, stage `received`, step `accept` | institution | institution-owned, not-an-order |
+| GOV-WF-005 | Ask the competent institution for a decision | 6 | `xi.decision-request`, stage `received`, step `assess` | institution | institution-owned, not-an-order |
+| GOV-WF-006 | Consult another institution | 7 | `xi.consultation`, stage `received`, step `accept` | institution | institution-owned, not-an-order |
+| GOV-WF-009 | Declare a service dependency between institutions | 5 | `xi.dependency`, stage `declared`, step `confirm` | institution | institution-owned, not-an-order |
+| GOV-WF-010 | Refer a dispute between institutions to the body that resolves it | 6 | `xi.dispute`, stage `received`, step `refer`, document `dispute-file` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-011 | Register an inter-agency agreement | 7 | `xi.agreement`, stage `draft`, step `register`, document `signed-agreement` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-012 | Review, amend or terminate an inter-agency agreement | 3 | `xi.agreement`, stage `under-review`, step `amend` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-013 | Onboard an institution to a shared service | 5 | `xi.onboarding`, stage `received`, step `test`, document `acceptance-test-report` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-014 | Request access to a shared service | 5 | `xi.access`, stage `received`, step `approve` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-015 | Request an exception to a cross-institution workflow | 6 | `xi.exception`, stage `received`, step `grant` | institution | institution-owned, not-an-order |
+| exchange.business_status.response | Return the business-status result | 3 | no case: the `organisation.standing` exchange service | businessRegister | no-case, relationship-bound |
+| exchange.business_status.verify | Verify a business-registration status | 4 | no case: the `organisation.standing` exchange service | businessRegister | no-case, relationship-bound |
+| exchange.referral.accept | Accept or decline an incoming referral | 3 | waits for the referral procedure (`referral.<institution>`) to carry it | institution | institution-owned, not-an-order, referral-procedure |
+| exchange.referral.close | Close an inter-institution referral | 2 | waits for the referral procedure (`referral.<institution>`) to carry it | institution | institution-owned, referral-procedure |
+| exchange.referral.create | Refer a case to another institution under an approved relationship | 4 | waits for the referral procedure (`referral.<institution>`) to carry it | institution | institution-owned, not-an-order, referral-procedure |
+| exchange.referral.update | Return a permitted referral-status update | 2 | waits for the referral procedure (`referral.<institution>`) to carry it | institution | institution-owned, referral-procedure |
+| exchange.tax_status.response | Return the permitted tax-status result | 3 | no case: the `taxpayer.status` exchange service | tax | no-case, relationship-bound |
+| exchange.tax_status.verify | Request verification of a tax-registration status | 4 | no case: the `taxpayer.status` exchange service | tax | no-case, relationship-bound |
+
+Each GOV-WF form is carried by the receiving institution's own procedure: the
+`xi.*` templates (`lib/federation/procedures.ts`) each institution adopts as
+`xi.<template>.<institution>`, drafted by one of its officials and approved by
+another (`procedure-link.ts` finds them adopted, as it finds `adm.*`, `lg.*` and
+`proc.*`). None becomes an order: when a request is taken in, its nature is
+recorded (`natureOf()`): an instruction only under an approved `instruct`
+relationship from the requester (`directiveTargetRefusal()`), otherwise a
+request the institution may decline with reasons. An agreement, an accepted
+handover, an onboarding or an access approval grants no power: an exchange
+needs an approved `exchange` relationship (`lib/federation/binding.ts`), a read
+an `audit` or `request_information` relationship, a change of who is
+responsible its own change process. The status checks open no case: the
+`taxpayer.status` and `organisation.standing` exchange services answer,
+between institutions only under an exchange relationship in force. The four
+referral forms wait for the referral procedure (`lib/casework/referral.ts`) to
+carry a contract; across installations a referral's status travels as the
+`referral.status.changed` federation event, references only. Nothing a law
+decides is set: the response days are named (`xi.information-request.response-days`,
+unset), the choice lists are marked proposed.
+
+The binding validation rules the field series names for exchange requests
+(`approved_relationship_exists`, `purpose_authorized_for_relationship`,
+`lawful_basis_covers_data_and_purpose`) stay `binding` in the rule registry:
+the relationship binding is enforced by `callService()` for every call, not yet
+as a form-level check. Left for later batches: the other Part 3 §3.6 exchange
+forms (trade authority, customs permit response, investment approval,
+procurement and financial references) and the Part 13 §2.2 directive forms
+(integration register 24.12).
+
 ## 21. Catalogue contracts, batch 13: security governance and resilience (26 October 2026)
 
 Plan step I12 wrote the contracts of the catalogue Part 11 forms its

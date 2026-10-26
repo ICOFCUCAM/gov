@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration), \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities), \"econ8\" (batch 8: Part 2's implementation rules for the executive centre, finance, treasury and budget forms), \"human\" (batch 9, human services: the specification's separate institutional records and lawful authority, the field series' rule that a submission is not a decision, that a failed check is no ground for refusal and that no default is activated) and \"land\", \"hpc\", \"lrg\" and \"trn\" (batch 10: the territory and infrastructure families of Parts 8 and 9 and the supplement's Parts 19 and 20). \"sec\", \"cyb\", \"inf\" and \"clr\" (batch 13, plan I12: Part 11's classification, access, register-integrity and country-configuration rules for every security form, and the rules of its family: cybersecurity, critical infrastructure, clearances). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration), \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities), \"econ8\" (batch 8: Part 2's implementation rules for the executive centre, finance, treasury and budget forms), \"human\" (batch 9, human services: the specification's separate institutional records and lawful authority, the field series' rule that a submission is not a decision, that a failed check is no ground for refusal and that no default is activated) and \"land\", \"hpc\", \"lrg\" and \"trn\" (batch 10: the territory and infrastructure families of Parts 8 and 9 and the supplement's Parts 19 and 20). \"sec\", \"cyb\", \"inf\" and \"clr\" (batch 13, plan I12: Part 11's classification, access, register-integrity and country-configuration rules for every security form, and the rules of its family: cybersecurity, critical infrastructure, clearances). \"xi\" (batch 11, plan I9: Part 13 §2.2 whole-of-government workflow) and \"xex\" (batch 11: field series Part 3 §3.6 cross-institution exchanges). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -439,7 +439,28 @@
   "SEC-INT-008",
   "CIP-REG-008",
   "CIP-RSK-009",
-  "CIP-INC-010"
+  "CIP-INC-010",
+  "GOV-WF-001",
+  "GOV-WF-002",
+  "GOV-WF-003",
+  "GOV-WF-004",
+  "GOV-WF-005",
+  "GOV-WF-006",
+  "GOV-WF-009",
+  "GOV-WF-010",
+  "GOV-WF-011",
+  "GOV-WF-012",
+  "GOV-WF-013",
+  "GOV-WF-014",
+  "GOV-WF-015",
+  "exchange.referral.create",
+  "exchange.referral.accept",
+  "exchange.referral.update",
+  "exchange.referral.close",
+  "exchange.tax_status.verify",
+  "exchange.tax_status.response",
+  "exchange.business_status.verify",
+  "exchange.business_status.response"
  ],
  "groups": {
   "health": [
@@ -941,6 +962,31 @@
   "clr": [
    "SEC-INT-007",
    "SEC-INT-008"
+  ],
+  "xi": [
+   "GOV-WF-001",
+   "GOV-WF-002",
+   "GOV-WF-003",
+   "GOV-WF-004",
+   "GOV-WF-005",
+   "GOV-WF-006",
+   "GOV-WF-009",
+   "GOV-WF-010",
+   "GOV-WF-011",
+   "GOV-WF-012",
+   "GOV-WF-013",
+   "GOV-WF-014",
+   "GOV-WF-015"
+  ],
+  "xex": [
+   "exchange.referral.create",
+   "exchange.referral.accept",
+   "exchange.referral.update",
+   "exchange.referral.close",
+   "exchange.tax_status.verify",
+   "exchange.tax_status.response",
+   "exchange.business_status.verify",
+   "exchange.business_status.response"
   ]
  },
  "items": [
@@ -4671,6 +4717,69 @@
    ],
    "met_by": {
     "deviation": "no-ai-decision"
+   }
+  },
+  {
+   "for": "xi",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 684,
+   "quotes": [
+    "Cross-institution tasks must not silently become binding orders.",
+    "Every workflow must distinguish a request, a consultation, a referral, an agreement, a directive and a legally binding decision."
+   ],
+   "met_by": {
+    "deviation": "not-an-order",
+    "platform": {
+     "file": "app/src/lib/federation/procedures.ts",
+     "how": "Each kind is its own procedure of the receiving institution; natureOf() records a request, or an instruction only under an approved instruct relationship (directiveTargetRefusal()); directives stay /api/directives, decisions the institution's own sealed decisions"
+    }
+   }
+  },
+  {
+   "for": "xi",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 1270,
+   "quotes": [
+    "CFG-GOV-011",
+    "Approved data exchange and interoperability standards"
+   ],
+   "met_by": {
+    "country_decision": "CFG-GOV-011",
+    "platform": {
+     "file": "app/src/lib/federation/binding.ts",
+     "how": "Exchange relationships in the relationship register, approved through policy-change.ts citing the law; none ship"
+    }
+   }
+  },
+  {
+   "for": "xex",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+   "line": 1220,
+   "quotes": [
+    "These forms connect customs, the Central Bank, Trade and Industry, Investment Facilitation, Procurement, Tax, Treasury and independent regulators.",
+    "They do not transfer ownership of the underlying record."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/exchange/services.ts",
+     "how": "callService() returns only the service's fields, never the record, with a signed receipt; between institutions only under an approved exchange relationship (lib/federation/binding.ts)"
+    }
+   }
+  },
+  {
+   "for": "xex",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+   "line": 1814,
+   "quotes": [
+    "CFG-INT-001",
+    "Authorized cross-institution exchanges and contract versions"
+   ],
+   "met_by": {
+    "country_decision": "CFG-INT-001",
+    "platform": {
+     "file": "app/src/lib/data/store/relationships.ts",
+     "how": "The exchange relationship names the services and purposes; the integration's purposes are approved by two officials; none ship"
+    }
    }
   }
  ]

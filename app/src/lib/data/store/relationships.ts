@@ -47,7 +47,9 @@ import { isIndependentInstitution } from './institutions';
 
 export type RelationshipType =
   | 'appoint' | 'dismiss' | 'fund' | 'instruct' | 'review' | 'veto' | 'audit' | 'investigate'
-  | 'dissolve' | 'impeach' | 'refer' | 'request_information' | 'receive_reports';
+  | 'dissolve' | 'impeach' | 'refer' | 'request_information' | 'receive_reports'
+  // I9 (federation): the actor receives the target's exchange services and events listed, for the purposes listed.
+  | 'exchange';
 
 export const RELATIONSHIP_TYPES: { key: RelationshipType; label: string; means: string; enforced?: string }[] = [
   { key: 'appoint', label: 'Appoints', means: 'Appoints the head or members of the other institution.' },
@@ -63,6 +65,8 @@ export const RELATIONSHIP_TYPES: { key: RelationshipType; label: string; means: 
   { key: 'refer', label: 'Refers matters', means: 'Refers matters to the other institution (referrals are cases between institutions).' },
   { key: 'request_information', label: 'Requests information', means: 'May ask the other institution for the listed records for the listed purposes; never all its records, never a change.', enforced: 'Its officials read the listed records with a stated purpose, read only, every read logged.' },
   { key: 'receive_reports', label: 'Receives reports', means: 'Receives the other institution\'s reports.' },
+  // I9 (federation and portability): exchange services and events between institutions answer only under this relationship.
+  { key: 'exchange', label: 'Exchanges data with', means: 'Receives answers from the other institution\'s exchange services, and its events, listed by id (a service id, or event:<type>), for the purposes listed; never its records.', enforced: 'callService() answers between institutions, and the event receiver accepts an event, only while this relationship is in force; suspending, ending or its end date stops the next exchange at once.' },
 ];
 export const isRelationshipType = (v: unknown): v is RelationshipType => RELATIONSHIP_TYPES.some(t => t.key === v);
 export const relationshipTypeLabel = (k: RelationshipType) => RELATIONSHIP_TYPES.find(t => t.key === k)?.label ?? k;
@@ -229,6 +233,23 @@ export function relationshipGrants(now = new Date()): RelationshipGrant[] {
   return out;
 }
 
+/**
+ * I9: every relationship of a kind between two institutions that ever covered
+ * a record type, service or event (adopted at least once), with its status and
+ * whether it grants today. Lets the exchange binding say that an exchange
+ * stopped because a relationship was suspended, ended or expired.
+ */
+export function relationshipsCovering(from: string, to: string, type: RelationshipType, recordType: string, now = new Date()): { id: string; status: RelationshipStatus; inForce: boolean; version?: number; effectiveTo?: string }[] {
+  const out: { id: string; status: RelationshipStatus; inForce: boolean; version?: number; effectiveTo?: string }[] = [];
+  for (const r of db().relationships) {
+    const ever = adopted(r).filter(h => h.values.from === from && h.values.to === to && h.values.type === type && h.values.scope.recordTypes.includes(recordType));
+    if (!ever.length) continue;
+    const v = inForceVersion(r, now);
+    out.push({ id: r.id, status: statusOf(r, now), inForce: grantsToday(v, now) && !!v?.values.scope.recordTypes.includes(recordType), ...(v ? { version: versionOf(r, v) } : {}), ...(v?.values.effectiveTo ? { effectiveTo: v.values.effectiveTo } : {}) });
+  }
+  return out;
+}
+
 // ── Reading and checking a proposal ─────────────────────────────────────────
 
 export interface RelationshipInput {
@@ -288,6 +309,12 @@ function check(v: RelationshipTerms): string | null {
   if (v.status === 'approved' && [v.from, v.to].some(id => id !== EXECUTIVE_OFFICE && getMinistry(id)?.status !== 'active')) return 'Both institutions must be active';
   if (READ_TYPES.includes(v.type) && (!v.scope.recordTypes.length || !v.scope.purposes.length)) {
     return 'Name the record types it covers and the purposes a read may state: asking for information never means reading every record';
+  }
+  // I9: an exchange relationship names the services or events it covers and the purposes a call may state.
+  if (v.type === 'exchange') {
+    if (!v.scope.recordTypes.length || !v.scope.purposes.length) return 'Name the exchange services (their ids) or events (event:<type>) it covers and the purposes a call may state: exchanging data never means every service';
+    const bad = v.scope.recordTypes.filter(k => !/^(event:)?[a-z][a-z0-9.-]{1,60}$/.test(k));
+    if (bad.length) return `An exchange relationship lists service ids (e.g. taxpayer.status) or events (event:permit.issued); not: ${bad.join(', ')}`;
   }
   if (v.type === 'instruct') {
     const bad = v.scope.recordTypes.filter(k => !INSTRUCTION_KINDS.includes(k));

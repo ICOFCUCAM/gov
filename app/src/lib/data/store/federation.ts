@@ -22,6 +22,7 @@ import type {
 import { db } from './state';
 import { uid } from './shared';
 import { recordAudit, UNVERIFIED_ACTOR } from './audit';
+import { getMinistry } from './ministries';
 
 // ── Interoperability & federation (mirrors the backend contract) ──────
 const HOME_TENANT = 'home';
@@ -208,7 +209,7 @@ const SCOPE = /^[A-Za-z][A-Za-z0-9._:*-]{0,80}$/;
 const SERVICE_ID = /^[a-z][a-z0-9.-]{1,60}$/;
 
 /** Check proposed terms: scopes, and purposes for every service scope (and only for those). */
-function parseTerms(input: { scopes?: unknown; purposes?: unknown }, current: IntegrationClient): Pick<IntegrationApprovalProposal, 'scopes' | 'purposes'> | { error: string } {
+function parseTerms(input: { scopes?: unknown; purposes?: unknown; institution?: unknown }, current: IntegrationClient): Pick<IntegrationApprovalProposal, 'scopes' | 'purposes' | 'institution'> | { error: string } {
   const rawScopes: unknown[] | null = input.scopes === undefined ? current.scopes : Array.isArray(input.scopes) ? input.scopes : typeof input.scopes === 'string' ? input.scopes.split(',') : null;
   if (!rawScopes) return { error: 'Scopes are a list' };
   const scopes = Array.from(new Set(rawScopes.filter((x): x is string => typeof x === 'string').map(x => x.trim()).filter(Boolean)));
@@ -226,18 +227,22 @@ function parseTerms(input: { scopes?: unknown; purposes?: unknown }, current: In
   }
   const missing = scopes.filter(x => x.startsWith('service:') && !purposes[x.slice('service:'.length)]);
   if (missing.length) return { error: `Name the purposes approved for ${missing.map(x => x.slice('service:'.length)).join(', ')}` };
-  return { scopes, purposes };
+  // I9: the registered institution it acts for (kept when left out; '' removes it).
+  const inst = input.institution === undefined ? current.institution : typeof input.institution === 'string' ? input.institution.trim() : null;
+  if (inst === null) return { error: 'The institution is the id of a registered institution' };
+  if (inst && !getMinistry(inst)) return { error: `${inst} is not a registered institution` };
+  return { scopes, purposes, ...(inst ? { institution: inst } : {}) };
 }
 
-const termsText = (t: { scopes: string[]; purposes: Record<string, string[]> }) =>
-  `scopes ${t.scopes.join(', ')}${Object.keys(t.purposes).length ? ` · purposes ${Object.entries(t.purposes).map(([s, p]) => `${s}: ${p.join('/')}`).join('; ')}` : ''}`;
+const termsText = (t: { scopes: string[]; purposes: Record<string, string[]>; institution?: string }) =>
+  `${t.institution ? `for institution ${t.institution} · ` : ''}scopes ${t.scopes.join(', ')}${Object.keys(t.purposes).length ? ` · purposes ${Object.entries(t.purposes).map(([s, p]) => `${s}: ${p.join('/')}`).join('; ')}` : ''}`;
 
 /**
  * One administrator proposes approving an integration (or changing what an
  * approved one may do): its scopes and, per service, its purposes. A waiting
  * proposal it replaces is kept as superseded. Audited.
  */
-export function proposeIntegrationApproval(id: string, input: { scopes?: unknown; purposes?: unknown; note?: unknown; legalBasis?: unknown; owners?: string[] }, by: string, byId?: string, now = new Date()): IntegrationClient | { error: string } {
+export function proposeIntegrationApproval(id: string, input: { scopes?: unknown; purposes?: unknown; institution?: unknown; note?: unknown; legalBasis?: unknown; owners?: string[] }, by: string, byId?: string, now = new Date()): IntegrationClient | { error: string } {
   lapseIntegrationApprovals(now.getTime());
   const c = db.integrations.find(i => i.id === id);
   if (!c) return { error: 'Integration not found' };
@@ -291,6 +296,7 @@ export function confirmIntegrationApproval(id: string, by: string, byId?: string
   const rec = closeProposal(c, 'confirmed', now, { confirmedBy: by, ...(byId ? { confirmedById: byId } : {}), independence })!;
   c.scopes = [...rec.scopes];
   c.purposes = structuredClone(rec.purposes);
+  if (rec.institution) c.institution = rec.institution; else delete c.institution;
   c.status = 'approved';
   c.approvedBy = by;
   c.approval = rec;
@@ -319,6 +325,12 @@ export function integrationPurposes(id: string, serviceId: string): { kind: 'app
   if (!c || c.status !== 'approved') return { kind: 'unknown' };
   if (!c.approval) return { kind: 'legacy' };
   return { kind: 'approved', purposes: [...(c.purposes?.[serviceId] ?? [])] };
+}
+
+/** I9: the registered institution an approved integration acts for (lib/federation/binding.ts), if any. */
+export function integrationInstitution(id: string): string | undefined {
+  const c = db.integrations.find(i => i.id === id);
+  return c?.status === 'approved' ? c.institution : undefined;
 }
 
 export function listGrants(): FederationGrant[] {

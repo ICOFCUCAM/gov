@@ -305,6 +305,23 @@ What has been built is locked. Work only upgrades it toward the vision in
   governments (standing `subnational`) adopt the `lg.*` templates as their
   own; transport keeps vehicles, licences (medical fitness only as a sealed
   document's reference), road works and operators apart.
+- Federation and portability (plan I9, `lib/federation/`): an exchange
+  service answers a caller from another registered institution only under
+  an approved `exchange` relationship in force (`exchangeBinding()` inside
+  `callService()`; a suspended, ended or expired relationship stops the next
+  call; none ships). Events between installations are envelopes of
+  references only (schema version, source institution, legal context from
+  the laws register), signed with the institution's own key through key
+  custody (`lib/federation/keys.ts`; development keys refused in
+  production); another installation's key is trusted by two officials and
+  revoked by one. Received envelopes go only through `receiveEnvelope()`
+  (credential, schema, signature, relationship, duplicates; kept as
+  accepted, rejected or pending; applied to nothing). Webhook subscribers
+  get no actor name or free text (`subscriberEvent()`). Requests between
+  institutions are cases of the receiving institution's `xi.*` procedures,
+  never orders unless an approved `instruct` relationship covers them. The
+  institution export carries `configuration.json` (evidence, never adopted)
+  and `verification.json`; `build:openapi` also writes `api-contract.json`.
 - Security governance and resilience (plan I12, `lib/security/`) is metadata
   only. The nation's classification scheme and the installation's declared
   accreditation are one country rule set (`classification.ts`, through
@@ -370,7 +387,8 @@ What has been built is locked. Work only upgrades it toward the vision in
   internal administration, 40 forms; batch 6, tax services, 95 forms;
   batch 7, independent oversight, 7 forms; batch 8, executive office,
   Cabinet, treasury and budget, 57 forms; batch 9, human services, 96 forms;
-  batch 10, territory and infrastructure, 36 forms; batch 13, security
+  batch 10, territory and infrastructure, 36 forms; batch 11, federation
+  and cross-institution workflow, 21 forms; batch 13, security
   governance and resilience, 31 forms: owner 2026-10-21), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.

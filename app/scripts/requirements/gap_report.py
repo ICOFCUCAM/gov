@@ -26,6 +26,8 @@ BATCH_LABEL[8] = 'executive office, Cabinet, treasury and budget'
 BATCH_LABEL[9] = 'human services forms'
 # Batch 13 (plan step I12): security governance and resilience, the Part 11 forms the cyber, critical infrastructure and clearance procedures carry or wait for.
 BATCH_LABEL[13] = 'security governance and resilience'
+# Batch 11 (plan I9): federation and portability, the whole-of-government workflow and cross-institution exchange forms.
+BATCH_LABEL[11] = 'federation and portability: cross-institution workflow and exchanges'
 GATES = [
     'The form owner and competent authority are verified.',
     'Legal references and their versions have been approved.',

@@ -88,5 +88,20 @@ export function checkCode(code: string): PublicCheck | null {
   return { kind: c.kind, title: c.title, institution: c.institution.name, issuedAt: c.issuedAt, status: c.status, sealOk: !!r?.ok, publicFacts: { ...c.publicFacts }, ...(seal ? { seal } : {}) };
 }
 
+/**
+ * Plan I9: certificates of an imported institution's decisions, exactly as
+ * issued (same id, code and standing), so their codes verify in the new
+ * installation. Only lib/portability/import.ts calls it, after the export
+ * verified and two officials confirmed; a code or id already here refuses all.
+ */
+export function restoreCertificates(list: Certificate[]): { restored: number } | { error: string } {
+  const d = db();
+  const clash = list.find(x => d.certificates.some(y => y.id === x.id || y.code === x.code));
+  if (clash) return { error: `Certificate ${clash.id} (or its code) is already in this installation` };
+  for (const c of list) if (!getDecision(c.decision)) return { error: `Certificate ${c.id} comes from decision ${c.decision}, which is not here` };
+  d.certificates.push(...list.map(x => structuredClone(x)));
+  return { restored: list.length };
+}
+
 export const certificatesFor = (decisionIds: string[]): Certificate[] => db().certificates.filter(c => decisionIds.includes(c.decision)).map(c => structuredClone(c));
 export const getCertificate = (id: string): Certificate | undefined => { const c = db().certificates.find(x => x.id === id); return c ? structuredClone(c) : undefined; };

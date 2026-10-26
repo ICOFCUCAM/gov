@@ -18,6 +18,15 @@
 //                           verifies without carrying another institution's actions
 //   access-log.json         the access log the same way: reads by its officials or of its records in full
 //   trust-list.json         the seal key register's public trust list when exported
+//   configuration.json      (plan I9) the configuration its records rest on: the approved authority-mapping
+//                           versions it leads, the approved rule versions it owns, the rule and mapping
+//                           versions its decisions record, the approved relationships it is an end of and
+//                           every law version its decisions, procedures, mappings and rules cite. Carried as
+//                           evidence of what applied; an importing installation adopts its own through its
+//                           change process, never from the export
+//   verification.json       (plan I9) the certificates issued from its decisions (what each states, its code
+//                           and standing) and the public half of its federation signing key, so certificates
+//                           and envelopes verify elsewhere; never a private key
 //   evidence/imported.json  evidence it brought with it from an earlier export (lib/portability/evidence.ts)
 //
 // Sealed through key custody exactly as backups are (lib/backup/archive.ts,
@@ -61,6 +70,12 @@ import { importRecords } from '@/lib/health/products/imports';
 import { controlledRecords } from '@/lib/health/products/controlled';
 import { allCapacity } from '@/lib/health/register';
 import { importedEvidence } from './evidence';
+import { listMappings } from '@/lib/permits/authority';
+import { listRules } from '@/lib/law/rules';
+import { getInstrument, type Citation } from '@/lib/law/register';
+import { listRelationships } from '@/lib/data/store/relationships';
+import { certificatesFor } from '@/lib/records/certificates';
+import { institutionPublicKey, seenInstitutionKeys } from '@/lib/federation/keys';
 
 export const EXPORT_KIND = 'civicos.institution-export';
 
@@ -83,8 +98,8 @@ export const NOT_INCLUDED: ExportManifest['notIncluded'] = [
   { what: 'An organisation\'s representatives and its standings in registers other institutions keep', why: 'They belong to the register that keeps them (the business register and others); the organisation\'s number and name identify it' },
   { what: 'Officials\' accounts, passwords and second-step secrets', why: 'Sign-in belongs to each installation; officials are named in the records they acted on' },
   { what: 'Keys (the data key, the seal key)', why: 'Held in key custody; the trust list carries the public seal keys a verifier needs' },
-  { what: 'Authority mappings, rates and the country\'s rules', why: 'The nation\'s configuration, adopted in each installation through its own change process; each decision records the versions it used' },
-  { what: 'Certificates, recall notice deliveries and capacity returns of organisations outside its registers', why: 'Not yet carried (integration register 20.43)' },
+  { what: 'Authority mappings, rates and the country\'s rules as adopted configuration', why: 'The versions it rests on are carried in configuration.json as evidence (plan I9); each installation adopts its own through its own change process, never from an export' },
+  { what: 'Recall notice deliveries and capacity returns of organisations outside its registers', why: 'Not yet carried (integration register 20.43; certificates are carried since plan I9, verification.json)' },
   { what: 'Protected identities (complainants, people making a protected disclosure, protected witnesses, data subjects)', why: 'Kept apart from the cases they belong to (lib/oversight/protected-identity.ts); an ordinary export never carries them (acceptance P4-07). Moving them to another installation would be its own act of the body\'s officials (integration register 20.86)' },
 ];
 
@@ -305,12 +320,57 @@ export function collectInstitution(institution: string, now = new Date()): { nam
 
   const trust = trustList(now);
   add('trust-list.json', trust, trust.keys.length);
+
+  // Plan I9: the configuration its records rest on (as evidence) and the material its certificates and envelopes verify with.
+  const configuration = configurationOf(institution, packages, decisions, now);
+  add('configuration.json', configuration, configuration.mappings.length + configuration.rules.length + configuration.relationships.length);
+  const certificates = certificatesFor(decisions.map(x => x.id));
+  const seen = seenInstitutionKeys().find(k => k.institution === institution);
+  const current = institutionPublicKey(institution);
+  const federationKey = seen ? { keyId: seen.keyId, publicKeyPem: seen.publicKeyPem, source: seen.source, since: seen.since, production: true }
+    : current ? { keyId: current.keyId, publicKeyPem: current.publicKeyPem, source: current.source, production: current.production } : null;
+  add('verification.json', { format: 'civicos.verification-material', version: 1, certificates, federationKey }, certificates.length);
   const evidence = importedEvidence(institution);
   add('evidence/imported.json', evidence, evidence.length);
 
   const counts = { organisations: orgs.length, professionals: people.length, products: products.length, imports: imports.length, controlled: controlled.length, capacityReturns: capacity.length,
-    procedures: packages.length, cases: cases.length, decisions: decisions.length, documents: docs.length, auditEntries: fullAudit, accessEntries: fullAccess, importedSegments: evidence.length };
+    procedures: packages.length, cases: cases.length, decisions: decisions.length, documents: docs.length, auditEntries: fullAudit, accessEntries: fullAccess, importedSegments: evidence.length,
+    mappings: configuration.mappings.length, rules: configuration.rules.length, relationships: configuration.relationships.length, laws: configuration.laws.length, certificates: certificates.length };
   return { name: m.name, parts, counts, audit: { head, entries: items.length, full: fullAudit }, accessLog: { head: accessHead, entries: access.length, full: fullAccess } };
+}
+
+/** Plan I9: what configuration.json holds. */
+export interface PortableConfiguration {
+  format: 'civicos.institution-configuration'; version: 1;
+  /** Never adopted by an import: each installation adopts its own configuration through its change process. */
+  adoptedOnImport: false;
+  mappings: ReturnType<typeof listMappings>;
+  rules: ReturnType<typeof listRules>;
+  /** The rule and mapping versions its decisions record (references; the full versions where it owns them are above). */
+  usedByDecisions: { rules: { key: string; version: number; digest: string }[]; mappings: { permitType: string; version: number }[] };
+  relationships: { id: string; version?: number; type: string; from: string; to: string; status: string; inForce: boolean; scope: { recordTypes: string[]; purposes: string[] }; basis: Citation[] }[];
+  laws: { instrument: string; version: string; digest: string; title?: string; inThisExport: 'cited' }[];
+}
+
+/** The configuration an institution's records rest on (plan I9), from the stores that hold it. */
+export function configurationOf(institution: string, packages: { citations?: Citation[] }[], decisions: { content: { citations: Citation[]; rules?: { key: string; version: number; digest: string }[]; authority?: { basis: string; permitType?: string; version?: number } } }[], now = new Date()): PortableConfiguration {
+  const mappings = listMappings().filter(m => m.state === 'approved' && keeperOf(m.lead) === institution);
+  const rules = listRules().filter(r => r.state === 'approved' && keeperOf(r.owner) === institution);
+  const ruleRefs = new Map<string, { key: string; version: number; digest: string }>();
+  const mappingRefs = new Map<string, { permitType: string; version: number }>();
+  for (const d of decisions) {
+    for (const r of d.content.rules ?? []) ruleRefs.set(`${r.key}@${r.version}`, { key: r.key, version: r.version, digest: r.digest });
+    const a = d.content.authority;
+    if (a?.basis === 'mapping' && a.permitType && a.version) mappingRefs.set(`${a.permitType}@${a.version}`, { permitType: a.permitType, version: a.version });
+  }
+  const relationships = listRelationships({ institution }, now).filter(r => r.version).map(r => ({ id: r.id, version: r.version, type: r.terms.type, from: r.terms.from, to: r.terms.to, status: r.status, inForce: r.inForce, scope: { recordTypes: [...r.terms.scope.recordTypes], purposes: [...r.terms.scope.purposes] }, basis: structuredClone(r.basis) }));
+  const cited: Citation[] = [
+    ...decisions.flatMap(d => d.content.citations ?? []), ...packages.flatMap(p => p.citations ?? []),
+    ...mappings.flatMap(m => m.legalBasis), ...rules.flatMap(r => r.citations), ...relationships.flatMap(r => r.basis),
+  ];
+  const laws = new Map<string, PortableConfiguration['laws'][number]>();
+  for (const c of cited) if (c?.instrument && c.version && !laws.has(`${c.instrument}@${c.version}`)) laws.set(`${c.instrument}@${c.version}`, { instrument: c.instrument, version: c.version, digest: c.digest, ...(c.title ?? getInstrument(c.instrument)?.title ? { title: c.title ?? getInstrument(c.instrument)?.title } : {}), inThisExport: 'cited' });
+  return { format: 'civicos.institution-configuration', version: 1, adoptedOnImport: false, mappings, rules, usedByDecisions: { rules: [...ruleRefs.values()], mappings: [...mappingRefs.values()] }, relationships, laws: [...laws.values()] };
 }
 
 /** Collect and seal one institution's export. */

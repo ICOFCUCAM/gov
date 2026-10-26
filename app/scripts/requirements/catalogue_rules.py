@@ -51,6 +51,11 @@ BLDEV = "lib/building/procedures.ts (building.planning: validation on a publishe
 HOUEV = "lib/housing/procedures.ts (housing.programme with terms approved by two officials citing the law; housing.application: criteria met or not with evidence, points from the terms in force, allocation by two officials with reasons, an out-of-order allocation recorded), lib/housing/register.ts; test lib/building/building.test.ts"
 LGEV = "lib/localgov/procedures.ts (lg.resolution, lg.budget, lg.service, lg.complaint templates adopted by each local government as its own, standing subnational), lib/localgov/register.ts (council rules through policy-change.ts, quorum and majority checked on the version in force; budgets in whole minor units; requests with places from the map); whole government reaches only under an approved relationship (roles.ts Boundaries.subnational); test lib/localgov/localgov.test.ts"
 TRNEV = "lib/transport/procedures.ts (transport.vehicle-registration, transport.vehicle-transfer, transport.driving-licence, transport.road-works, transport.operator-licence; checks, decisions by two officials), lib/transport/register.ts (vehicles and keepers with history, licences with medical fitness only as a sealed document reference, road works with place and period, operators of the organisations register); test lib/transport/transport.test.ts"
+# Plan I9 (forms batch 11): the cross-institution workflow procedures each institution adopts, and the exchange services bound to relationships.
+FED = "lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institution's, two officials for each decision, natureOf() records a request or, only under an approved instruct relationship, an instruction; nothing grants a power), decisions classified to the institution's own procedure (lib/permits/decisions.ts); test lib/federation/procedures.test.ts"
+FEDX = "lib/federation/binding.ts (exchange services between institutions only under an approved exchange relationship in force); tests lib/federation/binding.test.ts"
+B11 = "; library contract of batch 11 (app/src/lib/forms/library/catalogue-contracts/; docs/FORMS_CONFORMANCE.md §19)"
+B11MISS = "Adoption by each institution: its cross-institution procedures approved by a second official of its own"
 B10 = "; library contract of batch 10 (app/src/lib/forms/library/catalogue-contracts/; docs/FORMS_CONFORMANCE.md §18)"
 B10MISS = "Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved"
 DELEG = "lib/records/delegations.ts (who may act for whom, for which procedures, until when; granted by the verifying official, revocable, expiring, audited without names); test lib/records/delegations.test.ts"
@@ -421,6 +426,10 @@ I(r'^GOV-SVC-016$', 'Partial', KB.CERT, 'A certificate request case with entitle
 I(r'^GOV-SVC-014$', 'Partial', DELEG, 'Granted by the represented person or business themselves; scope per service')
 I(r'^GOV-SVC-00[46]$', 'Partial', 'Citizen wallet applies for a permit routed by type to the institution keeping that register (lib/data/store/permits.ts permitHolders()); demo and training only', 'Routing for every service through the service catalogue; production citizen accounts through the identity provider')
 I(r'^GOV-SVC-010$', 'Partial', KB.DOCS + ' (documents added to a case)', 'Applicant-side submission of further information')
+# Plan I9: the forms the cross-institution procedures carry (batch 11), before the earlier workflow rules.
+I(r'^GOV-WF-0(0[2-6]|09|1[0-35])$', 'Partial', FED + B11, B11MISS, 'I9')
+I(r'^GOV-WF-001$', 'Met', KB.REFERRAL + B11, '', '—')
+I(r'^GOV-WF-014$', 'Met', INTAPP + '; ' + KB.EXCH + '; ' + FED + B11, '', '—')
 I(r'^GOV-WF-001$', 'Met', KB.REFERRAL, '', '—')
 I(r'^GOV-WF-00[235]$', 'Partial', KB.REFERRAL + '; ' + KB.RELS + ' (request_information relationships, readRelationship())', 'Scoped request, consultation and handover records with acceptance')
 I(r'^GOV-WF-00[78]$', 'Partial', KB.DIRECT, 'Required responses and outstanding actions (plan I5)', 'I5')
@@ -470,6 +479,9 @@ I(r'^tax\.debt\.(payment_plan\.(request|evidence|decision|change_request|default
 I(r'^tax\.debt\.(statement\.request|recovery\.[a-z_]+)$', 'Not yet', TAX6WAIT, 'A debt statement drawn from account(); a recovery procedure only for the powers the nation\'s law gives (none inferred from a balance)')
 # Field series Part 3 (customs)
 I(r'^customs\.(import\.declaration\.submit|declaration\.(completeness|inspection|release_decision|release_notice|receipt))$', 'Partial', CUSEV, 'The catalogue\'s declaration contract (WCO data model mapping) and stages')
+# Plan I9 (batch 11): the tax and business status checks answered by their exchange services; the referral forms.
+I(r'^exchange\.(tax_status|business_status)\.(verify|response)$', 'Partial', KB.EXCH + '; ' + FEDX + ' (taxpayer.status, organisation.standing)' + B11, 'The nation\'s exchange relationships and each integration\'s purposes (none ship)', 'I9')
+I(r'^exchange\.referral\.(create|accept|update|close)$', 'Partial', KB.REFERRAL + '; the referral.status.changed federation event (lib/federation/envelope.ts)' + B11, 'The referral procedure carrying this contract (lib/casework/referral.ts referralTemplate() has no form contract yet)', 'I9')
 I(r'^exchange\.', 'Partial', KB.EXCH, 'This exchange service is not defined', None, 'I9')
 # Field series Part 4 (civil, immigration)
 I(r'^CIV-(BTH-00[24]|DEA-00[24]|MAR-001|REC-001|REC-01[034])$', 'Met', CIVEV, '', '—')

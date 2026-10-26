@@ -15,7 +15,12 @@
 //   - every document version matches its SHA-256;
 //   - the parts belong to one institution and refer to each other: each
 //     decision's case is in the export, each case's decisions and documents
-//     are, each record is the institution's own.
+//     are, each record is the institution's own;
+//   - (plan I9) its configuration and verification material, when it carries
+//     them: every mapping and rule version is the institution's own, every
+//     rule version and law version its decisions record is listed, every
+//     certificate comes from one of its decisions, and its federation key's id
+//     is the key's own.
 //
 // Used by the import (lib/portability/import.ts) before anything is written,
 // by the export route's check, and by app/scripts/verify-institution-export.mjs.
@@ -28,7 +33,9 @@ import type { AuditEntry } from '@/lib/api/types';
 import type { Case, CasePackage } from '@/lib/casework/types';
 import type { PortableDocument } from '@/lib/records/documents';
 import type { EvidenceSegment, TrustListCopy } from './evidence';
-import type { ExportManifest } from './export';
+import type { ExportManifest, PortableConfiguration } from './export';
+import type { Certificate } from '@/lib/records/certificates';
+import { keyIdOfPem } from '@/lib/crypto/signing-key';
 
 export interface ExportReport {
   ok: boolean;
@@ -147,6 +154,28 @@ export function verifyExportParts(manifest: ExportManifest, parts: Parts): Expor
     checks.push(`${good} of ${decisions.length} sealed decision(s) verify: hash, Ed25519 seal, the seal's audit entry and the key's standing in the trust list`);
     if (samples) notes.push(`${samples} decision(s) sealed with a sample key of a demonstration or training installation: they verify as samples, never as a nation's decisions`);
     if (manifest.installation !== 'production') notes.push(`Taken in a ${manifest.installation} installation: its records may be samples`);
+
+    // Plan I9: configuration (as evidence) and verification material.
+    if (parts.has('configuration.json') && parts.has('verification.json')) {
+      const conf = read<PortableConfiguration>(parts, 'configuration.json');
+      const ver = read<{ certificates: Certificate[]; federationKey: { keyId: string; publicKeyPem: string } | null }>(parts, 'verification.json');
+      const before = problems.length;
+      if (conf.adoptedOnImport !== false) problems.push('configuration.json must say it is not adopted on import');
+      for (const m of conf.mappings) if (!owns(m.lead)) problems.push(`Mapping ${m.permitType} v${m.version} is led by ${m.lead}, not by ${manifest.institution.name}`);
+      for (const r of conf.rules) if (!owns(String(r.owner))) problems.push(`Rule ${r.key} v${r.version} is owned by ${r.owner}, not by ${manifest.institution.name}`);
+      const ruleRefs = new Set(conf.usedByDecisions.rules.map(r => `${r.key}@${r.version}@${r.digest}`));
+      const laws = new Set(conf.laws.map(l => `${l.instrument}@${l.version}`));
+      for (const d of decisions) {
+        for (const r of d.content.rules ?? []) if (!ruleRefs.has(`${r.key}@${r.version}@${r.digest}`)) problems.push(`Decision ${d.id} used rule ${r.key} v${r.version}, which configuration.json does not list`);
+        for (const c of d.content.citations ?? []) if (!laws.has(`${c.instrument}@${c.version}`)) problems.push(`Decision ${d.id} cites ${c.instrument} ${c.version}, which configuration.json does not list`);
+      }
+      for (const c of ver.certificates) {
+        if (!decisionIds.has(c.decision)) problems.push(`Certificate ${c.id} comes from decision ${c.decision}, which is not in the export`);
+        if (c.institution.id !== inst) problems.push(`Certificate ${c.id} is another institution's`);
+      }
+      if (ver.federationKey && keyIdOfPem(ver.federationKey.publicKeyPem) !== ver.federationKey.keyId) problems.push('The federation key\'s id is not its own');
+      if (problems.length === before) checks.push(`Configuration: ${conf.mappings.length} mapping and ${conf.rules.length} rule version(s) of its own, ${conf.relationships.length} relationship(s), ${conf.laws.length} law version(s) cited, every rule and law its decisions record listed; ${ver.certificates.length} certificate(s) from its decisions${ver.federationKey ? `; federation key ${ver.federationKey.keyId}` : ''}`);
+    } else notes.push('Taken before plan I9: it carries no configuration or verification material (certificates, federation key)');
   } catch (e) {
     problems.push((e as Error).message);
   }

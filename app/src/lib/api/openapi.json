@@ -17646,6 +17646,833 @@
         "x-source": "src/app/api/events/route.ts"
       }
     },
+    "/api/exchange/events/feed": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_events_feed",
+        "summary": "GET /api/exchange/events/feed",
+        "description": "GET /api/exchange/events/feed?after=<published_at> — another institution's installation collects the federation envelopes its institution may receive (plan I9, lib/federation/events.ts feedFor()): its integration key of scope events:read in Authorization, linked by two officials to that institution. Only envelopes of the types an approved exchange relationship in force covers, from the institutions it names; references only (no actor, no free text). The source's public keys are at /api/exchange/institution-keys.",
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "envelopes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EventEnvelope"
+                      }
+                    },
+                    "covered": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "types": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "relationship": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "source",
+                          "types",
+                          "relationship"
+                        ]
+                      }
+                    },
+                    "institution": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "envelopes",
+                    "covered",
+                    "institution"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "envelopes": [
+                        {
+                          "integrity": {
+                            "alg": "ed25519",
+                            "key_id": "string",
+                            "signature": "string"
+                          },
+                          "event_id": "string",
+                          "event_type": "string",
+                          "schema_version": "1.0",
+                          "source_institution_id": "string",
+                          "aggregate_reference": "string",
+                          "occurred_at": "string",
+                          "published_at": "string",
+                          "legal_context": {
+                            "instrument_reference": "string",
+                            "version_reference": "string"
+                          }
+                        }
+                      ],
+                      "covered": [
+                        {
+                          "source": "string",
+                          "types": [
+                            "string"
+                          ],
+                          "relationship": "string"
+                        }
+                      ],
+                      "institution": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          },
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/exchange/events/feed/route.ts"
+      }
+    },
+    "/api/exchange/events": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_events",
+        "summary": "GET /api/exchange/events",
+        "description": "/api/exchange/events — federation events of this installation's institutions (plan I9, lib/federation/events.ts). GET: the envelopes they published and the envelopes they received (accepted, rejected, pending), an institution's officials seeing their own, the whole government's every institution's; the trusted keys and the event catalogue. POST { op: 'publish', type, aggregate, legal: { instrument_reference, version_reference }, payloadReference?, correlationId? }: an official publishes an envelope about their own institution's record, signed with its key (references only, no free text). { op: 'decide', id, outcome: 'accept' | 'reject', reason }: an official who can sign at the receiving institution decides a pending envelope. Who acted comes from the sign-in.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "scope": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "institution": {
+                              "type": "null"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "institution",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "institution": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "institution",
+                            "name"
+                          ]
+                        }
+                      ]
+                    },
+                    "catalogue": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "means": {
+                            "type": "string"
+                          },
+                          "versions": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "const": "1.0"
+                            }
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "means",
+                          "versions"
+                        ]
+                      }
+                    },
+                    "published": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublishedEvent"
+                      }
+                    },
+                    "inbound": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "eventId": {
+                            "type": "string"
+                          },
+                          "digest": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "recipient": {
+                            "type": "string"
+                          },
+                          "aggregate": {
+                            "type": "string"
+                          },
+                          "correlationId": {
+                            "type": "string"
+                          },
+                          "receivedAt": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "accepted",
+                              "pending",
+                              "rejected"
+                            ]
+                          },
+                          "reasons": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "relationship": {
+                            "type": "string"
+                          },
+                          "keyId": {
+                            "type": "string"
+                          },
+                          "via": {
+                            "type": "string",
+                            "description": "Through which credential it came (an integration id), when it did."
+                          },
+                          "duplicates": {
+                            "type": "number",
+                            "description": "Retries of the same envelope, recognised and not recorded again."
+                          },
+                          "applied": {
+                            "type": "boolean",
+                            "const": false,
+                            "description": "Nothing is ever applied automatically: the receiving institution acts in its own procedures."
+                          },
+                          "decided": {
+                            "type": "object",
+                            "properties": {
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "accepted",
+                                  "rejected"
+                                ]
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "outcome",
+                              "by",
+                              "at",
+                              "reason"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "eventId",
+                          "digest",
+                          "type",
+                          "source",
+                          "recipient",
+                          "aggregate",
+                          "receivedAt",
+                          "state",
+                          "reasons",
+                          "duplicates",
+                          "applied"
+                        ]
+                      }
+                    },
+                    "peers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "institution": {
+                            "type": "string"
+                          },
+                          "keyId": {
+                            "type": "string"
+                          },
+                          "endpoint": {
+                            "type": "string",
+                            "description": "Where that installation publishes (its feed), for officials; never fetched by the platform on its own."
+                          },
+                          "note": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "approved",
+                              "lapsed",
+                              "proposed",
+                              "retired",
+                              "revoked",
+                              "withdrawn"
+                            ]
+                          },
+                          "proposed": {
+                            "type": "object",
+                            "properties": {
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "by",
+                              "at"
+                            ]
+                          },
+                          "confirmed": {
+                            "type": "object",
+                            "properties": {
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "independence": {
+                                "type": "string",
+                                "enum": [
+                                  "accounts-only",
+                                  "identity-provider",
+                                  "unverified"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "by",
+                              "at",
+                              "independence"
+                            ]
+                          },
+                          "retiredAt": {
+                            "type": "string"
+                          },
+                          "revoked": {
+                            "type": "object",
+                            "properties": {
+                              "by": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "by",
+                              "at",
+                              "reason"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "institution",
+                          "keyId",
+                          "state",
+                          "proposed"
+                        ]
+                      }
+                    },
+                    "names": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "scope",
+                    "catalogue",
+                    "published",
+                    "inbound",
+                    "peers",
+                    "names"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "scope": {
+                        "institution": null,
+                        "name": "Example"
+                      },
+                      "catalogue": [
+                        {
+                          "type": "string",
+                          "means": "string",
+                          "versions": [
+                            "1.0"
+                          ]
+                        }
+                      ],
+                      "published": [
+                        {
+                          "envelope": {
+                            "integrity": {},
+                            "event_id": "string",
+                            "event_type": "string",
+                            "schema_version": "1.0",
+                            "source_institution_id": "string",
+                            "aggregate_reference": "string",
+                            "occurred_at": "string",
+                            "published_at": "string",
+                            "legal_context": {}
+                          },
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "keySource": "string",
+                          "production": true
+                        }
+                      ],
+                      "inbound": [
+                        {
+                          "id": "ID-0001",
+                          "eventId": "ID-0001",
+                          "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "type": "string",
+                          "source": "string",
+                          "recipient": "string",
+                          "aggregate": "string",
+                          "receivedAt": "2026-01-15T09:30:00.000Z",
+                          "state": "accepted",
+                          "reasons": [
+                            "Text"
+                          ],
+                          "duplicates": 1,
+                          "applied": false
+                        }
+                      ],
+                      "peers": [
+                        {
+                          "id": "ID-0001",
+                          "institution": "string",
+                          "keyId": "ID-0001",
+                          "state": "approved",
+                          "proposed": {
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        }
+                      ],
+                      "names": {
+                        "key": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/exchange/events/route.ts"
+      },
+      "post": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "post_exchange_events",
+        "summary": "POST /api/exchange/events",
+        "description": "/api/exchange/events — federation events of this installation's institutions (plan I9, lib/federation/events.ts). GET: the envelopes they published and the envelopes they received (accepted, rejected, pending), an institution's officials seeing their own, the whole government's every institution's; the trusted keys and the event catalogue. POST { op: 'publish', type, aggregate, legal: { instrument_reference, version_reference }, payloadReference?, correlationId? }: an official publishes an envelope about their own institution's record, signed with its key (references only, no free text). { op: 'decide', id, outcome: 'accept' | 'reject', reason }: an official who can sign at the receiving institution decides a pending envelope. Who acted comes from the sign-in.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "id": {},
+                  "outcome": {},
+                  "reason": {},
+                  "type": {},
+                  "source": {},
+                  "aggregate": {},
+                  "legal": {},
+                  "payloadReference": {},
+                  "correlationId": {},
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "id": null,
+                    "outcome": null,
+                    "reason": null,
+                    "type": null,
+                    "source": null,
+                    "aggregate": null,
+                    "legal": null,
+                    "payloadReference": null,
+                    "correlationId": null,
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "record": {
+                      "$ref": "#/components/schemas/InboundRecord"
+                    }
+                  },
+                  "required": [
+                    "record"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "record": {
+                        "id": "ID-0001",
+                        "eventId": "ID-0001",
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "type": "string",
+                        "source": "string",
+                        "recipient": "string",
+                        "aggregate": "string",
+                        "correlationId": "ID-0001",
+                        "receivedAt": "2026-01-15T09:30:00.000Z",
+                        "state": "accepted",
+                        "reasons": [
+                          "Text"
+                        ],
+                        "relationship": "string",
+                        "keyId": "ID-0001",
+                        "via": "string",
+                        "duplicates": 1,
+                        "applied": false,
+                        "decided": {
+                          "outcome": "accepted",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        },
+                        "envelope": {
+                          "integrity": {
+                            "alg": "ed25519",
+                            "key_id": "string",
+                            "signature": "string"
+                          },
+                          "event_id": "string",
+                          "event_type": "string",
+                          "schema_version": "1.0",
+                          "source_institution_id": "string",
+                          "aggregate_reference": "string",
+                          "occurred_at": "string",
+                          "published_at": "string",
+                          "legal_context": {
+                            "instrument_reference": "string",
+                            "version_reference": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "published": {
+                      "$ref": "#/components/schemas/PublishedEvent"
+                    }
+                  },
+                  "required": [
+                    "published"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "published": {
+                        "envelope": {
+                          "integrity": {
+                            "alg": "ed25519",
+                            "key_id": "string",
+                            "signature": "string"
+                          },
+                          "event_id": "string",
+                          "event_type": "string",
+                          "schema_version": "1.0",
+                          "source_institution_id": "string",
+                          "aggregate_reference": "string",
+                          "occurred_at": "string",
+                          "published_at": "string",
+                          "legal_context": {
+                            "instrument_reference": "string",
+                            "version_reference": "string"
+                          }
+                        },
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "keySource": "string",
+                        "production": true,
+                        "sample": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/exchange/events/route.ts"
+      }
+    },
+    "/api/exchange/institution-keys": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_institution_keys",
+        "summary": "GET /api/exchange/institution-keys",
+        "description": "GET /api/exchange/institution-keys — the public keys this installation's institutions sign federation events with (plan I9, lib/federation/keys.ts): for another installation's officials to propose trusting (two of them approve each). Production keys seen so far (key files or a remote key provider), each with its key id; public halves only, never key material.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "institution": {
+                            "type": "string"
+                          },
+                          "keyId": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "development",
+                              "file",
+                              "kms-http",
+                              "vault"
+                            ]
+                          },
+                          "since": {
+                            "type": "string"
+                          },
+                          "publicKeyPem": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "institution",
+                          "keyId",
+                          "source",
+                          "since",
+                          "publicKeyPem"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "keys"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "keys": [
+                        {
+                          "institution": "string",
+                          "keyId": "ID-0001",
+                          "source": "development",
+                          "since": "2026-01-15T09:30:00.000Z",
+                          "publicKeyPem": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/exchange/institution-keys/route.ts"
+      }
+    },
     "/api/exchange/key": {
       "get": {
         "tags": [
@@ -18170,6 +18997,379 @@
           }
         ],
         "x-source": "src/app/api/exchange/services/route.ts"
+      }
+    },
+    "/api/exchange/states": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_states",
+        "summary": "GET /api/exchange/states",
+        "description": "GET /api/exchange/states — the declared degraded states (plan I9, lib/federation/degraded.ts): every exchange service and every dependency the kernel can run without, its state now (computed from the facts, never stored) and what the platform does while it is not available. Read only.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DeclaredCapability"
+                      }
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "capabilities"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "at": "2026-01-15T09:30:00.000Z",
+                      "capabilities": [
+                        {
+                          "key": "string",
+                          "label": "Example",
+                          "kind": "dependency",
+                          "state": "available",
+                          "why": "string",
+                          "whileUnavailable": "string",
+                          "continues": "string",
+                          "enforcedIn": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/exchange/states/route.ts"
+      }
+    },
+    "/api/exchange/workflows": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_workflows",
+        "summary": "GET /api/exchange/workflows",
+        "description": "/api/exchange/workflows — cross-institution workflow (plan I9, lib/federation/procedures.ts): requests, consultations, handovers, tasks, decision requests, dependencies, disputes, agreements, onboarding, access and exceptions as cases of the receiving institution's own procedures, never binding orders. GET: the templates, the forms each carries, and how far each institution has adopted them (drafted, approved). POST { op: 'adopt', institution }: an official who can sign at that institution drafts its own procedures from the templates (a different official approves each under Laws › Procedures); never whole-government scope for another institution. Cases themselves move only through /api/cases.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "forms": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "stages": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "decisions": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "title",
+                          "forms",
+                          "stages",
+                          "decisions"
+                        ]
+                      }
+                    },
+                    "adoption": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "institution": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "procedures": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "template": {
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "type": "string"
+                                },
+                                "state": {
+                                  "type": "string",
+                                  "enum": [
+                                    "approved",
+                                    "draft",
+                                    "none"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "template",
+                                "key",
+                                "state"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "institution",
+                          "name",
+                          "procedures"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "templates",
+                    "adoption"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "templates": [
+                        {
+                          "key": "string",
+                          "title": "Example",
+                          "forms": [
+                            "string"
+                          ],
+                          "stages": [
+                            "string"
+                          ],
+                          "decisions": [
+                            "string"
+                          ]
+                        }
+                      ],
+                      "adoption": [
+                        {
+                          "institution": "string",
+                          "name": "Example",
+                          "procedures": [
+                            {}
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/exchange/workflows/route.ts"
+      },
+      "post": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "post_exchange_workflows",
+        "summary": "POST /api/exchange/workflows",
+        "description": "/api/exchange/workflows — cross-institution workflow (plan I9, lib/federation/procedures.ts): requests, consultations, handovers, tasks, decision requests, dependencies, disputes, agreements, onboarding, access and exceptions as cases of the receiving institution's own procedures, never binding orders. GET: the templates, the forms each carries, and how far each institution has adopted them (drafted, approved). POST { op: 'adopt', institution }: an official who can sign at that institution drafts its own procedures from the templates (a different official approves each under Laws › Procedures); never whole-government scope for another institution. Cases themselves move only through /api/cases.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "drafted": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "present": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "drafted",
+                        "present"
+                      ]
+                    },
+                    "procedures": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "template": {
+                            "type": "string"
+                          },
+                          "key": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "approved",
+                              "draft",
+                              "none"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "template",
+                          "key",
+                          "state"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "procedures"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {
+                        "drafted": [
+                          "string"
+                        ],
+                        "present": [
+                          "string"
+                        ]
+                      },
+                      "procedures": [
+                        {
+                          "template": "string",
+                          "key": "string",
+                          "state": "approved"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/exchange/workflows/route.ts"
       }
     },
     "/api/facilities/{fid}": {
@@ -21560,6 +22760,112 @@
         "x-source": "src/app/api/federation/grants/route.ts"
       }
     },
+    "/api/federation/inbound": {
+      "post": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "post_federation_inbound",
+        "summary": "POST /api/federation/inbound",
+        "description": "POST /api/federation/inbound — another institution's installation sends a federation event envelope (plan I9, lib/federation/events.ts receiveEnvelope()): its integration key of scope events:inbound in Authorization (an integration two officials linked to the source institution), and { recipient, envelope } in the body. The envelope's signature is checked against a key two officials of this installation trust for the source, its schema version, the recipient's authority under the relationship register, and duplicates by event id; every envelope is recorded as accepted, rejected or pending and applied to nothing. The answer carries the record and a signed exchange receipt (header CivicOS-Receipt).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "record": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "accepted",
+                            "pending",
+                            "rejected"
+                          ]
+                        },
+                        "reasons": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "duplicate": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "state",
+                        "reasons",
+                        "duplicate"
+                      ]
+                    },
+                    "receipt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "record",
+                    "receipt"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "record": {
+                        "id": "ID-0001",
+                        "state": "accepted",
+                        "reasons": [
+                          "Text"
+                        ],
+                        "duplicate": true
+                      },
+                      "receipt": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          }
+        ],
+        "x-permission-rule": "self-authenticated",
+        "x-source": "src/app/api/federation/inbound/route.ts"
+      }
+    },
     "/api/federation/mtls": {
       "get": {
         "tags": [
@@ -21681,6 +22987,192 @@
           }
         ],
         "x-source": "src/app/api/federation/mtls/route.ts"
+      }
+    },
+    "/api/federation/peers": {
+      "get": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "get_federation_peers",
+        "summary": "GET /api/federation/peers",
+        "description": "/api/federation/peers — the keys this installation trusts for other installations' institutions (plan I9, lib/federation/events.ts). GET lists them. POST { op: 'propose', institution, publicKeyPem, endpoint?, note? }: one administrator proposes trusting an institution's public key (the institution named by its stable id in the register); { op: 'confirm', id }: a different official confirms it (dual control on verified sessions); { op: 'revoke', id, reason }: one official withdraws a proposal or revokes a trusted key at once. Who acted comes from the sign-in; audited.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "peers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PeerKey"
+                      }
+                    }
+                  },
+                  "required": [
+                    "peers"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "peers": [
+                        {
+                          "id": "ID-0001",
+                          "institution": "string",
+                          "keyId": "ID-0001",
+                          "publicKeyPem": "string",
+                          "state": "approved",
+                          "proposed": {
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/federation/peers/route.ts"
+      },
+      "post": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "post_federation_peers",
+        "summary": "POST /api/federation/peers",
+        "description": "/api/federation/peers — the keys this installation trusts for other installations' institutions (plan I9, lib/federation/events.ts). GET lists them. POST { op: 'propose', institution, publicKeyPem, endpoint?, note? }: one administrator proposes trusting an institution's public key (the institution named by its stable id in the register); { op: 'confirm', id }: a different official confirms it (dual control on verified sessions); { op: 'revoke', id, reason }: one official withdraws a proposal or revokes a trusted key at once. Who acted comes from the sign-in; audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string"
+                  },
+                  "id": {},
+                  "institution": {},
+                  "publicKeyPem": {},
+                  "endpoint": {},
+                  "note": {},
+                  "reason": {},
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "op": "string",
+                    "id": null,
+                    "institution": null,
+                    "publicKeyPem": null,
+                    "endpoint": null,
+                    "note": null,
+                    "reason": null,
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "peer": {
+                      "$ref": "#/components/schemas/PeerKey"
+                    }
+                  },
+                  "required": [
+                    "peer"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "peer": {
+                        "id": "ID-0001",
+                        "institution": "string",
+                        "keyId": "ID-0001",
+                        "publicKeyPem": "string",
+                        "endpoint": "string",
+                        "note": "Text",
+                        "state": "approved",
+                        "proposed": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z"
+                        },
+                        "confirmed": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "independence": "accounts-only"
+                        },
+                        "retiredAt": "2026-01-15T09:30:00.000Z",
+                        "revoked": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/federation/peers/route.ts"
       }
     },
     "/api/federation/propose": {
@@ -29354,7 +30846,7 @@
         ],
         "operationId": "post_integrations_id_approve",
         "summary": "POST /api/integrations/{id}/approve",
-        "description": "POST /api/integrations/<id>/approve — approving an outside caller takes two officials (lib/data/store/federation.ts). { op: 'propose', scopes?, purposes?, note? } (the default op): one administrator proposes the integration's scopes and, per exchange service it may call (scope service:<id>), the purposes it may state, e.g. { \"person.verify\": [\"identity-card-enrolment\"] }; a change to an approved integration's scopes or purposes is proposed the same way. { op: 'confirm' }: a different official confirms the waiting proposal (dual control on verified sessions); it lapses after the country's dual-control waiting period. { op: 'withdraw' }: withdraws a waiting proposal. Who acted comes from the sign-in, never the request; audited. A proposal cites the law that permits the sharing (legalBasis: [{ instrument, eId }] from the laws register; required in production), and in production an official of every institution that owns a service the terms open confirms it (the owners are worked out here from the directory and the deployment profile, never taken from the request).",
+        "description": "POST /api/integrations/<id>/approve — approving an outside caller takes two officials (lib/data/store/federation.ts). { op: 'propose', scopes?, purposes?, note? } (the default op): one administrator proposes the integration's scopes and, per exchange service it may call (scope service:<id>), the purposes it may state, e.g. { \"person.verify\": [\"identity-card-enrolment\"] }; a change to an approved integration's scopes or purposes is proposed the same way. { op: 'confirm' }: a different official confirms the waiting proposal (dual control on verified sessions); it lapses after the country's dual-control waiting period. { op: 'withdraw' }: withdraws a waiting proposal. Who acted comes from the sign-in, never the request; audited. A proposal cites the law that permits the sharing (legalBasis: [{ instrument, eId }] from the laws register; required in production), and in production an official of every institution that owns a service the terms open confirms it (the owners are worked out here from the directory and the deployment profile, never taken from the request). I9: `institution` names the registered institution the integration acts for (another institution's installation); its exchanges then answer only under an approved `exchange` relationship (lib/federation/binding.ts).",
         "parameters": [
           {
             "name": "id",
@@ -29377,6 +30869,7 @@
                   },
                   "scopes": {},
                   "purposes": {},
+                  "institution": {},
                   "note": {},
                   "legalBasis": {},
                   "by": {
@@ -29391,6 +30884,7 @@
                     "op": "string",
                     "scopes": null,
                     "purposes": null,
+                    "institution": null,
                     "note": null,
                     "legalBasis": null,
                     "by": "A. Official"
@@ -29441,6 +30935,7 @@
                             "string"
                           ]
                         },
+                        "institution": "string",
                         "approval": {
                           "outcome": "confirmed",
                           "closedAt": "2026-01-15T09:30:00.000Z",
@@ -29524,6 +31019,7 @@
                             "string"
                           ]
                         },
+                        "institution": "string",
                         "approval": {
                           "outcome": "confirmed",
                           "closedAt": "2026-01-15T09:30:00.000Z",
@@ -29665,6 +31161,7 @@
                             "string"
                           ]
                         },
+                        "institution": "string",
                         "approval": {
                           "outcome": "confirmed",
                           "closedAt": "2026-01-15T09:30:00.000Z",
@@ -46549,6 +48046,7 @@
                                   "audit",
                                   "dismiss",
                                   "dissolve",
+                                  "exchange",
                                   "fund",
                                   "impeach",
                                   "instruct",
@@ -74625,6 +76123,9 @@
                                 "awaiting"
                               ]
                             },
+                            "dependency": {
+                              "type": "number"
+                            },
                             "incident": {
                               "type": "number"
                             },
@@ -74646,9 +76147,6 @@
                             "designation": {
                               "type": "number"
                             },
-                            "dependency": {
-                              "type": "number"
-                            },
                             "risk": {
                               "type": "number"
                             },
@@ -74668,6 +76166,7 @@
                           "required": [
                             "directives",
                             "transfers",
+                            "dependency",
                             "incident",
                             "supplier",
                             "plan",
@@ -74675,7 +76174,6 @@
                             "exception",
                             "exercise",
                             "designation",
-                            "dependency",
                             "risk",
                             "clearance",
                             "marked",
@@ -100726,6 +102224,59 @@
           "interest"
         ]
       },
+      "DeclaredCapability": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "dependency",
+              "exchange-service"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "available",
+              "degraded",
+              "not-configured",
+              "unavailable"
+            ]
+          },
+          "why": {
+            "type": "string",
+            "description": "Why it is in that state, read from the facts."
+          },
+          "whileUnavailable": {
+            "type": "string",
+            "description": "What the platform does while it is not available (the same text whatever the state, so it is declared in advance)."
+          },
+          "continues": {
+            "type": "string",
+            "description": "What keeps working regardless."
+          },
+          "enforcedIn": {
+            "type": "string",
+            "description": "The file that enforces the behaviour."
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "kind",
+          "state",
+          "why",
+          "whileUnavailable",
+          "continues",
+          "enforcedIn"
+        ]
+      },
       "DelegationGrant": {
         "description": "A delegation of authority in force (lib/records/delegations.ts, kind `authority`; form ADM-GOV-039): `delegator` (an official who can sign at `institution`) lets the holder take the listed decision steps (`actions`, case package action keys or task ids; `procedures`, package keys or '*') from `from` until `until`, resting on the cited law (`basis`).",
         "type": "object",
@@ -104265,6 +105816,73 @@
           "case",
           "results",
           "recommendation"
+        ]
+      },
+      "EventEnvelope": {
+        "type": "object",
+        "properties": {
+          "integrity": {
+            "type": "object",
+            "properties": {
+              "alg": {
+                "type": "string",
+                "const": "ed25519"
+              },
+              "key_id": {
+                "type": "string"
+              },
+              "signature": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "alg",
+              "key_id",
+              "signature"
+            ]
+          },
+          "event_id": {
+            "type": "string"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "schema_version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "source_institution_id": {
+            "type": "string"
+          },
+          "aggregate_reference": {
+            "type": "string"
+          },
+          "occurred_at": {
+            "type": "string"
+          },
+          "published_at": {
+            "type": "string"
+          },
+          "legal_context": {
+            "$ref": "#/components/schemas/LegalContext"
+          },
+          "payload_reference": {
+            "type": "string"
+          },
+          "correlation_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "integrity",
+          "event_id",
+          "event_type",
+          "schema_version",
+          "source_institution_id",
+          "aggregate_reference",
+          "occurred_at",
+          "published_at",
+          "legal_context"
         ]
       },
       "EvidencePack": {
@@ -109779,6 +111397,118 @@
           "state"
         ]
       },
+      "InboundRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "eventId": {
+            "type": "string"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "recipient": {
+            "type": "string"
+          },
+          "aggregate": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "receivedAt": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "pending",
+              "rejected"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "keyId": {
+            "type": "string"
+          },
+          "via": {
+            "type": "string",
+            "description": "Through which credential it came (an integration id), when it did."
+          },
+          "duplicates": {
+            "type": "number",
+            "description": "Retries of the same envelope, recognised and not recorded again."
+          },
+          "applied": {
+            "type": "boolean",
+            "const": false,
+            "description": "Nothing is ever applied automatically: the receiving institution acts in its own procedures."
+          },
+          "decided": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "accepted",
+                  "rejected"
+                ]
+              },
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "outcome",
+              "by",
+              "at",
+              "reason"
+            ]
+          },
+          "envelope": {
+            "$ref": "#/components/schemas/EventEnvelope"
+          }
+        },
+        "required": [
+          "id",
+          "eventId",
+          "digest",
+          "type",
+          "source",
+          "recipient",
+          "aggregate",
+          "receivedAt",
+          "state",
+          "reasons",
+          "duplicates",
+          "applied"
+        ]
+      },
       "Incident": {
         "type": "object",
         "properties": {
@@ -111569,6 +113299,10 @@
                 "type": "string"
               }
             }
+          },
+          "institution": {
+            "type": "string",
+            "description": "I9: the registered institution the integration acts for (see IntegrationClient.institution)."
           }
         },
         "required": [
@@ -111706,6 +113440,10 @@
                 "type": "string"
               }
             }
+          },
+          "institution": {
+            "type": "string",
+            "description": "I9: the registered institution the integration acts for (see IntegrationClient.institution)."
           }
         },
         "required": [
@@ -111783,6 +113521,10 @@
             },
             "description": "Per exchange service (its id, e.g. `person.verify`): the purposes this integration may state when calling it (short slugs), as approved by two officials. Absent on an integration approved before purposes were recorded (see `approval`)."
           },
+          "institution": {
+            "type": "string",
+            "description": "I9 (federation): the registered institution this integration acts for (another institution's own installation), approved with its terms by two officials. Its exchanges are then bound to the relationship register (lib/federation/binding.ts): they answer only under an approved `exchange` relationship in force. Absent: an outside system that is not an institution of the register."
+          },
           "approval": {
             "$ref": "#/components/schemas/IntegrationApprovalRecord"
           },
@@ -111855,6 +113597,10 @@
                 "type": "string"
               }
             }
+          },
+          "institution": {
+            "type": "string",
+            "description": "I9: the registered institution the integration acts for (see IntegrationClient.institution)."
           }
         },
         "required": [
@@ -112461,6 +114207,24 @@
           "reference",
           "by",
           "reason"
+        ]
+      },
+      "LegalContext": {
+        "type": "object",
+        "properties": {
+          "instrument_reference": {
+            "type": "string"
+          },
+          "version_reference": {
+            "type": "string"
+          },
+          "relationship_reference": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "instrument_reference",
+          "version_reference"
         ]
       },
       "LegalInstrument": {
@@ -119603,6 +121367,116 @@
           "hash"
         ]
       },
+      "PeerKey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "keyId": {
+            "type": "string"
+          },
+          "publicKeyPem": {
+            "type": "string"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Where that installation publishes (its feed), for officials; never fetched by the platform on its own."
+          },
+          "note": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "lapsed",
+              "proposed",
+              "retired",
+              "revoked",
+              "withdrawn"
+            ]
+          },
+          "proposed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at"
+            ]
+          },
+          "confirmed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "independence": {
+                "type": "string",
+                "enum": [
+                  "accounts-only",
+                  "identity-provider",
+                  "unverified"
+                ]
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "independence"
+            ]
+          },
+          "retiredAt": {
+            "type": "string"
+          },
+          "revoked": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "institution",
+          "keyId",
+          "publicKeyPem",
+          "state",
+          "proposed"
+        ]
+      },
       "Permit": {
         "type": "object",
         "properties": {
@@ -125321,6 +127195,36 @@
           "cell"
         ]
       },
+      "PublishedEvent": {
+        "type": "object",
+        "properties": {
+          "envelope": {
+            "$ref": "#/components/schemas/EventEnvelope"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "keySource": {
+            "type": "string"
+          },
+          "production": {
+            "type": "boolean"
+          },
+          "sample": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "envelope",
+          "by",
+          "at",
+          "keySource",
+          "production"
+        ]
+      },
       "PublishedReturn": {
         "type": "object",
         "properties": {
@@ -127223,6 +129127,7 @@
               "audit",
               "dismiss",
               "dissolve",
+              "exchange",
               "fund",
               "impeach",
               "instruct",

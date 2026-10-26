@@ -9,6 +9,9 @@
 import { AUTHORITIES, REQUIRED_AUTHORITIES, HEALTH_SLOTS, provisionalOwner } from '@/lib/nation/deployment';
 import { authorityFor, getSetup, getSovereign, authorityChanges, classificationChanges, editionChanges } from '@/lib/data/store/sovereign';
 import { currentEdition } from '@/lib/nation/edition';
+// I9: federation and cross-institution workflow.
+import { listPeers } from '@/lib/federation/events';
+import { adoptionOf } from '@/lib/federation/procedures';
 import { pilotExitGate } from '@/lib/pilot/exit-gate';
 import { listExports } from '@/lib/portability/export';
 import { listImports } from '@/lib/portability/import';
@@ -485,9 +488,16 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
     track({ key: 'exchange', title: 'Data sharing', why: 'Other systems and institutions reach records only through approved services, for an approved purpose, agreed by the data\'s owners.', href: '/integrations', seeded: true }, () => {
       const ints = listIntegrations();
       for (const i of ints) if (i.pendingApproval) wait({ what: `Data sharing: ${i.name}`, proposedBy: i.pendingApproval.by, at: i.pendingApproval.at, href: '/integrations' });
+      // I9: federation keys of other installations' institutions waiting for a second official, and the exchange relationships in force.
+      const peers = listPeers();
+      for (const p of peers) if (p.state === 'proposed') wait({ what: `Federation: trusting ${getMinistry(p.institution)?.name ?? p.institution}'s key ${p.keyId}`, proposedBy: p.proposed.by, at: p.proposed.at, href: '/gov/exchange/federation' });
+      const exchangeRels = relationshipGrants().filter(g => g.type === 'exchange');
+      const adoptedXi = active().filter(m => adoptionOf(m.id).every(a => a.state === 'approved'));
       return { checks: [
         { label: 'Integrations registered', done: ints.length > 0, href: '/integrations', detail: n(ints.length, 'integration') },
         { label: 'Integrations approved by two officials', done: ints.some(i => i.status === 'approved'), href: '/integrations' },
+        { label: 'Exchange relationships between institutions approved (citing the law)', done: exchangeRels.length > 0, href: '/gov/configuration/relationships', detail: exchangeRels.length ? n(exchangeRels.length, 'relationship') : 'None ships: services between institutions answer only under one (a demonstration notes their absence)' },
+        { label: 'Cross-institution workflow procedures adopted by each institution', done: active().length > 0 && adoptedXi.length === active().length, href: '/gov/exchange/workflows', detail: `${adoptedXi.length} of ${active().length} institution(s)` },
       ] };
     }),
 

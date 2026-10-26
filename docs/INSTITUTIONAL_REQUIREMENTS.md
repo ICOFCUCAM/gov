@@ -1,6 +1,6 @@
 # Institutional requirements traceability register
 
-**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): 2827 rows, ids `S<part>-…`, below. (2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): 7548 rows (Met 229, Partial 3808, Not yet 2353, Legal review 250, Platform rule stricter 334, Country decision 268, Lower priority 306), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.
+**Sources.** (1) `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts): 2827 rows, ids `S<part>-…`, below. (2) The forms catalogue `docs/forms-catalogue/` (one 13-part series, all parts received): 7548 rows (Met 229, Partial 3814, Not yet 2347, Legal review 250, Platform rule stricter 334, Country decision 268, Lower priority 306), section "Source 2" at the end. Both are binding and checked by `app/src/lib/requirements/requirements.test.ts`.
 
 Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md` (six parts) against the code in `app/src` on 21 October 2026 (main checkout, after step I0.1), with the plan step that delivers each one (`docs/INSTITUTIONAL_ARCHITECTURE_PLAN.md` §5). Machine-readable rows: `docs/requirements/requirements.json`. Re-run from the repository root: `python3 -I app/scripts/requirements/extract.py .` (scripts in `app/scripts/requirements/`; status knowledge base `rules.py`, step reassignment under the revised plan `reassign.py`). Checked by `app/src/lib/requirements/requirements.test.ts`.
 
@@ -19,20 +19,20 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Part | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
 | 0 (intro) | 1 | 9 | 0 | 0 | 1 | 0 | 11 |
-| 1 | 109 | 209 | 170 | 5 | 11 | 48 | 552 |
+| 1 | 110 | 208 | 170 | 5 | 11 | 48 | 552 |
 | 2 | 141 | 300 | 118 | 16 | 0 | 0 | 575 |
-| 3 | 83 | 174 | 221 | 23 | 2 | 79 | 582 |
+| 3 | 84 | 173 | 221 | 23 | 2 | 79 | 582 |
 | 4 | 178 | 146 | 105 | 0 | 1 | 50 | 480 |
-| 5 | 81 | 195 | 22 | 0 | 18 | 0 | 316 |
+| 5 | 109 | 185 | 4 | 0 | 18 | 0 | 316 |
 | 6 | 89 | 170 | 34 | 8 | 8 | 2 | 311 |
-| **All** | **682** | **1203** | **670** | **52** | **41** | **179** | **2827** |
+| **All** | **712** | **1191** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 682 | 0 | 0 | 39 | 5 | 0 | 726 |
+| — | 712 | 0 | 0 | 39 | 5 | 0 | 756 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 109 | 3 | 0 | 0 | 0 | 112 |
 | I3 | 0 | 123 | 30 | 0 | 0 | 0 | 153 |
@@ -41,12 +41,12 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | I6 | 0 | 123 | 111 | 4 | 0 | 0 | 238 |
 | I7 | 0 | 65 | 208 | 0 | 0 | 0 | 273 |
 | I8 | 0 | 63 | 105 | 0 | 0 | 0 | 168 |
-| I9 | 0 | 252 | 29 | 0 | 17 | 0 | 298 |
+| I9 | 0 | 240 | 11 | 0 | 17 | 0 | 268 |
 | I10 | 0 | 147 | 22 | 6 | 0 | 2 | 177 |
 | I11 | 0 | 44 | 5 | 3 | 0 | 166 | 218 |
 | I12 | 0 | 5 | 0 | 0 | 0 | 0 | 5 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
-| **All** | **682** | **1203** | **670** | **52** | **41** | **179** | **2827** |
+| **All** | **712** | **1191** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By sector
@@ -54,7 +54,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Sector | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
 | Cross-cutting | 7 | 10 | 0 | 0 | 3 | 0 | 20 |
-| Institution contract | 4 | 12 | 0 | 0 | 1 | 0 | 17 |
+| Institution contract | 5 | 11 | 0 | 0 | 1 | 0 | 17 |
 | Standards | 1 | 4 | 4 | 0 | 0 | 11 | 20 |
 | Presidency and Cabinet | 14 | 41 | 8 | 0 | 4 | 0 | 67 |
 | Finance and Treasury | 3 | 39 | 42 | 0 | 0 | 0 | 84 |
@@ -66,7 +66,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Internal administration | 2 | 7 | 3 | 0 | 0 | 0 | 12 |
 | Forms (common contract) | 1 | 9 | 3 | 0 | 0 | 0 | 13 |
 | National twin | 50 | 8 | 7 | 0 | 0 | 2 | 67 |
-| Acceptance | 15 | 11 | 0 | 0 | 0 | 0 | 26 |
+| Acceptance | 19 | 7 | 0 | 0 | 0 | 0 | 26 |
 | Institution catalogue | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
 | Civil registration and identity | 25 | 43 | 0 | 0 | 0 | 0 | 68 |
 | Health | 10 | 43 | 1 | 3 | 0 | 0 | 57 |
@@ -78,7 +78,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Water | 1 | 0 | 46 | 0 | 0 | 0 | 47 |
 | Professional licensing | 10 | 32 | 0 | 0 | 0 | 0 | 42 |
 | Institution workspace contract | 5 | 8 | 0 | 0 | 0 | 0 | 13 |
-| Exchange | 9 | 23 | 7 | 0 | 0 | 2 | 41 |
+| Exchange | 10 | 22 | 7 | 0 | 0 | 2 | 41 |
 | Fieldwork and legacy | 1 | 15 | 8 | 0 | 0 | 0 | 24 |
 | Readiness and acceptance | 41 | 28 | 8 | 0 | 0 | 0 | 77 |
 | Judiciary | 13 | 43 | 0 | 0 | 0 | 0 | 56 |
@@ -110,12 +110,12 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Independence contract | 12 | 3 | 0 | 0 | 0 | 0 | 15 |
 | Shared administration | 5 | 8 | 0 | 0 | 0 | 0 | 13 |
 | Authorisation and privileged roles | 20 | 5 | 0 | 0 | 0 | 0 | 25 |
-| Architecture | 6 | 14 | 0 | 0 | 0 | 0 | 20 |
-| Kernel | 4 | 8 | 0 | 0 | 0 | 0 | 12 |
+| Architecture | 7 | 13 | 0 | 0 | 0 | 0 | 20 |
+| Kernel | 6 | 6 | 0 | 0 | 0 | 0 | 12 |
 | Control plane | 2 | 19 | 0 | 0 | 0 | 0 | 21 |
-| Standalone deployment | 9 | 15 | 1 | 0 | 0 | 0 | 25 |
-| Federation | 4 | 15 | 0 | 0 | 0 | 0 | 19 |
-| APIs and events | 5 | 33 | 18 | 0 | 0 | 0 | 56 |
+| Standalone deployment | 11 | 13 | 1 | 0 | 0 | 0 | 25 |
+| Federation | 5 | 14 | 0 | 0 | 0 | 0 | 19 |
+| APIs and events | 23 | 33 | 0 | 0 | 0 | 0 | 56 |
 | Ownership and portability | 21 | 17 | 1 | 0 | 0 | 0 | 39 |
 | Security and keys | 5 | 25 | 2 | 0 | 1 | 0 | 33 |
 | Hosting | 1 | 5 | 0 | 0 | 17 | 0 | 23 |
@@ -128,7 +128,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Roadmap | 23 | 9 | 4 | 0 | 8 | 0 | 44 |
 | Risks | 14 | 8 | 0 | 0 | 0 | 0 | 22 |
 | Launch checklist | 15 | 8 | 0 | 0 | 0 | 0 | 23 |
-| **All** | **682** | **1203** | **670** | **52** | **41** | **179** | **2827** |
+| **All** | **712** | **1191** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By category
@@ -136,22 +136,22 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Category | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
 | KPI | 1 | 96 | 76 | 1 | 0 | 21 | 195 |
-| acceptance | 54 | 30 | 7 | 0 | 0 | 0 | 91 |
-| architecture | 99 | 160 | 7 | 0 | 25 | 0 | 291 |
+| acceptance | 58 | 26 | 7 | 0 | 0 | 0 | 91 |
+| architecture | 105 | 154 | 7 | 0 | 25 | 0 | 291 |
 | department | 0 | 179 | 152 | 13 | 0 | 47 | 391 |
 | design | 26 | 122 | 30 | 8 | 0 | 2 | 188 |
-| exchange | 10 | 69 | 25 | 0 | 0 | 2 | 106 |
+| exchange | 29 | 68 | 7 | 0 | 0 | 2 | 106 |
 | fieldwork | 1 | 15 | 8 | 0 | 0 | 0 | 24 |
 | form | 1 | 58 | 13 | 1 | 0 | 0 | 73 |
 | procedure | 135 | 97 | 167 | 4 | 0 | 39 | 442 |
-| prose-rule | 125 | 142 | 34 | 16 | 15 | 30 | 362 |
+| prose-rule | 126 | 141 | 34 | 16 | 15 | 30 | 362 |
 | register | 99 | 110 | 120 | 8 | 0 | 32 | 369 |
 | risk | 18 | 11 | 0 | 0 | 0 | 0 | 29 |
 | role | 13 | 37 | 0 | 1 | 0 | 4 | 55 |
 | security | 45 | 36 | 2 | 0 | 1 | 0 | 84 |
 | service | 3 | 12 | 13 | 0 | 0 | 0 | 28 |
 | twin | 52 | 29 | 16 | 0 | 0 | 2 | 99 |
-| **All** | **682** | **1203** | **670** | **52** | **41** | **179** | **2827** |
+| **All** | **712** | **1191** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ## Plan gaps closed by the revised plan
@@ -265,7 +265,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 ## Part 1
 
 
-### Institution contract — Met 4, Partial 12, Country decision 1
+### Institution contract — Met 5, Partial 11, Country decision 1
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -281,7 +281,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S1-1.1-08 | 100 | architecture | Finance: Bills, payments, refunds, adjustments and reconciliations are separate, attributable transactions. | Partial | lib/data/store/payments.ts issueBill()/receipts (payBill refuses in production); tests app/api/payments/route.test.ts, lib/data/store/payments-liabili | No refunds, adjustments or outgoing payments | I5 |
 | S1-1.1-09 | 101 | architecture | Exchange: Every service has an owner, purpose, permitted fields, legal basis, caller authorization and audit evidence. | Met | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in |  | — |
 | S1-1.1-10 | 102 | architecture | Oversight: Metrics derive from persisted records, carry a source and observation time, and disclose coverage and limitations. | Partial | lib/twin/register.ts (observations: validFrom/validTo, recordedAt, method, quality, source run, record lineage), lib/twin/signal.ts SignalKind; tests  | Generated panels with no record source remain (20.65); estimates with methodology and uncertainty (20.68) | I3 |
-| S1-1.1-11 | 103 | architecture | Continuity: Backup restoration, identifier continuity, event replay and signature verification are tested. | Partial | lib/data/backups.ts (encrypted, verified by dry-run restore, four-eyes restore); tests lib/data/backups.test.ts, backups-installation.test.ts, repo/ba | Restore into a clean environment not run in CI (P5-10) | I9 |
+| S1-1.1-11 | 103 | architecture | Continuity: Backup restoration, identifier continuity, event replay and signature verification are tested. | Met | lib/data/backups.ts (encrypted, verified by dry-run restore, four-eyes restore); tests lib/data/backups.test.ts, backups-installation.test.ts, repo/ba |  | — |
 | S1-1.1-12 | 104 | architecture | Public service: Online, assisted, accessible and low-connectivity channels use the same authoritative procedures. | Partial | Online: citizen wallet (/wallet) on the same procedures; accessibility audits (app/scripts/audit-console.mjs, audit-public-sites.mjs); assisted only a | Assisted-mode forms recording the assisting official; low-connectivity path (P6-20) | I1 (+I6) |
 | S1-1.1-13 | 105 | architecture | Standalone deployment: The institution can operate using its own authorized services and can later federate without changing record identity. | Met | lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, exchange answers not connected, a step needing another re |  | — |
 | S1-1.1-14 | 107 | prose-rule | Universal: these capabilities should be present in the institution kernel. | Partial | Kernel parts exist (audit A §1) | See capability rows | I9 |
@@ -1417,10 +1417,10 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S2-D-01 | 1847 | exchange | These nine institutional archetypes must work together without turning CivicOS into a universal-access database. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in |  | I9 |
 | S2-D-02 | 1849 | exchange | The exchange layer should support a request, a decision to authorise or refuse it, a minimum-data response, and a verifiable record of the transaction. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in |  | I9 |
 | S2-D-03 | 1849 | exchange | The requesting institution does not gain permanent access simply because an earlier request was approved. | Met | Each call decided on its own; grants suspend/expire (relationships.test.ts) |  | — |
-| S2-D-04 | 1853-1857 | exchange | 01 · REQUEST — Benefits Authority: Requests confirmation that an applicant's identity credential is valid, specifying the purpose and legal authority. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Relationship between institutions checked at authorisation (exchange bound to integrations, not relationships — audit C 3.2 5.5); refusal reason codes | I9 |
-| S2-D-05 | 1859-1863 | exchange | 02 · AUTHORISE — Sovereign exchange service: Validates the requesting role, purpose, legal basis, permitted attributes and relevant relationship between institutions. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Relationship between institutions checked at authorisation (exchange bound to integrations, not relationships — audit C 3.2 5.5); refusal reason codes | I9 |
-| S2-D-06 | 1865-1869 | exchange | 03 · RESPOND — Identity Authority: Returns the permitted verification result—or a refusal with a reason code. It does not disclose the entire identity record by default. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Relationship between institutions checked at authorisation (exchange bound to integrations, not relationships — audit C 3.2 5.5); refusal reason codes | I9 |
-| S2-D-07 | 1871-1875 | exchange | 04 · AUDIT — Both institutions retain evidence: The request, decision, response attributes, source version, timestamps and audit references are recorded. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Relationship between institutions checked at authorisation (exchange bound to integrations, not relationships — audit C 3.2 5.5); refusal reason codes | I9 |
+| S2-D-04 | 1853-1857 | exchange | 01 · REQUEST — Benefits Authority: Requests confirmation that an applicant's identity credential is valid, specifying the purpose and legal authority. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Refusal reason codes as fields | I9 |
+| S2-D-05 | 1859-1863 | exchange | 02 · AUTHORISE — Sovereign exchange service: Validates the requesting role, purpose, legal basis, permitted attributes and relevant relationship between institutions. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Refusal reason codes as fields | I9 |
+| S2-D-06 | 1865-1869 | exchange | 03 · RESPOND — Identity Authority: Returns the permitted verification result—or a refusal with a reason code. It does not disclose the entire identity record by default. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Refusal reason codes as fields | I9 |
+| S2-D-07 | 1871-1875 | exchange | 04 · AUDIT — Both institutions retain evidence: The request, decision, response attributes, source version, timestamps and audit references are recorded. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Refusal reason codes as fields | I9 |
 | S2-D-08 | 1877 | exchange | This pattern should be reusable for education credential verification, professional licensing, immigration document verification, authorised payment-status checks and other approved exchanges. | Met | qualification.verify, professional.standing, immigration.status, taxpayer.status services |  | — |
 | S2-D-09 | 1881-1901 | exchange | Contract field request_id (example: "generated-unique-id") | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Receiving institution, authorised attributes and reason codes as fields | I9 |
 | S2-D-10 | 1881-1901 | exchange | Contract field requesting_institution (example: "configured-institution-id") | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Receiving institution, authorised attributes and reason codes as fields | I9 |
@@ -2140,7 +2140,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S3-D.14-38 | 2677 | KPI | Maintenance backlog | Not yet | absent: no module, register or procedure (audit A §3) (lib/gov/infrastructure.ts engine) | Public works projects; Indicator definition (numerator, denominator, period, coverage, method version; "Not connected" when no data) — plan §3.2 | I7 (+I3) |
 | S3-D.14-39 | 2677 | procedure | Do not present forecast cost or expected completion as actual performance. | Not yet | absent: no module, register or procedure (audit A §3) (lib/gov/infrastructure.ts engine) | Public works projects | I7 |
 
-### Exchange — Met 1, Partial 6, Not yet 1, Lower priority 2
+### Exchange — Met 2, Partial 5, Not yet 1, Lower priority 2
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2153,7 +2153,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S3-E-07 | 2690 | exchange | Emergency Authority: To: Police and utilities · Permitted exchange example: Authorised incident assignments and situation updates · Must not imply: Emergency status grants unrestricted access to all records | Partial | Emergency recorded as legal event; nothing in roles.ts reads it (no access widening) | Incident assignments to police/utilities | I7 |
 | S3-E-08 | 2691 | exchange | Energy Regulator: To: Utility operator · Permitted exchange example: Permit, compliance and reporting requests · Must not imply: Regulator can operate industrial control systems | Not yet | absent: no module, register or procedure (audit A §3) | Energy regulation | I7 |
 | S3-E-09 | 2692 | exchange | Municipal Government: To: National Government · Permitted exchange example: Authorised service reports and statutory submissions · Must not imply: National ministries automatically control local records | Partial | Subnational reports only under relationships; lib/localgov/procedures.ts (each local government adopts lg.resolution, lg.budget, lg.service, lg.compla | Statutory submission service | I9 |
-| S3-E-10 | 2694 | exchange | Every exchange must specify the source, recipient, purpose, legal basis, data attributes, effective period, authorisation outcome and audit reference. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Legal basis and effective period per exchange from the relationship register | I9 |
+| S3-E-10 | 2694 | exchange | Every exchange must specify the source, recipient, purpose, legal basis, data attributes, effective period, authorisation outcome and audit reference. | Met | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in |  | — |
 
 ### National twin — Met 1, Partial 5, Not yet 7, Lower priority 2
 
@@ -2181,7 +2181,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 |---|---|---|---|---|---|---|---|
 | S3-G-01 | 2719 | prose-rule | A department is not ready for production simply because its interface renders. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 | S3-G-02 | 2719 | prose-rule | Each service needs evidence of legal grounding, configuration, staffing, records, security, integration and successful operational testing. | Partial | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif | Evidence per service (legal grounding, configuration, staffing, records, security, integration, operational testing) | I2 |
-| S3-G-03 | 2721 | prose-rule | The following tests should be mandatory for this part: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (54 proven, 30 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S3-G-03 | 2721 | prose-rule | The following tests should be mandatory for this part: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (58 proven, 26 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
 | S3-G-04 | 2723 | acceptance | A court can administer cases independently without an executive administrator altering case assignment or judicial decisions. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P3-01: `app/src/lib/courts/procedures.test.ts` "…stays isolated from other institutions" (another ministry and an adm |  | — |
 | S3-G-05 | 2724 | acceptance | A judgment cannot be silently overwritten; corrections and appeals produce separate, traceable events. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P3-02: `app/src/lib/records/decisions.test.ts` "seals the canonical record and detects any change", "needs reasons an | Sealing and correction-by-supersession are proven generically. No court test corrects a judgment or runs an appeal as a separate traceable event. | I11 |
 | S3-G-06 | 2725 | acceptance | A police allegation remains distinguishable from verified findings and judicial outcomes. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P3-03: `app/src/lib/police/procedures.test.ts` "takes a report from a person, classifies it only with a cited provisi |  | — |
@@ -2678,7 +2678,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-B-07 | 2850 | security | Controlled exchange: Cross-institution requests require a lawful purpose, approved authority and permitted fields | Met | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in |  | — |
 | S4-B-08 | 2851 | security | Protected audit: The institution can inspect its own audit history; privileged system operators cannot silently rewrite it | Partial | lib/data/store/audit.ts (SHA-256 v2 chain), lib/audit/sign.ts (signed heads), anchors/TSA/witnesses; tests lib/data/audit-chain.test.ts, lib/audit/sig | Institution inspecting its own audit history (audit entries have no institution field — audit C A-1) | I8 |
 | S4-B-09 | 2852 | security | Independent oversight: Oversight roles receive only the access authorised for their mandate | Met | Relationship-bound reads for audit/request_information, purpose, logged |  | — |
-| S4-B-10 | 2853 | security | Continuity: The institution can export its records, configurations and audit evidence without losing provenance | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Configuration beyond procedures and the institution's terms (authority mappings, rates, country rules) is not carried | I9 |
+| S4-B-10 | 2853 | security | Continuity: The institution can export its records, configurations and audit evidence without losing provenance | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Data dictionaries and API/event schemas in the export; postgres-mode export | I9 |
 | S4-B-11 | 2854 | security | Independent publication: Public reports, findings and releases follow the institution's authorised publication process | Met | Site editorial per institution (proposed and published by its own officials); legislature publication |  | — |
 | S4-B-12 | 2855 | security | Transparent delegation: Any lawful delegation or temporary appointment has a recorded scope, source and effective period | Met | lib/transitions/ (acting, delegation, conflict/recusal, emergency, caretaker, court rulings); tests lib/transitions/*.test.ts (acting recorded with sc |  | — |
 | S4-B-13 | 2857 | security | These requirements should be tested technically, not merely stated in policy documentation. | Met | lib/auth/negative-authorization.test.ts; portability.test.ts |  | — |
@@ -2746,11 +2746,11 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-F-07 | 3358-3360 | architecture | Audit integrity tested: Accesses, exports, changes, approvals and privileged operations are recorded and protected from silent alteration. | Partial | Acceptance P4-12 (chain), P3-13 (reads, refusals) | Exports beyond substrate export; privileged operations reviewable independently (P5-12) | I9 |
 | S4-F-08 | 3362-3364 | architecture | Publication controls tested: Public releases require the institution's own authorised approval process. | Met | lib/data/site-editorial.test.ts; legislature publication |  | — |
 | S4-F-09 | 3366-3368 | architecture | Exchange controls tested: Cross-institution requests enforce purpose, legal basis, permitted fields and auditable refusals. | Met | Acceptance P4-12, P5-03, P4-11 |  | — |
-| S4-F-10 | 3370-3372 | architecture | Portability tested: Records, documents, configuration and audit evidence can be exported with provenance intact. | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Configuration beyond procedures (authority mappings, rates, country rules) is not exported | I9 |
+| S4-F-10 | 3370-3372 | architecture | Portability tested: Records, documents, configuration and audit evidence can be exported with provenance intact. | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Data dictionaries in the export; postgres-mode export | I9 |
 | S4-F-11 | 3374-3376 | architecture | Continuity tested: Recovery, backups, key management, incident response and manual fallback procedures are exercised. | Not yet | No institution-specific recovery | I9 export and restore | I9 |
 | S4-F-12 | 3378 | architecture | Each item should be marked not_started, in_progress, verified, blocked or not_applicable, with evidence, an accountable owner, a verification date and the next corrective action. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 | S4-F-13 | 3378 | architecture | A high aggregate percentage must not conceal a failed critical safeguard. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
-| S4-G-01 | 3382 | prose-rule | Before production, CivicOS should demonstrate that: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (54 proven, 30 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S4-G-01 | 3382 | prose-rule | Before production, CivicOS should demonstrate that: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (58 proven, 26 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
 | S4-G-02 | 3384 | acceptance | An executive-wide administrator cannot read a protected parliamentary, judicial or independent-investigation record merely by virtue of their platform role. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-01: `app/src/lib/auth/negative-authorization.test.ts` "refuses a whole-government administrator, officer and audit |  | — |
 | S4-G-03 | 3385 | acceptance | An independent institution can manage its own users without giving its administrator authority over another independent institution. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-02: `app/src/lib/auth/negative-authorization.test.ts` "the court's own administrator acts directly; another instit |  | — |
 | S4-G-04 | 3386 | acceptance | An election result cannot be silently overwritten, and provisional results cannot be misrepresented as officially declared results. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P4-03: None. | Elections are not built (plan §4). | I11 |
@@ -2777,7 +2777,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-H-04 | 3406 | prose-rule | Third: parliamentary and statistical services. Build legislative records, proceedings, official publication and statistical metadata with clear public/private boundaries. | Partial | Legislature record built; statistics release absent | Statistical metadata | I8 |
 | S4-H-05 | 3407 | prose-rule | Fourth: oversight workflows. Implement audit engagements, public complaints, privacy investigations, protected disclosures and recommendations. | Met | lib/oversight/procedures.ts (reference drafts, each body an independent slot shipped empty: ombudsman.complaint, human-rights.complaint, integrity.dis | Adoption by the nation (bodies named, procedures and mappings approved) | — |
 | S4-H-06 | 3408 | prose-rule | Fifth: electoral and regulatory workflows. Add event-specific permissions, temporary access, protected registers, result verification, licensing and enforcement. | Lower priority | Electoral (I11); regulatory partially |  | I11 (+I8) |
-| S4-H-07 | 3409 | prose-rule | Sixth: independent recovery and exit. Test institution-specific backups, data export, configuration portability, key recovery and service continuity before declaring the deployment production-ready. | Partial | Institution data export tested: lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, doc | Institution-specific backups; configuration portability beyond procedures | I9 |
+| S4-H-07 | 3409 | prose-rule | Sixth: independent recovery and exit. Test institution-specific backups, data export, configuration portability, key recovery and service continuity before declaring the deployment production-ready. | Partial | Institution data export tested: lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, doc | Institution-specific backups | I9 |
 | S4-H-08 | 3413 | prose-rule | CivicOS should make independent institutions first-class sovereign tenants, not subordinate departments inside an executive-controlled application. | Met | Plan follows |  | — |
 | S4-H-09 | 3413 | prose-rule | Their independence must survive shared hosting, shared authentication, shared document services, shared payments and shared national dashboards. | Partial | lib/auth/roles.ts caseActRefusal()/caseReadRefusal()/reaches(); tests lib/auth/case-rules.test.ts, lib/auth/negative-authorization.test.ts (shared aut | Shared hosting keys are installation-wide (audit C K-1) | I9 |
 | S4-H-10 | 3415 | prose-rule | The platform should enforce the distinction between who provides a service, who owns a record, who may access it, and who has the legal power to decide. | Met | Plan follows |  | — |
@@ -2786,20 +2786,20 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 ## Part 5
 
 
-### Architecture — Met 6, Partial 14
+### Architecture — Met 7, Partial 13
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
 | S5-intro-01 | 3425 | architecture | Parts 1–4 defined what CivicOS must support across executive government, human services, justice, infrastructure and independent institutions. | Partial | Kernel exists |  | I9 |
 | S5-intro-02 | 3427 | architecture | The goal is not to build one enormous application with every government function embedded inside it. | Partial | Kernel exists |  | I9 |
 | S5-intro-03 | 3429 | architecture | A municipality, ministry or independent regulator must be able to install CivicOS and operate its own services before the rest of government is connected. | Met | lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, exchange answers not connected, a step needing another re |  | — |
-| S5-intro-04 | 3429 | architecture | Later, it must be possible to federate that deployment with other institutions without recreating records, losing history or transferring authority by accident. | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | A live federation enabled later with the original installation (I9) | I9 |
+| S5-intro-04 | 3429 | architecture | Later, it must be possible to federate that deployment with other institutions without recreating records, losing history or transferring authority by accident. | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
 | S5-A-01 | 3433-3435 | architecture | CivicOS institutional workspaces: Executive · Justice · Health · Education · Local government · Regulators · Independent bodies | Met | Layers exist (audit A §1) |  | — |
 | S5-A-02 | 3437-3439 | architecture | Institutional boundary and policy enforcement: Identity · Role and attribute policies · Legal authority · Delegation · Purpose limitation · Audit | Met | Layers exist (audit A §1) |  | — |
 | S5-A-03 | 3441-3443 | architecture | Sovereign shared services: Legal registry, workflow, documents, signatures, notifications, payments, maps, search and reporting. | Met | Layers exist (audit A §1) |  | — |
 | S5-A-04 | 3445-3447 | architecture | Institution-owned domain services: Cases, registers, permits, decisions, inspections, benefit claims, court filings and other sector records. | Met | Layers exist (audit A §1) |  | — |
-| S5-A-05 | 3449-3451 | architecture | Federation and integration layer: Approved APIs · Event exchange · Legacy adapters · Data contracts · Provenance · Reconciliation | Partial | Exchange services, CloudEvents outbox, legacy loads | Event envelope, reconciliation | I9 |
-| S5-A-06 | 3453-3455 | architecture | Sovereign infrastructure: Compute · Database · Encrypted object storage · Key management · Backup · Monitoring · Recovery | Partial | Backups encrypted, key custody (vault/KMS), monitoring | Per-institution keys | I9 |
+| S5-A-05 | 3449-3451 | architecture | Federation and integration layer: Approved APIs · Event exchange · Legacy adapters · Data contracts · Provenance · Reconciliation | Partial | Exchange services, CloudEvents outbox, legacy loads; lib/federation/binding.ts exchangeBinding() in callService() (between two registered institutions | Reconciliation tools; legacy adapters | I9 |
+| S5-A-06 | 3453-3455 | architecture | Sovereign infrastructure: Compute · Database · Encrypted object storage · Key management · Backup · Monitoring · Recovery | Partial | Backups encrypted, key custody (vault/KMS), monitoring; per-institution federation signing keys (lib/federation/keys.ts) | Per-institution data keys and decision seals | I9 |
 | S5-A-07 | 3457 | architecture | A small standalone deployment may run several components on one server, while a national deployment may separate them into multiple security zones and infrastructure clusters. | Met | Layers exist (audit A §1) |  | — |
 | S5-M-01 | 4060 | architecture | Build CivicOS as a modular sovereign platform with: | Partial | Kernel, shared services exist; federation and portability layers partial |  | I9 |
 | S5-M-02 | 4062 | architecture | A minimum kernel for legal authority, identity, policy enforcement, workflow, records, documents, audit and deployment management. | Partial | Kernel, shared services exist; federation and portability layers partial |  | I9 |
@@ -2811,7 +2811,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-M-08 | 4075 | architecture | Part 5 conclusion: a ministry should be able to start small, run independently, connect to other institutions when ready and leave or migrate without losing its records or history. | Partial | Kernel, shared services exist; federation and portability layers partial |  | I9 |
 | S5-M-09 | 4075 | architecture | Federation should expand cooperation, not centralise legal power. | Partial | Kernel, shared services exist; federation and portability layers partial |  | I9 |
 
-### Kernel — Met 4, Partial 8
+### Kernel — Met 6, Partial 6
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2823,10 +2823,10 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-B.4-01 | 3477 | architecture | Maintains authoritative records, document versions, signatures, evidence references, retention rules, correction history and exportable records. | Partial | lib/records/documents.ts (versions with sha256, media type, sensitivity, retention, encrypted); test lib/records/documents.test.ts; lib/records/decisi | Exportable records per institution | I9 |
 | S5-B.5-01 | 3481 | architecture | Captures access, reads, exports, changes, approvals, refusals, privileged operations and service-to-service disclosures. | Partial | lib/data/store/audit.ts (SHA-256 v2 chain), lib/audit/sign.ts (signed heads), anchors/TSA/witnesses; tests lib/data/audit-chain.test.ts, lib/audit/sig | Service-to-service disclosures and exports in the access log | I9 |
 | S5-B.5-02 | 3481 | architecture | Protects audit integrity and supports independent verification. | Partial | lib/data/store/audit.ts (SHA-256 v2 chain), lib/audit/sign.ts (signed heads), anchors/TSA/witnesses; tests lib/data/audit-chain.test.ts, lib/audit/sig | Service-to-service disclosures and exports in the access log | I9 |
-| S5-B.6-01 | 3485 | architecture | Provides versioned APIs, event contracts, legacy adapters, explicit exchange agreements, source references and reconciliation tools. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Versioned event contracts, reconciliation tools | I9 |
+| S5-B.6-01 | 3485 | architecture | Provides versioned APIs, event contracts, legacy adapters, explicit exchange agreements, source references and reconciliation tools. | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed receipt in | Reconciliation tools | I9 |
 | S5-B.7-01 | 3489 | architecture | Provides installation, environment configuration, migration, health checks, backup and restoration, software updates, schema versioning and verified export. | Partial | /setup, lib/data/updates.ts (compatibility, probation), backups, migrations, health checks (app/api/health) | Migration manifest (I9); verified institution export since Health I4 (lib/portability/export.ts, verify.ts, import.ts (one institution's registers, pr | I9 |
-| S5-B.7-02 | 3491 | architecture | A payment gateway, national digital identity provider, GIS service or AI assistant may be essential to a particular deployment, but none should be a hard dependency for every institution's basic operation. | Partial | Messaging says not connected and never pretends to send (lib/messaging/messaging.test.ts); AI opt-in with rule-based fallback; maps bundled | Declared degraded state per service; a step that needs an unavailable check refuses (acceptance P5-13) | I9 |
-| S5-B.7-03 | 3491 | architecture | CivicOS should support a disconnected or partially connected installation with explicitly degraded capabilities. | Partial | Messaging says not connected and never pretends to send (lib/messaging/messaging.test.ts); AI opt-in with rule-based fallback; maps bundled | Declared degraded state per service; a step that needs an unavailable check refuses (acceptance P5-13) | I9 |
+| S5-B.7-02 | 3491 | architecture | A payment gateway, national digital identity provider, GIS service or AI assistant may be essential to a particular deployment, but none should be a hard dependency for every institution's basic operation. | Met | Messaging says not connected and never pretends to send (lib/messaging/messaging.test.ts); AI opt-in with rule-based fallback; maps bundled; lib/feder |  | — |
+| S5-B.7-03 | 3491 | architecture | CivicOS should support a disconnected or partially connected installation with explicitly degraded capabilities. | Met | Messaging says not connected and never pretends to send (lib/messaging/messaging.test.ts); AI opt-in with rule-based fallback; maps bundled; lib/feder |  | — |
 
 ### Control plane — Met 2, Partial 19
 
@@ -2854,7 +2854,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-C-20 | 3525 | architecture | Design recommendation: use distinct service identities, narrowly scoped administrative interfaces, protected keys and institution-specific policies. | Partial | Shared secrets for bulk officers and substrate export replaced/audited partly in I0.1 (integration register 1.46) | Distinct service identities; per-institution keys | I9 |
 | S5-C-21 | 3525 | architecture | High-risk operational actions should be auditable and require additional approval where appropriate. | Partial | Control-plane stores (updates, ops, federation) separate from registers in register-owners.ts | Explicit control/data plane boundary | I9 |
 
-### Standalone deployment — Met 9, Partial 15, Not yet 1
+### Standalone deployment — Met 11, Partial 13, Not yet 1
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2876,15 +2876,15 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-D-16 | 3574 | architecture | Local reporting with clearly stated data freshness | Partial | Single server runs without external services; messaging queues | Offline operation declared and tested | I9 |
 | S5-D-17 | 3575 | architecture | Queued integration requests and visible synchronisation status | Partial | Single server runs without external services; messaging queues | Offline operation declared and tested | I9 |
 | S5-D-18 | 3576 | architecture | Backup, recovery and incident reporting | Partial | Single server runs without external services; messaging queues | Offline operation declared and tested | I9 |
-| S5-D-19 | 3578 | architecture | The system must not claim that an external check succeeded when it was not performed. | Partial | Acceptance P5-13 partial | Case step depending on an unavailable check refuses to pass | I9 |
-| S5-D-20 | 3578 | architecture | If an action legally requires confirmation from another authority, CivicOS should pause that transition or follow a separately approved fallback procedure. | Partial | Acceptance P5-13 partial | Case step depending on an unavailable check refuses to pass | I9 |
+| S5-D-19 | 3578 | architecture | The system must not claim that an external check succeeded when it was not performed. | Met | lib/federation/degraded.ts declaredStates() (every exchange service and dependency, state computed from the facts, behaviour while unavailable and whe |  | — |
+| S5-D-20 | 3578 | architecture | If an action legally requires confirmation from another authority, CivicOS should pause that transition or follow a separately approved fallback procedure. | Met | lib/federation/degraded.ts declaredStates() (every exchange service and dependency, state computed from the facts, behaviour while unavailable and whe |  | — |
 | S5-D-21 | 3584 | architecture | Single-server pilot: Typical use: One small institution or test deployment · Architecture: UI, application services and database on a hardened host; encrypted backups off-host | Partial | Hosting paths (/updates/hosting, lib/updates/hosting-model.ts), Helm values | Profiles as documented deployment contracts | I9 |
 | S5-D-22 | 3585 | architecture | Institutional production: Typical use: Medium or sensitive institution · Architecture: Separated application, database, object storage, key management and monitoring | Partial | Hosting paths (/updates/hosting, lib/updates/hosting-model.ts), Helm values | Profiles as documented deployment contracts | I9 |
 | S5-D-23 | 3586 | architecture | Sovereign national platform: Typical use: Multiple institutions and high availability · Architecture: Multiple security zones, independently scaled services, replicated infrastructure and formal disaster recovery | Partial | Hosting paths (/updates/hosting, lib/updates/hosting-model.ts), Helm values | Profiles as documented deployment contracts | I9 |
 | S5-D-24 | 3587 | architecture | Federated network: Typical use: Multiple sovereign institutions or jurisdictions · Architecture: Institution-local systems with authenticated, purpose-limited exchange between deployments | Partial | Hosting paths (/updates/hosting, lib/updates/hosting-model.ts), Helm values | Profiles as documented deployment contracts | I9 |
 | S5-D-25 | 3589 | architecture | Production sizing should be based on measured load tests. | Not yet | No load-test evidence | Measured load tests | I9 |
 
-### Federation — Met 4, Partial 15
+### Federation — Met 5, Partial 14
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -2892,28 +2892,28 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-E-02 | 3593 | exchange | It should not be a mandatory centralisation step. | Partial | Federation partly built |  | I9 |
 | S5-E-03 | 3595 | exchange | Its interoperability guidance also stresses that technical connections must be supported by common meanings and organisational agreements. | Partial | Federation partly built |  | I9 |
 | S5-E-04 | 3603-3607 | exchange | STAGE 1 — Standalone institution: Own database, staff, legal configuration, workflows and audit history. | Met | Standalone installation |  | — |
-| S5-E-05 | 3609-3613 | exchange | STAGE 2 — Trust and exchange configuration: Establish the institutional identity, service endpoints, certificates, approved relationships, data contracts and lawful purposes. | Partial | Integrations with keys, mTLS, purposes; federation grants (lib/data/store/federation.ts) | Relationship-bound exchange; federation enabled later (P5-02) | I9 |
-| S5-E-06 | 3615-3619 | exchange | STAGE 3 — Limited live exchange: Start with narrow use cases, such as credential verification or a case-status response. Log requests, denials, responses and reconciliation. | Partial | Integrations with keys, mTLS, purposes; federation grants (lib/data/store/federation.ts) | Relationship-bound exchange; federation enabled later (P5-02) | I9 |
-| S5-E-07 | 3621-3625 | exchange | STAGE 4 — Multi-institution federation: Add approved relationships incrementally while each institution retains its data ownership, decision powers and operational history. | Partial | Integrations with keys, mTLS, purposes; federation grants (lib/data/store/federation.ts) | Relationship-bound exchange; federation enabled later (P5-02) | I9 |
+| S5-E-05 | 3609-3613 | exchange | STAGE 2 — Trust and exchange configuration: Establish the institutional identity, service endpoints, certificates, approved relationships, data contracts and lawful purposes. | Partial | Integrations with keys, mTLS, purposes; federation grants (lib/data/store/federation.ts); lib/federation/binding.ts exchangeBinding() in callService() | A live exchange between two running installations over the network is not tested (the tests run both in one process) | I9 |
+| S5-E-06 | 3615-3619 | exchange | STAGE 3 — Limited live exchange: Start with narrow use cases, such as credential verification or a case-status response. Log requests, denials, responses and reconciliation. | Partial | Integrations with keys, mTLS, purposes; federation grants (lib/data/store/federation.ts); lib/federation/binding.ts exchangeBinding() in callService() | A live exchange between two running installations over the network is not tested (the tests run both in one process) | I9 |
+| S5-E-07 | 3621-3625 | exchange | STAGE 4 — Multi-institution federation: Add approved relationships incrementally while each institution retains its data ownership, decision powers and operational history. | Partial | Integrations with keys, mTLS, purposes; federation grants (lib/data/store/federation.ts); lib/federation/binding.ts exchangeBinding() in callService() | A live exchange between two running installations over the network is not tested (the tests run both in one process) | I9 |
 | S5-E.1-01 | 3631 | architecture | A central directory is not a central copy of all personal data. | Partial | Federation partly built |  | I9 |
 | S5-E.2-01 | 3635 | architecture | This is suitable where institutions need stronger administrative separation or operate different infrastructure. | Partial | Federation partly built |  | I9 |
 | S5-E.3-01 | 3641 | architecture | CivicOS should support all three without changing the legal meaning of a record when its physical hosting location changes. | Partial | Federation partly built |  | I9 |
 | S5-E.3-02 | 3645 | prose-rule | An institution is identified by a stable, unique institutional ID—not by a mutable display name. | Met | Stable institution ids (lib/institution/federation.ts) |  | — |
 | S5-E.3-03 | 3646 | prose-rule | Every exchange has a requesting identity, recipient, purpose and authorisation decision. | Partial | Federation partly built |  | I9 |
-| S5-E.3-04 | 3647 | prose-rule | Every data contract has a version and defined compatibility rules. | Partial | Service versions; HTTP signatures; outbox | Compatibility rules, inbound receiver, pending states | I9 |
-| S5-E.3-05 | 3648 | prose-rule | A receiver validates the sender and message integrity before processing. | Partial | Service versions; HTTP signatures; outbox | Compatibility rules, inbound receiver, pending states | I9 |
+| S5-E.3-04 | 3647 | prose-rule | Every data contract has a version and defined compatibility rules. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections and revocations propagated automatically as events from decisions (types declared, published by officials); compatibility rules between sc | I9 |
+| S5-E.3-05 | 3648 | prose-rule | A receiver validates the sender and message integrity before processing. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections and revocations propagated automatically as events from decisions (types declared, published by officials); compatibility rules between sc | I9 |
 | S5-E.3-06 | 3649 | prose-rule | Duplicate or retried messages must not create duplicate legal decisions. | Met | Acceptance P5-04 | Inbound receiver dedupe | — |
-| S5-E.3-07 | 3650 | prose-rule | Unavailable services must produce explicit pending, failed or unavailable states. | Partial | Service versions; HTTP signatures; outbox | Compatibility rules, inbound receiver, pending states | I9 |
-| S5-E.3-08 | 3651 | prose-rule | Corrections and revocations propagate through authorised events while preserving the original history. | Partial | Service versions; HTTP signatures; outbox | Compatibility rules, inbound receiver, pending states | I9 |
+| S5-E.3-07 | 3650 | prose-rule | Unavailable services must produce explicit pending, failed or unavailable states. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections and revocations propagated automatically as events from decisions (types declared, published by officials); compatibility rules between sc | I9 |
+| S5-E.3-08 | 3651 | prose-rule | Corrections and revocations propagate through authorised events while preserving the original history. | Partial | Service versions; HTTP signatures; outbox; lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relations | Corrections and revocations propagated automatically as events from decisions (types declared, published by officials); compatibility rules between sc | I9 |
 | S5-E.3-09 | 3652 | prose-rule | Federation must not silently grant a remote administrator access to local records. | Met | Federation reads by grant only (lib/exchange/log.test.ts) |  | — |
-| S5-E.3-10 | 3653 | prose-rule | Disconnection or termination of a relationship must revoke its credentials and stop future exchanges without erasing the prior audit history. | Partial | Acceptance P5-05 partial | Exchange bound to relationship register | I9 |
+| S5-E.3-10 | 3653 | prose-rule | Disconnection or termination of a relationship must revoke its credentials and stop future exchanges without erasing the prior audit history. | Met | lib/federation/binding.ts exchangeBinding() in callService() (between two registered institutions only under an approved exchange relationship in forc |  | — |
 
-### APIs and events — Met 5, Partial 33, Not yet 18
+### APIs and events — Met 23, Partial 33
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S5-F-01 | 3657 | exchange | CivicOS should expose versioned, documented APIs. | Partial | /api/openapi generated from route files (lib/api/openapi.json; openapi.test.ts) | Event contracts with schemas, versioning and compatibility tests | I9 |
-| S5-F-02 | 3657 | exchange | OpenAPI is a suitable specification format for HTTP APIs; event contracts need their own schemas, versioning and compatibility tests. | Partial | /api/openapi generated from route files (lib/api/openapi.json; openapi.test.ts) | Event contracts with schemas, versioning and compatibility tests | I9 |
+| S5-F-01 | 3657 | exchange | CivicOS should expose versioned, documented APIs. | Partial | /api/openapi generated from route files (lib/api/openapi.json; openapi.test.ts); src/lib/api/api-contract.json generated with the OpenAPI document fro | Compatibility rules between event schema versions (only 1.0 exists) | I9 |
+| S5-F-02 | 3657 | exchange | OpenAPI is a suitable specification format for HTTP APIs; event contracts need their own schemas, versioning and compatibility tests. | Partial | /api/openapi generated from route files (lib/api/openapi.json; openapi.test.ts); src/lib/api/api-contract.json generated with the OpenAPI document fro | Compatibility rules between event schema versions (only 1.0 exists) | I9 |
 | S5-F.1-01 | 3665 | exchange | Every API endpoint should define: | Partial | /api/openapi generated (openapi.test.ts); mutationRule() per route | Owning institution, refusal codes, idempotency, rate limits, audit, classification, deprecation per endpoint | I9 |
 | S5-F.1-02 | 3667 | exchange | Owning institution and service | Partial | /api/openapi generated (openapi.test.ts); mutationRule() per route | Owning institution, refusal codes, idempotency, rate limits, audit, classification, deprecation per endpoint | I9 |
 | S5-F.1-03 | 3668 | exchange | Operation and resource type | Partial | /api/openapi generated (openapi.test.ts); mutationRule() per route | Owning institution, refusal codes, idempotency, rate limits, audit, classification, deprecation per endpoint | I9 |
@@ -2936,38 +2936,38 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-F.1-20 | 3695 | exchange | Endpoint family /indicators/{indicatorId} | Partial | /api/openapi generated (openapi.test.ts); mutationRule() per route | Owning institution, refusal codes, idempotency, rate limits, audit, classification, deprecation per endpoint | I9 |
 | S5-F.1-21 | 3697 | exchange | Actual endpoint naming and access rules should be standardised in the API specification. | Partial | /api/openapi generated (openapi.test.ts); mutationRule() per route | Owning institution, refusal codes, idempotency, rate limits, audit, classification, deprecation per endpoint | I9 |
 | S5-F.1-22 | 3697 | exchange | The existence of an endpoint must never imply public access. | Partial | /api/openapi generated (openapi.test.ts); mutationRule() per route | Owning institution, refusal codes, idempotency, rate limits, audit, classification, deprecation per endpoint | I9 |
-| S5-F.2-01 | 3701 | exchange | Events are useful when one institution needs to notify another that something happened without granting direct database access. | Partial | lib/events/outbox.ts | Event contracts | I9 |
-| S5-F.2-02 | 3705 | exchange | credential.status.changed | Partial | Audit actions become org.civicos.* events; no event catalogue (audit A §1.7) | Declared event types | I9 |
-| S5-F.2-03 | 3706 | exchange | permit.issued | Partial | Audit actions become org.civicos.* events; no event catalogue (audit A §1.7) | Declared event types | I9 |
-| S5-F.2-04 | 3707 | exchange | permit.revoked | Partial | Audit actions become org.civicos.* events; no event catalogue (audit A §1.7) | Declared event types | I9 |
-| S5-F.2-05 | 3708 | exchange | case.status.changed | Partial | Audit actions become org.civicos.* events; no event catalogue (audit A §1.7) | Declared event types | I9 |
-| S5-F.2-06 | 3709 | exchange | court.order.issued | Partial | Audit actions become org.civicos.* events; no event catalogue (audit A §1.7) | Declared event types | I9 |
-| S5-F.2-07 | 3710 | exchange | payment.reconciled | Partial | Audit actions become org.civicos.* events; no event catalogue (audit A §1.7) | Declared event types | I9 |
-| S5-F.2-08 | 3711 | exchange | facility.status.changed | Partial | Audit actions become org.civicos.* events; no event catalogue (audit A §1.7) | Declared event types | I9 |
-| S5-F.2-09 | 3712 | exchange | legal.instrument.effective | Partial | Audit actions become org.civicos.* events; no event catalogue (audit A §1.7) | Declared event types | I9 |
+| S5-F.2-01 | 3701 | exchange | Events are useful when one institution needs to notify another that something happened without granting direct database access. | Partial | lib/events/outbox.ts; lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws register, aggregate and pa | Compatibility rules between event schema versions | I9 |
+| S5-F.2-02 | 3705 | exchange | credential.status.changed | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
+| S5-F.2-03 | 3706 | exchange | permit.issued | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
+| S5-F.2-04 | 3707 | exchange | permit.revoked | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
+| S5-F.2-05 | 3708 | exchange | case.status.changed | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
+| S5-F.2-06 | 3709 | exchange | court.order.issued | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
+| S5-F.2-07 | 3710 | exchange | payment.reconciled | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
+| S5-F.2-08 | 3711 | exchange | facility.status.changed | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
+| S5-F.2-09 | 3712 | exchange | legal.instrument.effective | Partial | Declared in the envelope catalogue (lib/federation/envelope.ts EVENT_CATALOGUE) with schema versions, published by an official of the source instituti | Emitted automatically from the decisions that cause them | I9 |
 | S5-F.2-10 | 3716-3734 | exchange | Contract field event_id (example: "unique-event-id") | Met | CloudEvents id/type/time (lib/events/outbox.ts) |  | — |
 | S5-F.2-11 | 3716-3734 | exchange | Contract field event_type (example: "permit.issued") | Met | CloudEvents id/type/time (lib/events/outbox.ts) |  | — |
-| S5-F.2-12 | 3716-3734 | exchange | Contract field schema_version (example: "1.0") | Not yet | Fixed source /civicos/platform; no schema version, legal context, payload reference; HMAC not signature (audit C F-1) | Event envelope | I9 |
-| S5-F.2-13 | 3716-3734 | exchange | Contract field source_institution_id (example: "issuing-institution") | Not yet | Fixed source /civicos/platform; no schema version, legal context, payload reference; HMAC not signature (audit C F-1) | Event envelope | I9 |
-| S5-F.2-14 | 3716-3734 | exchange | Contract field aggregate_reference (example: "permit-reference") | Not yet | Fixed source /civicos/platform; no schema version, legal context, payload reference; HMAC not signature (audit C F-1) | Event envelope | I9 |
+| S5-F.2-12 | 3716-3734 | exchange | Contract field schema_version (example: "1.0") | Met | lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws register, aggregate and payload references only, |  | — |
+| S5-F.2-13 | 3716-3734 | exchange | Contract field source_institution_id (example: "issuing-institution") | Met | lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws register, aggregate and payload references only, |  | — |
+| S5-F.2-14 | 3716-3734 | exchange | Contract field aggregate_reference (example: "permit-reference") | Met | lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws register, aggregate and payload references only, |  | — |
 | S5-F.2-15 | 3716-3734 | exchange | Contract field occurred_at (example: "timestamp") | Met | CloudEvents id/type/time (lib/events/outbox.ts) |  | — |
 | S5-F.2-16 | 3716-3734 | exchange | Contract field published_at (example: "timestamp") | Met | CloudEvents id/type/time (lib/events/outbox.ts) |  | — |
-| S5-F.2-17 | 3716-3734 | exchange | Contract field legal_context.instrument_reference (example: "law-record-reference") | Not yet | Fixed source /civicos/platform; no schema version, legal context, payload reference; HMAC not signature (audit C F-1) | Event envelope | I9 |
-| S5-F.2-18 | 3716-3734 | exchange | Contract field legal_context.version_reference (example: "effective-version-reference") | Not yet | Fixed source /civicos/platform; no schema version, legal context, payload reference; HMAC not signature (audit C F-1) | Event envelope | I9 |
-| S5-F.2-19 | 3716-3734 | exchange | Contract field payload_reference (example: "authorised-resource-reference") | Not yet | Fixed source /civicos/platform; no schema version, legal context, payload reference; HMAC not signature (audit C F-1) | Event envelope | I9 |
-| S5-F.2-20 | 3716-3734 | exchange | Contract field integrity.signature_reference (example: "signature-or-verification-reference") | Not yet | Fixed source /civicos/platform; no schema version, legal context, payload reference; HMAC not signature (audit C F-1) | Event envelope | I9 |
-| S5-F.2-21 | 3736 | exchange | An event should contain only the information required by its recipients. | Not yet | Outbox payload carries actor and detail to every subscriber (audit C F-1) | Payload reference instead of payload | I9 |
-| S5-F.2-22 | 3736 | exchange | Sensitive payloads should be retrieved through an authorised service rather than embedded in a broadly distributed event. | Not yet | Outbox payload carries actor and detail to every subscriber (audit C F-1) | Payload reference instead of payload | I9 |
+| S5-F.2-17 | 3716-3734 | exchange | Contract field legal_context.instrument_reference (example: "law-record-reference") | Met | lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws register, aggregate and payload references only, |  | — |
+| S5-F.2-18 | 3716-3734 | exchange | Contract field legal_context.version_reference (example: "effective-version-reference") | Met | lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws register, aggregate and payload references only, |  | — |
+| S5-F.2-19 | 3716-3734 | exchange | Contract field payload_reference (example: "authorised-resource-reference") | Met | lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws register, aggregate and payload references only, |  | — |
+| S5-F.2-20 | 3716-3734 | exchange | Contract field integrity.signature_reference (example: "signature-or-verification-reference") | Met | lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws register, aggregate and payload references only, |  | — |
+| S5-F.2-21 | 3736 | exchange | An event should contain only the information required by its recipients. | Met | Envelopes carry references only, no free text (lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws r |  | — |
+| S5-F.2-22 | 3736 | exchange | Sensitive payloads should be retrieved through an authorised service rather than embedded in a broadly distributed event. | Met | Envelopes carry references only, no free text (lib/federation/envelope.ts (envelope: schema version, source institution, legal context from the laws r |  | — |
 | S5-F.3-01 | 3740 | exchange | Use an outbox or equivalent transactional publication pattern so that a committed record change and the event describing it cannot easily drift apart. | Met | lib/events/outbox.ts (committed with audit entry); outbox.test.ts |  | — |
-| S5-F.3-02 | 3742 | exchange | The receiving service should: | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
-| S5-F.3-03 | 3744 | exchange | Authenticate the sender. | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
-| S5-F.3-04 | 3745 | exchange | Validate the schema and signature or message-integrity mechanism. | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
-| S5-F.3-05 | 3746 | exchange | Check the receiving institution's authority and permitted use. | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
-| S5-F.3-06 | 3747 | exchange | Detect duplicate event IDs and safely handle retries. | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
-| S5-F.3-07 | 3748 | exchange | Record acceptance, rejection or pending status. | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
-| S5-F.3-08 | 3749 | exchange | Apply the event to its own domain model only when authorised. | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
-| S5-F.3-09 | 3750 | exchange | Preserve source and correlation references for reconciliation. | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
-| S5-F.3-10 | 3752 | exchange | A message broker provides delivery infrastructure; it does not grant legal authority to process the message. | Not yet | No inbound event receiver (audit C F-2) | Receiver with authentication, schema, authority, dedupe, accept/reject/pending ledger | I9 |
+| S5-F.3-02 | 3742 | exchange | The receiving service should: | Met | lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relationship register, duplicates by event id, accep |  | — |
+| S5-F.3-03 | 3744 | exchange | Authenticate the sender. | Met | lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relationship register, duplicates by event id, accep |  | — |
+| S5-F.3-04 | 3745 | exchange | Validate the schema and signature or message-integrity mechanism. | Met | lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relationship register, duplicates by event id, accep |  | — |
+| S5-F.3-05 | 3746 | exchange | Check the receiving institution's authority and permitted use. | Met | lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relationship register, duplicates by event id, accep |  | — |
+| S5-F.3-06 | 3747 | exchange | Detect duplicate event IDs and safely handle retries. | Met | lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relationship register, duplicates by event id, accep |  | — |
+| S5-F.3-07 | 3748 | exchange | Record acceptance, rejection or pending status. | Met | lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relationship register, duplicates by event id, accep |  | — |
+| S5-F.3-08 | 3749 | exchange | Apply the event to its own domain model only when authorised. | Met | lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relationship register, duplicates by event id, accep |  | — |
+| S5-F.3-09 | 3750 | exchange | Preserve source and correlation references for reconciliation. | Met | lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relationship register, duplicates by event id, accep |  | — |
+| S5-F.3-10 | 3752 | exchange | A message broker provides delivery infrastructure; it does not grant legal authority to process the message. | Met | lib/federation/events.ts receiveEnvelope() (credential, schema and signature, authority under the relationship register, duplicates by event id, accep |  | — |
 
 ### Ownership and portability — Met 21, Partial 17, Not yet 1
 
@@ -3005,9 +3005,9 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-G-30 | 3801 | architecture | Workflow history and decision states | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
 | S5-G-31 | 3802 | architecture | Legal references and the versions used | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
 | S5-G-32 | 3803 | architecture | Audit events and integrity-verification material | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
-| S5-G-33 | 3804 | architecture | Register schemas and controlled vocabularies | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Rates and rules (lib/law/rules.ts) and controlled vocabularies beyond register types are not exported | I9 |
-| S5-G-34 | 3805 | architecture | Forms, rules and workflow configuration | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Rates and rules (lib/law/rules.ts) and controlled vocabularies beyond register types are not exported | I9 |
-| S5-G-35 | 3806 | architecture | Data dictionaries and API/event schemas | Not yet | The export is self-describing JSON per part; no data dictionary or API/event schema travels with it | Data dictionaries and API/event schemas in the export | I9 |
+| S5-G-33 | 3804 | architecture | Register schemas and controlled vocabularies | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Controlled vocabularies beyond register types are not exported | I9 |
+| S5-G-34 | 3805 | architecture | Forms, rules and workflow configuration | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Controlled vocabularies beyond register types are not exported | I9 |
+| S5-G-35 | 3806 | architecture | Data dictionaries and API/event schemas | Not yet | The export is self-describing JSON per part with its configuration (configuration.json (approved mappings and rule versions it owns, versions its deci | Data dictionaries and API/event schemas in the export | I9 |
 | S5-G-36 | 3807 | architecture | Export manifest, checksums and validation report | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
 | S5-G-37 | 3809 | architecture | A PDF-only export is not sufficient. | Met | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg |  | — |
 | S5-G-38 | 3809 | architecture | It may preserve a readable view while losing the structured data, history and relationships needed for future operation. | Partial | Ownership via register-owners.ts |  | I9 |
@@ -3141,23 +3141,23 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-K-23 | 4035 | architecture | A gap should lead to a specific action: name an owner, explain what evidence is missing, state the dependency and define the acceptance test. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 | S5-K-24 | 4035 | architecture | A single overall percentage is not enough, especially if a critical legal or security requirement remains unverified. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 
-### Acceptance — Met 9, Partial 7
+### Acceptance — Met 13, Partial 3
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
 | S5-L-01 | 4041 | acceptance | An institution can install CivicOS, create its legal configuration and operate an authorised service without another institution being online. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-01: `app/src/lib/nation/edition.test.ts` "runs facility licensing, professional registration and the medicines reg |  | — |
-| S5-L-02 | 4042 | acceptance | A later federation can be enabled without changing the original institution or record identifiers. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-02: `app/src/lib/portability/export.test.ts` "goes back into an empty installation with every record identifier un | Record and institution identifiers survive an export and an import into another installation (proven). Enabling a live federation exchange with the or | I9 |
+| S5-L-02 | 4042 | acceptance | A later federation can be enabled without changing the original institution or record identifiers. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-02: `app/src/lib/portability/export.test.ts` "goes back into an empty installation with every record identifier un |  | — |
 | S5-L-03 | 4043 | acceptance | A remote institution cannot query protected records without a valid, purpose-limited authorisation. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-03: `app/src/lib/exchange/services.test.ts` "purposes approved per caller and service" (all four tests); `app/src/ |  | — |
 | S5-L-04 | 4044 | acceptance | An event retry cannot duplicate a legally material action. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-04: `app/src/lib/customs/idempotency.test.ts` "a repeated open, decision, notice, transfer and reconciliation each |  | — |
-| S5-L-05 | 4045 | acceptance | A revoked institutional relationship stops new exchanges while preserving prior records. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-05: `app/src/lib/data/store/relationships.test.ts` "suspending, ending or expiring stops the grant; earlier versio | Suspending or revoking an exchange integration is proven to stop `callService()` with earlier log entries and receipts intact. Exchange services are b | I9 |
+| S5-L-05 | 4045 | acceptance | A revoked institutional relationship stops new exchanges while preserving prior records. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-05: `app/src/lib/data/store/relationships.test.ts` "suspending, ending or expiring stops the grant; earlier versio |  | — |
 | S5-L-06 | 4046 | acceptance | A migrated record retains its source, transformation history and verification status. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-06: `app/src/lib/data/case-import.test.ts` "loads cases … audited with the file hash"; `app/src/lib/organisations/ | Source and file hash are proven for loads. There is no migration manifest (transformation history, verification status per record, reconciliation coun | I9 |
 | S5-L-07 | 4047 | acceptance | A correction produces an auditable new state rather than silently erasing history. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-07: `app/src/lib/records/decisions.test.ts` "…a correction supersedes"; `app/src/lib/civil/register.test.ts` "…cor |  | — |
 | S5-L-08 | 4048 | acceptance | An institution can export structured records, documents, schemas and audit evidence. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-08: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
 | S5-L-09 | 4049 | acceptance | An exported record can be validated without depending on access to the original production interface. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-09: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
-| S5-L-10 | 4050 | acceptance | A backup can be restored into a clean environment using documented procedures. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-10: `app/src/lib/data/backups.test.ts` "takes an encrypted backup … and verifies it by a dry run" (scratch store); | The full fresh-standby drill (`dr-drill.mjs`) is documented but not run in CI; the tested restores go back into the same environment. | I9 |
+| S5-L-10 | 4050 | acceptance | A backup can be restored into a clean environment using documented procedures. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-10: `app/src/lib/data/backups.test.ts` "takes an encrypted backup … and verifies it by a dry run" (scratch store); |  | — |
 | S5-L-11 | 4051 | acceptance | The restored environment preserves record relationships and audit-integrity verification. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-11: `app/src/lib/data/backups.test.ts` "restores four-eyes … the replaced state kept and named" (`verifyAuditChain |  | — |
 | S5-L-12 | 4052 | acceptance | Privileged access and key-management operations are recorded and independently reviewable. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-12: `app/src/lib/keys/custody.test.ts` "names the key version that signed after a rotation in Vault", "signs audit | Key and privileged operations are recorded, bulk officer creation included, and the audit chain is read through the API only by auditors and the data- | I9 |
-| S5-L-13 | 4053 | acceptance | A service can operate in a declared degraded state without claiming that unavailable checks succeeded. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-13: `app/src/lib/messaging/messaging.test.ts` "keeps messages queued and says "not connected" while no provider is | Individual components report degradation honestly. There is no declared degraded state per service, and no test that a case step depending on an unava | I9 |
+| S5-L-13 | 4053 | acceptance | A service can operate in a declared degraded state without claiming that unavailable checks succeeded. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-13: `app/src/lib/messaging/messaging.test.ts` "keeps messages queued and says "not connected" while no provider is |  | — |
 | S5-L-14 | 4054 | acceptance | A software upgrade detects incompatible schema or policy changes before they corrupt production records. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-14: `app/src/lib/data/readiness.test.ts` "reports each customisation as compatible, needs change or blocking…", "b |  | — |
 | S5-L-15 | 4055 | acceptance | A disconnected institution can receive a controlled software update and verify its authenticity. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-15: `app/src/lib/data/mirror.test.ts` "each step is named, in order, audited; a matching seal makes the releases m | The controlled media chain is proven. Authenticity is not: the seal is a physical seal ID, and no test verifies the DSSE signature or artifact digest  | I9 |
 | S5-L-16 | 4056 | acceptance | Shared services cannot override institution-specific legal authority or decision ownership. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-16: `app/src/app/api/payments/route.test.ts` "never marks a tax or customs bill paid…"; `app/src/lib/casework/regi |  | — |
@@ -3487,9 +3487,9 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S6-K-01 | 4675 | design | Before CivicOS is declared ready for a real institution, require evidence for each of the following. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (54 proven, 30 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
-| S6-K-02 | 4681 | design | Use this as a working checklist. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (54 proven, 30 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
-| S6-K-03 | 4681 | design | Ticking an item tracks your review here; it does not verify the underlying system or certify production readiness. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (54 proven, 30 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S6-K-01 | 4675 | design | Before CivicOS is declared ready for a real institution, require evidence for each of the following. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (58 proven, 26 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S6-K-02 | 4681 | design | Use this as a working checklist. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (58 proven, 26 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S6-K-03 | 4681 | design | Ticking an item tracks your review here; it does not verify the underlying system or certify production readiness. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (58 proven, 26 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
 | S6-K-04 | 4685 | acceptance | Institution mandate and record ownership approved | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-01: `app/src/lib/data/store/institutions.test.ts` "after setup changes only by proposal citing the law and a diffe |  | — |
 | S6-K-05 | 4687 | acceptance | Legal instruments versioned and effective dates validated | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-02: `app/src/lib/law/register.test.ts` "records a version that cannot be cited until a different official confirms |  | — |
 | S6-K-06 | 4689 | acceptance | Decision authorities and delegations verified | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-03: `app/src/lib/permits/authority.test.ts` "governs decisions only once a second official approves a version with |  | — |
@@ -3521,9 +3521,9 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 
 *Platform rule stricter* means CivicOS will not hold the item at all (cited rule); the row says what it holds instead. Rows with basis `domain` are assessed at the level of their domain (no item-specific rule): the status is the domain's state and the step the domain's step; a contract and its fields follow the form they define. Every catalogue form carries `I1-catalogue` in `also_steps`: its field contract designed in the form library at or above the catalogue's standard, beside the sector step that builds its procedure. Steps I12 and I13 were added to the plan for the catalogue (plan §5).
 
-**Self-check.** Content lines not accounted for: 0. Headings (parts, sections, sub-sections) without a row: none. Catalogue IDs without a row: 0. Rows without a step: 0. Forms: 2072, with their own JSON contract: 145, with a contract CivicOS wrote (form library): 401, contract not yet given: 1526.
+**Self-check.** Content lines not accounted for: 0. Headings (parts, sections, sub-sections) without a row: none. Catalogue IDs without a row: 0. Rows without a step: 0. Forms: 2072, with their own JSON contract: 145, with a contract CivicOS wrote (form library): 422, contract not yet given: 1505.
 
-**Form status.** catalogued 0, contract_missing 1322, contract_draft 530, under_review 91, blocked 1, excluded 128, approved 0, production 0.
+**Form status.** catalogued 0, contract_missing 1301, contract_draft 551, under_review 91, blocked 1, excluded 128, approved 0, production 0.
 
 **Inputs.** All 13 parts and the supplement received. The topics the 13 parts left out are now catalogued by the supplement (table below); the earlier gap rows became the supplement's rows. Still missing from the received text: the field contract of every form listed only in a table (`contract: not yet given`).
 
@@ -3578,7 +3578,7 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 10 | 5 | 75 | 262 | 62 | 6 | 13 | 0 | 423 |
 | Part 11 | 117 | 166 | 12 | 4 | 24 | 21 | 46 | 390 |
 | Part 12 | 26 | 207 | 45 | 4 | 8 | 24 | 97 | 411 |
-| Part 13 | 15 | 373 | 149 | 0 | 1 | 21 | 0 | 559 |
+| Part 13 | 15 | 379 | 143 | 0 | 1 | 21 | 0 | 559 |
 | Supplement: shared contract standard | 0 | 50 | 0 | 0 | 0 | 0 | 0 | 50 |
 | Part 5 (supplement, Stage B contracts) | 3 | 39 | 7 | 15 | 0 | 0 | 0 | 64 |
 | Part 6 (supplement, Stage B contracts) | 1 | 25 | 0 | 0 | 38 | 0 | 0 | 64 |
@@ -3598,7 +3598,7 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | Part 20 | 0 | 64 | 10 | 0 | 0 | 0 | 0 | 74 |
 | Part 21 | 1 | 58 | 58 | 0 | 0 | 0 | 0 | 117 |
 | Part 22 | 0 | 77 | 21 | 0 | 0 | 0 | 0 | 98 |
-| **All** | **229** | **3808** | **2353** | **250** | **334** | **268** | **306** | **7548** |
+| **All** | **229** | **3814** | **2347** | **250** | **334** | **268** | **306** | **7548** |
 
 
 ### By plan step
@@ -3614,12 +3614,12 @@ Every item of ChatGPT's *Complete Government Form System* (`docs/forms-catalogue
 | I6 | 0 | 598 | 525 | 0 | 0 | 13 | 0 | 1136 |
 | I7 | 0 | 526 | 675 | 0 | 0 | 35 | 0 | 1236 |
 | I8 | 0 | 198 | 128 | 0 | 0 | 3 | 0 | 329 |
-| I9 | 0 | 159 | 49 | 0 | 0 | 0 | 0 | 208 |
+| I9 | 0 | 165 | 43 | 0 | 0 | 0 | 0 | 208 |
 | I11 | 0 | 115 | 42 | 229 | 0 | 13 | 173 | 572 |
 | I12 | 0 | 158 | 30 | 21 | 12 | 3 | 12 | 236 |
 | I13 | 0 | 93 | 138 | 0 | 0 | 0 | 0 | 231 |
 | Throughout | 0 | 297 | 1 | 0 | 0 | 0 | 0 | 298 |
-| **All** | **229** | **3808** | **2353** | **250** | **334** | **268** | **306** | **7548** |
+| **All** | **229** | **3814** | **2347** | **250** | **334** | **268** | **306** | **7548** |
 
 
 Also-steps (a row's further steps): I1-catalogue 3264, I10 56, I11 2, I12 1, I3 3, I7 25, I8 13, I9 63, Throughout 13.
@@ -3705,7 +3705,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 56, I11 2, I12 1, I3 
 | Political parties and campaign finance | 0 | 1 | 0 | 0 | 0 | 3 | 51 | 55 |
 | Public participation and information access | 0 | 4 | 36 | 0 | 0 | 2 | 0 | 42 |
 | Citizen and business digital services | 1 | 25 | 56 | 0 | 0 | 0 | 0 | 82 |
-| Whole-of-government workflow | 3 | 41 | 6 | 0 | 0 | 0 | 0 | 50 |
+| Whole-of-government workflow | 3 | 47 | 0 | 0 | 0 | 0 | 0 | 50 |
 | Records, documents and digital trust | 1 | 61 | 16 | 0 | 0 | 0 | 0 | 78 |
 | Official statistics | 0 | 18 | 52 | 0 | 0 | 0 | 0 | 70 |
 | Service governance and performance | 4 | 9 | 33 | 0 | 0 | 0 | 0 | 46 |
@@ -3719,7 +3719,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 56, I11 2, I12 1, I3 
 | Local and regional government | 0 | 45 | 29 | 0 | 0 | 0 | 0 | 74 |
 | Housing, planning and building control | 0 | 64 | 10 | 0 | 0 | 0 | 0 | 74 |
 | Shared internal administration | 1 | 58 | 58 | 0 | 0 | 0 | 0 | 117 |
-| **All** | **229** | **3808** | **2353** | **250** | **334** | **268** | **306** | **7548** |
+| **All** | **229** | **3814** | **2347** | **250** | **334** | **268** | **306** | **7548** |
 
 
 ### By category
@@ -3733,7 +3733,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 56, I11 2, I12 1, I3 
 | engineering deliverable | 0 | 100 | 19 | 4 | 9 | 2 | 0 | 134 |
 | exchange | 1 | 13 | 34 | 5 | 2 | 0 | 0 | 55 |
 | field group | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
-| form | 64 | 506 | 1156 | 91 | 128 | 0 | 127 | 2072 |
+| form | 64 | 512 | 1150 | 91 | 128 | 0 | 127 | 2072 |
 | permission | 1 | 52 | 0 | 4 | 0 | 0 | 0 | 57 |
 | register | 2 | 26 | 18 | 1 | 0 | 0 | 11 | 58 |
 | safeguard | 40 | 434 | 142 | 28 | 40 | 24 | 21 | 729 |
@@ -3742,7 +3742,7 @@ Also-steps (a row's further steps): I1-catalogue 3264, I10 56, I11 2, I12 1, I3 
 | table row | 0 | 87 | 9 | 14 | 9 | 1 | 1 | 121 |
 | values source | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 11 |
 | workflow stage | 5 | 45 | 28 | 0 | 0 | 0 | 12 | 90 |
-| **All** | **229** | **3808** | **2353** | **250** | **334** | **268** | **306** | **7548** |
+| **All** | **229** | **3814** | **2347** | **250** | **334** | **268** | **306** | **7548** |
 
 
 ### Deviations: platform rule stricter and legal review (584 rows)
@@ -6423,20 +6423,20 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | exchange.trade_authority.response | 1224 | 3.6 | form | exchange.trade_authority.response — Respond to an authorized trade-information request — Receiving institution — Response — Exchange response | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
 | exchange.customs_permit.verify | 1225 | 3.6 | form | exchange.customs_permit.verify — Request verification of an import/export permit — Customs or authorized trader — Verification — Verification result | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
 | exchange.customs_permit.response | 1226 | 3.6 | form | exchange.customs_permit.response — Return the permit verification result — Permit-owning institution — Response — Verification response | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
-| exchange.tax_status.verify | 1227 | 3.6 | form | exchange.tax_status.verify — Request verification of a legally relevant tax-registration status — Authorized requesting institution — Verification — Verification result | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
-| exchange.tax_status.response | 1228 | 3.6 | form | exchange.tax_status.response — Return the permitted tax-status result — Revenue Authority — Response — Status response | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
-| exchange.business_status.verify | 1229 | 3.6 | form | exchange.business_status.verify — Verify a business-registration status — Authorized institution — Verification — Verification result | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
-| exchange.business_status.response | 1230 | 3.6 | form | exchange.business_status.response — Return the business-status result — Business registry — Response — Status response | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
+| exchange.tax_status.verify | 1227 | 3.6 | form | exchange.tax_status.verify — Request verification of a legally relevant tax-registration status — Authorized requesting institution — Verification — Verification result | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | The nation's exchange relationships and each integration's purposes (none ship) | I9 (+I1-catalogue) |
+| exchange.tax_status.response | 1228 | 3.6 | form | exchange.tax_status.response — Return the permitted tax-status result — Revenue Authority — Response — Status response | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | The nation's exchange relationships and each integration's purposes (none ship) | I9 (+I1-catalogue) |
+| exchange.business_status.verify | 1229 | 3.6 | form | exchange.business_status.verify — Verify a business-registration status — Authorized institution — Verification — Verification result | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | The nation's exchange relationships and each integration's purposes (none ship) | I9 (+I1-catalogue) |
+| exchange.business_status.response | 1230 | 3.6 | form | exchange.business_status.response — Return the business-status result — Business registry — Response — Status response | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | The nation's exchange relationships and each integration's purposes (none ship) | I9 (+I1-catalogue) |
 | exchange.investment_approval.verify | 1231 | 3.6 | form | exchange.investment_approval.verify — Verify an investment approval — Authorized institution — Verification — Verification result | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
 | exchange.investment_approval.response | 1232 | 3.6 | form | exchange.investment_approval.response — Return an investment-approval result — Approval-owning institution — Response — Approval response | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
 | exchange.procurement_status.verify | 1233 | 3.6 | form | exchange.procurement_status.verify — Verify a supplier or procurement record where lawful — Authorized institution — Verification — Verification result | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
 | exchange.procurement_status.response | 1234 | 3.6 | form | exchange.procurement_status.response — Return the permitted procurement-status result — Record-owning authority — Response — Status response | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
 | exchange.financial_reference.verify | 1235 | 3.6 | form | exchange.financial_reference.verify — Verify a financial reference for an authorized administrative purpose — Authorized institution — Verification — Verification result | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
 | exchange.financial_reference.response | 1236 | 3.6 | form | exchange.financial_reference.response — Return the permitted verification result — Record-owning institution — Response — Verification response | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
-| exchange.referral.create | 1237 | 3.6 | form | exchange.referral.create — Refer a case to another institution under an approved relationship — Authorized officer — Referral — Referral record | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
-| exchange.referral.accept | 1238 | 3.6 | form | exchange.referral.accept — Accept or decline an incoming referral — Authorized receiving officer — Referral review — Referral outcome | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
-| exchange.referral.update | 1239 | 3.6 | form | exchange.referral.update — Return a permitted referral-status update — Authorized receiving officer — Monitoring — Status update | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
-| exchange.referral.close | 1240 | 3.6 | form | exchange.referral.close — Close an inter-institution referral — Authorized officer — Closure — Closure record | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | This exchange service is not defined | I9 (+I1-catalogue) |
+| exchange.referral.create | 1237 | 3.6 | form | exchange.referral.create — Refer a case to another institution under an approved relationship — Authorized officer — Referral — Referral record | Partial | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; the referral.status.changed  | The referral procedure carrying this contract (lib/casework/referral.ts referralTemplate() has no form contract yet) | I9 (+I1-catalogue) |
+| exchange.referral.accept | 1238 | 3.6 | form | exchange.referral.accept — Accept or decline an incoming referral — Authorized receiving officer — Referral review — Referral outcome | Partial | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; the referral.status.changed  | The referral procedure carrying this contract (lib/casework/referral.ts referralTemplate() has no form contract yet) | I9 (+I1-catalogue) |
+| exchange.referral.update | 1239 | 3.6 | form | exchange.referral.update — Return a permitted referral-status update — Authorized receiving officer — Monitoring — Status update | Partial | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; the referral.status.changed  | The referral procedure carrying this contract (lib/casework/referral.ts referralTemplate() has no form contract yet) | I9 (+I1-catalogue) |
+| exchange.referral.close | 1240 | 3.6 | form | exchange.referral.close — Close an inter-institution referral — Authorized officer — Closure — Closure record | Partial | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; the referral.status.changed  | The referral procedure carrying this contract (lib/casework/referral.ts referralTemplate() has no form contract yet) | I9 (+I1-catalogue) |
 | FC3-3.6-03 | 1242 | 3.6 | data contract | Contract exchange.customs_permit.verify: {"schema_version": "civicos.form-contract.v1", "form_id": "exchange.customs_permit.verify", "record_type": "civicos.authorized_exchange_request", "form_version": 1, "status": "draft", "legal_basis":  | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | Field of exchange.customs_permit.verify as the contract defines it (type, validation, classification, source) in the form library and the pr | I9 (+I1-catalogue) |
 | FC3-3.6-04 | 1250-1261 | 3.6 | data contract | exchange.customs_permit.verify field exchange.requesting_institution: {"type": "registry_reference", "required": true, "validation": [{"rule": "institution_active", "params": {}}, {"rule": "actor_authorized_for_exchange", "params": {}}], "v | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | Field of exchange.customs_permit.verify as the contract defines it (type, validation, classification, source) in the form library and the pr | I9 (+I1-catalogue) |
 | FC3-3.6-05 | 1262-1273 | 3.6 | data contract | exchange.customs_permit.verify field exchange.receiving_institution: {"type": "registry_reference", "required": true, "validation": [{"rule": "approved_relationship_exists", "params": {}}, {"rule": "recipient_authorized_for_data", "params": | Partial | lib/exchange/services.ts callService() (owner, version, declared returns, purposes approved per caller and service by two officials, signed  | Field of exchange.customs_permit.verify as the contract defines it (type, validation, classification, source) in the form library and the pr | I9 (+I1-catalogue) |
@@ -10632,25 +10632,25 @@ Every row where the catalogue goes beyond a binding platform rule. *Platform rul
 | FC13-5.3-07 | 837 | 5.3 | scope | The verification method and legal basis. | Partial | lib/records/decisions.ts (sealed: reasons, citations, officials, authority mapping version, rule versions, profile); test lib/records/decisi | The domain's procedures do not exist yet | I13 |
 | FC13-5.3-08 | 838 | 5.3 | safeguard | A representative's authorization for one service must not automatically grant access to every record belonging to the person or business. | Not yet | Citizen wallet (/wallet: apply for a permit, pay, sign, check a document; demo and training only), /verify, delegations (lib/records/delegat | No Citizen and business digital services records or procedures exist | I13 |
 
-##### Whole-of-government workflow — Met 3, Partial 41, Not yet 6
+##### Whole-of-government workflow — Met 3, Partial 47
 
 | ID | Lines | Section | Cat. | Item | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|---|
-| GOV-WF-001 | 669 | 2.2 | form | GOV-WF-001 — Inter-institution referral — Authorized referral and receiving acknowledgement | Met | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts |  | — (+I1-catalogue) |
-| GOV-WF-002 | 670 | 2.2 | form | GOV-WF-002 — Inter-institution information request — Scoped, lawful information request | Partial | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | Scoped request, consultation and handover records with acceptance | I9 (+I1-catalogue) |
-| GOV-WF-003 | 671 | 2.2 | form | GOV-WF-003 — Cross-institution service handover — Accepted transfer of responsibility | Partial | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | Scoped request, consultation and handover records with acceptance | I9 (+I1-catalogue) |
-| GOV-WF-004 | 672 | 2.2 | form | GOV-WF-004 — Inter-agency task assignment — Authorized task, owner and deadline | Not yet | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | Procedure package, field contract and record for this form | I9 (+I1-catalogue) |
-| GOV-WF-005 | 673 | 2.2 | form | GOV-WF-005 — Inter-agency decision request — Request for a decision by the competent authority | Partial | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | Scoped request, consultation and handover records with acceptance | I9 (+I1-catalogue) |
-| GOV-WF-006 | 674 | 2.2 | form | GOV-WF-006 — Inter-institution consultation request — Request for input within a defined scope | Not yet | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | Procedure package, field contract and record for this form | I9 (+I1-catalogue) |
+| GOV-WF-001 | 669 | 2.2 | form | GOV-WF-001 — Inter-institution referral — Authorized referral and receiving acknowledgement | Met | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; library contract of batch 11 |  | — (+I1-catalogue) |
+| GOV-WF-002 | 670 | 2.2 | form | GOV-WF-002 — Inter-institution information request — Scoped, lawful information request | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
+| GOV-WF-003 | 671 | 2.2 | form | GOV-WF-003 — Cross-institution service handover — Accepted transfer of responsibility | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
+| GOV-WF-004 | 672 | 2.2 | form | GOV-WF-004 — Inter-agency task assignment — Authorized task, owner and deadline | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
+| GOV-WF-005 | 673 | 2.2 | form | GOV-WF-005 — Inter-agency decision request — Request for a decision by the competent authority | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
+| GOV-WF-006 | 674 | 2.2 | form | GOV-WF-006 — Inter-institution consultation request — Request for input within a defined scope | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
 | GOV-WF-007 | 675 | 2.2 | form | GOV-WF-007 — Government directive registration — Authenticated directive and authority check | Partial | lib/data/directives.ts (draft, sign, rescind, effective_at; instructionRefusal() under relationships); test lib/data/directives.test.ts | Required responses and outstanding actions (plan I5) | I5 (+I1-catalogue) |
 | GOV-WF-008 | 676 | 2.2 | form | GOV-WF-008 — Directive implementation response — Recorded response and outstanding actions | Partial | lib/data/directives.ts (draft, sign, rescind, effective_at; instructionRefusal() under relationships); test lib/data/directives.test.ts | Required responses and outstanding actions (plan I5) | I5 (+I1-catalogue) |
-| GOV-WF-009 | 677 | 2.2 | form | GOV-WF-009 — Inter-agency service dependency declaration — Defined dependency and responsible parties | Not yet | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | Procedure package, field contract and record for this form | I9 (+I1-catalogue) |
-| GOV-WF-010 | 678 | 2.2 | form | GOV-WF-010 — Cross-institution dispute referral — Referral to an authorized resolving body | Not yet | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | Procedure package, field contract and record for this form | I9 (+I1-catalogue) |
-| GOV-WF-011 | 679 | 2.2 | form | GOV-WF-011 — Inter-agency agreement registration — Agreement, scope, signatories and validity | Partial | lib/data/store/relationships.ts (approved relationships via policy-change.ts), roles.ts readRelationship()/directiveTargetRefusal(); tests r | Agreement signatories and validity as agreement records | I9 (+I1-catalogue) |
-| GOV-WF-012 | 680 | 2.2 | form | GOV-WF-012 — Inter-agency agreement review — Review, amendment or termination | Partial | lib/data/store/relationships.ts (approved relationships via policy-change.ts), roles.ts readRelationship()/directiveTargetRefusal(); tests r | Agreement signatories and validity as agreement records | I9 (+I1-catalogue) |
-| GOV-WF-013 | 681 | 2.2 | form | GOV-WF-013 — Shared service onboarding — Institutional integration and acceptance | Not yet | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | Procedure package, field contract and record for this form | I9 (+I1-catalogue) |
+| GOV-WF-009 | 677 | 2.2 | form | GOV-WF-009 — Inter-agency service dependency declaration — Defined dependency and responsible parties | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
+| GOV-WF-010 | 678 | 2.2 | form | GOV-WF-010 — Cross-institution dispute referral — Referral to an authorized resolving body | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
+| GOV-WF-011 | 679 | 2.2 | form | GOV-WF-011 — Inter-agency agreement registration — Agreement, scope, signatories and validity | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
+| GOV-WF-012 | 680 | 2.2 | form | GOV-WF-012 — Inter-agency agreement review — Review, amendment or termination | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
+| GOV-WF-013 | 681 | 2.2 | form | GOV-WF-013 — Shared service onboarding — Institutional integration and acceptance | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
 | GOV-WF-014 | 682 | 2.2 | form | GOV-WF-014 — Shared service access request — Approved service access and scope | Met | proposeIntegrationApproval()/confirmIntegrationApproval() (an integration, its scopes and purposes approved by two officials); test lib/data |  | — (+I1-catalogue) |
-| GOV-WF-015 | 683 | 2.2 | form | GOV-WF-015 — Cross-institution workflow exception — Authorized exception with justification and expiry | Not yet | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | Procedure package, field contract and record for this form | I9 (+I1-catalogue) |
+| GOV-WF-015 | 683 | 2.2 | form | GOV-WF-015 — Cross-institution workflow exception — Authorized exception with justification and expiry | Partial | lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institutio | Adoption by each institution: its cross-institution procedures approved by a second official of its own | I9 (+I1-catalogue) |
 | FC13-2.2-01 | 684 | 2.2 | safeguard | Cross-institution tasks must not silently become binding orders. | Partial | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | The requirement as stated is not built for this domain beyond the cited records | I9 |
 | FC13-2.2-02 | 684 | 2.2 | safeguard | Every workflow must distinguish a request, a consultation, a referral, an agreement, a directive and a legally binding decision. | Partial | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | The requirement as stated is not built for this domain beyond the cited records | I9 |
 | FC13-4.1-01 | 782 | 4.1 | safeguard | The workflow engine should coordinate tasks between institutions while keeping each institution's legal decisions under its own control. | Partial | lib/casework/referral.ts (referral is a case at the receiving institution); test lib/casework/referral.test.ts; lib/data/store/relationships | The requirement as stated is not built for this domain beyond the cited records | I9 |

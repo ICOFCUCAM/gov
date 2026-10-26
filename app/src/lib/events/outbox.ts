@@ -90,6 +90,22 @@ export function noteAudit(e: AuditEntry): CloudEvent | null {
   return ev;
 }
 
+/**
+ * What a subscriber receives (plan I9; specification Part 5 F "An event should
+ * contain only the information required by its recipients"): the event without
+ * the actor's name and without the audit entry's free-text detail, i.e. the
+ * action, the resource reference, the outcome and the link to the audit entry
+ * (its sequence and hash). The full entry stays in the audit chain, read under
+ * its own rules; a receiver that needs the record asks the owning service.
+ */
+export type SubscriberEvent = Omit<CloudEvent, 'data'> & { data: Omit<CloudEvent['data'], 'actor' | 'detail'> };
+export function subscriberEvent(ev: CloudEvent): SubscriberEvent {
+  const { data, ...rest } = ev;
+  const { actor: _actor, detail: _detail, ...kept } = data;
+  void _actor; void _detail;
+  return { ...rest, data: kept };
+}
+
 /** A subscription topic matches an event: "*", the action itself, or a prefix of it ("facility" matches facility.publish). The "org.civicos." or "civicos." prefix is optional. */
 export function topicMatches(topic: string, type: string): boolean {
   const t = topic.trim().replace(/^org\.civicos\./, '').replace(/^civicos\./, '');

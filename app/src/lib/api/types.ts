@@ -349,6 +349,13 @@ export interface IntegrationClient {
    * recorded (see `approval`).
    */
   purposes?: Record<string, string[]>;
+  /**
+   * I9 (federation): the registered institution this integration acts for (another institution's own
+   * installation), approved with its terms by two officials. Its exchanges are then bound to the
+   * relationship register (lib/federation/binding.ts): they answer only under an approved `exchange`
+   * relationship in force. Absent: an outside system that is not an institution of the register.
+   */
+  institution?: string;
   /** The two-official approval in force; absent on an integration approved before approvals needed two officials. */
   approval?: IntegrationApprovalRecord;
   /** A proposed approval (or change of scopes and purposes) waiting for a different official. */
@@ -361,6 +368,8 @@ export interface IntegrationClient {
 export interface IntegrationTerms {
   scopes: string[];
   purposes: Record<string, string[]>;
+  /** I9: the registered institution the integration acts for (see IntegrationClient.institution). */
+  institution?: string;
 }
 
 export interface IntegrationApprovalProposal extends IntegrationTerms {
