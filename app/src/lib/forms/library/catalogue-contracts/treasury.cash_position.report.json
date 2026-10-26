@@ -1,0 +1,290 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "treasury.cash_position.report",
+ "record_type": "treasury.cash_forecast",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "country.treasury.cash: the treasury reporting entities, forecast horizons, approved cash categories, reconciliation frequency, variance thresholds and escalation authority (none ship).",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for public finance records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "treasury.cash_position.report",
+  "part": 2,
+  "section": "2.4",
+  "line": 2267,
+  "batch": 8
+ },
+ "library": {
+  "title": "Report an authorized cash position",
+  "intro": "Report a cash position (balances held at a date) for an institution or the treasury.",
+  "owner": "finance",
+  "filled_by": "The treasury or an authorised institution.",
+  "authority": "The finance authority the nation names for the finance slot under Who is responsible (authorityFor('finance')); the spending institution is named on each record and acts only for itself; never a ministry by name.",
+  "procedure": null,
+  "intended": "Cash position report: not built (no register of cash positions yet; positions come from the treasury's banking connection, integration register 21).",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadFinance() in lib/auth/roles.ts: officials of the finance authority, and of a spending institution for its own records; auditors with a purpose; every read of a payment in the access log",
+   "access.others": "Payee bank details are sealed and shown masked; no other institution reads them",
+   "amounts.stated": "report.amount: the amount the reporting official states"
+  },
+  "nation_values": [
+   {
+    "key": "treasury.cash_forecast.variance_threshold",
+    "kind": "threshold",
+    "source": "setting",
+    "decision": "The variance above which an explanation is required and escalated (the nation's treasury rules); none ships."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "report-not-built",
+    "what": "Cash position report: not built (no register of cash positions yet; positions come from the treasury's banking connection, integration register 21).",
+    "why": "The record type and its procedure are the nation's treasury configuration.",
+    "rule": "CLAUDE.md Government operating model: cases change only under an approved procedure package; plan step I5"
+   },
+   {
+    "id": "officer-from-sign-in",
+    "what": "The official who records it comes from the signed-in session, never typed; their authority is the power the procedure step needs and the role roles.ts gives them",
+    "why": "Who acted is the verified signed-in official.",
+    "rule": "CLAUDE.md Who acted: withOfficial() replaces any name in the request"
+   },
+   {
+    "id": "stated-amount",
+    "what": "The amount is what a person states (an institution's request or forecast, an invoice, the officials' proposed figure), typed as money with its currency and named in the form's amounts.stated policy; it is never a charge, and the amount that binds is the one the sealed decision and the register record",
+    "why": "A request or forecast is a statement; only a decision of the officials the procedure names fixes an allocation, a commitment or a payment.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; plan step I5 (no amount typed into code)"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2267,
+    "quotes": [
+     "treasury.cash_position.report",
+     "Report an authorized cash position",
+     "Treasury or authorized institution",
+     "Reporting",
+     "Cash position record"
+    ],
+    "met_by": {
+     "fields": [
+      "report.amount"
+     ],
+     "deviation": "report-not-built"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2283,
+    "quotes": [
+     "Country decisions: treasury reporting entities; forecast horizons; approved cash categories; reconciliation frequency; variance thresholds and escalation authority."
+    ],
+    "met_by": {
+     "country_decision": "country.treasury.cash"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "report.institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_institution",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Institution"
+   },
+   "hint": {
+    "en": "The institution in the institution register."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter institution.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "report.as_of",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "As of"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter as of."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "report.amount",
+   "type": "money",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "NONNEGATIVE",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Amount"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter amount.",
+     "NONNEGATIVE": "The amount cannot be below zero."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "report.explanation",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Explanation"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter explanation.",
+     "length": "Explanation must be between 1 and 4000 characters."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "report.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reported by"
+   },
+   "hint": {
+    "en": "The signed-in official; never typed."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "report.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}

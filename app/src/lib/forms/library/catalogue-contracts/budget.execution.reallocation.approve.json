@@ -1,0 +1,360 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "budget.execution.reallocation.approve",
+ "record_type": "budget.execution",
+ "form_version": 1,
+ "procedure_package_id": "budget.revision",
+ "legal_basis": [],
+ "country_decisions": [
+  "country.budget.execution: permitted reallocation types, who can approve each type, whether a supplementary appropriation requires legislative action, fiscal thresholds, year-end closure and carry-forward rules (none ship).",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for public finance records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "budget.execution.reallocation.approve",
+  "part": 2,
+  "section": "2.5",
+  "line": 2466,
+  "batch": 8
+ },
+ "library": {
+  "title": "Approve or refuse a reallocation",
+  "intro": "Approve or refuse a budget revision, citing the law, with reasons. Two officials who can sign decide it; a reduction never goes below what is committed.",
+  "owner": "finance",
+  "filled_by": "Officials who can sign at the finance authority (the authority the nation's law names for each kind of revision).",
+  "authority": "The finance authority the nation names for the finance slot under Who is responsible (authorityFor('finance')); the spending institution is named on each record and acts only for itself; never a ministry by name.",
+  "procedure": {
+   "key": "budget.revision",
+   "stage": "pending-approval",
+   "action": "approve"
+  },
+  "lists": {
+   "budget.revision.outcomes": {
+    "values": [
+     {
+      "value": "revise",
+      "label": "Approved"
+     },
+     {
+      "value": "refuse",
+      "label": "Refused"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "policies": {
+   "access.read_rule": "canReadFinance() in lib/auth/roles.ts: officials of the finance authority, and of a spending institution for its own records; auditors with a purpose; every read of a payment in the access log",
+   "access.others": "Payee bank details are sealed and shown masked; no other institution reads them"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "decision-in-engine",
+    "what": "The decision is made and sealed by the case engine (the linked procedure's decision step, by an official who can sign, confirmed by a different official where the step asks), never by submitting this form; the form records what the decision-makers state",
+    "why": "Every decision cites the law version that applied and is signed with the decision key; AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts"
+   },
+   {
+    "id": "officer-from-sign-in",
+    "what": "The official who records it comes from the signed-in session, never typed; their authority is the power the procedure step needs and the role roles.ts gives them",
+    "why": "Who acted is the verified signed-in official.",
+    "rule": "CLAUDE.md Who acted: withOfficial() replaces any name in the request"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2466,
+    "quotes": [
+     "budget.execution.reallocation.approve",
+     "Approve or refuse a reallocation",
+     "Authorized decision-maker",
+     "Decision",
+     "Reallocation decision"
+    ],
+    "met_by": {
+     "fields": [
+      "revision.outcome",
+      "revision.legal_basis_refs"
+     ],
+     "procedure": "approve",
+     "country_decision": "country.budget.execution"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2487,
+    "quotes": [
+     "Country decisions: permitted reallocation types; who can approve each type; whether supplementary appropriation requires legislative action; fiscal thresholds; year-end closure and carry-forward rules."
+    ],
+    "met_by": {
+     "country_decision": "country.budget.execution"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2486,
+    "quotes": [
+     "execution.approval_record: identifier_reference, system-created after the decision stage."
+    ],
+    "met_by": {
+     "fields": [
+      "revision.decision_ref"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "revision.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The revision request"
+   },
+   "hint": {
+    "en": "The open case of the procedure this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the revision request.",
+     "case_exists_and_is_open": "Select an open case of this procedure."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "revision.outcome",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "budget.revision.outcomes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Outcome"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select outcome.",
+     "value_in_source": "Choose one of the listed values for outcome."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "revision.legal_basis_refs",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "legal_references_resolve",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.law_provisions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Provisions of law applied"
+   },
+   "hint": {
+    "en": "Confirmed provisions from the laws register."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter provisions of law applied.",
+     "legal_references_resolve": "Every provision must be a confirmed version in the laws register."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "revision.reason",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reasons"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reasons.",
+     "length": "Reasons must be between 1 and 10000 characters."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The decision"
+   }
+  },
+  {
+   "id": "revision.decision_maker",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Decision-maker"
+   },
+   "hint": {
+    "en": "The signed-in official who proposed it; never typed."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "revision.approval_event_ref",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Second official's confirmation"
+   },
+   "hint": {
+    "en": "The confirming official, a different person (dual control)."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "revision.decision_ref",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Sealed decision"
+   },
+   "hint": {
+    "en": "Set when the decision is sealed (/verify checks it)."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "revision.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}

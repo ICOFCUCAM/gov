@@ -1,0 +1,363 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "exec.cabinet.paper.fiscal_review",
+ "record_type": "exec.cabinet.record",
+ "form_version": 1,
+ "procedure_package_id": "cabinet.decision",
+ "legal_basis": [],
+ "country_decisions": [
+  "country.exec.cabinet: Cabinet paper types and review paths, which matters need legal, fiscal, human-rights or other impact review, confidentiality classifications and publication rules, who may sponsor papers and approve the agenda, and the Cabinet rules (members, quorum, decision rule) adopted through policy-change.ts (none ship).",
+  "country.exec.records: retention, confidentiality, disclosure and access restrictions for executive-office and Cabinet records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "exec.cabinet.paper.fiscal_review",
+  "part": 2,
+  "section": "2.2",
+  "line": 1904,
+  "batch": 8
+ },
+ "library": {
+  "title": "Record fiscal implications review",
+  "intro": "Record the fiscal implications review of a Cabinet paper: what was checked and found, with reasons, and whether it goes forward or is returned. The fiscal review is recorded by a different official from the legal review.",
+  "owner": "cabinetOffice",
+  "filled_by": "A finance officer reviewing for the Cabinet office (not the legal reviewer).",
+  "authority": "The office the nation names for the cabinetOffice slot under Who is responsible (authorityFor('cabinetOffice')); where the head of state's office keeps its own correspondence, the nation names that office; never a ministry by name, and holding an office grants no power.",
+  "procedure": {
+   "key": "cabinet.decision",
+   "stage": "legal-reviewed",
+   "action": "fiscal-review"
+  },
+  "lists": {
+   "exec.cabinet.fiscal_review_results": {
+    "values": [
+     {
+      "value": "complete",
+      "label": "Review complete: the paper goes forward"
+     },
+     {
+      "value": "return",
+      "label": "Returned to the sponsor"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "policies": {
+   "access.read_rule": "cabinetReadScope() in lib/auth/roles.ts: officials of the office that keeps the record; a restricted case only to its assignee and signatories; every read of personal data in the access log",
+   "access.others": "No other institution reads these records; a referral or an assigned action carries only what its own record names"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "cabinet-rules",
+    "what": "Quorum, the decision rule and the number of members come from the Cabinet rules the nation adopts through policy-change.ts (a part of the constitutional profile, none ships); a production installation records no decision without them",
+    "why": "Who decides in Cabinet and by what vote is the nation's constitutional configuration.",
+    "rule": "CLAUDE.md Constitutional architecture: country rule sets change only through lib/law/policy-change.ts; nothing ships for a nation"
+   },
+   {
+    "id": "officer-from-sign-in",
+    "what": "The official who records it comes from the signed-in session, never typed; their authority is the power the procedure step needs and the role roles.ts gives them",
+    "why": "Who acted is the verified signed-in official.",
+    "rule": "CLAUDE.md Who acted: withOfficial() replaces any name in the request"
+   },
+   {
+    "id": "distinct-reviewers",
+    "what": "The fiscal review is recorded by a different person from the legal review (distinctFrom: legal-review)",
+    "why": "Two reviews by one person are one review.",
+    "rule": "Plan step I5; CLAUDE.md dual control compares people (personOf())"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1904,
+    "quotes": [
+     "exec.cabinet.paper.fiscal_review",
+     "Record fiscal implications review",
+     "Authorized finance officer",
+     "Review",
+     "Fiscal review completed or returned"
+    ],
+    "met_by": {
+     "fields": [
+      "review.result",
+      "review.findings"
+     ],
+     "procedure": "fiscal-review",
+     "deviation": "distinct-reviewers"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1897,
+    "quotes": [
+     "These are related but distinct functions.",
+     "A country may combine them or place them in separate institutions.",
+     "CivicOS must preserve the actual legal structure configured by the country rather than assuming a universal hierarchy."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/nation/deployment.ts",
+      "how": "The office keeping Cabinet records is the institution the nation names for the cabinetOffice slot; the Prime Minister's office and the Cabinet office may be one institution or two, as configured"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2027,
+    "quotes": [
+     "Required procedure controls: a Cabinet decision is not the same as a statute, budget appropriation, executive order or administrative instruction.",
+     "CivicOS must record its actual legal category, the authority of the decision-maker and the actions the decision lawfully authorizes.",
+     "An assigned action must not override another institution's independence or exceed its statutory powers."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/cabinet/procedures.ts",
+      "how": "The decision records its legal category, the law cited and the actions it authorises; an action to an independent institution becomes a request, never an instruction (directiveTargetRefusal())"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "review.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The paper"
+   },
+   "hint": {
+    "en": "The open case of the procedure this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the paper.",
+     "case_exists_and_is_open": "Select an open case of this procedure."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "review.result",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "exec.cabinet.fiscal_review_results",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Result"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select result.",
+     "value_in_source": "Choose one of the listed values for result."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "review.findings",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What was checked and found"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter what was checked and found.",
+     "length": "What was checked and found must be between 1 and 10000 characters."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "review.fiscal_estimate_ref",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "requires_approved_fiscal_estimate",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.finance.approved_estimates",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Approved fiscal estimate"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "review.appropriation_ref",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.finance.approved_budget_allocations",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Appropriation that would fund it (where one does)"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "review.reasons",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reasons"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reasons.",
+     "length": "Reasons must be between 1 and 10000 characters."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "review.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded by"
+   },
+   "hint": {
+    "en": "The signed-in official; never typed."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "review.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -1,0 +1,295 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "budget.allocation.propose",
+ "record_type": "budget.record",
+ "form_version": 1,
+ "procedure_package_id": "budget.bid",
+ "legal_basis": [],
+ "country_decisions": [
+  "country.budget.preparation: the budget calendar and submission windows, budget classifications and chart-of-accounts mapping, institutional ceilings, permitted adjustments and approval authority, required performance indicators and capital-project appraisal rules (none ship).",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for public finance records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "budget.allocation.propose",
+  "part": 2,
+  "section": "2.5",
+  "line": 2329,
+  "batch": 8
+ },
+ "library": {
+  "title": "Propose a budget allocation",
+  "intro": "Propose the allocation for a negotiated bid, within the institution's ceiling, with reasons. A different official decides it.",
+  "owner": "finance",
+  "filled_by": "A budget officer of the finance authority.",
+  "authority": "The finance authority the nation names for the finance slot under Who is responsible (authorityFor('finance')); the spending institution is named on each record and acts only for itself; never a ministry by name.",
+  "procedure": {
+   "key": "budget.bid",
+   "stage": "negotiation",
+   "action": "propose"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadFinance() in lib/auth/roles.ts: officials of the finance authority, and of a spending institution for its own records; auditors with a purpose; every read of a payment in the access log",
+   "access.others": "Payee bank details are sealed and shown masked; no other institution reads them",
+   "amounts.stated": "allocation.amount: the allocation proposed"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "officer-from-sign-in",
+    "what": "The official who records it comes from the signed-in session, never typed; their authority is the power the procedure step needs and the role roles.ts gives them",
+    "why": "Who acted is the verified signed-in official.",
+    "rule": "CLAUDE.md Who acted: withOfficial() replaces any name in the request"
+   },
+   {
+    "id": "stated-amount",
+    "what": "The amount is what a person states (an institution's request or forecast, an invoice, the officials' proposed figure), typed as money with its currency and named in the form's amounts.stated policy; it is never a charge, and the amount that binds is the one the sealed decision and the register record",
+    "why": "A request or forecast is a statement; only a decision of the officials the procedure names fixes an allocation, a commitment or a payment.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; plan step I5 (no amount typed into code)"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2329,
+    "quotes": [
+     "budget.allocation.propose",
+     "Propose a budget allocation",
+     "Authorized budget officer",
+     "Proposal",
+     "Allocation proposal"
+    ],
+    "met_by": {
+     "fields": [
+      "allocation.amount"
+     ],
+     "procedure": "propose"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2452,
+    "quotes": [
+     "\"Budget calendar and submission windows.\""
+    ],
+    "met_by": {
+     "country_decision": "country.budget.preparation"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2453,
+    "quotes": [
+     "\"Budget classifications and chart-of-accounts mapping.\""
+    ],
+    "met_by": {
+     "country_decision": "country.budget.preparation"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2454,
+    "quotes": [
+     "\"Institutional ceilings, permitted adjustments and approval authority.\""
+    ],
+    "met_by": {
+     "country_decision": "country.budget.preparation"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2455,
+    "quotes": [
+     "\"Required performance indicators and capital-project appraisal rules.\""
+    ],
+    "met_by": {
+     "country_decision": "country.budget.preparation"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2460,
+    "quotes": [
+     "Universal controls: a bid must not be mistaken for an appropriation.",
+     "Approval of a budget bid is not payment authorization.",
+     "A budget ceiling, proposed request, approved allocation and enacted appropriation are distinct record types with separate legal states."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/finance/register.ts",
+      "how": "Ceilings, bids, allocations and appropriations are distinct records with separate states; an allocation is never a release and a release never a payment"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "allocation.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The budget bid"
+   },
+   "hint": {
+    "en": "The bid case (its reference)."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the budget bid.",
+     "case_exists_and_is_open": "Select an open case of this procedure."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "allocation.amount",
+   "type": "money",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "NONNEGATIVE",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Proposed allocation"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter proposed allocation.",
+     "NONNEGATIVE": "The amount cannot be below zero."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "allocation.reasons",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reasons"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reasons.",
+     "length": "Reasons must be between 1 and 10000 characters."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "allocation.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Proposed by"
+   },
+   "hint": {
+    "en": "The signed-in official; never typed."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "allocation.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}

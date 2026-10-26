@@ -3,6 +3,7 @@
  "form_id": "ADM-PRC-020",
  "record_type": "administration.procurement.purchase-order",
  "form_version": 1,
+ "procedure_package_id": "proc.tender",
  "legal_basis": [],
  "country_decisions": [
   "CFG-ADM-001: the public-service law's grades, employment types, leave types and entitlements, personnel actions, performance outcomes and disciplinary outcomes (none ship).",
@@ -25,8 +26,12 @@
   "owner": "institution",
   "filled_by": "The procurement officer prepares; an approving official decides.",
   "authority": "The institution itself: each institution adopts the internal-administration procedures as its own (adm.<template>.<institution>) and its own officials decide (caseActRefusal()); never a ministry by name, and an independent institution keeps its own.",
-  "procedure": null,
-  "intended": "A purchase-order procedure of the institution: not built; the form waits in the library (plan steps I2 and I5)",
+  "procedure": {
+   "key": "proc.tender",
+   "stage": "standstill",
+   "action": "sign-contract",
+   "document": "contract"
+  },
   "lists": {
    "civicos.administration.decision": {
     "values": [
@@ -59,10 +64,10 @@
   ],
   "deviations": [
    {
-    "id": "procedure-not-built",
-    "what": "A purchase-order procedure of the institution: no reference procedure carries this form yet; it waits in the library for the institution's procedure, drafted by one official and approved by another",
-    "why": "Cases change only under an approved procedure package; the plan builds the internal-administration procedures in the order of plan step I2 (the payroll, establishment, privileged-access, policy, delegation, disciplinary and legal-advice procedures first).",
-    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts under an approved procedure package"
+    "id": "procurement-procedure",
+    "what": "Linked to the tender procedure each institution adopts as its own (proc.tender.<institution>): the contract or order is signed after the award and the standstill, with no challenge open, by officials who did not evaluate",
+    "why": "The specification's procurement workflow is the institution's own procedure, adopted in a version a second official approves; the supplier is an organisation in the register.",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts under an approved procedure package; plan step I5"
    },
    {
     "id": "minimisation",
@@ -116,7 +121,8 @@
       "order.total",
       "order.approved_by"
      ],
-     "deviation": "procedure-not-built"
+     "deviation": "procurement-procedure",
+     "procedure": "sign-contract"
     }
    },
    {

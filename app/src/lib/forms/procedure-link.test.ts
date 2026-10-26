@@ -18,6 +18,7 @@ import { procedureLink } from './procedure-link';
 import { libraryPublicationOf, findLibraryForm, libraryInfo, serviceIds } from './page-data';
 import { resetPublication } from './publication';
 import { installAdministrationProcedures } from '@/lib/administration/procedures';
+import { installProcurementProcedures } from '@/lib/procurement/procedures';
 
 const FIELD_SERIES = 'docs/forms-catalogue/FIELD-SERIES-PARTS-05-07.md';
 const lib = (id: string) => CATALOGUE_CONTRACTS.find(f => f.specId === id)!;
@@ -83,10 +84,13 @@ describe('procedure-link states', () => {
 
   it('is draft for each batch-5 form once an institution has adopted its internal-administration template, never before', () => {
     const adm = CATALOGUE_CONTRACTS.filter(f => f.batch === 5 && f.procedure);
-    expect(adm).toHaveLength(9);
+    // Nine internal-administration forms, and since plan step I5 the procurement requisition, evaluation and order (proc.plan, proc.tender).
+    expect(adm).toHaveLength(12);
     for (const f of adm) expect(procedureLink({ identity: f.identity, procedure: f.procedure }).state, f.identity).toBe('missing');
     const r = installAdministrationProcedures(CIVIL, 'Administrator', 'admin');
     if ('error' in r) throw new Error(r.error);
+    const p = installProcurementProcedures(CIVIL, 'Administrator', 'admin');
+    if ('error' in p) throw new Error(p.error);
     for (const f of adm) {
       const l = procedureLink({ identity: f.identity, procedure: f.procedure });
       expect(l, f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });

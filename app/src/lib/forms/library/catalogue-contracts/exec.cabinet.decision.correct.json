@@ -1,0 +1,325 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "exec.cabinet.decision.correct",
+ "record_type": "exec.cabinet.record",
+ "form_version": 1,
+ "procedure_package_id": "cabinet.decision",
+ "legal_basis": [],
+ "country_decisions": [
+  "country.exec.cabinet: Cabinet paper types and review paths, which matters need legal, fiscal, human-rights or other impact review, confidentiality classifications and publication rules, who may sponsor papers and approve the agenda, and the Cabinet rules (members, quorum, decision rule) adopted through policy-change.ts (none ship).",
+  "country.exec.records: retention, confidentiality, disclosure and access restrictions for executive-office and Cabinet records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "exec.cabinet.decision.correct",
+  "part": 2,
+  "section": "2.2",
+  "line": 1907,
+  "batch": 8
+ },
+ "library": {
+  "title": "Correct a Cabinet decision record",
+  "intro": "Correct the record of a Cabinet decision: the corrected text and why. The earlier version is kept and stays readable; a different official confirms the correction.",
+  "owner": "cabinetOffice",
+  "filled_by": "The Cabinet secretary; confirmed by a different official of the Cabinet office.",
+  "authority": "The office the nation names for the cabinetOffice slot under Who is responsible (authorityFor('cabinetOffice')); where the head of state's office keeps its own correspondence, the nation names that office; never a ministry by name, and holding an office grants no power.",
+  "procedure": {
+   "key": "cabinet.decision",
+   "stage": "decided",
+   "action": "correct"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "cabinetReadScope() in lib/auth/roles.ts: officials of the office that keeps the record; a restricted case only to its assignee and signatories; every read of personal data in the access log",
+   "access.others": "No other institution reads these records; a referral or an assigned action carries only what its own record names"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "cabinet-rules",
+    "what": "Quorum, the decision rule and the number of members come from the Cabinet rules the nation adopts through policy-change.ts (a part of the constitutional profile, none ships); a production installation records no decision without them",
+    "why": "Who decides in Cabinet and by what vote is the nation's constitutional configuration.",
+    "rule": "CLAUDE.md Constitutional architecture: country rule sets change only through lib/law/policy-change.ts; nothing ships for a nation"
+   },
+   {
+    "id": "decision-in-engine",
+    "what": "The decision is made and sealed by the case engine (the linked procedure's decision step, by an official who can sign, confirmed by a different official where the step asks), never by submitting this form; the form records what the decision-makers state",
+    "why": "Every decision cites the law version that applied and is signed with the decision key; AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model: cases change only through lib/casework/engine.ts"
+   },
+   {
+    "id": "officer-from-sign-in",
+    "what": "The official who records it comes from the signed-in session, never typed; their authority is the power the procedure step needs and the role roles.ts gives them",
+    "why": "Who acted is the verified signed-in official.",
+    "rule": "CLAUDE.md Who acted: withOfficial() replaces any name in the request"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1907,
+    "quotes": [
+     "exec.cabinet.decision.correct",
+     "Correct a Cabinet decision record",
+     "Authorized Cabinet secretary",
+     "Amendment",
+     "Versioned correction"
+    ],
+    "met_by": {
+     "fields": [
+      "correction.corrected_text",
+      "correction.reason"
+     ],
+     "procedure": "correct",
+     "platform": {
+      "file": "app/src/lib/cabinet/register.ts",
+      "how": "correctCabinetDecision(): a new version, the earlier kept"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1897,
+    "quotes": [
+     "These are related but distinct functions.",
+     "A country may combine them or place them in separate institutions.",
+     "CivicOS must preserve the actual legal structure configured by the country rather than assuming a universal hierarchy."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/nation/deployment.ts",
+      "how": "The office keeping Cabinet records is the institution the nation names for the cabinetOffice slot; the Prime Minister's office and the Cabinet office may be one institution or two, as configured"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2027,
+    "quotes": [
+     "Required procedure controls: a Cabinet decision is not the same as a statute, budget appropriation, executive order or administrative instruction.",
+     "CivicOS must record its actual legal category, the authority of the decision-maker and the actions the decision lawfully authorizes.",
+     "An assigned action must not override another institution's independence or exceed its statutory powers."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/cabinet/procedures.ts",
+      "how": "The decision records its legal category, the law cited and the actions it authorises; an action to an independent institution becomes a request, never an instruction (directiveTargetRefusal())"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "correction.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The decision"
+   },
+   "hint": {
+    "en": "The open case of the procedure this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the decision.",
+     "case_exists_and_is_open": "Select an open case of this procedure."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "correction.corrected_text",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Corrected text"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter corrected text.",
+     "length": "Corrected text must be between 1 and 10000 characters."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "correction.reason",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Why it is corrected"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter why it is corrected.",
+     "length": "Why it is corrected must be between 1 and 10000 characters."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "correction.decision_maker",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Decision-maker"
+   },
+   "hint": {
+    "en": "The signed-in official who proposed it; never typed."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "correction.approval_event_ref",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Second official's confirmation"
+   },
+   "hint": {
+    "en": "The confirming official, a different person (dual control)."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "correction.decision_ref",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Sealed decision"
+   },
+   "hint": {
+    "en": "Set when the decision is sealed (/verify checks it)."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "correction.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}
