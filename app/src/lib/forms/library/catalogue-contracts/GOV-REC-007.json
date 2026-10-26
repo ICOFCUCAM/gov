@@ -1,0 +1,312 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-REC-007",
+ "record_type": "rec.schedule",
+ "form_version": 1,
+ "procedure_package_id": "rec.schedule",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-010: records retention, archival and destruction.",
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-REC-007",
+  "part": 13,
+  "section": "2.3",
+  "line": 693,
+  "batch": 12
+ },
+ "library": {
+  "title": "Classify a record class",
+  "intro": "Define a class of records the institution keeps: its key (the retention class its records carry), what it holds and how its records are classified for access. Its retention schedule is approved with it.",
+  "owner": "institution",
+  "filled_by": "An official of the institution's records office.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name.",
+  "procedure": {
+   "key": "rec.schedule",
+   "stage": "drafted",
+   "action": "review"
+  },
+  "lists": {
+   "records.access_classes": {
+    "values": [
+     {
+      "value": "normal",
+      "label": "Normal"
+     },
+     {
+      "value": "restricted",
+      "label": "Restricted"
+     },
+     {
+      "value": "secret",
+      "label": "Secret"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "schedule-by-law",
+    "what": "No record class, period or disposition ships: each schedule is the nation's law, entered with its citation in the approving case and approved by two officials; nothing is disposed of without one",
+    "why": "Part 13 §7.2: retention under the approved schedule, not a generic age threshold.",
+    "rule": "lib/recordkeeping/procedures.ts rec.schedule; lib/recordkeeping/register.ts scheduleOf()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 693,
+    "quotes": [
+     "GOV-REC-007",
+     "Official record classification",
+     "Classification and access policy"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/recordkeeping/procedures.ts",
+      "how": "the form's register row, carried by rec.schedule"
+     },
+     "procedure": "review"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 877,
+    "quotes": [
+     "Classification and record ownership."
+    ],
+    "met_by": {
+     "fields": [
+      "class.key",
+      "class.institution"
+     ],
+     "procedure": "review"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 886,
+    "quotes": [
+     "Record class",
+     "Country-configured records classification"
+    ],
+    "met_by": {
+     "fields": [
+      "class.key",
+      "class.title"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 887,
+    "quotes": [
+     "Owning institution",
+     "Institution responsible for the official record"
+    ],
+    "met_by": {
+     "fields": [
+      "class.institution"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "class.institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_institution",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Your institution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter your institution.",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "class.key",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 60
+     }
+    },
+    {
+     "rule": "classification_scheme_from_policy",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Record class key"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter record class key.",
+     "length": "Record class key must be 60 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "class.title",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 160
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Title"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter title.",
+     "length": "Title must be 160 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "class.scope_note",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What records the class holds"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter what records the class holds.",
+     "length": "What records the class holds must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "class.access",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "records.access_classes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "How its records are classified for access"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  }
+ ]
+}

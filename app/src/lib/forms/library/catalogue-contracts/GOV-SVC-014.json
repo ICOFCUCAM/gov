@@ -1,0 +1,609 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-SVC-014",
+ "record_type": "frontdoor.representation",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-SVC-014",
+  "part": 13,
+  "section": "2.1",
+  "line": 659,
+  "batch": 12
+ },
+ "library": {
+  "title": "Let someone act for you",
+  "intro": "Give another person the right to act for you for the services and the acts you choose, from a date and until a date or until you revoke it. They act only within it, and every application they make records both of you.",
+  "owner": "institution",
+  "filled_by": "The person represented, signed in; revoked only by them.",
+  "authority": "Granted by the represented person themselves (lib/frontdoor/representation.ts), kept in the delegations register; no institution grants it for them.",
+  "procedure": null,
+  "intended": "no case is opened: the representation is granted and revoked by the represented person (lib/frontdoor/representation.ts grantRepresentation(), revokeRepresentation(); /wallet/representation)",
+  "lists": {
+   "frontdoor.representation_actions": {
+    "values": [
+     {
+      "value": "apply",
+      "label": "Apply"
+     },
+     {
+      "value": "track",
+      "label": "Follow the application"
+     },
+     {
+      "value": "add-information",
+      "label": "Add information"
+     },
+     {
+      "value": "challenge",
+      "label": "Ask for reconsideration"
+     },
+     {
+      "value": "receive-decision",
+      "label": "Receive the decision"
+     }
+    ],
+    "proposed": true
+   },
+   "frontdoor.representation_status": {
+    "values": [
+     {
+      "value": "in-force",
+      "label": "In force"
+     },
+     {
+      "value": "ended",
+      "label": "Ended"
+     },
+     {
+      "value": "revoked",
+      "label": "Revoked"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "no-case-of-its-own",
+    "what": "This form opens no case of its own: what it records is kept by the platform system named in its intended stage, under that system's own two-official rules",
+    "why": "The catalogue item is a record of the front door or of service management, not a decision procedure.",
+    "rule": "lib/frontdoor/catalogue.ts, lib/frontdoor/service-management.ts, lib/frontdoor/representation.ts, lib/frontdoor/journey.ts"
+   },
+   {
+    "id": "identity-not-authorisation",
+    "what": "Signing in through the nation's identity provider proves who someone is; whether they may act for another is decided by a representation that person granted, checked at every act",
+    "why": "Part 13 §5.2: identity is not authorisation.",
+    "rule": "lib/frontdoor/representation.ts representationCovering()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 659,
+    "quotes": [
+     "GOV-SVC-014",
+     "Representative or agent authorization",
+     "Verified delegation of permitted actions"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/catalogue.ts",
+      "how": "the form's register row, carried by the platform system its intended stage names"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 831,
+    "quotes": [
+     "The person or entity granting authority."
+    ],
+    "met_by": {
+     "fields": [
+      "representation.principal"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 832,
+    "quotes": [
+     "The representative's identity."
+    ],
+    "met_by": {
+     "fields": [
+      "representation.representative_id",
+      "representation.representative_name"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 833,
+    "quotes": [
+     "The permitted actions and service scope."
+    ],
+    "met_by": {
+     "fields": [
+      "representation.actions",
+      "representation.services"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 834,
+    "quotes": [
+     "Start and expiry dates where applicable."
+    ],
+    "met_by": {
+     "fields": [
+      "representation.effective_period"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 835,
+    "quotes": [
+     "Restrictions and any required supporting instrument."
+    ],
+    "met_by": {
+     "fields": [
+      "representation.restrictions",
+      "representation.instrument"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 836,
+    "quotes": [
+     "Revocation and amendment history."
+    ],
+    "met_by": {
+     "fields": [
+      "representation.status"
+     ],
+     "platform": {
+      "file": "app/src/lib/frontdoor/representation.ts",
+      "how": "revokeRepresentation(): kept, never deleted; every change audited without the parties' names"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 837,
+    "quotes": [
+     "The verification method and legal basis."
+    ],
+    "met_by": {
+     "fields": [
+      "representation.basis"
+     ],
+     "deviation": "identity-not-authorisation"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 838,
+    "quotes": [
+     "A representative's authorization for one service must not automatically grant access to every record belonging to the person or business."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/representation.ts",
+      "how": "representationCovering(): only the procedures and acts granted, checked at every act"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 2251,
+    "quotes": [
+     "\"form_id\": \"DGV-REP-003\""
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/representation.ts",
+      "how": "grantRepresentation()"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 2253,
+    "quotes": [
+     "{\"key\": \"principal_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "representation.principal"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 2254,
+    "quotes": [
+     "{\"key\": \"representative_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "representation.representative_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 2255,
+    "quotes": [
+     "{\"key\": \"authorized_service_scopes\", \"type\": \"array\", \"required\": true, \"items_type\": \"entity_reference\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "representation.services"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 2256,
+    "quotes": [
+     "{\"key\": \"effective_period\", \"type\": \"date_range\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "representation.effective_period"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 2257,
+    "quotes": [
+     "{\"key\": \"authorization_evidence_reference\", \"type\": \"document_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "representation.instrument"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 2258,
+    "quotes": [
+     "{\"key\": \"revocation_status\", \"type\": \"enum\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "representation.status"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "representation.principal",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 120
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "You (as the identity provider names you)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter you (as the identity provider names you).",
+     "length": "You (as the identity provider names you) must be 120 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "representation.representative_id",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 120
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Their identifier at the identity provider"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter their identifier at the identity provider.",
+     "length": "Their identifier at the identity provider must be 120 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "representation.representative_name",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 120
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Their name"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter their name.",
+     "length": "Their name must be 120 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "representation.services",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "frontdoor.catalogue.services",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The services it covers"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true
+  },
+  {
+   "id": "representation.actions",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "frontdoor.representation_actions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What they may do"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true
+  },
+  {
+   "id": "representation.effective_period",
+   "type": "date_range",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "From and until"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter from and until."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "representation.restrictions",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 1000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Restrictions"
+   },
+   "error_text": {
+    "en": {
+     "length": "Restrictions must be 1000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "representation.basis",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Why (family member, lawyer, company officer)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Why (family member, lawyer, company officer) must be 300 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "representation.instrument",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "representation-instrument",
+     "when": "the_law_requires_it"
+    }
+   ],
+   "label": {
+    "en": "A supporting instrument, where the law requires one"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "representation.status",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": "frontdoor.representation_status",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Status (in force, ended or revoked)"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  }
+ ]
+}

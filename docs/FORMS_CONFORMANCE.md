@@ -1592,3 +1592,77 @@ and 011, HPC-BLD-021 and 022, HPC-REG-023 and 024, the Part 19 forms not
 listed above, the other transport forms (licence renewals, vehicle
 inspection, road reports, maritime and aviation) and every environment form
 (integration register 21.79).
+
+## 20. Catalogue contracts, batch 12: digital front door and records (26 October 2026)
+
+Plan step I13 wrote the contracts of the forms its systems carry: the citizen
+and business digital services (catalogue Part 13 §2.1), records,
+correspondence and digital documents (§2.3) and government service
+governance and performance (§2.5), with the supplement's DGV contracts for
+applying and representation (Part 21, DGV-SVC-001 and DGV-REP-003) answered
+line by line in GOV-SVC-004 and GOV-SVC-014. Twenty-seven forms of
+`docs/forms-catalogue/PARTS-12-13.md`, which were `contract_missing`, have a
+CivicOS contract with `batch: 12` in their `catalogue` block. The internal
+administration's records forms (ADM-REC-025, 026) stay batch 5's. The format,
+loader, gates and test are batch 1's (§8). The conformance test
+(`lib/forms/catalogue-contracts.test.ts`, source `E`) holds the lines each
+form answers: Part 1's shared rules and the supplement's conventions and
+gates, as for every batch; Part 13's lines every batch-12 form answers
+(`dgv`: lines 620 and 1387, configured before activation and accountable
+authority); the shared group of its family (`svc`: lines 666, 826 and 828,
+separate decisions and identity that is not authorisation; `rec`: lines 875,
+895, 904 and 1305, the configured lifecycle, retention by law and holds;
+`ggov`: lines 779 and 991, a status that never implies an integration works
+and separate dashboards); and its own lines (`FORM_12` in the test).
+
+| Catalogue form | Title | Fields | Belongs to | Owner | Deviations (besides minimisation, evidence-requirement and scanning) |
+|---|---|---|---|---|---|
+| GOV-GOV-001 | Register a service in the catalogue | 19 | no case: the catalogue (`catalogue.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, status-computed, fee-by-rule |
+| GOV-GOV-002 | Assign a service's owner | 5 | no case: the catalogue (`catalogue.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own |
+| GOV-GOV-003 | Approve a service-level objective | 6 | no case: service management (`service-management.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, target-is-nations |
+| GOV-GOV-004 | Record a service performance report | 4 | no case: service management (`service-management.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, computed-figures |
+| GOV-GOV-005 | Report a service disruption | 5 | no case: service management (`service-management.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own |
+| GOV-GOV-006 | Request a change to a service | 4 | no case: service management (`service-management.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own |
+| GOV-GOV-010 | Retire a service | 3 | no case: the catalogue (`catalogue.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, status-computed |
+| GOV-GOV-014 | Request an architecture exception | 5 | no case: service management (`service-management.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, expires |
+| GOV-REC-001 | Register incoming correspondence or a document | 8 | `rec.incoming.<institution>`, stage `received`, step `register` | institution | institution-owned, two-officials, no-ai-decision, schedule-by-law |
+| GOV-REC-007 | Classify a record class | 5 | `rec.schedule.<institution>`, stage `drafted`, step `review` | institution | institution-owned, two-officials, no-ai-decision, schedule-by-law |
+| GOV-REC-008 | Approve a retention schedule | 7 | `rec.schedule.<institution>`, stage `review`, step `approve` | institution | institution-owned, two-officials, no-ai-decision, schedule-by-law |
+| GOV-REC-010 | Transfer records to the archive | 4 | `rec.transfer.<institution>`, stage `prepared`, step `send` | institution | institution-owned, two-officials, no-ai-decision, schedule-by-law, hold-blocks |
+| GOV-REC-011 | Authorise a records disposal | 3 | `rec.disposal.<institution>`, stage `opened`, step `list` | institution | institution-owned, two-officials, no-ai-decision, schedule-by-law, hold-blocks, never-deleted |
+| GOV-REC-012 | Place a legal hold | 6 | `rec.hold.<institution>`, stage `requested`, step `place` | institution | institution-owned, two-officials, no-ai-decision, hold-blocks |
+| GOV-REC-017 | Approve a records migration | 8 | `rec.migration.<institution>`, stage `drafted`, step `record-plan` | institution | institution-owned, two-officials, no-ai-decision, counts-and-hashes |
+| GOV-REC-018 | Reconcile a records migration | 5 | `rec.migration.<institution>`, stage `approved`, step `reconcile` | institution | institution-owned, two-officials, no-ai-decision, counts-and-hashes |
+| GOV-SVC-001 | Find a government service | 5 | no case: the catalogue (`catalogue.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, status-computed, fee-by-rule |
+| GOV-SVC-004 | Apply for a public service | 5 and the declaration | no case: the journey (`journey.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, separate-decisions, identity-not-authorisation |
+| GOV-SVC-006 | Ask where your application stands | 2 | no case: the journey (`journey.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, identity-not-authorisation |
+| GOV-SVC-007 | Book an appointment | 5 and the declaration | `svc.appointment.<institution>`, stage `requested`, step `confirm` | institution | institution-owned, two-officials, no-ai-decision |
+| GOV-SVC-008 | Change or cancel an appointment | 4 and the declaration | `svc.appointment.<institution>`, stage `confirmed`, step `cancel` | institution | institution-owned, two-officials, no-ai-decision |
+| GOV-SVC-009 | Write to an institution | 5 and the declaration | `rec.incoming.<institution>`, stage `received`, step `register` | institution | institution-owned, two-officials, no-ai-decision |
+| GOV-SVC-011 | Complain about a service | 6 and the declaration | `svc.complaint.<institution>`, stage `received`, step `acknowledge` | institution | institution-owned, two-officials, no-ai-decision |
+| GOV-SVC-012 | Ask for a decision to be reconsidered | 5 and the declaration | `svc.reconsideration.<institution>`, stage `received`, step `admit` | institution | institution-owned, two-officials, no-ai-decision, reconsideration-independent |
+| GOV-SVC-013 | Ask for help to use a service | 4 and the declaration | `svc.appointment.<institution>`, stage `requested`, step `confirm` | institution | institution-owned, two-officials, no-ai-decision |
+| GOV-SVC-014 | Let someone act for you | 10 and the declaration | no case: representation (`representation.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, identity-not-authorisation |
+| GOV-SVC-018 | Ask for a fee to be refunded | 4 and the declaration | `svc.refund.<institution>`, stage `received`, step `assess` | institution | institution-owned, two-officials, no-ai-decision, refund-from-receipt, fee-by-rule |
+
+The owner is each institution itself (`institution`): the front-door
+templates (`svc.appointment`, `svc.complaint`, `svc.reconsideration`,
+`svc.refund`, `lib/frontdoor/procedures.ts`) and the records templates
+(`rec.incoming`, `rec.schedule`, `rec.hold`, `rec.disposal`, `rec.transfer`,
+`rec.migration`, `lib/recordkeeping/procedures.ts`) are adopted by an
+institution as `svc.<template>.<institution>` and `rec.<template>.<institution>`
+(`procedure-link.ts` finds them adopted; `procedure-link.test.ts` "is draft
+for each batch-12 form once an institution has adopted its front-door or
+records template"). Twelve forms open no case of their own: the catalogue,
+the journey, representation and service management keep what they record
+under their own two-official rules, and each says so in `intended`. Nothing a
+law decides is set: no service, fee, period, retention schedule or target
+ships; a fee is named only as a rule of Rates and tariffs; the
+reconsideration period, each class's retention period and each service's
+target are named nation values, unset.
+
+Left for later batches: GOV-SVC-002, 003, 005, 010, 015 … 017, 019 and
+020; GOV-REC-002 … 006, 009 and 013 … 016 (signatures, certificates,
+verification and custody, which the documents, seal and certificate systems
+already hold in part); GOV-GOV-007 … 009, 011 … 013 and 015; the workflow,
+statistics and interoperability forms of Part 13 (integration register 26).

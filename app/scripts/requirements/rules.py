@@ -96,7 +96,7 @@ R(None, None, r'risk score|risk-based selection|automated student risk score', '
 
 # framing sentences of the acceptance lists
 R(None, None, r'(tests should be mandatory|should demonstrate that|require evidence for each of the following|Use this as a working checklist|Ticking an item|I would not accept these institutions)', 'Met',
-  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (54 proven, 30 partial, 7 not yet); plan §3.5 makes it the definition of done', '', '—')
+  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (56 proven, 28 partial, 7 not yet); plan §3.5 makes it the definition of done', '', '—')
 R(3, r'^G$', r'not ready for production simply because its interface renders', 'Met', COMPLETE, '', '—')
 R(3, r'^G$', r'Each service needs evidence', 'Partial', COMPLETE + ' (per institution)', 'Evidence per service (legal grounding, configuration, staffing, records, security, integration, operational testing)', 'I2')
 R(1, r'^2$', r'(CivicOS should use international standards|It is a disclosure standard)', 'Lower priority', 'Plan §4 "Reference lists of standards. Informative; cited where a feature uses one."', '', 'Unassigned')

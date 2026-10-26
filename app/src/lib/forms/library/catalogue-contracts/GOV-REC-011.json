@@ -1,0 +1,271 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-REC-011",
+ "record_type": "rec.disposal",
+ "form_version": 1,
+ "procedure_package_id": "rec.disposal",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-REC-011",
+  "part": 13,
+  "section": "2.3",
+  "line": 697,
+  "batch": 12
+ },
+ "library": {
+  "title": "Authorise a records disposal",
+  "intro": "List the records of a class that its schedule makes due, and have two other officials authorise their disposal. Held records are skipped; each destroyed document keeps its record and fingerprint, and a certificate is kept.",
+  "owner": "institution",
+  "filled_by": "An official of the records office lists; two officials who can sign, other than the lister, authorise.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name.",
+  "procedure": {
+   "key": "rec.disposal",
+   "stage": "opened",
+   "action": "list"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "schedule-by-law",
+    "what": "No record class, period or disposition ships: each schedule is the nation's law, entered with its citation in the approving case and approved by two officials; nothing is disposed of without one",
+    "why": "Part 13 §7.2: retention under the approved schedule, not a generic age threshold.",
+    "rule": "lib/recordkeeping/procedures.ts rec.schedule; lib/recordkeeping/register.ts scheduleOf()"
+   },
+   {
+    "id": "hold-blocks",
+    "what": "A legal hold in force blocks disposal and transfer of what it covers, and the platform's own retention sweep",
+    "why": "Part 13 §7.3: suspend routine disposal when a valid legal hold applies.",
+    "rule": "lib/recordkeeping/register.ts holdCovering(); lib/data/retention.ts runRetention()"
+   },
+   {
+    "id": "never-deleted",
+    "what": "Disposal destroys only a document's content: its record and SHA-256 stay, the disposal keeps the exact list and a certificate; nothing is deleted from any store, and a demonstration never disposes of a real record",
+    "why": "Part 13 §7.1: preservation of the disposition event and required metadata.",
+    "rule": "lib/recordkeeping/procedures.ts rec.disposal; lib/records/documents.ts disposeDocument()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 697,
+    "quotes": [
+     "GOV-REC-011",
+     "Records disposal authorization",
+     "Authorized disposition and evidence"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/recordkeeping/procedures.ts",
+      "how": "the form's register row, carried by rec.disposal"
+     },
+     "procedure": "list"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 882,
+    "quotes": [
+     "Authorized destruction or other lawful disposition."
+    ],
+    "met_by": {
+     "procedure": "authorise"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 883,
+    "quotes": [
+     "Preservation of the disposition event and required metadata."
+    ],
+    "met_by": {
+     "deviation": "never-deleted"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 893,
+    "quotes": [
+     "Evidence",
+     "Disposition certificate or archival receipt"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/recordkeeping/register.ts",
+      "how": "recordDisposal(): the certificate over the list and what was destroyed"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 894,
+    "quotes": [
+     "Audit",
+     "Decision, execution and verification history"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/recordkeeping/register.ts",
+      "how": "listForDisposal() and recordDisposal(): decision, execution and what was skipped, audited"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 901,
+    "quotes": [
+     "Prevent ordinary users from destroying records they are not authorized to dispose of."
+    ],
+    "met_by": {
+     "deviation": "two-officials",
+     "procedure": "authorise"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 902,
+    "quotes": [
+     "Require additional approval for high-impact archival or destruction operations."
+    ],
+    "met_by": {
+     "procedure": "authorise",
+     "deviation": "two-officials"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "disposal.institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_institution",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Your institution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter your institution.",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "disposal.record_class",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 60
+     }
+    },
+    {
+     "rule": "retention_period_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Record class (its key)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter record class (its key).",
+     "length": "Record class (its key) must be 60 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "disposal.notes",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Notes for the authorising officials"
+   },
+   "error_text": {
+    "en": {
+     "length": "Notes for the authorising officials must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  }
+ ]
+}

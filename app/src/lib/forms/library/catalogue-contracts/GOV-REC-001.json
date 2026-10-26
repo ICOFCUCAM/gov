@@ -1,0 +1,408 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-REC-001",
+ "record_type": "rec.incoming",
+ "form_version": 1,
+ "procedure_package_id": "rec.incoming",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-REC-001",
+  "part": 13,
+  "section": "2.3",
+  "line": 687,
+  "batch": 12
+ },
+ "library": {
+  "title": "Register incoming correspondence or a document",
+  "intro": "Register what arrived: its subject, who sent it, how and when it arrived, and the record class it belongs to. It gets a number and is kept under that class's retention schedule.",
+  "owner": "institution",
+  "filled_by": "An official of the receiving institution's registry.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name.",
+  "procedure": {
+   "key": "rec.incoming",
+   "stage": "received",
+   "action": "register"
+  },
+  "lists": {
+   "records.sender_kinds": {
+    "values": [
+     {
+      "value": "person",
+      "label": "A person"
+     },
+     {
+      "value": "organisation",
+      "label": "An organisation"
+     },
+     {
+      "value": "institution",
+      "label": "An institution"
+     },
+     {
+      "value": "not-stated",
+      "label": "Not stated"
+     }
+    ],
+    "proposed": true
+   },
+   "records.channels": {
+    "values": [
+     {
+      "value": "post",
+      "label": "Post"
+     },
+     {
+      "value": "email",
+      "label": "Email"
+     },
+     {
+      "value": "by-hand",
+      "label": "By hand"
+     },
+     {
+      "value": "online",
+      "label": "Online"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "schedule-by-law",
+    "what": "No record class, period or disposition ships: each schedule is the nation's law, entered with its citation in the approving case and approved by two officials; nothing is disposed of without one",
+    "why": "Part 13 §7.2: retention under the approved schedule, not a generic age threshold.",
+    "rule": "lib/recordkeeping/procedures.ts rec.schedule; lib/recordkeeping/register.ts scheduleOf()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 687,
+    "quotes": [
+     "GOV-REC-001",
+     "Official incoming document registration",
+     "Registered document and provenance"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/recordkeeping/procedures.ts",
+      "how": "the form's register row, carried by rec.incoming"
+     },
+     "procedure": "register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 841,
+    "quotes": [
+     "Create or receive"
+    ],
+    "met_by": {
+     "procedure": "register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 843,
+    "quotes": [
+     "Register the document's source, issuing institution, document type and applicable classification."
+    ],
+    "met_by": {
+     "fields": [
+      "incoming.sender_kind",
+      "incoming.institution",
+      "incoming.record_class"
+     ],
+     "platform": {
+      "file": "app/src/lib/recordkeeping/register.ts",
+      "how": "registerIncoming()"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 876,
+    "quotes": [
+     "Creation or receipt."
+    ],
+    "met_by": {
+     "fields": [
+      "incoming.received_on",
+      "incoming.channel"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "incoming.institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_institution",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Your institution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter your institution.",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "incoming.subject",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Subject"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter subject.",
+     "length": "Subject must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "incoming.sender_kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "records.sender_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Who sent it"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "incoming.channel",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "records.channels",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "How it arrived"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "incoming.received_on",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date received"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter date received."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "incoming.record_class",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 60
+     }
+    },
+    {
+     "rule": "classification_scheme_from_policy",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Record class (its key)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter record class (its key).",
+     "length": "Record class (its key) must be 60 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "incoming.summary",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What it asks or says"
+   },
+   "error_text": {
+    "en": {
+     "length": "What it asks or says must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "incoming.document",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "correspondence",
+     "when": "when_it_arrived_as_a_document"
+    }
+   ],
+   "label": {
+    "en": "The correspondence as received"
+   },
+   "country_decision": null
+  }
+ ]
+}

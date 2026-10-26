@@ -1,0 +1,249 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-SVC-008",
+ "record_type": "svc.appointment",
+ "form_version": 1,
+ "procedure_package_id": "svc.appointment",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-SVC-008",
+  "part": 13,
+  "section": "2.1",
+  "line": 653,
+  "batch": 12
+ },
+ "library": {
+  "title": "Change or cancel an appointment",
+  "intro": "Ask to move or cancel an appointment. The office records the new date and time or the cancellation; the earlier booking stays in its history.",
+  "owner": "institution",
+  "filled_by": "The person who booked it; an official at an office.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name.",
+  "procedure": {
+   "key": "svc.appointment",
+   "stage": "confirmed",
+   "action": "cancel"
+  },
+  "lists": {
+   "frontdoor.appointment_changes": {
+    "values": [
+     {
+      "value": "reschedule",
+      "label": "Move it"
+     },
+     {
+      "value": "cancel",
+      "label": "Cancel it"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 653,
+    "quotes": [
+     "GOV-SVC-008",
+     "Appointment rescheduling or cancellation",
+     "Updated appointment history"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/procedures.ts",
+      "how": "the form's register row, carried by svc.appointment"
+     },
+     "procedure": "cancel"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 763,
+    "quotes": [
+     "Provide the relevant payment, appointment, certificate, correction, complaint or appeal workflow."
+    ],
+    "met_by": {
+     "procedure": "cancel",
+     "platform": {
+      "file": "app/src/lib/frontdoor/register.ts",
+      "how": "setAppointment(): every change kept in its history"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "change.appointment",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 40
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The appointment's reference"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the appointment's reference.",
+     "length": "The appointment's reference must be 40 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "change.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "frontdoor.appointment_changes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What you want"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "change.preferred_date",
+   "type": "date",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "New preferred date"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "change.reason",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 1000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Why (optional)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Why (optional) must be 1000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "change.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}
