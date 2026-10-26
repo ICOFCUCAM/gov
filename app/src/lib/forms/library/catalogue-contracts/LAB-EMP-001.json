@@ -1,0 +1,528 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "LAB-EMP-001",
+ "record_type": "lab.lab-emp-001",
+ "form_version": 1,
+ "procedure_package_id": "labour.employment-registration",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "The labour law's employer and employment registration duties, occupational and industry classifications, inspection powers and severity scale, complaint categories, injury reporting categories and periods, notice periods (none ship)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "LAB-EMP-001",
+  "part": 14,
+  "section": "14.1",
+  "line": 163,
+  "batch": 9
+ },
+ "library": {
+  "title": "Register an employment relationship",
+  "intro": "The employer registers a worker's employment. For a worker who is not a national the work authorisation is checked with the immigration authority; an unanswered check holds or refers the case, never refuses it.",
+  "owner": "labour",
+  "filled_by": "The employer or its authorised representative, online or at an office; or an official from a paper form.",
+  "authority": "The labour authority the nation names for the labour slot (authorityFor('labour'), shipped empty). Never a ministry by name.",
+  "procedure": {
+   "key": "labour.employment-registration",
+   "stage": "submitted",
+   "action": "check-authorisation",
+   "document": "application"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadLabour() in lib/auth/roles.ts: the labour authority's officials; auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only an employer's standing through employer.standing"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "no-score",
+    "what": "No field scores a person, a household, a credential, an employer or an application: no risk, credibility, propensity or match score exists in the contract or its procedure",
+    "why": "Directions §15.6 and §15.7; supplement Part 15: a risk score alone cannot determine loss of essential support; field series Part 4 §4.4: no opaque risk scores.",
+    "rule": "CLAUDE.md Immigration and Customs (\"never a score\"); lib/social/procedures.ts refuses a suspension whose grounds rest on a score"
+   },
+   {
+    "id": "authority-slot",
+    "what": "The labour authority is the institution the nation names for the labour slot, shipped empty; until it is named no case opens",
+    "why": "Specification Part 2 §A.6: the government assigns these functions.",
+    "rule": "lib/nation/deployment.ts AUTHORITIES (labour, optional)"
+   },
+   {
+    "id": "stated-amount",
+    "what": "An amount a person states (a remuneration, a claimed wage, a salary range) is recorded as a whole number of minor units, never a calculated money field",
+    "why": "The platform calculates money only by an approved rule (lib/law/rules.ts); a stated figure is evidence, never a charge or entitlement.",
+    "rule": "CLAUDE.md: rates, bands and tariffs come only from lib/law/rules.ts"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 163,
+    "quotes": [
+     "LAB-EMP-001",
+     "Employment registration",
+     "Register an employment relationship"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.employer_id",
+      "lab.worker_person_id"
+     ],
+     "procedure": "check-authorisation"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1152,
+    "quotes": [
+     "Owns: employer registrations where assigned, inspection cases, findings, corrective orders and employment-service referrals.",
+     "It must not see private medical information without specific authority."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/labour/register.ts",
+      "how": "Employers, inspections with findings and corrective orders, employment-service referrals; injury medical content only as a sealed document"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1593,
+    "quotes": [
+     "Indicators: inspections completed, outstanding corrective actions, complaint age bands, resolution time, repeat findings and employment-service outcomes.",
+     "Do not publish identifying complainant details or imply that an allegation is a proven violation."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/labour/register.ts",
+      "how": "labourCounts() carries no complainant or employer; a complaint is upheld only on findings (labour.checkOutcome)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 184,
+    "quotes": [
+     "The following contracts specify the domain-specific fields.",
+     "The shared standard above supplies the common metadata, legal basis, workflow, privacy and audit fields."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts/shared/common-items.json",
+      "how": "The shared envelope (metadata, legal basis, workflow, privacy, audit) is answered by the shared items; this contract adds the domain fields line by line"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 189,
+    "quotes": [
+     "\"form_id\": \"LAB-EMP-001\""
+    ],
+    "met_by": {
+     "fields": [
+      "lab.employer_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 190,
+    "quotes": [
+     "\"title\": \"Employment Registration\""
+    ],
+    "met_by": {
+     "fields": [
+      "lab.worker_person_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 192,
+    "quotes": [
+     "{\"key\": \"employer_id\", \"type\": \"entity_reference\", \"required\": true, \"source\": \"business_registry\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.employer_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 193,
+    "quotes": [
+     "{\"key\": \"worker_person_id\", \"type\": \"entity_reference\", \"required\": true, \"source\": \"identity_registry\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.worker_person_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 194,
+    "quotes": [
+     "{\"key\": \"employment_start_date\", \"type\": \"date\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.employment_start_date"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 195,
+    "quotes": [
+     "{\"key\": \"employment_type\", \"type\": \"enum\", \"required\": true, \"options_source\": \"approved_employment_types\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.employment_type"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 196,
+    "quotes": [
+     "{\"key\": \"occupation_code\", \"type\": \"code_reference\", \"required\": true, \"options_source\": \"approved_occupation_classification\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.occupation_code"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 197,
+    "quotes": [
+     "{\"key\": \"contract_reference\", \"type\": \"document_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.contract_reference"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 198,
+    "quotes": [
+     "{\"key\": \"work_location\", \"type\": \"address_or_geo_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.work_location"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 199,
+    "quotes": [
+     "{\"key\": \"weekly_hours\", \"type\": \"decimal\", \"required\": false, \"validation_rule_ids\": [\"NONNEGATIVE\"]}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.weekly_hours"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 200,
+    "quotes": [
+     "{\"key\": \"remuneration\", \"type\": \"money\", \"required\": false, \"classification\": \"confidential\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.remuneration"
+     ],
+     "deviation": "stated-amount"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 201,
+    "quotes": [
+     "{\"key\": \"declaration_accuracy\", \"type\": \"boolean\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.declaration_accuracy"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "lab.employer_id",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "labour.registry.employers",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Employer (labour register number)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter employer (labour register number)."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.worker_person_id",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "identity.registry.records",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Worker (identity record)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter worker (identity record)."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.employment_start_date",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Employment start date"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter employment start date."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.employment_type",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "labour.country.employment_types",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Employment type"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter employment type."
+    }
+   },
+   "country_decision": "The nation's list; none ships."
+  },
+  {
+   "id": "lab.occupation_code",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "labour.country.occupations",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Occupation code"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter occupation code."
+    }
+   },
+   "country_decision": "The nation's occupational classification (for example based on ISCO-08); none ships."
+  },
+  {
+   "id": "lab.contract_reference",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "contract-reference",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Employment contract"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.work_location",
+   "type": "address",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Work location"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter work location."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.weekly_hours",
+   "type": "number",
+   "required": false,
+   "validation": [
+    {
+     "rule": "integer_range",
+     "params": {
+      "min": 0
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Weekly hours"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.remuneration",
+   "type": "number",
+   "required": false,
+   "validation": [
+    {
+     "rule": "integer_range",
+     "params": {
+      "min": 0
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Remuneration"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.declaration_accuracy",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The employer declares the information accurate"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the employer declares the information accurate."
+    }
+   },
+   "country_decision": null
+  }
+ ]
+}

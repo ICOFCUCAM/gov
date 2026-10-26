@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { draftRule, approveRule, calculate, ruleInForce, applyRule, resetRules } from './rules';
+import { draftRule, approveRule, calculate, ruleInForce, applyRule, resetRules, recalculate } from './rules';
 import { recordVersion, confirmVersion, resetLaw } from './register';
 
 let act = '';
@@ -36,5 +36,24 @@ describe('operational rules', () => {
     expect(applyRule(t, { amountMinor: -1, code: '0901' })).toHaveProperty('error');
     expect(draftRule({ key: 'customs.t', title: 'Tariff', kind: 'tariff', owner: 'customs', effectiveFrom: '2026-01-01', lines: [{ code: '09', rate: 10 }, { code: '09', rate: 5 }], tests: [] }, 'A')).toMatchObject({ error: expect.stringMatching(/appears twice/) });
     expect(ruleInForce('customs.t')).toBeUndefined();
+  });
+
+  // Plan step I6: fixed amounts by code (passport fees) and a means-tested amount (benefits).
+  it('schedules fixed amounts by code and calculates a means-tested amount, both tested, cited and reproducible by version', () => {
+    expect(applyRule({ kind: 'fixed-amounts', amounts: [{ code: 'ordinary', amountMinor: 400_000 }] }, { amountMinor: 0, code: 'ordinary' })).toMatchObject({ amountMinor: 400_000 });
+    expect(applyRule({ kind: 'fixed-amounts', amounts: [{ code: 'ordinary', amountMinor: 400_000 }] }, { amountMinor: 0, code: 'diplomatic' })).toMatchObject({ error: expect.stringMatching(/No line/) });
+    const means = { limitMinor: 800_000, baseMinor: 300_000, perMemberMinor: 100_000, taperRate: 50 };
+    expect(applyRule({ kind: 'means-tested', means }, { amountMinor: 250_000, members: 3 })).toMatchObject({ amountMinor: 375_000 });
+    expect(applyRule({ kind: 'means-tested', means }, { amountMinor: 800_000, members: 3 })).toMatchObject({ amountMinor: 0 });
+    expect(applyRule({ kind: 'means-tested', means }, { amountMinor: 700_000, members: 1 })).toMatchObject({ amountMinor: 0 });
+    expect(draftRule({ key: 'social.x', title: 'Child support', kind: 'means-tested', owner: 'socialProtection', effectiveFrom: '2026-01-01', means: { ...means, taperRate: -1 }, tests: [] }, 'A', 'a')).toHaveProperty('error');
+    const d = draftRule({ key: 'social.x', title: 'Child support', kind: 'means-tested', owner: 'socialProtection', effectiveFrom: '2026-01-01', means, citations: [{ instrument: act, eId: 'sch_1' }], tests: [{ name: 't', input: { amountMinor: 250_000, members: 3 }, expectMinor: 375_000 }] }, 'A', 'a');
+    if ('error' in d) throw new Error(d.error);
+    expect(recalculate({ key: 'social.x', version: 1, digest: d.digest }, { amountMinor: 250_000, members: 3 })).toMatchObject({ error: expect.stringMatching(/never approved/) });
+    approveRule('social.x', 1, 'B', 'b');
+    const c = calculate('social.x', { amountMinor: 250_000, members: 3 }, '2026-03-01');
+    if ('error' in c) throw new Error(c.error);
+    expect(recalculate(c.rule, { amountMinor: 250_000, members: 3 })).toMatchObject({ amountMinor: 375_000 });
+    expect(recalculate({ ...c.rule, digest: '0'.repeat(64) }, { amountMinor: 250_000, members: 3 })).toMatchObject({ error: expect.stringMatching(/digest/) });
   });
 });

@@ -30,7 +30,10 @@ export type AuthorityKey =
   // the finance authority the nation names, whether a ministry of finance, a treasury or a budget office), the cabinet
   // office (Cabinet submissions, decisions and actions; executive correspondence and petitions) and the body that
   // reviews procurement complaints independently of the procuring institution. Empty until named; nothing is assumed.
-  | 'finance' | 'cabinetOffice' | 'procurementReview';
+  | 'finance' | 'cabinetOffice' | 'procurementReview'
+  // Human services (plan step I6, specification Part 2): bodies a nation may keep apart, each named by the nation;
+  // empty until named, no case opens under a slot nobody is named for, and no stand-in acts for them.
+  | 'travelDocuments' | 'citizenship' | 'labour' | 'socialProtection';
 
 export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts' | 'tax' | 'customs' | 'education' | 'health' | 'professions';
 
@@ -113,6 +116,12 @@ export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string;
   { key: 'finance', label: 'Public finance (budget and treasury)', registers: 'Budget calls, ceilings and bids; appropriations and their releases and revisions; commitments; payment orders and payee accounts; cash forecasts', optional: true },
   { key: 'cabinetOffice', label: 'Cabinet office', registers: 'Cabinet submissions, decisions with their votes, the action register; executive correspondence and petitions', optional: true },
   { key: 'procurementReview', label: 'Procurement review body', registers: 'Procurement complaints and their review decisions, kept apart from the procuring institution', optional: true },
+  // Human services (plan step I6): optional, so an installation set up before them stays complete; until the nation names one,
+  // its procedures open no case and its register stays empty (the nation may name the same institution as for immigration).
+  { key: 'travelDocuments', label: 'Passports and travel documents', registers: 'Passports and other travel documents: applications, issuance, custody, status and production reconciliation', optional: true },
+  { key: 'citizenship', label: 'Citizenship determination', registers: 'Citizenship and nationality applications and determinations (only where the nation\'s law names a competent authority)', optional: true },
+  { key: 'labour', label: 'Labour and employment', registers: 'Employers and workplaces, employment registrations, vacancies and jobseekers, inspections and corrective orders, labour complaints, occupational injury notifications, mediation', optional: true },
+  { key: 'socialProtection', label: 'Social protection and benefits', registers: 'Claimants and households, benefit claims and their calculations, entitlements, payment instructions, overpayments and appeals', optional: true },
 ];
 /** Health bodies a nation may set apart from the health regulator: optional, provisionally stood in for until named (PROVISIONAL_FALLBACK). */
 export const HEALTH_SLOTS: AuthorityKey[] = ['medicinesRegulation', 'controlledSubstances', 'publicHealth'];

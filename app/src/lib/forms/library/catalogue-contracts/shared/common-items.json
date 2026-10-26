@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration), \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities), \"econ8\" (batch 8: Part 2's implementation rules for the executive centre, finance, treasury and budget forms) and \"land\", \"hpc\", \"lrg\" and \"trn\" (batch 10: the territory and infrastructure families of Parts 8 and 9 and the supplement's Parts 19 and 20). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration), \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities), \"econ8\" (batch 8: Part 2's implementation rules for the executive centre, finance, treasury and budget forms), \"human\" (batch 9, human services: the specification's separate institutional records and lawful authority, the field series' rule that a submission is not a decision, that a failed check is no ground for refusal and that no default is activated) and \"land\", \"hpc\", \"lrg\" and \"trn\" (batch 10: the territory and infrastructure families of Parts 8 and 9 and the supplement's Parts 19 and 20). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -312,7 +312,103 @@
   "treasury.payment.refund",
   "treasury.payment.reject",
   "treasury.payment.supporting_evidence",
-  "treasury.payment.verify"
+  "treasury.payment.verify",
+  "IDN-REG-001",
+  "IDN-REG-002",
+  "IDN-REG-003",
+  "IDN-REG-004",
+  "IDN-REG-005",
+  "IDN-CARD-001",
+  "IDN-CARD-002",
+  "IDN-CARD-003",
+  "IDN-CARD-004",
+  "IDN-CARD-005",
+  "IDN-CARD-006",
+  "IDN-CARD-007",
+  "IDN-VER-001",
+  "IDN-VER-002",
+  "IDN-VER-003",
+  "IDN-ACC-001",
+  "IDN-ACC-002",
+  "IDN-ACC-003",
+  "IDN-ACC-004",
+  "IDN-SEC-001",
+  "IDN-SEC-002",
+  "IDN-SEC-003",
+  "PAS-APP-001",
+  "PAS-APP-002",
+  "PAS-APP-003",
+  "PAS-APP-004",
+  "PAS-APP-005",
+  "PAS-APP-008",
+  "PAS-APP-009",
+  "PAS-APP-010",
+  "PAS-APP-006",
+  "PAS-APP-007",
+  "PAS-APP-011",
+  "PAS-APP-012",
+  "PAS-APP-013",
+  "PAS-APP-014",
+  "PAS-APP-015",
+  "PAS-APP-016",
+  "PAS-APP-017",
+  "PAS-APP-018",
+  "NAT-APP-001",
+  "NAT-APP-002",
+  "NAT-APP-003",
+  "NAT-APP-004",
+  "NAT-APP-005",
+  "NAT-APP-006",
+  "NAT-APP-007",
+  "NAT-APP-010",
+  "NAT-APP-012",
+  "NAT-APP-008",
+  "NAT-APP-009",
+  "NAT-APP-011",
+  "LAB-EMP-001",
+  "LAB-EMP-002",
+  "LAB-EMP-003",
+  "LAB-EMP-004",
+  "LAB-EMP-005",
+  "LAB-EMP-006",
+  "LAB-EMP-007",
+  "LAB-EMP-008",
+  "LAB-EMP-009",
+  "LAB-EMP-010",
+  "LAB-EMP-011",
+  "LAB-EMP-012",
+  "LAB-EMP-013",
+  "LAB-EMP-014",
+  "LAB-EMP-015",
+  "LAB-EMP-016",
+  "LAB-EMP-017",
+  "LAB-EMP-018",
+  "LAB-EMP-019",
+  "LAB-EMP-020",
+  "SOC-BEN-001",
+  "SOC-BEN-002",
+  "SOC-BEN-003",
+  "SOC-BEN-004",
+  "SOC-BEN-005",
+  "SOC-BEN-006",
+  "SOC-BEN-017",
+  "SOC-BEN-007",
+  "SOC-BEN-009",
+  "SOC-BEN-011",
+  "SOC-BEN-012",
+  "SOC-BEN-014",
+  "SOC-BEN-010",
+  "SOC-BEN-008",
+  "SOC-BEN-013",
+  "SOC-BEN-016",
+  "SOC-BEN-021",
+  "SOC-BEN-022",
+  "SOC-BEN-023",
+  "SOC-BEN-024",
+  "SOC-BEN-015",
+  "SOC-BEN-018",
+  "SOC-BEN-019",
+  "SOC-BEN-020"
  ],
  "groups": {
   "health": [
@@ -646,6 +742,104 @@
    "treasury.payment.reject",
    "treasury.payment.supporting_evidence",
    "treasury.payment.verify"
+  ],
+  "human": [
+   "IDN-REG-001",
+   "IDN-REG-002",
+   "IDN-REG-003",
+   "IDN-REG-004",
+   "IDN-REG-005",
+   "IDN-CARD-001",
+   "IDN-CARD-002",
+   "IDN-CARD-003",
+   "IDN-CARD-004",
+   "IDN-CARD-005",
+   "IDN-CARD-006",
+   "IDN-CARD-007",
+   "IDN-VER-001",
+   "IDN-VER-002",
+   "IDN-VER-003",
+   "IDN-ACC-001",
+   "IDN-ACC-002",
+   "IDN-ACC-003",
+   "IDN-ACC-004",
+   "IDN-SEC-001",
+   "IDN-SEC-002",
+   "IDN-SEC-003",
+   "PAS-APP-001",
+   "PAS-APP-002",
+   "PAS-APP-003",
+   "PAS-APP-004",
+   "PAS-APP-005",
+   "PAS-APP-008",
+   "PAS-APP-009",
+   "PAS-APP-010",
+   "PAS-APP-006",
+   "PAS-APP-007",
+   "PAS-APP-011",
+   "PAS-APP-012",
+   "PAS-APP-013",
+   "PAS-APP-014",
+   "PAS-APP-015",
+   "PAS-APP-016",
+   "PAS-APP-017",
+   "PAS-APP-018",
+   "NAT-APP-001",
+   "NAT-APP-002",
+   "NAT-APP-003",
+   "NAT-APP-004",
+   "NAT-APP-005",
+   "NAT-APP-006",
+   "NAT-APP-007",
+   "NAT-APP-010",
+   "NAT-APP-012",
+   "NAT-APP-008",
+   "NAT-APP-009",
+   "NAT-APP-011",
+   "LAB-EMP-001",
+   "LAB-EMP-002",
+   "LAB-EMP-003",
+   "LAB-EMP-004",
+   "LAB-EMP-005",
+   "LAB-EMP-006",
+   "LAB-EMP-007",
+   "LAB-EMP-008",
+   "LAB-EMP-009",
+   "LAB-EMP-010",
+   "LAB-EMP-011",
+   "LAB-EMP-012",
+   "LAB-EMP-013",
+   "LAB-EMP-014",
+   "LAB-EMP-015",
+   "LAB-EMP-016",
+   "LAB-EMP-017",
+   "LAB-EMP-018",
+   "LAB-EMP-019",
+   "LAB-EMP-020",
+   "SOC-BEN-001",
+   "SOC-BEN-002",
+   "SOC-BEN-003",
+   "SOC-BEN-004",
+   "SOC-BEN-005",
+   "SOC-BEN-006",
+   "SOC-BEN-017",
+   "SOC-BEN-007",
+   "SOC-BEN-009",
+   "SOC-BEN-011",
+   "SOC-BEN-012",
+   "SOC-BEN-014",
+   "SOC-BEN-010",
+   "SOC-BEN-008",
+   "SOC-BEN-013",
+   "SOC-BEN-016",
+   "SOC-BEN-021",
+   "SOC-BEN-022",
+   "SOC-BEN-023",
+   "SOC-BEN-024",
+   "SOC-BEN-015",
+   "SOC-BEN-018",
+   "SOC-BEN-019",
+   "SOC-BEN-020"
   ]
  },
  "items": [
@@ -3571,6 +3765,81 @@
     "platform": {
      "file": "app/src/lib/forms/rules.ts",
      "how": "Only registered rules run (unknown names fail closed); a binding rule is recorded as not performed and blocks publication until its register or decision exists"
+    }
+   }
+  },
+  {
+   "for": "human",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 1106,
+   "quotes": [
+    "The governing principle is one sovereign platform, distinct lawful authorities, and separate institutional records.",
+    "CivicOS can provide common infrastructure, but it must not turn every institution into a user of one unrestricted national database."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Identity, travel document, labour and social protection records are read only by the authority that keeps them (canReadIdentity(), canReadTravelDocuments(), canReadLabour(), canReadSocial()); others learn a result through an exchange service, never the record"
+    }
+   }
+  },
+  {
+   "for": "human",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 1197,
+   "quotes": [
+    "Critical implementation rule: a case workflow cannot itself confer legal power.",
+    "The workflow may only execute an action if the configured authority, applicable legal provision, effective date and required approvals are valid."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/permits/decisions.ts",
+     "how": "Every decision step of the human services procedures is classified to a permit type whose mapping ships as an unapproved draft (lib/permits/authority.ts); production refuses a decision no approved mapping covers, and the decision cites a law version"
+    }
+   }
+  },
+  {
+   "for": "human",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+   "line": 1406,
+   "quotes": [
+    "The key architectural rule is that a form submission is not itself a legal decision.",
+    "CivicOS records the application, evidence, verification, authorized decision, notification, and review history as distinct events.",
+    "Each workflow must be activated only after the country has configured the relevant law, competent authority, required evidence, deadlines, fees, and review process."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "A submission opens a case; application, evidence, verification, decision, notice and review are separate acts on it by named officials; the procedures are drafts until the nation approves them under its law and authority"
+    }
+   }
+  },
+  {
+   "for": "human",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+   "line": 1771,
+   "quotes": [
+    "Validation must distinguish a technical error from a legal conclusion.",
+    "A missing document, unresolved match, or failed external connection is not automatically grounds for an adverse decision."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/social/procedures.ts",
+     "how": "An identity or status check that cannot be made holds the case (identity.verify unable_to_verify); refusal is not open from the held stage, here and in lib/passports/procedures.ts and lib/labour/procedures.ts"
+    }
+   }
+  },
+  {
+   "for": "human",
+   "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+   "line": 1817,
+   "quotes": [
+    "No rule should be activated merely because a developer supplied a plausible default."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/law/rules.ts",
+     "how": "No fee, rate, period or amount ships: calculate() refuses without an approved, cited, tested rule version; the slots and lists ship empty"
     }
    }
   }

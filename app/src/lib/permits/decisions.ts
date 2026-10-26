@@ -40,6 +40,11 @@ import { TRANSPORT_PERMITS } from '@/lib/transport/procedures';
 import { FINANCE_PERMITS } from '@/lib/finance/procedures';
 import { PROCUREMENT_PERMITS, PROCURING_ENTITY } from '@/lib/procurement/procedures';
 import { CABINET_PERMITS } from '@/lib/cabinet/procedures';
+import { IDENTITY_PERMITS } from '@/lib/identity/procedures';
+import { PASSPORT_PERMITS } from '@/lib/passports/procedures';
+import { CITIZENSHIP_PERMITS } from '@/lib/citizenship/procedures';
+import { LABOUR_PERMITS } from '@/lib/labour/procedures';
+import { SOCIAL_PERMITS } from '@/lib/social/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -122,6 +127,9 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   // the procuring entity, resolved to the case's own institution) and the review body's complaints (lead: its slot).
   // Proposed mappings, none approved: a production installation refuses these decisions until the nation approves them.
   for (const [k, permitType] of Object.entries({ ...FINANCE_PERMITS, ...CABINET_PERMITS, ...PROCUREMENT_PERMITS })) if (is(key, k)) return mapped(permitType);
+  // Human services (plan step I6): identity, passports and travel documents, citizenship, labour and social protection, each
+  // family under its own permit type (lead: the slot the nation names). Proposed, unapproved: refused in production until approved.
+  for (const permits of [IDENTITY_PERMITS, PASSPORT_PERMITS, CITIZENSHIP_PERMITS, LABOUR_PERMITS, SOCIAL_PERMITS]) for (const [k, permitType] of Object.entries(permits)) if (is(key, k)) return mapped(permitType);
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);
 }

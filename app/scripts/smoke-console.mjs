@@ -85,6 +85,11 @@ const PAGES = [
   { path: '/gov/building', map: false, text: /planning, building control and housing/i },
   { path: '/gov/local-government', map: false, text: /local and regional government/i },
   { path: '/gov/transport', map: false, text: /transport registers/i },
+  // Human services (plan I6): identity, passports and travel documents, labour, social protection.
+  { path: '/gov/identity', map: false, text: /national identity/i },
+  { path: '/gov/passports', map: false, text: /passports and travel documents/i },
+  { path: '/gov/labour', map: false, text: /labour and employment/i },
+  { path: '/gov/social-protection', map: false, text: /social protection/i },
   // Tax services (plan step I5) and forms batch 6: the procedures and a form of each kind, in three channels.
   { path: '/gov/tax/services', map: false, text: /tax services/i },
   // Plan step I5: budget and treasury, procurement, the Cabinet office (records as the official may read them, and the procedures).

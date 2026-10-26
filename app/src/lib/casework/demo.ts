@@ -16,7 +16,7 @@ import { LAND_PROCEDURES } from '@/lib/land/procedures';
 import { BUILDING_PROCEDURES } from '@/lib/building/procedures';
 import { HOUSING_PROCEDURES } from '@/lib/housing/procedures';
 import { TRANSPORT_PROCEDURES } from '@/lib/transport/procedures';
-import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, PROGRAMME_PROCEDURES, COMPLAINT_PROCEDURES, FINANCE_PROCEDURES, CABINET_PROCEDURES, REFERENCE_PROCUREMENT_COMPLAINT, installReferenceProcedures } from '@/lib/casework/modules';
+import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, PROGRAMME_PROCEDURES, COMPLAINT_PROCEDURES, FINANCE_PROCEDURES, CABINET_PROCEDURES, REFERENCE_PROCUREMENT_COMPLAINT, IDENTITY_PROCEDURES, PASSPORT_PROCEDURES, CITIZENSHIP_PROCEDURES, LABOUR_PROCEDURES, SOCIAL_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 import { activePackage, approvePackage, draftPackage, listPackages, withSampleDeadlines } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
@@ -137,6 +137,43 @@ const MORE_ACTS: { title: string; number: string; authority: AuthorityKey; provi
   } },
   { title: 'Public Procurement Review Act (sample for demonstration)', number: 'sample-16', authority: 'procurementReview', procedures: [REFERENCE_PROCUREMENT_COMPLAINT], provisions: {
     'procurement-review.complaint': P('sec_50', '50', 'A bidder may complain to the review body about a procurement decision; the review body may suspend the award and shall decide with reasons.'),
+  } },
+  // Human services (plan I6): powers only. No fee, validity period, benefit rate or means limit is sampled: the passport fee
+  // schedule and each programme's rule stay for the nation to approve (Rates and tariffs), and the mappings stay drafts.
+  { title: 'National Identity Act (sample for demonstration)', number: 'sample-i6-1', authority: 'identity', procedures: IDENTITY_PROCEDURES, provisions: {
+    'identity.enrolment': P('sec_4', '4', 'An eligible person may be enrolled in the national identity register on verified evidence of identity; a possible duplicate is determined by an authorised officer.'),
+    'identity.credential': P('sec_8', '8', 'The authority issues, renews and replaces identity credentials for the period the regulations set.'),
+    'identity.credential-status': P('sec_10', '10', 'After notice and representations, a credential may be suspended or revoked; a lost or stolen credential may be cancelled.'),
+    'identity.resolution': P('sec_12', '12', 'The authority determines suspected duplicate, misused or compromised identity records.'),
+  } },
+  { title: 'Passports Act (sample for demonstration)', number: 'sample-i6-2', authority: 'travelDocuments', procedures: PASSPORT_PROCEDURES, provisions: {
+    'passport.application': P('sec_5', '5', 'A citizen may be issued a passport or other travel document on application and the fee the Schedule sets.'),
+    'passport.status': P('sec_9', '9', 'A travel document reported lost or stolen may be cancelled; after notice and representations, one may be revoked.'),
+    'passport.review': P('sec_11', '11', 'A person refused a passport may ask for the refusal to be reviewed by officers who did not take it.'),
+  } },
+  { title: 'Citizenship Act (sample for demonstration)', number: 'sample-i6-3', authority: 'citizenship', procedures: CITIZENSHIP_PROCEDURES, provisions: {
+    'citizenship.application': P('sec_5', '5', 'The competent authority determines applications for citizenship on the grounds this Act sets.'),
+  } },
+  { title: 'Employment and Labour Relations Act (sample for demonstration)', number: 'sample-i6-4', authority: 'labour', procedures: LABOUR_PROCEDURES, provisions: {
+    'labour.employer-registration': P('sec_4', '4', 'Every employer shall register with the labour authority.'),
+    'labour.employment-registration': P('sec_6', '6', 'An employer shall register each employment relationship.'),
+    'labour.vacancy': P('sec_20', '20', 'The labour authority may publish vacancies employers notify.'),
+    'labour.jobseeker': P('sec_21', '21', 'The labour authority may register jobseekers and refer them to vacancies.'),
+    'labour.inspection': P('sec_30', '30', 'A labour inspector may inspect any workplace, record findings and issue corrective orders.'),
+    'labour.complaint': P('sec_40', '40', 'Any worker may complain to the labour authority, which shall assess and decide the complaint with reasons.'),
+    'labour.injury': P('sec_50', '50', 'An employer shall notify the labour authority of every occupational injury or dangerous occurrence.'),
+    'labour.mediation': P('sec_60', '60', 'The labour authority may mediate a dispute at the request of a party.'),
+    'labour.notice': P('sec_70', '70', 'Notice of a strike or of redundancies shall be given to the labour authority.'),
+  } },
+  { title: 'Social Assistance Act (sample for demonstration)', number: 'sample-i6-5', authority: 'socialProtection', procedures: SOCIAL_PROCEDURES, provisions: {
+    'social.registration': P('sec_4', '4', 'A person may register with the social protection authority.'),
+    'social.household': P('sec_5', '5', 'A registered person shall declare their household and any change to it.'),
+    'social.benefit': P('sec_10', '10', 'A benefit is paid as the programme\'s regulations calculate, on a decision with reasons.'),
+    'social.reassessment': P('sec_12', '12', 'A benefit may be reassessed on a change of circumstances.'),
+    'social.suspension': P('sec_14', '14', 'After notice and representations, a benefit may be suspended or terminated.'),
+    'social.payment': P('sec_16', '16', 'Payments are made on instructions approved by an officer other than the one who prepared them.'),
+    'social.overpayment': P('sec_18', '18', 'An overpayment may be recovered or waived.'),
+    'social.appeal': P('sec_20', '20', 'A person may appeal a decision to officers who did not take it.'),
   } },
   { title: 'Customs Act (sample for demonstration)', number: 'sample-10', authority: 'customs', procedures: CUSTOMS_PROCEDURES, provisions: {
     'customs.declaration': P('sec_30', '30', 'Goods shall be declared to customs, may be examined, and are released once the duty assessed on them is paid.'),

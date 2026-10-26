@@ -1,0 +1,310 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "IDN-REG-004",
+ "record_type": "idn.idn-reg-004",
+ "form_version": 1,
+ "procedure_package_id": "identity.enrolment",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-IDN-001: national identity eligibility and the issuing authority (the identity slot, shipped empty).",
+  "CFG-IDN-002: identifier generation, uniqueness and replacement rules, and credential types and validity (none ship).",
+  "CFG-IDN-003: the verification responses and the recipients permitted (identity.verify, each caller and purpose approved by two officials).",
+  "CFG-IDN-004: biometric authorisation, if any, and its security requirements: legal review first (plan I11); none ships."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+  "id": "IDN-REG-004",
+  "part": 4,
+  "section": "3.1",
+  "line": 1504,
+  "batch": 9
+ },
+ "library": {
+  "title": "Record the identity verification",
+  "intro": "Record how the evidence was verified, the result and what could not be verified. An unverified fact stays unresolved: it is never turned into a refusal or an identity.",
+  "owner": "identity",
+  "filled_by": "An official of the identity authority, signed in, at an office or from a paper form.",
+  "authority": "The identity authority the nation names for the identity slot of the deployment profile (authorityFor('identity')). Never a ministry by name.",
+  "procedure": {
+   "key": "identity.enrolment",
+   "stage": "verified",
+   "action": "verify",
+   "document": "identity-evidence"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadIdentity() in lib/auth/roles.ts: the identity authority's officials; auditors with a purpose; every read and search in the access log",
+   "access.others": "Other institutions learn only a verification result through identity.verify, never the record"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "no-score",
+    "what": "No field scores a person, a household, a credential, an employer or an application: no risk, credibility, propensity or match score exists in the contract or its procedure",
+    "why": "Directions §15.6 and §15.7; supplement Part 15: a risk score alone cannot determine loss of essential support; field series Part 4 §4.4: no opaque risk scores.",
+    "rule": "CLAUDE.md Immigration and Customs (\"never a score\"); lib/social/procedures.ts refuses a suspension whose grounds rest on a score"
+   },
+   {
+    "id": "authority-slot",
+    "what": "The identity authority is the institution the nation names for the identity slot of the deployment profile, never a ministry by name; until it is named no case opens",
+    "why": "Who is legally responsible comes from the deployment profile (directions §3; CFG-IDN-001).",
+    "rule": "lib/nation/deployment.ts authorityFor(); lib/casework/packages.ts ownerInstitution()"
+   },
+   {
+    "id": "no-biometric",
+    "what": "No biometric field, template, match or score: a photograph is a document of the case (an image), and no biometric template is made or stored",
+    "why": "Field series Part 4 §3.4: biometric collection is not a default; CFG-IDN-004 (biometric authorisation) needs the nation's law and an independent legal review first (plan I11).",
+    "rule": "lib/identity/register.ts and lib/passports/register.ts hold no biometric data; app/scripts/requirements/catalogue.py PROHIBITED_FIELD"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1504,
+    "quotes": [
+     "IDN-REG-004",
+     "Identity verification record",
+     "Verification outcome recorded"
+    ],
+    "met_by": {
+     "fields": [
+      "verification.method",
+      "verification.result"
+     ],
+     "procedure": "verify"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1128,
+    "quotes": [
+     "Owns: credential issuance, status, revocation, verification events and identity-resolution cases.",
+     "Does not automatically own the underlying birth or court records."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/identity/register.ts",
+      "how": "Credentials with issuance, status and revocation, verification through identity.verify and resolution determinations; the civil register is linked by reference only and never changed"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1498,
+    "quotes": [
+     "National identity administration is separate from civil registration.",
+     "A civil event may support an identity application, but it must not automatically create, merge, or invalidate a national identity unless an explicitly configured legal rule authorizes the specific transition."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/identity/register.ts",
+      "how": "A civil register entry is linked only with its basis; enrolment, merge or invalidation happens only by an identity decision, never from a civil event"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1536,
+    "quotes": [
+     "Sensitive values such as full identity numbers should be masked by default in staff interfaces, search results, logs, exports, and notifications.",
+     "Full values should appear only where the user's role, purpose, and case authorization permit them."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/identity/register.ts",
+      "how": "maskNumber() and listedIdentity(): numbers masked in staff lists; the full record only under canReadIdentity(), with a purpose for a name search, every read logged"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1543,
+    "quotes": [
+     "The permitted response vocabulary must be configured to match the jurisdiction's law and service contract.",
+     "A failed lookup must not be treated as proof that a person does not exist, lacks citizenship, or is ineligible for a service."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/identity/register.ts",
+      "how": "VERIFY_RESULTS and VERIFY_MEANING: verified, not_verified, unable_to_verify, additional_review_required; not_verified states that it is not proof of non-existence or ineligibility"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1545,
+    "quotes": [
+     "A requesting institution should normally receive only the result needed for its lawful purpose, not the underlying civil or identity record."
+    ],
+    "met_by": {
+     "exchange": "identity.verify"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1555,
+    "quotes": [
+     "A biometric match must not itself make an adverse legal decision."
+    ],
+    "met_by": {
+     "deviation": "no-biometric"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1489,
+    "quotes": [
+     "CIV-REC-018",
+     "Suspected duplicate record review",
+     "Candidate records, comparison evidence, and human determination"
+    ],
+    "met_by": {
+     "fields": [
+      "verification.candidates",
+      "verification.determination"
+     ],
+     "procedure": "determine-duplicate"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "verification.method",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "How it was verified"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter how it was verified."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "verification.result",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "identity.verification_results",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Result"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter result."
+    }
+   },
+   "country_decision": "Verified, not verified or unresolved (lib/identity/procedures.ts)."
+  },
+  {
+   "id": "verification.limitations",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What could not be verified, and why"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "verification.candidates",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Possible duplicates found (register numbers; a flag, never a merge)"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "verification.determination",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "identity.determinations",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Determination about a possible duplicate (an official's, with reasons)"
+   },
+   "country_decision": "same-person, different-persons, unresolved (lib/identity/register.ts DETERMINATIONS)."
+  }
+ ]
+}

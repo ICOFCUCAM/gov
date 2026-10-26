@@ -24,6 +24,12 @@ import '@/lib/housing/procedures';
 // Local and regional government (plan I7): each local government's own procedures, adopted from templates on request.
 import '@/lib/localgov/procedures';
 import '@/lib/transport/procedures';
+// Human services (plan step I6): identity, passports and travel documents, citizenship, labour, social protection.
+import '@/lib/identity/procedures';
+import '@/lib/passports/procedures';
+import '@/lib/citizenship/procedures';
+import '@/lib/labour/procedures';
+import '@/lib/social/procedures';
 // Internal administration (plan I2): each institution's own procedures, drafted from templates on request.
 import '@/lib/administration/procedures';
 // The economic group (plan I5): budget and treasury, the Cabinet office, and procurement (each institution's own
@@ -60,6 +66,11 @@ import { installTransportProcedures } from '@/lib/transport/procedures';
 import { installFinanceProcedures } from '@/lib/finance/procedures';
 import { installCabinetProcedures } from '@/lib/cabinet/procedures';
 import { installProcurementReviewProcedures } from '@/lib/procurement/procedures';
+import { installIdentityProcedures } from '@/lib/identity/procedures';
+import { installPassportProcedures } from '@/lib/passports/procedures';
+import { installCitizenshipProcedures } from '@/lib/citizenship/procedures';
+import { installLabourProcedures } from '@/lib/labour/procedures';
+import { installSocialProcedures } from '@/lib/social/procedures';
 export { REFERENCE_PROCEDURES } from '@/lib/civil/procedures';
 export { ORGANISATION_PROCEDURES } from '@/lib/organisations/procedures';
 export { IMMIGRATION_PROCEDURES } from '@/lib/immigration/procedures';
@@ -81,13 +92,20 @@ export { TRANSPORT_PROCEDURES } from '@/lib/transport/procedures';
 export { FINANCE_PROCEDURES } from '@/lib/finance/procedures';
 export { CABINET_PROCEDURES } from '@/lib/cabinet/procedures';
 export { PROCUREMENT_PROCEDURES, REFERENCE_PROCUREMENT_COMPLAINT } from '@/lib/procurement/procedures';
+export { IDENTITY_PROCEDURES } from '@/lib/identity/procedures';
+export { PASSPORT_PROCEDURES } from '@/lib/passports/procedures';
+export { CITIZENSHIP_PROCEDURES } from '@/lib/citizenship/procedures';
+export { LABOUR_PROCEDURES } from '@/lib/labour/procedures';
+export { SOCIAL_PROCEDURES } from '@/lib/social/procedures';
 
-/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight, land, building, housing and transport, budget and treasury, the Cabinet office, procurement review) the installation does not have yet. */
+/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight, land, building, housing and transport, budget and treasury, the Cabinet office, procurement review, identity, passports, citizenship, labour and social protection) the installation does not have yet. */
 export function installReferenceProcedures(by: string): { drafted: string[]; present: string[] } {
   const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by), installProductProcedures(by), installProgrammeProcedures(by), installComplaintProcedures(by), installOversightProcedures(by),
     // Plan step I7: territory and infrastructure.
     installLandProcedures(by), installBuildingProcedures(by), installHousingProcedures(by), installTransportProcedures(by),
     // Plan step I5: budget and treasury, the Cabinet office, the procurement review body (procurement itself: each institution's own templates).
-    installFinanceProcedures(by), installCabinetProcedures(by), installProcurementReviewProcedures(by)];
+    installFinanceProcedures(by), installCabinetProcedures(by), installProcurementReviewProcedures(by),
+    // Plan step I6: human services.
+    installIdentityProcedures(by), installPassportProcedures(by), installCitizenshipProcedures(by), installLabourProcedures(by), installSocialProcedures(by)];
   return { drafted: all.flatMap(x => x.drafted), present: all.flatMap(x => x.present) };
 }

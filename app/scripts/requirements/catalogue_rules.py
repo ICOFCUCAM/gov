@@ -35,6 +35,12 @@ PROFEV = "lib/professions/procedures.ts (prof.registration, prof.renewal, prof.f
 EDUEV = "lib/education/procedures.ts (edu.inspection, edu.qualification, edu.qualification-correction, edu.qualification-revocation), schools as organisations with a standing in the schools register, aggregate returns, qualification.verify; tests lib/education/procedures.test.ts"
 ACCEV = "lib/organisations/procedures.ts org.accreditation (higher-education accreditation as a standing kept by the accrediting body)"
 OVSEV = KB.OVS + '; ' + KB.PIDEV
+# Human services (plan I6)
+IDNEV = "lib/identity/procedures.ts (identity.enrolment, identity.credential, identity.credential-status, identity.resolution), lib/identity/register.ts (identity records, credentials and their status history, determinations by an officer with reasons, never an automatic match; canReadIdentity(); others learn only a result through identity.verify); tests lib/identity/identity.test.ts"
+PASEV = "lib/passports/procedures.ts (passport.application, passport.status, passport.review), lib/passports/register.ts (documents with ICAO Doc 9303 data elements, production, quality, custody and collection; fee only from the approved passports.fees schedule; no biometric template; travel-document.status); tests lib/passports/passports.test.ts"
+NATEV = "lib/citizenship/procedures.ts (citizenship.application: grounds, evidence, the competent authority's determination by two officials with reasons; the citizenship slot ships empty); tests lib/citizenship/citizenship.test.ts"
+LABEV = "lib/labour/procedures.ts (employer and employment registration, vacancies, jobseekers, inspections with findings by version and corrective orders, complaints, injury notifications with medical evidence only as a sealed document, mediation, notices), lib/labour/register.ts (canReadLabour(); employer.standing); tests lib/labour/labour.test.ts"
+SOCEV = "lib/social/procedures.ts (registration, household, benefit, reassessment, suspension, payment by maker and a different approver, overpayment, appeal), lib/social/register.ts (each assessment with its inputs, approved rule version and digest, reproducible; no score; canReadSocial()); tests lib/social/social.test.ts"
 TRANSEV = KB.TRANS + "; emergencies recorded as legal events cited from the laws register, confirmed by a different person, lapsing at expiry (lib/transitions/events.ts, state.ts)"
 INCID = "ministry incidents with recorded places (lib/data/incident-places.ts; test lib/data/incident-places.test.ts)"
 # Territory and infrastructure (plan I7, forms batch 10): reference procedures as drafts owned by the slots the nation names (landRegistry,
@@ -92,10 +98,10 @@ D = {
     'procurement': ('Public procurement', 'I5', True, PROCEV, 'Not yet'),
     'exchange': ('Cross-institution exchange', 'I9', True, KB.EXCH, 'Not yet'),
     'civil': ('Civil registration', 'I6', True, CIVEV, 'Not yet'),
-    'identity': ('National identity', 'I6', False, "person.verify exchange (lib/exchange/services.ts) answers a match against the civil register; no identity credential register", 'Not yet'),
+    'identity': ('National identity', 'I6', True, IDNEV, 'Not yet'),
     'immigration': ('Immigration', 'I6', True, IMMEV, 'Not yet'),
-    'passports': ('Passports and travel documents', 'I6', False, KB.ABSENT, 'Not yet'),
-    'citizenship': ('Citizenship', 'I6', False, KB.ABSENT, 'Not yet'),
+    'passports': ('Passports and travel documents', 'I6', True, PASEV, 'Not yet'),
+    'citizenship': ('Citizenship', 'I6', True, NATEV, 'Not yet'),
     'portal': ('Public portal and workspaces', 'I13', False, "Citizen wallet (/wallet; demo and training only until the identity provider is connected), institution case queues (lib/casework/view.ts)", 'Not yet'),
     'courts': ('Courts', 'I11', True, COURTS, 'Not yet'),
     'judicial-independence': ('Judicial independence', 'I11', True, COURTS + "; " + KB.ROLES + " (courts' cases closed to every other institution)", 'Not yet'),
@@ -157,8 +163,8 @@ D = {
     'service-gov': ('Service governance and performance', 'I13', False, UPD + "; " + KB.REGOWN, 'Not yet'),
     'interop': ('Interoperability', 'I9', True, KB.EXCH, 'Not yet'),
     # supplement, parts 14-22
-    'labour': ('Labour and employment', 'I6', False, KB.SCREENS, 'Not yet'),
-    'social-protection': ('Social protection and social services', 'I6', False, KB.SCREENS, 'Not yet'),
+    'labour': ('Labour and employment', 'I6', True, LABEV, 'Not yet'),
+    'social-protection': ('Social protection and social services', 'I6', True, SOCEV, 'Not yet'),
     'foreign': ('Foreign affairs, consular and diaspora', 'I6', False, KB.SCREENS, 'Not yet'),
     'culture': ('Tourism, culture, youth and sports', 'I6', False, KB.SCREENS, 'Not yet'),
     'professions-other': ('Professional licensing outside health', 'I6', True, PROFEV + ' (a profession is configured by its regulator; the reference procedures are written for health professions)', 'Not yet'),
@@ -443,7 +449,18 @@ I(r'^exchange\.', 'Partial', KB.EXCH, 'This exchange service is not defined', No
 I(r'^CIV-(BTH-00[24]|DEA-00[24]|MAR-001|REC-001|REC-01[034])$', 'Met', CIVEV, '', '—')
 I(r'^CIV-(BTH-005|DEA-005|MAR-004|REC-004)$', 'Partial', CIVEV + '; ' + KB.CERT, 'A certificate request case by an entitled person')
 I(r'^CIV-MAR-002$', 'Partial', CIVEV + ' (civil.correction)', 'Amendment specific to marriage records')
-I(r'^IDN-VER-00[12]$', 'Partial', 'person.verify exchange (lib/exchange/services.ts; purposes approved per caller by two officials, minimum answer)', 'Identity register and the configured response vocabulary')
+# Human services (plan I6): the batch-9 library contracts, linked to their procedures or waiting for them.
+I(r'^(IDN-REG-001|IDN-REG-002|IDN-REG-003|IDN-REG-004|IDN-REG-005|IDN-CARD-001|IDN-CARD-002|IDN-CARD-003|IDN-CARD-004|IDN-CARD-005|IDN-CARD-006|IDN-CARD-007|IDN-VER-003|IDN-SEC-001|IDN-SEC-002|IDN-SEC-003)$', 'Partial', IDNEV + '; library contract of batch 9 (app/src/lib/forms/library/catalogue-contracts/)', 'Adoption by the nation: the identity authority named for its slot, its procedure approved by a second official, its decision mapping approved under its law', 'I6')
+I(r'^(IDN-VER-00[12])$', 'Partial', IDNEV + '; identity.verify exchange (lib/exchange/services.ts: purposes approved per caller by two officials; the result and its meaning, never the record; unable_to_verify while no identity authority is named); library contract of batch 9', 'Adoption by the nation: the response vocabulary it narrows (CFG-IDN-003) and each caller\'s approved purpose', 'I6')
+I(r'^(PAS-APP-015)$', 'Partial', PASEV + '; travel-document.status exchange (lib/exchange/services.ts); library contract of batch 9', 'Adoption by the nation: each caller\'s approved purpose', 'I6')
+I(r'^(IDN-ACC-001|IDN-ACC-002|IDN-ACC-003|IDN-ACC-004)$', 'Not yet', IDNEV + '; library contract of batch 9 waiting for its procedure', 'The procedure this form belongs to (not built in I6)', 'I6')
+I(r'^(PAS-APP-001|PAS-APP-002|PAS-APP-003|PAS-APP-004|PAS-APP-005|PAS-APP-008|PAS-APP-009|PAS-APP-010|PAS-APP-006|PAS-APP-007|PAS-APP-011|PAS-APP-012|PAS-APP-013|PAS-APP-014|PAS-APP-016|PAS-APP-017|PAS-APP-018)$', 'Partial', PASEV + '; library contract of batch 9 (app/src/lib/forms/library/catalogue-contracts/)' + '; fee from the approved passports.fees schedule only', 'Adoption by the nation: the travel document authority named for its slot, its procedure approved by a second official, its decision mapping approved under its law', 'I6')
+I(r'^(NAT-APP-001|NAT-APP-002|NAT-APP-003|NAT-APP-004|NAT-APP-005|NAT-APP-006|NAT-APP-007|NAT-APP-010|NAT-APP-012)$', 'Partial', NATEV + '; library contract of batch 9 (app/src/lib/forms/library/catalogue-contracts/)', 'Adoption by the nation: the competent citizenship authority named for its slot, its procedure approved by a second official, its decision mapping approved under its law', 'I6')
+I(r'^(NAT-APP-008|NAT-APP-009|NAT-APP-011)$', 'Not yet', NATEV + '; library contract of batch 9 waiting for its procedure', 'The procedure this form belongs to (not built in I6)', 'I6')
+I(r'^(LAB-EMP-001|LAB-EMP-002|LAB-EMP-003|LAB-EMP-004|LAB-EMP-005|LAB-EMP-006|LAB-EMP-007|LAB-EMP-008|LAB-EMP-009|LAB-EMP-010|LAB-EMP-011|LAB-EMP-012|LAB-EMP-013|LAB-EMP-014|LAB-EMP-015|LAB-EMP-020)$', 'Partial', LABEV + '; library contract of batch 9 (app/src/lib/forms/library/catalogue-contracts/)', 'Adoption by the nation: the labour authority named for its slot, its procedure approved by a second official, its decision mapping approved under its law', 'I6', tag='SUP')
+I(r'^(LAB-EMP-016|LAB-EMP-017|LAB-EMP-018|LAB-EMP-019)$', 'Not yet', LABEV + '; library contract of batch 9 waiting for its procedure', 'The procedure this form belongs to (not built in I6)', 'I6', tag='SUP')
+I(r'^(SOC-BEN-001|SOC-BEN-002|SOC-BEN-003|SOC-BEN-004|SOC-BEN-005|SOC-BEN-006|SOC-BEN-017|SOC-BEN-007|SOC-BEN-009|SOC-BEN-011|SOC-BEN-012|SOC-BEN-014|SOC-BEN-010|SOC-BEN-018|SOC-BEN-019|SOC-BEN-020)$', 'Partial', SOCEV + '; library contract of batch 9 (app/src/lib/forms/library/catalogue-contracts/)' + '; amounts only from the programme\'s approved rule, its version recorded', 'Adoption by the nation: the social protection authority named for its slot, its procedure approved by a second official, its decision mapping approved under its law', 'I6', tag='SUP')
+I(r'^(SOC-BEN-008|SOC-BEN-013|SOC-BEN-016|SOC-BEN-021|SOC-BEN-022|SOC-BEN-023|SOC-BEN-024|SOC-BEN-015)$', 'Not yet', SOCEV + '; library contract of batch 9 waiting for its procedure', 'The procedure this form belongs to (not built in I6)', 'I6', tag='SUP')
 I(r'^IMM-VIS-00[178]$|^IMM-RES-00[13]$|^IMM-RES-016$', 'Partial', IMMEV, 'The catalogue\'s field contract and stages')
 I(r'^IMM-VIS-01[13]$|^IMM-RES-018$', 'Partial', IMMEV + '; immigration.status exchange', 'Review case and purpose-limited response per catalogue')
 # Field series Part 5 (courts)

@@ -1,0 +1,548 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "SOC-BEN-018",
+ "record_type": "soc.soc-ben-018",
+ "form_version": 1,
+ "procedure_package_id": "social.payment",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "Each programme's eligibility and amount as an approved rule (social.<programme>, lib/law/rules.ts; none ships), its evidence, payment periods and appeal route (the nation's law)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "SOC-BEN-018",
+  "part": 15,
+  "section": "15.1",
+  "line": 362,
+  "batch": 9
+ },
+ "library": {
+  "title": "Instruct a benefit payment",
+  "intro": "A payment instruction from the award's current assessment: prepared by one official, approved by a different one, then sent to the payment service. The amount is the assessment's, never typed.",
+  "owner": "socialProtection",
+  "filled_by": "Two officials of the social protection authority: the maker and a different approver.",
+  "authority": "The social protection authority the nation names for the socialProtection slot (authorityFor('socialProtection'), shipped empty). Never a ministry by name.",
+  "procedure": {
+   "key": "social.payment",
+   "stage": "opened",
+   "action": "prepare"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadSocial() in lib/auth/roles.ts: the social protection authority's officials with a stated purpose; every read in the access log",
+   "access.others": "No other institution reads these records; payments leave only as instructions to the payment service"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "no-score",
+    "what": "No field scores a person, a household, a credential, an employer or an application: no risk, credibility, propensity or match score exists in the contract or its procedure",
+    "why": "Directions §15.6 and §15.7; supplement Part 15: a risk score alone cannot determine loss of essential support; field series Part 4 §4.4: no opaque risk scores.",
+    "rule": "CLAUDE.md Immigration and Customs (\"never a score\"); lib/social/procedures.ts refuses a suspension whose grounds rest on a score"
+   },
+   {
+    "id": "authority-slot",
+    "what": "The social protection authority is the institution the nation names for the socialProtection slot, shipped empty; until it is named no case opens",
+    "why": "Specification Part 2 §A.7: each benefit requires its own approved eligibility rules, under the body the law names.",
+    "rule": "lib/nation/deployment.ts AUTHORITIES (socialProtection, optional)"
+   },
+   {
+    "id": "maker-checker",
+    "what": "The maker and the approver are the signed-in officials who take the prepare and approve steps; the approver must be a different person (distinctFrom, compared by person, never by name)",
+    "why": "Supplement Part 15 APPROVER-DIFFERS-FROM-MAKER, enforced on the steps instead of typed fields.",
+    "rule": "lib/social/procedures.ts social.payment (needs.distinctFrom [\"prepare\"]); lib/data/dual-control.ts dualControlRefusal()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 362,
+    "quotes": [
+     "SOC-BEN-018",
+     "Benefit payment instruction"
+    ],
+    "met_by": {
+     "fields": [
+      "soc.benefit_case_id",
+      "soc.payment_period"
+     ],
+     "procedure": "prepare"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1158,
+    "quotes": [
+     "Owns: claims, eligibility evidence, decisions, payment instructions, reassessments and appeals.",
+     "Each benefit requires its own approved eligibility rules."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/social/register.ts",
+      "how": "Claims with every assessment and its approved rule version; decisions, payment instructions, reassessments and appeals; each programme its own approved rule (social.<programme>)"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1652,
+    "quotes": [
+     "The schema deliberately makes some fields conditional.",
+     "A universal form that collects all household, health, financial and identity information for every programme would be excessive.",
+     "Each programme should request only the evidence its lawful eligibility rules require."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/social/procedures.ts",
+      "how": "Inputs only as the programme's rule requires: income, assets and deductions by line, each with its source; no universal household, health, financial and identity form"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1656,
+    "quotes": [
+     "Benefits cannot be denied solely because an external database is unavailable."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/social/procedures.ts",
+      "how": "An identity check that cannot be made holds the claim; refusal is not open from the held stage (acceptance P2-08)"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1657,
+    "quotes": [
+     "A mismatch is a discrepancy to resolve, not proof of fraud."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/social/register.ts",
+      "how": "Each input line records whether it was verified; a mismatch is resolved by the officer, never scored"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1658,
+    "quotes": [
+     "Automated calculations must show the rule version and inputs used."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/social/register.ts",
+      "how": "Each assessment keeps its inputs, means, rule key, version and digest and the calculation steps; reproduceAssessment() re-runs them (P2-07)"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1659,
+    "quotes": [
+     "Affected people must receive an understandable explanation of the decision, subject to applicable law."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/social/procedures.ts",
+      "how": "Award, refusal and variation require an explanation to the person"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1660,
+    "quotes": [
+     "Reassessment and correction must not erase the earlier decision or its evidence."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/social/register.ts",
+      "how": "A reassessment adds a version; earlier assessments, decisions and evidence are kept"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1661,
+    "quotes": [
+     "Appeals must be assigned to a role with appropriate independence from the original decision."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/social/procedures.ts",
+      "how": "social.appeal refuses a reviewer who took part in the decision appealed"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1662,
+    "quotes": [
+     "No universal government-wide “risk score” for a person or household."
+    ],
+    "met_by": {
+     "deviation": "no-score"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 500,
+    "quotes": [
+     "Mandatory safeguards: sensitive social-service records must be purpose-limited and segregated by role.",
+     "Benefit eligibility and payment decisions must be explainable, linked to the applicable rule version, reviewable by an authorized human, and appealable where the law provides.",
+     "A risk score alone cannot determine loss of essential support."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/social/procedures.ts",
+      "how": "Restricted cases, read by the social protection authority with a purpose; decisions linked to the rule version, by two officials, with the review route; a suspension whose grounds rest on a score is refused"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 455,
+    "quotes": [
+     "\"form_id\": \"SOC-BEN-018\""
+    ],
+    "met_by": {
+     "fields": [
+      "soc.benefit_case_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 456,
+    "quotes": [
+     "\"title\": \"Benefit Payment Instruction\""
+    ],
+    "met_by": {
+     "fields": [
+      "soc.approved_entitlement_reference"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 458,
+    "quotes": [
+     "{\"key\": \"benefit_case_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "soc.benefit_case_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 459,
+    "quotes": [
+     "{\"key\": \"approved_entitlement_reference\", \"type\": \"decision_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "soc.approved_entitlement_reference"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 460,
+    "quotes": [
+     "{\"key\": \"payee_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "soc.payee_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 461,
+    "quotes": [
+     "{\"key\": \"amount\", \"type\": \"money\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "soc.amount"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 462,
+    "quotes": [
+     "{\"key\": \"currency\", \"type\": \"currency_code\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "soc.currency"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 463,
+    "quotes": [
+     "{\"key\": \"payment_period\", \"type\": \"date_range\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "soc.payment_period"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 464,
+    "quotes": [
+     "{\"key\": \"payment_method_reference\", \"type\": \"protected_payment_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "soc.payment_method_reference"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 465,
+    "quotes": [
+     "{\"key\": \"maker_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "deviation": "maker-checker"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 466,
+    "quotes": [
+     "{\"key\": \"approver_id\", \"type\": \"entity_reference\", \"required\": true, \"validation_rule_ids\": [\"APPROVER-DIFFERS-FROM-MAKER\"]}"
+    ],
+    "met_by": {
+     "deviation": "maker-checker"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "soc.benefit_case_id",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "social.registry.claims",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Claim (its number)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter claim (its number)."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "soc.approved_entitlement_reference",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.decisions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The award (its decision)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the award (its decision)."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "soc.payee_id",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "social.registry.claimants",
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Payee"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter payee."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "soc.amount",
+   "type": "number",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "integer_range",
+     "params": {
+      "min": 0
+     }
+    },
+    {
+     "rule": "derived_from_approved_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Amount (from the current assessment)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter amount (from the current assessment)."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "soc.currency",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.nation.currencies",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Currency"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter currency."
+    }
+   },
+   "country_decision": "The nation's currency (ISO 4217), from its profile."
+  },
+  {
+   "id": "soc.payment_period",
+   "type": "date_range",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Payment period"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter payment period."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "soc.payment_method_reference",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Payment method reference"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter payment method reference."
+    }
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -23,6 +23,7 @@ BATCH_LABEL[6] = 'tax services'
 BATCH_LABEL[10] = 'territory and infrastructure'
 # Batch 8 (owner's assignment, plan step I5): the executive office, Cabinet, treasury and budget forms of the field series Part 2.
 BATCH_LABEL[8] = 'executive office, Cabinet, treasury and budget'
+BATCH_LABEL[9] = 'human services forms'
 GATES = [
     'The form owner and competent authority are verified.',
     'Legal references and their versions have been approved.',

@@ -1,0 +1,289 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "NAT-APP-005",
+ "record_type": "citizenship.application.registration",
+ "form_version": 1,
+ "procedure_package_id": "citizenship.application",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-NAT-001: the citizenship procedures that exist and the competent determination authority (the citizenship slot, shipped empty)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+  "id": "NAT-APP-005",
+  "part": 4,
+  "section": "6.1",
+  "line": 1678,
+  "batch": 9
+ },
+ "library": {
+  "title": "Apply to register as a citizen",
+  "intro": "The competent authority the nation names decides, on the grounds its law sets and the evidence you give; two officials determine with reasons and the review route.",
+  "owner": "citizenship",
+  "filled_by": "The applicant or an authorised representative: online, at an office or on paper.",
+  "authority": "The competent authority the nation names for the citizenship slot (authorityFor('citizenship'), shipped empty). Never a ministry by name; no stand-in acts for it.",
+  "procedure": {
+   "key": "citizenship.application",
+   "stage": "submitted",
+   "action": "review-evidence",
+   "document": "application"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: a restricted case of the competent authority, read by its assignee and supervisors; every read in the access log",
+   "access.others": "No other institution reads the file; a certificate carries no name and is checked at /verify"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "no-score",
+    "what": "No field scores a person, a household, a credential, an employer or an application: no risk, credibility, propensity or match score exists in the contract or its procedure",
+    "why": "Directions §15.6 and §15.7; supplement Part 15: a risk score alone cannot determine loss of essential support; field series Part 4 §4.4: no opaque risk scores.",
+    "rule": "CLAUDE.md Immigration and Customs (\"never a score\"); lib/social/procedures.ts refuses a suspension whose grounds rest on a score"
+   },
+   {
+    "id": "authority-slot",
+    "what": "The competent citizenship authority is the institution the nation names for the citizenship slot, shipped empty; no stand-in acts for it",
+    "why": "Field series Part 4 §6: optional entries until the country confirms which procedures exist and which institution has jurisdiction (CFG-NAT-001).",
+    "rule": "lib/nation/deployment.ts AUTHORITIES (citizenship, optional; no provisional fallback)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1678,
+    "quotes": [
+     "NAT-APP-005",
+     "Citizenship registration application",
+     "Registration review"
+    ],
+    "met_by": {
+     "fields": [
+      "application.grounds"
+     ],
+     "procedure": "review-evidence"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1671,
+    "quotes": [
+     "Citizenship determination can have constitutional and legal consequences.",
+     "CivicOS should support the records and procedures of the competent authority without assuming that civil registration or possession of an identity document establishes citizenship."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/citizenship/procedures.ts",
+      "how": "citizenship.application records the grounds claimed and the competent authority's assessment; nothing reads another register to infer citizenship"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1686,
+    "quotes": [
+     "These are optional catalogue entries until the country confirms which citizenship procedures exist and which institution has jurisdiction."
+    ],
+    "met_by": {
+     "deviation": "authority-slot"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1688,
+    "quotes": [
+     "Critical boundary: A national identity number, birthplace, passport, parent's record, or immigration status must not independently be treated as conclusive proof of citizenship unless the applicable law expressly gives it that effect."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/citizenship/procedures.ts",
+      "how": "citizenship.checkDetermination refuses a determination without the assessment of each criterion; the hint states that an identity number, passport or birthplace is not conclusive unless the law says so"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "applicant.name",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Full name"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter full name."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "applicant.identity",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "identity.registry.records",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Identity record, if any (not proof of citizenship)"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "applicant.civil_registration",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.person",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Civil register entry, if any (not proof of citizenship)"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "application.grounds",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The grounds claimed, as the nation's law names them"
+   },
+   "hint": {
+    "en": "Name the provision relied on. An identity number, passport or birthplace is not conclusive unless the law gives it that effect."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the grounds claimed, as the nation's law names them."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "application.form",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "application",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "The application as received"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the document."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "application.evidence",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "evidence",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Evidence of the grounds claimed"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the document."
+    }
+   },
+   "country_decision": null,
+   "multiple": true
+  }
+ ]
+}

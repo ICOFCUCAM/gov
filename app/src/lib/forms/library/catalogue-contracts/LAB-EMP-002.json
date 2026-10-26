@@ -1,0 +1,211 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "LAB-EMP-002",
+ "record_type": "lab.lab-emp-002",
+ "form_version": 1,
+ "procedure_package_id": "labour.employment-registration",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "The labour law's employer and employment registration duties, occupational and industry classifications, inspection powers and severity scale, complaint categories, injury reporting categories and periods, notice periods (none ship)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "LAB-EMP-002",
+  "part": 14,
+  "section": "14.1",
+  "line": 164,
+  "batch": 9
+ },
+ "library": {
+  "title": "Register or amend an employment contract",
+  "intro": "Register an employment contract, or an amendment, where the nation's law requires it. The contract is a document of the employment registration.",
+  "owner": "labour",
+  "filled_by": "The employer or its authorised representative, online or at an office; or an official from a paper form.",
+  "authority": "The labour authority the nation names for the labour slot (authorityFor('labour'), shipped empty). Never a ministry by name.",
+  "procedure": {
+   "key": "labour.employment-registration",
+   "stage": "submitted",
+   "action": "check-authorisation",
+   "document": "contract"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadLabour() in lib/auth/roles.ts: the labour authority's officials; auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only an employer's standing through employer.standing"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "no-score",
+    "what": "No field scores a person, a household, a credential, an employer or an application: no risk, credibility, propensity or match score exists in the contract or its procedure",
+    "why": "Directions §15.6 and §15.7; supplement Part 15: a risk score alone cannot determine loss of essential support; field series Part 4 §4.4: no opaque risk scores.",
+    "rule": "CLAUDE.md Immigration and Customs (\"never a score\"); lib/social/procedures.ts refuses a suspension whose grounds rest on a score"
+   },
+   {
+    "id": "authority-slot",
+    "what": "The labour authority is the institution the nation names for the labour slot, shipped empty; until it is named no case opens",
+    "why": "Specification Part 2 §A.6: the government assigns these functions.",
+    "rule": "lib/nation/deployment.ts AUTHORITIES (labour, optional)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 164,
+    "quotes": [
+     "LAB-EMP-002",
+     "Employment contract registration",
+     "Register or amend a contract where required"
+    ],
+    "met_by": {
+     "fields": [
+      "contract.document"
+     ],
+     "procedure": "check-authorisation"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1152,
+    "quotes": [
+     "Owns: employer registrations where assigned, inspection cases, findings, corrective orders and employment-service referrals.",
+     "It must not see private medical information without specific authority."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/labour/register.ts",
+      "how": "Employers, inspections with findings and corrective orders, employment-service referrals; injury medical content only as a sealed document"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1593,
+    "quotes": [
+     "Indicators: inspections completed, outstanding corrective actions, complaint age bands, resolution time, repeat findings and employment-service outcomes.",
+     "Do not publish identifying complainant details or imply that an allegation is a proven violation."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/labour/register.ts",
+      "how": "labourCounts() carries no complainant or employer; a complaint is upheld only on findings (labour.checkOutcome)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 340,
+    "quotes": [
+     "The remaining labour forms (LAB-EMP-002, 006, 007, 012–015, and 017–019) use the same contract envelope and are specified in the catalogue above.",
+     "Their individual field contracts should be added to the form registry before that form is marked production-ready; they must not be treated as implemented merely because their IDs exist."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/catalogue-contracts.test.ts",
+      "how": "This contract is written to the same envelope and held to the conformance test; its form status stays contract_draft (never implemented merely because the ID exists)"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "contract.employment",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.cases",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Employment registration (its number)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter employment registration (its number)."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "contract.change",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What the contract or amendment provides"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "contract.document",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "contract",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "The contract or amendment"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the document."
+    }
+   },
+   "country_decision": null
+  }
+ ]
+}

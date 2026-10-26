@@ -76,6 +76,15 @@ import type { AuthorityKey } from '@/lib/nation/deployment';
 import { departmentsOf, waitingDepartmentChanges } from '@/lib/institution/departments';
 import { ADMINISTRATION_PROCEDURES, administrationKey } from '@/lib/administration/procedures';
 import { ruleInForce } from '@/lib/law/rules';
+import { IDENTITY_PROCEDURES, IDENTITY_PERMITS } from '@/lib/identity/procedures';
+import { PASSPORT_PROCEDURES, PASSPORT_PERMITS } from '@/lib/passports/procedures';
+import { CITIZENSHIP_PROCEDURES, CITIZENSHIP_PERMITS } from '@/lib/citizenship/procedures';
+import { LABOUR_PROCEDURES, LABOUR_PERMITS } from '@/lib/labour/procedures';
+import { SOCIAL_PROCEDURES, SOCIAL_PERMITS } from '@/lib/social/procedures';
+import { identityCounts } from '@/lib/identity/register';
+import { passportCounts, FEE_RULE } from '@/lib/passports/register';
+import { labourCounts } from '@/lib/labour/register';
+import { socialCounts } from '@/lib/social/register';
 
 export type TrackState = 'done' | 'in-progress' | 'not-started' | 'blocked';
 /**
@@ -599,6 +608,42 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
           { label: 'Each council\'s rules (seats, quorum, majority) adopted by two of its officials', done: locals.every(l => !!councilRules(l)), href: '/gov/local-government', detail: `${locals.filter(l => !!councilRules(l)).length} of ${locals.length}` },
         ] : []),
         { label: 'Records through decided cases', done: lc.transactions + bc.permits + hc.allocated + tc.vehicles + tc.licences + localCounts().resolutions > 0, href: '/gov/land', detail: `${lc.transactions} land transactions, ${lc.disputes} disputes · ${bc.planning} planning decisions, ${bc.permits} permits · ${hc.allocated} homes allocated · ${tc.vehicles} vehicles, ${tc.licences} licences · ${localCounts().resolutions} resolutions` },
+      ] };
+    }));
+  }
+
+  // Human services (plan I6): one track for each area the nation names a body for (all optional but identity).
+  const HUMAN: { slot: AuthorityKey; key: string; title: string; why: string; href: string; procedures: { key: string }[]; permits: Record<string, string>; extra: () => { label: string; done: boolean; href: string; detail?: string }[] }[] = [
+    { slot: 'identity', key: 'identity', title: 'National identity', href: '/gov/identity', procedures: IDENTITY_PROCEDURES, permits: IDENTITY_PERMITS,
+      why: 'Identity enrolment, credentials and their status, and the resolution of suspected duplicates and misuse, decided by the identity authority\'s officials; others learn only a verification result through identity.verify.',
+      extra: () => { const c = identityCounts(); const n = Object.values(c.records).reduce((a, b) => a + b, 0); return [{ label: 'Identities enrolled and credentials delivered through decided cases', done: n > 0 && c.delivered > 0, href: '/gov/identity', detail: `${n} record(s), ${c.delivered} credential(s) delivered${c.samples ? ` (${c.samples} samples)` : ''}` }]; } },
+    { slot: 'travelDocuments', key: 'travel-documents', title: 'Passports and travel documents', href: '/gov/passports', procedures: PASSPORT_PROCEDURES, permits: PASSPORT_PERMITS,
+      why: 'Applications, the fee from the approved schedule, issuance by two officials, production, custody and collection, and every later status. Only where the nation names its travel document authority.',
+      extra: () => [{ label: 'Fee schedule approved (passports.fees, Rates and tariffs)', done: !!ruleInForce(FEE_RULE), href: '/gov/law/rules', detail: ruleInForce(FEE_RULE) ? `version ${ruleInForce(FEE_RULE)!.version}` : 'None: no fee is calculated until one is (an exemption the law gives is recorded instead)' },
+        { label: 'Documents issued through decided cases', done: (passportCounts().byState.issued ?? 0) > 0, href: '/gov/passports', detail: JSON.stringify(passportCounts().byState) }] },
+    { slot: 'citizenship', key: 'citizenship', title: 'Citizenship determination', href: '/gov/law/procedures', procedures: CITIZENSHIP_PROCEDURES, permits: CITIZENSHIP_PERMITS,
+      why: 'Citizenship and nationality applications decided by the competent authority the nation names. Only where its law names one.', extra: () => [] },
+    { slot: 'labour', key: 'labour', title: 'Labour and employment', href: '/gov/labour', procedures: LABOUR_PROCEDURES, permits: LABOUR_PERMITS,
+      why: 'Employers, employment, employment services, workplace inspections, complaints, injury notifications and mediation, worked by the labour authority. Only where the nation names one.',
+      extra: () => { const c = labourCounts(); return [{ label: 'Employers registered through decided cases', done: (c.employers ?? 0) > 0, href: '/gov/labour', detail: `${c.employers ?? 0} employer(s), ${(c.inspectionsOpen ?? 0) + (c.inspectionsClosed ?? 0)} inspection(s)` }]; } },
+    { slot: 'socialProtection', key: 'social-protection', title: 'Social protection', href: '/gov/social-protection', procedures: SOCIAL_PROCEDURES, permits: SOCIAL_PERMITS,
+      why: 'Benefits calculated only by approved rules and decided by two officials, payment instructions approved by a second official, overpayments and appeals. Only where the nation names its social protection authority.',
+      extra: () => { const rules = listRules().filter(r => r.key.startsWith('social.') && r.state === 'approved').length; const c = socialCounts(); return [{ label: 'A programme rule approved (social.<programme>, Rates and tariffs)', done: rules > 0, href: '/gov/law/rules', detail: rules ? `${rules} approved` : 'None: no claim can be assessed until one is' }, { label: 'Claims decided through cases', done: c.claims.some(x => x.state !== 'assessed'), href: '/gov/social-protection', detail: `${c.claimants} claimant(s)` }]; } },
+  ];
+  for (const h of HUMAN) {
+    const id = authorityFor(h.slot);
+    if (!id && h.slot !== 'identity') continue;
+    tracks.push(track({ key: h.key, title: h.title, why: h.why, href: h.href, seeded: true }, () => {
+      const approved = h.procedures.filter(p => listPackages({ key: p.key, state: 'approved' }).length);
+      const types = [...new Set(Object.values(h.permits))];
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const signers = id ? listAccounts().filter(a => !a.disabled && a.institution === id && a.role === 'signatory').length : 0;
+      return { checks: [
+        { label: `${h.title}: the institution named (Who is responsible)`, done: !!id, href: '/gov/configuration#who-is-responsible', ...(id ? {} : { detail: 'Not named: no case opens until it is' }) },
+        { label: 'Two officials who can sign there', done: signers >= 2, href: '/admin/officials', detail: `${signers}` },
+        { label: 'Its procedures approved', done: approved.length === h.procedures.length, href: '/gov/law/procedures', detail: `${approved.length} of ${h.procedures.length} approved` },
+        { label: 'Who decides approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        ...h.extra(),
       ] };
     }));
   }

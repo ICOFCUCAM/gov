@@ -22,6 +22,8 @@ import { raiseSuspensionAlerts, lapseSuspensionPolicy } from '@/lib/permits/auth
 import { lapseDualControlPolicy } from '@/lib/casework/dual-control-policy';
 import { listReceipts, lapseClassification } from '@/lib/data/store';
 import { activateDue, lapseProcess } from '@/lib/constitution/profile';
+import { expireCredentials } from '@/lib/identity/register';
+import { expireDocuments } from '@/lib/passports/register';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +36,9 @@ async function runJob(req: Request) {
   const tax = reconcileTaxPayments(listReceipts());
   const professionals = lapseRegistrations();
   const products = expireProducts();
+  // Plan step I6: identity credentials and travel documents past the validity their decision set.
+  const credentials = expireCredentials();
+  const travelDocuments = expireDocuments();
   const customs = reconcileCustomsPayments(listReceipts());
   const suspensions = raiseSuspensionAlerts();
   const proposals = lapseProposals();
@@ -41,7 +46,7 @@ async function runJob(req: Request) {
   lapseDualControlPolicy(); lapseSuspensionPolicy(); lapseClassification(); lapseProcess();
   // Constitutional profiles approved for a date that has come (plan phase 5): activated with their recorded approvals.
   const profilesActivated = activateDue();
-  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, productsLapsed: products.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length, proposalsLapsed: proposals.length, profilesActivated });
+  return NextResponse.json({ ok: true, lapsed: lapsed.length, cases: lapsed.map(l => ({ ref: l.ref, deadline: l.deadline, onLapse: l.onLapse })), expired, immigrationExpired: immigration.length, unusualAccessRaised: access.raised, taxPaymentsPosted: tax.posted, taxPaymentsUnmatched: tax.unmatched.length, professionalsLapsed: professionals.length, productsLapsed: products.length, credentialsExpired: credentials.length, travelDocumentsExpired: travelDocuments.length, customsPaymentsPosted: customs.posted, customsPaymentsUnmatched: customs.unmatched.length, suspensionAlerts: suspensions.length, proposalsLapsed: proposals.length, profilesActivated });
 }
 
 // Run recorded, deduplicated, retried and alerted on by lib/ops/cron-runs.ts (register 18.39).
