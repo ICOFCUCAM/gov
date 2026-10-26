@@ -305,6 +305,27 @@ What has been built is locked. Work only upgrades it toward the vision in
   governments (standing `subnational`) adopt the `lg.*` templates as their
   own; transport keeps vehicles, licences (medical fitness only as a sealed
   document's reference), road works and operators apart.
+- Security governance and resilience (plan I12, `lib/security/`) is metadata
+  only. The nation's classification scheme and the installation's declared
+  accreditation are one country rule set (`classification.ts`, through
+  `policy-change.ts`, shipped empty); until both are adopted nothing above
+  the platform default is held, and a record or upload marked above the
+  accreditation is refused (`markingRefusal()`, also in `addDocument()`).
+  Cyber incidents, vulnerabilities, supplier assessments, exceptions,
+  exercises, critical infrastructure designations, dependencies, risk
+  assessments, resilience plans and clearance decisions change only in the
+  effects of `lib/security/procedures.ts` (slots `cyberAuthority`,
+  `criticalInfrastructure`, `securityAccreditation`, shipped empty; two
+  officials, unapproved mappings). A security record is read only under
+  `securityAccessRefusal()`: need to know, a stated purpose, the action and,
+  for a marked record, a valid clearance at its level, each checked on its
+  own; a clearance alone grants nothing; every attempt is logged. National
+  security directives (`directives.ts`, slot `nationalSecurity`) stay apart
+  from the general directives register and reach an independent institution
+  only as a request. Never add an intelligence register, a source,
+  collection method, target, surveillance, attack attribution or any score
+  about a person without the nation's legal review (integration register
+  §25); AI never attributes an attack, accepts a risk or decides a clearance.
 
 ## Constitutional architecture
 
@@ -349,7 +370,8 @@ What has been built is locked. Work only upgrades it toward the vision in
   internal administration, 40 forms; batch 6, tax services, 95 forms;
   batch 7, independent oversight, 7 forms; batch 8, executive office,
   Cabinet, treasury and budget, 57 forms; batch 9, human services, 96 forms;
-  batch 10, territory and infrastructure, 36 forms: owner 2026-10-21), as library
+  batch 10, territory and infrastructure, 36 forms; batch 13, security
+  governance and resilience, 31 forms: owner 2026-10-21), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.
 - Every requirement of that specification is a row of
